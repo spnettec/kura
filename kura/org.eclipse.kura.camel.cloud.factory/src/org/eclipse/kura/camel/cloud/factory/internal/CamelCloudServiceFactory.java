@@ -79,8 +79,8 @@ public class CamelCloudServiceFactory implements CloudServiceFactory {
         }
 
         props.put("cloud.service.pid", pid);
-        String factoryPid = FACTORY_ID + "-" + new Date().getTime();
-        this.configurationService.createFactoryConfiguration(FACTORY_ID, factoryPid, props, true);
+        String camelPid = FACTORY_ID + "-" + new Date().getTime();
+        this.configurationService.createFactoryConfiguration(FACTORY_ID, camelPid, props, true);
     }
 
     private static Filter getFilterUnchecked(final String filter) {

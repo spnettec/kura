@@ -104,7 +104,7 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
         List<String> componentPids = new ArrayList<String>();
 
         String[] result = getTargetPids(pid);
-        componentPids.add(pid);
+        // componentPids.add(pid);
         componentPids.add(result[0]);
         componentPids.add(result[1]);
         return componentPids;

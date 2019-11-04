@@ -321,10 +321,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     @Override
     public Set<String> getConfigurableComponentPids() {
-        if (this.allActivatedPids.isEmpty()) {
-            return Collections.emptySet();
-        }
-        return Collections.unmodifiableSet(this.allActivatedPids);
+        Set<String> result = Collections.emptySet();
+        result.addAll(this.allActivatedPids);
+        result.addAll(this.waittingForActivatedPids);
+
+        return result;
     }
 
     // Don't perform internal calls to this method
@@ -342,6 +343,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
         try {
             final ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, null);
+            if (refs == null)
+                return Collections.emptyList();
             final List<ComponentConfiguration> result = new ArrayList<>(refs.length);
 
             for (final ServiceReference<?> ref : refs) {
@@ -360,7 +363,6 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     }
                 }
             }
-
             return result;
         } catch (final Exception e) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
@@ -922,18 +924,24 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     // returns configurations with encrypted passwords
     private List<ComponentConfiguration> getComponentConfigurationsInternal() throws KuraException {
+        List<ComponentConfiguration> configs = getComponentConfigurationsInternal(this.allActivatedPids);
+        configs.addAll(getComponentConfigurationsInternal(this.waittingForActivatedPids));
+        return configs;
+    }
+
+    private List<ComponentConfiguration> getComponentConfigurationsInternal(Set<String> pids) throws KuraException {
         List<ComponentConfiguration> configs = new ArrayList<>();
 
         // assemble all the configurations we have
         // clone the list to avoid concurrent modifications
-        List<String> allPids = new ArrayList<>(this.allActivatedPids);
-        allPids.addAll(this.waittingForActivatedPids);
+        List<String> allPids = new ArrayList<>(pids);
         for (String pid : allPids) {
             try {
                 ComponentConfiguration cc = getComponentConfigurationInternal(pid);
                 if (cc != null) {
                     configs.add(cc);
-                }
+                } else
+                    logger.warn("could not find ComponentConfiguration for pid:{}", pid);
             } catch (Exception e) {
                 logger.error("Error getting configuration for component " + pid, e);
                 throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e,
