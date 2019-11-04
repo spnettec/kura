@@ -235,18 +235,7 @@ public class Console implements ConfigurableComponent, org.eclipse.kura.web.api.
     }
 
     private void doUpdate(Map<String, Object> properties) {
-        ConsoleOptions options = new ConsoleOptions(properties);
-
-        Console.setConsoleOptions(options);
-
-        try {
-            updateAuthenticationManager(options.getUsername(), options.getUserPassword());
-        } catch (Exception e) {
-            logger.warn("Error Updating Web properties", e);
-        }
-
-        setAppRoot(options.getAppRoot());
-        setSessionMaxInactiveInterval(options.getSessionMaxInactivityInterval());
+        updated(properties);
 
         try {
             initHTTPService();
