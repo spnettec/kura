@@ -682,7 +682,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             registerFactoryComponentOCD(metatypePid, ocd, provider);
         } else {
             try {
-                updateWithDefaultConfiguration(metatypePid, ocd);
+                updateWithDefaultConfigurationForNonFactoryInstance(metatypePid, ocd);
             } catch (IOException e) {
                 throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
             }
@@ -697,12 +697,26 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         });
     }
 
-    synchronized void registerComponentConfiguration(final String pid, final String servicePid,
-            final String factoryPid) {
-        if (pid == null || servicePid == null) {
-            logger.warn("Either PID (kura.service.pid) {} or Service PID (service.pid) {} is null", pid, servicePid);
-            return;
+    synchronized void registerComponentConfiguration(String pid, final String servicePid, final String factoryPid) {
+        if (factoryPid != null) {// factory instance
+            if (pid == null || servicePid == null) {
+                logger.error("Either PID (kura.service.pid) {} or Service PID (service.pid) {} is null", pid,
+                        servicePid);
+                return;
+            }
+        } else // non factory instance
+        {
+            if (servicePid == null) {
+                logger.error("non factory instance PID : {} have not Service PID (service.pid) ", pid);
+                return;
+            } else if (pid == null) {
+                logger.warn(
+                        "non factory instance Service PID (service.pid) is {}, Can not find  PID (kura.service.pid). Maybe OCD not registed",
+                        servicePid);
+                pid = servicePid;
+            }
         }
+
         if (this.waittingForActivatedPids.contains(pid))
             this.waittingForActivatedPids.remove(pid);
         if (this.allActivatedPids.contains(pid)) {
@@ -761,7 +775,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
         if (factoryOCD != null) {
             try {
-                updateWithDefaultConfiguration(pid, factoryOCD);
+                updateWithDefaultConfigurationForNewFactoryInstance(pid, factoryOCD);
             } catch (KuraException | IOException e) {
                 logger.info("Error seeding updated configuration for pid: {}", pid);
             }
@@ -962,11 +976,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         return cc;
     }
 
-    private void updateWithDefaultConfiguration(String pid, Tocd ocd) throws KuraException, IOException {
-        String servicePid = this.servicePidByPid.get(pid);
-        if (servicePid == null) {
-            servicePid = pid;
-        }
+    private void updateDefaultConfiguration(String pid, String servicePid, Tocd ocd) throws KuraException, IOException {
+
         Configuration config = this.configurationAdmin.getConfiguration(servicePid, "?");
         if (config != null) {
             // get the properties from ConfigurationAdmin if any are present
@@ -987,13 +998,51 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
     }
 
+    private void updateWithDefaultConfigurationForNonFactoryInstance(String pid, Tocd ocd)
+            throws KuraException, IOException {
+        String servicePid = this.servicePidByPid.get(pid);
+        if (servicePid == null) {
+            servicePid = pid;
+        } else {
+            if (!this.allActivatedPids.contains(pid))
+                logger.error("non factory instance (service.pid): {} is created error before OCD registed", servicePid);
+            else
+                logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+        }
+        updateDefaultConfiguration(pid, servicePid, ocd);
+    }
+
+    private void updateWithDefaultConfigurationForNewFactoryInstance(String pid, Tocd ocd)
+            throws KuraException, IOException {
+        if (pid == null) {
+            logger.error("New factory instance PID (kura.service.pid) is null");
+            return;
+        }
+        String servicePid = this.servicePidByPid.get(pid);
+        if (servicePid == null) {
+            logger.error("New factory instance (service.pid) is null PID is {}", pid);
+            return;
+        }
+        updateDefaultConfiguration(pid, servicePid, ocd);
+    }
+
+    private void updateWithDefaultConfigurationForFactorInstance(String pid, Tocd ocd)
+            throws KuraException, IOException {
+        String servicePid = this.servicePidByPid.get(pid);
+        if (servicePid == null) {
+            servicePid = pid;
+        } else if (!this.factoryPidByPid.containsKey(pid))
+            logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+        updateDefaultConfiguration(pid, servicePid, ocd);
+    }
+
     private void registerFactoryComponentOCD(String metatypePid, Tocd ocd, final Bundle provider) throws KuraException {
         this.factoryPids.add(new TrackedComponentFactory(metatypePid, provider));
 
         for (Map.Entry<String, String> entry : this.factoryPidByPid.entrySet()) {
             if (entry.getValue().equals(metatypePid) && this.servicePidByPid.get(entry.getKey()) != null) {
                 try {
-                    updateWithDefaultConfiguration(entry.getKey(), ocd);
+                    updateWithDefaultConfigurationForFactorInstance(entry.getKey(), ocd);
                 } catch (IOException e) {
                     throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
                 }

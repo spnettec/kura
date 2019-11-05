@@ -67,7 +67,7 @@
         </b:Row>
 
 		<!-- MODAL -->
-        <b:Modal title="Install/Upgrade Package" closable="true" fade="true" b:id="uploadModal" ui:field="uploadModal">
+        <b:Modal title="{msgs.packageIUp}" closable="true" fade="true" b:id="uploadModal" ui:field="uploadModal">
             <b:ModalBody>
                 <b:Well>
                     <b:Container fluid="true">
@@ -81,13 +81,13 @@
                             <b:TabPane fade="true" in="true" active="true" b:id="tab1">
                                 <g:FormPanel ui:field="packagesFormFile">
                                     <b:FieldSet>
-                                        <b:FormLabel addStyleNames="{style.upload-label}">Select the deployment package file:</b:FormLabel>
+                                        <b:FormLabel addStyleNames="{style.upload-label}" text="{msgs.selectDPFile}:"/>
                                         <b:Well>
                                             <g:FileUpload ui:field="filePath"></g:FileUpload>
                                         </b:Well>
                                         <b:ButtonGroup pull="RIGHT">
-                                            <b:Button ui:field="fileCancel" b:id="btnCancel1">Cancel</b:Button>
-                                            <b:Button ui:field="fileSubmit" b:id="btnSubmit1">Submit</b:Button>
+                                            <b:Button ui:field="fileCancel" b:id="btnCancel1" text="{msgs.cancelButton}"/>
+                                            <b:Button ui:field="fileSubmit" b:id="btnSubmit1" text="{msgs.submitButton}"/>
                                         </b:ButtonGroup>
                                         <g:Hidden ui:field="xsrfTokenFieldFile"></g:Hidden>
                                     </b:FieldSet>
@@ -97,11 +97,11 @@
                             <b:TabPane fade="true" b:id="tab2">
                                 <g:FormPanel ui:field="packagesFormUrl">
                                     <b:FieldSet>
-                                        <b:FormLabel addStyleNames="{style.upload-label}" for="formUrl">Enter the URL of the deployment package:</b:FormLabel>
+                                        <b:FormLabel addStyleNames="{style.upload-label}" for="formUrl" text="{msgs.enterdpUrl}"/>
                                         <b:TextBox b:id="formUrl" ui:field="formUrl" />
                                         <b:ButtonGroup pull="RIGHT">
-                                            <b:Button ui:field="urlCancel" b:id="btnCancel2">Cancel</b:Button>
-                                            <b:Button ui:field="urlSubmit" b:id="btnSubmit2">Submit</b:Button>
+                                            <b:Button ui:field="urlCancel" b:id="btnCancel2" text="{msgs.cancelButton}"/>
+                                            <b:Button ui:field="urlSubmit" b:id="btnSubmit2" text="{msgs.submitButton}"/>
                                         </b:ButtonGroup>
                                         <g:Hidden ui:field="xsrfTokenFieldUrl"></g:Hidden>
                                     </b:FieldSet>
