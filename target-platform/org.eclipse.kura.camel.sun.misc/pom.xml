@@ -28,7 +28,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
-	<name>Camel :: Core :: Import sun.misc</name>
+	<name>Camel :: Core :: Import com.sun.xml.bind.v2</name>
 
 	<build>
 		<plugins>
