@@ -349,8 +349,9 @@ public class WireGraphServiceImpl implements ConfigurableComponent, WireGraphSer
                 factoryPid = (String) componentToDelete.getConfiguration().getConfigurationProperties()
                         .get(SERVICE_FACTORYPID);
             }
-            if (factoryPid != null && factoryPid.equals(WIRE_ASSET_FACTORY_PID))
+            if (factoryPid != null && factoryPid.equals(WIRE_ASSET_FACTORY_PID)) {
                 continue;
+            }
             this.configurationService.deleteFactoryConfiguration(componentToDelete.getConfiguration().getPid(), false);
         }
 
@@ -378,12 +379,7 @@ public class WireGraphServiceImpl implements ConfigurableComponent, WireGraphSer
                 this.configurationService.createFactoryConfiguration(factoryPid, configToCreate.getPid(),
                         configurationProps, false);
             } catch (Exception e) {
-                for (String createdPid : createdPids)
-                    try {
-                        this.configurationService.deleteFactoryConfiguration(createdPid, false);
-                    } catch (Exception e1) {
-
-                    }
+                deleteConfigurations(createdPids);
                 throw e;
             }
             createdPids.add(configToCreate.getPid());
@@ -404,6 +400,16 @@ public class WireGraphServiceImpl implements ConfigurableComponent, WireGraphSer
         componentConfigurations.add(wireGraphServiceComponentConfig);
 
         this.configurationService.updateConfigurations(componentConfigurations, true);
+    }
+
+    private void deleteConfigurations(List<String> createdPids) {
+        for (String createdPid : createdPids) {
+            try {
+                this.configurationService.deleteFactoryConfiguration(createdPid, false);
+            } catch (Exception e1) {
+                logger.debug("Failed to delete factory configuration", e1);
+            }
+        }
     }
 
     private List<WireComponentConfiguration> getComponentsToUpdate(
