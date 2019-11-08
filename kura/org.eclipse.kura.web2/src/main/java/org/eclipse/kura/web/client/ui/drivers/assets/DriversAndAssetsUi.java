@@ -129,9 +129,6 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
         this.configurations.getDriverFactoryPidNames().forEach((driverFactoryPid, driverFactoryName) -> {
             DriversAndAssetsUi.this.driverFactoriesList.addItem(driverFactoryName, driverFactoryPid);
         });
-        // for (String driverFactoryPid : this.configurations.getDriverFactoryPids()) {
-        // DriversAndAssetsUi.this.driverFactoriesList.addItem(driverFactoryPid);
-        // }
 
         clearDirtyState();
         this.driverAndAssetsListUi.refresh();

@@ -201,7 +201,7 @@ public class DriversAndAssetsListUi extends Composite {
             @Override
             public String getValue(final DriverAssetInfo object) {
                 final String factoryPid = object.getFactoryPid();
-                return factoryPid != null ? factoryPid : MSGS.unknown();
+                return factoryPid != null ? object.getFactoryName() : MSGS.unknown();
             }
         };
 
@@ -375,6 +375,15 @@ public class DriversAndAssetsListUi extends Composite {
 
         public String getDriverPid() {
             return driverPid;
+        }
+
+        public String getFactoryName() {
+            if (isAsset()) {
+                if (configurations.getConfiguration(driverPid) == null)
+                    return factoryPid;
+                return configurations.getConfiguration(driverPid).getConfiguration().getComponentName();
+            }
+            return configurations.getDriverFactoryNameByPid(factoryPid);
         }
 
         public boolean isAsset() {

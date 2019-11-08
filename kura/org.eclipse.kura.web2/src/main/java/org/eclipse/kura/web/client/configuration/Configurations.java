@@ -178,6 +178,16 @@ public class Configurations {
         return result;
     }
 
+    public String getDriverFactoryNameByPid(String driverFactoryPid) {
+        for (Entry<String, GwtConfigComponent> entry : this.componentDefinitions.entrySet()) {
+            if (entry.getValue().isDriver()) {
+                if (entry.getKey().equals(driverFactoryPid))
+                    return entry.getValue().getComponentName();
+            }
+        }
+        return null;
+    }
+
     public List<String> getDriverPids() {
         final ArrayList<String> result = new ArrayList<>();
         for (Entry<String, HasConfiguration> entry : this.currentConfigurations.entrySet()) {

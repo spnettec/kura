@@ -13,16 +13,12 @@
  *******************************************************************************/
 package org.eclipse.kura.web.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -34,9 +30,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.cloud.factory.CloudServiceFactory;
 import org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory;
@@ -64,7 +58,6 @@ import org.eclipse.kura.web.shared.service.GwtWireGraphService;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.graph.WireComponentDefinition;
 import org.eclipse.kura.wire.graph.WireComponentDefinitionService;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -76,10 +69,6 @@ import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ReferenceDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements GwtComponentService {
 
@@ -100,8 +89,6 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
     private static final String DRIVER_PID = "driver.pid";
     private static final String KURA_SERVICE_PID = ConfigurationService.KURA_SERVICE_PID;
     private static final String SERVICE_FACTORY_PID = "service.factoryPid";
-    // private static final String KURA_UI_SERVICE_HIDE = "kura.ui.service.hide";
-    private static final String PATTERN_SERVICE_PROVIDE_DRIVER = "provide interface=\"org.eclipse.kura.driver.Driver\"";
 
     private static final int SERVICE_WAIT_TIMEOUT = 60;
 
@@ -233,7 +220,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             String componentDescription) throws GwtKuraException {
         this.checkXSRFToken(xsrfToken);
         Map<String, Object> properties = new HashMap<>();
-        properties.put("name", name);
+        properties.put("componentName", name);
         properties.put("componentDescription", componentDescription);
         internalCreateFactoryComponent(factoryPid, pid, properties);
     }
@@ -354,75 +341,6 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             OCD ocd = cc.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage());
             return ocd.getName();
         }));
-    }
-
-    // TODO this is a workaround that gives some time to a BaseAsset to track its driver so that it is
-    // able to return its OCD
-    private ComponentConfiguration waitForComponentConfiguration(ConfigurationService cs, String pid)
-            throws InterruptedException, KuraException {
-        final long DELAY_MS = 1000;
-        long waitTime = 0;
-        while (waitTime < SERVICE_WAIT_TIMEOUT * 1000) {
-            final ComponentConfiguration config = cs.getComponentConfiguration(pid);
-            if (config != null && config.getDefinition() != null) {
-                return config;
-            }
-            Thread.sleep(DELAY_MS);
-            waitTime += DELAY_MS;
-        }
-        throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR);
-    }
-
-    @Override
-    public GwtConfigComponent findWireComponentConfigurationFromPid(GwtXSRFToken xsrfToken, String pid,
-            String factoryPid, Map<String, Object> extraProps) throws GwtKuraException {
-        this.checkXSRFToken(xsrfToken);
-
-        final HttpServletRequest request = getThreadLocalRequest();
-        final HttpSession session = request.getSession(false);
-
-        ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
-        GwtConfigComponent comp = null;
-        try {
-            ComponentConfiguration conf = cs.getComponentConfiguration(pid);
-            if (conf == null) {
-                conf = cs.getDefaultComponentConfiguration(factoryPid);
-                if (conf != null) {
-                    conf.getConfigurationProperties().put(ConfigurationAdmin.SERVICE_FACTORYPID, factoryPid);
-                }
-                if (conf != null && conf.getDefinition() == null) {
-                    String temporaryName = String.valueOf(System.nanoTime());
-                    cs.createFactoryConfiguration(factoryPid, temporaryName, extraProps, false);
-                    try {
-
-                        // track and wait for the wire Component
-                        String filterString = "(" + ConfigurationService.KURA_SERVICE_PID + "=" + temporaryName + ")";
-                        ServiceUtil.waitForService(filterString, SERVICE_WAIT_TIMEOUT, TimeUnit.SECONDS);
-
-                        comp = createMetatypeOnlyGwtComponentConfiguration(
-                                waitForComponentConfiguration(cs, temporaryName));
-                    } catch (Exception ex) {
-                        auditLogger.warn(
-                                "UI Component - Failure - Failed to fetch component config for user: {}, session {}",
-                                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-                        throw new GwtKuraException(ex.getMessage());
-                    } finally {
-                        cs.deleteFactoryConfiguration(temporaryName, false);
-                    }
-                }
-            } else {
-                comp = createMetatypeOnlyGwtComponentConfiguration(conf);
-            }
-
-        } catch (KuraException e) {
-            auditLogger.warn("UI Component - Failure - Failed to fetch component config for user: {}, session {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-            throw new GwtKuraException("Could not retrieve component configuration!");
-        }
-
-        auditLogger.info("UI Component - Success - Successfully returned component config for user: {}, session {}",
-                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-        return comp;
     }
 
     private List<String> findWireComponents() throws GwtKuraException {
@@ -664,8 +582,8 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
             if (props != null && props.get(SERVICE_FACTORY_PID) != null) {
                 String name = ocd.getName();
-                if (props.containsKey("name"))
-                    name = (String) props.get("name");
+                if (props.containsKey("componentName"))
+                    name = (String) props.get("componentName");
                 if (name == null || name.equals(""))
                     name = stripPidPrefix(config.getPid());
                 gwtConfig.setComponentName(name);
@@ -831,71 +749,6 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                 session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), pid);
 
         return true;
-    }
-
-    @Override
-    public List<String> getDriverFactoriesList(GwtXSRFToken xsrfToken) throws GwtKuraException {
-        this.checkXSRFToken(xsrfToken);
-
-        final HttpServletRequest request = getThreadLocalRequest();
-        final HttpSession session = request.getSession(false);
-
-        List<String> driverFactoriesPids = new ArrayList<>();
-        final Bundle[] bundles = FrameworkUtil.getBundle(GwtWireGraphService.class).getBundleContext().getBundles();
-        for (final Bundle bundle : bundles) {
-            final Enumeration<URL> enumeration = bundle.findEntries("OSGI-INF", "*.xml", false);
-            if (enumeration != null) {
-                while (enumeration.hasMoreElements()) {
-                    final URL entry = enumeration.nextElement();
-                    try (InputStreamReader inputStream = new InputStreamReader(entry.openConnection().getInputStream());
-                            BufferedReader reader = new BufferedReader(inputStream);) {
-                        final StringBuilder contents = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            contents.append(line);
-                        }
-                        // Configuration Policy=Require and
-                        // SelfConfiguringComponent or ConfigurableComponent
-                        if ((contents.toString().contains(GwtServerUtil.PATTERN_SERVICE_PROVIDE_SELF_CONFIGURING_COMP)
-                                || contents.toString()
-                                        .contains(GwtServerUtil.PATTERN_SERVICE_PROVIDE_CONFIGURABLE_COMP))
-                                && contents.toString().contains(GwtServerUtil.PATTERN_CONFIGURATION_REQUIRE)) {
-                            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                            dbf.setXIncludeAware(false);
-                            dbf.setExpandEntityReferences(false);
-
-                            final Document dom = dbf.newDocumentBuilder()
-                                    .parse(entry.openConnection().getInputStream());
-                            final NodeList nl = dom.getElementsByTagName("property");
-                            for (int i = 0; i < nl.getLength(); i++) {
-                                final Node n = nl.item(i);
-                                if (n instanceof Element) {
-                                    final String name = ((Element) n).getAttribute("name");
-                                    if ("service.pid".equals(name)) {
-                                        final String factoryPid = ((Element) n).getAttribute("value");
-                                        if (contents.toString().contains(PATTERN_SERVICE_PROVIDE_DRIVER)) {
-                                            driverFactoriesPids.add(factoryPid);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (final Exception ex) {
-                        auditLogger.info(
-                                "UI Component - Failure - Failed to list driver factories for user: {}, session: {}",
-                                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-                        throw new GwtKuraException(GwtKuraErrorCode.RESOURCE_FETCHING_FAILURE);
-                    }
-                }
-            }
-        }
-
-        auditLogger.info("UI Component - Success - Successfully listed driver factories for user: {}, session: {}",
-                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-
-        return driverFactoriesPids;
     }
 
     @Override

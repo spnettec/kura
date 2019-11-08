@@ -268,11 +268,6 @@
 
     <repositories>
         <repository>
-            <id>license-feature</id>
-            <url>http://download.eclipse.org/cbi/updates/license/</url>
-            <layout>p2</layout>
-        </repository>
-        <repository>
             <id>p2-repo-common</id>
             <layout>p2</layout>
             <url>file:///${kura.basedir}/target-definition/common/repository/</url>

@@ -80,8 +80,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet implements GwtWireGraphService {
 
-    private static final String DRIVER_PID = "driver.pid";
-    private static final String SERVICE_FACTORY_PID = "service.factoryPid";
+    // private static final String DRIVER_PID = "driver.pid";
+    // private static final String SERVICE_FACTORY_PID = "service.factoryPid";
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
     private static final ComponentConfiguration WIRE_ASSET_OCD_CONFIG = new ComponentConfigurationImpl(
