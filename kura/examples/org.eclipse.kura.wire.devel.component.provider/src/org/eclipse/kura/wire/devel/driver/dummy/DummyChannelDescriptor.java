@@ -31,9 +31,9 @@ public final class DummyChannelDescriptor implements ChannelDescriptor {
 
     private static List<Tad> initAttributes() {
         final Tad value = new Tad();
-        value.setName(VALUE.getKey());
+        value.setName("%" + VALUE.getKey());
         value.setId(VALUE.getKey());
-        value.setDescription("The value to be emitted for this channel");
+        value.setDescription("%" + VALUE.getKey() + "Desc");
         value.setType(Tscalar.STRING);
         value.setRequired(true);
         value.setDefault(VALUE.getDefaultValue());
