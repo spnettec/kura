@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.camel.component.Configuration;
-import org.eclipse.kura.cloud.factory.CloudServiceFactory;
+import org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.locale.LocaleContextHolder;
@@ -37,9 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An implementation of {@link CloudServiceFactory} based on Apache Camel
+ * An implementation of {@link CloudConnectionFactory} based on Apache Camel
  */
-public class CamelCloudServiceFactory implements CloudServiceFactory {
+public class CamelCloudServiceFactory implements CloudConnectionFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(CamelCloudServiceFactory.class);
 
@@ -153,6 +153,11 @@ public class CamelCloudServiceFactory implements CloudServiceFactory {
 
     @Override
     public String getFactoryPid() {
+        return FACTORY_ID;
+    }
+
+    @Override
+    public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService.getDefaultComponentConfiguration(FACTORY_ID);
             return config.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage()).getName();
@@ -169,7 +174,7 @@ public class CamelCloudServiceFactory implements CloudServiceFactory {
     }
 
     @Override
-    public Set<String> getManagedCloudServicePids() throws KuraException {
+    public Set<String> getManagedCloudConnectionPids() throws KuraException {
         final Set<String> result = new HashSet<>();
 
         for (final ComponentConfiguration cc : this.configurationService.getComponentConfigurations()) {

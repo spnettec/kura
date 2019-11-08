@@ -120,7 +120,7 @@ public class CloudInstancesUi extends Composite {
     @UiField
     AlertDialog alertDialog;
 
-    List<String> cloudConnectionFactoryPids;
+    Map<String, String> cloudConnectionFactoryPidNames;
     Map<String, List<GwtCloudEntry>> pubSubFactoryEntries;
 
     @UiField
@@ -210,7 +210,7 @@ public class CloudInstancesUi extends Composite {
 
     public void setFactoryInfo(final GwtCloudComponentFactories factories) {
         this.cloudComponentFactories = factories;
-        this.cloudConnectionFactoryPids = factories.getCloudConnectionFactoryPids();
+        this.cloudConnectionFactoryPidNames = factories.getCloudConnectionFactoryPidNames();
 
         this.pubSubFactoryEntries = new HashMap<>();
 
@@ -433,12 +433,15 @@ public class CloudInstancesUi extends Composite {
 
             @Override
             public String getValue(GwtCloudEntry object) {
-
-                if (object instanceof GwtCloudConnectionEntry) {
-                    return ((GwtCloudConnectionEntry) object).getCloudConnectionFactoryPid();
+                String factoryName = object.getFactoryName();
+                if (factoryName == null) {
+                    if (object instanceof GwtCloudConnectionEntry)
+                        factoryName = ((GwtCloudConnectionEntry) object).getCloudConnectionFactoryPid();
+                    else
+                        factoryName = object.getFactoryPid();
                 }
 
-                return object.getFactoryPid();
+                return factoryName;
             }
         };
         col.setCellStyleNames(STATUS_TABLE_ROW);
@@ -539,9 +542,9 @@ public class CloudInstancesUi extends Composite {
         this.cloudConnectionPid.clear();
         this.cloudFactoriesPids.clear();
 
-        for (final String cloudConnectionFactoryPid : this.cloudConnectionFactoryPids) {
-            this.cloudFactoriesPids.addItem(cloudConnectionFactoryPid);
-        }
+        this.cloudConnectionFactoryPidNames.entrySet().stream().forEach(entry -> {
+            this.cloudFactoriesPids.addItem(entry.getValue(), entry.getKey());
+        });
         String selectedFactoryPid = CloudInstancesUi.this.cloudFactoriesPids.getSelectedValue();
         getSuggestedCloudConnectionPid(selectedFactoryPid);
         this.newConnectionModal.show();

@@ -14,6 +14,7 @@ package org.eclipse.kura.web.server;
 
 import static java.lang.String.format;
 import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_PID;
+import static org.eclipse.kura.web.server.util.ServiceLocator.withAllServiceReferences;
 import static org.eclipse.kura.web.server.util.ServiceLocator.withAllServices;
 import static org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry.GwtCloudConnectionState.CONNECTED;
 import static org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry.GwtCloudConnectionState.DISCONNECTED;
@@ -22,8 +23,10 @@ import static org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry.GwtCloud
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -101,6 +104,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
                 final GwtCloudConnectionEntry cloudConnectionEntry = new GwtCloudConnectionEntry();
                 cloudConnectionEntry.setCloudConnectionFactoryPid(factoryPid);
                 cloudConnectionEntry.setPid(pid);
+                cloudConnectionEntry.setFactoryName(service.getFactoryName());
 
                 fillState(cloudConnectionEntry);
 
@@ -124,16 +128,23 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         final String filter = format("(%s=%s)", KURA_SERVICE_PID, cloudConnectionEntry.getPid());
 
-        withAllServices(null, filter, service -> {
-            if (service instanceof CloudConnectionManager) {
-                cloudConnectionEntry
-                        .setState(((CloudConnectionManager) service).isConnected() ? CONNECTED : DISCONNECTED);
-                cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.CONNECTION);
-            } else if (service instanceof CloudEndpoint) {
-                cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.ENDPOINT);
-            } else if (service instanceof CloudService) {
-                cloudConnectionEntry.setState(((CloudService) service).isConnected() ? CONNECTED : DISCONNECTED);
-                cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.CONNECTION);
+        withAllServiceReferences(null, filter, (ref, ctx) -> {
+            try {
+                cloudConnectionEntry.setName((String) ref.getProperties().get("name"));
+                cloudConnectionEntry.setComponentDescription((String) ref.getProperties().get("componentDescription"));
+                Object service = ctx.getService(ref);
+                if (service instanceof CloudConnectionManager) {
+                    cloudConnectionEntry
+                            .setState(((CloudConnectionManager) service).isConnected() ? CONNECTED : DISCONNECTED);
+                    cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.CONNECTION);
+                } else if (service instanceof CloudEndpoint) {
+                    cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.ENDPOINT);
+                } else if (service instanceof CloudService) {
+                    cloudConnectionEntry.setState(((CloudService) service).isConnected() ? CONNECTED : DISCONNECTED);
+                    cloudConnectionEntry.setConnectionType(GwtCloudConnectionType.CONNECTION);
+                }
+            } finally {
+                ctx.ungetService(ref);
             }
         });
     }
@@ -143,15 +154,16 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
-        final List<String> cloudConnectionFactoryPids = new ArrayList<>();
+        final Map<String, String> cloudConnectionFactoryPidNames = new HashMap<>();
 
-        withAllCloudConnectionFactories(service -> cloudConnectionFactoryPids.add(service.getFactoryPid()));
+        withAllCloudConnectionFactories(
+                service -> cloudConnectionFactoryPidNames.put(service.getFactoryPid(), service.getFactoryName()));
 
         final List<GwtCloudEntry> pubSubFactories = getPubSubFactories();
 
         final GwtCloudComponentFactories result = new GwtCloudComponentFactories();
 
-        result.setCloudConnectionFactoryPids(cloudConnectionFactoryPids);
+        result.setCloudConnectionFactoryPidNames(cloudConnectionFactoryPidNames);
         result.setPubSubFactories(pubSubFactories);
 
         auditLogger.info(
@@ -356,7 +368,8 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         }
 
         final GwtCloudEntry entry = new GwtCloudEntry();
-
+        entry.setName((String) component.properties.get("name"));
+        entry.setComponentDescription((String) component.properties.get("componentDescription"));
         entry.setPid((String) factoryPid);
         entry.setFactoryPid((String) ccsfFactoryPid);
         entry.setDefaultFactoryPid((String) defaultFactoryPid);
@@ -475,6 +488,11 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
                 @Override
                 public void createConfiguration(String pid) throws KuraException {
                     f.createConfiguration(pid);
+                }
+
+                @Override
+                public String getFactoryName() {
+                    return f.getFactoryPid();
                 }
             };
         }

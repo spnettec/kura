@@ -57,7 +57,7 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
     }
 
     @Override
-    public String getFactoryPid() {
+    public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService
                     .getDefaultComponentConfiguration(CLOUD_SERVICE_FACTORY_PID);
@@ -65,6 +65,11 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
         } catch (Exception e) {
             return CLOUD_SERVICE_FACTORY_PID;
         }
+    }
+
+    @Override
+    public String getFactoryPid() {
+        return CLOUD_SERVICE_FACTORY_PID;
     }
 
     @Override
@@ -91,10 +96,15 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
     @Override
     public void deleteConfiguration(String pid) throws KuraException {
         String[] result = getTargetPids(pid);
-
-        this.configurationService.deleteFactoryConfiguration(pid, false);
-        if (result[0] != null)
-            this.configurationService.deleteFactoryConfiguration(result[0], false);
+        boolean takeSnapshot = false;
+        if (result[0] == null && result[1] == null)
+            takeSnapshot = true;
+        this.configurationService.deleteFactoryConfiguration(pid, takeSnapshot);
+        if (result[0] != null) {
+            if (result[1] == null)
+                takeSnapshot = true;
+            this.configurationService.deleteFactoryConfiguration(result[0], takeSnapshot);
+        }
         if (result[1] != null)
             this.configurationService.deleteFactoryConfiguration(result[1], true);
     }

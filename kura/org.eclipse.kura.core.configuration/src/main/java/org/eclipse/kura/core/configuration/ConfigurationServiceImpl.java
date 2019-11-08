@@ -684,7 +684,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             try {
                 updateWithDefaultConfigurationForNonFactoryInstance(metatypePid, ocd);
             } catch (IOException e) {
-                throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                throw KuraException.internalError(e);
             }
         }
     }
@@ -1044,7 +1044,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 try {
                     updateWithDefaultConfigurationForFactorInstance(entry.getKey(), ocd);
                 } catch (IOException e) {
-                    throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                    throw KuraException.internalError(e);
                 }
             }
         }
@@ -1205,7 +1205,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             try (FileOutputStream outputfile = new FileOutputStream(fSnapshot)) {
                 marshal(xmlConfigs, outputfile);
             } catch (IOException e) {
-                throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                throw KuraException.internalError(e);
             }
             return;
         }
@@ -1213,7 +1213,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         try {
             tempFile = File.createTempFile("snapshot_write_" + sid + "_", ".temp");
         } catch (IOException e1) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR);
+            throw KuraException.internalError(e1);
         }
         // Encrypt the XML
         try (FileOutputStream tempOutputfile = new FileOutputStream(tempFile)) {
@@ -1224,7 +1224,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             } catch (IOException e1) {
                 logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
             }
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+            throw KuraException.internalError(e);
         }
 
         try (FileInputStream temInputFile = new FileInputStream(tempFile);
@@ -1232,7 +1232,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             this.cryptoService.encryptAes(temInputFile, outputfile);
 
         } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+            throw KuraException.internalError(e);
         } finally {
             try {
                 Files.delete(tempFile.toPath());
@@ -1501,7 +1501,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
                             : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
             if (isEncrypt != null && !isEncrypt) {
-                throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                throw KuraException.internalError(e);
             }
             logger.info("Unable to decrypt snapshot! Fallback to unencrypted snapshots mode.");
             try {
@@ -1510,7 +1510,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     configs = loadEncryptLatestSnapshotConfigurations();
                 }
             } catch (Exception ex) {
-                throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                throw KuraException.internalError(e);
             }
         }
 
@@ -1564,7 +1564,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             } catch (FileNotFoundException e) {
                 throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND, e);
             } catch (IOException e) {
-                throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+                throw KuraException.internalError(e);
             }
             return xmlConfigs;
         }
@@ -1573,7 +1573,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         try {
             tempFile = File.createTempFile("snapshot_read_" + snapshotID + "_", ".temp");
         } catch (IOException e1) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e1);
+            throw KuraException.internalError(e1);
         }
         try (FileInputStream snapInputStream = new FileInputStream(snapshot);
                 FileOutputStream tmpOutputStream = new FileOutputStream(tempFile)) {
@@ -1582,7 +1582,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         } catch (FileNotFoundException e) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND, e);
         } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+            throw KuraException.internalError(e);
         } finally {
             try {
                 Files.delete(tempFile.toPath());
@@ -1610,7 +1610,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         try {
             tempFile = File.createTempFile("snapshot_test_" + snapshotID + "_", ".temp");
         } catch (IOException e1) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR);
+            throw KuraException.internalError(e1);
         }
         try (FileInputStream snapInputStream = new FileInputStream(snapshot);
                 FileOutputStream tmpOutputStream = new FileOutputStream(tempFile)) {
@@ -1618,7 +1618,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         } catch (KuraException e) {
             return false;
         } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR);
+            throw KuraException.internalError(e);
         } finally {
             try {
                 Files.delete(tempFile.toPath());

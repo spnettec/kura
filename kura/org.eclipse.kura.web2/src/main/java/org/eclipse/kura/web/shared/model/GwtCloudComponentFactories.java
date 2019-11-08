@@ -11,10 +11,11 @@ package org.eclipse.kura.web.shared.model;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 public class GwtCloudComponentFactories implements Serializable {
 
-    private List<String> cloudConnectionFactoryPids;
+    private Map<String, String> cloudConnectionFactoryPidNames;
 
     private List<GwtCloudEntry> pubSubFactories;
 
@@ -26,12 +27,12 @@ public class GwtCloudComponentFactories implements Serializable {
     public GwtCloudComponentFactories() {
     }
 
-    public List<String> getCloudConnectionFactoryPids() {
-        return cloudConnectionFactoryPids;
+    public Map<String, String> getCloudConnectionFactoryPidNames() {
+        return cloudConnectionFactoryPidNames;
     }
 
-    public void setCloudConnectionFactoryPids(final List<String> cloudConnectionFactoryPids) {
-        this.cloudConnectionFactoryPids = cloudConnectionFactoryPids;
+    public void setCloudConnectionFactoryPidNames(final Map<String, String> cloudConnectionFactoryPidNameNames) {
+        this.cloudConnectionFactoryPidNames = cloudConnectionFactoryPidNameNames;
     }
 
     public List<GwtCloudEntry> getPubSubFactories() {

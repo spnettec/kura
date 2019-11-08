@@ -22,18 +22,42 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
         return get("pid");
     }
 
+    public String getName() {
+        return get("name");
+    }
+
     public void setPid(String pid) {
         set("pid", pid);
+    }
+
+    public void setName(String name) {
+        set("name", name);
+    }
+
+    public void setComponentDescription(String componentDescription) {
+        set("componentDescription", componentDescription);
+    }
+
+    public String getComponentDescription() {
+        return get("componentDescription");
     }
 
     public String getFactoryPid() {
         return get("factoryPid");
     }
 
+    public String getFactoryName() {
+        return get("factoryName");
+    }
+
     public void setFactoryPid(final String factoryPid) {
         set("factoryPid", factoryPid);
     }
-    
+
+    public void setFactoryName(final String factoryName) {
+        set("factoryName", factoryName);
+    }
+
     public String getDefaultFactoryPid() {
         return get("defaultFactoryPid");
     }
@@ -41,7 +65,7 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
     public void setDefaultFactoryPid(final String defaultFactoryPid) {
         set("defaultFactoryPid", defaultFactoryPid);
     }
-    
+
     public String getDefaultFactoryPidRegex() {
         return get("defaultFactoryPidRegex");
     }

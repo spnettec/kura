@@ -12,9 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui.cloudconnection;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-
 import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.FilterUtil;
 import org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry;
@@ -150,10 +147,8 @@ public class CloudConnectionConfigurationsUi extends Composite {
                     gwtXSRFService.generateSecurityToken(
                             context.callback(token -> gwtComponentService.findComponentConfigurations(token,
                                     FilterUtil.getPidFilter(pidsResult.iterator()), context.callback(result -> {
-                                        final ArrayList<GwtConfigComponent> sorted = new ArrayList<>(result);
-                                        sorted.sort(Comparator.comparing(this::getSimplifiedComponentName));
                                         boolean isFirstEntry = true;
-                                        for (GwtConfigComponent pair : sorted) {
+                                        for (GwtConfigComponent pair : result) {
                                             if (pidsResult.contains(pair.getComponentId())) {
                                                 renderTabs(pair, isFirstEntry);
                                                 isFirstEntry = false;
@@ -165,9 +160,9 @@ public class CloudConnectionConfigurationsUi extends Composite {
     }
 
     private void renderTabs(GwtConfigComponent config, boolean isFirstEntry) {
-        String simplifiedComponentName = getSimplifiedComponentName(config);
-        if (config.getComponentName() != null && !config.getComponentName().equals(""))
-            simplifiedComponentName = config.getComponentName();
+        String simplifiedComponentName = config.getComponentName();
+        if (simplifiedComponentName == null)
+            simplifiedComponentName = config.getComponentId();
         TabListItem item = new TabListItem(simplifiedComponentName);
         item.setDataTarget("#" + simplifiedComponentName);
         item.addClickHandler(event -> {
@@ -189,18 +184,5 @@ public class CloudConnectionConfigurationsUi extends Composite {
         }
 
         serviceConfigurationBinder.renderForm();
-    }
-
-    private String getSimplifiedComponentName(GwtConfigComponent config) {
-        String selectedCloudServicePid = config.getComponentId();
-        String tempName;
-        int start = selectedCloudServicePid.lastIndexOf('.');
-        int substringIndex = start + 1;
-        if (start != -1 && substringIndex < selectedCloudServicePid.length()) {
-            tempName = selectedCloudServicePid.substring(substringIndex);
-        } else {
-            tempName = selectedCloudServicePid;
-        }
-        return tempName;
     }
 }

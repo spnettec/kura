@@ -161,7 +161,7 @@ import org.osgi.service.component.ComponentContext;
  *
  * <br>
  */
-public class DefaultCloudServiceFactory implements CloudServiceFactory, CloudConnectionFactory {
+public class DefaultCloudServiceFactory implements CloudConnectionFactory {
 
     // The following constants must match the factory component definitions
     private static final String CLOUD_SERVICE_FACTORY_PID = "org.eclipse.kura.cloud.CloudService";
@@ -194,6 +194,11 @@ public class DefaultCloudServiceFactory implements CloudServiceFactory, CloudCon
 
     @Override
     public String getFactoryPid() {
+        return CLOUD_SERVICE_FACTORY_PID;
+    }
+
+    @Override
+    public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService
                     .getDefaultComponentConfiguration(CLOUD_SERVICE_FACTORY_PID);
@@ -226,10 +231,15 @@ public class DefaultCloudServiceFactory implements CloudServiceFactory, CloudCon
     @Override
     public void deleteConfiguration(String pid) throws KuraException {
         String[] result = getTargetPids(pid);
-
-        this.configurationService.deleteFactoryConfiguration(pid, false);
-        if (result[0] != null)
-            this.configurationService.deleteFactoryConfiguration(result[0], false);
+        boolean takeSnapshot = false;
+        if (result[0] == null && result[1] == null)
+            takeSnapshot = true;
+        this.configurationService.deleteFactoryConfiguration(pid, takeSnapshot);
+        if (result[0] != null) {
+            if (result[1] == null)
+                takeSnapshot = true;
+            this.configurationService.deleteFactoryConfiguration(result[0], takeSnapshot);
+        }
         if (result[1] != null)
             this.configurationService.deleteFactoryConfiguration(result[1], true);
 
@@ -281,6 +291,7 @@ public class DefaultCloudServiceFactory implements CloudServiceFactory, CloudCon
     public Set<String> getManagedCloudConnectionPids() throws KuraException {
 
         try {
+            this.bundleContext.getServiceReferences(CloudConnectionManager.class, null);
             return this.bundleContext.getServiceReferences(CloudConnectionManager.class, null).stream().filter(ref -> {
                 final Object kuraServicePid = ref.getProperty(ConfigurationService.KURA_SERVICE_PID);
 
@@ -293,10 +304,5 @@ public class DefaultCloudServiceFactory implements CloudServiceFactory, CloudCon
         } catch (InvalidSyntaxException e) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, e);
         }
-    }
-
-    @Override
-    public Set<String> getManagedCloudServicePids() throws KuraException {
-        return getManagedCloudConnectionPids();
     }
 }
