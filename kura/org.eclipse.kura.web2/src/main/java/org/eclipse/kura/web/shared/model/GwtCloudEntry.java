@@ -28,12 +28,20 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
         return get(ConfigurationService.KURA_SERVICE_NAME);
     }
 
+    public String getCloudName() {
+        return get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
+    }
+
     public void setPid(String pid) {
         set("pid", pid);
     }
 
     public void setName(String name) {
         set(ConfigurationService.KURA_SERVICE_NAME, name);
+    }
+
+    public void setCloudName(String name) {
+        set(ConfigurationService.KURA_CLOUD_FACTORY_NAME, name);
     }
 
     public void setComponentDescription(String componentDescription) {

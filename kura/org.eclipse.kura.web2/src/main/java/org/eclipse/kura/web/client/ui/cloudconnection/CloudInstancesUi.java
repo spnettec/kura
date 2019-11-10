@@ -338,18 +338,20 @@ public class CloudInstancesUi extends Composite {
             @Override
             public String getValue(GwtCloudEntry object) {
                 final String pid = object.getPid();
+                final String cloudName = object.getCloudName();
                 final String name = object.getName();
 
                 if (object instanceof GwtCloudPubSubEntry) {
                     return " -> " + (name == null ? pid : name);
                 } else {
-                    return name == null ? pid : name;
+                    return cloudName == null ? pid : cloudName;
                 }
             }
 
             @Override
             public void render(Context context, GwtCloudEntry object, SafeHtmlBuilder sb) {
                 final String pid = object.getPid();
+                final String cloudName = object.getCloudName();
                 final String name = object.getName();
 
                 if (object instanceof GwtCloudPubSubEntry) {
@@ -360,7 +362,8 @@ public class CloudInstancesUi extends Composite {
                     sb.append(() -> "&ensp;<i class=\"fa assets-status-icon " + iconStyle + "\"></i>"
                             + (name == null ? pid : name));
                 } else {
-                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>" + (name == null ? pid : name));
+                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>"
+                            + (cloudName == null ? pid : cloudName));
                 }
             }
         };

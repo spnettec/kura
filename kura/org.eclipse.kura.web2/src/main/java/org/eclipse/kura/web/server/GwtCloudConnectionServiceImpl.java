@@ -104,7 +104,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
                 final GwtCloudConnectionEntry cloudConnectionEntry = new GwtCloudConnectionEntry();
                 cloudConnectionEntry.setCloudConnectionFactoryPid(factoryPid);
                 cloudConnectionEntry.setPid(pid);
-                cloudConnectionEntry.setName(service.getCloudName(pid));
+                cloudConnectionEntry.setCloudName(service.getCloudName(pid));
                 cloudConnectionEntry.setFactoryName(service.getFactoryName());
 
                 fillState(cloudConnectionEntry);
@@ -413,7 +413,10 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         result.setPid(kuraServicePid);
         result.setCloudConnectionPid((String) ccsPid);
-        result.setFactoryPid(factoryName);
+        result.setFactoryPid((String) factoryPid);
+        result.setFactoryName(factoryName);
+        result.setName((String) ref.getProperty(ConfigurationService.KURA_SERVICE_NAME));
+        result.setComponentDescription((String) ref.getProperty(ConfigurationService.KURA_SERVICE_DESC));
         result.setType(type);
 
         return result;
