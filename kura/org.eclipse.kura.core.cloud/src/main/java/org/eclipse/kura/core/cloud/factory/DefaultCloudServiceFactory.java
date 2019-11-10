@@ -316,7 +316,6 @@ public class DefaultCloudServiceFactory implements CloudConnectionFactory {
     public Set<String> getManagedCloudConnectionPids() throws KuraException {
 
         try {
-            this.bundleContext.getServiceReferences(CloudConnectionManager.class, null);
             return this.bundleContext.getServiceReferences(CloudConnectionManager.class, null).stream().filter(ref -> {
                 final Object kuraServicePid = ref.getProperty(ConfigurationService.KURA_SERVICE_PID);
 

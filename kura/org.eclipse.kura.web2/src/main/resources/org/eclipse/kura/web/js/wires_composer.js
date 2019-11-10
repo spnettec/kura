@@ -210,7 +210,7 @@ WireComposer.prototype.addWireComponent = function (component) {
 	var componentCell = new joint.shapes.devs.Atomic({
 		attrs : {
 			'.label' : {
-				text : joint.util.breakText(component.pid, {
+				text : joint.util.breakText(component.componentName, {
 					width : 100
 				}),
 			},
@@ -275,6 +275,7 @@ WireComposer.prototype.deleteWireComponent = function (component) {
 		var element = elements[i];
 		if (element.attributes.wireComponent.pid === component.pid) {
 			element.remove()
+			this.dispatchWireComponentDeleted(component);
 		}
 	}
 }

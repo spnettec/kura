@@ -34,7 +34,6 @@ import org.eclipse.kura.web.shared.service.GwtComponentServiceAsync;
 import org.eclipse.kura.web.shared.service.GwtSecurityTokenService;
 import org.eclipse.kura.web.shared.service.GwtSecurityTokenServiceAsync;
 import org.gwtbootstrap3.client.ui.Anchor;
-import org.gwtbootstrap3.client.ui.AnchorListItem;
 import org.gwtbootstrap3.client.ui.DropDown;
 import org.gwtbootstrap3.client.ui.DropDownHeader;
 import org.gwtbootstrap3.client.ui.DropDownMenu;
@@ -242,7 +241,6 @@ public abstract class AbstractServicesUi extends Composite {
 
         if (param.getId().endsWith(TARGET_SUFFIX)) {
             String targetedService = param.getId().split(TARGET_SUFFIX)[0];
-
             DropDown dropDown = new DropDown();
             Anchor dropDownAnchor = new Anchor();
             dropDownAnchor.setText(MSGS.selectAvailableTargets());
@@ -258,16 +256,22 @@ public abstract class AbstractServicesUi extends Composite {
             dropDownMenu.add(dropDownHeader);
 
             dropDown.add(dropDownMenu);
-
+            KuraTextBox kuraTextBox = (KuraTextBox) textBox;
+            kuraTextBox.setData(formattedValue);
+            kuraTextBox.setText(MSGS.noTargetsAvailable());
             RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
-                    context.callback(token -> AbstractServicesUi.this.gwtComponentService.getPidsFromTarget(token,
+                    context.callback(token -> AbstractServicesUi.this.gwtComponentService.getPidNamesFromTarget(token,
                             this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
-                                if (data.isEmpty()) {
-                                    dropDownHeader.setText(MSGS.noTargetsAvailable());
-                                } else {
-                                    dropDownHeader.setText(MSGS.targetsAvailable());
-                                    data.forEach(targetEntry -> {
-                                        AnchorListItem listItem = createListItem(textBox, targetEntry);
+                                dropDownHeader.setText(MSGS.noTargetsAvailable());
+                                if (!data.isEmpty()) {
+                                    final String targetData;
+                                    if (kuraTextBox.getData() != null && kuraTextBox.getData().contains("=")) {
+                                        targetData = kuraTextBox.getData().split("=")[1].replace(")", "");
+                                    } else
+                                        targetData = "";
+                                    data.entrySet().forEach(targetEntry -> {
+                                        KuraAnchorListItem listItem = createListItem(kuraTextBox, targetEntry.getKey(),
+                                                targetEntry.getValue(), targetData);
                                         dropDownMenu.add(listItem);
                                     });
                                 }
@@ -278,18 +282,26 @@ public abstract class AbstractServicesUi extends Composite {
         }
     }
 
-    private AnchorListItem createListItem(final TextBoxBase textBox, String targetEntry) {
-        AnchorListItem listItem = new AnchorListItem();
-        listItem.setText("(kura.service.pid=" + targetEntry + ")");
+    private KuraAnchorListItem createListItem(final KuraTextBox textBox, String targetEntryKey, String targetEntryName,
+            String targetData) {
+        if (targetEntryKey.equals(targetData)) {
+            textBox.setText(targetEntryName + "(" + targetEntryKey + ")");
+        }
+        KuraAnchorListItem listItem = new KuraAnchorListItem();
+        listItem.setText(targetEntryName);
+        listItem.setData("(kura.service.pid=" + targetEntryKey + ")");
         listItem.addClickHandler(event -> {
-            Anchor eventGenerator = (Anchor) event.getSource();
-            textBox.setText(eventGenerator.getText());
+            KuraAnchor eventGenerator = (KuraAnchor) event.getSource();
+            textBox.setData(eventGenerator.getData());
+            textBox.setText(targetEntryName + "(" + targetEntryKey + ")");
             setDirty(true);
         });
         return listItem;
     }
 
     private TextBoxBase createTextBox(final GwtConfigParameter param) {
+        if (param.getId().endsWith(TARGET_SUFFIX))
+            return new KuraTextBox();
         if (param.getDescription() != null && param.getDescription().contains("\u200B\u200B\u200B\u200B\u200B")) {
             final TextArea result = createTextArea();
             result.setHeight("500px");
@@ -709,6 +721,8 @@ public abstract class AbstractServicesUi extends Composite {
             case STRING:
                 TextBoxBase tb = (TextBoxBase) wg;
                 String value = tb.getText();
+                if (tb instanceof KuraTextBox)
+                    value = ((KuraTextBox) tb).getData();
                 if (value != null) {
                     return value;
                 } else {

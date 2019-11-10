@@ -9,9 +9,10 @@
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui.wires;
 
-import java.util.List;
+import java.util.Map;
 
 import org.eclipse.kura.web.client.messages.Messages;
+import org.eclipse.kura.web.client.ui.KuraTextBox;
 import org.eclipse.kura.web.client.util.PidTextBox;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.gwtbootstrap3.client.ui.Button;
@@ -19,6 +20,7 @@ import org.gwtbootstrap3.client.ui.FormLabel;
 import org.gwtbootstrap3.client.ui.ListBox;
 import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.ModalHeader;
+import org.gwtbootstrap3.client.ui.TextArea;
 import org.gwtbootstrap3.client.ui.TextBox;
 
 import com.google.gwt.core.client.GWT;
@@ -59,9 +61,9 @@ public class WiresDialogs extends Composite {
     @UiField
     Modal newAssetModal;
     @UiField
-    PidTextBox newAssetName;
+    PidTextBox newAssetPid;
     @UiField
-    TextBox newAssetDriverInstance;
+    KuraTextBox newAssetDriverInstance;
     @UiField
     Button newAssetOk;
     @UiField
@@ -69,7 +71,7 @@ public class WiresDialogs extends Composite {
     @UiField
     Modal newDriverModal;
     @UiField
-    PidTextBox newDriverName;
+    PidTextBox newDriverPid;
     @UiField
     ListBox newDriverFactory;
     @UiField
@@ -81,7 +83,7 @@ public class WiresDialogs extends Composite {
     @UiField
     ModalHeader newAssetModalHeader;
     @UiField
-    FormLabel componentNameLabel;
+    FormLabel componentPidLabel;
     @UiField
     Modal genericCompModal;
     @UiField
@@ -89,7 +91,19 @@ public class WiresDialogs extends Composite {
     @UiField
     Button btnComponentModalNo;
     @UiField
-    PidTextBox componentName;
+    PidTextBox componentPid;
+    @UiField
+    TextBox componentName;
+    @UiField
+    TextArea componentDesc;
+    @UiField
+    TextBox newDriverName;
+    @UiField
+    TextArea newDriverDesc;
+    @UiField
+    TextBox newAssetName;
+    @UiField
+    TextArea newAssetDesc;
 
     private Listener listener;
     private Callback pickCallback;
@@ -104,33 +118,33 @@ public class WiresDialogs extends Composite {
         initNewDriverModal();
     }
 
-    public void setDriverPids(List<String> driverPids) {
+    public void setDriverPids(Map<String, String> driverPids) {
         this.driverInstance.clear();
-        for (String driverPid : driverPids) {
-            this.driverInstance.addItem(driverPid);
-        }
+        driverPids.entrySet().stream().forEach(entry -> {
+            this.driverInstance.addItem(entry.getValue(), entry.getKey());
+        });
 
         driverInstance.setEnabled(!driverPids.isEmpty());
         buttonSelectDriverOk.setEnabled(!driverPids.isEmpty());
     }
 
-    public void setDriverFactoryPids(List<String> driverFactoryPids) {
+    public void setDriverFactoryPids(Map<String, String> driverFactoryPidNames) {
         this.newDriverFactory.clear();
-        for (String driverPid : driverFactoryPids) {
-            this.newDriverFactory.addItem(driverPid);
-        }
+        driverFactoryPidNames.entrySet().stream().forEach(entry -> {
+            this.newDriverFactory.addItem(entry.getValue(), entry.getKey());
+        });
 
-        newDriverFactory.setEnabled(!driverFactoryPids.isEmpty());
-        newDriverOk.setEnabled(!driverFactoryPids.isEmpty());
+        newDriverFactory.setEnabled(!driverFactoryPidNames.isEmpty());
+        newDriverOk.setEnabled(!driverFactoryPidNames.isEmpty());
     }
 
-    public void setAssetPids(List<String> assetPids) {
+    public void setAssetPidNames(Map<String, String> assetPidNames) {
         this.assetInstance.clear();
-        for (String assetPid : assetPids) {
-            this.assetInstance.addItem(assetPid);
-        }
+        assetPidNames.entrySet().stream().forEach(entry -> {
+            this.assetInstance.addItem(entry.getValue(), entry.getKey());
+        });
 
-        buttonSelectAssetOk.setEnabled(!assetPids.isEmpty());
+        buttonSelectAssetOk.setEnabled(!assetPidNames.isEmpty());
     }
 
     private void initSelectAssetModal() {
@@ -148,7 +162,9 @@ public class WiresDialogs extends Composite {
             @Override
             public void onClick(ClickEvent event) {
                 if (pickCallback != null) {
-                    pickCallback.onNewComponentCreated(WiresDialogs.this.assetInstance.getSelectedValue());
+                    String assetPid = WiresDialogs.this.assetInstance.getSelectedValue();
+                    String name = WiresDialogs.this.assetInstance.getSelectedItemText();
+                    pickCallback.onNewComponentCreated(assetPid, name, null);
                 }
                 selectAssetModal.hide();
             }
@@ -169,8 +185,7 @@ public class WiresDialogs extends Composite {
 
             @Override
             public void onClick(ClickEvent event) {
-                WiresDialogs.this.newDriverName.setValue("");
-                WiresDialogs.this.newDriverName.setText("");
+                WiresDialogs.this.newDriverPid.setValue("");
                 WiresDialogs.this.newDriverModal.show();
             }
         });
@@ -180,8 +195,10 @@ public class WiresDialogs extends Composite {
             @Override
             public void onClick(ClickEvent event) {
                 String driverPid = WiresDialogs.this.driverInstance.getSelectedValue();
-                WiresDialogs.this.newAssetDriverInstance.setText(driverPid);
-                WiresDialogs.this.newAssetName.setText("");
+                String driverName = WiresDialogs.this.driverInstance.getSelectedItemText();
+                WiresDialogs.this.newAssetDriverInstance.setText(driverName);
+                WiresDialogs.this.newAssetDriverInstance.setData(driverPid);
+                WiresDialogs.this.newAssetPid.setText("");
                 WiresDialogs.this.newAssetModal.show();
             }
         });
@@ -203,14 +220,16 @@ public class WiresDialogs extends Composite {
 
             @Override
             public void onClick(ClickEvent event) {
-                String wireAssetPid = WiresDialogs.this.newAssetName.getPid();
+                String wireAssetPid = WiresDialogs.this.newAssetPid.getPid();
+                String name = WiresDialogs.this.newAssetName.getText();
+                String desc = WiresDialogs.this.newAssetDesc.getText();
                 if (wireAssetPid == null || !listener.onNewPidInserted(wireAssetPid)) {
                     return;
                 }
-                String driverPid = WiresDialogs.this.newAssetDriverInstance.getText();
+                String driverPid = WiresDialogs.this.newAssetDriverInstance.getData();
                 WiresDialogs.this.newAssetModal.hide();
                 if (pickCallback != null) {
-                    pickCallback.onNewAssetCreated(wireAssetPid, driverPid);
+                    pickCallback.onNewAssetCreated(wireAssetPid, driverPid, name, desc);
                 }
             }
         });
@@ -232,7 +251,9 @@ public class WiresDialogs extends Composite {
 
             @Override
             public void onClick(ClickEvent event) {
-                final String pid = WiresDialogs.this.newDriverName.getPid();
+                final String pid = WiresDialogs.this.newDriverPid.getPid();
+                final String name = WiresDialogs.this.newDriverName.getText();
+                final String desc = WiresDialogs.this.newDriverDesc.getText();
                 if (pid == null) {
                     return;
                 }
@@ -240,16 +261,17 @@ public class WiresDialogs extends Composite {
                     return;
                 }
                 final String factoryPid = WiresDialogs.this.newDriverFactory.getSelectedValue();
-                WiresRPC.createNewDriver(factoryPid, pid, new WiresRPC.Callback<GwtConfigComponent>() {
+                WiresRPC.createNewDriver(factoryPid, pid, name, desc, new WiresRPC.Callback<GwtConfigComponent>() {
 
                     @Override
                     public void onSuccess(GwtConfigComponent result) {
                         newDriverModal.hide();
-                        newAssetDriverInstance.setText(pid);
-                        newAssetName.setText("");
+                        newAssetDriverInstance.setText(name);
+                        newAssetDriverInstance.setData(pid);
+                        newAssetPid.setText("");
                         newAssetModal.show();
                         if (listener != null) {
-                            listener.onNewDriverCreated(pid, factoryPid, result);
+                            listener.onNewDriverCreated(pid, factoryPid, name, desc, result);
                         }
                     }
                 });
@@ -269,21 +291,23 @@ public class WiresDialogs extends Composite {
     }
 
     private void initAssetModal() {
-        this.componentNameLabel.setText(MSGS.wiresComponentName());
+        this.componentPidLabel.setText(MSGS.wiresComponentName());
         this.btnComponentModalYes.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
-                String value = WiresDialogs.this.componentName.getPid();
+                String value = WiresDialogs.this.componentPid.getPid();
+                String name = WiresDialogs.this.componentName.getText();
+                String desc = WiresDialogs.this.componentDesc.getText();
                 if (value != null) {
                     if (listener == null || !listener.onNewPidInserted(value)) {
                         return;
                     }
                     if (pickCallback != null) {
-                        pickCallback.onNewComponentCreated(value);
+                        pickCallback.onNewComponentCreated(value, name, desc);
                     }
                     genericCompModal.hide();
-                    componentName.clear();
+                    componentPid.clear();
                 }
             }
         });
@@ -312,10 +336,10 @@ public class WiresDialogs extends Composite {
             }
         } else {
             this.newAssetModalHeader.setTitle(MSGS.wiresComponentNew());
-            this.componentNameLabel.setText(MSGS.wiresComponentName());
-            this.componentName.clear();
-            this.newAssetName.clear();
-            this.newDriverName.clear();
+            this.componentPidLabel.setText(MSGS.wiresComponentPid());
+            this.componentPid.clear();
+            this.newAssetPid.clear();
+            this.newDriverPid.clear();
             this.genericCompModal.show();
         }
     }
@@ -324,14 +348,15 @@ public class WiresDialogs extends Composite {
 
         public boolean onNewPidInserted(String pid);
 
-        public void onNewDriverCreated(String pid, String factoryPid, GwtConfigComponent descriptor);
+        public void onNewDriverCreated(String pid, String factoryPid, String name, String desc,
+                GwtConfigComponent descriptor);
     }
 
     public interface Callback {
 
-        public void onNewAssetCreated(String pid, String driverPid);
+        public void onNewAssetCreated(String pid, String driverPid, String name, String desc);
 
-        public void onNewComponentCreated(String pid);
+        public void onNewComponentCreated(String pid, String name, String desc);
 
         public void onCancel();
     }

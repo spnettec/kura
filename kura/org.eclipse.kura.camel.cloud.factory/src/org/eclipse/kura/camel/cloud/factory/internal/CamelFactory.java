@@ -15,6 +15,9 @@ import static org.eclipse.kura.camel.component.Configuration.asString;
 
 import java.util.Map;
 
+import org.eclipse.kura.KuraException;
+import org.eclipse.kura.camel.camelcloud.CamelCloudService;
+import org.eclipse.kura.cloud.CloudClient;
 import org.eclipse.kura.cloud.CloudService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.osgi.framework.FrameworkUtil;
@@ -29,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * {@link XmlCamelCloudService} which will take care of the lifecycle of the Camel context.
  * </p>
  */
-public class CamelFactory implements ConfigurableComponent {
+public class CamelFactory implements ConfigurableComponent, CamelCloudService {
 
     private static final Logger logger = LoggerFactory.getLogger(CamelFactory.class);
 
@@ -46,14 +49,12 @@ public class CamelFactory implements ConfigurableComponent {
     }
 
     private void setFromProperties(final Map<String, Object> properties) throws Exception {
-        final String pid = asString(properties, "cloud.service.pid");
-
         final ServiceConfiguration configuration = new ServiceConfiguration();
         configuration.setXml(asString(properties, "xml"));
         configuration.setInitCode(asString(properties, "initCode"));
         configuration.setEnableJmx(asBoolean(properties, "enableJmx", true));
 
-        createService(pid, configuration);
+        createService(configuration);
     }
 
     public void deactivate() {
@@ -67,10 +68,7 @@ public class CamelFactory implements ConfigurableComponent {
         }
     }
 
-    private void createService(final String pid, final ServiceConfiguration configuration) throws Exception {
-        if (pid == null) {
-            return;
-        }
+    private void createService(final ServiceConfiguration configuration) throws Exception {
 
         if (this.configuration == configuration) {
             // null to null?
@@ -90,11 +88,37 @@ public class CamelFactory implements ConfigurableComponent {
 
         // start new service
         if (configuration.isValid()) {
-            this.service = new XmlCamelCloudService(FrameworkUtil.getBundle(CamelFactory.class).getBundleContext(), pid,
+            this.service = new XmlCamelCloudService(FrameworkUtil.getBundle(CamelFactory.class).getBundleContext(),
                     configuration);
             this.service.start();
         }
 
         this.configuration = configuration;
+    }
+
+    @Override
+    public CloudClient newCloudClient(String appId) throws KuraException {
+        return this.service.getService().newCloudClient(appId);
+    }
+
+    @Override
+    public String[] getCloudApplicationIdentifiers() {
+        return this.service.getService().getCloudApplicationIdentifiers();
+    }
+
+    @Override
+    public boolean isConnected() {
+        return this.service.getService().isConnected();
+    }
+
+    @Override
+    public void registerBaseEndpoint(String applicationId, String baseEndpoint) {
+        this.service.getService().registerBaseEndpoint(applicationId, baseEndpoint);
+
+    }
+
+    @Override
+    public void release(String applicationId) {
+        this.service.getService().release(applicationId);
     }
 }

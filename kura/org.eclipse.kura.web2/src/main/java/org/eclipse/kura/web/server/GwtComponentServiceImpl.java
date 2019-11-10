@@ -755,14 +755,14 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
     }
 
     @Override
-    public List<String> getPidsFromTarget(GwtXSRFToken xsrfToken, String pid, String targetRef)
+    public Map<String, String> getPidNamesFromTarget(GwtXSRFToken xsrfToken, String pid, String targetRef)
             throws GwtKuraException {
         this.checkXSRFToken(xsrfToken);
 
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
-        List<String> result = new ArrayList<>();
+        Map<String, String> result = new HashMap<>();
 
         final BundleContext context = FrameworkUtil.getBundle(GwtWireGraphService.class).getBundleContext();
         ServiceReference<ServiceComponentRuntime> scrServiceRef = context
@@ -789,7 +789,9 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                         if (cloudServiceReferenceObject instanceof ServiceReference) {
                             ServiceReference<?> cloudServiceReference = (ServiceReference<?>) cloudServiceReferenceObject;
                             String cloudServicePid = (String) cloudServiceReference.getProperty(KURA_SERVICE_PID);
-                            result.add(cloudServicePid);
+                            String cloudServiceName = (String) cloudServiceReference
+                                    .getProperty(ConfigurationService.KURA_SERVICE_NAME);
+                            result.put(cloudServicePid, cloudServiceName);
                             ServiceLocator.getInstance().ungetService(cloudServiceReference);
                         }
                     }

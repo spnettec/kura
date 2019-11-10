@@ -103,7 +103,7 @@
                             </b:FormGroup>
                             <b:FormGroup>
                                 <b:FormLabel for="formAssetDriverPid" text="{msgs.driverPid}" />
-                                <b:TextBox b:id="formAssetDriverPid" ui:field="assetDriverPid" enabled="false" />
+                                <kura:KuraTextBox b:id="formAssetDriverPid" ui:field="assetDriverPid" enabled="false" />
                             </b:FormGroup>
                         </b:FieldSet>
                     </b:Form>

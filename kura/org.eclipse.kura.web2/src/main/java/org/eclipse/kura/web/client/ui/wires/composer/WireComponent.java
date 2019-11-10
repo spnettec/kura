@@ -30,6 +30,16 @@ public final class WireComponent extends JavaScriptObject {
         return this.pid
     }-*/;
 
+    public native String getComponentName()
+    /*-{
+        return this.componentName
+    }-*/;
+
+    public native String getComponentDescription()
+    /*-{
+        return this.componentDescription
+    }-*/;
+
     public native String getFactoryPid()
     /*-{
         return this.factoryPid
@@ -53,6 +63,16 @@ public final class WireComponent extends JavaScriptObject {
     public native String setPid(String pid)
     /*-{
         this.pid = pid
+    }-*/;
+
+    public native String setComponentName(String componentName)
+    /*-{
+        this.componentName = componentName
+    }-*/;
+
+    public native String setComponentDescription(String componentDescription)
+    /*-{
+        this.componentDescription = componentDescription
     }-*/;
 
     public native String setFactoryPid(String pid)
@@ -101,6 +121,8 @@ public final class WireComponent extends JavaScriptObject {
         final WireComponent result = WireComponent.create();
 
         result.setPid(configuration.getComponentId());
+        result.setComponentName(configuration.getComponentName());
+        result.setComponentDescription(configuration.getComponentDescription());
         result.setFactoryPid(configuration.getFactoryId());
         result.setInputPortCount(config.getInputPortCount());
         result.setOutputPortCount(config.getOutputPortCount());
@@ -116,6 +138,8 @@ public final class WireComponent extends JavaScriptObject {
         result.setPositionX(getRenderingProperties().getPosition().getX());
         result.setPositionY(getRenderingProperties().getPosition().getY());
         result.setConfiguration(configuration);
+        // result.getConfiguration().setComponentName(configuration.getComponentName());
+        // result.getConfiguration().setComponentDescription(configuration.getComponentDescription());
 
         return result;
     }

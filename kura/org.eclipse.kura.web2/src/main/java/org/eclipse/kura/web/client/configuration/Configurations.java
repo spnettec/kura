@@ -36,30 +36,37 @@ public class Configurations {
         return this.currentConfigurations.get(pid);
     }
 
-    private GwtConfigComponent createConfigurationFromDefinition(String pid, String factoryPid,
-            GwtConfigComponent definition) {
+    private GwtConfigComponent createConfigurationFromDefinition(String pid, String factoryPid, String componentName,
+            String componentDescription, GwtConfigComponent definition) {
         final GwtConfigComponent cloned = new GwtConfigComponent(definition);
         cloned.setComponentId(pid);
         cloned.setFactoryPid(factoryPid);
+        cloned.setComponentName(componentName);
+        cloned.setComponentDescription(componentDescription);
         return cloned;
     }
 
-    public HasConfiguration createConfiguration(String pid, String factoryPid) {
+    public HasConfiguration createConfiguration(String pid, String factoryPid, String componentName,
+            String componentDescription) {
         final GwtConfigComponent definition = this.componentDefinitions.get(factoryPid);
         GwtConfigComponent newConfiguration = null;
         if (definition != null) {
-            newConfiguration = createConfigurationFromDefinition(pid, factoryPid, definition);
+            newConfiguration = createConfigurationFromDefinition(pid, factoryPid, componentName, componentDescription,
+                    definition);
         }
         if (newConfiguration == null) {
             newConfiguration = new GwtConfigComponent();
             newConfiguration.setComponentId(pid);
             newConfiguration.setFactoryPid(factoryPid);
+            newConfiguration.setComponentName(componentName);
+            newConfiguration.setComponentDescription(componentDescription);
         }
         return new ConfigurationWrapper(newConfiguration);
     }
 
-    public HasConfiguration createAndRegisterConfiguration(String pid, String factoryPid) {
-        final HasConfiguration result = createConfiguration(pid, factoryPid);
+    public HasConfiguration createAndRegisterConfiguration(String pid, String factoryPid, String componentName,
+            String componentDescription) {
+        final HasConfiguration result = createConfiguration(pid, factoryPid, componentName, componentDescription);
         this.currentConfigurations.put(pid, result);
         this.allActivePids.add(pid);
         return result;
@@ -158,16 +165,6 @@ public class Configurations {
         }
     }
 
-    public List<String> getDriverFactoryPids() {
-        final ArrayList<String> result = new ArrayList<>();
-        for (Entry<String, GwtConfigComponent> entry : this.componentDefinitions.entrySet()) {
-            if (entry.getValue().isDriver()) {
-                result.add(entry.getKey());
-            }
-        }
-        return result;
-    }
-
     public Map<String, String> getDriverFactoryPidNames() {
         final Map<String, String> result = new HashMap<>();
         for (Entry<String, GwtConfigComponent> entry : this.componentDefinitions.entrySet()) {
@@ -188,22 +185,22 @@ public class Configurations {
         return null;
     }
 
-    public List<String> getDriverPids() {
-        final ArrayList<String> result = new ArrayList<>();
+    public Map<String, String> getDriverPidNames() {
+        final Map<String, String> result = new HashMap<>();
         for (Entry<String, HasConfiguration> entry : this.currentConfigurations.entrySet()) {
             if (entry.getValue().getConfiguration().isDriver()) {
-                result.add(entry.getKey());
+                result.put(entry.getKey(), entry.getValue().getConfiguration().getComponentName());
             }
         }
         return result;
     }
 
-    public List<String> getFactoryInstancesPids(String factoryPid) {
-        final ArrayList<String> result = new ArrayList<>();
+    public Map<String, String> getFactoryInstancesPidNames(String factoryPid) {
+        final Map<String, String> result = new HashMap<>();
         for (Entry<String, HasConfiguration> entry : this.currentConfigurations.entrySet()) {
             final GwtConfigComponent config = entry.getValue().getConfiguration();
             if (factoryPid.equals(config.getFactoryId())) {
-                result.add(entry.getKey());
+                result.put(entry.getKey(), config.getComponentName());
             }
         }
         return result;

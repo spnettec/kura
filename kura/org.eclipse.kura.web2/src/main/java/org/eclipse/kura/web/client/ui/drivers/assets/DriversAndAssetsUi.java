@@ -20,6 +20,7 @@ import org.eclipse.kura.web.client.configuration.HasConfiguration;
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.ui.AlertDialog;
 import org.eclipse.kura.web.client.ui.AlertDialog.ConfirmListener;
+import org.eclipse.kura.web.client.ui.KuraTextBox;
 import org.eclipse.kura.web.client.ui.drivers.assets.DriversAndAssetsListUi.DriverAssetInfo;
 import org.eclipse.kura.web.client.util.PidTextBox;
 import org.eclipse.kura.web.shared.AssetConstants;
@@ -87,7 +88,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     @UiField
     PidTextBox assetPid;
     @UiField
-    TextBox assetDriverPid;
+    KuraTextBox assetDriverPid;
     @UiField
     Button buttonNewAssetCancel;
     @UiField
@@ -162,7 +163,8 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
         });
 
         this.newAssetButton.addClickHandler(event -> {
-            DriversAndAssetsUi.this.assetDriverPid.setValue(this.driverAndAssetsListUi.getSelectedItem().getPid());
+            DriversAndAssetsUi.this.assetDriverPid.setValue(this.driverAndAssetsListUi.getSelectedItem().getName());
+            DriversAndAssetsUi.this.assetDriverPid.setData(this.driverAndAssetsListUi.getSelectedItem().getPid());
             DriversAndAssetsUi.this.newAssetModal.show();
         });
 
@@ -217,7 +219,8 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     }
 
     private void createAsset(final String pid, final String driverPid, String assertName, String assertDesc) {
-        final HasConfiguration assetConfig = this.configurations.createConfiguration(pid, ASSET_FACTORY_PID);
+        final HasConfiguration assetConfig = this.configurations.createConfiguration(pid, ASSET_FACTORY_PID, assertName,
+                assertDesc);
         assetConfig.getConfiguration().getParameter(AssetConstants.ASSET_DRIVER_PROP.value()).setValue(driverPid);
         assetConfig.getConfiguration().set(ConfigurationService.KURA_SERVICE_NAME, assertName);
         assetConfig.getConfiguration().set(ConfigurationService.KURA_SERVICE_DESC, assertDesc);
@@ -255,7 +258,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
             final String factoryPid = DriversAndAssetsUi.this.driverFactoriesList.getSelectedValue();
 
             DriversAndAssetsRPC.createNewDriver(factoryPid, pid, name, desc, result -> {
-                this.configurations.createAndRegisterConfiguration(pid, factoryPid);
+                this.configurations.createAndRegisterConfiguration(pid, factoryPid, name, desc);
                 this.configurations.setChannelDescriptor(pid, result);
                 this.newDriverModal.hide();
                 this.driverAndAssetsListUi.refresh();

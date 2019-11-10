@@ -158,7 +158,8 @@ public interface GwtComponentService extends RemoteService {
     public boolean updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties)
             throws GwtKuraException;
 
-    public List<String> getPidsFromTarget(GwtXSRFToken xsrfToken, String pid, String targetRef) throws GwtKuraException;
+    public Map<String, String> getPidNamesFromTarget(GwtXSRFToken xsrfToken, String pid, String targetRef)
+            throws GwtKuraException;
 
     public Map<String, String> findFactoryComponentPidNames(GwtXSRFToken xsrfToken) throws GwtKuraException;
 }

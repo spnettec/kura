@@ -37,7 +37,7 @@ public class WireComponentDescriptors {
         return descriptors;
     }
 
-    public WireComponent createNewComponent(String pid, String factoryPid) {
+    public WireComponent createNewComponent(String pid, String factoryPid, String componentName, String desc) {
         final GwtWireComponentDescriptor descriptor = descriptors.get(factoryPid);
         if (descriptor == null) {
             return null;
@@ -47,6 +47,14 @@ public class WireComponentDescriptors {
 
         result.setPid(pid);
         result.setFactoryPid(factoryPid);
+        String name = componentName;
+        if (name == null || name.equals(""))
+            name = pid;
+        if (name == null || name.equals(""))
+            name = descriptor.getName();
+        result.setComponentName(name);
+        if (desc != null && !desc.equals(""))
+            result.setComponentDescription(desc);
         result.setInputPortCount(descriptor.getMinInputPorts());
         result.setOutputPortCount(descriptor.getMinOutputPorts());
 

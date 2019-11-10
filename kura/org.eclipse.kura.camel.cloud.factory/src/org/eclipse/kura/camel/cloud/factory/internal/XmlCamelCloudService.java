@@ -10,20 +10,13 @@
  *******************************************************************************/
 package org.eclipse.kura.camel.cloud.factory.internal;
 
-import static org.apache.camel.ServiceStatus.Started;
-import static org.eclipse.kura.camel.cloud.factory.internal.CamelCloudServiceFactory.CLOUD_SERVICE_FACTORY_PID;
 import static org.eclipse.kura.camel.utils.CamelContexts.scriptInitCamelContext;
-import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_PID;
-import static org.osgi.framework.Constants.SERVICE_PID;
 
 import java.io.ByteArrayInputStream;
-import java.util.Dictionary;
-import java.util.Hashtable;
 
 import javax.script.ScriptException;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.ServiceStatus;
 import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
 import org.apache.camel.core.osgi.OsgiServiceRegistry;
 import org.apache.camel.impl.CompositeRegistry;
@@ -52,20 +45,20 @@ public class XmlCamelCloudService {
 
     private final BundleContext context;
 
-    private final String pid;
-
     private final ServiceConfiguration configuration;
 
     private DefaultCamelCloudService service;
+
+    public DefaultCamelCloudService getService() {
+        return service;
+    }
 
     private OsgiDefaultCamelContext router;
 
     private ServiceRegistration<CloudService> handle;
 
-    public XmlCamelCloudService(final BundleContext context, final String pid,
-            final ServiceConfiguration configuration) {
+    public XmlCamelCloudService(final BundleContext context, final ServiceConfiguration configuration) {
         this.context = context;
-        this.pid = pid;
         this.configuration = configuration;
     }
 
@@ -108,18 +101,18 @@ public class XmlCamelCloudService {
 
         logger.debug("Starting router...");
         this.router.start();
-        final ServiceStatus status = this.router.getStatus();
-        logger.debug("Starting router... {} ({}, {})", status, status == Started, this.service.isConnected());
+        // final ServiceStatus status = this.router.getStatus();
+        // logger.debug("Starting router... {} ({}, {})", status, status == Started, this.service.isConnected());
 
         // register
 
-        final Dictionary<String, Object> props = new Hashtable<>();
-        props.put(SERVICE_PID, this.pid);
-        props.put("service.factoryPid", CLOUD_SERVICE_FACTORY_PID);
-        props.put(KURA_SERVICE_PID, this.pid);
+        // final Dictionary<String, Object> props = new Hashtable<>();
+        // props.put(SERVICE_PID, this.pid);
+        // props.put("service.factoryPid", CLOUD_SERVICE_FACTORY_PID);
+        // props.put(KURA_SERVICE_PID, this.pid);
         // props.put("kura.cloud.service.factory.pid", PID);
 
-        this.handle = this.context.registerService(CloudService.class, this.service, props);
+        // this.handle = this.context.registerService(CloudService.class, this.service, props);
     }
 
     public void stop() throws Exception {

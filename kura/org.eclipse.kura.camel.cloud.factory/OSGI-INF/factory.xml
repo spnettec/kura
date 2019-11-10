@@ -3,6 +3,7 @@
    <implementation class="org.eclipse.kura.camel.cloud.factory.internal.CamelFactory"/>
    <service>
       <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
+      <provide interface="org.eclipse.kura.camel.camelcloud.CamelCloudService"/>
    </service>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>
 </scr:component>
