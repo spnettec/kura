@@ -43,6 +43,8 @@ import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.ModalBody;
 import org.gwtbootstrap3.client.ui.ModalFooter;
 import org.gwtbootstrap3.client.ui.ModalHeader;
+import org.gwtbootstrap3.client.ui.TextArea;
+import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.Well;
 import org.gwtbootstrap3.client.ui.form.validator.RegExValidator;
 import org.gwtbootstrap3.client.ui.gwt.CellTable;
@@ -104,6 +106,10 @@ public class CloudInstancesUi extends Composite {
     @UiField
     PidTextBox cloudConnectionPid;
     @UiField
+    TextBox cloudConnectionName;
+    @UiField
+    TextArea cloudConnectionDesc;
+    @UiField
     Icon cloudConnectionPidSpinner;
     @UiField
     Modal newPubSubModal;
@@ -111,6 +117,10 @@ public class CloudInstancesUi extends Composite {
     ListBox pubSubFactoriesPids;
     @UiField
     PidTextBox pubSubPid;
+    @UiField
+    TextBox pubSubName;
+    @UiField
+    TextArea pubSubDesc;
     @UiField
     Icon pubSubPidSpinner;
     @UiField
@@ -328,26 +338,29 @@ public class CloudInstancesUi extends Composite {
             @Override
             public String getValue(GwtCloudEntry object) {
                 final String pid = object.getPid();
+                final String name = object.getName();
 
                 if (object instanceof GwtCloudPubSubEntry) {
-                    return " -> " + pid;
+                    return " -> " + (name == null ? pid : name);
                 } else {
-                    return pid;
+                    return name == null ? pid : name;
                 }
             }
 
             @Override
             public void render(Context context, GwtCloudEntry object, SafeHtmlBuilder sb) {
                 final String pid = object.getPid();
+                final String name = object.getName();
 
                 if (object instanceof GwtCloudPubSubEntry) {
 
                     final String iconStyle = ((GwtCloudPubSubEntry) object)
                             .getType() == GwtCloudPubSubEntry.Type.PUBLISHER ? "fa-arrow-up" : "fa-arrow-down";
 
-                    sb.append(() -> "&ensp;<i class=\"fa assets-status-icon " + iconStyle + "\"></i>" + pid);
+                    sb.append(() -> "&ensp;<i class=\"fa assets-status-icon " + iconStyle + "\"></i>"
+                            + (name == null ? pid : name));
                 } else {
-                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>" + pid);
+                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>" + (name == null ? pid : name));
                 }
             }
         };
@@ -451,6 +464,8 @@ public class CloudInstancesUi extends Composite {
 
     private void createPubSub() {
         final String kuraServicePid = this.pubSubPid.getPid();
+        final String name = this.pubSubName.getText();
+        final String desc = this.pubSubDesc.getText();
 
         if (kuraServicePid == null) {
             return;
@@ -466,8 +481,9 @@ public class CloudInstancesUi extends Composite {
 
         final String factoryPid = this.pubSubFactoriesPids.getSelectedValue();
 
-        RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(context.callback(
-                token -> this.gwtCloudConnection.createPubSubInstance(token, kuraServicePid, factoryPid, entry.getPid(),
+        RequestQueue.submit(context -> this.gwtXSRFService
+                .generateSecurityToken(context.callback(token -> this.gwtCloudConnection.createPubSubInstance(token,
+                        kuraServicePid, factoryPid, entry.getPid(), name, desc,
                         context.callback(v -> context.defer(REFRESH_DELAY_MS, this.cloudServicesUi::refresh))))));
     }
 
@@ -481,6 +497,8 @@ public class CloudInstancesUi extends Composite {
     private void createCloudConnectionServiceFactory() {
         final String factoryPid = this.cloudFactoriesPids.getSelectedValue();
         final String newCloudServicePid = this.cloudConnectionPid.getPid();
+        final String name = this.cloudConnectionName.getText();
+        final String desc = this.cloudConnectionDesc.getText();
 
         if (newCloudServicePid == null) {
             return;
@@ -488,7 +506,7 @@ public class CloudInstancesUi extends Composite {
 
         RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
                 context.callback(token -> this.gwtCloudConnection.createCloudServiceFromFactory(token, factoryPid,
-                        newCloudServicePid, context.callback(new AsyncCallback<Void>() {
+                        newCloudServicePid, name, desc, context.callback(new AsyncCallback<Void>() {
 
                             @Override
                             public void onFailure(Throwable caught) {

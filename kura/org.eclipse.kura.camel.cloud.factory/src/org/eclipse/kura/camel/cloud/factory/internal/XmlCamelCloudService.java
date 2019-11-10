@@ -11,8 +11,7 @@
 package org.eclipse.kura.camel.cloud.factory.internal;
 
 import static org.apache.camel.ServiceStatus.Started;
-import static org.eclipse.kura.camel.cloud.factory.internal.CamelCloudServiceFactory.PID;
-import static org.eclipse.kura.camel.cloud.factory.internal.CamelFactory.FACTORY_ID;
+import static org.eclipse.kura.camel.cloud.factory.internal.CamelCloudServiceFactory.CLOUD_SERVICE_FACTORY_PID;
 import static org.eclipse.kura.camel.utils.CamelContexts.scriptInitCamelContext;
 import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_PID;
 import static org.osgi.framework.Constants.SERVICE_PID;
@@ -116,9 +115,9 @@ public class XmlCamelCloudService {
 
         final Dictionary<String, Object> props = new Hashtable<>();
         props.put(SERVICE_PID, this.pid);
-        props.put("service.factoryPid", FACTORY_ID);
+        props.put("service.factoryPid", CLOUD_SERVICE_FACTORY_PID);
         props.put(KURA_SERVICE_PID, this.pid);
-        props.put("kura.cloud.service.factory.pid", PID);
+        // props.put("kura.cloud.service.factory.pid", PID);
 
         this.handle = this.context.registerService(CloudService.class, this.service, props);
     }

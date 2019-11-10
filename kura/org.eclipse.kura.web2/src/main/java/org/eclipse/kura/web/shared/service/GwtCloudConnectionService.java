@@ -111,8 +111,8 @@ public interface GwtCloudConnectionService extends RemoteService {
      * @throws GwtKuraException
      *             if the creation and initialization of a {@link CloudService} instance fails.
      */
-    public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid)
-            throws GwtKuraException;
+    public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid,
+            String name, String description) throws GwtKuraException;
 
     /**
      * Invokes the deletion of the associated {@link CloudService} instance by the specified Factory Component.
@@ -133,8 +133,8 @@ public interface GwtCloudConnectionService extends RemoteService {
 
     public GwtCloudComponentFactories getCloudComponentFactories() throws GwtKuraException;
 
-    public void createPubSubInstance(GwtXSRFToken xsrfToken, String pid, String factoryPid, String cloudConnectionPid)
-            throws GwtKuraException;
+    public void createPubSubInstance(GwtXSRFToken xsrfToken, String pid, String factoryPid, String cloudConnectionPid,
+            String name, String description) throws GwtKuraException;
 
     public void deletePubSubInstance(GwtXSRFToken xsrfToken, String pid) throws GwtKuraException;
 

@@ -11,6 +11,8 @@ package org.eclipse.kura.web.shared.model;
 
 import java.io.Serializable;
 
+import org.eclipse.kura.configuration.ConfigurationService;
+
 public class GwtCloudEntry extends KuraBaseModel implements Serializable {
 
     /**
@@ -23,7 +25,7 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
     }
 
     public String getName() {
-        return get("name");
+        return get(ConfigurationService.KURA_SERVICE_NAME);
     }
 
     public void setPid(String pid) {
@@ -31,15 +33,15 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
     }
 
     public void setName(String name) {
-        set("name", name);
+        set(ConfigurationService.KURA_SERVICE_NAME, name);
     }
 
     public void setComponentDescription(String componentDescription) {
-        set("componentDescription", componentDescription);
+        set(ConfigurationService.KURA_SERVICE_DESC, componentDescription);
     }
 
     public String getComponentDescription() {
-        return get("componentDescription");
+        return get(ConfigurationService.KURA_SERVICE_DESC);
     }
 
     public String getFactoryPid() {

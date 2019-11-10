@@ -33,8 +33,6 @@ public class CamelFactory implements ConfigurableComponent {
 
     private static final Logger logger = LoggerFactory.getLogger(CamelFactory.class);
 
-    public static final String FACTORY_ID = "org.eclipse.kura.camel.cloud.factory.CamelFactory";
-
     private XmlCamelCloudService service;
 
     private ServiceConfiguration configuration;

@@ -14,6 +14,7 @@ package org.eclipse.kura.web.client.ui.drivers.assets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.web.client.configuration.Configurations;
 import org.eclipse.kura.web.client.configuration.HasConfiguration;
 import org.eclipse.kura.web.client.messages.Messages;
@@ -29,6 +30,7 @@ import org.eclipse.kura.web.shared.model.GwtWireGraphConfiguration;
 import org.gwtbootstrap3.client.ui.Button;
 import org.gwtbootstrap3.client.ui.ListBox;
 import org.gwtbootstrap3.client.ui.Modal;
+import org.gwtbootstrap3.client.ui.TextArea;
 import org.gwtbootstrap3.client.ui.TextBox;
 
 import com.google.gwt.core.client.GWT;
@@ -64,7 +66,17 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     @UiField
     ListBox driverFactoriesList;
     @UiField
-    PidTextBox driverName;
+    PidTextBox driverPid;
+
+    @UiField
+    TextBox driverName;
+    @UiField
+    TextArea driverDesc;
+    @UiField
+    TextBox assetName;
+    @UiField
+    TextArea assetDesc;
+
     @UiField
     Button buttonNewDriverCancel;
     @UiField
@@ -73,9 +85,9 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     @UiField
     Modal newAssetModal;
     @UiField
-    PidTextBox assetName;
+    PidTextBox assetPid;
     @UiField
-    TextBox driverPid;
+    TextBox assetDriverPid;
     @UiField
     Button buttonNewAssetCancel;
     @UiField
@@ -145,12 +157,12 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     private void initButtonBar() {
 
         this.newDriverButton.addClickHandler(event -> {
-            DriversAndAssetsUi.this.driverName.setValue("");
+            DriversAndAssetsUi.this.driverPid.setValue("");
             DriversAndAssetsUi.this.newDriverModal.show();
         });
 
         this.newAssetButton.addClickHandler(event -> {
-            DriversAndAssetsUi.this.driverPid.setValue(this.driverAndAssetsListUi.getSelectedItem().getPid());
+            DriversAndAssetsUi.this.assetDriverPid.setValue(this.driverAndAssetsListUi.getSelectedItem().getPid());
             DriversAndAssetsUi.this.newAssetModal.show();
         });
 
@@ -204,21 +216,26 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
         this.confirmDialog.show(MSGS.driversAssetsConfirmDeleteAsset(), () -> deleteComponent(pid));
     }
 
-    private void createAsset(final String pid, final String driverPid) {
+    private void createAsset(final String pid, final String driverPid, String assertName, String assertDesc) {
         final HasConfiguration assetConfig = this.configurations.createConfiguration(pid, ASSET_FACTORY_PID);
         assetConfig.getConfiguration().getParameter(AssetConstants.ASSET_DRIVER_PROP.value()).setValue(driverPid);
+        assetConfig.getConfiguration().set(ConfigurationService.KURA_SERVICE_NAME, assertName);
+        assetConfig.getConfiguration().set(ConfigurationService.KURA_SERVICE_DESC, assertDesc);
         DriversAndAssetsRPC.createFactoryConfiguration(pid, ASSET_FACTORY_PID, assetConfig.getConfiguration(),
                 result -> {
                     this.configurations.setConfiguration(assetConfig.getConfiguration());
                     this.newAssetModal.hide();
                     this.driverAndAssetsListUi.refresh();
+                }, error -> {
+                    this.newAssetModal.hide();
                 });
     }
 
     private void initNewDriverModal() {
         this.buttonNewDriverApply.addClickHandler(event -> {
-            final String pid = DriversAndAssetsUi.this.driverName.getPid();
-
+            final String pid = DriversAndAssetsUi.this.driverPid.getPid();
+            final String name = DriversAndAssetsUi.this.driverName.getText();
+            final String desc = DriversAndAssetsUi.this.driverDesc.getText();
             if (pid == null) {
                 return;
             }
@@ -237,7 +254,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
             final String factoryPid = DriversAndAssetsUi.this.driverFactoriesList.getSelectedValue();
 
-            DriversAndAssetsRPC.createNewDriver(factoryPid, pid, result -> {
+            DriversAndAssetsRPC.createNewDriver(factoryPid, pid, name, desc, result -> {
                 this.configurations.createAndRegisterConfiguration(pid, factoryPid);
                 this.configurations.setChannelDescriptor(pid, result);
                 this.newDriverModal.hide();
@@ -251,7 +268,9 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     private void initNewAssetModal() {
 
         this.buttonNewAssetApply.addClickHandler(event -> {
-            final String pid = this.assetName.getPid();
+            final String pid = this.assetPid.getPid();
+            final String name = this.assetName.getText();
+            final String desc = this.assetDesc.getText();
 
             if (pid == null) {
                 return;
@@ -265,7 +284,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
             final String newDriverPid = this.driverAndAssetsListUi.getSelectedItem().getPid();
 
-            createAsset(pid, newDriverPid);
+            createAsset(pid, newDriverPid, name, desc);
         });
     }
 

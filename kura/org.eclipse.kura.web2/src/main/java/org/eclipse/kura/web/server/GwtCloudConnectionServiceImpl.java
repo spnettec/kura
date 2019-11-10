@@ -22,7 +22,6 @@ import static org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry.GwtCloud
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,6 +82,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     private static final String CLOUD_SUBSCRIBER = CloudSubscriber.class.getName();
 
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
+    private BundleContext bundleContext;
 
     @Override
     public List<GwtCloudEntry> findCloudEntries() throws GwtKuraException {
@@ -104,6 +104,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
                 final GwtCloudConnectionEntry cloudConnectionEntry = new GwtCloudConnectionEntry();
                 cloudConnectionEntry.setCloudConnectionFactoryPid(factoryPid);
                 cloudConnectionEntry.setPid(pid);
+                cloudConnectionEntry.setName(service.getCloudName(pid));
                 cloudConnectionEntry.setFactoryName(service.getFactoryName());
 
                 fillState(cloudConnectionEntry);
@@ -196,8 +197,8 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     }
 
     @Override
-    public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid)
-            throws GwtKuraException {
+    public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid,
+            String name, String description) throws GwtKuraException {
         checkXSRFToken(xsrfToken);
         if (factoryPid == null || factoryPid.trim().isEmpty() || cloudServicePid == null
                 || cloudServicePid.trim().isEmpty()) {
@@ -206,7 +207,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         withAllCloudConnectionFactories(service -> {
             if (service.getFactoryPid().equals(factoryPid)) {
-                service.createConfiguration(cloudServicePid);
+                service.createConfiguration(cloudServicePid, name, description);
             }
         });
 
@@ -303,15 +304,18 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
     @Override
     public void createPubSubInstance(final GwtXSRFToken token, final String pid, final String factoryPid,
-            final String cloudConnectionPid) throws GwtKuraException {
+            final String cloudConnectionPid, String name, String description) throws GwtKuraException {
         checkXSRFToken(token);
 
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
         ServiceLocator.applyToServiceOptionally(ConfigurationService.class, cs -> {
-            cs.createFactoryConfiguration(factoryPid, pid, Collections.singletonMap(
-                    CloudConnectionConstants.CLOUD_ENDPOINT_SERVICE_PID_PROP_NAME.value(), cloudConnectionPid), true);
+            Map<String, Object> properties = new HashMap<>();
+            properties.put(CloudConnectionConstants.CLOUD_ENDPOINT_SERVICE_PID_PROP_NAME.value(), cloudConnectionPid);
+            properties.put(ConfigurationService.KURA_SERVICE_NAME, name);
+            properties.put(ConfigurationService.KURA_SERVICE_DESC, description);
+            cs.createFactoryConfiguration(factoryPid, pid, properties, true);
 
             auditLogger.info(
                     "UI CloudConnection - Success - Successfully created pub/sub instance for user: {}, session {}",
@@ -486,13 +490,23 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
                 }
 
                 @Override
-                public void createConfiguration(String pid) throws KuraException {
-                    f.createConfiguration(pid);
+                public void createConfiguration(String pid, String name, String description) throws KuraException {
+                    f.createConfiguration(pid, name, description);
                 }
 
                 @Override
                 public String getFactoryName() {
-                    return f.getFactoryPid();
+                    return f.getFactoryName();
+                }
+
+                @Override
+                public String getCloudName(String pid) {
+                    return f.getCloudName(pid);
+                }
+
+                @Override
+                public void createConfiguration(String pid) throws KuraException {
+                    f.createConfiguration(pid);
                 }
             };
         }

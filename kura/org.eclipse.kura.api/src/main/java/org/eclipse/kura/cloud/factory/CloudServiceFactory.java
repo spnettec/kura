@@ -17,8 +17,7 @@ import java.util.Set;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.cloud.CloudService;
-import org.eclipse.kura.cloudconnection.publisher.CloudPublisher;
-import org.eclipse.kura.cloudconnection.subscriber.CloudSubscriber;
+import org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.data.DataTransportService;
 import org.osgi.annotation.versioning.ProviderType;
@@ -84,6 +83,10 @@ public interface CloudServiceFactory {
      */
     String getFactoryPid();
 
+    String getFactoryName();
+
+    String getCloudName(String pid);
+
     /**
      * Creates a {@link CloudService} instance and initializes its configuration with the defaults
      * expressed in the Metatype of the target component factory providing the CloudService.
@@ -131,6 +134,8 @@ public interface CloudServiceFactory {
      * @throws KuraException
      */
     void createConfiguration(String pid) throws KuraException;
+
+    void createConfiguration(String pid, String name, String description) throws KuraException;
 
     /**
      * Returns the list of <i>kura.service.pid</i>s that compose the cloud stack associated with the provided

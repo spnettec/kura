@@ -134,13 +134,16 @@ public final class DriversAndAssetsRPC {
     }
 
     public static void createFactoryConfiguration(final String pid, final String factoryPid,
-            final GwtConfigComponent configuration, final Callback<Void> callback) {
+            final GwtConfigComponent configuration, final Callback<Void> callback,
+            final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
         gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
                 EntryClassUi.hideWaitModal();
+                if (errorCallback != null)
+                    errorCallback.onError(ex);
                 FailureHandler.handle(ex);
             }
 
@@ -152,6 +155,8 @@ public final class DriversAndAssetsRPC {
                             @Override
                             public void onFailure(Throwable ex) {
                                 EntryClassUi.hideWaitModal();
+                                if (errorCallback != null)
+                                    errorCallback.onError(ex);
                                 FailureHandler.handle(ex);
                             }
 
@@ -225,7 +230,7 @@ public final class DriversAndAssetsRPC {
         });
     }
 
-    public static void createNewDriver(final String factoryPid, final String pid,
+    public static void createNewDriver(final String factoryPid, final String pid, String name, String desc,
             final Callback<GwtConfigComponent> callback, final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
         gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
@@ -233,54 +238,59 @@ public final class DriversAndAssetsRPC {
             @Override
             public void onFailure(Throwable ex) {
                 EntryClassUi.hideWaitModal();
-                errorCallback.onError(ex);
+                if (errorCallback != null)
+                    errorCallback.onError(ex);
                 FailureHandler.handle(ex);
             }
 
             @Override
             public void onSuccess(GwtXSRFToken result) {
-                gwtComponentService.createFactoryComponent(result, factoryPid, pid, new AsyncCallback<Void>() {
-
-                    @Override
-                    public void onFailure(Throwable ex) {
-                        EntryClassUi.hideWaitModal();
-                        errorCallback.onError(ex);
-                        FailureHandler.handle(ex);
-                    }
-
-                    @Override
-                    public void onSuccess(Void result) {
-                        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+                gwtComponentService.createFactoryComponent(result, factoryPid, pid, name, desc,
+                        new AsyncCallback<Void>() {
 
                             @Override
                             public void onFailure(Throwable ex) {
                                 EntryClassUi.hideWaitModal();
-                                errorCallback.onError(ex);
+                                if (errorCallback != null)
+                                    errorCallback.onError(ex);
                                 FailureHandler.handle(ex);
                             }
 
                             @Override
-                            public void onSuccess(GwtXSRFToken result) {
-                                gwtWireGraphService.getGwtChannelDescriptor(result, pid,
-                                        new AsyncCallback<GwtConfigComponent>() {
+                            public void onSuccess(Void result) {
+                                gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
-                                            @Override
-                                            public void onFailure(Throwable ex) {
-                                                EntryClassUi.hideWaitModal();
-                                                errorCallback.onError(ex);
-                                                FailureHandler.handle(ex);
-                                            }
+                                    @Override
+                                    public void onFailure(Throwable ex) {
+                                        EntryClassUi.hideWaitModal();
+                                        if (errorCallback != null)
+                                            errorCallback.onError(ex);
+                                        FailureHandler.handle(ex);
+                                    }
 
-                                            @Override
-                                            public void onSuccess(GwtConfigComponent result) {
-                                                EntryClassUi.hideWaitModal();
-                                                callback.onSuccess(result);
-                                            }
-                                        });
+                                    @Override
+                                    public void onSuccess(GwtXSRFToken result) {
+                                        gwtWireGraphService.getGwtChannelDescriptor(result, pid,
+                                                new AsyncCallback<GwtConfigComponent>() {
+
+                                                    @Override
+                                                    public void onFailure(Throwable ex) {
+                                                        EntryClassUi.hideWaitModal();
+                                                        if (errorCallback != null)
+                                                            errorCallback.onError(ex);
+                                                        FailureHandler.handle(ex);
+                                                    }
+
+                                                    @Override
+                                                    public void onSuccess(GwtConfigComponent result) {
+                                                        EntryClassUi.hideWaitModal();
+                                                        callback.onSuccess(result);
+                                                    }
+                                                });
+                                    }
+                                });
                             }
                         });
-                    }
-                });
             }
         });
     }

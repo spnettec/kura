@@ -84,6 +84,18 @@
                             <kura.util:PidTextBox ui:field="cloudConnectionPid" b:id="cloudConnectionPid" allowBlank="false"
                                 autoComplete="false" validateOnBlur="true"/>
                         </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="formCloudConnectionName" text="{msgs.newCloudServiceName}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <b:TextBox b:id="formCloudConnectionName"
+                                ui:field="cloudConnectionName" autoComplete="false"/>
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="formCloudConnectionDesc" text="{msgs.newCloudServiceDesc}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <b:TextArea b:id="formCloudConnectionDesc"
+                                ui:field="cloudConnectionDesc" autoComplete="false"/>
+                        </b:FormGroup>
                     </b:Form>
                 </b:ModalBody>
                 <b:ModalFooter>
@@ -100,6 +112,18 @@
                                 <b:ListBox ui:field="pubSubFactoriesPids" b:id="pubSubFactoriesPids">
                                 </b:ListBox>
                             </g:FlowPanel>
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="formPubSubName" text="{msgs.newPubSubName}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <b:TextBox b:id="formPubSubName"
+                                ui:field="pubSubName" autoComplete="false"/>
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="formPubSubDesc" text="{msgs.newPubSubDesc}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <b:TextArea b:id="formPubSubDesc"
+                                ui:field="pubSubDesc" autoComplete="false"/>
                         </b:FormGroup>
                         <b:FormGroup>
                             <b:FormLabel for="pubSubPid" text="{msgs.newPubSubPid}"/>

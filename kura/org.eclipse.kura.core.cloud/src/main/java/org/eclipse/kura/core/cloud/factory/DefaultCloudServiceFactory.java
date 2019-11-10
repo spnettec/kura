@@ -198,6 +198,20 @@ public class DefaultCloudServiceFactory implements CloudConnectionFactory {
     }
 
     @Override
+    public String getCloudName(String pid) {
+        try {
+            ComponentConfiguration config = this.configurationService.getComponentConfiguration(pid);
+            String name = (String) config.getConfigurationProperties()
+                    .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
+            if (name != null)
+                return name;
+            return CLOUD_SERVICE_FACTORY_PID;
+        } catch (Exception e) {
+            return CLOUD_SERVICE_FACTORY_PID;
+        }
+    }
+
+    @Override
     public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService
@@ -210,6 +224,13 @@ public class DefaultCloudServiceFactory implements CloudConnectionFactory {
 
     @Override
     public void createConfiguration(String pid) throws KuraException {
+        createConfiguration(pid, null, null);
+    }
+
+    @Override
+    public void createConfiguration(String pid, String instanceName, String description) throws KuraException {
+        if (pid == null || pid.equals(""))
+            pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
         String dataTransportServicePid = DATA_TRANSPORT_SERVICE_PID + "-" + new Date().getTime();
         this.configurationService.createFactoryConfiguration(DATA_TRANSPORT_SERVICE_FACTORY_PID,
                 dataTransportServicePid, null, false);
@@ -223,6 +244,10 @@ public class DefaultCloudServiceFactory implements CloudConnectionFactory {
         Map<String, Object> cloudServiceProperties = new HashMap<>();
         name = DATA_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
         cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataServicePid));
+        if (instanceName != null && !instanceName.equals(""))
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, instanceName);
+        if (description != null && !description.equals(""))
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
         this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, pid, cloudServiceProperties,
                 true);
 

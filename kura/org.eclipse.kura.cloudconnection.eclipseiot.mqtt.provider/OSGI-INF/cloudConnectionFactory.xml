@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.DefaultCloudConnectionFactory"> 
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" name="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.DefaultCloudConnectionFactory"> 
    <implementation class="org.eclipse.kura.internal.cloudconnection.eclipseiot.mqtt.cloud.factory.DefaultCloudConnectionFactory"/>
    <reference bind="setConfigurationService" cardinality="1..1" interface="org.eclipse.kura.configuration.ConfigurationService" name="ConfigurationService" policy="static" unbind="unsetConfigurationService"/>
    <service>

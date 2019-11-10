@@ -98,6 +98,10 @@ public interface ConfigurationService {
      * @since 1.0.8
      */
     public static final String KURA_SERVICE_PID = "kura.service.pid";
+    public static final String KURA_SERVICE_NAME = "kura.service.name";
+    public static final String KURA_SERVICE_DESC = "kura.service.desc";
+    public static final String KURA_CLOUD_FACTORY_NAME = "kura.cloud.factory.name";
+    public static final String KURA_CLOUD_FACTORY_DESC = "kura.cloud.factory.desc";
 
     /**
      * Returns the list of Meta Type factory PIDs tracked by the Configuration Service.

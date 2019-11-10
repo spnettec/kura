@@ -30,10 +30,10 @@ import org.eclipse.kura.data.DataService;
 import org.eclipse.kura.data.DataTransportService;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentConstants;
+import org.osgi.service.component.ComponentContext;
 
 /**
  * The Kura default {@link CloudConnectionFactory} implements a three layer stack architecture.
@@ -172,6 +172,11 @@ public class DefaultCloudConnectionFactory implements CloudConnectionFactory {
     private static final String REFERENCE_TARGET_VALUE_FORMAT = "(" + ConfigurationService.KURA_SERVICE_PID + "=%s)";
 
     private ConfigurationService configurationService;
+    private BundleContext bundleContext;
+
+    public void activate(final ComponentContext context) {
+        this.bundleContext = context.getBundleContext();
+    }
 
     protected void setConfigurationService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
@@ -189,6 +194,20 @@ public class DefaultCloudConnectionFactory implements CloudConnectionFactory {
     }
 
     @Override
+    public String getCloudName(String pid) {
+        try {
+            ComponentConfiguration config = this.configurationService.getComponentConfiguration(pid);
+            String name = (String) config.getConfigurationProperties()
+                    .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
+            if (name != null)
+                return name;
+            return CLOUD_SERVICE_FACTORY_PID;
+        } catch (Exception e) {
+            return CLOUD_SERVICE_FACTORY_PID;
+        }
+    }
+
+    @Override
     public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService
@@ -201,7 +220,13 @@ public class DefaultCloudConnectionFactory implements CloudConnectionFactory {
 
     @Override
     public void createConfiguration(String pid) throws KuraException {
+        createConfiguration(pid, null, null);
+    }
 
+    @Override
+    public void createConfiguration(String pid, String instanceName, String description) throws KuraException {
+        if (pid == null || pid.equals(""))
+            pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
         String dataTransportServicePid = DATA_TRANSPORT_SERVICE_PID + "-" + new Date().getTime();
         this.configurationService.createFactoryConfiguration(DATA_TRANSPORT_SERVICE_FACTORY_PID,
                 dataTransportServicePid, null, false);
@@ -216,6 +241,10 @@ public class DefaultCloudConnectionFactory implements CloudConnectionFactory {
         Map<String, Object> cloudServiceProperties = new HashMap<>();
         name = DATA_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
         cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataServicePid));
+        if (instanceName != null && !instanceName.equals(""))
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, instanceName);
+        if (description != null && !description.equals(""))
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
         this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, pid, cloudServiceProperties,
                 true);
     }
@@ -281,10 +310,8 @@ public class DefaultCloudConnectionFactory implements CloudConnectionFactory {
     @Override
     public Set<String> getManagedCloudConnectionPids() throws KuraException {
 
-        final BundleContext context = FrameworkUtil.getBundle(DefaultCloudConnectionFactory.class).getBundleContext();
-
         try {
-            return context.getServiceReferences(CloudConnectionManager.class, null).stream().filter(ref -> {
+            return this.bundleContext.getServiceReferences(CloudConnectionManager.class, null).stream().filter(ref -> {
                 final Object kuraServicePid = ref.getProperty(ConfigurationService.KURA_SERVICE_PID);
 
                 if (!(kuraServicePid instanceof String)) {

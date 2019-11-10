@@ -13,6 +13,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.kura.configuration.ConfigurationService;
+
 public class GwtConfigComponent extends KuraBaseModel implements Serializable {
 
     private static final long serialVersionUID = -6388356998309026758L;
@@ -32,7 +34,7 @@ public class GwtConfigComponent extends KuraBaseModel implements Serializable {
     }
 
     public String getComponentDescription() {
-        return this.get("componentDescription");
+        return this.get(ConfigurationService.KURA_SERVICE_DESC);
     }
 
     public String getComponentIcon() {
@@ -44,7 +46,7 @@ public class GwtConfigComponent extends KuraBaseModel implements Serializable {
     }
 
     public String getComponentName() {
-        return this.get("componentName");
+        return this.get(ConfigurationService.KURA_SERVICE_NAME);
     }
 
     public String getFactoryId() {
@@ -86,7 +88,7 @@ public class GwtConfigComponent extends KuraBaseModel implements Serializable {
     }
 
     public void setComponentDescription(final String componentDescription) {
-        this.set("componentDescription", componentDescription);
+        this.set(ConfigurationService.KURA_SERVICE_DESC, componentDescription);
     }
 
     public void setComponentIcon(final String componentIcon) {
@@ -98,7 +100,7 @@ public class GwtConfigComponent extends KuraBaseModel implements Serializable {
     }
 
     public void setComponentName(final String componentName) {
-        this.set("componentName", componentName);
+        this.set(ConfigurationService.KURA_SERVICE_NAME, componentName);
     }
 
     public void setFactoryComponent(final boolean isFactory) {

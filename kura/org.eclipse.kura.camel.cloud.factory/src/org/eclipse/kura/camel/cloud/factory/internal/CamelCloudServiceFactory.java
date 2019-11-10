@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.kura.camel.cloud.factory.internal;
 
-import static org.eclipse.kura.camel.cloud.factory.internal.CamelFactory.FACTORY_ID;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.eclipse.kura.KuraException;
@@ -29,10 +25,10 @@ import org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.locale.LocaleContextHolder;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +40,14 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
     private static final Logger logger = LoggerFactory.getLogger(CamelCloudServiceFactory.class);
 
     public static final String PID = "org.eclipse.kura.camel.cloud.factory.CamelCloudServiceFactory";
-
+    public static final String CLOUD_SERVICE_FACTORY_PID = "org.eclipse.kura.camel.cloud.factory.CamelFactory";
     private ConfigurationService configurationService;
+
+    private BundleContext bundleContext;
+
+    public void activate(final ComponentContext context) {
+        this.bundleContext = context.getBundleContext();
+    }
 
     public void setConfigurationService(final ConfigurationService configurationService) {
         this.configurationService = configurationService;
@@ -61,8 +63,11 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
      * @throws KuraException
      *             if anything goes wrong
      */
-    protected void add(final String pid, final Map<String, Object> properties) throws KuraException {
+    protected void add(String pid, String name, String description, final Map<String, Object> properties)
+            throws KuraException {
         logger.info("Add: {}", pid);
+        if (pid == null || pid.equals(""))
+            pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
 
         final Map<String, Object> props = new HashMap<>();
 
@@ -79,8 +84,12 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
         }
 
         props.put("cloud.service.pid", pid);
-        String camelPid = FACTORY_ID + "-" + new Date().getTime();
-        this.configurationService.createFactoryConfiguration(FACTORY_ID, camelPid, props, true);
+        if (name != null && !name.equals(""))
+            props.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, name);
+        if (description != null && !description.equals(""))
+            props.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
+        String camelPid = CLOUD_SERVICE_FACTORY_PID + "-" + new Date().getTime();
+        this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, camelPid, props, true);
     }
 
     private static Filter getFilterUnchecked(final String filter) {
@@ -88,35 +97,6 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
             return FrameworkUtil.createFilter(filter);
         } catch (final Exception e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    /**
-     * Enumerate all registered CamelFactory instances
-     *
-     * @return a PID (<code>kura.service.pid</code>) set of all registered CamelFactory instances
-     */
-    public static Set<String> lookupIds() {
-        final Set<String> ids = new TreeSet<>();
-        try {
-
-            final Collection<ServiceReference<CamelFactory>> refs = FrameworkUtil
-                    .getBundle(CamelCloudServiceFactory.class).getBundleContext()
-                    .getServiceReferences(CamelFactory.class, null);
-            if (refs != null) {
-                for (final ServiceReference<CamelFactory> ref : refs) {
-                    addService(ref, ids);
-                }
-            }
-        } catch (final InvalidSyntaxException e) {
-        }
-        return ids;
-    }
-
-    private static void addService(final ServiceReference<CamelFactory> ref, final Set<String> ids) {
-        final Object kpid = ref.getProperty("kura.service.pid");
-        if (kpid instanceof String) {
-            ids.add((String) kpid);
         }
     }
 
@@ -140,8 +120,13 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
     }
 
     @Override
-    public void createConfiguration(final String pid) throws KuraException {
-        add(pid, Collections.<String, Object> emptyMap());
+    public void createConfiguration(final String pid, String name, String description) throws KuraException {
+        add(pid, name, description, Collections.<String, Object> emptyMap());
+    }
+
+    @Override
+    public void createConfiguration(String pid) throws KuraException {
+        add(pid, null, null, Collections.<String, Object> emptyMap());
     }
 
     @Override
@@ -153,16 +138,35 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
 
     @Override
     public String getFactoryPid() {
-        return FACTORY_ID;
+        return CLOUD_SERVICE_FACTORY_PID;
+    }
+
+    @Override
+    public String getCloudName(String pid) {
+        try {
+            List<ComponentConfiguration> configs = configurationService
+                    .getComponentConfigurations(getFilterUnchecked("(|(cloud.service.pid=" + pid + "))"));
+            if (configs == null || configs.size() > 1)
+                return CLOUD_SERVICE_FACTORY_PID;
+            ComponentConfiguration config = configs.get(0);
+            String name = (String) config.getConfigurationProperties()
+                    .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
+            if (name != null)
+                return name;
+            return CLOUD_SERVICE_FACTORY_PID;
+        } catch (Exception e) {
+            return CLOUD_SERVICE_FACTORY_PID;
+        }
     }
 
     @Override
     public String getFactoryName() {
         try {
-            ComponentConfiguration config = this.configurationService.getDefaultComponentConfiguration(FACTORY_ID);
+            ComponentConfiguration config = this.configurationService
+                    .getDefaultComponentConfiguration(CLOUD_SERVICE_FACTORY_PID);
             return config.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage()).getName();
         } catch (Exception e) {
-            return FACTORY_ID;
+            return CLOUD_SERVICE_FACTORY_PID;
         }
     }
 
@@ -178,12 +182,11 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
         final Set<String> result = new HashSet<>();
 
         for (final ComponentConfiguration cc : this.configurationService.getComponentConfigurations()) {
-            if (cc.getDefinition() != null && FACTORY_ID.equals(cc.getDefinition().getId())) {
+            if (cc.getDefinition() != null && CLOUD_SERVICE_FACTORY_PID.equals(cc.getDefinition().getId())) {
                 String pid = (String) cc.getConfigurationProperties().get("cloud.service.pid");
                 result.add(pid);
             }
         }
-
         return result;
     }
 }

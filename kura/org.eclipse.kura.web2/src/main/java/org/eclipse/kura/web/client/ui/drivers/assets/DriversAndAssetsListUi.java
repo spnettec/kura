@@ -170,7 +170,7 @@ public class DriversAndAssetsListUi extends Composite {
 
             @Override
             public String getValue(final DriverAssetInfo object) {
-                return object.isAsset() ? " -> " + object.pid : object.pid;
+                return object.isAsset() ? " -> " + object.getName() : object.getName();
             }
         };
 
@@ -384,6 +384,13 @@ public class DriversAndAssetsListUi extends Composite {
                 return configurations.getConfiguration(driverPid).getConfiguration().getComponentName();
             }
             return configurations.getDriverFactoryNameByPid(factoryPid);
+        }
+
+        public String getName() {
+
+            if (configurations.getConfiguration(pid) == null)
+                return pid;
+            return configurations.getConfiguration(pid).getConfiguration().getComponentName();
         }
 
         public boolean isAsset() {

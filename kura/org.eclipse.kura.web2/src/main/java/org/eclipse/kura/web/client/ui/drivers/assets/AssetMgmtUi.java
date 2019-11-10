@@ -128,7 +128,7 @@ public class AssetMgmtUi extends Composite {
                                 newConfig.getFactoryId(), newConfig, result1 -> {
                                     configurations.setConfiguration(new GwtConfigComponent(newConfig));
                                     assetUi.setDirty(false);
-                                }));
+                                }, null));
             }
         });
         return result;

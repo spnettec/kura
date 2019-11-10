@@ -57,6 +57,8 @@ public interface CloudConnectionFactory {
 
     public String getFactoryName();
 
+    public String getCloudName(String pid);
+
     /**
      * This method creates a CloudEndpoint instance and, eventually, more service instances that are necessary to
      * identify and the manage the endpoint and the connection. It initializes the configuration of the created services
@@ -72,6 +74,8 @@ public interface CloudConnectionFactory {
      *             an exception is thrown in case the creation operation fails
      */
     public void createConfiguration(String pid) throws KuraException;
+
+    public void createConfiguration(String pid, String name, String description) throws KuraException;
 
     /**
      * Returns the list of {@code kura.service.pid}s that compose the cloud connection associated with the provided

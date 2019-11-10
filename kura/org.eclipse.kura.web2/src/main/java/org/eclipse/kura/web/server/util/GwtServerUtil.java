@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Icon;
@@ -362,12 +363,15 @@ public final class GwtServerUtil {
             } else {
                 gwtConfig.setFactoryComponent(false);
             }
-
-            if (ocd.getName() != null) {
+            if (props != null && props.get(ConfigurationService.KURA_SERVICE_NAME) != null) {
+                gwtConfig.setComponentName((String) props.get(ConfigurationService.KURA_SERVICE_NAME));
+            } else if (ocd.getName() != null) {
                 gwtConfig.setComponentName(ocd.getName());
             }
-
-            gwtConfig.setComponentDescription(ocd.getDescription());
+            if (props != null && props.get(ConfigurationService.KURA_SERVICE_DESC) != null) {
+                gwtConfig.setComponentDescription((String) props.get(ConfigurationService.KURA_SERVICE_DESC));
+            } else if (ocd.getDescription() != null)
+                gwtConfig.setComponentDescription(ocd.getDescription());
             if (ocd.getIcon() != null && !ocd.getIcon().isEmpty()) {
                 Icon icon = ocd.getIcon().get(0);
                 gwtConfig.setComponentIcon(icon.getResource());

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -220,8 +221,8 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             String componentDescription) throws GwtKuraException {
         this.checkXSRFToken(xsrfToken);
         Map<String, Object> properties = new HashMap<>();
-        properties.put("componentName", name);
-        properties.put("componentDescription", componentDescription);
+        properties.put(ConfigurationService.KURA_SERVICE_NAME, name);
+        properties.put(ConfigurationService.KURA_SERVICE_DESC, componentDescription);
         internalCreateFactoryComponent(factoryPid, pid, properties);
     }
 
@@ -243,6 +244,8 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
         try {
+            if (pid == null || pid.equals(""))
+                pid = factoryPid + "-Component-" + new Date().getTime();
             cs.createFactoryConfiguration(factoryPid, pid, properties, false);
 
             String filterString = "(" + ConfigurationService.KURA_SERVICE_PID + "=" + pid + ")";
@@ -582,8 +585,8 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
             if (props != null && props.get(SERVICE_FACTORY_PID) != null) {
                 String name = ocd.getName();
-                if (props.containsKey("componentName"))
-                    name = (String) props.get("componentName");
+                if (props.containsKey(ConfigurationService.KURA_SERVICE_NAME))
+                    name = (String) props.get(ConfigurationService.KURA_SERVICE_DESC);
                 if (name == null || name.equals(""))
                     name = stripPidPrefix(config.getPid());
                 gwtConfig.setComponentName(name);
@@ -594,8 +597,8 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                 gwtConfig.setFactoryComponent(false);
             }
             String descCription = "";
-            if (props.containsKey("componentDescription"))
-                descCription = (String) props.get("componentDescription");
+            if (props.containsKey(ConfigurationService.KURA_SERVICE_DESC))
+                descCription = (String) props.get(ConfigurationService.KURA_SERVICE_DESC);
             if (descCription == null || descCription.equals(""))
                 gwtConfig.setComponentDescription(ocd.getDescription());
             else

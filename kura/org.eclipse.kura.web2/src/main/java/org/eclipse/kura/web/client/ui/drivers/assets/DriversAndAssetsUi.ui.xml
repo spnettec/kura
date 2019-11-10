@@ -44,15 +44,27 @@
                     <b:Form type="HORIZONTAL">
                         <b:FieldSet>
                             <b:FormGroup>
-                                <b:FormLabel for="driverFactory" text="{msgs.driverFactory}" />
+                                <b:FormLabel for="formDriverFactory" text="{msgs.driverFactory}" />
                                 <b:InlineHelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                                <b:ListBox b:id="driverFactory" ui:field="driverFactoriesList" />
+                                <b:ListBox b:id="formDriverFactory" ui:field="driverFactoriesList" />
                             </b:FormGroup>
                             <b:FormGroup>
-                                <b:FormLabel for="driverName" text="{msgs.driverName}" />
+                                <b:FormLabel for="formDriverPid" text="{msgs.driverPid}" />
                                 <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                                <kura.util:PidTextBox b:id="driverName" ui:field="driverName"
+                                <kura.util:PidTextBox b:id="formDriverPid" ui:field="driverPid"
                                     autoComplete="false" validateOnBlur="true" />
+                            </b:FormGroup>
+                            <b:FormGroup>
+                                <b:FormLabel for="formDriverName" text="{msgs.driverName}" />
+                                <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                                <b:TextBox b:id="formDriverName"
+                                    ui:field="driverName" autoComplete="false"/>
+                            </b:FormGroup>
+                            <b:FormGroup>
+                                <b:FormLabel for="formDriverDesc" text="{msgs.driverDesc}" />
+                                <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                                <b:TextArea b:id="formDriverDesc"
+                                    ui:field="driverDesc" autoComplete="false"/>
                             </b:FormGroup>
                         </b:FieldSet>
                     </b:Form>
@@ -72,14 +84,26 @@
                     <b:Form type="HORIZONTAL">
                         <b:FieldSet>
                             <b:FormGroup>
-                                <b:FormLabel for="assetName" text="{msgs.assetName}" />
+                                <b:FormLabel for="formAssetPid" text="{msgs.assetPid}" />
                                 <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                                <kura.util:PidTextBox b:id="assetName" ui:field="assetName"
+                                <kura.util:PidTextBox b:id="formAssetPid" ui:field="assetPid"
                                     autoComplete="false" validateOnBlur="true" />
                             </b:FormGroup>
                             <b:FormGroup>
-                                <b:FormLabel for="driverPid" text="{msgs.driverName}" />
-                                <b:TextBox b:id="driverPid" ui:field="driverPid" enabled="false" />
+                                <b:FormLabel for="formAssetName"  text="{msgs.assetName}" />
+                                <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                                <b:TextBox b:id="formAssetName"
+                                    ui:field="assetName" autoComplete="false"/>
+                            </b:FormGroup>
+                            <b:FormGroup>
+                                <b:FormLabel for="formAssetDesc"  text="{msgs.assetDesc}" />
+                                <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                                <b:TextArea b:id="formAssetDesc"
+                                    ui:field="assetDesc" autoComplete="false"/>
+                            </b:FormGroup>
+                            <b:FormGroup>
+                                <b:FormLabel for="formAssetDriverPid" text="{msgs.driverPid}" />
+                                <b:TextBox b:id="formAssetDriverPid" ui:field="assetDriverPid" enabled="false" />
                             </b:FormGroup>
                         </b:FieldSet>
                     </b:Form>
