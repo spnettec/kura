@@ -708,10 +708,8 @@ public class EntryClassUi extends Composite implements Context {
             String name = EntryClassUi.this.componentName.getText();
             String pid = EntryClassUi.this.componentPid.getPid();
             String desc = EntryClassUi.this.componentDesc.getText();
-            if (pid == null) {
-                return;
-            }
-            if (SELECT_COMPONENT.equalsIgnoreCase(factoryPid) || "".equals(pid)) {
+
+            if (SELECT_COMPONENT.equalsIgnoreCase(factoryPid)) {
                 EntryClassUi.this.errorAlertText.setText(MSGS.servicesComponentFactoryAlertNotSelected());
                 errorModal.show();
                 return;

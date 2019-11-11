@@ -148,10 +148,12 @@ public class CloudConnectionConfigurationsUi extends Composite {
                             context.callback(token -> gwtComponentService.findComponentConfigurations(token,
                                     FilterUtil.getPidFilter(pidsResult.iterator()), context.callback(result -> {
                                         boolean isFirstEntry = true;
-                                        for (GwtConfigComponent pair : result) {
-                                            if (pidsResult.contains(pair.getComponentId())) {
-                                                renderTabs(pair, isFirstEntry);
-                                                isFirstEntry = false;
+                                        for (String pid : pidsResult) {
+                                            for (GwtConfigComponent pair : result) {
+                                                if (pid.equals(pair.getComponentId())) {
+                                                    renderTabs(pair, isFirstEntry);
+                                                    isFirstEntry = false;
+                                                }
                                             }
                                         }
                                     }))));

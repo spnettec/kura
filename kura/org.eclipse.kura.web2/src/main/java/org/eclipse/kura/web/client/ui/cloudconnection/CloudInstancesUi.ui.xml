@@ -78,13 +78,6 @@
                             </g:FlowPanel>
                         </b:FormGroup>
                         <b:FormGroup>
-                            <b:FormLabel for="cloudConnectionPid" text="{msgs.newCloudServicePid}"/>
-                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE"/>
-                            <b:Icon type="COG" ui:field="cloudConnectionPidSpinner" spin="true" visible="false" addStyleNames="{style.spinner}"/>
-                            <kura.util:PidTextBox ui:field="cloudConnectionPid" b:id="cloudConnectionPid" allowBlank="false"
-                                autoComplete="false" validateOnBlur="true"/>
-                        </b:FormGroup>
-                        <b:FormGroup>
                             <b:FormLabel for="formCloudConnectionName" text="{msgs.newCloudServiceName}" />
                             <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
                             <b:TextBox b:id="formCloudConnectionName"
@@ -95,6 +88,13 @@
                             <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
                             <b:TextArea b:id="formCloudConnectionDesc"
                                 ui:field="cloudConnectionDesc" autoComplete="false"/>
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="cloudConnectionPid" text="{msgs.newCloudServicePid}"/>
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE"/>
+                            <b:Icon type="COG" ui:field="cloudConnectionPidSpinner" spin="true" visible="false" addStyleNames="{style.spinner}"/>
+                            <kura.util:PidTextBox ui:field="cloudConnectionPid" b:id="cloudConnectionPid" allowBlank="false"
+                                autoComplete="false" validateOnBlur="true"/>
                         </b:FormGroup>
                     </b:Form>
                 </b:ModalBody>

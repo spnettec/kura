@@ -314,14 +314,6 @@
 								ui:field="newFactoryComponentFormLabel" />
 							<b:ListBox b:id="formFactory" ui:field="factoriesList" />
 						</b:FormGroup>
-						<b:FormGroup>
-							<b:FormLabel for="formPid"
-								ui:field="componentInstancePidLabel" />
-							<b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-							<kura.util:PidTextBox b:id="formPid"
-								ui:field="componentPid" autoComplete="false"
-								validateOnBlur="true" />
-						</b:FormGroup>
                         <b:FormGroup>
                             <b:FormLabel for="formName"
                                 ui:field="componentInstanceNameLabel" />
@@ -335,6 +327,14 @@
                             <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
                             <b:TextArea b:id="formDesc"
                                 ui:field="componentDesc" autoComplete="false"/>
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="formPid"
+                                ui:field="componentInstancePidLabel" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <kura.util:PidTextBox b:id="formPid"
+                                ui:field="componentPid" autoComplete="false"
+                                validateOnBlur="true" />
                         </b:FormGroup>
 					</b:FieldSet>
 				</b:Form>

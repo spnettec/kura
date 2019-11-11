@@ -22,6 +22,7 @@ import static org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry.GwtCloud
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -200,14 +201,15 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid,
             String name, String description) throws GwtKuraException {
         checkXSRFToken(xsrfToken);
-        if (factoryPid == null || factoryPid.trim().isEmpty() || cloudServicePid == null
-                || cloudServicePid.trim().isEmpty()) {
+        if (factoryPid == null || factoryPid.trim().isEmpty()) {
             throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_NULL_ARGUMENT);
         }
-
+        if (cloudServicePid == null || cloudServicePid.trim().isEmpty())
+            cloudServicePid = factoryPid + "-Component-" + new Date().getTime();
+        final String pid = cloudServicePid;
         withAllCloudConnectionFactories(service -> {
             if (service.getFactoryPid().equals(factoryPid)) {
-                service.createConfiguration(cloudServicePid, name, description);
+                service.createConfiguration(pid, name, description);
             }
         });
 
@@ -303,10 +305,12 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     }
 
     @Override
-    public void createPubSubInstance(final GwtXSRFToken token, final String pid, final String factoryPid,
+    public void createPubSubInstance(final GwtXSRFToken token, String pid, final String factoryPid,
             final String cloudConnectionPid, String name, String description) throws GwtKuraException {
         checkXSRFToken(token);
-
+        if (pid == null || pid.trim().isEmpty())
+            pid = factoryPid + "-Component-" + new Date().getTime();
+        final String pubSubPid = pid;
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
@@ -315,7 +319,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
             properties.put(CloudConnectionConstants.CLOUD_ENDPOINT_SERVICE_PID_PROP_NAME.value(), cloudConnectionPid);
             properties.put(ConfigurationService.KURA_SERVICE_NAME, name);
             properties.put(ConfigurationService.KURA_SERVICE_DESC, description);
-            cs.createFactoryConfiguration(factoryPid, pid, properties, true);
+            cs.createFactoryConfiguration(factoryPid, pubSubPid, properties, true);
 
             auditLogger.info(
                     "UI CloudConnection - Success - Successfully created pub/sub instance for user: {}, session {}",

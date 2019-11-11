@@ -470,10 +470,6 @@ public class CloudInstancesUi extends Composite {
         final String name = this.pubSubName.getText();
         final String desc = this.pubSubDesc.getText();
 
-        if (kuraServicePid == null) {
-            return;
-        }
-
         this.newPubSubModal.hide();
 
         final GwtCloudEntry entry = getSelectedObject();
@@ -484,6 +480,9 @@ public class CloudInstancesUi extends Composite {
 
         final String factoryPid = this.pubSubFactoriesPids.getSelectedValue();
 
+        this.pubSubPid.setText("");
+        this.pubSubName.setText("");
+        this.pubSubDesc.setText("");
         RequestQueue.submit(context -> this.gwtXSRFService
                 .generateSecurityToken(context.callback(token -> this.gwtCloudConnection.createPubSubInstance(token,
                         kuraServicePid, factoryPid, entry.getPid(), name, desc,
@@ -503,10 +502,6 @@ public class CloudInstancesUi extends Composite {
         final String name = this.cloudConnectionName.getText();
         final String desc = this.cloudConnectionDesc.getText();
 
-        if (newCloudServicePid == null) {
-            return;
-        }
-
         RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
                 context.callback(token -> this.gwtCloudConnection.createCloudServiceFromFactory(token, factoryPid,
                         newCloudServicePid, name, desc, context.callback(new AsyncCallback<Void>() {
@@ -516,6 +511,9 @@ public class CloudInstancesUi extends Composite {
                                 FailureHandler.handle(caught,
                                         CloudInstancesUi.this.gwtCloudConnection.getClass().getSimpleName());
                                 CloudInstancesUi.this.newConnectionModal.hide();
+                                CloudInstancesUi.this.cloudConnectionPid.setText("");
+                                CloudInstancesUi.this.cloudConnectionName.setText("");
+                                CloudInstancesUi.this.cloudConnectionDesc.setText("");
                             }
 
                             @Override

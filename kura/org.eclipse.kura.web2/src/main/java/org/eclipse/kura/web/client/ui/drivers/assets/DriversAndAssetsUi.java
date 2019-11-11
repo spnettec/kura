@@ -12,6 +12,7 @@
 package org.eclipse.kura.web.client.ui.drivers.assets;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.eclipse.kura.configuration.ConfigurationService;
@@ -240,13 +241,15 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
     private void initNewDriverModal() {
         this.buttonNewDriverApply.addClickHandler(event -> {
-            final String pid = DriversAndAssetsUi.this.driverPid.getPid();
+            String driverpPid = DriversAndAssetsUi.this.driverPid.getPid();
             final String name = DriversAndAssetsUi.this.driverName.getText();
             final String desc = DriversAndAssetsUi.this.driverDesc.getText();
-            if (pid == null) {
-                return;
-            }
 
+            final String factoryPid = DriversAndAssetsUi.this.driverFactoriesList.getSelectedValue();
+            if (driverpPid == null || driverpPid.equals("")) {
+                driverpPid = factoryPid + "-" + (new Date()).getTime();
+            }
+            final String pid = driverpPid;
             if (this.driverFactoriesList.getSelectedIndex() == 0) {
                 this.confirmDialog.show(MSGS.driversAssetsInvalidDriverFactory(), AlertDialog.Severity.ALERT,
                         (ConfirmListener) null);
@@ -258,8 +261,6 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
                         (ConfirmListener) null);
                 return;
             }
-
-            final String factoryPid = DriversAndAssetsUi.this.driverFactoriesList.getSelectedValue();
 
             DriversAndAssetsRPC.createNewDriver(factoryPid, pid, name, desc, result -> {
                 this.configurations.createAndRegisterConfiguration(pid, factoryPid, name, desc);
@@ -275,12 +276,15 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
     private void initNewAssetModal() {
 
         this.buttonNewAssetApply.addClickHandler(event -> {
-            final String pid = this.assetPid.getPid();
+            final String inputPid = this.assetPid.getPid();
             final String name = this.assetName.getText();
             final String desc = this.assetDesc.getText();
 
-            if (pid == null) {
-                return;
+            final String newDriverPid = this.driverAndAssetsListUi.getSelectedItem().getPid();
+
+            String pid = inputPid;
+            if (pid == null || pid.equals("")) {
+                pid = newDriverPid + "-" + (new Date()).getTime();
             }
 
             if (this.configurations.isPidExisting(pid)) {
@@ -288,8 +292,6 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
                         (ConfirmListener) null);
                 return;
             }
-
-            final String newDriverPid = this.driverAndAssetsListUi.getSelectedItem().getPid();
 
             createAsset(pid, newDriverPid, name, desc);
         });

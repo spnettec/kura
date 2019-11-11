@@ -244,7 +244,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
         try {
-            if (pid == null || pid.equals(""))
+            if (pid == null || pid.trim().isEmpty())
                 pid = factoryPid + "-Component-" + new Date().getTime();
             cs.createFactoryConfiguration(factoryPid, pid, properties, false);
 

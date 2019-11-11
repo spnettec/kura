@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/XmlRouterComponent">
     <OCD id="org.eclipse.kura.camel.xml.XmlRouterComponent"
-         name="Camel XML router" description="Configurable Camel-based XML router">
+         name="%name" description="%description">
 
         <Icon resource="OSGI-INF/logo.png" size="32" />
 
-        <AD id="xml.data" name="Router XML"
-            description="Camel XML route definitions|TextArea"
+        <AD id="xml.data" name="%xmlData"
+            description="%xmlDataDesc"
             type="String"
             cardinality="1"
             required="false"
@@ -18,24 +18,24 @@
     &lt;/route&gt;&#10;
 &lt;/routes&gt;'/>
 
-        <AD id="component.prereqs" name="Required Camel Components"
-            description="A comma separated list of Camel components which are required in order to start up this setup (e.g. amqp, stream)"
+        <AD id="component.prereqs" name="%reqCom"
+            description="%reqComDesc"
             type="String"
             cardinality="1"
             required="false"
             max="2147483647"
             />
 
-        <AD id="language.prereqs" name="Required Camel Languages"
-            description="A comma separated list of Camel languages which are required in order to start up this setup (e.g. javaScript)"
+        <AD id="language.prereqs" name="%reqLang"
+            description="%reqLangDesc"
             type="String"
             cardinality="1"
             required="false"
             max="2147483647"
             />
 
-        <AD id="cloudService.prereqs" name="Cloud Service Mappings"
-            description="A comma separated list of entries in the format name=filter or name=kura-pid, mapping cloud service instances to component names. (e.g. cloud=org.eclipse.kura.cloud.CloudService)"
+        <AD id="cloudService.prereqs" name="%reqCloud"
+            description="%reqCloudDesc"
             type="String"
             cardinality="1"
             required="false"
@@ -43,19 +43,19 @@
             />
 
         <AD id="initCode"
-            name="JavaScript init code"
+            name="%initCode"
             type="String"
             cardinality="1"
             required="false"
-            description="JavaScript code which is called when the router is initialized first. The camel context is available in the variable 'camelContext'.|TextArea"/>
+            description="%initCodeDesc"/>
 
         <AD id="disableJmx"
-            name="Disable JMX"
+            name="%disableJmx"
             type="Boolean"
             cardinality="1"
             required="true"
             default="false"
-            description="Disable the JMX integration for this Camel context"/>
+            description="%disableJmxDesc"/>
 
     </OCD>
 

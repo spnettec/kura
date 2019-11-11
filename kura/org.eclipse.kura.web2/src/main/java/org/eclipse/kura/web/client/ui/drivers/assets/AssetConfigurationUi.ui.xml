@@ -99,7 +99,7 @@
                             <g:FormPanel ui:field="uploadForm">
                                 <b:FieldSet>
                                     <b:FormGroup>
-                                        <b:FormLabel>File</b:FormLabel>
+                                        <b:FormLabel text="{msgs.fileLabel}"/>
                                         <g:FileUpload ui:field="filePath"></g:FileUpload>
                                         <b:CheckBox ui:field="appendCheck" text="{msgs.wiresAppendChannelsCheck}"/>
                                         <b:HelpBlock text="{msgs.wiresAppendChannelsHelpText}"/>
