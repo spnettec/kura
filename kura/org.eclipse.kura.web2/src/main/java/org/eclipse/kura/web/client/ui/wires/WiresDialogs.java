@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui.wires;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.eclipse.kura.web.client.messages.Messages;
@@ -223,10 +224,16 @@ public class WiresDialogs extends Composite {
                 String wireAssetPid = WiresDialogs.this.newAssetPid.getPid();
                 String name = WiresDialogs.this.newAssetName.getText();
                 String desc = WiresDialogs.this.newAssetDesc.getText();
-                if (wireAssetPid == null || !listener.onNewPidInserted(wireAssetPid)) {
+                if (!listener.onNewPidInserted(wireAssetPid)) {
                     return;
                 }
                 String driverPid = WiresDialogs.this.newAssetDriverInstance.getData();
+                if (wireAssetPid == null || wireAssetPid.equals("")) {
+                    wireAssetPid = driverPid + "-" + (new Date()).getTime();
+                }
+                WiresDialogs.this.newAssetPid.setText("");
+                WiresDialogs.this.newAssetName.setText("");
+                WiresDialogs.this.newAssetDesc.setText("");
                 WiresDialogs.this.newAssetModal.hide();
                 if (pickCallback != null) {
                     pickCallback.onNewAssetCreated(wireAssetPid, driverPid, name, desc);
@@ -251,16 +258,20 @@ public class WiresDialogs extends Composite {
 
             @Override
             public void onClick(ClickEvent event) {
-                final String pid = WiresDialogs.this.newDriverPid.getPid();
+                String driverPid = WiresDialogs.this.newDriverPid.getPid();
                 final String name = WiresDialogs.this.newDriverName.getText();
                 final String desc = WiresDialogs.this.newDriverDesc.getText();
-                if (pid == null) {
-                    return;
+
+                final String factoryPid = WiresDialogs.this.newDriverFactory.getSelectedValue();
+
+                if (driverPid == null || driverPid.equals("")) {
+                    driverPid = factoryPid + "-" + (new Date()).getTime();
                 }
+                final String pid = driverPid;
                 if (listener == null || !listener.onNewPidInserted(pid)) {
                     return;
                 }
-                final String factoryPid = WiresDialogs.this.newDriverFactory.getSelectedValue();
+
                 WiresRPC.createNewDriver(factoryPid, pid, name, desc, new WiresRPC.Callback<GwtConfigComponent>() {
 
                     @Override
@@ -274,7 +285,7 @@ public class WiresDialogs extends Composite {
                             listener.onNewDriverCreated(pid, factoryPid, name, desc, result);
                         }
                     }
-                });
+                }, ex -> newDriverModal.hide());
             }
         });
 

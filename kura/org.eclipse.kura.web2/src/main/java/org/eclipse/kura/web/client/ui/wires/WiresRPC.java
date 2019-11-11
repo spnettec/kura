@@ -161,13 +161,15 @@ public final class WiresRPC {
     }
 
     public static void createNewDriver(final String factoryPid, final String pid, String name, String desc,
-            final Callback<GwtConfigComponent> callback) {
+            final Callback<GwtConfigComponent> callback, final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
         gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
                 EntryClassUi.hideWaitModal();
+                if (errorCallback != null)
+                    errorCallback.onError(ex);
                 FailureHandler.handle(ex);
             }
 
@@ -179,6 +181,8 @@ public final class WiresRPC {
                             @Override
                             public void onFailure(Throwable ex) {
                                 EntryClassUi.hideWaitModal();
+                                if (errorCallback != null)
+                                    errorCallback.onError(ex);
                                 FailureHandler.handle(ex);
                             }
 
@@ -189,6 +193,8 @@ public final class WiresRPC {
                                     @Override
                                     public void onFailure(Throwable ex) {
                                         EntryClassUi.hideWaitModal();
+                                        if (errorCallback != null)
+                                            errorCallback.onError(ex);
                                         FailureHandler.handle(ex);
                                     }
 
@@ -200,6 +206,8 @@ public final class WiresRPC {
                                                     @Override
                                                     public void onFailure(Throwable ex) {
                                                         EntryClassUi.hideWaitModal();
+                                                        if (errorCallback != null)
+                                                            errorCallback.onError(ex);
                                                         FailureHandler.handle(ex);
                                                     }
 
@@ -240,4 +248,8 @@ public final class WiresRPC {
         public void onSuccess(T result);
     }
 
+    public static interface ErrorCallback<T extends Throwable> {
+
+        public void onError(T result);
+    }
 }

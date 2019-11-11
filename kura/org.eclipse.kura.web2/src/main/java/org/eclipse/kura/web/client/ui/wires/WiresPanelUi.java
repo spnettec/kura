@@ -16,6 +16,7 @@ package org.eclipse.kura.web.client.ui.wires;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -350,11 +351,17 @@ public class WiresPanelUi extends Composite
 
             @Override
             public void onNewComponentCreated(String pid, String name, String desc) {
+                if (pid == null || pid.equals("")) {
+                    pid = factoryPid + "-" + (new Date()).getTime();
+                }
                 wireComposer.addWireComponent(descriptors.createNewComponent(pid, factoryPid, name, desc));
             }
 
             @Override
             public void onNewAssetCreated(String pid, String driverPid, String name, String desc) {
+                if (pid == null || pid.equals("")) {
+                    pid = driverPid + "-" + (new Date()).getTime();
+                }
                 wireComposer.addWireComponent(createAsset(pid, driverPid, name, desc));
             }
 
@@ -495,11 +502,17 @@ public class WiresPanelUi extends Composite
 
             @Override
             public void onNewComponentCreated(String pid, String name, String desc) {
+                if (pid == null || pid.equals("")) {
+                    pid = factoryPid + "-" + (new Date()).getTime();
+                }
                 event.complete(descriptors.createNewComponent(pid, factoryPid, name, desc));
             }
 
             @Override
             public void onNewAssetCreated(String pid, String driverPid, String name, String desc) {
+                if (pid == null || pid.equals("")) {
+                    pid = driverPid + "-" + (new Date()).getTime();
+                }
                 event.complete(createAsset(pid, driverPid, name, desc));
             }
 

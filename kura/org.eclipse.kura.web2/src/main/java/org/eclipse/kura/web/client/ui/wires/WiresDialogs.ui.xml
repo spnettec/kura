@@ -77,13 +77,6 @@
                 <b:Form type="HORIZONTAL">
                     <b:FieldSet>
                         <b:FormGroup>
-                            <b:FormLabel for="newAssetPid" ui:field="newAssetPidLabel"
-                                text="{msgs.assetPid}" />
-                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                            <kura.util:PidTextBox ui:field="newAssetPid" b:id="newAssetPid"
-                                autoComplete="false" validateOnBlur="true" />
-                        </b:FormGroup>
-                        <b:FormGroup>
                             <b:FormLabel for="formNewAssetName" text="{msgs.assetName}" />
                             <b:TextBox ui:field="newAssetName" b:id="formNewAssetName"
                                 allowBlank="false" autoComplete="false" />
@@ -92,6 +85,13 @@
                             <b:FormLabel for="formNewAssetDesc" text="{msgs.assetDesc}" />
                             <b:TextArea ui:field="newAssetDesc" b:id="formNewAssetDesc"
                                 allowBlank="false" autoComplete="false" />
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="newAssetPid" ui:field="newAssetPidLabel"
+                                text="{msgs.assetPid}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <kura.util:PidTextBox ui:field="newAssetPid" b:id="newAssetPid"
+                                autoComplete="false" validateOnBlur="true" />
                         </b:FormGroup>
                         <b:FormGroup>
                             <b:FormLabel for="newAssetDriverInstance" ui:field="newAssetDriverInstanceLabel"
@@ -121,13 +121,6 @@
                             <b:ListBox ui:field="newDriverFactory" b:id="newDriverFactory" />
                         </b:FormGroup>
                         <b:FormGroup>
-                            <b:FormLabel for="newDriverPid" ui:field="newDriverPidLabel"
-                                text="{msgs.driverPid}" />
-                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                            <kura.util:PidTextBox ui:field="newDriverPid" b:id="newDriverPid"
-                                autoComplete="false" validateOnBlur="true" />
-                        </b:FormGroup>
-                        <b:FormGroup>
                             <b:FormLabel for="formNewDriverName" text="{msgs.driverName}" />
                             <b:TextBox ui:field="newDriverName" b:id="formNewDriverName"
                                 allowBlank="false" autoComplete="false" />
@@ -136,6 +129,13 @@
                             <b:FormLabel for="formNewDriverDesc" text="{msgs.driverDesc}" />
                             <b:TextArea ui:field="newDriverDesc" b:id="formNewDriverDesc"
                                 allowBlank="false" autoComplete="false" />
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="newDriverPid" ui:field="newDriverPidLabel"
+                                text="{msgs.driverPid}" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <kura.util:PidTextBox ui:field="newDriverPid" b:id="newDriverPid"
+                                autoComplete="false" validateOnBlur="true" />
                         </b:FormGroup>
                     </b:FieldSet>
                 </b:Form>
@@ -154,14 +154,6 @@
                 <b:Form>
                     <b:FieldSet>
                         <b:FormGroup>
-                            <b:FormLabel for="componentPid" addStyleNames="{style.newComponentName}"
-                                ui:field="componentPidLabel" />
-                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                            <kura.util:PidTextBox ui:field="componentPid" b:id="componentPid"
-                                autoComplete="false" validateOnBlur="true"
-                                placeholder="{msgs.wiresComponentNamePlaceholder}" />
-                        </b:FormGroup>
-                        <b:FormGroup>
                             <b:FormLabel for="formComponentName" text="{msgs.wiresComponentName}" />
                             <b:TextBox ui:field="componentName" b:id="formComponentName"
                                 allowBlank="false" autoComplete="false" />
@@ -170,6 +162,14 @@
                             <b:FormLabel for="formComponentDesc" text="{msgs.wiresComponentDesc}" />
                             <b:TextArea ui:field="componentDesc" b:id="formComponentDesc"
                                 allowBlank="false" autoComplete="false" />
+                        </b:FormGroup>
+                        <b:FormGroup>
+                            <b:FormLabel for="componentPid" addStyleNames="{style.newComponentName}"
+                                ui:field="componentPidLabel" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <kura.util:PidTextBox ui:field="componentPid" b:id="componentPid"
+                                autoComplete="false" validateOnBlur="true"
+                                placeholder="{msgs.wiresComponentNamePlaceholder}" />
                         </b:FormGroup>
                     </b:FieldSet>
                 </b:Form>
