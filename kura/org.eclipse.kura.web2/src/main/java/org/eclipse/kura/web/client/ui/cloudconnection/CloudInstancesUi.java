@@ -550,7 +550,7 @@ public class CloudInstancesUi extends Composite {
         }
 
         for (final GwtCloudEntry entry : entries) {
-            this.pubSubFactoriesPids.addItem(entry.getPid());
+            this.pubSubFactoriesPids.addItem(entry.getName(), entry.getPid());
         }
 
         String selectedPubSubPid = CloudInstancesUi.this.pubSubFactoriesPids.getSelectedValue();

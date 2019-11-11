@@ -43,7 +43,7 @@
     value="GWT_LOCALE" />
   <set-configuration-property name="locale.searchorder"
         value="cookie,meta,useragent" />
- 
+  <!-- <set-property name="compiler.useSourceMaps" value="true" /> -->
   <!-- Locales: English language, independent of country -->
   <extend-property name="locale" values="zh_CN"/>
   <extend-property name="locale" values="en"/>

@@ -275,7 +275,6 @@ WireComposer.prototype.deleteWireComponent = function (component) {
 		var element = elements[i];
 		if (element.attributes.wireComponent.pid === component.pid) {
 			element.remove()
-			this.dispatchWireComponentDeleted(component);
 		}
 	}
 }

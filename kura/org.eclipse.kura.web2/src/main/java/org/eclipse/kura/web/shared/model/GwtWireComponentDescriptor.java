@@ -18,6 +18,7 @@ public final class GwtWireComponentDescriptor extends GwtBaseModel implements Se
     private static final long serialVersionUID = -5716936754311577904L;
 
     private String name;
+    private String description;
     private String factoryPid;
 
     private int minInputPorts;
@@ -35,10 +36,11 @@ public final class GwtWireComponentDescriptor extends GwtBaseModel implements Se
     public GwtWireComponentDescriptor() {
     }
 
-    public GwtWireComponentDescriptor(String name, String factoryPid, int minInputPorts, int maxInputPorts,
-            int defaultInputPorts, int minOutputPorts, int maxOutputPorts, int defaultOutputPorts,
+    public GwtWireComponentDescriptor(String name, String description, String factoryPid, int minInputPorts,
+            int maxInputPorts, int defaultInputPorts, int minOutputPorts, int maxOutputPorts, int defaultOutputPorts,
             Map<Integer, String> inputPortNames, Map<Integer, String> outputPortNames) {
         this.name = name;
+        this.description = description;
         this.factoryPid = factoryPid;
         this.minInputPorts = minInputPorts;
         this.maxInputPorts = maxInputPorts;
@@ -52,6 +54,10 @@ public final class GwtWireComponentDescriptor extends GwtBaseModel implements Se
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String getFactoryPid() {

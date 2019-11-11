@@ -159,12 +159,16 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
         this.newDriverButton.addClickHandler(event -> {
             DriversAndAssetsUi.this.driverPid.setValue("");
+            DriversAndAssetsUi.this.driverName.setValue("");
+            DriversAndAssetsUi.this.driverDesc.setValue("");
             DriversAndAssetsUi.this.newDriverModal.show();
         });
 
         this.newAssetButton.addClickHandler(event -> {
             DriversAndAssetsUi.this.assetDriverPid.setValue(this.driverAndAssetsListUi.getSelectedItem().getName());
             DriversAndAssetsUi.this.assetDriverPid.setData(this.driverAndAssetsListUi.getSelectedItem().getPid());
+            DriversAndAssetsUi.this.assetName.setValue("");
+            DriversAndAssetsUi.this.assetDesc.setValue("");
             DriversAndAssetsUi.this.newAssetModal.show();
         });
 

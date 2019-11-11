@@ -45,6 +45,7 @@ import org.eclipse.kura.cloudconnection.publisher.CloudPublisher;
 import org.eclipse.kura.cloudconnection.subscriber.CloudSubscriber;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
+import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.web.server.util.ServiceLocator;
 import org.eclipse.kura.web.server.util.ServiceLocator.ServiceConsumer;
@@ -82,7 +83,6 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     private static final String CLOUD_SUBSCRIBER = CloudSubscriber.class.getName();
 
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
-    private BundleContext bundleContext;
 
     @Override
     public List<GwtCloudEntry> findCloudEntries() throws GwtKuraException {
@@ -372,8 +372,19 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         }
 
         final GwtCloudEntry entry = new GwtCloudEntry();
-        entry.setName((String) component.properties.get("name"));
-        entry.setComponentDescription((String) component.properties.get("componentDescription"));
+        String name = (String) factoryPid;
+        String desc = name;
+        try {
+            ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
+            ComponentConfiguration cc = cs.getDefaultComponentConfiguration(component.name);
+            OCD ocd = cc.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage());
+            name = ocd.getName();
+            desc = ocd.getDescription();
+
+        } catch (Exception e) {
+        }
+        entry.setName(name);
+        entry.setComponentDescription(desc);
         entry.setPid((String) factoryPid);
         entry.setFactoryPid((String) ccsfFactoryPid);
         entry.setDefaultFactoryPid((String) defaultFactoryPid);

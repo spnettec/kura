@@ -55,6 +55,8 @@ public class WireComponentDescriptors {
         result.setComponentName(name);
         if (desc != null && !desc.equals(""))
             result.setComponentDescription(desc);
+        else
+            result.setComponentDescription(descriptor.getDescription());
         result.setInputPortCount(descriptor.getMinInputPorts());
         result.setOutputPortCount(descriptor.getMinOutputPorts());
 

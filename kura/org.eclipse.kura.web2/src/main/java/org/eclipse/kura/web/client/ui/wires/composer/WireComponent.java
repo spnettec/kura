@@ -138,8 +138,6 @@ public final class WireComponent extends JavaScriptObject {
         result.setPositionX(getRenderingProperties().getPosition().getX());
         result.setPositionY(getRenderingProperties().getPosition().getY());
         result.setConfiguration(configuration);
-        // result.getConfiguration().setComponentName(configuration.getComponentName());
-        // result.getConfiguration().setComponentDescription(configuration.getComponentDescription());
 
         return result;
     }

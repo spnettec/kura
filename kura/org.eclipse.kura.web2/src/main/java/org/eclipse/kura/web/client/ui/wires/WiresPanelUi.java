@@ -391,8 +391,8 @@ public class WiresPanelUi extends Composite
         final Map<String, String> assetPids = this.configurations.getFactoryInstancesPidNames(WIRE_ASSET_PID);
         final Iterator<Entry<String, String>> i = assetPids.entrySet().iterator();
         while (i.hasNext()) {
-            final String pid = i.next().getKey();
-            if (wireComposer.getWireComponent(pid) != null) {
+            final Entry<String, String> pidEntry = i.next();
+            if (wireComposer.getWireComponent(pidEntry.getKey()) != null) {
                 i.remove();
             }
         }

@@ -362,8 +362,10 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                         }
 
                         final GwtWireComponentDescriptor result = new GwtWireComponentDescriptor(
-                                toComponentName(wireComponentDefinition), wireComponentDefinition.getFactoryPid(),
-                                wireComponentDefinition.getMinInputPorts(), wireComponentDefinition.getMaxInputPorts(),
+                                toComponentName(wireComponentDefinition),
+                                toComponentDescription(wireComponentDefinition),
+                                wireComponentDefinition.getFactoryPid(), wireComponentDefinition.getMinInputPorts(),
+                                wireComponentDefinition.getMaxInputPorts(),
                                 wireComponentDefinition.getDefaultInputPorts(),
                                 wireComponentDefinition.getMinOutputPorts(),
                                 wireComponentDefinition.getMaxOutputPorts(),
@@ -398,6 +400,22 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
         }
 
         return wireComponentDefinition.getComponentOCD().getDefinition().getName();
+    }
+
+    private String toComponentDescription(WireComponentDefinition wireComponentDefinition) {
+        if (wireComponentDefinition.getComponentOCD() == null) {
+            return IdHelper.getLastIdComponent(wireComponentDefinition.getFactoryPid());
+        }
+
+        if (wireComponentDefinition.getComponentOCD().getDefinition() == null) {
+            return IdHelper.getLastIdComponent(wireComponentDefinition.getFactoryPid());
+        }
+
+        if (wireComponentDefinition.getComponentOCD().getDefinition().getName() == null) {
+            return IdHelper.getLastIdComponent(wireComponentDefinition.getFactoryPid());
+        }
+
+        return wireComponentDefinition.getComponentOCD().getDefinition().getDescription();
     }
 
     private void fillDriverDefinitions(List<GwtConfigComponent> resultDefinitions) throws GwtKuraException {
