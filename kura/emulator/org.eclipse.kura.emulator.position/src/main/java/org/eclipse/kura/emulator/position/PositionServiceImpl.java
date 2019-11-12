@@ -153,7 +153,8 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
             fileName = "test2.gpx";
         } else if ("test3".equals(this.source)) {
             fileName = "test3.gpx";
-        }
+        } else
+            fileName = "test.gpx";
 
         GpsXmlHandler handler = new GpsXmlHandler();
         SAXParserFactory factory = SAXParserFactory.newInstance();
