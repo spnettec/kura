@@ -126,10 +126,10 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
     /**
      * two connection types are available:
      * <ul>
-     * <li> serial mode (PROTOCOL_CONNECTION_TYPE_SERIAL)
+     * <li>serial mode (PROTOCOL_CONNECTION_TYPE_SERIAL)
      * 
-     * <li> Ethernet with 2 possible modes : RTU over TCP/IP (PROTOCOL_CONNECTION_TYPE_ETHER_RTU) or real MODBUS-TCP/IP
-     * (PROTOCOL_CONNECTION_TYPE_ETHER_TCP). 
+     * <li>Ethernet with 2 possible modes : RTU over TCP/IP (PROTOCOL_CONNECTION_TYPE_ETHER_RTU) or real MODBUS-TCP/IP
+     * (PROTOCOL_CONNECTION_TYPE_ETHER_TCP).
      * <ul>
      * <p>
      * <h4>PROTOCOL_CONNECTION_TYPE_SERIAL</h4>
@@ -354,7 +354,7 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
             int bits = Integer.valueOf(sBits).intValue();
 
             String uri = new CommURI.Builder(sPort).withBaudRate(baud).withDataBits(bits).withStopBits(stop)
-                    .withParity(parity).withTimeout(2000).build().toString();
+                    .withParity(parity).withOpenTimeout(2000).build().toString();
 
             try {
                 this.conn = (CommConnection) connFactory.createConnection(uri, 1, false);
@@ -671,8 +671,8 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
                 if (!this.connected) {
                     try {
                         this.socket = new Socket();
-                        this.socket.connect(new InetSocketAddress(this.ipAddress, this.port), 
-                            ModbusProtocolDevice.this.m_respTout);
+                        this.socket.connect(new InetSocketAddress(this.ipAddress, this.port),
+                                ModbusProtocolDevice.this.m_respTout);
                         try {
                             this.inputStream = this.socket.getInputStream();
                             this.outputStream = this.socket.getOutputStream();
@@ -692,7 +692,7 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
 
         @Override
         public void disconnect() {
-            if(this.socket==null){
+            if (this.socket == null) {
                 return;
             }
             if (ModbusProtocolDevice.this.m_connConfigd) {
@@ -785,8 +785,8 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
                 // Assume this means the socket is closed...make sure it is
                 s_logger.error("Socket disconnect in send: " + e);
                 disconnect();
-                throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE, "Send failure: "
-                        + e.getMessage());
+                throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
+                        "Send failure: " + e.getMessage());
             }
 
             // ---------------------------------------------- Receive response
@@ -821,9 +821,9 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
                                 }
                             } else if (respIndex == 9) {
                                 // Check first for an Exception response
-                            	if ((response[7] & 0x80) == 0x80) {                                    
-                            		throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
-                            				"Modbus responds an error = " + String.format("%02X", response[8]));
+                                if ((response[7] & 0x80) == 0x80) {
+                                    throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
+                                            "Modbus responds an error = " + String.format("%02X", response[8]));
                                 } else {
                                     if (response[7] == ModbusFunctionCodes.FORCE_SINGLE_COIL
                                             || response[7] == ModbusFunctionCodes.PRESET_SINGLE_REG

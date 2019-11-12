@@ -158,23 +158,33 @@
             default="10" 
             description="Interval in seconds between 2 publishes."/>
 
-        <AD id="inputAddress"  
-            name="inputAddress"
+        <AD id="discreteInputAddress"  
+            name="discreteInputAddress"
             type="Integer"
-            cardinality="0" 
+            cardinality="2" 
             required="false"
             default="0" 
             min="0"
             description="Address in decimal of the discrete input to read. Leave 0 if no input."/>
 
-        <AD id="registerAddress"  
-            name="registerAddress"
+        <AD id="inputRegisterAddress"  
+            name="inputRegisterAddress"
             type="Integer"
-            cardinality="0" 
+            cardinality="2" 
             required="false"
             default="0" 
             min="0"
-            description="Address in decimal of the register to read. Leave 0 if no input."/>
+            description="Address in decimal of the input register to read. Leave 0 if no input."/>
+       <AD id="holdingRegisterAddress"  
+            name="holdingRegisterAddress"
+            type="Integer"
+            cardinality="2" 
+            required="false"
+            default="0" 
+            min="0"
+            description="Address in decimal of the holding register to read. Leave 0 if no value"/>
+            
+            
 
     </OCD>
     <Designate pid="org.eclipse.kura.demo.modbus.ModbusExample">

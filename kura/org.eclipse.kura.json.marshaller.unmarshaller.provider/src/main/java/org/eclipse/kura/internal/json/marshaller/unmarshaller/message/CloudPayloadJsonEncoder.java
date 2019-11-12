@@ -90,6 +90,18 @@ public class CloudPayloadJsonEncoder {
                 jsonMetrics.add(name, (String) object);
             } else if (object instanceof byte[]) {
                 jsonMetrics.add(name, Base64.getEncoder().encodeToString((byte[]) object));
+            } else if (object instanceof int[]) {
+                jsonMetrics.add(name, Json.array((int[]) object));
+            } else if (object instanceof boolean[]) {
+                jsonMetrics.add(name, Json.array((boolean[]) object));
+            } else if (object instanceof String[]) {
+                jsonMetrics.add(name, Json.array((String[]) object));
+            } else if (object instanceof float[]) {
+                jsonMetrics.add(name, Json.array((float[]) object));
+            } else if (object instanceof double[]) {
+                jsonMetrics.add(name, Json.array((double[]) object));
+            } else if (object instanceof long[]) {
+                jsonMetrics.add(name, Json.array((long[]) object));
             } else {
                 throw new IllegalArgumentException("Cannot encode this value: " + object.toString());
             }

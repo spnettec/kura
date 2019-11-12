@@ -53,8 +53,9 @@ public class ModbusExample implements ConfigurableComponent, CloudConnectionList
     private static final String POLL_INTERVAL = "pollInterval";
     private static final String PUBLISH_INTERVAL = "publishInterval";
 
-    private static final String INPUT_ADDRESS = "inputAddress";
-    private static final String REGISTER_ADDRESS = "registerAddress";
+    private static final String DISCRETE_INPUT_ADDRESS = "discreteInputAddress";
+    private static final String INPUT_REGISTER_ADDRESS = "inputRegisterAddress";
+    private static final String HOLDING_REGISTER_ADDRESS = "holdingRegisterAddress";
 
     private boolean doConnection = true;
 
@@ -69,8 +70,12 @@ public class ModbusExample implements ConfigurableComponent, CloudConnectionList
     private int publishInterval = 0;
     private long startPublish = 0;
 
-    private int inputaddr = 0;
-    private int registeraddr = 0;
+    private int discreteInputaddr = 0;
+    private int inputRegisteraddr = 0;
+    private int holdingRegisteraddr = 0;
+    private int discreteInputaddrNum = 1;
+    private int inputRegisteraddrNum = 1;
+    private int holdingRegisteraddrNum = 1;
 
     private CloudPublisher cloudPublisher;
 
@@ -173,11 +178,27 @@ public class ModbusExample implements ConfigurableComponent, CloudConnectionList
                 this.publishInterval = (Integer) this.properties.get(PUBLISH_INTERVAL);
             }
 
-            if (this.properties.get(INPUT_ADDRESS) != null) {
-                this.inputaddr = (Integer) this.properties.get(INPUT_ADDRESS);
+            if (this.properties.get(DISCRETE_INPUT_ADDRESS) != null) {
+                Integer[] inputs = (Integer[]) this.properties.get(DISCRETE_INPUT_ADDRESS);
+                if (inputs.length > 0)
+                    this.discreteInputaddr = inputs[0];
+                if (inputs.length > 1)
+                    this.discreteInputaddrNum = inputs[1];
+
             }
-            if (this.properties.get(REGISTER_ADDRESS) != null) {
-                this.registeraddr = (Integer) this.properties.get(REGISTER_ADDRESS);
+            if (this.properties.get(INPUT_REGISTER_ADDRESS) != null) {
+                Integer[] regss = (Integer[]) this.properties.get(INPUT_REGISTER_ADDRESS);
+                if (regss.length > 0)
+                    this.inputRegisteraddr = regss[0];
+                if (regss.length > 1)
+                    this.inputRegisteraddrNum = regss[1];
+            }
+            if (this.properties.get(HOLDING_REGISTER_ADDRESS) != null) {
+                Integer[] regss = (Integer[]) this.properties.get(HOLDING_REGISTER_ADDRESS);
+                if (regss.length > 0)
+                    this.holdingRegisteraddr = regss[0];
+                if (regss.length > 1)
+                    this.holdingRegisteraddrNum = regss[1];
             }
 
             if (!this.configured) {
@@ -230,20 +251,41 @@ public class ModbusExample implements ConfigurableComponent, CloudConnectionList
             // Allocate a new payload
             KuraPayload payload = new KuraPayload();
 
-            if (this.inputaddr > 0) {
-                boolean[] dicreteInputs = this.protocolDevice.readDiscreteInputs(this.slaveAddr, this.inputaddr, 1);
-                StringBuilder sb = new StringBuilder().append("Input ").append(this.inputaddr).append(" = ");
-                sb.append(dicreteInputs[0]);
-                logger.info(sb.toString());
-                payload.addMetric("input", Boolean.valueOf(dicreteInputs[0]));
+            if (this.discreteInputaddr > 0) {
+                boolean[] dicreteInputs = this.protocolDevice.readDiscreteInputs(this.slaveAddr, this.discreteInputaddr,
+                        discreteInputaddrNum);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < dicreteInputs.length; i++) {
+                    sb.append("  ");
+                    sb.append(discreteInputaddr + i).append("=").append(dicreteInputs[i]);
+
+                }
+                logger.info("DiscreteInput {}", sb.toString());
+                payload.addMetric("discreteInput", Boolean.valueOf(dicreteInputs[0]));
             }
-            if (this.registeraddr > 0) {
-                int[] analogInputs = this.protocolDevice.readInputRegisters(this.slaveAddr, this.registeraddr, 1);
-                short val = (short) analogInputs[0];
-                StringBuilder sb = new StringBuilder().append("Register ").append(this.registeraddr).append(" = ");
-                sb.append(val);
-                logger.info(sb.toString());
-                payload.addMetric("register", Integer.valueOf(analogInputs[0]));
+            if (this.inputRegisteraddr > 0) {
+                int[] analogInputs = this.protocolDevice.readInputRegisters(this.slaveAddr, this.inputRegisteraddr,
+                        inputRegisteraddrNum);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < analogInputs.length; i++) {
+                    sb.append("  ");
+                    sb.append(inputRegisteraddr + i).append("=").append(analogInputs[i]);
+
+                }
+                logger.info("InputRegister {}", sb.toString());
+                payload.addMetric("inputregister", Integer.valueOf(analogInputs[0]));
+            }
+            if (this.holdingRegisteraddr > 0) {
+                int[] analogInputs = this.protocolDevice.readHoldingRegisters(this.slaveAddr, this.holdingRegisteraddr,
+                        holdingRegisteraddrNum);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < analogInputs.length; i++) {
+                    sb.append("  ");
+                    sb.append(holdingRegisteraddr + i).append("=").append(analogInputs[i]);
+
+                }
+                logger.info("HoldingRegister {}", sb.toString());
+                payload.addMetric("holdingRegister", analogInputs);
             }
 
             // time to publish ?

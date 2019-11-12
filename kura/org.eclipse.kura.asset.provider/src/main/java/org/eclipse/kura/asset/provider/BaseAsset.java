@@ -135,9 +135,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while activation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the service properties
+     *            the service properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.info("activating...");
@@ -151,7 +151,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component update callback.
      *
      * @param properties
-     *                       the service properties
+     *            the service properties
      */
     public void updated(final Map<String, Object> properties) {
 
@@ -171,7 +171,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while deactivation.
      *
      * @param context
-     *                    the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext context) {
         logger.debug("deactivating...");
@@ -190,9 +190,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * PID.
      *
      * @param driverId
-     *                     the identifier of the driver
+     *            the identifier of the driver
      * @throws NullPointerException
-     *                                  if driver id provided is null
+     *             if driver id provided is null
      */
     private void reopenDriverTracker(final String driverId) {
         requireNonNull(driverId, "Driver PID cannot be null");
@@ -291,6 +291,18 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
     protected String getKuraServicePid() throws KuraException {
         return config.getKuraServicePid();
+    }
+
+    protected String getKuraServiceName() throws KuraException {
+        if (config.getProperties().get(ConfigurationService.KURA_SERVICE_NAME) == null)
+            return config.getKuraServicePid();
+        return config.getProperties().get(ConfigurationService.KURA_SERVICE_NAME).toString();
+    }
+
+    protected String getKuraServiceDesc() throws KuraException {
+        if (config.getProperties().get(ConfigurationService.KURA_SERVICE_NAME) == null)
+            return getKuraServiceName();
+        return config.getProperties().get(ConfigurationService.KURA_SERVICE_DESC).toString();
     }
 
     /** {@inheritDoc} */

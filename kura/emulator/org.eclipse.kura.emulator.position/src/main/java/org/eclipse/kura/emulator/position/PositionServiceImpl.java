@@ -44,10 +44,6 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
 
     private static final Logger logger = LoggerFactory.getLogger(PositionServiceImpl.class);
 
-    private static final String SOURCE_KEY = "source";
-
-    private static final String BOSTON = "boston";
-
     private ComponentContext ctx;
     private EventAdmin eventAdmin;
 
@@ -109,7 +105,7 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
         if (this.useGpsd) {
             logger.info("USE GPSD");
         }
-        this.source = (String) properties.getOrDefault(SOURCE_KEY, BOSTON);
+        this.source = (String) properties.getOrDefault("source", "test");
     }
 
     @Override
@@ -149,14 +145,14 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
         this.index = 0;
 
         String fileName = null;
-        if (BOSTON.equals(this.source)) {
-            fileName = "boston.gpx";
-        } else if ("denver".equals(this.source)) {
-            fileName = "denver.gpx";
-        } else if ("paris".equals(this.source)) {
-            fileName = "paris.gpx";
-        } else if ("test".equals(this.source)) {
+        if ("test".equals(this.source)) {
             fileName = "test.gpx";
+        } else if ("test1".equals(this.source)) {
+            fileName = "test1.gpx";
+        } else if ("test2".equals(this.source)) {
+            fileName = "test2.gpx";
+        } else if ("test3".equals(this.source)) {
+            fileName = "test3.gpx";
         }
 
         GpsXmlHandler handler = new GpsXmlHandler();

@@ -32,9 +32,7 @@ import javax.servlet.http.HttpSession;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
-import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.OCDService;
-import org.eclipse.kura.configuration.metatype.Option;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.metatype.Tad;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
@@ -51,8 +49,6 @@ import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
 import org.eclipse.kura.web.shared.IdHelper;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
-import org.eclipse.kura.web.shared.model.GwtConfigParameter;
-import org.eclipse.kura.web.shared.model.GwtConfigParameter.GwtConfigParameterType;
 import org.eclipse.kura.web.shared.model.GwtWireComponentConfiguration;
 import org.eclipse.kura.web.shared.model.GwtWireComponentDescriptor;
 import org.eclipse.kura.web.shared.model.GwtWireComposerStaticInfo;
@@ -106,42 +102,10 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
 
         if (driverDescriptorOptional.isPresent()) {
             DriverDescriptor driverDescriptor = driverDescriptorOptional.get();
-            return getGwtConfigComponent(driverDescriptor);
+            return GwtServerUtil.toGwtConfigComponent(driverDescriptor, LocaleContextHolder.getLocale().getLanguage());
         } else {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR);
         }
-    }
-
-    private GwtConfigComponent getGwtConfigComponent(DriverDescriptor driverDescriptor) {
-        @SuppressWarnings("unchecked")
-        final List<AD> params = (List<AD>) driverDescriptor.getChannelDescriptor();
-        final GwtConfigComponent gwtConfig = new GwtConfigComponent();
-        gwtConfig.setComponentId(driverDescriptor.getPid());
-
-        final List<GwtConfigParameter> gwtParams = new ArrayList<>();
-        gwtConfig.setParameters(gwtParams);
-        for (final AD ad : params) {
-            final GwtConfigParameter gwtParam = new GwtConfigParameter();
-            gwtParam.setId(ad.getId());
-            gwtParam.setName(ad.getName());
-            gwtParam.setDescription(ad.getDescription());
-            gwtParam.setType(GwtConfigParameterType.valueOf(ad.getType().name()));
-            gwtParam.setRequired(ad.isRequired());
-            gwtParam.setCardinality(ad.getCardinality());
-            if (ad.getOption() != null && !ad.getOption().isEmpty()) {
-                final Map<String, String> options = new HashMap<>();
-                for (final Option option : ad.getOption()) {
-                    options.put(option.getLabel(), option.getValue());
-                }
-                gwtParam.setOptions(options);
-            }
-            gwtParam.setMin(ad.getMin());
-            gwtParam.setMax(ad.getMax());
-            gwtParam.setDefault(ad.getDefault());
-
-            gwtParams.add(gwtParam);
-        }
-        return gwtConfig;
     }
 
     private void fillGwtRenderingProperties(GwtWireComponentConfiguration component,

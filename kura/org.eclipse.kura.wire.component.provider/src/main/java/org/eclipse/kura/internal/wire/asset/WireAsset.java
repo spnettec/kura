@@ -302,7 +302,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
 
         try {
             wireRecordProperties.put(WireAssetConstants.PROP_ASSET_NAME.value(),
-                    TypedValues.newStringValue(getKuraServicePid()));
+                    TypedValues.newStringValue(getKuraServiceName()));
         } catch (KuraException e) {
             logger.error("Configurations cannot be null", e);
         }
