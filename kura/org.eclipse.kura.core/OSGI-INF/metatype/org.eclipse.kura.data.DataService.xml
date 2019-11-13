@@ -45,13 +45,13 @@
             description="%recoveryConnectionFailureDesc"/>
         
         <AD id="connection.recovery.max.failures"
-            name="Connection Recovery Max Failures"
+            name="%connectionRecoveryMaxFailures"
             type="Integer"
             cardinality="0" 
             required="true"
             default="10"
             min="1"
-            description="Number of failures in Data Publishers connection before forcing a reboot."/>
+            description="%connectionRecoveryMaxFailuresDesc"/>
             
         <AD id="disconnect.quiesce-timeout"
             name="%disconnectQuiesceTimeout"
