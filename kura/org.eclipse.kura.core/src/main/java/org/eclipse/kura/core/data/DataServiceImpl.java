@@ -665,7 +665,7 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
 
             long publishPeriod = this.dataServiceOptions.getRateLimitTimeUnit() / publishRate;
 
-            logger.info("Get Throttle with burst length {} and send a message every {} millis", burstLength,
+            logger.info("Get Throttle with burst length {} and send a message every {} nanoseconds", burstLength,
                     publishPeriod);
             this.throttle = new TokenBucket(burstLength, publishPeriod);
         }
@@ -802,7 +802,7 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
                 }
 
                 if (!messagePublished) {
-                    suspendPublisher(sleepingTime, TimeUnit.MILLISECONDS);
+                    suspendPublisher(sleepingTime, TimeUnit.NANOSECONDS);
                 }
             }
             logger.debug("Exited publisher loop.");
@@ -827,7 +827,7 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
                         logger.debug("Suspending publishing thread indefinitely");
                         DataServiceImpl.this.lockCondition.await();
                     } else {
-                        logger.debug("Suspending publishing thread for {} milliseconds", timeout);
+                        logger.debug("Suspending publishing thread for {} nanoseconds", timeout);
                         DataServiceImpl.this.lockCondition.await(timeout, timeUnit);
                     }
                 }
