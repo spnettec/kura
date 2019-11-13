@@ -76,10 +76,10 @@ public class CloudPayloadJsonDecoder {
                 } else if (METRICS.value().equalsIgnoreCase(name) && value.isObject()) {
                     decodeMetric(payload, value.asObject());
                 } else {
+                    logger.warn("Unrecognized value: {},try add to metric", name);
                     JsonObject obj = new JsonObject();
                     obj.add(name, value);
                     decodeMetric(payload, obj);
-                    logger.error("Unrecognized value: {}", name);
                 }
             }
         } catch (Exception e) {

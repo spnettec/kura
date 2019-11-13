@@ -98,7 +98,7 @@
 
 
 		<condition property="kura.osgi.repo"
-			value="../../target-platform/p2-repo-equinox_3.12.50/target/source">
+			value="../target-definition/equinox_3.12.50/repository">
 			<or>
 				<not>
 					<isset property="kura.osgi" />
