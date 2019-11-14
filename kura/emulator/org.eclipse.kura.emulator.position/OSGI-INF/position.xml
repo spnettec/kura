@@ -17,9 +17,6 @@
    <service>
       <provide interface="org.eclipse.kura.position.PositionService"/>
       <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
-      <!--
-      <provide interface="org.osgi.service.event.EventHandler"/>
-      -->
    </service>
    <reference name="EventAdmin" 
               cardinality="1..1" 

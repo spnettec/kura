@@ -94,7 +94,9 @@ public class GpsXmlHandler extends DefaultHandler {
 
     @Override
     public void characters(char[] buf, int offset, int length) {
-        String tag = new String(buf).substring(offset, offset + length).trim();
+        String bufString = new String(buf);
+        String tag = bufString.substring(offset, offset + length);
+        tag = tag.trim();
 
         if (!this.foundTrackPoint && !this.foundElevation && !this.foundTime) {
             return;
@@ -119,9 +121,10 @@ public class GpsXmlHandler extends DefaultHandler {
                 return;
             }
         }
-
-        System.out.println(LABEL + "found some odd data in services.xml");
-        logDump(tag.getBytes());
+        if (!tag.equals("")) {
+            System.out.println(LABEL + "found some odd data in services.xml");
+            logDump(tag.getBytes());
+        }
     }
 
     public GpsPoint[] getGpsPoints() {

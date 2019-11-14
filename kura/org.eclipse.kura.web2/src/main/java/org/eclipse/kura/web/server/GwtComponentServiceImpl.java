@@ -586,7 +586,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             if (props != null && props.get(SERVICE_FACTORY_PID) != null) {
                 String name = ocd.getName();
                 if (props.containsKey(ConfigurationService.KURA_SERVICE_NAME))
-                    name = (String) props.get(ConfigurationService.KURA_SERVICE_DESC);
+                    name = (String) props.get(ConfigurationService.KURA_SERVICE_NAME);
                 if (name == null || name.equals(""))
                     name = stripPidPrefix(config.getPid());
                 gwtConfig.setComponentName(name);

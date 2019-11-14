@@ -51,7 +51,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-all</artifactId>
-                <version>2.5.8</version>
+                <version>3.0.0-rc-1</version>
                 <type>pom</type>
             </dependency>            
             <dependency>
@@ -487,6 +487,16 @@
                   <id>org.apache.camel:camel-groovy:${org.apache.camel.camel-groovy.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>org.apache.camel;version="[2.24,2.25)",org.apache.came
+                         l.spi;version="[2.24,2.25)",org.apache.camel.support;version="[2.24,2
+                         .25)",org.apache.camel.util;version="[2.24,2.25)",groovy.lang;version
+                         ="[2.5,4)",org.codehaus.groovy.runtime;version="[2.5,4)",org.codehaus
+                         .groovy.runtime.callsite;version="[2.5,4)",org.osgi.framework;version
+                         ="[1.5,2)",org.osgi.framework.wiring;version="[1.0,2)"
+                      </Import-Package>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-servlet:${org.apache.camel.camel-servlet.version}</id>
@@ -560,42 +570,42 @@
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy.groovy.version}</id>
+                  <id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
