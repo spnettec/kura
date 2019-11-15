@@ -76,7 +76,7 @@ public class CloudPayloadJsonDecoder {
                 } else if (METRICS.value().equalsIgnoreCase(name) && value.isObject()) {
                     decodeMetric(payload, value.asObject());
                 } else {
-                    logger.warn("Unrecognized value: {},try add to metric", name);
+                    logger.warn("Unrecognized name: {}, value: {}, try add to metric", name, value);
                     JsonObject obj = new JsonObject();
                     obj.add(name, value);
                     decodeMetric(payload, obj);
