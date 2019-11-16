@@ -555,6 +555,11 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
                 ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 ks.load(null, null);
                 ks.setEntry(keyAlias, entry, pp);
+            } else if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {
+                Certificate cert = ks.getCertificate(keyAlias);
+                ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(null, null);
+                ks.setCertificateEntry("ca", cert);
             }
 
             return ks;

@@ -586,26 +586,6 @@
                         tensions;version="3.0.0.rc-1",org.apache.groovy.xml.tools;version="3.0
                         .0.rc-1",org.codehaus.groovy.tools.xml;version="3.0.0.rc-1"
                         </Export-Package>
-                        <Import-Package>groovy.io;resolution:=optional,groovy.lang;resolution:
-                         =optional,groovy.namespace;resolution:=optional,groovy.transform;reso
-                         lution:=optional,groovy.util;resolution:=optional;version="[3.0,4)",g
-                         roovy.util.slurpersupport;resolution:=optional;version="[3.0,4)",groo
-                         vy.xml;resolution:=optional;version="[3.0,4)",groovy.xml.slurpersuppo
-                         rt;resolution:=optional;version="[3.0,4)",groovy.xml.streamingmarkups
-                         upport;resolution:=optional;version="[3.0,4)",javax.xml.namespace;res
-                         olution:=optional,javax.xml.parsers;resolution:=optional,javax.xml.tr
-                         ansform;resolution:=optional,javax.xml.transform.dom;resolution:=opti
-                         onal,javax.xml.transform.stream;resolution:=optional,javax.xml.valida
-                         tion;resolution:=optional,javax.xml.xpath;resolution:=optional,org.ap
-                         ache.groovy.io;resolution:=optional,org.apache.groovy.xml.extensions;
-                         resolution:=optional;version="[3.0,4)",org.codehaus.groovy.reflection
-                         ;resolution:=optional,org.codehaus.groovy.runtime;resolution:=optiona
-                         l;version="[3.0,4)",org.codehaus.groovy.runtime.callsite;resolution:=
-                         optional,org.codehaus.groovy.runtime.typehandling;resolution:=optiona
-                         l,org.codehaus.groovy.syntax;resolution:=optional,org.w3c.dom;resolut
-                         ion:=optional,org.xml.sax;resolution:=optional,org.xml.sax.ext;resolu
-                         tion:=optional,org.xml.sax.helpers;resolution:=optional
-                        </Import-Package>
                   </instructions>
               </artifact>   
               <artifact>

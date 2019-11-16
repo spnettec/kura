@@ -117,12 +117,14 @@ public class GwtCertificatesServiceImpl extends OsgiRemoteServiceServlet impleme
                 for (X509Certificate cert : certs) {
                     if (!leafAssigned && (cert.getBasicConstraints() == -1
                             || cert.getKeyUsage() != null && !cert.getKeyUsage()[5])) { // certificate is leaf
-                        sslService.installTrustCertificate("ssl-" + alias, cert);
+                        // sslService.installTrustCertificate("ssl-" + alias, cert);
+                        sslService.installTrustCertificate(alias, cert);
                         leafAssigned = true;
                     } else { // Certificate is CA.
                         // http://stackoverflow.com/questions/12092457/how-to-check-if-x509certificate-is-ca-certificate
-                        String certificateAlias = "ca-" + cert.getSerialNumber().toString();
-                        sslService.installTrustCertificate(certificateAlias, cert);
+                        // String certificateAlias = "ca-" + cert.getSerialNumber().toString();
+                        // sslService.installTrustCertificate(certificateAlias, cert);
+                        sslService.installTrustCertificate(alias, cert);
                     }
                 }
             }
@@ -173,7 +175,8 @@ public class GwtCertificatesServiceImpl extends OsgiRemoteServiceServlet impleme
 
             return certs.length;
         } catch (CertificateException | UnsupportedEncodingException | KuraException e) {
-            auditLogger.warn("UI Certificate - Failure - Failed to store application public chain for user: {}, session {}",
+            auditLogger.warn(
+                    "UI Certificate - Failure - Failed to store application public chain for user: {}, session {}",
                     session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
             throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT, e);
         }
