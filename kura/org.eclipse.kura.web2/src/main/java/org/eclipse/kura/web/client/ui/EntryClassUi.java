@@ -349,169 +349,169 @@ public class EntryClassUi extends Composite implements Context {
     }
 
     private void initDriversAndAssetsPanel() {
-        this.driversAndAssetsServices.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.driversAndAssetsServices(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.driversAndTwinsBinder);
-                EntryClassUi.this.driversAndTwinsBinder.refresh();
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.driversAndAssetsServices(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.driversAndTwinsBinder);
+            EntryClassUi.this.driversAndTwinsBinder.refresh();
 
-            });
+        });
+        this.driversAndAssetsServices.addClickHandler(event -> {
             renderDirtyConfigModal(b);
         });
     }
 
     private void initWiresPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.wires(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.wiresBinder);
+            EntryClassUi.this.wiresBinder.load();
+        });
         this.wires.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.wires(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.wiresBinder);
-                EntryClassUi.this.wiresBinder.load();
-            });
             renderDirtyConfigModal(b);
         });
     }
 
     private void initCloudServicesPanel() {
-        this.cloudServices.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.cloudServices(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.cloudServicesBinder);
-                EntryClassUi.this.cloudServicesBinder.refresh();
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.cloudServices(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.cloudServicesBinder);
+            EntryClassUi.this.cloudServicesBinder.refresh();
 
-            });
+        });
+        this.cloudServices.addClickHandler(event -> {
             renderDirtyConfigModal(b);
         });
     }
 
     private void initSettingsPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.settings(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.settingsBinder);
+            EntryClassUi.this.settingsBinder.setSession(EntryClassUi.this.currentSession);
+            EntryClassUi.this.settingsBinder.load();
+        });
         this.settings.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.settings(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.settingsBinder);
-                EntryClassUi.this.settingsBinder.setSession(EntryClassUi.this.currentSession);
-                EntryClassUi.this.settingsBinder.load();
-            });
             renderDirtyConfigModal(b);
         });
     }
 
     private void initPackagesPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.packages(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.packagesBinder);
+            EntryClassUi.this.packagesBinder.setSession(EntryClassUi.this.currentSession);
+            EntryClassUi.this.packagesBinder.setMainUi(EntryClassUi.this.ui);
+            EntryClassUi.this.packagesBinder.refresh();
+        });
         this.packages.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.packages(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.packagesBinder);
-                EntryClassUi.this.packagesBinder.setSession(EntryClassUi.this.currentSession);
-                EntryClassUi.this.packagesBinder.setMainUi(EntryClassUi.this.ui);
-                EntryClassUi.this.packagesBinder.refresh();
-            });
             renderDirtyConfigModal(b);
         });
     }
 
     private void initFirewallPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.firewall(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.firewallBinder);
+            EntryClassUi.this.firewallBinder.initFirewallPanel();
+        });
         if (this.firewall.isVisible()) {
             this.firewall.addClickHandler(event -> {
-                Button b = new Button(MSGS.yesButton(), event1 -> {
-                    forceTabsCleaning();
-                    if (EntryClassUi.this.modal != null) {
-                        EntryClassUi.this.modal.hide();
-                    }
-                    EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
-                    EntryClassUi.this.contentPanel.setVisible(true);
-                    setHeader(MSGS.firewall(), null);
-                    EntryClassUi.this.contentPanelBody.clear();
-                    EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.firewallBinder);
-                    EntryClassUi.this.firewallBinder.initFirewallPanel();
-                });
                 renderDirtyConfigModal(b);
             });
         }
     }
 
     private void initNetworkPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.network(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.networkBinder);
+            EntryClassUi.this.networkBinder.setSession(EntryClassUi.this.currentSession);
+            EntryClassUi.this.networkBinder.initNetworkPanel();
+        });
         if (this.network.isVisible()) {
             this.network.addClickHandler(event -> {
-                Button b = new Button(MSGS.yesButton(), event1 -> {
-                    forceTabsCleaning();
-                    if (EntryClassUi.this.modal != null) {
-                        EntryClassUi.this.modal.hide();
-                    }
-                    EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
-                    EntryClassUi.this.contentPanel.setVisible(true);
-                    setHeader(MSGS.network(), null);
-                    EntryClassUi.this.contentPanelBody.clear();
-                    EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.networkBinder);
-                    EntryClassUi.this.networkBinder.setSession(EntryClassUi.this.currentSession);
-                    EntryClassUi.this.networkBinder.initNetworkPanel();
-                });
                 renderDirtyConfigModal(b);
             });
         }
     }
 
     private void initDevicePanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
+            EntryClassUi.this.contentPanel.setVisible(true);
+            setHeader(MSGS.device(), null);
+            EntryClassUi.this.contentPanelBody.clear();
+            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.deviceBinder);
+            EntryClassUi.this.deviceBinder.setSession(EntryClassUi.this.currentSession);
+            EntryClassUi.this.deviceBinder.initDevicePanel();
+        });
         this.device.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.device(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.deviceBinder);
-                EntryClassUi.this.deviceBinder.setSession(EntryClassUi.this.currentSession);
-                EntryClassUi.this.deviceBinder.initDevicePanel();
-            });
             renderDirtyConfigModal(b);
         });
     }
 
     private void initStatusPanel() {
+        Button b = new Button(MSGS.yesButton(), event1 -> {
+            forceTabsCleaning();
+            if (EntryClassUi.this.modal != null) {
+                EntryClassUi.this.modal.hide();
+            }
+            EntryClassUi.this.showStatusPanel();
+        });
         this.status.addClickHandler(event -> {
-            Button b = new Button(MSGS.yesButton(), event1 -> {
-                forceTabsCleaning();
-                if (EntryClassUi.this.modal != null) {
-                    EntryClassUi.this.modal.hide();
-                }
-                EntryClassUi.this.showStatusPanel();
-            });
             renderDirtyConfigModal(b);
         });
     }
