@@ -87,7 +87,7 @@ public class SystemAdminServiceImpl extends SuperSystemService implements System
                 String[] lastBootUpTime = runSystemCommand("wmic os get LastBootUpTime ", false, this.executorService)
                         .split("\n");
                 if (lastBootUpTime[0].toLowerCase().startsWith("lastbootuptime")) {
-                    String lastBoot = lastBootUpTime[2];
+                    String lastBoot = lastBootUpTime[1];
                     DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
                     Date bootDate = df.parse(lastBoot);
                     uptime = System.currentTimeMillis() - bootDate.getTime();
