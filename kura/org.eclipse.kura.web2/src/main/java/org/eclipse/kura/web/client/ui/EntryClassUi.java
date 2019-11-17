@@ -510,16 +510,8 @@ public class EntryClassUi extends Composite implements Context {
                 if (EntryClassUi.this.modal != null) {
                     EntryClassUi.this.modal.hide();
                 }
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.status(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
-                EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
-                // EntryClassUi.this.statusBinder.setParent(instanceReference);
-                EntryClassUi.this.statusBinder.refresh();
+                EntryClassUi.this.showStatusPanel();
             });
-
             renderDirtyConfigModal(b);
         });
     }
@@ -951,7 +943,7 @@ public class EntryClassUi extends Composite implements Context {
         this.contentPanelBody.add(EntryClassUi.this.statusBinder);
         this.statusBinder.setSession(EntryClassUi.this.currentSession);
         // this.statusBinder.setParent(this);
-        this.statusBinder.refresh();
+        this.statusBinder.loadStatusData();
     }
 
     @Override

@@ -37,7 +37,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -89,7 +88,7 @@ public class StatusPanelUi extends Composite {
 
         EventService.Handler connectionStateChangeHandler = eventInfo -> {
             if (StatusPanelUi.this.isVisible() && StatusPanelUi.this.isAttached()) {
-                StatusPanelUi.this.refresh();
+                loadStatusData();
             }
         };
 
@@ -98,28 +97,13 @@ public class StatusPanelUi extends Composite {
 
     }
 
-    public void refresh() {
-        refresh(100);
-    }
-
-    private void refresh(int delay) {
-        Timer timer = new Timer() {
-
-            @Override
-            public void run() {
-                loadStatusData();
-            }
-        };
-        timer.schedule(delay);
-    }
-
     // get current session from UI parent
     public void setSession(GwtSession gwtBSSession) {
         this.currentSession = gwtBSSession;
     }
 
     // create table layout
-    private void loadStatusTable(CellTable<GwtGroupedNVPair> grid, ListDataProvider<GwtGroupedNVPair> dataProvider) {
+    public void loadStatusTable(CellTable<GwtGroupedNVPair> grid, ListDataProvider<GwtGroupedNVPair> dataProvider) {
         TextColumn<GwtGroupedNVPair> col1 = new TextColumn<GwtGroupedNVPair>() {
 
             @Override
