@@ -12,6 +12,7 @@
 package org.eclipse.kura.driver.binary.adapter;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.eclipse.kura.driver.binary.BinaryData;
 import org.eclipse.kura.driver.binary.Buffer;
@@ -39,9 +40,10 @@ public class StringData implements BinaryData<String> {
 
     @Override
     public void write(Buffer buf, int offset, String value) {
+        value = value == null ? "" : value;
         Charset charset = AutoCharsetReader.getEncoding(value);
         if (charset == null)
-            charset = this.charset;
+            charset = this.charset == null ? StandardCharsets.UTF_8 : this.charset;
         final byte[] raw = value.getBytes(charset);
         int amount = this.wrapped.getSize();
         int size = value.length();
@@ -62,7 +64,11 @@ public class StringData implements BinaryData<String> {
             return "";
         int i = 0;
         int totalByteSize = raw[i];
+        if (totalByteSize <= 0)
+            return "";
         int size = raw[i + 1]; // Current length of the string
+        if (size <= 0)
+            return "";
         int length = Math.min(size, totalSize - 2);
         StringBuilder builder = new StringBuilder();
         while (totalSize > 0) {
