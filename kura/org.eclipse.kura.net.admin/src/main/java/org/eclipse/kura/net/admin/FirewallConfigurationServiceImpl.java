@@ -69,7 +69,7 @@ public class FirewallConfigurationServiceImpl implements FirewallConfigurationSe
         this.executorService = executorService;
     }
 
-    public void unsetEventAdmin(CommandExecutorService executorService) {
+    public void unsetExecutorService(CommandExecutorService executorService) {
         this.executorService = null;
     }
 

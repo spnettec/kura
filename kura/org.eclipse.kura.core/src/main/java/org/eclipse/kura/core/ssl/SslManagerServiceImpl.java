@@ -17,6 +17,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -507,11 +510,13 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
             throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
         TrustManager[] result = new TrustManager[0];
         TrustManagerFactory tmf = null;
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
+        ks.load(Files.newInputStream(ksPath), "changeit".toCharArray());
         if (trustStore != null) {
-
             // Load the configured the Trust Store
             try (InputStream tsReadStream = new FileInputStream(trustStore);) {
-                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+
                 ks.load(tsReadStream, keyStorePassword);
                 tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {

@@ -60,8 +60,6 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
 
     private static final Logger logger = LogManager.getLogger(CloudPublisher.class);
 
-    private static final String ASSET_NAME_PROPERTY_KEY = "assetName";
-
     private CloudPublisherOptions cloudPublisherOptions;
 
     private volatile WireHelperService wireHelperService;
@@ -132,6 +130,7 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
      * @param properties
      *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating Cloud Publisher Wire Component...");
         this.wireSupport = this.wireHelperService.newWireSupport(this,
