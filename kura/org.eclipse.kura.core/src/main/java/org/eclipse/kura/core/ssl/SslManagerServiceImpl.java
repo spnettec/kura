@@ -246,8 +246,7 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
     public X509Certificate[] getTrustCertificates() throws GeneralSecurityException, IOException {
         X509Certificate[] cacerts = null;
         String trustStore = this.options.getSslKeyStore();
-        TrustManager[] tms = getTrustManagers(trustStore, this.options.getSslKeystorePassword().toCharArray(),
-                this.options.getSslKeystorePassword());
+        TrustManager[] tms = getTrustManagers(trustStore, this.options.getSslKeystorePassword().toCharArray());
         for (TrustManager tm : tms) {
             if (tm instanceof X509TrustManager) {
                 X509TrustManager x509tm = (X509TrustManager) tm;
@@ -467,14 +466,23 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
         // for a new alias.
         // This allows for SSL Context Resumption and abbreviated SSL handshake
         // in case of reconnects to the same host.
+
         SSLContext context = this.sslContexts.get(options);
         if (context == null) {
+            String alias = options.getAlias();
+            alias = alias == null ? "" : alias;
+            KeyStore ks = getKeyStore(options.getKeyStore(), options.getKeyStorePassword(), alias);
+            if (!alias.equals("") && !ks.aliases().hasMoreElements()) {
+                options.setAlias("");
+                context = this.sslContexts.get(options);
+                if (context != null)
+                    return context;
+            }
             logger.info("Creating a new SSLSocketFactory instance");
 
-            TrustManager[] tms = getTrustManagers(options.getTrustStore(), options.getKeyStorePassword(),
-                    options.getAlias());
+            TrustManager[] tms = getTrustManagers(ks);
 
-            KeyManager[] kms = getKeyManagers(options.getKeyStore(), options.getKeyStorePassword(), options.getAlias());
+            KeyManager[] kms = getKeyManagers(ks, options.getKeyStorePassword());
 
             context = createSSLContext(options.getProtocol(), options.getCiphers(), kms, tms,
                     options.getHostnameVerification());
@@ -506,25 +514,28 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
         };
     }
 
-    private static TrustManager[] getTrustManagers(String trustStore, char[] keyStorePassword, String keyAlias)
+    private static TrustManager[] getTrustManagers(KeyStore ks)
             throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-        TrustManager[] result = new TrustManager[0];
-        TrustManagerFactory tmf = null;
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        if (ks.aliases().hasMoreElements()) {
+            tmf.init(ks);
+            return tmf.getTrustManagers();
+        }
         Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
         ks.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+        tmf.init(ks);
+        return tmf.getTrustManagers();
+    }
+
+    private static TrustManager[] getTrustManagers(String trustStore, char[] keyStorePassword)
+            throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+        TrustManager[] result = new TrustManager[0];
         if (trustStore != null) {
             // Load the configured the Trust Store
-            try (InputStream tsReadStream = new FileInputStream(trustStore);) {
-
+            try (InputStream tsReadStream = new FileInputStream(trustStore)) {
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 ks.load(tsReadStream, keyStorePassword);
-                tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {
-                    Certificate cert = ks.getCertificate(keyAlias);
-                    ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                    ks.load(null, null);
-                    ks.setCertificateEntry(keyAlias, cert);
-                }
                 tmf.init(ks);
                 result = tmf.getTrustManagers();
             }
@@ -532,10 +543,8 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
         return result;
     }
 
-    private KeyManager[] getKeyManagers(String keyStore, char[] keyStorePassword, String keyAlias)
-            throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException,
-            UnrecoverableEntryException {
-        KeyStore ks = getKeyStore(keyStore, keyStorePassword, keyAlias);
+    private KeyManager[] getKeyManagers(KeyStore ks, char[] keyStorePassword) throws KeyStoreException,
+            NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableEntryException {
 
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(ks, keyStorePassword);
@@ -569,6 +578,9 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
                 ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 ks.load(null, null);
                 ks.setCertificateEntry(keyAlias, cert);
+            } else {
+                ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(null, null);
             }
 
             return ks;

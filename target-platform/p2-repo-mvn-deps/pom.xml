@@ -1152,6 +1152,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
+              <artifact>
+                  <id>com.alibaba:fastjson:jar:${fastjson.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
 	       </artifacts>
             </configuration>
           </execution>
