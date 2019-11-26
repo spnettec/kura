@@ -16,7 +16,6 @@ package org.eclipse.kura.web.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
@@ -782,20 +781,19 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
             referenceInterfaces.forEach(reference -> {
                 try {
-                    Class<?> t = Class.forName(reference);
-                    Collection<?> cloudServiceReferences = ServiceLocator.getInstance().getServiceReferences(t, null);
+                    ServiceReference<?>[] serviceReferences = context.getServiceReferences(reference, null);
 
-                    for (Object cloudServiceReferenceObject : cloudServiceReferences) {
-                        if (cloudServiceReferenceObject instanceof ServiceReference) {
-                            ServiceReference<?> cloudServiceReference = (ServiceReference<?>) cloudServiceReferenceObject;
-                            String cloudServicePid = (String) cloudServiceReference.getProperty(KURA_SERVICE_PID);
-                            String cloudServiceName = (String) cloudServiceReference
+                    for (Object serviceReferenceObject : serviceReferences) {
+                        if (serviceReferenceObject instanceof ServiceReference) {
+                            ServiceReference<?> cloudServiceReference = (ServiceReference<?>) serviceReferenceObject;
+                            String servicePid = (String) cloudServiceReference.getProperty(KURA_SERVICE_PID);
+                            String serviceName = (String) cloudServiceReference
                                     .getProperty(ConfigurationService.KURA_SERVICE_NAME);
-                            result.put(cloudServicePid, cloudServiceName);
+                            result.put(servicePid, serviceName);
                             ServiceLocator.getInstance().ungetService(cloudServiceReference);
                         }
                     }
-                } catch (ClassNotFoundException | GwtKuraException e) {
+                } catch (InvalidSyntaxException e) {
 
                 }
             });
