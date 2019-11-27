@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -521,8 +522,12 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
             tmf.init(ks);
             return tmf.getTrustManagers();
         }
-        Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
-        ks.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+        try {
+            Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
+            if (Files.exists(ksPath))
+                ks.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+        } catch (NoSuchFileException e) {
+        }
         tmf.init(ks);
         return tmf.getTrustManagers();
     }
@@ -573,16 +578,18 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
                 ks = KeyStore.getInstance(KeyStore.getDefaultType());
                 ks.load(null, null);
                 ks.setEntry(keyAlias, entry, pp);
-            } else if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {
-                Certificate cert = ks.getCertificate(keyAlias);
-                ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                ks.load(null, null);
-                ks.setCertificateEntry(keyAlias, cert);
-            } else {
-                ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                ks.load(null, null);
             }
-
+            /*
+             * else if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {
+             * Certificate cert = ks.getCertificate(keyAlias);
+             * ks = KeyStore.getInstance(KeyStore.getDefaultType());
+             * ks.load(null, null);
+             * ks.setCertificateEntry(keyAlias, cert);
+             * } else {
+             * ks = KeyStore.getInstance(KeyStore.getDefaultType());
+             * ks.load(null, null);
+             * }
+             */
             return ks;
         }
     }
