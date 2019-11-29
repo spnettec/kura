@@ -321,9 +321,9 @@ public class LoginUi extends Composite implements Context {
                 public void onFailure(final Throwable caught) {
 
                     if (caught instanceof GwtKuraException) {
-                        callback.onFailure("Login failed: The provided credentials are not valid.");
+                        callback.onFailure(MSGS.loginfailureauth());
                     } else {
-                        callback.onFailure("Login failed: The device is unreachable.");
+                        callback.onFailure(MSGS.loginfailuredevice());
                     }
                 }
             });

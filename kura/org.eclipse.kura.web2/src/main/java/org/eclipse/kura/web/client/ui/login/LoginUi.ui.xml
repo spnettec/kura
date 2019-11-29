@@ -21,7 +21,7 @@
 			
 			<b:ModalBody ui:field="loginModalBody">
 						<b:FormGroup ui:field="authenticationMethodGroup">
-                            <b:FormLabel for="authenticationMethod" text="Authentication Method"/>
+                            <b:FormLabel for="authenticationMethod" text="{msgs.authenticationMethod}"/>
                             <g:FlowPanel>
                                 <b:ListBox ui:field="authenticationMethod" b:id="authenticationMethod">
                                 </b:ListBox>
