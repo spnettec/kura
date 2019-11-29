@@ -18,6 +18,7 @@
 			<groupId>org.eclipse.kura</groupId>
 			<artifactId>examples</artifactId>
 			<version>4.3.0-SNAPSHOT</version>
+            <relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>org.eclipse.kura.example.web.extension</artifactId>
@@ -25,7 +26,6 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<kura.basedir>${project.basedir}/..</kura.basedir>
 		<!-- Convenience property to set the GWT version -->
 		<gwtVersion>2.8.2</gwtVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -59,10 +59,7 @@
 				<configuration>
 					<filesets>
 						<fileset>
-							<directory>src/main/webapp</directory>
-						</fileset>
-						<fileset>
-							<directory>src/main/gwt-unitCache</directory>
+							<directory>www</directory>
 						</fileset>
 					</filesets>
 				</configuration>
@@ -85,7 +82,7 @@
 					<failOnError>true</failOnError>
 					<extraJvmArgs>-Xmx512M -Xss1024k -XX:+UseParallelGC</extraJvmArgs>
 					<localWorkers>2</localWorkers>
-					<outputDirectory>src/main/webapp</outputDirectory>
+					<outputDirectory>www</outputDirectory>
 				</configuration>
 			</plugin>
 
@@ -95,7 +92,7 @@
 				<configuration>
 					<additionalFileSets>
 						<fileSet>
-							<directory>src/main/webapp</directory>
+							<directory>www</directory>
 							<prefix>www/</prefix>
 							<excludes>
 								<exclude>**/WEB-INF/**</exclude>
