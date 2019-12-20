@@ -815,7 +815,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.ds_${org.eclipse.equinox.ds.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
