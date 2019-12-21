@@ -5,20 +5,6 @@ import java.util.TimeZone;
 
 import org.eclipse.kura.annotation.Nullable;
 
-/**
- * Simple implementation of the {@link TimeZoneAwareLocaleContext} interface,
- * always returning a specified {@code Locale} and {@code TimeZone}.
- *
- * <p>
- * Note: Prefer the use of {@link SimpleLocaleContext} when only setting
- * a Locale but no TimeZone.
- *
- * @author Juergen Hoeller
- * @author Nicholas Williams
- * @since 4.0
- * @see LocaleContextHolder#setLocaleContext
- * @see LocaleContextHolder#getTimeZone()
- */
 public class SimpleTimeZoneAwareLocaleContext extends SimpleLocaleContext implements TimeZoneAwareLocaleContext {
 
     @Nullable
@@ -30,9 +16,9 @@ public class SimpleTimeZoneAwareLocaleContext extends SimpleLocaleContext implem
      * Locale, and every {@link #getTimeZone()} call will return the given TimeZone.
      * 
      * @param locale
-     *                     the Locale to expose
+     *            the Locale to expose
      * @param timeZone
-     *                     the TimeZone to expose
+     *            the TimeZone to expose
      */
     public SimpleTimeZoneAwareLocaleContext(@Nullable Locale locale, @Nullable TimeZone timeZone) {
         super(locale);

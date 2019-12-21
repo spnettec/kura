@@ -33,7 +33,7 @@ public class ModbusProtocolException extends Exception {
 
     private static final long serialVersionUID = -6155136065068974723L;
 
-    private static final String PROTOCOL_GENERIC_MESSAGES_PATTERN = "Generic Error - {0}: {1} {2} {3} {4} {5}";
+    private static final String PROTOCOL_GENERIC_MESSAGES_PATTERN = "Generic Error {0} : ";
     private static final String PROTOCOL_EXCEPTION_MESSAGES_BUNDLE = "org.eclipse.kura.protocol.messages.ProtocolExceptionMessagesBundle";
 
     private static final Logger s_logger = LoggerFactory.getLogger(ModbusProtocolException.class);
@@ -132,7 +132,7 @@ public class ModbusProtocolException extends Exception {
             }
         } catch (MissingResourceException mre) {
             // log the failure to load a message bundle
-            s_logger.warn("Could not load Exception Messages Bundle for Locale {}", locale);
+            s_logger.debug("Could not load Exception Messages Bundle for Locale {}", locale);
         }
 
         //
