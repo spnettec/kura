@@ -27,7 +27,6 @@ import org.eclipse.kura.camel.camelcloud.DefaultCamelCloudService;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
 import org.eclipse.kura.cloud.CloudService;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +54,7 @@ public class XmlCamelCloudService {
 
     private OsgiDefaultCamelContext router;
 
-    private ServiceRegistration<CloudService> handle;
+    // private ServiceRegistration<CloudService> handle;
 
     public XmlCamelCloudService(final BundleContext context, final ServiceConfiguration configuration) {
         this.context = context;
@@ -116,10 +115,10 @@ public class XmlCamelCloudService {
     }
 
     public void stop() throws Exception {
-        if (this.handle != null) {
-            this.handle.unregister();
-            this.handle = null;
-        }
+        // if (this.handle != null) {
+        // this.handle.unregister();
+        // this.handle = null;
+        // }
         if (this.service != null) {
             this.service.dispose();
             this.service = null;
