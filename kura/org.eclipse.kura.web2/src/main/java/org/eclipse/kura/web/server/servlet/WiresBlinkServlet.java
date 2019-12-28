@@ -129,8 +129,7 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         response.setHeader("Connection", "keep-alive");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Origin", "*"); // required for IE9
-        response.setHeader("Content-Encoding", "identity");
-
+        response.setHeader("Content-Encoding", "identity"); // allow compressed data
         final RequestContext context;
 
         synchronized (this) {
@@ -176,7 +175,7 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         RequestContext(final String requestId, HttpServletResponse response) throws IOException {
             this.requestId = requestId;
             this.response = response;
-            run = true;
+            this.run = true;
         }
 
         private boolean shouldDispatch(final WireEvent event) {
@@ -188,12 +187,12 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         private boolean processEvent(final long startTime) {
             final Wire wire;
 
-            if (!(System.currentTimeMillis() - startTime < SESSION_DURATION_MS && run)) {
+            if (!(System.currentTimeMillis() - startTime < SESSION_DURATION_MS && this.run)) {
                 return false;
             }
 
             try {
-                wire = events.poll(1, TimeUnit.SECONDS);
+                wire = this.events.poll(1, TimeUnit.SECONDS);
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return false;
@@ -210,8 +209,9 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
             }
 
             try {
-                response.getWriter().printf("data: %s %s%n%n", wireEvent.emitterKuraServicePid, wireEvent.emitterPort);
-                response.getWriter().flush();
+                this.response.getWriter().printf("data: %s %s%n%n", wireEvent.emitterKuraServicePid,
+                        wireEvent.emitterPort);
+                this.response.getWriter().flush();
 
                 this.lastSentTimestamp.put(wireEvent, System.currentTimeMillis());
                 return true;
@@ -221,31 +221,32 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         }
 
         void run() {
-            logger.info("Session started: {}", requestId);
+            logger.info("Session started: {}", this.requestId);
 
             final long startTime = System.currentTimeMillis();
 
-            while (processEvent(startTime))
+            while (processEvent(startTime)) {
                 ;
+            }
 
-            logger.info("Session ended: {}", requestId);
+            logger.info("Session ended: {}", this.requestId);
 
             try {
-                response.getWriter().close();
+                this.response.getWriter().close();
             } catch (Exception e) {
                 logger.warn("failed to close stream", e);
             }
 
-            removeContext(requestId);
+            removeContext(this.requestId);
         }
 
         boolean submit(final Wire wire) {
 
-            return events.offer(wire);
+            return this.events.offer(wire);
         }
 
         void close() {
-            run = false;
+            this.run = false;
         }
     }
 
@@ -277,30 +278,37 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((emitterKuraServicePid == null) ? 0 : emitterKuraServicePid.hashCode());
-            result = prime * result + ((emitterPort == null) ? 0 : emitterPort.hashCode());
+            result = prime * result + (this.emitterKuraServicePid == null ? 0 : this.emitterKuraServicePid.hashCode());
+            result = prime * result + (this.emitterPort == null ? 0 : this.emitterPort.hashCode());
             return result;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (getClass() != obj.getClass()) {
                 return false;
+            }
             WireEvent other = (WireEvent) obj;
-            if (emitterKuraServicePid == null) {
-                if (other.emitterKuraServicePid != null)
+            if (this.emitterKuraServicePid == null) {
+                if (other.emitterKuraServicePid != null) {
                     return false;
-            } else if (!emitterKuraServicePid.equals(other.emitterKuraServicePid))
+                }
+            } else if (!this.emitterKuraServicePid.equals(other.emitterKuraServicePid)) {
                 return false;
-            if (emitterPort == null) {
-                if (other.emitterPort != null)
+            }
+            if (this.emitterPort == null) {
+                if (other.emitterPort != null) {
                     return false;
-            } else if (!emitterPort.equals(other.emitterPort))
+                }
+            } else if (!this.emitterPort.equals(other.emitterPort)) {
                 return false;
+            }
             return true;
         }
     }
