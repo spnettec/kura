@@ -87,24 +87,8 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
         }
     }
 
-    /**
-     * Unbinds the Wire Helper Service.
-     *
-     * @param wireHelperService
-     *            the new Wire Helper Service
-     */
-    public void unbindWireHelperService(final WireHelperService wireHelperService) {
-        if (this.wireHelperService == wireHelperService) {
-            this.wireHelperService = null;
-        }
-    }
-
     public void setPositionService(PositionService positionService) {
         this.positionService = positionService;
-    }
-
-    public void unsetPositionService(PositionService positionService) {
-        this.positionService = null;
     }
 
     public void setCloudPublisher(org.eclipse.kura.cloudconnection.publisher.CloudPublisher cloudPublisher) {
@@ -112,8 +96,9 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
     }
 
     public void unsetCloudPublisher(org.eclipse.kura.cloudconnection.publisher.CloudPublisher cloudPublisher) {
-        if (this.cloudConnectionPublisher == cloudPublisher)
+        if (cloudPublisher == this.cloudConnectionPublisher) {
             this.cloudConnectionPublisher = null;
+        }
     }
 
     // ----------------------------------------------------------------
