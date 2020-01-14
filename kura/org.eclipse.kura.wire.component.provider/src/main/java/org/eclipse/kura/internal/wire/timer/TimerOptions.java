@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -9,7 +9,7 @@
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
- *  
+ *
  *******************************************************************************/
 package org.eclipse.kura.internal.wire.timer;
 
@@ -18,6 +18,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.eclipse.kura.configuration.ConfigurationService;
 
 /**
  * The Class TimerOptions is responsible to contain all the Timer related
@@ -35,21 +37,7 @@ final class TimerOptions {
 
     private static final String PROP_INTERVAL_TYPE = "type";
 
-    private static final String PROP_THREAD_COUNT = "threadCount";
-
-    private static final String KURA_SERVICE_PID = "kura.service.pid";
-
     private final Map<String, Object> properties;
-
-    String getServicePid() {
-        String servicePid = null;
-        final Object servicePidObj = this.properties.get(KURA_SERVICE_PID);
-        if (nonNull(servicePidObj) && servicePidObj instanceof String) {
-            servicePid = (String) servicePidObj;
-        }
-        requireNonNull(servicePid, "Service Pid cannot be null");
-        return servicePid;
-    }
 
     /**
      * Instantiates a new Timer options.
@@ -74,20 +62,6 @@ final class TimerOptions {
             expression = (String) interval;
         }
         return expression;
-    }
-
-    /**
-     * Returns the thread count as configured.
-     *
-     * @return the thread count
-     */
-    int getThreadCount() {
-        int threadCount = 0;
-        final Object threadCountObj = this.properties.get(PROP_THREAD_COUNT);
-        if (nonNull(threadCountObj) && threadCountObj instanceof Integer) {
-            threadCount = (Integer) threadCountObj;
-        }
-        return threadCount;
     }
 
     /**
@@ -116,6 +90,10 @@ final class TimerOptions {
             type = (String) timerType;
         }
         return type;
+    }
+
+    String getOwnPid() {
+        return (String) this.properties.get(ConfigurationService.KURA_SERVICE_PID);
     }
 
     long getSimpleTimeUnitMultiplier() throws IllegalArgumentException {
