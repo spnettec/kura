@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -103,7 +104,7 @@ public class FileServlet extends LocaleServlet {
     private final BundleContext bundleContext;
 
     public FileServlet() {
-        bundleContext = FrameworkUtil.getBundle(FileServlet.class).getBundleContext();
+        this.bundleContext = FrameworkUtil.getBundle(FileServlet.class).getBundleContext();
     }
 
     @Override
@@ -233,7 +234,7 @@ public class FileServlet extends LocaleServlet {
         }
 
         if (pid != null && pid.length() > 0) {
-            Bundle[] bundles = bundleContext.getBundles();
+            Bundle[] bundles = this.bundleContext.getBundles();
             ServiceLocator locator = ServiceLocator.getInstance();
 
             final MetaTypeService mts;
@@ -683,7 +684,7 @@ public class FileServlet extends LocaleServlet {
             String filename = item.getName();
             is = item.getInputStream();
 
-            String filePath = System.getProperty(JAVA_IO_TMPDIR) + File.separator + filename;
+            String filePath = System.getProperty(JAVA_IO_TMPDIR) + File.separator + UUID.randomUUID() + ".dp";
 
             localFile = new File(filePath);
             if (localFile.exists()) {
