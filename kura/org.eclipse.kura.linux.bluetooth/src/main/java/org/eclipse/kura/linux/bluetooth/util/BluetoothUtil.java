@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -14,7 +14,6 @@ package org.eclipse.kura.linux.bluetooth.util;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,10 +60,8 @@ public class BluetoothUtil {
     static {
         try {
             File f = new File(BTDUMP);
-            FileUtils.writeStringToFile(f,
-                    "#!/bin/bash\n" + "set -e\n" + "ADAPTER=$1\n"
-                            + "{ hcidump -i $ADAPTER -R -w /dev/fd/3 >/dev/null; } 3>&1",
-                    StandardCharsets.UTF_8, false);
+            FileUtils.writeStringToFile(f, "#!/bin/bash\n" + "set -e\n" + "ADAPTER=$1\n"
+                    + "{ hcidump -i $ADAPTER -R -w /dev/fd/3 >/dev/null; } 3>&1", false);
 
             if (!f.setExecutable(true)) {
                 logger.warn("Unable to set as executable");
@@ -93,7 +90,7 @@ public class BluetoothUtil {
         command.setOutputStream(outputStream);
         command.setErrorStream(errorStream);
         CommandStatus status = executorService.execute(command);
-        if ((Integer) status.getExitStatus().getExitValue() == 0) {
+        if (status.getExitStatus().isSuccessful()) {
             // Check Input stream
             String[] outputLines = new String(outputStream.toByteArray(), Charsets.UTF_8).split("\n");
             // TODO: Pull more parameters from hciconfig?
@@ -155,8 +152,8 @@ public class BluetoothUtil {
         command.setOutputStream(outputStream);
         command.setErrorStream(errorStream);
         CommandStatus status = executorService.execute(command);
-        if ((Integer) status.getExitStatus().getExitValue() == 0) {
-            String[] outputLines = new String(outputStream.toByteArray(), StandardCharsets.UTF_8).split("\n");
+        if (status.getExitStatus().isSuccessful()) {
+            String[] outputLines = new String(outputStream.toByteArray(), Charsets.UTF_8).split("\n");
             for (String line : outputLines) {
                 if (line.contains("UP")) {
                     isEnabled = true;
@@ -186,8 +183,8 @@ public class BluetoothUtil {
         command.setOutputStream(outputStream);
         command.setErrorStream(errorStream);
         CommandStatus status = executorService.execute(command);
-        if ((Integer) status.getExitStatus().getExitValue() == 0) {
-            outputString = new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
+        if (status.getExitStatus().isSuccessful()) {
+            outputString = new String(outputStream.toByteArray(), Charsets.UTF_8);
         } else {
             if (logger.isErrorEnabled()) {
                 logger.error(ERROR_EXECUTING_COMMAND_MESSAGE, String.join(" ", commandLine));
@@ -215,9 +212,9 @@ public class BluetoothUtil {
      * Start an hci dump process for the examination of BLE advertisement packets
      *
      * @param name
-     *                     Name of HCI device (hci0, for example)
+     *            Name of HCI device (hci0, for example)
      * @param listener
-     *                     Listener for receiving btsnoop records
+     *            Listener for receiving btsnoop records
      * @return BluetoothProcess created
      */
     public static BluetoothProcess btdumpCmd(String name, BTSnoopListener listener,
@@ -313,9 +310,9 @@ public class BluetoothUtil {
      * See Bluetooth Core 4.0; 8 EXTENDED INQUIRY RESPONSE DATA FORMAT
      *
      * @param b
-     *              Array containing EIR data
+     *            Array containing EIR data
      * @param i
-     *              Index of first byte of EIR data
+     *            Index of first byte of EIR data
      * @return BeaconInfo or null if no beacon data present
      */
     private static BluetoothBeaconData parseEIRData(byte[] b, int payloadPtr, int len, String companyName) {
