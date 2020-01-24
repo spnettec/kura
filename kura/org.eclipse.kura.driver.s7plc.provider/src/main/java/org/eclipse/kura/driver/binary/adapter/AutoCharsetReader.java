@@ -9,7 +9,7 @@ import java.nio.charset.CharsetDecoder;
 
 public class AutoCharsetReader {
 
-    private static final String[] _defaultCharsets = { "US-ASCII", "UTF-8", "GBK", "GB2312", "BIG5", "GB18030" };
+    private static final String[] DEFAULTCHARSETS = { "US-ASCII", "UTF-8", "GBK", "GB2312", "BIG5", "GB18030" };
 
     private AutoCharsetReader() {
         throw new IllegalStateException("Utility class");
@@ -19,7 +19,7 @@ public class AutoCharsetReader {
 
         Charset charset = null;
 
-        for (String charsetName : _defaultCharsets) {
+        for (String charsetName : DEFAULTCHARSETS) {
             charset = detectCharset(bytes, Charset.forName(charsetName), 0, bytes.length);
             if (charset != null) {
                 break;
@@ -33,7 +33,7 @@ public class AutoCharsetReader {
 
         Charset charset = null;
 
-        for (String charsetName : _defaultCharsets) {
+        for (String charsetName : DEFAULTCHARSETS) {
             charset = detectCharset(bytes, Charset.forName(charsetName), offset, length);
             if (charset != null) {
                 break;
@@ -110,7 +110,7 @@ public class AutoCharsetReader {
         if (str == null || str.trim().length() < 1) {
             return null;
         }
-        for (String encode : _defaultCharsets) {
+        for (String encode : DEFAULTCHARSETS) {
             try {
                 Charset charset = Charset.forName(encode);
                 if (str.equals(new String(str.getBytes(charset), charset))) {

@@ -41,11 +41,11 @@ public class StringData implements BinaryData<String> {
     @Override
     public void write(Buffer buf, int offset, String value) {
         value = value == null ? "" : value;
-        Charset charset = AutoCharsetReader.getEncoding(value);
-        if (charset == null) {
-            charset = this.charset == null ? StandardCharsets.UTF_8 : this.charset;
+        Charset charsetTemp = AutoCharsetReader.getEncoding(value);
+        if (charsetTemp == null) {
+            charsetTemp = this.charset == null ? StandardCharsets.UTF_8 : this.charset;
         }
-        final byte[] raw = value.getBytes(charset);
+        final byte[] raw = value.getBytes(charsetTemp);
         int amount = this.wrapped.getSize();
         int size = value.length();
         byte[] sendByte = new byte[amount + 2];
@@ -77,17 +77,17 @@ public class StringData implements BinaryData<String> {
         StringBuilder builder = new StringBuilder();
         while (totalSize > 0) {
             if (length > 0) {
-                Charset charset = this.charset;
-                if (charset == null) {
-                    charset = AutoCharsetReader.detectCharset(raw, i + 2, length);
+                Charset charsetTemp = this.charset;
+                if (charsetTemp == null) {
+                    charsetTemp = AutoCharsetReader.detectCharset(raw, i + 2, length);
                 }
-                if (charset == null) {
-                    charset = AutoCharsetReader.detectCharset(raw, i + 2, length - 1);
+                if (charsetTemp == null) {
+                    charsetTemp = AutoCharsetReader.detectCharset(raw, i + 2, length - 1);
                 }
-                if (charset == null) {
-                    charset = Charset.forName("US-ASCII");
+                if (charsetTemp == null) {
+                    charsetTemp = StandardCharsets.US_ASCII;
                 }
-                String substr = new String(raw, i + 2, length, charset);
+                String substr = new String(raw, i + 2, length, charsetTemp);
                 substr = substr.replaceAll("[^\u0020-\u9FA5]", "");
                 builder.append(substr);
             }

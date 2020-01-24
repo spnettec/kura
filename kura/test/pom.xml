@@ -82,23 +82,6 @@ Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>checkstyle-validation</id>
-                        <phase>process-sources</phase>
-                        <configuration>
-                            <configLocation>${kura.basedir}/../checkstyle_checks.xml</configLocation>
-                        </configuration>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-surefire-plugin</artifactId>
                 <version>${tycho-version}</version>
@@ -106,6 +89,12 @@ Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
                     <argLine>${tycho.argline}</argLine>
                     <failIfNoTests>false</failIfNoTests>
                     <providerHint>junit4</providerHint>
+                    <dependencies>
+                        <dependency>
+                            <type>p2-installable-unit</type>
+                            <artifactId>org.eclipse.equinox.ds</artifactId>
+                        </dependency>
+                    </dependencies>
                     <bundleStartLevel>
                         <bundle>
                             <id>org.apache.felix.scr</id>
