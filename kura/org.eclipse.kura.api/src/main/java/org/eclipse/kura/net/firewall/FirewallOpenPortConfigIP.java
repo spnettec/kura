@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -21,7 +21,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The base class for firewall open port configurations
  *
  * @param <T>
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 @ProviderType
@@ -62,19 +62,19 @@ public abstract class FirewallOpenPortConfigIP<T extends IPAddress> implements F
      * Creates a complete Open Port configuration
      *
      * @param port
-     *            The port to open for inbound connections
+     *                                     The port to open for inbound connections
      * @param protocol
-     *            The type of protocol to allow for inbound connections
+     *                                     The type of protocol to allow for inbound connections
      * @param permittedNetwork
-     *            The (optional) permitted network for inbound connections
+     *                                     The (optional) permitted network for inbound connections
      * @param permittedInterfaceName
-     *            The (optional) permitted interface name for inbound connections
+     *                                     The (optional) permitted interface name for inbound connections
      * @param unpermittedInterfaceName
-     *            The (optional) not permitted interface name for inbound connections
+     *                                     The (optional) not permitted interface name for inbound connections
      * @param permittedMac
-     *            The (optional) permitted MAC address for inbound connections
+     *                                     The (optional) permitted MAC address for inbound connections
      * @param sourcePortRange
-     *            The (options) permitted source port range for inbound connections
+     *                                     The (options) permitted source port range for inbound connections
      */
     public FirewallOpenPortConfigIP(int port, NetProtocol protocol, NetworkPair<T> permittedNetwork,
             String permittedInterfaceName, String unpermittedInterfaceName, String permittedMac,

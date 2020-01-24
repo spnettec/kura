@@ -221,7 +221,7 @@ public class ComponentUtil {
      *
      * @param ctx
      * @param pid
-     *            ID of the service whose OCD should be loaded
+     *                ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -332,8 +332,9 @@ public class ComponentUtil {
     }
 
     public static ResourceBundle getResourceBundle(String localization, String locale, URL[] urls) {
-        if (urls == null)
+        if (urls == null) {
             return null;
+        }
         String[] searchCandidates = getSearchCandidates(locale);
 
         URL resourceUrl = getLocaleUrl(urls, searchCandidates, localization);
@@ -353,8 +354,9 @@ public class ComponentUtil {
         String directory = "/"; //$NON-NLS-1$
         String file = "*"; //$NON-NLS-1$
         int index = path.lastIndexOf(DIRECTORY_SEP);
-        if (index > 0)
+        if (index > 0) {
             directory = path.substring(0, index);
+        }
 
         Enumeration<URL> entries = bundle.findEntries(directory, file, false);
         if (entries == null) {
@@ -365,15 +367,15 @@ public class ComponentUtil {
     }
 
     private static URL getLocaleUrl(URL[] urls, String[] searchCandidates, String resourceBase) {
-        if (urls == null)
+        if (urls == null) {
             return null;
+        }
         resourceBase = resourceBase == null ? Constants.BUNDLE_LOCALIZATION_DEFAULT_BASENAME : resourceBase;
 
-        for (int idx = 0; idx < searchCandidates.length; idx++) {
+        for (String searchCandidate : searchCandidates) {
             for (URL url : urls) {
                 String path = url.getPath();
-                if (searchCandidates[idx] != null
-                        && path.equals("/" + resourceBase + searchCandidates[idx] + RESOURCE_FILE_EXT)) {
+                if (searchCandidate != null && path.equals("/" + resourceBase + searchCandidate + RESOURCE_FILE_EXT)) {
                     return url;
                 }
             }
@@ -413,7 +415,7 @@ public class ComponentUtil {
      * contain any extra post-processing of the loaded information.
      *
      * @param resourceUrl
-     *            Url of the MetaData XML file which needs to be loaded
+     *                        Url of the MetaData XML file which needs to be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -441,7 +443,7 @@ public class ComponentUtil {
      * contain any extra post-processing of the loaded information.
      *
      * @param pid
-     *            ID of the service whose OCD should be loaded
+     *                ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -474,7 +476,7 @@ public class ComponentUtil {
      *
      * @param ctx
      * @param pid
-     *            ID of the service whose OCD should be loaded
+     *                ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException

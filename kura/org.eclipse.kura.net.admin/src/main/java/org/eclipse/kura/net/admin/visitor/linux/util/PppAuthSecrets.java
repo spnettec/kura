@@ -119,15 +119,15 @@ public class PppAuthSecrets {
      * Add a new entry to the secrets file
      *
      * @param provider
-     *            cellular provider for which this secret applies
+     *                      cellular provider for which this secret applies
      * @param client
-     *            client/username for this secret
+     *                      client/username for this secret
      * @param server
-     *            server ip for which this entry requires
+     *                      server ip for which this entry requires
      * @param secret
-     *            secret/password for this account
+     *                      secret/password for this account
      * @param ipAddress
-     *            ipaddress for this account
+     *                      ipaddress for this account
      * @throws Exception
      */
     public void addEntry(String provider, String client, String server, String secret, String ipAddress)
@@ -167,7 +167,7 @@ public class PppAuthSecrets {
      * Writes current contents in ram back to the pap-secrets file
      *
      * @throws Exception
-     *             for file IO errors
+     *                       for file IO errors
      */
     private void writeToFile() throws Exception {
         String authType = "";
@@ -219,14 +219,14 @@ public class PppAuthSecrets {
      * once, all entries of 'type' matching 'value' will be removed
      *
      * @param type
-     *            can be either provider, client, server, secret, or ipaddress
+     *                  can be either provider, client, server, secret, or ipaddress
      *
      * @param value
-     *            is the value for the given type. For example, if the type is
-     *            provider, then the value could be att
+     *                  is the value for the given type. For example, if the type is
+     *                  provider, then the value could be att
      *
      * @throws Exception
-     *             for indexing problems
+     *                       for indexing problems
      */
     public void removeEntry(String type, String value) throws Exception {
         if ("provider".equals(type)) {
@@ -259,10 +259,10 @@ public class PppAuthSecrets {
      * removed an entry based on an index
      *
      * @param index
-     *            the index of the entry to be removed
+     *                  the index of the entry to be removed
      *
      * @throws Exception
-     *             if the index is invalid
+     *                       if the index is invalid
      */
     public void removeEntry(int index) throws Exception {
         try {
@@ -282,15 +282,15 @@ public class PppAuthSecrets {
      * Checks to see if an entry is already present
      *
      * @param provider
-     *            cellular provider for which this secret applies
+     *                      cellular provider for which this secret applies
      * @param client
-     *            client/username for this secret
+     *                      client/username for this secret
      * @param server
-     *            server ip for which this entry requires
+     *                      server ip for which this entry requires
      * @param secret
-     *            secret/password for this account
+     *                      secret/password for this account
      * @param ipAddress
-     *            ipaddress for this account
+     *                      ipaddress for this account
      * @return boolean
      *         true - entry found
      *         false - entry not found
@@ -315,13 +315,13 @@ public class PppAuthSecrets {
      * Return the secret as a string, given the other parameters. Return null if not found.
      *
      * @param provider
-     *            cellular provider for which this secret applies
+     *                      cellular provider for which this secret applies
      * @param client
-     *            client/username for this secret
+     *                      client/username for this secret
      * @param server
-     *            server ip for which this entry requires
+     *                      server ip for which this entry requires
      * @param ipAddress
-     *            ipaddress for this account
+     *                      ipaddress for this account
      * @return String
      */
     public String getSecret(String provider, String client, String server, String ipAddress) {

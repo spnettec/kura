@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2019, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -24,6 +24,7 @@ public class TriConsumerAdapter<T, U, V> implements Adapter<TriConsumer<T, U, V>
         this.thirdAdapter = thirdAdapter;
     }
 
+    @SuppressWarnings("checkstyle:lineLength")
     @Override
     public native JavaScriptObject adaptNonNull(final TriConsumer<T, U, V> consumer)
     /*-{
@@ -42,8 +43,8 @@ public class TriConsumerAdapter<T, U, V> implements Adapter<TriConsumer<T, U, V>
     @Override
     public TriConsumer<T, U, V> adaptNonNull(final JavaScriptObject jsConsumer) {
 
-        return (t, u, v) -> JsObject.call(jsConsumer, JsObject.toArray(firstAdapter.adaptNullable(t),
-                secondAdapter.adaptNullable(u), thirdAdapter.adaptNullable(v)));
+        return (t, u, v) -> JsObject.call(jsConsumer, JsObject.toArray(this.firstAdapter.adaptNullable(t),
+                this.secondAdapter.adaptNullable(u), this.thirdAdapter.adaptNullable(v)));
 
     }
 

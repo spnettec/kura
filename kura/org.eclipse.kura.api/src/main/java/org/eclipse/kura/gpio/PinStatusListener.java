@@ -24,7 +24,7 @@ public interface PinStatusListener {
      * Invoked when the status of the attached input pin changes
      *
      * @param value
-     *            The new value of the pin.
+     *                  The new value of the pin.
      */
     public void pinStatusChange(boolean value);
 }

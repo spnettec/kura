@@ -17,6 +17,7 @@ import org.eclipse.kura.raspsberrypi.sensehat.joystick.Joystick;
 import org.eclipse.kura.raspsberrypi.sensehat.joystick.JoystickEvent;
 
 public enum Resource {
+
     LED_MATRIX_CHARS,
     LED_MATRIX_FB_RGB565,
     LED_MATRIX_FB_MONOCHROME,

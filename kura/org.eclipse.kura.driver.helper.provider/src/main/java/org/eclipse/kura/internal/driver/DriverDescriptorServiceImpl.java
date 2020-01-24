@@ -65,7 +65,7 @@ public class DriverDescriptorServiceImpl implements DriverDescriptorService {
             }
         } finally {
             ungetDriverServiceReferences(refs);
-            bundleContext.ungetService(sr);
+            this.bundleContext.ungetService(sr);
         }
 
         return Optional.ofNullable(driverDescriptor);
@@ -96,7 +96,7 @@ public class DriverDescriptorServiceImpl implements DriverDescriptorService {
             }
         } finally {
             ungetDriverServiceReferences(refs);
-            bundleContext.ungetService(sr);
+            this.bundleContext.ungetService(sr);
         }
 
         return driverDescriptors;

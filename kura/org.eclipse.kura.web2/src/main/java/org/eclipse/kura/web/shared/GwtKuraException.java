@@ -40,7 +40,7 @@ public class GwtKuraException extends Exception {
     protected String detailMessage;
 
     public String getDetailMessage() {
-        return detailMessage;
+        return this.detailMessage;
     }
 
     @Override
@@ -74,14 +74,16 @@ public class GwtKuraException extends Exception {
         if (cause != null) {
             this.stackTrace = cause.getStackTrace();
             Throwable topCause = cause;
-            while (topCause.getCause() != null && topCause.getMessage() != null)
+            while (topCause.getCause() != null && topCause.getMessage() != null) {
                 topCause = topCause.getCause();
+            }
             this.detailMessage = topCause.getMessage();
         } else {
             this.stackTrace = super.getStackTrace();
             Throwable topCause = this;
-            while (topCause.getCause() != null && topCause.getMessage() != null)
+            while (topCause.getCause() != null && topCause.getMessage() != null) {
                 topCause = topCause.getCause();
+            }
             this.detailMessage = topCause.getMessage();
         }
     }
@@ -163,8 +165,9 @@ public class GwtKuraException extends Exception {
         String msg = null;
         if (this.m_errorCode == null) {
             msg = super.getMessage();
-        } else
+        } else {
             msg = this.m_errorCode.toString();
+        }
 
         try {
             // ValidationMessages MSGS = GWT.create(ValidationMessages.class);

@@ -24,9 +24,9 @@ public final class Configuration {
      * Get a string value, defaulting to {@code null}
      *
      * @param properties
-     *            the properties to read from, may be {@code null}
+     *                       the properties to read from, may be {@code null}
      * @param key
-     *            the key to read, may be {@code null}
+     *                       the key to read, may be {@code null}
      * @return the string value or {@code null}
      */
     public static String asString(final Map<String, ?> properties, final String key) {
@@ -37,11 +37,11 @@ public final class Configuration {
      * Get a string value
      *
      * @param properties
-     *            the properties to read from, may be {@code null}
+     *                         the properties to read from, may be {@code null}
      * @param key
-     *            the key to read, may be {@code null}
+     *                         the key to read, may be {@code null}
      * @param defaultValue
-     *            the default value, may be {@code null}
+     *                         the default value, may be {@code null}
      * @return the string value or the default value
      */
     public static String asString(final Map<String, ?> properties, final String key, final String defaultValue) {
@@ -65,14 +65,15 @@ public final class Configuration {
      * </p>
      *
      * @param properties
-     *            the properties to read from, may be {@code null}
+     *                         the properties to read from, may be {@code null}
      * @param key
-     *            the key to read, may be {@code null}
+     *                         the key to read, may be {@code null}
      * @param defaultValue
-     *            the default value, may be {@code null}
+     *                         the default value, may be {@code null}
      * @return the string value or the default value
      */
-    public static String asStringNotEmpty(final Map<String, ?> properties, final String key, final String defaultValue) {
+    public static String asStringNotEmpty(final Map<String, ?> properties, final String key,
+            final String defaultValue) {
         if (properties == null) {
             return defaultValue;
         }
@@ -184,9 +185,9 @@ public final class Configuration {
      * Get a boolean parameter from the configuration
      *
      * @param properties
-     *            the configuration
+     *                       the configuration
      * @param key
-     *            the key to fetch
+     *                       the key to fetch
      * @return the boolean value from the configuration, or {@code false} if the property set is {@code null}, the
      *         property is not set or it is not boolean
      */

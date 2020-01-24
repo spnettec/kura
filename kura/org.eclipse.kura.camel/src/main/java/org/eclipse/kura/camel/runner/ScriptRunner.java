@@ -27,8 +27,9 @@ import javax.script.ScriptException;
  * so that at least the standard "JavaScript" language works inside of OSGi.
  * <br>
  * In order to execute a script use:
+ * 
  * <pre>
- * ScriptRunner runner = ScriptRunner.create(ServiceClass.class.getClassLoader(), "JavaScript", "callFooBar();" );
+ * ScriptRunner runner = ScriptRunner.create(ServiceClass.class.getClassLoader(), "JavaScript", "callFooBar();");
  * runner.run();
  * </pre>
  */
@@ -133,12 +134,12 @@ public abstract class ScriptRunner {
      * Run a Callable while swapping the context class loader
      *
      * @param classLoader
-     *            the class loader to set while calling the code
+     *                        the class loader to set while calling the code
      * @param code
-     *            the code to call
+     *                        the code to call
      * @return the return value of the code
      * @throws ScriptException
-     *             if anything goes wrong
+     *                             if anything goes wrong
      */
     public static <T> T runWithClassLoader(final ClassLoader classLoader, final Callable<T> code)
             throws ScriptException {

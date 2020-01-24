@@ -67,9 +67,9 @@ class IWAPParser {
 
     /**
      * @param propLine
-     *            A trimmed line from iw scan.
+     *                     A trimmed line from iw scan.
      * @throws Exception
-     *             Something went wrong for this AP.
+     *                       Something went wrong for this AP.
      */
     public void parsePropLine(String propLine) throws Exception {
 

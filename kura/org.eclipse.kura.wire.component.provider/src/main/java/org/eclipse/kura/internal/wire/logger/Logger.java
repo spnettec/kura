@@ -57,7 +57,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -69,7 +69,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -81,9 +81,9 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for activation.
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      * @param properties
-     *            the properties
+     *                             the properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating Logger Wire Component...");
@@ -97,7 +97,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for updating.
      *
      * @param properties
-     *            the updated properties
+     *                       the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating Logger Wire Component...");
@@ -109,7 +109,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for deactivation.
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Deactivating Logger Wire Component...");

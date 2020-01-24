@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 public class SendStatusServlet extends HttpServlet {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -66,7 +66,7 @@ public class SendStatusServlet extends HttpServlet {
 
     private void sendStatus(final HttpServletResponse resp) {
         try {
-            resp.sendError(status);
+            resp.sendError(this.status);
         } catch (final IOException e) {
             logger.warn("unexpected exception", e);
         }

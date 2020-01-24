@@ -69,7 +69,7 @@ public class InstallImpl {
     private final String installVerifDir;
     private final String installPersistanceDir;
     private String packagesPath;
-    private CommandExecutorService executorService;
+    private final CommandExecutorService executorService;
 
     public InstallImpl(CloudDeploymentHandlerV2 callback, String kuraDataDir, CommandExecutorService executorService) {
         this.callback = callback;

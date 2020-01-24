@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -73,7 +73,8 @@ public class LifeCyclePayloadBuilder {
                 .withFirmwareVersion(deviceProfile.getFirmwareVersion()).withBiosVersion(deviceProfile.getBiosVersion())
                 .withOs(deviceProfile.getOs()).withOsVersion(deviceProfile.getOsVersion())
                 .withJvmName(deviceProfile.getJvmName()).withJvmVersion(deviceProfile.getJvmVersion())
-                .withJvmProfile(deviceProfile.getJvmProfile()).withKuraVersion(deviceProfile.getApplicationFrameworkVersion())
+                .withJvmProfile(deviceProfile.getJvmProfile())
+                .withKuraVersion(deviceProfile.getApplicationFrameworkVersion())
                 .withConnectionInterface(deviceProfile.getConnectionInterface())
                 .withConnectionIp(deviceProfile.getConnectionIp()).withAcceptEncoding(acceptEncoding)
                 .withApplicationIdentifiers(appIds).withAvailableProcessors(deviceProfile.getAvailableProcessors())
@@ -175,8 +176,8 @@ public class LifeCyclePayloadBuilder {
             }
         }
 
-        return buildKuraDeviceProfile(systemService, sysAdminService, connectionIp,
-                connectionInterface, latitude, longitude, altitude);
+        return buildKuraDeviceProfile(systemService, sysAdminService, connectionIp, connectionInterface, latitude,
+                longitude, altitude);
     }
 
     private KuraDeviceProfile buildKuraDeviceProfile(SystemService systemService, SystemAdminService sysAdminService,

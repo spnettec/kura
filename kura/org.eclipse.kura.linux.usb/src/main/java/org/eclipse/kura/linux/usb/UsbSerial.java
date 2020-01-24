@@ -34,8 +34,7 @@ public class UsbSerial {
      */
     private static void getInfo() throws IOException {
 
-        try (FileReader fr = new FileReader(FILENAME);
-                BufferedReader in = new BufferedReader(fr);) {
+        try (FileReader fr = new FileReader(FILENAME); BufferedReader in = new BufferedReader(fr);) {
             entries = new ArrayList<>();
 
             int ttyUsbNo = 0;

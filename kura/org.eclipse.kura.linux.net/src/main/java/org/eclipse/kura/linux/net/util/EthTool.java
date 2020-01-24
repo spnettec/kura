@@ -40,15 +40,15 @@ public class EthTool implements LinkTool {
     private int speed = 0; // in b/s
     private String duplex = null;
 
-    private CommandExecutorService executorService;
+    private final CommandExecutorService executorService;
 
     /**
      * ethtool constructor
      *
      * @param ifaceName
-     *            - interface name as {@link String}
+     *                            - interface name as {@link String}
      * @param executorService
-     *            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
+     *                            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
      */
     public EthTool(String ifaceName, CommandExecutorService executorService) {
         this.ifaceName = ifaceName;

@@ -1010,8 +1010,9 @@ public class CloudServiceImpl
             return;
         }
         String fullTopic = (String) subscriptionProperties.get(FULL_TOPIC.name());
-        if (isNull(fullTopic))
+        if (isNull(fullTopic)) {
             fullTopic = encodeTopic(appId, CloudServiceOptions.getTopicClientIdToken(), appTopic, isControl);
+        }
 
         CloudSubscriptionRecord subscriptionRecord = new CloudSubscriptionRecord(fullTopic, qos);
 

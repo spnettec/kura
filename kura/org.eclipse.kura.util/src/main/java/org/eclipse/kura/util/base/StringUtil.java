@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -30,21 +30,21 @@ public final class StringUtil {
      * Returns {@code true} if the given string is null or is the empty string.
      *
      * @param string
-     *            a string reference to check
+     *                   a string reference to check
      * @return {@code true} if the string is null or is the empty string
      */
     public static boolean isNullOrEmpty(@Nullable final String string) {
-        return (string == null) || string.isEmpty();
+        return string == null || string.isEmpty();
     }
 
     /**
      * Returns a string containing the tokens joined by delimiters.
      *
      * @param tokens
-     *            an array objects to be joined. Strings will be formed from the
-     *            objects by calling object.toString().
+     *                   an array objects to be joined. Strings will be formed from the
+     *                   objects by calling object.toString().
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     public static String join(final CharSequence delimiter, final Iterable<?> tokens) {
         requireNonNull(delimiter, "Delimiter cannot be null.");

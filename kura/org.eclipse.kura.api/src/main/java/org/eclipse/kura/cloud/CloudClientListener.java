@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -24,7 +24,7 @@ import org.osgi.annotation.versioning.ConsumerType;
  * Arrived methods are invoked whenever a message is sent to a appTopic associated to the CloudClient.
  * The Arrived method signatures are differentiated based on whether the incoming messages have been
  * published to a data topic (by default accountName/#) or a control topic (by default $EDC/accountName/#).
- * 
+ *
  * @deprecated Please consider using {@link CloudConnectionListener} and {@link CloudSubscriberListener} instead
  */
 @ConsumerType
@@ -38,15 +38,15 @@ public interface CloudClientListener {
      * KuraPaylaod instance which is passed to the callback Listener interface.
      *
      * @param deviceId
-     *            The deviceId this message was addressed to.
+     *                     The deviceId this message was addressed to.
      * @param appTopic
-     *            The appTopic the message arrived on.
+     *                     The appTopic the message arrived on.
      * @param msg
-     *            The KuraPayload that arrived.
+     *                     The KuraPayload that arrived.
      * @param qos
-     *            The Quality of Service that the message was received on.
+     *                     The Quality of Service that the message was received on.
      * @param retain
-     *            Whether the message was retained by the broker.
+     *                     Whether the message was retained by the broker.
      */
     void onControlMessageArrived(String deviceId, String appTopic, KuraPayload msg, int qos, boolean retain);
 
@@ -57,15 +57,15 @@ public interface CloudClientListener {
      * KuraPaylaod instance which is passed to the callback Listener interface.
      *
      * @param deviceId
-     *            The asset ID of the semanticTopic prefix the message arrived on.
+     *                     The asset ID of the semanticTopic prefix the message arrived on.
      * @param appTopic
-     *            The appTopic the message arrived on.
+     *                     The appTopic the message arrived on.
      * @param msg
-     *            The KuraPayload that arrived.
+     *                     The KuraPayload that arrived.
      * @param qos
-     *            The Quality of Service that the message was received on.
+     *                     The Quality of Service that the message was received on.
      * @param retain
-     *            Whether the message was retained by the broker.
+     *                     Whether the message was retained by the broker.
      */
     void onMessageArrived(String deviceId, String appTopic, KuraPayload msg, int qos, boolean retain);
 
@@ -96,7 +96,7 @@ public interface CloudClientListener {
      * as appropriate for the quality of service. The published method is not called for QoS 0 publications.
      *
      * @param messageId
-     *            The message id of the published message
+     *                      The message id of the published message
      */
     void onMessageConfirmed(int messageId, String appTopic);
 

@@ -31,7 +31,7 @@ public interface WireComponentDefinitionService {
      *
      * @return a list of registered {@link WireComponentDefinition}s
      * @throws KuraException
-     *             if the get operation fails.
+     *                           if the get operation fails.
      */
     public List<WireComponentDefinition> getComponentDefinitions() throws KuraException;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -64,7 +64,7 @@ public interface Driver {
          * Instantiates a new connection exception.
          *
          * @param messsage
-         *            the exception message
+         *                     the exception message
          */
         public ConnectionException(final String messsage) {
             super(messsage);
@@ -74,9 +74,9 @@ public interface Driver {
          * Instantiates a new connection exception.
          *
          * @param message
-         *            the exception message
+         *                    the exception message
          * @param cause
-         *            the exception cause
+         *                    the exception cause
          */
         public ConnectionException(final String message, final Throwable cause) {
             super(message, cause);
@@ -86,7 +86,7 @@ public interface Driver {
          * Instantiates a new connection exception.
          *
          * @param cause
-         *            the exception cause
+         *                  the exception cause
          */
         public ConnectionException(final Throwable cause) {
             super(cause);
@@ -105,7 +105,7 @@ public interface Driver {
      * case the connect function may optionally test if the asset is reachable.
      *
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                 if the connection to the field device is interrupted
      */
     public void connect() throws ConnectionException;
 
@@ -113,7 +113,7 @@ public interface Driver {
      * Attempts to disconnect the already established communication channel.
      *
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                 if the connection to the field device is interrupted
      */
     public void disconnect() throws ConnectionException;
 
@@ -137,19 +137,19 @@ public interface Driver {
      * shall be thrown.
      *
      * @param records
-     *            the records hold the information of what channels are to be
-     *            read. They will be filled by this function with the records
-     *            already read.
+     *                    the records hold the information of what channels are to be
+     *                    read. They will be filled by this function with the records
+     *                    already read.
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                      if the connection to the field device is interrupted
      * @throws NullPointerException
-     *             if argument is null
+     *                                      if argument is null
      * @throws IllegalArgumentException
-     *             if argument is empty
+     *                                      if argument is empty
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the driver then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                      if the method is not implemented by the driver then specific
+     *                                      error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                      needs to be set in the thrown {@link KuraRuntimeException}
      */
     public void read(List<ChannelRecord> records) throws ConnectionException;
 
@@ -158,17 +158,17 @@ public interface Driver {
      * monitor operation on it.
      *
      * @param channelConfig
-     *            the channel configuration
+     *                          the channel configuration
      * @param listener
-     *            the listener
+     *                          the listener
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                  if the connection to the field device is interrupted
      * @throws NullPointerException
-     *             any of the arguments is null
+     *                                  any of the arguments is null
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the driver then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the driver then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      */
     public void registerChannelListener(Map<String, Object> channelConfig, ChannelListener listener)
             throws ConnectionException;
@@ -178,15 +178,15 @@ public interface Driver {
      * registered for a monitor operation.
      *
      * @param listener
-     *            the listener to unregister
+     *                     the listener to unregister
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                  if the connection to the field device is interrupted
      * @throws NullPointerException
-     *             if the argument is null
+     *                                  if the argument is null
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the driver then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the driver then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      */
     public void unregisterChannelListener(ChannelListener listener) throws ConnectionException;
 
@@ -199,20 +199,20 @@ public interface Driver {
      * {@code ConnectionException} shall be thrown.
      *
      * @param records
-     *            the records hold the information of what channels are to be
-     *            written and the values that are to written. They will be
-     *            filled by this function with a driver flag stating whether the
-     *            write process was successful or not.
+     *                    the records hold the information of what channels are to be
+     *                    written and the values that are to written. They will be
+     *                    filled by this function with a driver flag stating whether the
+     *                    write process was successful or not.
      * @throws ConnectionException
-     *             if the connection to the field device is interrupted
+     *                                      if the connection to the field device is interrupted
      * @throws NullPointerException
-     *             if the argument is null
+     *                                      if the argument is null
      * @throws IllegalArgumentException
-     *             if the provided list is empty
+     *                                      if the provided list is empty
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the driver then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                      if the method is not implemented by the driver then specific
+     *                                      error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                      needs to be set in the thrown {@link KuraRuntimeException}
      */
     public void write(List<ChannelRecord> records) throws ConnectionException;
 
@@ -230,13 +230,13 @@ public interface Driver {
      * If the validation of the channel configuration fails for some channels, the driver must not throw an exception
      * but it is required to return channel records with proper error flags set as a result of the
      * {@link PreparedRead#execute()} call.
-     * 
+     *
      * @see PreparedRead
      * @param records
-     *            The list of channel records that represent the request to be optimized.
+     *                    The list of channel records that represent the request to be optimized.
      * @return The {@link PreparedRead} instance
      * @throws NullPointerException
-     *             if the provided list is null
+     *                                  if the provided list is null
      */
     public PreparedRead prepareRead(List<ChannelRecord> records);
 }

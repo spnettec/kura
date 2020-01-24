@@ -70,7 +70,7 @@ public interface CloudConnectionStatusComponent {
      * Invoked internally by {@link CloudConnectionStatusService} to persist the status of the component
      *
      * @param status
-     *            New status of this component
+     *                   New status of this component
      */
     public void setNotificationStatus(CloudConnectionStatusEnum status);
 

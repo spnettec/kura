@@ -750,8 +750,9 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
 
             Password password = (Password) properties.get(MQTT_PASSWORD_PROP_NAME);
             String passwordString = "";
-            if (password != null)
+            if (password != null) {
                 passwordString = password.toString();
+            }
 
             Boolean isPostProcess = (Boolean) properties.get(POST_PROCESS_NAME_PROP_NAME);
             String scriptSource = (String) properties.get(POST_PROCESS_CODE_NAME_PROP_NAME);

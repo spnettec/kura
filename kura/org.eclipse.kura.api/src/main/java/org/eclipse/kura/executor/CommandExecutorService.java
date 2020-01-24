@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2019, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -26,31 +26,31 @@ public interface CommandExecutorService {
 
     /**
      * Synchronously executes a system command.
-     * 
+     *
      * @param command
-     *            the {@link Command} to be executed
+     *                    the {@link Command} to be executed
      * @return a {@link CommandStatus} object
      */
     public CommandStatus execute(Command command);
 
     /**
      * Asynchronously executes a system command.
-     * 
+     *
      * @param command
-     *            the {@link Command} to be executed
+     *                     the {@link Command} to be executed
      * @param callback
-     *            the consumer called when the command returns
+     *                     the consumer called when the command returns
      */
     public void execute(Command command, Consumer<CommandStatus> callback);
 
     /**
      * Stops the system process identified by the given {@link Pid}.
-     * 
+     *
      * @param pid
-     *            the {@link Pid} of the process to be stopped
+     *                   the {@link Pid} of the process to be stopped
      * @param signal
-     *            the {@link Signal} sent to the process to stop it. If null, a default signal will be sent.
-     *            The type of the default signal is implementation specific
+     *                   the {@link Signal} sent to the process to stop it. If null, a default signal will be sent.
+     *                   The type of the default signal is implementation specific
      * @return a boolean value that is true if the stop operation succeeded
      */
     public boolean stop(Pid pid, Signal signal);
@@ -58,21 +58,21 @@ public interface CommandExecutorService {
     /**
      * Kills the system commands containing all the tokens in the given command line.
      * If more processes are found, all of them will be killed.
-     * 
+     *
      * @param commandLine
-     *            the command to be killed
+     *                        the command to be killed
      * @param signal
-     *            the {@link Signal} sent to the command to kill it. If null, a default signal will be sent.
-     *            The type of the default signal is implementation specific
+     *                        the {@link Signal} sent to the command to kill it. If null, a default signal will be sent.
+     *                        The type of the default signal is implementation specific
      * @return a boolean value that is true if the kill operation succeeded
      */
     public boolean kill(String[] commandLine, Signal signal);
 
     /**
      * Returns true if the process identified by the given Pid is running.
-     * 
+     *
      * @param pid
-     *            the {@link Pid} object of the process
+     *                the {@link Pid} object of the process
      * @return a boolean value that is true if the process is running
      */
     public boolean isRunning(Pid pid);
@@ -80,9 +80,9 @@ public interface CommandExecutorService {
     /**
      * Returns true if at least one process containing all the tokens in the given command line is found.
      * It is equivalent to !getPids(commandLine).isEmpty().
-     * 
+     *
      * @param commandLine
-     *            the command to be checked
+     *                        the command to be checked
      * @return a boolean value that is true if the command is running
      */
     public boolean isRunning(String[] commandLine);
@@ -90,9 +90,9 @@ public interface CommandExecutorService {
     /**
      * This method searches for running processes containing all the tokens in the command line.
      * It returns a map whose keys are the commands found and the values are the associated {@link Pid}s.
-     * 
+     *
      * @param commandLine
-     *            the command line
+     *                        the command line
      * @return a map of commands and associated {@link Pid}
      */
     public Map<String, Pid> getPids(String[] commandLine);

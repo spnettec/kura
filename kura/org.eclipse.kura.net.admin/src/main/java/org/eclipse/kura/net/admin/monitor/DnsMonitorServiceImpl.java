@@ -119,7 +119,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
             logger.error("Could not get initial network configuration", e);
         }
 
-        //this.dnsUtil = LinuxDns.getInstance();
+        // this.dnsUtil = LinuxDns.getInstance();
         this.linuxNetworkUtil = new LinuxNetworkUtil(this.executorService);
 
         stopThread = new AtomicBoolean();

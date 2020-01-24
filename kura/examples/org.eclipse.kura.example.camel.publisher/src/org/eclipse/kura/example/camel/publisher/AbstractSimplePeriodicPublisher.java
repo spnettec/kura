@@ -16,8 +16,6 @@ import static org.eclipse.kura.camel.component.Configuration.asBoolean;
 import java.util.Date;
 import java.util.Map;
 
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.eclipse.kura.message.KuraPayload;
 
@@ -56,25 +54,21 @@ public abstract class AbstractSimplePeriodicPublisher<T> extends AbstractSimpleP
             @Override
             public void configure() throws Exception {
 
-                from("timer://heartbeat").id("payload").process(new Processor() {
+                from("timer://heartbeat").id("payload").process(exchange -> {
+                    // get new payload for this run
+                    final Map<String, Object> payload = getPayload(configuration);
 
-                    @Override
-                    public void process(final Exchange exchange) throws Exception {
-                        // get new payload for this run
-                        final Map<String, Object> payload = getPayload(configuration);
+                    // create new Kura payload structure
+                    final KuraPayload kuraPayload = new KuraPayload();
+                    kuraPayload.setTimestamp(new Date());
 
-                        // create new Kura payload structure
-                        final KuraPayload kuraPayload = new KuraPayload();
-                        kuraPayload.setTimestamp(new Date());
-
-                        // set map of data
-                        for (final Map.Entry<String, Object> entry : payload.entrySet()) {
-                            kuraPayload.addMetric(entry.getKey(), entry.getValue());
-                        }
-
-                        // set camel exchange data
-                        exchange.getIn().setBody(kuraPayload);
+                    // set map of data
+                    for (final Map.Entry<String, Object> entry : payload.entrySet()) {
+                        kuraPayload.addMetric(entry.getKey(), entry.getValue());
                     }
+
+                    // set camel exchange data
+                    exchange.getIn().setBody(kuraPayload);
                 }).to("cloud:" + AbstractSimplePeriodicPublisher.this.appId);
             }
         };

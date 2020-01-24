@@ -49,7 +49,7 @@ public class BluetoothLeEddystoneDecoderImpl implements BluetoothLeEddystoneDeco
      * See Bluetooth Core 4.0; 8 EXTENDED INQUIRY RESPONSE DATA FORMAT
      *
      * @param b
-     *            Array containing EIR data
+     *              Array containing EIR data
      * @return BluetoothLeEddystone or null if no beacon data present
      */
     private static BluetoothLeEddystone parseEIRData(byte[] b) {

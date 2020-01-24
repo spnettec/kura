@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -77,25 +77,27 @@ public class ComponentConfigurationImpl implements ComponentConfiguration {
 
     @Override
     public String toString() {
-        return "ComponentConfigurationImpl [pid=" + pid + ", definition=" + definition + ", properties=" + properties
-                + "]";
+        return "ComponentConfigurationImpl [pid=" + this.pid + ", definition=" + this.definition + ", properties="
+                + this.properties + "]";
     }
 
     @Override
     public OCD getLocalizedDefinition(String locale) {
-        if (definition == null)
+        if (this.definition == null) {
             return null;
-        ResourceBundle rb = ComponentUtil.getResourceBundle(definition.getLocalization(), locale,
-                definition.getLocaleUrls());
-        if (rb == null)
-            return definition;
+        }
+        ResourceBundle rb = ComponentUtil.getResourceBundle(this.definition.getLocalization(), locale,
+                this.definition.getLocaleUrls());
+        if (rb == null) {
+            return this.definition;
+        }
         Tocd localeDefinition = new Tocd();
-        localeDefinition.setName(ComponentUtil.getLocalized(rb, definition.getName()));
-        localeDefinition.setDescription(ComponentUtil.getLocalized(rb, definition.getDescription()));
-        definition.getIcon().forEach(icon -> localeDefinition.setIcon((Ticon) icon));
-        definition.getAny().forEach(any -> localeDefinition.setAny(any));
-        localeDefinition.setId(definition.getId());
-        List<AD> ads = definition.getAD();
+        localeDefinition.setName(ComponentUtil.getLocalized(rb, this.definition.getName()));
+        localeDefinition.setDescription(ComponentUtil.getLocalized(rb, this.definition.getDescription()));
+        this.definition.getIcon().forEach(icon -> localeDefinition.setIcon((Ticon) icon));
+        this.definition.getAny().forEach(any -> localeDefinition.setAny(any));
+        localeDefinition.setId(this.definition.getId());
+        List<AD> ads = this.definition.getAD();
         for (AD ad : ads) {
             Tad localeTad = new Tad();
             Tad tad = (Tad) ad;

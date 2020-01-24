@@ -44,7 +44,7 @@ public class ModemXchangeScript {
      * Adds 'send/expect' pair to the modem exchange script
      *
      * @param xchangePair
-     *            - 'send/expect' pair
+     *                        - 'send/expect' pair
      */
     public void addmodemXchangePair(ModemXchangePair xchangePair) {
         this.modemXchangePairs.add(xchangePair);

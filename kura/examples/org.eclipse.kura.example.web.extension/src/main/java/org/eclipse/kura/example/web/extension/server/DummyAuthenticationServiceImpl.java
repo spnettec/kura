@@ -28,7 +28,7 @@ import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 public class DummyAuthenticationServiceImpl extends RemoteServiceServlet implements DummyAuthenticationService {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -68,7 +68,7 @@ public class DummyAuthenticationServiceImpl extends RemoteServiceServlet impleme
 
     @Override
     public String login(final String user) {
-        return console.setAuthenticated(getThreadLocalRequest().getSession(false), user);
+        return this.console.setAuthenticated(getThreadLocalRequest().getSession(false), user);
     }
 
 }

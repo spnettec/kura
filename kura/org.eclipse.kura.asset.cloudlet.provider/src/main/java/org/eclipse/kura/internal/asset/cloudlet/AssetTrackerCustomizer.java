@@ -41,9 +41,9 @@ final class AssetTrackerCustomizer implements ServiceTrackerCustomizer<Asset, As
      * Instantiates a new asset tracker.
      *
      * @param context
-     *            the bundle context
+     *                    the bundle context
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     AssetTrackerCustomizer(final BundleContext context) {
         requireNonNull(context, "Bundle context cannot be null");
@@ -67,9 +67,9 @@ final class AssetTrackerCustomizer implements ServiceTrackerCustomizer<Asset, As
      * Adds the service instance to the map of asset service instances
      *
      * @param service
-     *            the asset service instance
+     *                    the asset service instance
      * @throws NullPointerException
-     *             if provided service is null
+     *                                  if provided service is null
      * @return Asset service instance
      */
     private Asset addService(final Asset service, final ServiceReference<Asset> reference) {

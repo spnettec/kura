@@ -160,8 +160,9 @@ public class CloudPublisherImpl
         boolean isControl = MessageType.CONTROL.equals(this.cloudPublisherOptions.getMessageType());
 
         Map<String, Object> publishMessageProps = new HashMap<>();
-        if (this.cloudPublisherOptions.isAppTopicOnly())
+        if (this.cloudPublisherOptions.isAppTopicOnly()) {
             publishMessageProps.put(MessageConstants.FULL_TOPIC.name(), appTopic);
+        }
         publishMessageProps.put(APP_TOPIC.name(), appTopic);
         publishMessageProps.put(APP_ID.name(), this.cloudPublisherOptions.getAppId());
         publishMessageProps.put(QOS.name(), qos);

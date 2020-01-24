@@ -119,12 +119,13 @@ public class CryptoServiceImpl implements CryptoService {
         } catch (IOException e) {
             throw new KuraException(KuraErrorCode.ENCODE_ERROR);
         } finally {
-            if (cipherOutputStream != null)
+            if (cipherOutputStream != null) {
                 try {
                     cipherOutputStream.close();
                 } catch (IOException e) {
 
                 }
+            }
         }
     }
 
@@ -163,12 +164,13 @@ public class CryptoServiceImpl implements CryptoService {
         } catch (IOException e) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
         } finally {
-            if (cipherInputStream != null)
+            if (cipherInputStream != null) {
                 try {
                     cipherInputStream.close();
                 } catch (IOException e) {
 
                 }
+            }
         }
     }
 

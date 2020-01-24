@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -19,7 +19,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * This interface provides methods for starting, stopping, and updating a
  * hardware watchdog present on the system. Updating the watchdog, once
  * started, prevents the system from rebooting.
- * 
+ *
  * @noimplement This interface is not intended to be implemented by clients.
  */
 @ProviderType
@@ -57,7 +57,7 @@ public interface WatchdogService {
      * method (at a frequency higher than 1/timeout) to prevent a system reboot.
      *
      * @param criticalComponent
-     *            The CriticalComponent to be registered.
+     *                              The CriticalComponent to be registered.
      */
     @Deprecated
     public void registerCriticalService(CriticalComponent criticalComponent);
@@ -68,7 +68,7 @@ public interface WatchdogService {
      * checkin() method.
      *
      * @param criticalComponent
-     *            The CriticalComponent to be unregistered.
+     *                              The CriticalComponent to be unregistered.
      */
     @Deprecated
     public void unregisterCriticalService(CriticalComponent criticalComponent);
@@ -79,7 +79,7 @@ public interface WatchdogService {
      * method (at a frequency higher than 1/timeout) to prevent a system reboot.
      *
      * @param criticalComponent
-     *            The CriticalComponent to be registered.
+     *                              The CriticalComponent to be registered.
      */
     public void registerCriticalComponent(CriticalComponent criticalComponent);
 
@@ -89,7 +89,7 @@ public interface WatchdogService {
      * checkin() method.
      *
      * @param criticalComponent
-     *            The CriticalComponent to be unregistered.
+     *                              The CriticalComponent to be unregistered.
      */
     public void unregisterCriticalComponent(CriticalComponent criticalComponent);
 
@@ -105,7 +105,7 @@ public interface WatchdogService {
      * has 'checked in' and the reboot timer should be reset.
      *
      * @param criticalComponent
-     *            The criticalComponent to be updated.
+     *                              The criticalComponent to be updated.
      */
     public void checkin(CriticalComponent criticalComponent);
 

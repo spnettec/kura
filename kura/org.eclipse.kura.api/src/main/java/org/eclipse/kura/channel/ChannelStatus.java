@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -47,9 +47,9 @@ public class ChannelStatus {
      * Instantiates a new status.
      *
      * @param channelFlag
-     *            the channel flag
+     *                        the channel flag
      * @throws NullPointerException
-     *             if the channel flag is null
+     *                                  if the channel flag is null
      */
     public ChannelStatus(final ChannelFlag channelFlag) {
         requireNonNull(channelFlag, "Channel Flag cannot be null");
@@ -62,13 +62,13 @@ public class ChannelStatus {
      * Instantiates a new status.
      *
      * @param channelFlag
-     *            the channel flag
+     *                             the channel flag
      * @param exceptionMessage
-     *            the exception message
+     *                             the exception message
      * @param exception
-     *            the exception
+     *                             the exception
      * @throws NullPointerException
-     *             if the channel flag is null
+     *                                  if the channel flag is null
      */
     public ChannelStatus(final ChannelFlag channelFlag, @Nullable final String exceptionMessage,
             @Nullable final Exception exception) {
@@ -143,15 +143,15 @@ public class ChannelStatus {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result) + ((this.channelFlag == null) ? 0 : this.channelFlag.hashCode());
-        result = (prime * result) + ((this.exception == null) ? 0 : this.exception.hashCode());
-        result = (prime * result) + ((this.exceptionMessage == null) ? 0 : this.exceptionMessage.hashCode());
+        result = prime * result + (this.channelFlag == null ? 0 : this.channelFlag.hashCode());
+        result = prime * result + (this.exception == null ? 0 : this.exception.hashCode());
+        result = prime * result + (this.exceptionMessage == null ? 0 : this.exceptionMessage.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
-        return "ChannelStatus [channelFlag=" + channelFlag + ", exception=" + exception + ", exceptionMessage="
-                + exceptionMessage + "]";
+        return "ChannelStatus [channelFlag=" + this.channelFlag + ", exception=" + this.exception
+                + ", exceptionMessage=" + this.exceptionMessage + "]";
     }
 }

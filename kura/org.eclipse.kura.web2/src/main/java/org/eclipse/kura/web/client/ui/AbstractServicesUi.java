@@ -267,8 +267,9 @@ public abstract class AbstractServicesUi extends Composite {
                                     final String targetData;
                                     if (kuraTextBox.getData() != null && kuraTextBox.getData().contains("=")) {
                                         targetData = kuraTextBox.getData().split("=")[1].replace(")", "");
-                                    } else
+                                    } else {
                                         targetData = "";
+                                    }
                                     data.entrySet().forEach(targetEntry -> {
                                         KuraAnchorListItem listItem = createListItem(kuraTextBox, targetEntry.getKey(),
                                                 targetEntry.getValue(), targetData);
@@ -300,8 +301,9 @@ public abstract class AbstractServicesUi extends Composite {
     }
 
     private TextBoxBase createTextBox(final GwtConfigParameter param) {
-        if (param.getId().endsWith(TARGET_SUFFIX))
+        if (param.getId().endsWith(TARGET_SUFFIX)) {
             return new KuraTextBox();
+        }
         if (param.getDescription() != null && param.getDescription().contains("\u200B\u200B\u200B\u200B\u200B")) {
             final TextArea result = createTextArea();
             result.setHeight("500px");
@@ -721,8 +723,9 @@ public abstract class AbstractServicesUi extends Composite {
             case STRING:
                 TextBoxBase tb = (TextBoxBase) wg;
                 String value = tb.getText();
-                if (tb instanceof KuraTextBox)
+                if (tb instanceof KuraTextBox) {
                     value = ((KuraTextBox) tb).getData();
+                }
                 if (value != null) {
                     return value;
                 } else {

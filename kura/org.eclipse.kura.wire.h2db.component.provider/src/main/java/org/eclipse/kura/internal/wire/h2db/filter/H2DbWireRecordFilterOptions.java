@@ -5,11 +5,11 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *  
+ *
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
- *  
+ *
  *******************************************************************************/
 package org.eclipse.kura.internal.wire.h2db.filter;
 
@@ -42,7 +42,7 @@ final class H2DbWireRecordFilterOptions {
      * Instantiates a new DB wire record filter options.
      *
      * @param properties
-     *            the provided properties
+     *                       the provided properties
      */
     H2DbWireRecordFilterOptions(final Map<String, Object> properties) {
         requireNonNull(properties, "Properties cannot be null");

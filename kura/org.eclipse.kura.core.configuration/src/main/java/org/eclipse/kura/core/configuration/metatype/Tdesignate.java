@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -66,7 +66,7 @@ public class Tdesignate implements Designate {
     protected String bundle;
     protected Boolean optional;
     protected Boolean merge;
-    private final Map<QName, String> otherAttributes = new HashMap<QName, String>();
+    private final Map<QName, String> otherAttributes = new HashMap<>();
 
     /**
      * Gets the value of the object property.
@@ -85,8 +85,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the object property.
      *
      * @param value
-     *            allowed object is
-     *            {@link Tobject }
+     *                  allowed object is
+     *                  {@link Tobject }
      *
      */
     public void setObject(Tobject value) {
@@ -119,7 +119,7 @@ public class Tdesignate implements Designate {
      */
     public List<Object> getAny() {
         if (this.any == null) {
-            this.any = new ArrayList<Object>();
+            this.any = new ArrayList<>();
         }
         return this.any;
     }
@@ -141,8 +141,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the pid property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setPid(String value) {
@@ -166,8 +166,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the factoryPid property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setFactoryPid(String value) {
@@ -191,8 +191,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the bundle property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setBundle(String value) {
@@ -220,8 +220,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the optional property.
      *
      * @param value
-     *            allowed object is
-     *            {@link Boolean }
+     *                  allowed object is
+     *                  {@link Boolean }
      *
      */
     public void setOptional(Boolean value) {
@@ -249,8 +249,8 @@ public class Tdesignate implements Designate {
      * Sets the value of the merge property.
      *
      * @param value
-     *            allowed object is
-     *            {@link Boolean }
+     *                  allowed object is
+     *                  {@link Boolean }
      *
      */
     public void setMerge(Boolean value) {

@@ -37,7 +37,6 @@ import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.type.TypedValues;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireRecord;
 import org.eclipse.kura.wire.WireSupport;
@@ -47,11 +46,11 @@ import org.osgi.service.wireadmin.Wire;
 
 /**
  * The Class CloudSubscriber is the specific Wire Component to subscribe a list
- * of {@link WireRecord}s as received in {@link WireEnvelope} from the configured cloud
+ * of {@link WireRecord}s as received in {@link org.eclipse.kura.wire.WireEnvelope} from the configured cloud
  * platform.<br/>
  * <br/>
  *
- * For every {@link WireRecord} as found in {@link WireEnvelope} will be wrapped inside a Kura
+ * For every {@link WireRecord} as found in {@link org.eclipse.kura.wire.WireEnvelope} will be wrapped inside a Kura
  * Payload and will be sent to the Cloud Platform. Unlike Cloud Publisher Wire
  * Component, the user can only avail to wrap every {@link WireRecord} in the default
  * Google Protobuf Payload.
@@ -77,7 +76,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -107,9 +106,9 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for activation.
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      * @param properties
-     *            the properties
+     *                             the properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating Cloud Subscriber Wire Component...");
@@ -124,7 +123,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for updating.
      *
      * @param properties
-     *            the updated properties
+     *                       the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating Cloud Subscriber Wire Component...");
@@ -138,7 +137,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for deactivation.
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Deactivating Cloud Subscriber Wire Component...");
@@ -168,10 +167,10 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * Builds a list of {@link WireRecord}s from the provided Kura Payload.
      *
      * @param payload
-     *            the payload
+     *                    the payload
      * @return a List of {@link WireRecord}s
      * @throws NullPointerException
-     *             if the payload provided is null
+     *                                  if the payload provided is null
      */
     private List<WireRecord> buildWireRecord(final KuraPayload payload) {
         requireNonNull(payload, "Payload cannot be null");

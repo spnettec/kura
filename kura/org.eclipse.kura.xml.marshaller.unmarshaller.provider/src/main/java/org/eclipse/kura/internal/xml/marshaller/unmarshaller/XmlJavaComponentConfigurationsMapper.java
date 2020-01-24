@@ -73,6 +73,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                     Map<String, Object> propertiesMap = xmlPropAdapter.unmarshal(xmlPropertiesAdapted);
                     return new ComponentConfigurationImpl(pid, null, propertiesMap);
                 }
+            default:
             }
             r.next();
         }
@@ -116,14 +117,17 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                 if (r.getLocalName().equals(CONFIGURATIONS_CONFIGURATION_PROPERTY)) {
                     String name = r.getAttributeValue("", CONFIGURATIONS_CONFIGURATION_PROPERTY_NAME);
                     String type = r.getAttributeValue("", CONFIGURATIONS_CONFIGURATION_PROPERTY_TYPE);
-                    if (type == null)
+                    if (type == null) {
                         type = "String";
+                    }
                     String array = r.getAttributeValue("", CONFIGURATIONS_CONFIGURATION_PROPERTY_ARRAY);
-                    if (array == null)
+                    if (array == null) {
                         array = "false";
+                    }
                     String encrypted = r.getAttributeValue("", CONFIGURATIONS_CONFIGURATION_PROPERTY_ENCRYPTED);
-                    if (encrypted == null)
+                    if (encrypted == null) {
                         encrypted = "false";
+                    }
                     ConfigPropertyType cct = getType(type);
                     String[] values = paraValues(r);
                     XmlConfigPropertyAdapted xmlProperty = new XmlConfigPropertyAdapted(name, cct, values);
@@ -185,7 +189,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
             OCD configOCD = config.getDefinition();
             xml.writeStartElement("esf", "configuration", "");
             xml.writeAttribute("pid", configPid);
-            if (configOCD != null)
+            if (configOCD != null) {
                 if (configOCD instanceof Tocd) {
                     Tocd configTOCD = (Tocd) configOCD;
 
@@ -230,6 +234,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                     }
                     xml.writeEndElement();
                 }
+            }
             if (configProperty != null) {
                 xml.writeStartElement("esf", "properties", "");
                 XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter();
@@ -242,15 +247,18 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                     Boolean encrypted = propertyObj.isEncrypted();
                     ConfigPropertyType cpt = propertyObj.getType();
                     String[] values = propertyObj.getValues();
-                    boolean hasValue = (values != null && values.length > 0);
-                    if (hasValue)
+                    boolean hasValue = values != null && values.length > 0;
+                    if (hasValue) {
                         xml.writeStartElement("esf", "property", "");
-                    else
+                    } else {
                         xml.writeEmptyElement("esf", "property", "");
-                    if (array)
+                    }
+                    if (array) {
                         xml.writeAttribute("array", array.toString());
-                    if (encrypted)
+                    }
+                    if (encrypted) {
                         xml.writeAttribute("encrypted", encrypted.toString());
+                    }
                     xml.writeAttribute("name", name);
                     xml.writeAttribute("type", getStringValue(cpt));
                     if (hasValue) {
@@ -260,8 +268,9 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                             xml.writeEndElement();
                         }
                     }
-                    if (hasValue)
+                    if (hasValue) {
                         xml.writeEndElement();
+                    }
                 }
                 xml.writeEndElement();
             }

@@ -86,9 +86,9 @@ public interface PositionService {
      * Registers position listener
      *
      * @param listenerId
-     *            - listener ID as {@link String}
+     *                             - listener ID as {@link String}
      * @param positionListener
-     *            - position listener as {@link PositionListener}
+     *                             - position listener as {@link PositionListener}
      */
     public void registerListener(String listenerId, PositionListener positionListener);
 
@@ -96,7 +96,7 @@ public interface PositionService {
      * Unregisters position listener
      *
      * @param listenerId
-     *            - listener ID as {@link String}
+     *                       - listener ID as {@link String}
      */
     public void unregisterListener(String listenerId);
 }

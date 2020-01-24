@@ -286,7 +286,7 @@ public class S7Client {
     private static AtomicInteger PDUReference = new AtomicInteger(5);
 
     private int TCPConnect() {
-        SocketAddress sockaddr = new InetSocketAddress(this.IPAddress, TCPPort);
+        SocketAddress sockaddr = new InetSocketAddress(this.IPAddress, this.TCPPort);
         this.LastError = 0;
         try {
             this.TCPSocket = new Socket();
@@ -355,7 +355,7 @@ public class S7Client {
         } catch (IOException ex) {
             this.Connected = false;
             try {
-                this.Connect();
+                Connect();
                 try {
                     this.OutStream.write(Buffer, 0, Len);
                     this.OutStream.flush();
@@ -621,7 +621,7 @@ public class S7Client {
                 if (this.LastError == 0) {
                     if (Length >= 25) {
                         if (Length - 25 == SizeRequested && this.PDU[21] == (byte) 0xFF
-                                && SizeRequested <= (Data.length - Offset)) {
+                                && SizeRequested <= Data.length - Offset) {
                             System.arraycopy(this.PDU, 25, Data, Offset, SizeRequested);
                             Offset += SizeRequested;
                         } else {

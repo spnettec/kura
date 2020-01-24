@@ -59,13 +59,13 @@ public class AssetConfiguration {
      * Instantiates a new asset configuration.
      *
      * @param description
-     *            the description of the asset
+     *                        the description of the asset
      * @param driverPid
-     *            the driver PID
+     *                        the driver PID
      * @param channels
-     *            the map of all channel configurations
+     *                        the map of all channel configurations
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     public AssetConfiguration(final String description, final String driverPid, final Map<String, Channel> channels) {
         requireNonNull(description, "Asset description cannot be null");
@@ -108,9 +108,9 @@ public class AssetConfiguration {
      * Sets the asset description.
      *
      * @param description
-     *            the new asset description
+     *                        the new asset description
      * @throws NullPointerException
-     *             if the argument is null
+     *                                  if the argument is null
      */
     public void setAssetDescription(final String description) {
         requireNonNull(description, "Asset description cannot be null");

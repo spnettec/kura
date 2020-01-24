@@ -221,7 +221,7 @@ public final class GwtServerUtil {
      * Strip PID prefix.
      *
      * @param pid
-     *            the PID
+     *                the PID
      * @return the string
      */
     public static String stripPidPrefix(final String pid) {
@@ -281,10 +281,11 @@ public final class GwtServerUtil {
     private static List<GwtConfigParameter> getADProperties(ComponentConfiguration config, String locale) {
         List<GwtConfigParameter> gwtParams = new ArrayList<>();
         OCD ocd = null;
-        if (locale == null)
+        if (locale == null) {
             ocd = config.getDefinition();
-        else
+        } else {
             ocd = config.getLocalizedDefinition(locale);
+        }
         for (AD ad : ocd.getAD()) {
             GwtConfigParameter gwtParam = new GwtConfigParameter();
             gwtParam.setId(ad.getId());
@@ -343,10 +344,11 @@ public final class GwtServerUtil {
     public static GwtConfigComponent toGwtConfigComponent(ComponentConfiguration config, String locale) {
         GwtConfigComponent gwtConfig = null;
         OCD ocd = null;
-        if (locale == null)
+        if (locale == null) {
             ocd = config.getDefinition();
-        else
+        } else {
             ocd = config.getLocalizedDefinition(locale);
+        }
         if (ocd != null) {
 
             gwtConfig = new GwtConfigComponent();
@@ -370,8 +372,9 @@ public final class GwtServerUtil {
             }
             if (props != null && props.get(ConfigurationService.KURA_SERVICE_DESC) != null) {
                 gwtConfig.setComponentDescription((String) props.get(ConfigurationService.KURA_SERVICE_DESC));
-            } else if (ocd.getDescription() != null)
+            } else if (ocd.getDescription() != null) {
                 gwtConfig.setComponentDescription(ocd.getDescription());
+            }
             if (ocd.getIcon() != null && !ocd.getIcon().isEmpty()) {
                 Icon icon = ocd.getIcon().get(0);
                 gwtConfig.setComponentIcon(icon.getResource());

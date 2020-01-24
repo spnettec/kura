@@ -16,7 +16,7 @@ package org.eclipse.kura.driver.binary;
  * This class can be used to read/write a block of data in a {@link Buffer} to/from an instance of type T.
  *
  * @param <T>
- *            the type to be used for reading or writing.
+ *                the type to be used for reading or writing.
  */
 public interface BinaryData<T> {
 
@@ -34,20 +34,20 @@ public interface BinaryData<T> {
      * Writes the provided value into the provided {@link Buffer}
      *
      * @param buf
-     *            a {@link Buffer} instance to be written
+     *                   a {@link Buffer} instance to be written
      * @param offset
-     *            the offset at which the data will be written
+     *                   the offset at which the data will be written
      * @param value
-     *            the value to be written
+     *                   the value to be written
      */
     public abstract void write(Buffer buf, int offset, T value);
 
     /**
      *
      * @param buf
-     *            a {@link Buffer} from which the data needs to be read
+     *                a {@link Buffer} from which the data needs to be read
      * @param the
-     *            offset from which the data will be read
+     *                offset from which the data will be read
      * @return the obtained value
      */
     public abstract T read(Buffer buf, int offset);

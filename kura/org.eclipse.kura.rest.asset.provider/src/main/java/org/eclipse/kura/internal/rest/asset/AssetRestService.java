@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -48,8 +48,10 @@ import com.google.gson.JsonSerializer;
 @Path("/assets")
 public class AssetRestService {
 
-    private static final String BAD_WRITE_REQUEST_ERROR_MESSAGE = "Bad request, expected request format: {\"channels\": [{\"name\": \"channel-1\", \"type\": \"INTEGER\", \"value\": 10 }]}";
-    private static final String BAD_READ_REQUEST_ERROR_MESSAGE = "Bad request, expected request format: { \"channels\": [ \"channel-1\", \"channel-2\"]}";
+    private static final String BAD_WRITE_REQUEST_ERROR_MESSAGE = "Bad request, "
+            + "expected request format: {\"channels\": [{\"name\": \"channel-1\", \"type\": \"INTEGER\", \"value\": 10 }]}";
+    private static final String BAD_READ_REQUEST_ERROR_MESSAGE = "Bad request, "
+            + "expected request format: { \"channels\": [ \"channel-1\", \"channel-2\"]}";
     private static final Encoder BASE64_ENCODER = Base64.getEncoder();
 
     private AssetService assetService;
@@ -63,13 +65,13 @@ public class AssetRestService {
     @RolesAllowed("assets")
     @Produces(MediaType.APPLICATION_JSON)
     public List<String> listAssetPids() throws InvalidSyntaxException {
-        return getAssetServiceReferences().stream()
-                .map(reference -> (String) reference.getProperty("kura.service.pid")).collect(Collectors.toList());
+        return getAssetServiceReferences().stream().map(reference -> (String) reference.getProperty("kura.service.pid"))
+                .collect(Collectors.toList());
     }
 
     protected Collection<ServiceReference<Asset>> getAssetServiceReferences() throws InvalidSyntaxException {
-        return FrameworkUtil.getBundle(AssetRestService.class).getBundleContext()
-                .getServiceReferences(Asset.class, null);
+        return FrameworkUtil.getBundle(AssetRestService.class).getBundleContext().getServiceReferences(Asset.class,
+                null);
     }
 
     @GET
@@ -114,7 +116,7 @@ public class AssetRestService {
     }
 
     private Asset getAsset(String assetPid) {
-        final Asset asset = assetService.getAsset(assetPid);
+        final Asset asset = this.assetService.getAsset(assetPid);
         if (asset == null) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).type(MediaType.TEXT_PLAIN)
                     .entity("Asset not found: " + assetPid).build());
@@ -123,8 +125,8 @@ public class AssetRestService {
     }
 
     private Gson getChannelSerializer() {
-        if (channelSerializer == null) {
-            channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
+        if (this.channelSerializer == null) {
+            this.channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
                     (JsonSerializer<TypedValue<?>>) (typedValue, type, context) -> {
                         final Object value = typedValue.getValue();
                         if (value instanceof Number) {
@@ -139,6 +141,6 @@ public class AssetRestService {
                         return null;
                     }).create();
         }
-        return channelSerializer;
+        return this.channelSerializer;
     }
 }

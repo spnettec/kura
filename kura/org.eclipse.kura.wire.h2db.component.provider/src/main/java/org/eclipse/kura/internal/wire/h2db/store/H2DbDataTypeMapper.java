@@ -93,7 +93,7 @@ public final class H2DbDataTypeMapper {
      * Gets the data type.
      *
      * @param jdbcType
-     *            the JDBC type
+     *                     the JDBC type
      * @return the data type
      */
     public static DataType getDataType(final int jdbcType) {
@@ -104,7 +104,7 @@ public final class H2DbDataTypeMapper {
      * Gets the JDBC type.
      *
      * @param dataType
-     *            the data type
+     *                     the data type
      * @return the JDBC type
      */
     public static JdbcType getJdbcType(final DataType dataType) {

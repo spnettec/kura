@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -22,7 +22,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * Base class for DNS proxy configurations
  *
  * @param <T>
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 @ProviderType
@@ -35,9 +35,9 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Creates a DNS configuration with a default set of forwarders and a set of allowed networks
      *
      * @param forwarders
-     *            The recursive DNS servers to use
+     *                            The recursive DNS servers to use
      * @param allowedNetworks
-     *            The LAN networks that are allowed to make queries
+     *                            The LAN networks that are allowed to make queries
      */
     public DnsServerConfigIP(Set<T> forwarders, Set<NetworkPair<T>> allowedNetworks) {
         super();
@@ -58,7 +58,7 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Sets the current recursive domain name servers to use to resolve queries
      *
      * @param forwarders
-     *            The recursive DNS servers to use
+     *                       The recursive DNS servers to use
      */
     public void setForwarders(Set<T> forwarders) {
         this.m_forwarders = forwarders;
@@ -76,7 +76,7 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Sets a List of networks that are allowed to make DNS queries
      *
      * @param allowedNetworks
-     *            The LAN networks that are allowed to make queries
+     *                            The LAN networks that are allowed to make queries
      */
     public void setAllowedNetworks(Set<NetworkPair<T>> allowedNetworks) {
         this.m_allowedNetworks = allowedNetworks;

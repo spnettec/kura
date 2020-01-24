@@ -168,8 +168,9 @@ public final class WiresRPC {
             @Override
             public void onFailure(Throwable ex) {
                 EntryClassUi.hideWaitModal();
-                if (errorCallback != null)
+                if (errorCallback != null) {
                     errorCallback.onError(ex);
+                }
                 FailureHandler.handle(ex);
             }
 
@@ -181,8 +182,9 @@ public final class WiresRPC {
                             @Override
                             public void onFailure(Throwable ex) {
                                 EntryClassUi.hideWaitModal();
-                                if (errorCallback != null)
+                                if (errorCallback != null) {
                                     errorCallback.onError(ex);
+                                }
                                 FailureHandler.handle(ex);
                             }
 
@@ -193,8 +195,9 @@ public final class WiresRPC {
                                     @Override
                                     public void onFailure(Throwable ex) {
                                         EntryClassUi.hideWaitModal();
-                                        if (errorCallback != null)
+                                        if (errorCallback != null) {
                                             errorCallback.onError(ex);
+                                        }
                                         FailureHandler.handle(ex);
                                     }
 
@@ -206,8 +209,9 @@ public final class WiresRPC {
                                                     @Override
                                                     public void onFailure(Throwable ex) {
                                                         EntryClassUi.hideWaitModal();
-                                                        if (errorCallback != null)
+                                                        if (errorCallback != null) {
                                                             errorCallback.onError(ex);
+                                                        }
                                                         FailureHandler.handle(ex);
                                                     }
 

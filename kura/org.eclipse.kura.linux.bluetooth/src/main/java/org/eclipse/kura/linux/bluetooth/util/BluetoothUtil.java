@@ -212,9 +212,9 @@ public class BluetoothUtil {
      * Start an hci dump process for the examination of BLE advertisement packets
      *
      * @param name
-     *            Name of HCI device (hci0, for example)
+     *                     Name of HCI device (hci0, for example)
      * @param listener
-     *            Listener for receiving btsnoop records
+     *                     Listener for receiving btsnoop records
      * @return BluetoothProcess created
      */
     public static BluetoothProcess btdumpCmd(String name, BTSnoopListener listener,
@@ -310,9 +310,9 @@ public class BluetoothUtil {
      * See Bluetooth Core 4.0; 8 EXTENDED INQUIRY RESPONSE DATA FORMAT
      *
      * @param b
-     *            Array containing EIR data
+     *              Array containing EIR data
      * @param i
-     *            Index of first byte of EIR data
+     *              Index of first byte of EIR data
      * @return BeaconInfo or null if no beacon data present
      */
     private static BluetoothBeaconData parseEIRData(byte[] b, int payloadPtr, int len, String companyName) {
@@ -459,7 +459,7 @@ public class BluetoothUtil {
      */
     public static List<BluetoothBeaconData> parseLEAdvertisingReport(byte[] b, String companyName) {
 
-        List<BluetoothBeaconData> results = new LinkedList<BluetoothBeaconData>();
+        List<BluetoothBeaconData> results = new LinkedList<>();
 
         // Packet Type: Event OR Event Type: LE Advertisement Report
         if (b[0] != 0x04 || b[1] != 0x3E) {

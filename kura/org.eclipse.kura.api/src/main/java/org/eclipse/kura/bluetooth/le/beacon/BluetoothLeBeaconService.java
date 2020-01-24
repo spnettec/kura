@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -26,18 +26,18 @@ public interface BluetoothLeBeaconService<T extends BluetoothLeBeacon> {
 
     /**
      * Instantiate a new scanner for beacons.
-     * 
+     *
      * @param adapter
-     *            the bluetooth adapter used by the scanner
+     *                    the bluetooth adapter used by the scanner
      * @return BluetoothLeBeaconScanner
      */
     public BluetoothLeBeaconScanner<T> newBeaconScanner(BluetoothLeAdapter adapter);
 
     /**
      * Instantiate a new advertiser for beacons.
-     * 
+     *
      * @param adapter
-     *            the bluetooth adapter used by the advertiser
+     *                    the bluetooth adapter used by the advertiser
      * @return BluetoothLeBeaconAdvertiser
      * @throws KuraBluetoothBeaconAdvertiserNotAvailable
      */
@@ -46,17 +46,17 @@ public interface BluetoothLeBeaconService<T extends BluetoothLeBeacon> {
 
     /**
      * Delete the given scanner.
-     * 
+     *
      * @param scanner
-     *            The scanenr to be deleted
+     *                    The scanenr to be deleted
      */
     public void deleteBeaconScanner(BluetoothLeBeaconScanner<T> scanner);
 
     /**
      * Delete the given advertiser.
-     * 
+     *
      * @param advertiser
-     *            The advertiser to be deleted
+     *                       The advertiser to be deleted
      */
     public void deleteBeaconAdvertiser(BluetoothLeBeaconAdvertiser<T> advertiser);
 

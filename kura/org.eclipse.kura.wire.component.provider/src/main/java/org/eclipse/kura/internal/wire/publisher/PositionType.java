@@ -16,6 +16,7 @@ package org.eclipse.kura.internal.wire.publisher;
  *
  */
 public enum PositionType {
+
     NONE("none"),
     BASIC("basic"),
     FULL("full");
@@ -30,10 +31,11 @@ public enum PositionType {
      * Allows to map a provided string with the corresponding {@link PositionType}
      *
      * @param proposedEncoding
-     *            the String that has to be mapped to the corresponding {@link PositionType}
+     *                             the String that has to be mapped to the corresponding {@link PositionType}
      * @return {@link PositionType} if the matching between passed string and enum values succeeds
      * @throws IllegalArgumentException
-     *             if the argument cannot be matched to a corresponding {@link PositionType} object.
+     *                                      if the argument cannot be matched to a corresponding {@link PositionType}
+     *                                      object.
      */
     public static PositionType getEncoding(String proposedEncoding) {
         for (PositionType encoding : PositionType.values()) {

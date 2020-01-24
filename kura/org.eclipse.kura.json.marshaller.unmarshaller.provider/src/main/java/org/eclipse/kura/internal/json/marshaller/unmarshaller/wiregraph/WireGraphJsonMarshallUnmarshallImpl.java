@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
  *
  *   All rights reserved. This program and the accompanying materials
  *   are made available under the terms of the Eclipse Public License v1.0
@@ -26,8 +26,9 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+@SuppressWarnings("checkstyle:hideUtilityClassConstructor")
 public class WireGraphJsonMarshallUnmarshallImpl {
-    
+
     private static final String RENDERING_PROPERTIES_KEY = "renderingProperties";
     private static final String OUTPUT_PORT_COUNT_KEY = "outputPortCount";
     private static final String INPUT_PORT_COUNT_KEY = "inputPortCount";
@@ -41,11 +42,11 @@ public class WireGraphJsonMarshallUnmarshallImpl {
     private static final String EMITTER_PORT_KEY = "emitterPort";
     private static final String WIRES_KEY = "wires";
     private static final String COMPONENTS_KEY = "components";
-    
+
     public WireGraphJsonMarshallUnmarshallImpl() {
         // Public for testing purposes
     }
-    
+
     public static JsonObject marshalWireGraphConfiguration(WireGraphConfiguration graphConfiguration) {
         JsonArray wireConfigurationJson = marshalWireConfigurationList(graphConfiguration.getWireConfigurations());
         JsonArray wireComponentConfigurationJson = marshalWireComponentConfigurationList(
@@ -143,7 +144,7 @@ public class WireGraphJsonMarshallUnmarshallImpl {
 
         return outputPortElems;
     }
-    
+
     public static WireGraphConfiguration unmarshalToWireGraphConfiguration(String jsonString) {
 
         List<WireComponentConfiguration> wireCompConfigList = new ArrayList<>();
@@ -165,7 +166,7 @@ public class WireGraphJsonMarshallUnmarshallImpl {
 
     private static List<MultiportWireConfiguration> unmarshalWireConfiguration(JsonArray array) {
         List<MultiportWireConfiguration> wireConfigurationList = new ArrayList<>();
-        
+
         array.forEach(jsonWireConfigValue -> {
             JsonObject jsonWireConfig = jsonWireConfigValue.asObject();
 

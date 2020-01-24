@@ -756,7 +756,7 @@ public class ModemMonitorServiceImpl implements ModemMonitorService, ModemManage
         }
 
         boolean shouldResetModem(final long modemResetTimeout) {
-            
+
             if (modemResetTimeout == 0) {
                 return false;
             }

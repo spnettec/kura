@@ -118,7 +118,7 @@ public class WireComponentDefinition {
     }
 
     public int getToolsSorted() {
-        return toolsSorted;
+        return this.toolsSorted;
     }
 
     public void setToolsSorted(int toolsSorted) {

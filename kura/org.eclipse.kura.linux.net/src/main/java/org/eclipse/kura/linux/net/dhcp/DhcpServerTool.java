@@ -12,6 +12,7 @@
 package org.eclipse.kura.linux.net.dhcp;
 
 public enum DhcpServerTool {
+
     NONE("none"),
     DHCPD("dhcpd"),
     UDHCPD("udhcpd");

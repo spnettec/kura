@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -42,7 +42,7 @@ public class StringValue implements TypedValue<String> {
      * Instantiates a new string value.
      *
      * @param value
-     *            the value
+     *                  the value
      */
     public StringValue(@Nullable final String value) {
         this.value = value == null ? "" : value;
@@ -95,7 +95,7 @@ public class StringValue implements TypedValue<String> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result) + ((this.value == null) ? 0 : this.value.hashCode());
+        result = prime * result + (this.value == null ? 0 : this.value.hashCode());
         return result;
     }
 

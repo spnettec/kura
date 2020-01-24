@@ -85,9 +85,9 @@ public class UsbModemDevice extends AbstractUsbDevice implements ModemDevice {
      * @since 1.4
      *
      * @param ttyDev
-     *            the name of the tty device
+     *                            the name of the tty device
      * @param interfaceNumber
-     *            the number of the interface as described by the bInterfaceNumber property
+     *                            the number of the interface as described by the bInterfaceNumber property
      */
     public void addTtyDev(String ttyDev, Integer interfaceNumber) {
         TtyDev dev = new TtyDev(ttyDev, interfaceNumber);
@@ -109,7 +109,7 @@ public class UsbModemDevice extends AbstractUsbDevice implements ModemDevice {
      * Adds a block device identified by its name. The block devices will be sorted by the name.
      *
      * @param blockDev
-     *            the name of the block device
+     *                     the name of the block device
      */
     public void addBlockDev(String blockDev) {
         if (!this.blockDevs.contains(blockDev)) {
@@ -122,7 +122,7 @@ public class UsbModemDevice extends AbstractUsbDevice implements ModemDevice {
      * Remove a tty device form the list.
      *
      * @param ttyDev
-     *            the name of the tty device
+     *                   the name of the tty device
      * @return true if the list contained the specified device
      */
     public boolean removeTtyDev(String ttyDev) {
@@ -133,7 +133,7 @@ public class UsbModemDevice extends AbstractUsbDevice implements ModemDevice {
      * Remove a block device form the list.
      *
      * @param blockDev
-     *            the name of the block device
+     *                     the name of the block device
      * @return true if the list contained the specified device
      */
     public boolean removeBlockDev(String blockDev) {

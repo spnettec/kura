@@ -91,11 +91,11 @@ public class NetworkConfiguration {
      * set of properties
      *
      * @param properties
-     *            The properties that represent the new configuration
+     *                       The properties that represent the new configuration
      * @throws UnknownHostException
-     *             If some hostnames can not be resolved
+     *                                  If some hostnames can not be resolved
      * @throws KuraException
-     *             It there is an internal error
+     *                                  It there is an internal error
      */
     public NetworkConfiguration(Map<String, Object> properties) throws UnknownHostException, KuraException {
         logger.debug("Creating NetworkConfiguration from properties");

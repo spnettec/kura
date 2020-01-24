@@ -98,6 +98,13 @@
             required="true"
             default="3600" 
             description="%ntpRefreshIntervalDesc"/>
+        <AD id="rtc.filename"  
+            name="rtcFilename"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="/dev/rtc0" 
+            description="rtcFilenameDesc"/>
 
     </OCD>
     <Designate pid="org.eclipse.kura.clock.ClockService">

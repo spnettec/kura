@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -25,7 +25,8 @@ import org.osgi.annotation.versioning.ProviderType;
  * register itself as a {@link CloudSubscriberListener}, in order to be notified when a message is received from the
  * associated cloud stack.
  *
- * In most cases, the consumers are not interested in the header of the received message and assume to always receive the
+ * In most cases, the consumers are not interested in the header of the received message and assume to always receive
+ * the
  * same kind of message. In order to receive different kinds of messages, the consumer should register to multiple
  * subscribers.
  *
@@ -48,8 +49,9 @@ public interface CloudSubscriber {
      * {@link CloudSubscriberListener}s will be notified by the implementation when a message is received.
      *
      * @param listener
-     *            a {@link CloudSubscriberListener} instance that will be notified when a message will be received from
-     *            the remote cloud platform.
+     *                     a {@link CloudSubscriberListener} instance that will be notified when a message will be
+     *                     received from
+     *                     the remote cloud platform.
      */
     public void registerCloudSubscriberListener(CloudSubscriberListener listener);
 
@@ -65,7 +67,7 @@ public interface CloudSubscriber {
      * connection related event happens, all the registered {@link CloudConnectionListener}s will be notified.
      *
      * @param cloudConnectionListener
-     *            a {@link CloudConnectionListener} instance
+     *                                    a {@link CloudConnectionListener} instance
      */
     public void registerCloudConnectionListener(CloudConnectionListener cloudConnectionListener);
 

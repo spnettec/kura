@@ -48,21 +48,24 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String localeName = null;
         Cookie[] cookies = req.getCookies();
-        if (cookies != null)
+        if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals("GWT_LOCALE")) {
                     localeName = cookie.getValue();
                     break;
                 }
             }
+        }
 
-        if (localeName == null || localeName.equals(""))
+        if (localeName == null || localeName.equals("")) {
             localeName = System.getProperty("osgi.nl");
+        }
         Locale locale = null;
-        if (localeName != null)
+        if (localeName != null) {
             locale = new Locale(localeName);
-        else
+        } else {
             locale = req.getLocale();
+        }
         try {
             LocaleContextHolder.setLocale(locale);
             super.service(req, resp);

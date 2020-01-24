@@ -257,8 +257,9 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
         try {
-            if (pid == null || pid.trim().isEmpty())
+            if (pid == null || pid.trim().isEmpty()) {
                 pid = factoryPid + "-Component-" + new Date().getTime();
+            }
             cs.createFactoryConfiguration(factoryPid, pid, properties, false);
 
             String filterString = "(" + ConfigurationService.KURA_SERVICE_PID + "=" + pid + ")";
@@ -373,18 +374,21 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                     if (dto.properties.containsKey(hideStr)) {
                         Boolean ishide = false;
                         Object ishideObj = dto.properties.get(hideStr);
-                        if (ishideObj instanceof Boolean)
+                        if (ishideObj instanceof Boolean) {
                             ishide = (Boolean) ishideObj;
-                        else
+                        } else {
                             ishide = Boolean.parseBoolean(ishideObj.toString());
-                        if (ishide == null || ishide.equals(Boolean.TRUE))
+                        }
+                        if (ishide == null || ishide.equals(Boolean.TRUE)) {
                             return true;
-                        else
+                        } else {
                             return false;
-                    } else if (Arrays.asList(dto.serviceInterfaces).contains("org.eclipse.kura.driver.Driver"))
+                        }
+                    } else if (Arrays.asList(dto.serviceInterfaces).contains("org.eclipse.kura.driver.Driver")) {
                         return true;
-                    else
+                    } else {
                         return false;
+                    }
                 }).map(dto -> dto.name).collect(Collectors.toList()));
     }
 
@@ -598,10 +602,12 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
             if (props != null && props.get(SERVICE_FACTORY_PID) != null) {
                 String name = ocd.getName();
-                if (props.containsKey(ConfigurationService.KURA_SERVICE_NAME))
+                if (props.containsKey(ConfigurationService.KURA_SERVICE_NAME)) {
                     name = (String) props.get(ConfigurationService.KURA_SERVICE_NAME);
-                if (name == null || name.equals(""))
+                }
+                if (name == null || name.equals("")) {
                     name = stripPidPrefix(config.getPid());
+                }
                 gwtConfig.setComponentName(name);
                 gwtConfig.setFactoryComponent(true);
                 gwtConfig.setFactoryPid(String.valueOf(props.get(ConfigurationAdmin.SERVICE_FACTORYPID)));
@@ -610,12 +616,14 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                 gwtConfig.setFactoryComponent(false);
             }
             String descCription = "";
-            if (props.containsKey(ConfigurationService.KURA_SERVICE_DESC))
+            if (props.containsKey(ConfigurationService.KURA_SERVICE_DESC)) {
                 descCription = (String) props.get(ConfigurationService.KURA_SERVICE_DESC);
-            if (descCription == null || descCription.equals(""))
+            }
+            if (descCription == null || descCription.equals("")) {
                 gwtConfig.setComponentDescription(ocd.getDescription());
-            else
+            } else {
                 gwtConfig.setComponentDescription(descCription);
+            }
             if (ocd.getIcon() != null && !ocd.getIcon().isEmpty()) {
                 Icon icon = ocd.getIcon().get(0);
                 gwtConfig.setComponentIcon(icon.getResource());
@@ -796,7 +804,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             referenceInterfaces.forEach(reference -> {
                 try {
                     ServiceReference<?>[] serviceReferences = context.getServiceReferences(reference, null);
-                    if (serviceReferences != null)
+                    if (serviceReferences != null) {
                         for (Object serviceReferenceObject : serviceReferences) {
                             if (serviceReferenceObject instanceof ServiceReference) {
                                 ServiceReference<?> cloudServiceReference = (ServiceReference<?>) serviceReferenceObject;
@@ -807,6 +815,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                                 ServiceLocator.getInstance().ungetService(cloudServiceReference);
                             }
                         }
+                    }
                 } catch (InvalidSyntaxException e) {
 
                 }

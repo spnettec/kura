@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -15,15 +15,15 @@ import java.security.cert.Certificate;
 import java.util.Enumeration;
 
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.message.KuraApplicationTopic;
+import org.eclipse.kura.message.KuraPayload;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * The CertificatesService is used to manage the storage, listing and retrieval of public certificates
  * from a key store.
  *
- * @noimplement This interface is not intended to be implemented by clients. 
+ * @noimplement This interface is not intended to be implemented by clients.
  */
 @ProviderType
 public interface CertificatesService {
@@ -32,11 +32,11 @@ public interface CertificatesService {
      * The storeCertificate interface method receives a certificate and an alias that should be stored in a key store
      *
      * @param cert
-     *            The certificate of type Certificate that has to be stored in a key store
+     *                  The certificate of type Certificate that has to be stored in a key store
      * @param alias
-     *            A string that will be used to identify the certificate in a key store
+     *                  A string that will be used to identify the certificate in a key store
      * @throws KuraException
-     *             raised if the certificate storage operation failed
+     *                           raised if the certificate storage operation failed
      *
      */
     public void storeCertificate(Certificate cert, String alias) throws KuraException;
@@ -83,7 +83,7 @@ public interface CertificatesService {
      * returnCertificate returns the certificate corresponding to the specified alias.
      *
      * @param alias
-     *            The string used to identify the certificate in a key store
+     *                  The string used to identify the certificate in a key store
      * @return A Certificate object retrieved from a key store.
      *
      */
@@ -94,9 +94,9 @@ public interface CertificatesService {
      * operation succeeded. False, otherwise.
      *
      * @param alias
-     *            The string used to identify the certificate in a key store
+     *                  The string used to identify the certificate in a key store
      * @throws KuraException
-     *             raised if the certificate removal operation failed
+     *                           raised if the certificate removal operation failed
      *
      */
     public void removeCertificate(String alias) throws KuraException;
@@ -106,9 +106,9 @@ public interface CertificatesService {
      * to send the message and the signed message to verify the correctness of the signature.
      *
      * @param kuraAppTopic
-     *            The application topic part used to send the message
+     *                         The application topic part used to send the message
      * @param kuraPayload
-     *            The kuraPayload message received and that needs to be verified
+     *                         The kuraPayload message received and that needs to be verified
      * @return A boolean value that is true if the signature received corresponds with the signature
      *         calculated from the message content. False otherwise.
      * @since 2.0

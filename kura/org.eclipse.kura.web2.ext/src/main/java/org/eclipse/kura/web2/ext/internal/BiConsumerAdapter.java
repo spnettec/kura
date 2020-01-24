@@ -40,7 +40,7 @@ public class BiConsumerAdapter<T, U> implements Adapter<BiConsumer<T, U>> {
     public BiConsumer<T, U> adaptNonNull(final JavaScriptObject jsConsumer) {
 
         return (t, u) -> JsObject.call(jsConsumer,
-                JsObject.toArray(firstAdapter.adaptNullable(t), secondAdapter.adaptNullable(u)));
+                JsObject.toArray(this.firstAdapter.adaptNullable(t), this.secondAdapter.adaptNullable(u)));
 
     }
 

@@ -18,6 +18,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 public class GwtConfigParameter implements IsSerializable {
 
     public enum GwtConfigParameterType {
+
         STRING,
         LONG,
         DOUBLE,

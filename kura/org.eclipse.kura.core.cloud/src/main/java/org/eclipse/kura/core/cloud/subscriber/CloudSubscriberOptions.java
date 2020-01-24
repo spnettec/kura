@@ -54,7 +54,7 @@ public class CloudSubscriberOptions {
     }
 
     public boolean isAppTopicOnly() {
-        return appTopicOnly;
+        return this.appTopicOnly;
     }
 
     public int getQos() {

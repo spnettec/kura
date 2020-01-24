@@ -350,9 +350,9 @@ public class GwtDeviceServiceImpl extends OsgiRemoteServiceServlet implements Gw
      * </ol>
      *
      * @param bundle
-     *            the bundle which name to retrieve
+     *                   the bundle which name to retrieve
      * @param locale
-     *            the locale, in which the bundle name is requested
+     *                   the locale, in which the bundle name is requested
      * @return the bundle name - see the description of the method for more
      *         details.
      */
@@ -375,9 +375,9 @@ public class GwtDeviceServiceImpl extends OsgiRemoteServiceServlet implements Gw
      * available.
      *
      * @param bundle
-     *            the bundle which header to retrieve
+     *                       the bundle which header to retrieve
      * @param headerName
-     *            the name of the header to retrieve
+     *                       the name of the header to retrieve
      * @return the header or empty string if it is not set
      */
     private static String getHeaderValue(Bundle bundle, String headerName) {

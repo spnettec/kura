@@ -40,11 +40,11 @@ public class TelitDe910 extends TelitModem implements EvdoCellularModem {
      * TelitDe910 modem constructor
      *
      * @param usbDevice
-     *            - modem USB device as {@link UsbModemDevice}
+     *                              - modem USB device as {@link UsbModemDevice}
      * @param platform
-     *            - hardware platform as {@link String}
+     *                              - hardware platform as {@link String}
      * @param connectionFactory
-     *            - connection factory {@link ConnectionFactory}
+     *                              - connection factory {@link ConnectionFactory}
      */
     public TelitDe910(ModemDevice device, String platform, ConnectionFactory connectionFactory) {
 

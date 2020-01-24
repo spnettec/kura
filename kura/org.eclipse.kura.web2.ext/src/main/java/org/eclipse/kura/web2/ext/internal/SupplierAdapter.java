@@ -35,7 +35,7 @@ public class SupplierAdapter<T> implements Adapter<Supplier<T>> {
     @Override
     public Supplier<T> adaptNonNull(JavaScriptObject jsSupplier) {
 
-        return () -> adapter.adaptNullable(JsObject.call(jsSupplier));
+        return () -> this.adapter.adaptNullable(JsObject.call(jsSupplier));
 
     }
 }

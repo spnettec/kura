@@ -49,7 +49,7 @@ public enum AssetConstants {
      * Instantiates a new asset constants.
      *
      * @param value
-     *            the value
+     *                  the value
      */
     private AssetConstants(final String value) {
         this.value = value;

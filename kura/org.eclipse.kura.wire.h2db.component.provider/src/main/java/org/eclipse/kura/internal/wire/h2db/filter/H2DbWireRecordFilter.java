@@ -93,7 +93,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -105,7 +105,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -117,9 +117,9 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for deactivation
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      * @param properties
-     *            the properties
+     *                             the properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating DB Wire Record Filter...");
@@ -143,7 +143,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for updating
      *
      * @param properties
-     *            the updated properties
+     *                       the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating DB Wire Record Filter... {}", properties);
@@ -168,7 +168,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for deactivation
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Dectivating DB Wire Record Filter...");
@@ -214,7 +214,6 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
                 continue;
             }
 
-            // TODO: Consider if moving to TypeValues
             if (dbExtractedData instanceof Blob) {
                 final Blob dbExtractedBlob = (Blob) dbExtractedData;
                 final int dbExtractedBlobLength = (int) dbExtractedBlob.length();
@@ -255,7 +254,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
             result = Collections.unmodifiableList(new ArrayList<WireRecord>());
         }
 
-        if (!result.isEmpty() || options.emitOnEmptyResult()) {
+        if (!result.isEmpty() || this.options.emitOnEmptyResult()) {
             this.wireSupport.emit(result);
         }
     }

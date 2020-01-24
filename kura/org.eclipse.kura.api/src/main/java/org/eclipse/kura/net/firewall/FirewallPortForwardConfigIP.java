@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -21,7 +21,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The base class for firewall port forward configurations
  *
  * @param <T>
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 @ProviderType
@@ -68,25 +68,25 @@ public abstract class FirewallPortForwardConfigIP<T extends IPAddress> implement
      * Creates a complete port forward configuration
      *
      * @param inboundIface
-     *            The interface name on which this configuration will listen for inbound connections
+     *                             The interface name on which this configuration will listen for inbound connections
      * @param outboundIface
-     *            The inetrface name on which packet will be forwarded
+     *                             The inetrface name on which packet will be forwarded
      * @param address
-     *            The LAN address to forward to
+     *                             The LAN address to forward to
      * @param protocol
-     *            The protocol (TCP or UDP) to listen for and forward
+     *                             The protocol (TCP or UDP) to listen for and forward
      * @param inPort
-     *            The inbound (WAN) port to listen on
+     *                             The inbound (WAN) port to listen on
      * @param outPort
-     *            The outbound (LAN) port to listen on
+     *                             The outbound (LAN) port to listen on
      * @param masquerade
-     *            Use masquerade
+     *                             Use masquerade
      * @param permittedNetwork
-     *            The (optional) permitted network for inbound connections
+     *                             The (optional) permitted network for inbound connections
      * @param permittedMac
-     *            The (optional) permitted MAC address for inbound connections
+     *                             The (optional) permitted MAC address for inbound connections
      * @param sourcePortRange
-     *            The (options) permitted source port range for inbound connections
+     *                             The (options) permitted source port range for inbound connections
      */
     public FirewallPortForwardConfigIP(String inboundIface, String outboundIface, IP4Address address,
             NetProtocol protocol, int inPort, int outPort, boolean masquerade, NetworkPair<T> permittedNetwork,

@@ -61,7 +61,7 @@ public class StatusPanelUi extends Composite {
     @UiField
     Button statusRefresh;
     @UiField
-    CellTable<GwtGroupedNVPair> statusGrid;
+    CellTable<GwtGroupedNVPair> statusGrid = new CellTable<>();
 
     public StatusPanelUi() {
         initWidget(uiBinder.createAndBindUi(this));
@@ -109,10 +109,12 @@ public class StatusPanelUi extends Composite {
             @Override
             public String getValue(GwtGroupedNVPair object) {
                 String title = object.getName();
-                if ("Connection Name".equals(title))
+                if ("Connection Name".equals(title)) {
                     title = "connectionName";
-                if ("Account".equals(title))
+                }
+                if ("Account".equals(title)) {
                     title = "account";
+                }
                 try {
                     title = msgs.getString(title);
                 } catch (Exception e) {
@@ -151,8 +153,9 @@ public class StatusPanelUi extends Composite {
                                 GwtGroupedNVPair connectionName = it.next();
                                 if (!title.equals(connectionName.getGroup())) {
                                     title = connectionName.getGroup();
-                                    if ("Connection Name".equals(title))
+                                    if ("Connection Name".equals(title)) {
                                         title = "connectionName";
+                                    }
                                     StatusPanelUi.this.statusGridProvider.getList()
                                             .add(new GwtGroupedNVPair(" ", title, " "));
                                 }

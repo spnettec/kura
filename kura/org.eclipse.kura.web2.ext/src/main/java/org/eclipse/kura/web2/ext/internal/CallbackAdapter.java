@@ -29,8 +29,8 @@ public class CallbackAdapter<T, U> implements Adapter<Callback<T, U>> {
     public JavaScriptObject adaptNonNull(final Callback<T, U> callback) {
         final JsObject result = JavaScriptObject.createObject().cast();
 
-        result.set(ON_SUCCESS, new ConsumerAdapter<>(successAdapter).adaptNullable(callback::onSuccess));
-        result.set(ON_FAILURE, new ConsumerAdapter<>(failureAdapter).adaptNullable(callback::onFailure));
+        result.set(ON_SUCCESS, new ConsumerAdapter<>(this.successAdapter).adaptNullable(callback::onSuccess));
+        result.set(ON_FAILURE, new ConsumerAdapter<>(this.failureAdapter).adaptNullable(callback::onFailure));
 
         return result;
     }
@@ -42,13 +42,13 @@ public class CallbackAdapter<T, U> implements Adapter<Callback<T, U>> {
             @Override
             public void onSuccess(T result) {
                 final JsObject obj = callback.cast();
-                obj.call(ON_SUCCESS, successAdapter.adaptNullable(result));
+                obj.call(ON_SUCCESS, CallbackAdapter.this.successAdapter.adaptNullable(result));
             }
 
             @Override
             public void onFailure(U reason) {
                 final JsObject obj = callback.cast();
-                obj.call(ON_FAILURE, failureAdapter.adaptNullable(reason));
+                obj.call(ON_FAILURE, CallbackAdapter.this.failureAdapter.adaptNullable(reason));
             }
         };
     }

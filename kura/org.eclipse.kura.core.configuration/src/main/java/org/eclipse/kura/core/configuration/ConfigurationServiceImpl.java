@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and others
+ * Copyright (c) 2011, 2020 Eurotech and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -229,8 +229,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1)
+            if (servicePids.size() > 1) {
                 servicePid = servicePids.get(servicePids.size() - 1);
+            }
         }
 
         if (servicePid == null) {
@@ -250,8 +251,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1)
+            if (servicePids.size() > 1) {
                 servicePid = servicePids.get(servicePids.size() - 1);
+            }
         }
 
         if (servicePid == null) {
@@ -270,8 +272,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1)
+            if (servicePids.size() > 1) {
                 servicePid = servicePids.get(servicePids.size() - 1);
+            }
         }
 
         if (servicePid == null) {
@@ -290,8 +293,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1)
+            if (servicePids.size() > 1) {
                 servicePid = servicePids.get(servicePids.size() - 1);
+            }
         }
 
         if (servicePid == null) {
@@ -342,9 +346,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
 
         try {
-            final ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, null);
-            if (refs == null)
+            final ServiceReference<?>[] refs = this.bundleContext.getAllServiceReferences(null, null);
+            if (refs == null) {
                 return Collections.emptyList();
+            }
             final List<ComponentConfiguration> result = new ArrayList<>(refs.length);
 
             for (final ServiceReference<?> ref : refs) {
@@ -717,8 +722,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             }
         }
 
-        if (this.waittingForActivatedPids.contains(pid))
+        if (this.waittingForActivatedPids.contains(pid)) {
             this.waittingForActivatedPids.remove(pid);
+        }
         if (this.allActivatedPids.contains(pid)) {
             logger.error("Error create component, have doublic pid:{}", pid);
             try {
@@ -734,9 +740,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 factoryPid);
         if (factoryPid != null) {
             if (!this.factoryPidByPid.containsKey(pid)) {
-                if (this.servicePidByPid.containsKey(pid))
+                if (this.servicePidByPid.containsKey(pid)) {
                     logger.error("servicePid:{} did not deleted,PID is:{},factoryPid is:{}", servicePid, pid,
                             factoryPid);
+                }
                 logger.info("factoryPidByPid:{} reCreated,PID is:{}", factoryPid, pid);
                 this.factoryPidByPid.put(pid, factoryPid);
             }
@@ -789,8 +796,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             logger.warn("PID (kura.service.pid) is null");
             return;
         }
-        if (this.waittingForActivatedPids.contains(pid))
+        if (this.waittingForActivatedPids.contains(pid)) {
             this.waittingForActivatedPids.remove(pid);
+        }
         logger.info("Registering SelfConfiguringComponent - {}....", pid);
         if (!this.servicePidByPid.containsKey(pid)) {
             logger.error("servicePid:{} is not created by Factory,PID is:{}", servicePid, pid);
@@ -802,8 +810,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         this.allActivatedPids.add(pid);
         if (this.activatedSelfConfigComponents.contains(pid)) {
             logger.error("pid:{} is already in SelfConfigComponents, servicePid is:{}", pid, servicePid);
-        } else
+        } else {
             this.activatedSelfConfigComponents.add(pid);
+        }
         logger.info("Registering SelfConfiguringComponent - {}....Done", pid);
     }
 
@@ -954,8 +963,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 ComponentConfiguration cc = getComponentConfigurationInternal(pid);
                 if (cc != null) {
                     configs.add(cc);
-                } else
+                } else {
                     logger.warn("could not find ComponentConfiguration for pid:{}", pid);
+                }
             } catch (Exception e) {
                 logger.error("Error getting configuration for component " + pid, e);
                 throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e,
@@ -1004,10 +1014,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (servicePid == null) {
             servicePid = pid;
         } else {
-            if (!this.allActivatedPids.contains(pid))
+            if (!this.allActivatedPids.contains(pid)) {
                 logger.error("non factory instance (service.pid): {} is created error before OCD registed", servicePid);
-            else
+            } else {
                 logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+            }
         }
         updateDefaultConfiguration(pid, servicePid, ocd);
     }
@@ -1031,8 +1042,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         String servicePid = this.servicePidByPid.get(pid);
         if (servicePid == null) {
             servicePid = pid;
-        } else if (!this.factoryPidByPid.containsKey(pid))
+        } else if (!this.factoryPidByPid.containsKey(pid)) {
             logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+        }
         updateDefaultConfiguration(pid, servicePid, ocd);
     }
 
@@ -1123,8 +1135,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
                 try {
                     // Verify if the current snapshot is encrypted
-                    if (testEncryptedSnapshotFileContent(snapshot))
+                    if (testEncryptedSnapshotFileContent(snapshot)) {
                         return false;
+                    }
                 } catch (Exception e) {
                 }
             }
@@ -1893,7 +1906,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *            the input value
+     *                  the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
@@ -1968,10 +1981,12 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
     }
 
     protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-        if (file == null)
+        if (file == null) {
             throw KuraException.internalError("file is null");
-        if (this.xmlUnmarshaller == null)
+        }
+        if (this.xmlUnmarshaller == null) {
             throw KuraException.internalError("xmlUnmarshaller is null");
+        }
         try {
             return requireNonNull(this.xmlUnmarshaller.unmarshal(new FileInputStream(file), clazz));
         } catch (final Exception e) {
@@ -2061,7 +2076,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
         public ByteBufferInputStream(int bufferSize) {
             this(ByteBuffer.allocate(bufferSize));
-            byteBuffer.flip();
+            this.byteBuffer.flip();
         }
 
         public ByteBufferInputStream(ByteBuffer byteBuffer) {
@@ -2069,31 +2084,37 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
 
         public ByteBuffer getByteBuffer() {
-            return byteBuffer;
+            return this.byteBuffer;
         }
 
         public void setByteBuffer(ByteBuffer byteBuffer) {
             this.byteBuffer = byteBuffer;
         }
 
+        @Override
         public int read() throws IOException {
-            if (!byteBuffer.hasRemaining())
+            if (!this.byteBuffer.hasRemaining()) {
                 return -1;
-            return byteBuffer.get() & 0xFF;
+            }
+            return this.byteBuffer.get() & 0xFF;
         }
 
+        @Override
         public int read(byte[] bytes, int offset, int length) throws IOException {
-            if (length == 0)
+            if (length == 0) {
                 return 0;
-            int count = Math.min(byteBuffer.remaining(), length);
-            if (count == 0)
+            }
+            int count = Math.min(this.byteBuffer.remaining(), length);
+            if (count == 0) {
                 return -1;
-            byteBuffer.get(bytes, offset, count);
+            }
+            this.byteBuffer.get(bytes, offset, count);
             return count;
         }
 
+        @Override
         public int available() throws IOException {
-            return byteBuffer.remaining();
+            return this.byteBuffer.remaining();
         }
     }
 }

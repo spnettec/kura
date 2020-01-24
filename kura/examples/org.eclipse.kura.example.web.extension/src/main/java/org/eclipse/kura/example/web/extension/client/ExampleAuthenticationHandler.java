@@ -72,14 +72,14 @@ public class ExampleAuthenticationHandler implements Extension {
             this.exampleInput.setPlaceholder("Enter failure message here");
             this.exampleButton.setText("Example button");
 
-            this.exampleButton.addClickHandler(e -> exampleInput.setText("button clicked"));
+            this.exampleButton.addClickHandler(e -> this.exampleInput.setText("button clicked"));
 
             this.add(this.exampleInput);
             this.add(this.exampleButton);
         }
 
         public String getText() {
-            return exampleInput.getValue();
+            return this.exampleInput.getValue();
         }
     }
 

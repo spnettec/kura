@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2016 Red Hat Inc and others.
+ * Copyright (c) 2016, 2020 Red Hat Inc and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Red Hat Inc - initial API and implementation
+ *     Red Hat Inc
+ *     Eurotech
  *******************************************************************************/
 package org.eclipse.kura.example.camel.quickstart;
 
@@ -17,8 +18,6 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
 import org.eclipse.kura.camel.component.Configuration;
@@ -61,8 +60,8 @@ public class GatewayRouterJava implements ConfigurableComponent {
 
         // create new filter and instance
 
-        final String cloudServiceFilter = makeCloudServiceFilter(properties);
-        this.camel = createCamelRunner(cloudServiceFilter);
+        final String cloudServiceFilterTmp = makeCloudServiceFilter(properties);
+        this.camel = createCamelRunner(cloudServiceFilterTmp);
 
         // set routes
 
@@ -76,15 +75,15 @@ public class GatewayRouterJava implements ConfigurableComponent {
     public void updated(final Map<String, Object> properties) throws Exception {
         logger.info("Updating: {}", properties);
 
-        final String cloudServiceFilter = makeCloudServiceFilter(properties);
-        if (!this.cloudServiceFilter.equals(cloudServiceFilter)) {
+        final String cloudServiceFilterTmp = makeCloudServiceFilter(properties);
+        if (!this.cloudServiceFilter.equals(cloudServiceFilterTmp)) {
             // update the routes and the filter
 
             // stop the camel context first
             this.camel.stop();
 
             // create a new camel runner, with new dependencies
-            this.camel = createCamelRunner(cloudServiceFilter);
+            this.camel = createCamelRunner(cloudServiceFilterTmp);
 
             // set the routes
             this.camel.setRoutes(fromProperties(properties));
@@ -164,14 +163,10 @@ public class GatewayRouterJava implements ConfigurableComponent {
 
             @Override
             public void configure() throws Exception {
-                from("timer://heartbeat").process(new Processor() {
-
-                    @Override
-                    public void process(Exchange exchange) throws Exception {
-                        final int value = new Random().nextInt(maxTemp);
-                        final Map<String, Integer> data = singletonMap("temperature", value);
-                        exchange.getIn().setBody(data);
-                    }
+                from("timer://heartbeat").process(exchange -> {
+                    final int value = new Random().nextInt(maxTemp);
+                    final Map<String, Integer> data = singletonMap("temperature", value);
+                    exchange.getIn().setBody(data);
                 }) //
                         .convertBodyTo(KuraPayload.class) //
                         .to("cloud:myapp/topic").id("temp-heartbeat");
@@ -183,14 +178,10 @@ public class GatewayRouterJava implements ConfigurableComponent {
                         .otherwise().to("log:greaterThanTen") //
                         .id("test-log");
 
-                from("timer://xmltopic").process(new Processor() {
-
-                    @Override
-                    public void process(Exchange exchange) throws Exception {
-                        KuraPayload payload = new KuraPayload();
-                        payload.addMetric("temperature", new Random().nextInt(20));
-                        exchange.getIn().setBody(payload);
-                    }
+                from("timer://xmltopic").process(exchange -> {
+                    KuraPayload payload = new KuraPayload();
+                    payload.addMetric("temperature", new Random().nextInt(20));
+                    exchange.getIn().setBody(payload);
                 }).to("cloud:myapp/xmltopic");
             }
         };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -29,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * through the {@link DataTransportListener}
  *
  * {@see DataTransportListener}
- * 
+ *
  * @noimplement This interface is not intended to be implemented by clients.
  */
 @ProviderType
@@ -42,7 +42,7 @@ public interface DataTransportService {
      * exposed through the ConfigurationAdmin.
      *
      * @throws KuraConnectException
-     *             the caller MAY retry connecting a later time.
+     *                                  the caller MAY retry connecting a later time.
      */
     public void connect() throws KuraConnectException;
 
@@ -68,7 +68,7 @@ public interface DataTransportService {
      * in-flight messages before actually disconnecting from the broker.
      *
      * @param quiesceTimeout
-     *            - timeout that will be used before forcing a disconnect
+     *                           - timeout that will be used before forcing a disconnect
      */
     public void disconnect(long quiesceTimeout);
 
@@ -83,10 +83,10 @@ public interface DataTransportService {
      * @param topic
      * @param qos
      * @throws KuraTimeoutException
-     *             TODO
+     *                                       TODO
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *             TODO
+     *                                       TODO
      */
     public void subscribe(String topic, int qos) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 
@@ -101,7 +101,7 @@ public interface DataTransportService {
      * @throws KuraTimeoutException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *             TODO
+     *                                       TODO
      */
     public void unsubscribe(String topic) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 
@@ -117,7 +117,7 @@ public interface DataTransportService {
      * @throws KuraTooManyInflightMessagesException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *             TODO
+     *                                                  TODO
      */
     public DataTransportToken publish(String topic, byte[] payload, int qos, boolean retain)
             throws KuraTooManyInflightMessagesException, KuraException, KuraNotConnectedException;

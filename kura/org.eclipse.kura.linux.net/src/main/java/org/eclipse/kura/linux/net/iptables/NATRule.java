@@ -36,11 +36,11 @@ public class NATRule {
      * Constructor of <code>NATRule</code> object.
      *
      * @param sourceInterface
-     *            interface name of source network (such as eth0)
+     *                                 interface name of source network (such as eth0)
      * @param destinationInterface
-     *            interface name of destination network to be reached via NAT (such as ppp0)
+     *                                 interface name of destination network to be reached via NAT (such as ppp0)
      * @param masquerade
-     *            add masquerade entry
+     *                                 add masquerade entry
      */
     public NATRule(String sourceInterface, String destinationInterface, boolean masquerade) {
         this.sourceInterface = sourceInterface;
@@ -103,7 +103,7 @@ public class NATRule {
      * Setter for the sourceInterface.
      *
      * @param sourceInterface
-     *            A String representing the sourceInterface.
+     *                            A String representing the sourceInterface.
      */
     public void setSourceInterface(String sourceInterface) {
         this.sourceInterface = sourceInterface;
@@ -113,7 +113,7 @@ public class NATRule {
      * Setter for the destinationInterface.
      *
      * @param destinationInterface
-     *            A String representing the destinationInterface.
+     *                                 A String representing the destinationInterface.
      */
     public void setDestinationInterface(String destinationInterface) {
         this.destinationInterface = destinationInterface;
@@ -123,7 +123,7 @@ public class NATRule {
      * Setter for the masquerade.
      *
      * @param masquerade
-     *            A boolean representing the masquerade.
+     *                       A boolean representing the masquerade.
      */
     public void setMasquerade(boolean masquerade) {
         this.masquerade = masquerade;

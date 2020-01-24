@@ -247,7 +247,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
             final String factoryPid = DriversAndAssetsUi.this.driverFactoriesList.getSelectedValue();
             if (driverpPid == null || driverpPid.equals("")) {
-                driverpPid = factoryPid + "-" + (new Date()).getTime();
+                driverpPid = factoryPid + "-" + new Date().getTime();
             }
             final String pid = driverpPid;
             if (this.driverFactoriesList.getSelectedIndex() == 0) {
@@ -284,7 +284,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
 
             String pid = inputPid;
             if (pid == null || pid.equals("")) {
-                pid = newDriverPid + "-" + (new Date()).getTime();
+                pid = newDriverPid + "-" + new Date().getTime();
             }
 
             if (this.configurations.isPidExisting(pid)) {

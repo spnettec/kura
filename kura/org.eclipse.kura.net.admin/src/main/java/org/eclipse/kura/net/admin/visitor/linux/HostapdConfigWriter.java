@@ -339,12 +339,12 @@ public class HostapdConfigWriter implements NetworkConfigurationVisitor {
      * Updates configuration with appropriate values.
      *
      * @param wifiConfig
-     *            config
+     *                         config
      * @param fileAsString
-     *            complete configuration string
+     *                         complete configuration string
      * @return
      * @throws KuraException
-     *             in case of invalid mode
+     *                           in case of invalid mode
      */
     private String updateRadioMode(WifiConfig wifiConfig, String fileAsString) throws KuraException {
         WifiRadioMode radioMode = wifiConfig.getRadioMode();

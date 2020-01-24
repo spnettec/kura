@@ -9,6 +9,7 @@
 package org.eclipse.kura.core.deployment;
 
 public enum InstallStatus {
+
     IDLE("IDLE"),
     IN_PROGRESS("IN_PROGRESS"),
     COMPLETED("COMPLETED"),

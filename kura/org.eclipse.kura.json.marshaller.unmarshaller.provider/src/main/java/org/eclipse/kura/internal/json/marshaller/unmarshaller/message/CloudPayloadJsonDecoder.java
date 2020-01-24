@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -55,7 +55,7 @@ public class CloudPayloadJsonDecoder {
      * {@link KuraPayload}.
      *
      * @param stringJson
-     *            a Json encoded as a String.
+     *                       a Json encoded as a String.
      * @return a {@link KuraPayload} that directly maps the received array.
      */
     public static KuraPayload buildFromString(String stringJson) {
@@ -203,10 +203,11 @@ public class CloudPayloadJsonDecoder {
         } else if (name.equalsIgnoreCase("bytes")) {
             javaValue = Base64.getDecoder().decode(value0.asString());
         } else {
-            if (!member.getValue().isObject())
+            if (!member.getValue().isObject()) {
                 javaValue = member.getValue().toString();
-            else
+            } else {
                 throw new IllegalArgumentException(String.format("metric typed object %s is incorrect!", value));
+            }
         }
         return javaValue;
     }

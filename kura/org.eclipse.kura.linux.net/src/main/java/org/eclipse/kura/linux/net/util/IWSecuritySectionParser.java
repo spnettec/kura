@@ -37,7 +37,7 @@ class IWSecuritySectionParser {
 
     /**
      * @param line
-     *            A trimmed line from a subsection in iw scan.
+     *                 A trimmed line from a subsection in iw scan.
      * @return true if we've got all of the security information for this parser
      */
     public boolean parsePropLine(String line) {

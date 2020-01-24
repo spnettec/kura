@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -65,7 +65,7 @@ public class Tmetadata implements MetaData {
     protected URL[] localeUrls;
 
     public URL[] getLocaleUrls() {
-        return localeUrls;
+        return this.localeUrls;
     }
 
     public void setLocaleUrls(URL[] localeUrls) {
@@ -73,7 +73,7 @@ public class Tmetadata implements MetaData {
     }
 
     protected String localization;
-    private final Map<QName, String> otherAttributes = new HashMap<QName, String>();
+    private final Map<QName, String> otherAttributes = new HashMap<>();
 
     /**
      * Gets the value of the ocd property.
@@ -101,14 +101,14 @@ public class Tmetadata implements MetaData {
     @Override
     public List<OCD> getOCD() {
         if (this.ocd == null) {
-            this.ocd = new ArrayList<Tocd>();
+            this.ocd = new ArrayList<>();
         }
-        return new ArrayList<OCD>(this.ocd);
+        return new ArrayList<>(this.ocd);
     }
 
     public void setOCD(Tocd element) {
         if (this.ocd == null) {
-            this.ocd = new ArrayList<Tocd>();
+            this.ocd = new ArrayList<>();
         }
         this.ocd.add(element);
     }
@@ -139,14 +139,14 @@ public class Tmetadata implements MetaData {
     @Override
     public List<Designate> getDesignate() {
         if (this.designate == null) {
-            this.designate = new ArrayList<Tdesignate>();
+            this.designate = new ArrayList<>();
         }
-        return new ArrayList<Designate>(this.designate);
+        return new ArrayList<>(this.designate);
     }
 
     public void setDesignate(Tdesignate td) {
         if (this.designate == null) {
-            this.designate = new ArrayList<Tdesignate>();
+            this.designate = new ArrayList<>();
         }
         this.designate.add(td);
     }
@@ -177,14 +177,14 @@ public class Tmetadata implements MetaData {
      */
     public List<Object> getAny() {
         if (this.any == null) {
-            this.any = new ArrayList<Object>();
+            this.any = new ArrayList<>();
         }
         return this.any;
     }
 
     public void getAny(Object o) {
         if (this.any == null) {
-            this.any = new ArrayList<Object>();
+            this.any = new ArrayList<>();
         }
         this.any.add(o);
     }
@@ -206,8 +206,8 @@ public class Tmetadata implements MetaData {
      * Sets the value of the localization property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setLocalization(String value) {

@@ -25,7 +25,7 @@ public class NtpdClockSyncProvider extends AbstractNtpClockSyncProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(NtpdClockSyncProvider.class);
 
-    private CommandExecutorService executorService;
+    private final CommandExecutorService executorService;
 
     public NtpdClockSyncProvider(CommandExecutorService service) {
         this.executorService = service;

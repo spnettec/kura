@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -30,7 +30,7 @@ public final class TypeUtil {
      * Returns a byte array representation of the provided integer value.
      *
      * @param value
-     *            The provided integer value
+     *                  The provided integer value
      * @return the byte array instance
      */
     public static byte[] intToBytes(final int value) {
@@ -38,7 +38,7 @@ public final class TypeUtil {
         result[0] = (byte) (value >> 24);
         result[1] = (byte) (value >> 16);
         result[2] = (byte) (value >> 8);
-        result[3] = (byte) (value);
+        result[3] = (byte) value;
         return result;
     }
 
@@ -48,9 +48,9 @@ public final class TypeUtil {
      * @param value
      * @return the byte array
      * @throws IOException
-     *             if the access to byte stream fails
+     *                                  if the access to byte stream fails
      * @throws NullPointerException
-     *             if the argument is null
+     *                                  if the argument is null
      */
     public static byte[] objectToByteArray(final Object value) throws IOException {
         requireNonNull(value, "Value cannot be null.");

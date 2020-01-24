@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -71,7 +71,7 @@ public class Tocd implements OCD {
     protected String localization;
 
     public String getLocalization() {
-        return localization;
+        return this.localization;
     }
 
     public void setLocalization(String localization) {
@@ -79,14 +79,14 @@ public class Tocd implements OCD {
     }
 
     public URL[] getLocaleUrls() {
-        return localeUrls;
+        return this.localeUrls;
     }
 
     public void setLocaleUrls(URL[] localeUrls) {
         this.localeUrls = localeUrls;
     }
 
-    private final Map<QName, String> otherAttributes = new HashMap<QName, String>();
+    private final Map<QName, String> otherAttributes = new HashMap<>();
 
     /**
      * Gets the value of the ad property.
@@ -114,14 +114,14 @@ public class Tocd implements OCD {
     @Override
     public List<AD> getAD() {
         if (this.ad == null) {
-            this.ad = new ArrayList<Tad>();
+            this.ad = new ArrayList<>();
         }
-        return new ArrayList<AD>(this.ad);
+        return new ArrayList<>(this.ad);
     }
 
     public void addAD(Tad tad) {
         if (this.ad == null) {
-            this.ad = new ArrayList<Tad>();
+            this.ad = new ArrayList<>();
         }
 
         this.ad.add(tad);
@@ -153,14 +153,14 @@ public class Tocd implements OCD {
     @Override
     public List<Icon> getIcon() {
         if (this.icon == null) {
-            this.icon = new ArrayList<Ticon>();
+            this.icon = new ArrayList<>();
         }
-        return new ArrayList<Icon>(this.icon);
+        return new ArrayList<>(this.icon);
     }
 
     public void setIcon(Ticon ti) {
         if (this.icon == null) {
-            this.icon = new ArrayList<Ticon>();
+            this.icon = new ArrayList<>();
         }
         this.icon.add(ti);
     }
@@ -191,14 +191,14 @@ public class Tocd implements OCD {
      */
     public List<Object> getAny() {
         if (this.any == null) {
-            this.any = new ArrayList<Object>();
+            this.any = new ArrayList<>();
         }
         return this.any;
     }
 
     public void setAny(Object o) {
         if (this.any == null) {
-            this.any = new ArrayList<Object>();
+            this.any = new ArrayList<>();
         }
         this.any.add(o);
     }
@@ -220,8 +220,8 @@ public class Tocd implements OCD {
      * Sets the value of the name property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setName(String value) {
@@ -245,8 +245,8 @@ public class Tocd implements OCD {
      * Sets the value of the description property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setDescription(String value) {
@@ -270,8 +270,8 @@ public class Tocd implements OCD {
      * Sets the value of the id property.
      *
      * @param value
-     *            allowed object is
-     *            {@link String }
+     *                  allowed object is
+     *                  {@link String }
      *
      */
     public void setId(String value) {

@@ -50,7 +50,7 @@ public class NMEAParser {
      * Fill the fields of GPS position depending of the type of the sentence
      *
      * @param sentence
-     *            most recent sentence String from GPS modem
+     *                     most recent sentence String from GPS modem
      */
     public boolean parseSentence(String sentence) throws ParseException {
 
@@ -225,11 +225,11 @@ public class NMEAParser {
 
     /**
      * @param pos
-     *            DDD?MM?.dddd
+     *                      DDD?MM?.dddd
      * @param direction
-     *            N/S, E/W
+     *                      N/S, E/W
      * @param degChars
-     *            number of characters representing degrees
+     *                      number of characters representing degrees
      * @return
      */
     private double convertPosition(String pos, String direction, int degChars) {

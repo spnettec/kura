@@ -18,15 +18,15 @@ public class WifiInterfaceState extends InterfaceState {
     /**
      *
      * @param interfaceName
-     *            interface name as {@link String}
+     *                           interface name as {@link String}
      * @param up
-     *            if true the interface is up
+     *                           if true the interface is up
      * @param link
-     *            if true the interface has link
+     *                           if true the interface has link
      * @param ipAddress
-     *            the {@link IPAddress} assigned to the interface
+     *                           the {@link IPAddress} assigned to the interface
      * @param carrierChanges
-     *            the number of times the network has been connected or disconnected
+     *                           the number of times the network has been connected or disconnected
      */
     public WifiInterfaceState(String interfaceName, boolean up, boolean link, IPAddress ipAddress, int carrierChanges) {
         super(interfaceName, up, link, ipAddress, carrierChanges);

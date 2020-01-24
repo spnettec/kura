@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -36,13 +36,13 @@ import org.slf4j.LoggerFactory;
 
 public class EmulatedNetworkServiceImpl implements NetworkService {
 
-    private static final Logger s_logger = LoggerFactory.getLogger(EmulatedNetworkServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(EmulatedNetworkServiceImpl.class);
 
     @SuppressWarnings("unused")
-    private Emulator m_emulator;
+    private Emulator emulator;
 
     @SuppressWarnings("unused")
-    private ComponentContext m_ctx;
+    private ComponentContext ctx;
 
     // ----------------------------------------------------------------
     //
@@ -51,11 +51,11 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
     // ----------------------------------------------------------------
 
     public void setEmulator(Emulator emulator) {
-        this.m_emulator = emulator;
+        this.emulator = emulator;
     }
 
     public void unsetEmulator(Emulator emulator) {
-        this.m_emulator = null;
+        this.emulator = null;
     }
 
     // ----------------------------------------------------------------
@@ -67,11 +67,11 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
     protected void activate(ComponentContext componentContext) {
         //
         // save the bundle context
-        this.m_ctx = componentContext;
+        this.ctx = componentContext;
     }
 
     protected void deactivate(ComponentContext componentContext) {
-        this.m_ctx = null;
+        this.ctx = null;
     }
 
     // ----------------------------------------------------------------
@@ -102,7 +102,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
 
     @Override
     public List<String> getAllNetworkInterfaceNames() throws KuraException {
-        List<String> interfaceNames = new ArrayList<String>();
+        List<String> interfaceNames = new ArrayList<>();
 
         java.net.NetworkInterface jnInterface = null;
         Enumeration<java.net.NetworkInterface> interfaces = null;
@@ -125,7 +125,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
         IPAddress netAddress = null;
         NetInterfaceAddressImpl addressImpl = null;
         List<NetInterfaceAddress> addresses = null;
-        List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<NetInterface<? extends NetInterfaceAddress>>();
+        List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<>();
 
         EthernetInterfaceImpl ethInterface = null;
         java.net.NetworkInterface jnInterface = null;
@@ -155,7 +155,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                     isP2p = jnInterface.isPointToPoint();
                     multi = jnInterface.supportsMulticast();
                 } catch (Exception e) {
-                    s_logger.warn("Exception while getting information for interface " + jnInterface.getName() + ": "
+                    logger.warn("Exception while getting information for interface " + jnInterface.getName() + ": "
                             + e.getMessage());
                 }
                 ethInterface.setHardwareAddress(hwAddr);
@@ -166,7 +166,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                 ethInterface.setSupportsMulticast(multi);
                 ethInterface.setUp(isUp);
 
-                addresses = new ArrayList<NetInterfaceAddress>();
+                addresses = new ArrayList<>();
                 jnInterfaceAddresses = jnInterface.getInterfaceAddresses();
                 for (java.net.InterfaceAddress jnInterfaceAddress : jnInterfaceAddresses) {
 
@@ -206,7 +206,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
         IPAddress netAddress = null;
         NetInterfaceAddressImpl addressImpl = null;
         List<NetInterfaceAddress> addresses = null;
-        List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<NetInterface<? extends NetInterfaceAddress>>();
+        List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<>();
 
         EthernetInterfaceImpl ethInterface = null;
         java.net.NetworkInterface jnInterface = null;
@@ -241,7 +241,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                             isP2p = jnInterface.isPointToPoint();
                             multi = jnInterface.supportsMulticast();
                         } catch (Exception e) {
-                            s_logger.warn("Exception while getting information for interface " + jnInterface.getName(),
+                            logger.warn("Exception while getting information for interface " + jnInterface.getName(),
                                     e);
                         }
                         ethInterface.setHardwareAddress(hwAddr);
@@ -252,7 +252,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                         ethInterface.setSupportsMulticast(multi);
                         ethInterface.setUp(isUp);
 
-                        addresses = new ArrayList<NetInterfaceAddress>();
+                        addresses = new ArrayList<>();
                         jnInterfaceAddresses = jnInterface.getInterfaceAddresses();
                         for (java.net.InterfaceAddress jnInterfaceAddress : jnInterfaceAddresses) {
 
@@ -271,7 +271,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                         interfaces.add(ethInterface);
                     }
                 } catch (SocketException se) {
-                    s_logger.warn("Exception while getting information for interface " + jnInterface.getName(), se);
+                    logger.warn("Exception while getting information for interface " + jnInterface.getName(), se);
                 }
             }
         } catch (Exception e) {
@@ -336,7 +336,7 @@ public class EmulatedNetworkServiceImpl implements NetworkService {
                 }
             }
         } catch (SocketException e) {
-            s_logger.error("Error getting IP address", e);
+            logger.error("Error getting IP address", e);
         }
         return jnAddress;
     }

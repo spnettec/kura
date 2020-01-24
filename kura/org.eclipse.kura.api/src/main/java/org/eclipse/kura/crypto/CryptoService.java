@@ -38,7 +38,7 @@ public interface CryptoService {
      * Returns an AES encrypted char array based on the provided value.
      *
      * @param value
-     *            A char array that will be encrypted.
+     *                  A char array that will be encrypted.
      * @return The char array representing the encrypted value.
      * @throws KuraException
      */
@@ -48,7 +48,7 @@ public interface CryptoService {
      * Returns a char array based on the provided encrypted value.
      *
      * @param encryptedValue
-     *            A char array representing the value to be decrypted.
+     *                           A char array representing the value to be decrypted.
      * @return char[] that has been decrypted.
      * @throws KuraException
      */
@@ -58,7 +58,7 @@ public interface CryptoService {
      * Returns an AES encrypted string based on the provided value.
      *
      * @param value
-     *            A string that will be encrypted.
+     *                  A string that will be encrypted.
      * @return String that has been encrypted.
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -74,7 +74,7 @@ public interface CryptoService {
      * Returns a plain text string based on the provided encrypted value.
      *
      * @param encryptedValue
-     *            A string representing the value to be decrypted.
+     *                           A string representing the value to be decrypted.
      * @return String that has been decrypted.
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -91,7 +91,7 @@ public interface CryptoService {
      * Returns a SHA1 hashed value of the provided string s.
      *
      * @param s
-     *            A string on which to run the SHA1 hasing algorithm.
+     *              A string on which to run the SHA1 hasing algorithm.
      * @return String that has been hashed.
      * @throws NoSuchAlgorithmException
      * @throws UnsupportedEncodingException
@@ -102,7 +102,7 @@ public interface CryptoService {
      * Returns an encoded string based on the provided stringValue.
      *
      * @param stringValue
-     *            A string to be encoded.
+     *                        A string to be encoded.
      * @return String that has been encoded.
      * @throws NoSuchAlgorithmException
      * @throws UnsupportedEncodingException
@@ -113,7 +113,7 @@ public interface CryptoService {
      * Returns a decoded string based on the provided encodedValue.
      *
      * @param encodedValue
-     *            A string to be decoded.
+     *                         A string to be decoded.
      * @return String that has been decoded.
      * @throws NoSuchAlgorithmException
      * @throws UnsupportedEncodingException
@@ -125,7 +125,7 @@ public interface CryptoService {
      * used to access to the data saved in the specified keystore.
      *
      * @param keyStorePath
-     *            A String that represents a unique identifier of the specified keystore.
+     *                         A String that represents a unique identifier of the specified keystore.
      * @return A char array that represents the password of the specified keystore.
      */
     public char[] getKeyStorePassword(String keyStorePath);
@@ -135,9 +135,9 @@ public interface CryptoService {
      * that has to be stored for the specified keystore.
      *
      * @param keyStorePath
-     *            A String that represents a unique identifier of the specified keystore.
+     *                         A String that represents a unique identifier of the specified keystore.
      * @param password
-     *            A char array that represents the password of the specified keystore.
+     *                         A char array that represents the password of the specified keystore.
      * @throws KuraException
      */
     public void setKeyStorePassword(String keyStorePath, char[] password) throws KuraException;
@@ -147,9 +147,9 @@ public interface CryptoService {
      * that has to be stored for the specified keystore.
      *
      * @param keyStorePath
-     *            A String that represents a unique identifier of the specified keystore.
+     *                         A String that represents a unique identifier of the specified keystore.
      * @param password
-     *            A String that represents the password of the specified keystore.
+     *                         A String that represents the password of the specified keystore.
      * @throws IOException
      */
     @Deprecated
@@ -162,7 +162,7 @@ public interface CryptoService {
      */
     public boolean isFrameworkSecure();
 
-    public void encryptAes(InputStream value,OutputStream out) throws KuraException;
+    public void encryptAes(InputStream value, OutputStream out) throws KuraException;
 
-    public void decryptAes(InputStream value,OutputStream out) throws KuraException;
+    public void decryptAes(InputStream value, OutputStream out) throws KuraException;
 }

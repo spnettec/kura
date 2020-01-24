@@ -42,7 +42,7 @@ public class ConnectionInfoImpl implements ConnectionInfo {
      * Creates a ConnectionInfo instance with the previously persisted connection properties if they existed
      *
      * @param ifaceName
-     *            The interface name tied to the connection information
+     *                      The interface name tied to the connection information
      * @throws KuraException
      */
     public ConnectionInfoImpl(String ifaceName) throws KuraException {

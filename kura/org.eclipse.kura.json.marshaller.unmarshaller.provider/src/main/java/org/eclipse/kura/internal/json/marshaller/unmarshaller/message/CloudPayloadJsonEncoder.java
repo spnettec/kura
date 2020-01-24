@@ -46,10 +46,10 @@ public class CloudPayloadJsonEncoder {
      * This static method takes a {@link KuraPayload} and converts it into a {@code String}
      *
      * @param kuraPayload
-     *            a {@link KuraPayload} object that has to be converted.
+     *                        a {@link KuraPayload} object that has to be converted.
      * @return a String that maps the received {@link KuraPayload} object
      * @throws IllegalArgumentException
-     *             if the conversion fails
+     *                                      if the conversion fails
      */
     public static String marshal(KuraPayload kuraPayload) {
         JsonObject json = Json.object();

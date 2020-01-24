@@ -204,8 +204,9 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         if (factoryPid == null || factoryPid.trim().isEmpty()) {
             throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_NULL_ARGUMENT);
         }
-        if (cloudServicePid == null || cloudServicePid.trim().isEmpty())
+        if (cloudServicePid == null || cloudServicePid.trim().isEmpty()) {
             cloudServicePid = factoryPid + "-Component-" + new Date().getTime();
+        }
         final String pid = cloudServicePid;
         withAllCloudConnectionFactories(service -> {
             if (service.getFactoryPid().equals(factoryPid)) {
@@ -308,8 +309,9 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     public void createPubSubInstance(final GwtXSRFToken token, String pid, final String factoryPid,
             final String cloudConnectionPid, String name, String description) throws GwtKuraException {
         checkXSRFToken(token);
-        if (pid == null || pid.trim().isEmpty())
+        if (pid == null || pid.trim().isEmpty()) {
             pid = factoryPid + "-Component-" + new Date().getTime();
+        }
         final String pubSubPid = pid;
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);

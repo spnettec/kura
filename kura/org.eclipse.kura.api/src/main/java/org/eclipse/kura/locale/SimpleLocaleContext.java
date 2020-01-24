@@ -12,7 +12,7 @@ public class SimpleLocaleContext implements LocaleContext {
     /**
      * Create a new SimpleLocaleContext that exposes the specified Locale.
      * Every {@link #getLocale()} call will return this Locale.
-     * 
+     *
      * @param locale
      *                   the Locale to expose, or {@code null} for no specific one
      */
@@ -28,7 +28,7 @@ public class SimpleLocaleContext implements LocaleContext {
 
     @Override
     public String toString() {
-        return (this.locale != null ? this.locale.toString() : "-");
+        return this.locale != null ? this.locale.toString() : "-";
     }
 
 }

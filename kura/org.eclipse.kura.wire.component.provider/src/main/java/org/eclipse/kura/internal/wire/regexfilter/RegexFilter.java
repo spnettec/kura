@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -85,7 +84,7 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * Bind the {@link WireHelperService}.
      *
      * @param wireHelperService
-     *            the new {@link WireHelperService}
+     *                              the new {@link WireHelperService}
      */
     protected synchronized void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -97,7 +96,7 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * Unbind the {@link WireHelperService}
      *
      * @param wireHelperService
-     *            the new {@link WireHelperService}
+     *                              the new {@link WireHelperService}
      */
     protected synchronized void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -109,7 +108,7 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * OSGi service component activation callback
      *
      * @param properties
-     *            the configured properties
+     *                             the configured properties
      * @param componentContext
      */
     protected synchronized void activate(final Map<String, Object> properties, ComponentContext componentContext) {
@@ -126,7 +125,7 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * OSGi service component modification callback
      *
      * @param properties
-     *            the updated properties
+     *                       the updated properties
      */
     protected synchronized void updated(final Map<String, Object> properties) {
         logger.debug("Updating Regex Filter...");
@@ -179,9 +178,9 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * instance
      *
      * @param wireRecords
-     *            list of non-filtered {@link WireRecord}s
+     *                                    list of non-filtered {@link WireRecord}s
      * @param nonFilteredWireEnvelope
-     *            non-filtered {@link WireEnvelope} instance
+     *                                    non-filtered {@link WireEnvelope} instance
      * @return returns A {@link WireEnvelope} instance associating the list of filtered
      *         {@link WireRecord}s in case of success, otherwise the provided non-filtered
      *         {@link WireEnvelope} instance
@@ -206,16 +205,16 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * that matches the provided filter
      *
      * @param wireRecords
-     *            the list of {@link WireRecord}s
+     *                        the list of {@link WireRecord}s
      * @param filter
-     *            the filter to match
+     *                        the filter to match
      * @param type
-     *            the associated type that signifies either to retain matched keys or remove
+     *                        the associated type that signifies either to retain matched keys or remove
      * @return the list of {@link WireRecord}s containing the filtered properties
      * @throws NullPointerException
-     *             if any of the arguments is null
-     * @throws PatternSyntaxException
-     *             If the filter's syntax is invalid
+     *                                                    if any of the arguments is null
+     * @throws java.util.regex.PatternSyntaxException
+     *                                                    If the filter's syntax is invalid
      */
     private static List<WireRecord> filter(final List<WireRecord> wireRecords, final String filter,
             final FilterType type) {
@@ -245,15 +244,15 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * Filters out the keys from the provided {@link Map} instance
      *
      * @param regularExpression
-     *            the regular expression to match
+     *                              the regular expression to match
      * @param map
-     *            the {@link Map} instance to filter
+     *                              the {@link Map} instance to filter
      * @param type
-     *            the associated type that signifies either to retain matched keys or remove
+     *                              the associated type that signifies either to retain matched keys or remove
      * @return the {@link Map} instance comprising the keys
      *         that match the provided regular expression
-     * @throws PatternSyntaxException
-     *             If the regular expression's syntax is invalid
+     * @throws java.util.regex.PatternSyntaxException
+     *                                                    If the regular expression's syntax is invalid
      */
     private static <V> Map<String, V> match(final String regularExpression, final Map<String, V> map,
             final FilterType type) {
@@ -278,9 +277,9 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * The {@link Predicate} instance denoting the provided {@link Pattern} instance to match
      *
      * @param pattern
-     *            the {@link Pattern} instance to match
+     *                    the {@link Pattern} instance to match
      * @param type
-     *            the type that signifies either to match entries or not
+     *                    the type that signifies either to match entries or not
      * @return a {@link Predicate} instance
      */
     private static <V> Predicate<Entry<String, V>> matches(final Pattern pattern, final FilterType type) {
@@ -292,7 +291,7 @@ public final class RegexFilter implements WireEmitter, WireReceiver, Configurabl
      * Returns the associated type of the filter operation
      *
      * @param props
-     *            the properties to find the associated type
+     *                  the properties to find the associated type
      * @return if type is equal to 2, then {@link FilterType#REMOVE} else {@link FilterType#RETAIN}
      */
     private static FilterType getType(final Map<String, Object> props) {

@@ -84,9 +84,8 @@ public final class RecordFillers {
 
         @Override
         public void fill(Map<String, TypedValue<?>> envelopeProperties, ChannelRecord record) {
-            if (record != null && record.getChannelStatus() != null
-                    && record.getChannelStatus().getChannelFlag() == ChannelFlag.SUCCESS) {
-                envelopeProperties.put(valueKey, record.getValue());
+            if (record.getChannelStatus().getChannelFlag() == ChannelFlag.SUCCESS) {
+                envelopeProperties.put(this.valueKey, record.getValue());
             }
         }
     }
@@ -102,7 +101,8 @@ public final class RecordFillers {
         @Override
         public void fill(Map<String, TypedValue<?>> envelopeProperties, ChannelRecord record) {
 
-            envelopeProperties.put(errorKey, TypedValues.newStringValue(getErrorMessage(record.getChannelStatus())));
+            envelopeProperties.put(this.errorKey,
+                    TypedValues.newStringValue(getErrorMessage(record.getChannelStatus())));
         }
 
         private String getErrorMessage(final ChannelStatus channelStatus) {
@@ -133,7 +133,7 @@ public final class RecordFillers {
 
         @Override
         public void fill(Map<String, TypedValue<?>> envelopeProperties, ChannelRecord record) {
-            envelopeProperties.put(timestampKey, TypedValues.newLongValue(record.getTimestamp()));
+            envelopeProperties.put(this.timestampKey, TypedValues.newLongValue(record.getTimestamp()));
         }
     }
 
@@ -143,14 +143,14 @@ public final class RecordFillers {
         private int len = 0;
 
         void add(final RecordFiller filler) {
-            fillers[len] = filler;
-            len++;
+            this.fillers[this.len] = filler;
+            this.len++;
         }
 
         @Override
         public void fill(Map<String, TypedValue<?>> envelopeProperties, ChannelRecord record) {
-            for (int i = 0; i < fillers.length && fillers[i] != null; i++) {
-                fillers[i].fill(envelopeProperties, record);
+            for (int i = 0; i < this.fillers.length && this.fillers[i] != null; i++) {
+                this.fillers[i].fill(envelopeProperties, record);
             }
         }
     }

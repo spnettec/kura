@@ -421,13 +421,7 @@ public class ExampleComponent implements CloudClientListener, EventHandler {
             this.handle.cancel(true);
         }
 
-        this.handle = this.worker.scheduleAtFixedRate(new Runnable() {
-
-            @Override
-            public void run() {
-                doPublish();
-            }
-        }, 0, POLL_DELAY_SEC, TimeUnit.SECONDS);
+        this.handle = this.worker.scheduleAtFixedRate(() -> doPublish(), 0, POLL_DELAY_SEC, TimeUnit.SECONDS);
     }
 
     private void doGpsUpdate() {
@@ -436,20 +430,16 @@ public class ExampleComponent implements CloudClientListener, EventHandler {
         }
 
         this.gpsWorker = Executors.newSingleThreadScheduledExecutor();
-        this.gpsHandle = this.gpsWorker.scheduleAtFixedRate(new Runnable() {
-
-            @Override
-            public void run() {
-                Position position = ExampleComponent.this.positionService.getPosition();
-                s_logger.debug("Latitude: " + position.getLatitude());
-                s_logger.debug("Longitude: " + position.getLongitude());
-                s_logger.debug("Altitude: " + position.getAltitude());
-                s_logger.debug("Speed: " + position.getSpeed());
-                s_logger.debug("Track: " + position.getTrack());
-                s_logger.debug("Time: " + ExampleComponent.this.positionService.getNmeaTime());
-                s_logger.debug("Date: " + ExampleComponent.this.positionService.getNmeaDate());
-                s_logger.debug("Last Sentence: " + ExampleComponent.this.positionService.getLastSentence());
-            }
+        this.gpsHandle = this.gpsWorker.scheduleAtFixedRate(() -> {
+            Position position = ExampleComponent.this.positionService.getPosition();
+            s_logger.debug("Latitude: " + position.getLatitude());
+            s_logger.debug("Longitude: " + position.getLongitude());
+            s_logger.debug("Altitude: " + position.getAltitude());
+            s_logger.debug("Speed: " + position.getSpeed());
+            s_logger.debug("Track: " + position.getTrack());
+            s_logger.debug("Time: " + ExampleComponent.this.positionService.getNmeaTime());
+            s_logger.debug("Date: " + ExampleComponent.this.positionService.getNmeaDate());
+            s_logger.debug("Last Sentence: " + ExampleComponent.this.positionService.getLastSentence());
         }, 0, POLL_DELAY_SEC, TimeUnit.SECONDS);
     }
 

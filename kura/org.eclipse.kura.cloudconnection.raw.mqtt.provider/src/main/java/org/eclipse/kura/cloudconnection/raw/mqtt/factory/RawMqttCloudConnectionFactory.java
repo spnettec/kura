@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -67,8 +67,9 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
             ComponentConfiguration config = this.configurationService.getComponentConfiguration(pid);
             String name = (String) config.getConfigurationProperties()
                     .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
-            if (name != null)
+            if (name != null) {
                 return name;
+            }
             return CLOUD_SERVICE_FACTORY_PID;
         } catch (Exception e) {
             return CLOUD_SERVICE_FACTORY_PID;
@@ -98,12 +99,13 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
 
     @Override
     public void createConfiguration(String pid, String instanceName, String description) throws KuraException {
-        if (pid == null || pid.equals(""))
+        if (pid == null || pid.equals("")) {
             pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
+        }
         String dataTransportServicePid = DATA_TRANSPORT_SERVICE_PID + "-" + new Date().getTime();
         this.configurationService.createFactoryConfiguration(DATA_TRANSPORT_SERVICE_FACTORY_PID,
                 dataTransportServicePid, null, false);
-        Map<String, Object> dataServiceProperties = new HashMap<String, Object>();
+        Map<String, Object> dataServiceProperties = new HashMap<>();
         String name = DATA_TRANSPORT_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
         dataServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataTransportServicePid));
 
@@ -114,10 +116,12 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
         Map<String, Object> cloudServiceProperties = new HashMap<>();
         name = DATA_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
         cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataServicePid));
-        if (instanceName != null && !instanceName.equals(""))
+        if (instanceName != null && !instanceName.equals("")) {
             cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, instanceName);
-        if (description != null && !description.equals(""))
+        }
+        if (description != null && !description.equals("")) {
             cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
+        }
         this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, pid, cloudServiceProperties,
                 true);
     }
@@ -126,21 +130,24 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
     public void deleteConfiguration(String pid) throws KuraException {
         String[] result = getTargetPids(pid);
         boolean takeSnapshot = false;
-        if (result[0] == null && result[1] == null)
+        if (result[0] == null && result[1] == null) {
             takeSnapshot = true;
+        }
         this.configurationService.deleteFactoryConfiguration(pid, takeSnapshot);
         if (result[0] != null) {
-            if (result[1] == null)
+            if (result[1] == null) {
                 takeSnapshot = true;
+            }
             this.configurationService.deleteFactoryConfiguration(result[0], takeSnapshot);
         }
-        if (result[1] != null)
+        if (result[1] != null) {
             this.configurationService.deleteFactoryConfiguration(result[1], true);
+        }
     }
 
     @Override
     public List<String> getStackComponentsPids(String pid) throws KuraException {
-        List<String> componentPids = new ArrayList<String>();
+        List<String> componentPids = new ArrayList<>();
 
         String[] result = getTargetPids(pid);
         // componentPids.add(pid);
@@ -157,8 +164,9 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
         String dataServicePid = (String) config.getConfigurationProperties().get(name);
         if (dataServicePid != null) {
             String[] names = dataServicePid.split("=");
-            if (names.length == 2)
+            if (names.length == 2) {
                 dataServicePid = names[1];
+            }
             dataServicePid = dataServicePid.substring(0, dataServicePid.indexOf(')'));
 
             if (dataServicePid != null) {
@@ -167,8 +175,9 @@ public class RawMqttCloudConnectionFactory implements CloudConnectionFactory {
                 dataTransportServicePid = (String) config.getConfigurationProperties().get(name);
                 if (dataTransportServicePid != null) {
                     names = dataTransportServicePid.split("=");
-                    if (names.length == 2)
+                    if (names.length == 2) {
                         dataTransportServicePid = names[1];
+                    }
                     dataTransportServicePid = dataTransportServicePid.substring(0,
                             dataTransportServicePid.indexOf(')'));
                 }

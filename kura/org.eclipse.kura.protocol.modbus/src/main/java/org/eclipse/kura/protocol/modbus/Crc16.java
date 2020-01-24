@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,17 +17,17 @@ package org.eclipse.kura.protocol.modbus;
 public class Crc16 {
 
     private Crc16() {
-    };
+    }
 
     /**
      * calculate the crc for the passed buffer
      *
      * @param buff
-     *            byte array to calculate CRC of
+     *                    byte array to calculate CRC of
      * @param buffLen
-     *            number of bytes in array to calculate against
+     *                    number of bytes in array to calculate against
      * @param crcSeed
-     *            starting seed for CRC calculation
+     *                    starting seed for CRC calculation
      * @return CRC16 as calculated for buff
      */
     public static int getCrc16(byte[] buff, int buffLen, int crcSeed) {

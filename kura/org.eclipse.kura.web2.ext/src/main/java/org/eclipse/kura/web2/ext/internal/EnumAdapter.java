@@ -27,7 +27,7 @@ public class EnumAdapter<T extends Enum<T>> implements Adapter<T> {
     @Override
     public T adaptNonNull(JavaScriptObject value) {
         final JsObject obj = value.cast();
-        return Enum.valueOf(type, obj.asString());
+        return Enum.valueOf(this.type, obj.asString());
     }
 
 }

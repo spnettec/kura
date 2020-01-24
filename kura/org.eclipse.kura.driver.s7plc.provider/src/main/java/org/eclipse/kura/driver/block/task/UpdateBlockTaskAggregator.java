@@ -63,15 +63,17 @@ public class UpdateBlockTaskAggregator extends BlockTaskAggregator {
      * Creates a new {@link UpdateBlockTaskAggregator} instance
      *
      * @param tasks
-     *            the list of input tasks
+     *                             the list of input tasks
      * @param readTaskFactory
-     *            a {@link BlockFactory} that will be used for creating the {@link ToplevelBlockTask} instances in
-     *            {@link Mode#READ} mode
+     *                             a {@link BlockFactory} that will be used for creating the {@link ToplevelBlockTask}
+     *                             instances in
+     *                             {@link Mode#READ} mode
      * @param writeTaskFactory
-     *            a {@link BlockFactory} that will be used for creating the {@link ToplevelBlockTask} instances in
-     *            {@link Mode#WRITE} mode
+     *                             a {@link BlockFactory} that will be used for creating the {@link ToplevelBlockTask}
+     *                             instances in
+     *                             {@link Mode#WRITE} mode
      * @throws IllegalArgumentException
-     *             if any task in {@link Mode#READ} is found in the input task list
+     *                                      if any task in {@link Mode#READ} is found in the input task list
      */
     public UpdateBlockTaskAggregator(List<Block> tasks, BlockFactory<ToplevelBlockTask> readTaskFactory,
             BlockFactory<ToplevelBlockTask> writeTaskFactory) {
@@ -109,7 +111,7 @@ public class UpdateBlockTaskAggregator extends BlockTaskAggregator {
      * {@inheritDoc}
      *
      * @throws IllegalArgumentException
-     *             if the provided task is in {@link Mode#READ} mode.
+     *                                      if the provided task is in {@link Mode#READ} mode.
      */
     @Override
     public void addBlock(Block block) {

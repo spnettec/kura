@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Red Hat Inc and others
+ * Copyright (c) 2016, 2020 Red Hat Inc and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -132,9 +132,9 @@ public abstract class AbstractCamelComponent {
      * The default implementation is empty
      *
      * @param builder
-     *            the builder
+     *                       the builder
      * @param properties
-     *            the properties provided to the {@link #start(Map)} method
+     *                       the properties provided to the {@link #start(Map)} method
      */
     protected void customizeBuilder(final Builder builder, final Map<String, Object> properties) {
     }
@@ -156,15 +156,15 @@ public abstract class AbstractCamelComponent {
      * @return the camel context or {@code null} if the context is not started
      */
     public CamelContext getCamelContext() {
-        final CamelRunner runner = this.runner;
-        return runner != null ? runner.getCamelContext() : null;
+        final CamelRunner camelRunner = this.runner;
+        return camelRunner != null ? camelRunner.getCamelContext() : null;
     }
 
     /**
      * Called before the context is started
      *
      * @param camelContext
-     *            the Camel context which is being prepared for starting
+     *                         the Camel context which is being prepared for starting
      */
     protected void beforeStart(final CamelContext camelContext) {
     }

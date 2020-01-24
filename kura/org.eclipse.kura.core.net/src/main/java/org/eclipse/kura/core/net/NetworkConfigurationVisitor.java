@@ -22,9 +22,9 @@ public interface NetworkConfigurationVisitor {
      * it needs a {@link CommandExecutorService}. It has to be set before the visit using the
      * {@link NetworkConfigurationVisitor#setExecutorService}
      * method.
-     * 
+     *
      * @param config
-     *            the {@link NetworkConfiguration} used by the visitor
+     *                   the {@link NetworkConfiguration} used by the visitor
      * @throws KuraException
      */
     public void visit(NetworkConfiguration config) throws KuraException;
@@ -32,9 +32,9 @@ public interface NetworkConfigurationVisitor {
     /**
      * Sets the {@link CommandExecutorService} for the visitor. It has to be set before every call of the
      * {@link NetworkConfigurationVisitor#visit} method.
-     * 
+     *
      * @param executorService
-     *            the {@link CommandExecutorService} used to perform operations on the system
+     *                            the {@link CommandExecutorService} used to perform operations on the system
      */
     public void setExecutorService(CommandExecutorService executorService);
 }

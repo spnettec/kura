@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2018, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -24,34 +24,34 @@ public interface BoardResourcePowerService {
      * Enables the resource specified by the passed identifier
      *
      * @param identifier
-     *            a String object used to univocally identify a resource in the board.
+     *                       a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void enable(String identifier) throws IOException;
 
     /**
      * Disables the resource specified by the passed identifier
-     * 
+     *
      * @param identifier
-     *            a String object used to univocally identify a resource in the board.
+     *                       a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void disable(String identifier) throws IOException;
 
     /**
      * Resets the resource specified by the passed identifier
-     * 
+     *
      * @param identifier
-     *            a String object used to univocally identify a resource in the board.
+     *                       a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void reset(String identifier) throws IOException;
 
     /**
      * Returns the state of the resource specified by the passed identifier
-     * 
+     *
      * @param identifier
-     *            a String object used to univocally identify a resource in the board.
+     *                       a String object used to univocally identify a resource in the board.
      * @return a {@link BoardPowerState} representing the current status
      * @throws IOException
      */

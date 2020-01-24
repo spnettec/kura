@@ -17,7 +17,6 @@ import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.kura.KuraRuntimeException;
 import org.eclipse.kura.db.H2DbService;
 
 /**
@@ -34,9 +33,9 @@ public final class H2DbServiceHelper {
      * Instantiates a new DB Service Helper.
      *
      * @param dbService
-     *            the DB service
+     *                      the DB service
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     private H2DbServiceHelper(final H2DbService dbService) {
         requireNonNull(dbService, "DB Service cannot be null");
@@ -47,10 +46,10 @@ public final class H2DbServiceHelper {
      * Creates instance of {@link H2DbServiceHelper}
      *
      * @param dbService
-     *            the {@link H2DbService}
+     *                      the {@link H2DbService}
      * @return the instance of {@link H2DbServiceHelper}
-     * @throws KuraRuntimeException
-     *             if argument is null
+     * @throws org.eclipse.kura.KuraRuntimeException
+     *                                                   if argument is null
      */
     public static H2DbServiceHelper of(final H2DbService dbService) {
         return new H2DbServiceHelper(dbService);
@@ -60,13 +59,13 @@ public final class H2DbServiceHelper {
      * Executes the provided SQL query.
      *
      * @param sql
-     *            the SQL query to execute
+     *                   the SQL query to execute
      * @param params
-     *            the extra parameters needed for the query
+     *                   the extra parameters needed for the query
      * @throws SQLException
-     *             the SQL exception
+     *                                  the SQL exception
      * @throws NullPointerException
-     *             if SQL query argument is null
+     *                                  if SQL query argument is null
      */
     public synchronized void execute(final Connection c, final String sql, final Integer... params)
             throws SQLException {
@@ -85,7 +84,7 @@ public final class H2DbServiceHelper {
     }
 
     public <T> T withConnection(final H2DbService.ConnectionCallable<T> callable) throws SQLException {
-        return dbService.withConnection(callable);
+        return this.dbService.withConnection(callable);
     }
 
     /**
@@ -93,10 +92,10 @@ public final class H2DbServiceHelper {
      * any double quote present in the string.
      *
      * @param string
-     *            the string to be sanitized
+     *                   the string to be sanitized
      * @return the escaped string
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     public String sanitizeSqlTableAndColumnName(final String string) {
         requireNonNull(string, "Provided string cannot be null");

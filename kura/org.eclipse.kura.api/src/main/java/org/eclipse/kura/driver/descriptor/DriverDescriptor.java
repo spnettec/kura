@@ -38,11 +38,11 @@ public class DriverDescriptor {
     private ComponentConfiguration ComConfig;
 
     public ComponentConfiguration getComConfig() {
-        return ComConfig;
+        return this.ComConfig;
     }
 
     public void setComConfig(ComponentConfiguration comConfig) {
-        ComConfig = comConfig;
+        this.ComConfig = comConfig;
     }
 
     public DriverDescriptor(String pid, String factoryPid, Object channelDescriptor) {

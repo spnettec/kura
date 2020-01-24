@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -16,6 +16,7 @@ package org.eclipse.kura.channel;
 /**
  * This provides the necessary constants to denote the type of the channel
  * (whether the channel is for reading or writing or both)
+ *
  * @since 1.2
  */
 public enum ChannelType {
@@ -38,12 +39,12 @@ public enum ChannelType {
 
     /**
      * Converts {@code channelTypeString}, if possible, to the related {@link ChannelType}.
-     * 
+     *
      * @param channelTypeString
-     *            String that we want to use to get the respective {@link ChannelType}.
+     *                              String that we want to use to get the respective {@link ChannelType}.
      * @return a ChannelType that corresponds to the String passed as argument.
      * @throws IllegalArgumentException
-     *             if the passed string does not correspond to an existing {@link ChannelType}.
+     *                                      if the passed string does not correspond to an existing {@link ChannelType}.
      */
     public static ChannelType getChannelType(String channelTypeString) {
         if (READ.name().equalsIgnoreCase(channelTypeString)) {

@@ -25,7 +25,6 @@ import org.apache.camel.model.RoutesDefinition;
 import org.eclipse.kura.camel.bean.PayloadFactory;
 import org.eclipse.kura.camel.camelcloud.DefaultCamelCloudService;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
-import org.eclipse.kura.cloud.CloudService;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,7 @@ public class XmlCamelCloudService {
     private DefaultCamelCloudService service;
 
     public DefaultCamelCloudService getService() {
-        return service;
+        return this.service;
     }
 
     private OsgiDefaultCamelContext router;
@@ -75,7 +74,7 @@ public class XmlCamelCloudService {
         // new router
 
         this.router = new OsgiDefaultCamelContext(this.context, registry);
-        if (!configuration.isEnableJmx()) {
+        if (!this.configuration.isEnableJmx()) {
             this.router.disableJMX();
         }
 
@@ -130,7 +129,7 @@ public class XmlCamelCloudService {
     }
 
     private void callInitCode(final CamelContext router) throws ScriptException {
-        scriptInitCamelContext(router, configuration.getInitCode(), XmlCamelCloudService.class.getClassLoader());
+        scriptInitCamelContext(router, this.configuration.getInitCode(), XmlCamelCloudService.class.getClassLoader());
     }
 
 }

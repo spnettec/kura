@@ -5,7 +5,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *  Red Hat
  *  Eurotech
@@ -123,7 +123,7 @@ public class ServiceComponent implements ConfigurableComponent {
             auth.defaultUser(user);
             password = "";
         } else {
-            password = String.valueOf(cryptoService.decryptAes(password.toCharArray()));
+            password = String.valueOf(this.cryptoService.decryptAes(password.toCharArray()));
         }
 
         auth.addUser(user, password, Collections.singleton("amq"));

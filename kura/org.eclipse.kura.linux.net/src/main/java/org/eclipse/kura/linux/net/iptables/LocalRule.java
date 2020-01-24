@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2017 Eurotech and others
+ * Copyright (c) 2011, 2020 Eurotech and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -8,7 +8,7 @@
  *
  * Contributors:
  *     Eurotech
- *     Red Hat Inc - Fix build warnings
+ *     Red Hat Inc
  *******************************************************************************/
 package org.eclipse.kura.linux.net.iptables;
 
@@ -40,19 +40,20 @@ public class LocalRule {
      * Constructor of <code>LocalRule</code> object.
      *
      * @param port
-     *            destination local IP port number to allow
+     *                                     destination local IP port number to allow
      * @param protocol
-     *            protocol of port (tcp, udp)
+     *                                     protocol of port (tcp, udp)
      * @param sourcePortRange
-     *            range of source ports allowed on IP connection (sourcePort1:sourcePort2)
+     *                                     range of source ports allowed on IP connection (sourcePort1:sourcePort2)
      * @param permittedNetwork
-     *            source network or ip address from which connection is allowed (such as 192.168.1.0/24)
+     *                                     source network or ip address from which connection is allowed (such as
+     *                                     192.168.1.0/24)
      * @param permittedInterfaceName
-     *            only allow open port for this interface
+     *                                     only allow open port for this interface
      * @param unpermittedInterfaceName
-     *            allow open port for all interfaces except this one
+     *                                     allow open port for all interfaces except this one
      * @param permittedMAC
-     *            MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
+     *                                     MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
      */
     public LocalRule(int port, String protocol, NetworkPair<IP4Address> permittedNetwork, String permittedInterfaceName,
             String unpermittedInterfaceName, String permittedMAC, String sourcePortRange) {
@@ -77,19 +78,21 @@ public class LocalRule {
      * Constructor of <code>LocalRule</code> object.
      *
      * @param portRange
-     *            destination local IP port range to allow of the form X:Y where X<Y and both are valid ports
+     *                                     destination local IP port range to allow of the form X:Y where X<Y and both
+     *                                     are valid ports
      * @param protocol
-     *            protocol of port (tcp, udp)
+     *                                     protocol of port (tcp, udp)
      * @param sourcePortRange
-     *            range of source ports allowed on IP connection (sourcePort1:sourcePort2)
+     *                                     range of source ports allowed on IP connection (sourcePort1:sourcePort2)
      * @param permittedNetwork
-     *            source network or ip address from which connection is allowed (such as 192.168.1.0/24)
+     *                                     source network or ip address from which connection is allowed (such as
+     *                                     192.168.1.0/24)
      * @param permittedInterfaceName
-     *            only allow open port for this interface
+     *                                     only allow open port for this interface
      * @param unpermittedInterfaceName
-     *            allow open port for all interfaces except this one
+     *                                     allow open port for all interfaces except this one
      * @param permittedMAC
-     *            MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
+     *                                     MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
      */
     public LocalRule(String portRange, String protocol, NetworkPair<IP4Address> permittedNetwork,
             String permittedInterfaceName, String unpermittedInterfaceName, String permittedMAC,
@@ -180,7 +183,7 @@ public class LocalRule {
      * Setter for the protocol.
      *
      * @param protocol
-     *            A String representing the protocol.
+     *                     A String representing the protocol.
      */
     public void setProtocol(String protocol) {
         this.protocol = protocol;
@@ -190,7 +193,7 @@ public class LocalRule {
      * Setter for the permittedNetwork.
      *
      * @param permittedNetwork
-     *            A String representing the permittedNetwork.
+     *                             A String representing the permittedNetwork.
      */
     public void setPermittedNetwork(NetworkPair<IP4Address> permittedNetwork) {
         if (permittedNetwork != null) {
@@ -205,7 +208,7 @@ public class LocalRule {
      * Setter for the permittedInterfaceName.
      *
      * @param permittedInterfaceName
-     *            A String representing the only interface allowed on this open port
+     *                                   A String representing the only interface allowed on this open port
      */
     public void setPermittedInterfaceName(String permittedInterfaceName) {
         this.permittedInterfaceName = permittedInterfaceName;
@@ -215,7 +218,7 @@ public class LocalRule {
      * Setter for the unpermittedInterfaceName.
      *
      * @param unpermittedInterfaceName
-     *            A String representing the only interface not allowed on this open port
+     *                                     A String representing the only interface not allowed on this open port
      */
     public void setUnpermittedInterfaceName(String unpermittedInterfaceName) {
         this.unpermittedInterfaceName = unpermittedInterfaceName;
@@ -225,7 +228,7 @@ public class LocalRule {
      * Setter for the permittedMAC.
      *
      * @param permittedMAC
-     *            A String representing the permittedMAC.
+     *                         A String representing the permittedMAC.
      */
     public void setPermittedMAC(String permittedMAC) {
         this.permittedMAC = permittedMAC;
@@ -235,7 +238,7 @@ public class LocalRule {
      * Setter for the sourcePortRange.
      *
      * @param sourcePortRange
-     *            A String representing the sourcePortRange.
+     *                            A String representing the sourcePortRange.
      */
     public void setSourcePortRange(String sourcePortRange) {
         this.sourcePortRange = sourcePortRange;
@@ -245,7 +248,7 @@ public class LocalRule {
      * Setter for the port.
      *
      * @param port
-     *            An int representing the port.
+     *                 An int representing the port.
      */
     public void setPort(int port) {
         this.port = port;
@@ -256,7 +259,7 @@ public class LocalRule {
      * Setter for the portRange
      *
      * @param portRange
-     *            A string representing the port range of the form X:Y where X < Y and both are valid ports
+     *                      A string representing the port range of the form X:Y where X < Y and both are valid ports
      */
     public void setPortRange(String portRange) {
         this.port = -1;
@@ -276,7 +279,7 @@ public class LocalRule {
      * Getter for the permittedInterfaceName.
      *
      * @param permittedInterfaceName
-     *            A String representing the only interface allowed on this open port
+     *                                   A String representing the only interface allowed on this open port
      */
     public String getPermittedInterfaceName() {
         return this.permittedInterfaceName;
@@ -286,7 +289,7 @@ public class LocalRule {
      * Getter for the unpermittedInterfaceName.
      *
      * @param unpermittedInterfaceName
-     *            A String representing the only interface not allowed on this open port
+     *                                     A String representing the only interface not allowed on this open port
      */
     public String getUnpermittedInterfaceName() {
         return this.unpermittedInterfaceName;
@@ -425,7 +428,8 @@ public class LocalRule {
                 int portStart = Integer.parseInt(rangeParts[0]);
                 int portEnd = Integer.parseInt(rangeParts[1]);
                 return portStart > 0 && portStart < 65535 && portEnd > 0 && portEnd < 65535 && portStart < portEnd
-                        ? true : false;
+                        ? true
+                        : false;
             } else {
                 return false;
             }

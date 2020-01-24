@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Red Hat Inc and others.
+ * Copyright (c) 2016, 2020 Red Hat Inc and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -68,8 +68,9 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
     protected void add(String pid, String name, String description, final Map<String, Object> properties)
             throws KuraException {
         logger.info("Add: {}", pid);
-        if (pid == null || pid.equals(""))
+        if (pid == null || pid.equals("")) {
             pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
+        }
 
         final Map<String, Object> props = new HashMap<>();
 
@@ -86,22 +87,24 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
         }
 
         // props.put("cloud.service.pid", pid);
-        if (name != null && !name.equals(""))
+        if (name != null && !name.equals("")) {
             props.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, name);
-        if (description != null && !description.equals(""))
+        }
+        if (description != null && !description.equals("")) {
             props.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
+        }
 
         this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, pid, props, true);
     }
 
     @Override
     public void createConfiguration(final String pid, String name, String description) throws KuraException {
-        add(pid, name, description, Collections.<String, Object> emptyMap());
+        add(pid, name, description, Collections.emptyMap());
     }
 
     @Override
     public void createConfiguration(String pid) throws KuraException {
-        add(pid, null, null, Collections.<String, Object> emptyMap());
+        add(pid, null, null, Collections.emptyMap());
     }
 
     @Override
@@ -120,8 +123,9 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
             ComponentConfiguration config = this.configurationService.getComponentConfiguration(pid);
             String name = (String) config.getConfigurationProperties()
                     .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
-            if (name != null)
+            if (name != null) {
                 return name;
+            }
             return CLOUD_SERVICE_FACTORY_PID;
         } catch (Exception e) {
             return CLOUD_SERVICE_FACTORY_PID;
@@ -141,7 +145,7 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
 
     @Override
     public List<String> getStackComponentsPids(final String pid) throws KuraException {
-        List<String> componentPids = new ArrayList<String>();
+        List<String> componentPids = new ArrayList<>();
         componentPids.add(pid);
         return componentPids;
     }

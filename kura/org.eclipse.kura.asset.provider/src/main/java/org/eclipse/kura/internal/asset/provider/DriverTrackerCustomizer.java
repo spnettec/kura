@@ -42,13 +42,13 @@ public final class DriverTrackerCustomizer implements ServiceTrackerCustomizer<D
      * Instantiates a new driver tracker.
      *
      * @param context
-     *            the bundle context
+     *                      the bundle context
      * @param baseAsset
-     *            the asset
+     *                      the asset
      * @param driverId
-     *            the driver id
+     *                      the driver id
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     public DriverTrackerCustomizer(final BundleContext context, final BaseAsset baseAsset, final String driverId) {
         requireNonNull(context, "Bundle context cannot be null");

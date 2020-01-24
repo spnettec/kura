@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2018, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -160,10 +160,11 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                 if (((NetConfigIP4) netConfig).getStatus() == NetInterfaceStatus.netIPv4StatusEnabledWAN) {
                     sb.append(DEFROUTE_PROP_NAME).append("=yes\n");
                 } else {
-                    if (this.isDelDefaultRoute)
+                    if (this.isDelDefaultRoute) {
                         sb.append(DEFROUTE_PROP_NAME).append("=no\n");
-                    else
+                    } else {
                         sb.append(DEFROUTE_PROP_NAME).append("=yes\n");
+                    }
                 }
 
                 // DNS

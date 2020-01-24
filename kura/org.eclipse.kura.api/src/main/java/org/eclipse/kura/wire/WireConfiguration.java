@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -56,11 +56,11 @@ public class WireConfiguration {
      * Instantiates a new {@link WireConfiguration}.
      *
      * @param emitterPid
-     *            the Wire Emitter PID
+     *                        the Wire Emitter PID
      * @param receiverPid
-     *            the Wire Receiver PID
+     *                        the Wire Receiver PID
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     public WireConfiguration(final String emitterPid, final String receiverPid) {
         requireNonNull(emitterPid, "Emitter PID cannot be null");
@@ -110,7 +110,7 @@ public class WireConfiguration {
      * Sets the filter for this {@link WireConfiguration}
      *
      * @param filter
-     *            the new filter
+     *                   the new filter
      */
     public void setFilter(final String filter) {
         this.filter = filter;
@@ -120,7 +120,7 @@ public class WireConfiguration {
      * Sets the {@link Wire} instance.
      *
      * @param wire
-     *            the new {@link Wire} instance
+     *                 the new {@link Wire} instance
      */
     public void setWire(final Wire wire) {
         this.wire = wire;
@@ -161,8 +161,8 @@ public class WireConfiguration {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result) + ((this.emitterPid == null) ? 0 : this.emitterPid.hashCode());
-        result = (prime * result) + ((this.receiverPid == null) ? 0 : this.receiverPid.hashCode());
+        result = prime * result + (this.emitterPid == null ? 0 : this.emitterPid.hashCode());
+        result = prime * result + (this.receiverPid == null ? 0 : this.receiverPid.hashCode());
         return result;
     }
 

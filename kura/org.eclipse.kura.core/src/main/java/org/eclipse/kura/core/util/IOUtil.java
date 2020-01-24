@@ -33,10 +33,10 @@ public final class IOUtil {
      * Reads a resource fully and returns it as a string.
      *
      * @param resourceName
-     *            the name of the resource
+     *                         the name of the resource
      * @return the content as string, or {@code null if the resource could not be found}
      * @throws IOException
-     *             in case there is a resource but it cannot be read
+     *                         in case there is a resource but it cannot be read
      */
     public static String readResource(final String resourceName) throws IOException {
         return readResource(currentThread().getContextClassLoader().getResource(resourceName));
@@ -46,12 +46,12 @@ public final class IOUtil {
      * Reads a resource fully and returns it as a string.
      *
      * @param ctx
-     *            the bundle context to use for locating the resource
+     *                         the bundle context to use for locating the resource
      * @param resourceName
-     *            the name of the resource
+     *                         the name of the resource
      * @return the content as string, or {@code null if the resource could not be found}
      * @throws IOException
-     *             in case there is a resource but it cannot be read
+     *                         in case there is a resource but it cannot be read
      */
     public static String readResource(BundleContext ctx, String resourceName) throws IOException {
         return readResource(ctx.getBundle().getResource(resourceName));
@@ -61,12 +61,12 @@ public final class IOUtil {
      * Reads a resource fully and returns it as a string.
      *
      * @param bundle
-     *            the bundle to use for getting the bundle context
+     *                         the bundle to use for getting the bundle context
      * @param resourceName
-     *            the name of the resource
+     *                         the name of the resource
      * @return the content as string, or {@code null if the resource could not be found}
      * @throws IOException
-     *             in case there is a resource but it cannot be read
+     *                         in case there is a resource but it cannot be read
      */
     public static String readResource(Bundle bundle, String resourceName) throws IOException {
         return readResource(bundle.getResource(resourceName));
@@ -76,10 +76,10 @@ public final class IOUtil {
      * Reads a resource fully and returns it as a string.
      *
      * @param resourceUrl
-     *            the URL to read the resource from, may be {@code null}
+     *                        the URL to read the resource from, may be {@code null}
      * @return the content as string, or {@code null if the resource could not be found}
      * @throws IOException
-     *             in case there is a resource but it cannot be read
+     *                         in case there is a resource but it cannot be read
      */
     public static String readResource(URL resourceUrl) throws IOException {
         if (resourceUrl == null) {

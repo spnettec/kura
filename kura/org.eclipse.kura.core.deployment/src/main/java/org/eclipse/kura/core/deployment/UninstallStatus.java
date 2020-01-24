@@ -9,6 +9,7 @@
 package org.eclipse.kura.core.deployment;
 
 public enum UninstallStatus {
+
     IDLE("IDLE"),
     IN_PROGRESS("IN_PROGRESS"),
     COMPLETED("COMPLETED"),

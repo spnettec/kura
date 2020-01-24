@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -25,9 +25,9 @@ public interface BluetoothLeBeaconScanner<T extends BluetoothLeBeacon> {
 
     /**
      * Start a scan for beacons of given duration in seconds.
-     * 
+     *
      * @param duration
-     *            The scan duration in seconds
+     *                     The scan duration in seconds
      * @throws KuraBluetoothCommandException
      */
     public void startBeaconScan(long duration) throws KuraBluetoothCommandException;
@@ -39,37 +39,37 @@ public interface BluetoothLeBeaconScanner<T extends BluetoothLeBeacon> {
 
     /**
      * Indicates if a scan is running.
-     * 
+     *
      * @return
      */
     public boolean isScanning();
 
     /**
      * Add a listener for detected beacons.
-     * 
+     *
      * @param listener
-     *            The beacon listener
+     *                     The beacon listener
      */
     public void addBeaconListener(BluetoothLeBeaconListener<T> listener);
 
     /**
      * Remove the given beacon listener
-     * 
+     *
      * @param listener
-     *            The beacon listener
+     *                     The beacon listener
      */
     public void removeBeaconListener(BluetoothLeBeaconListener<T> listener);
 
     /**
      * Get the bluetooth adapter this advertiser is associated to.
-     * 
+     *
      * @return BluetoothLeAdapter
      */
     public BluetoothLeAdapter getAdapter();
 
     /**
      * Get the decoder used by this scanner.
-     * 
+     *
      * @return BluetoothLeBeaconDecoder
      */
     public BluetoothLeBeaconDecoder<T> getDecoder();

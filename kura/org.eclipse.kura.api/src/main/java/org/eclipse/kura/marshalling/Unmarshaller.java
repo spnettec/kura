@@ -29,12 +29,12 @@ public interface Unmarshaller {
      * This method takes a String representation and a class that will be used as reference to construct the result.
      *
      * @param string
-     *            the input string
+     *                   the input string
      * @param clazz
-     *            the class representing the type of object expected for the result
+     *                   the class representing the type of object expected for the result
      * @return an object that is constructed from the passed string
      * @throws KuraException
-     *             when the unmarshaling operation fails.
+     *                           when the unmarshaling operation fails.
      */
     public <T> T unmarshal(String string, Class<T> clazz) throws KuraException;
 

@@ -178,10 +178,10 @@ public class WiresPanelUi extends Composite
         WiresRPC.loadWireGraph(result -> {
             loadStaticInformation(result.getStaticInfo());
             loadGraph(result.getWireGraphConfiguration());
-            this.dialogs.setDriverPids(configurations.getDriverPidNames());
+            this.dialogs.setDriverPids(this.configurations.getDriverPidNames());
             this.dialogs.setAssetPidNames(getAssetsNotInComposer());
             this.configurations.setAllActivePids(result.getWireGraphConfiguration().getAllActivePids());
-            blinkEffect.setEnabled(true);
+            this.blinkEffect.setEnabled(true);
             clearDirtyState();
         });
 
@@ -200,11 +200,12 @@ public class WiresPanelUi extends Composite
 
         Collections.sort(sortedDescriptors, (o1, o2) -> {
             int comp = Integer.compare(o2.getToolsSorted(), o1.getToolsSorted());
-            if (comp == 0)
+            if (comp == 0) {
                 return Integer.compare(o1.getMinInputPorts() * 2 + o1.getMinOutputPorts(),
                         o2.getMinInputPorts() * 2 + o2.getMinOutputPorts());
-            else
+            } else {
                 return comp;
+            }
         });
 
         for (GwtWireComponentDescriptor descriptor : sortedDescriptors) {
@@ -338,9 +339,10 @@ public class WiresPanelUi extends Composite
     }
 
     private WireComponent createAsset(String pid, String driverPid, String assetName, String assetDesc) {
-        final HasConfiguration assetConfig = this.configurations.createAndRegisterConfiguration(pid, WIRE_ASSET_PID,assetName, assetDesc);
+        final HasConfiguration assetConfig = this.configurations.createAndRegisterConfiguration(pid, WIRE_ASSET_PID,
+                assetName, assetDesc);
         assetConfig.getConfiguration().getParameter(AssetConstants.ASSET_DRIVER_PROP.value()).setValue(driverPid);
-        return descriptors.createNewComponent(pid, WIRE_ASSET_PID, assetName, assetDesc);
+        return this.descriptors.createNewComponent(pid, WIRE_ASSET_PID, assetName, assetDesc);
     }
 
     public void showComponentCreationDialog(final String factoryPid) {
@@ -352,16 +354,16 @@ public class WiresPanelUi extends Composite
             @Override
             public void onNewComponentCreated(String pid, String name, String desc) {
                 if (pid == null || pid.equals("")) {
-                    pid = factoryPid + "-" + (new Date()).getTime();
+                    pid = factoryPid + "-" + new Date().getTime();
                 }
-                WiresPanelUi.this.wireComposer
-                        .addWireComponent(descriptors.createNewComponent(pid, factoryPid, name, desc));
+                WiresPanelUi.this.wireComposer.addWireComponent(
+                        WiresPanelUi.this.descriptors.createNewComponent(pid, factoryPid, name, desc));
             }
 
             @Override
             public void onNewAssetCreated(String pid, String driverPid, String name, String desc) {
                 if (pid == null || pid.equals("")) {
-                    pid = driverPid + "-" + (new Date()).getTime();
+                    pid = driverPid + "-" + new Date().getTime();
                 }
                 WiresPanelUi.this.wireComposer.addWireComponent(createAsset(pid, driverPid, name, desc));
             }
@@ -484,8 +486,9 @@ public class WiresPanelUi extends Composite
 
     @Override
     public void onWireComponentDeleted(WireComponent component) {
-        if (!WIRE_ASSET_PID.equals(component.getFactoryPid()))
+        if (!WIRE_ASSET_PID.equals(component.getFactoryPid())) {
             this.configurations.deleteConfiguration(component.getPid());
+        }
         updateDirtyState();
         this.btnGraphDelete.setEnabled(this.wireComposer.getWireComponentCount() > 0);
         this.dialogs.setAssetPidNames(getAssetsNotInComposer());
@@ -504,7 +507,7 @@ public class WiresPanelUi extends Composite
             @Override
             public void onNewComponentCreated(String pid, String name, String desc) {
                 if (pid == null || pid.equals("")) {
-                    pid = factoryPid + "-" + (new Date()).getTime();
+                    pid = factoryPid + "-" + new Date().getTime();
                 }
                 event.complete(WiresPanelUi.this.descriptors.createNewComponent(pid, factoryPid, name, desc));
             }
@@ -512,7 +515,7 @@ public class WiresPanelUi extends Composite
             @Override
             public void onNewAssetCreated(String pid, String driverPid, String name, String desc) {
                 if (pid == null || pid.equals("")) {
-                    pid = driverPid + "-" + (new Date()).getTime();
+                    pid = driverPid + "-" + new Date().getTime();
                 }
                 event.complete(createAsset(pid, driverPid, name, desc));
             }

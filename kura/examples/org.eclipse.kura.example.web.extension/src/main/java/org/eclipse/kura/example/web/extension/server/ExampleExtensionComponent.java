@@ -56,14 +56,14 @@ public class ExampleExtensionComponent {
     }
 
     public void activate() {
-        this.dummyAuth = new DummyAuthenticationServiceImpl(console);
+        this.dummyAuth = new DummyAuthenticationServiceImpl(this.console);
 
         this.console.registerConsoleExtensionBundle(EXTENSION);
         this.console.registerLoginExtensionBundle(EXTENSION);
         try {
             final HttpContext context = this.httpService.createDefaultHttpContext();
 
-            console.registerLoginServlet("/exampleext/dummylogin", dummyAuth);
+            this.console.registerLoginServlet("/exampleext/dummylogin", this.dummyAuth);
             this.httpService.registerResources("/exampleext", "www/exampleext", context);
         } catch (final NamespaceException | ServletException e) {
             logger.warn("failed to register resources", e);
@@ -86,7 +86,7 @@ public class ExampleExtensionComponent {
     public class RedirectServlet extends HttpServlet {
 
         /**
-         * 
+         *
          */
         private static final long serialVersionUID = 1L;
 
@@ -136,7 +136,7 @@ public class ExampleExtensionComponent {
             try {
                 final String path = req.getRequestURI();
 
-                resp.sendRedirect(location.apply(path));
+                resp.sendRedirect(this.location.apply(path));
 
             } catch (final Exception e) {
                 logger.warn("unexpected exception", e);

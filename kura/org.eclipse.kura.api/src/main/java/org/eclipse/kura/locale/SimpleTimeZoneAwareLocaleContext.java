@@ -14,11 +14,11 @@ public class SimpleTimeZoneAwareLocaleContext extends SimpleLocaleContext implem
      * Create a new SimpleTimeZoneAwareLocaleContext that exposes the specified
      * Locale and TimeZone. Every {@link #getLocale()} call will return the given
      * Locale, and every {@link #getTimeZone()} call will return the given TimeZone.
-     * 
+     *
      * @param locale
-     *            the Locale to expose
+     *                     the Locale to expose
      * @param timeZone
-     *            the TimeZone to expose
+     *                     the TimeZone to expose
      */
     public SimpleTimeZoneAwareLocaleContext(@Nullable Locale locale, @Nullable TimeZone timeZone) {
         super(locale);

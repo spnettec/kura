@@ -277,7 +277,7 @@ public class KuraDeviceProfile {
      * Sets the length of time the unit has been powered on.
      *
      * @param uptime
-     *            A String representing the length of time the unit has been powered on.
+     *                   A String representing the length of time the unit has been powered on.
      */
     public void setUptime(String uptime) {
         this.uptime = uptime;
@@ -287,7 +287,7 @@ public class KuraDeviceProfile {
      * Sets the readable display name for the device
      *
      * @param displayName
-     *            A String representing the readable display name for the device
+     *                        A String representing the readable display name for the device
      */
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
@@ -297,7 +297,7 @@ public class KuraDeviceProfile {
      * Sets the device model name.
      *
      * @param modelName
-     *            A String representing the device model name.
+     *                      A String representing the device model name.
      */
     public void setModelName(String modelName) {
         this.modelName = modelName;
@@ -307,7 +307,7 @@ public class KuraDeviceProfile {
      * Sets the device model ID.
      *
      * @param modelId
-     *            A String representing the device model ID.
+     *                    A String representing the device model ID.
      */
     public void setModelId(String modelId) {
         this.modelId = modelId;
@@ -317,7 +317,7 @@ public class KuraDeviceProfile {
      * Sets the part number of the device.
      *
      * @param partNumber
-     *            A String representing the part number of the device.
+     *                       A String representing the part number of the device.
      */
     public void setPartNumber(String partNumber) {
         this.partNumber = partNumber;
@@ -327,7 +327,7 @@ public class KuraDeviceProfile {
      * Sets the serial number of the device.
      *
      * @param serialNumber
-     *            A String representing the serial number of the device.
+     *                         A String representing the serial number of the device.
      */
     public void setSerialNumber(String serialNumber) {
         this.serialNumber = serialNumber;
@@ -337,7 +337,7 @@ public class KuraDeviceProfile {
      * Sets the version of firmware running on the device.
      *
      * @param firmwareVersion
-     *            A String representing the version of firmware running on the device.
+     *                            A String representing the version of firmware running on the device.
      */
     public void setFirmwareVersion(String firmwareVersion) {
         this.firmwareVersion = firmwareVersion;
@@ -347,7 +347,7 @@ public class KuraDeviceProfile {
      * Sets the version of the BIOS on the device.
      *
      * @param biosVersion
-     *            A String representing the version of the BIOS on the device.
+     *                        A String representing the version of the BIOS on the device.
      */
     public void setBiosVersion(String biosVersion) {
         this.biosVersion = biosVersion;
@@ -357,7 +357,7 @@ public class KuraDeviceProfile {
      * Sets the name of the operating system.
      *
      * @param os
-     *            A String representing the name of the operating system.
+     *               A String representing the name of the operating system.
      */
     public void setOs(String os) {
         this.os = os;
@@ -367,7 +367,7 @@ public class KuraDeviceProfile {
      * Sets the version of the operating system.
      *
      * @param osVersion
-     *            A String representing the version of the operating system.
+     *                      A String representing the version of the operating system.
      */
     public void setOsVersion(String osVersion) {
         this.osVersion = osVersion;
@@ -377,7 +377,7 @@ public class KuraDeviceProfile {
      * Sets the name of the JVM.
      *
      * @param jvmName
-     *            A String representing the name of the JVM.
+     *                    A String representing the name of the JVM.
      */
     public void setJvmName(String jvmName) {
         this.jvmName = jvmName;
@@ -387,7 +387,7 @@ public class KuraDeviceProfile {
      * Sets the version of the JVM.
      *
      * @param jvmVersion
-     *            A String representing the version of the JVM.
+     *                       A String representing the version of the JVM.
      */
     public void setJvmVersion(String jvmVersion) {
         this.jvmVersion = jvmVersion;
@@ -397,7 +397,7 @@ public class KuraDeviceProfile {
      * Sets the profile of the JVM.
      *
      * @param jvmProfile
-     *            A String representing the profile of the JVM.
+     *                       A String representing the profile of the JVM.
      */
     public void setJvmProfile(String jvmProfile) {
         this.jvmProfile = jvmProfile;
@@ -407,7 +407,7 @@ public class KuraDeviceProfile {
      * Sets the name of the interface used to connect to the cloud.
      *
      * @param connectionInterface
-     *            A String representing the name of the interface used to connect to the cloud.
+     *                                A String representing the name of the interface used to connect to the cloud.
      */
     public void setConnectionInterface(String connectionInterface) {
         this.connectionInterface = connectionInterface;
@@ -417,7 +417,7 @@ public class KuraDeviceProfile {
      * Sets the IP address of the interface used to connect to the cloud.
      *
      * @param connectionIp
-     *            A String representing the IP address of the interface used to connect to the cloud.
+     *                         A String representing the IP address of the interface used to connect to the cloud.
      */
     public void setConnectionIp(String connectionIp) {
         this.connectionIp = connectionIp;
@@ -427,7 +427,7 @@ public class KuraDeviceProfile {
      * Sets the latitude of the device's location.
      *
      * @param latitude
-     *            A String representing the latitude of the device's location.
+     *                     A String representing the latitude of the device's location.
      */
     public void setLatitude(Double latitude) {
         this.latitude = latitude;
@@ -437,7 +437,7 @@ public class KuraDeviceProfile {
      * Sets the longitude of the device's location.
      *
      * @param longitude
-     *            A String representing the longitude of the device's location.
+     *                      A String representing the longitude of the device's location.
      */
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
@@ -447,7 +447,7 @@ public class KuraDeviceProfile {
      * Sets the altitude of the device's location.
      *
      * @param altitude
-     *            A String representing the altitude of the device's location.
+     *                     A String representing the altitude of the device's location.
      */
     public void setAltitude(Double altitude) {
         this.altitude = altitude;

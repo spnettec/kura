@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
  *
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
@@ -34,9 +34,9 @@ public class XdkOptions {
      * Instantiates a new BLE Xdk options.
      *
      * @param properties
-     *            the properties
+     *                       the properties
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     XdkOptions(final Map<String, Object> properties) {
 
@@ -56,7 +56,7 @@ public class XdkOptions {
     String getBluetoothInterfaceName() {
         String interfaceName = null;
         final Object iname = this.properties.get(INAME);
-        if (nonNull(iname) && (iname instanceof String)) {
+        if (nonNull(iname) && iname instanceof String) {
             interfaceName = iname.toString();
         }
         return interfaceName;

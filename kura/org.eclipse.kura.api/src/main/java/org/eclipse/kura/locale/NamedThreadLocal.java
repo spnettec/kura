@@ -6,9 +6,9 @@ public class NamedThreadLocal<T> extends ThreadLocal<T> {
 
     /**
      * Create a new NamedThreadLocal with the given name.
-     * 
+     *
      * @param name
-     *            a descriptive name for this ThreadLocal
+     *                 a descriptive name for this ThreadLocal
      */
     public NamedThreadLocal(String name) {
         if (name == null) {

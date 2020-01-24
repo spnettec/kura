@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -16,6 +16,7 @@ package org.eclipse.kura.type;
 /**
  * This contains all the required data type constants required for representing
  * Java data types as {@link TypedValue}
+ *
  * @since 1.2
  */
 public enum DataType {
@@ -38,10 +39,10 @@ public enum DataType {
      * Converts {@code stringDataType}, if possible, to the related {@link DataType}.
      *
      * @param stringDataType
-     *            String that we want to use to get the respective {@link DataType}.
+     *                           String that we want to use to get the respective {@link DataType}.
      * @return a DataType that corresponds to the String passed as argument.
      * @throws IllegalArgumentException
-     *             if the passed string does not correspond to an existing {@link DataType}.
+     *                                      if the passed string does not correspond to an existing {@link DataType}.
      */
     public static DataType getDataType(String stringDataType) {
         if (INTEGER.name().equalsIgnoreCase(stringDataType)) {

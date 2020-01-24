@@ -31,7 +31,7 @@ public interface DataTransportListener {
      * Notifies the listener of the establishment of the new connection with the remote server.
      *
      * @param newSession
-     *            true if the connection is to the same broker with the same client ID.
+     *                       true if the connection is to the same broker with the same client ID.
      */
     public void onConnectionEstablished(boolean newSession);
 

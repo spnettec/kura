@@ -23,9 +23,9 @@ public interface RoutesProvider {
      * </p>
      *
      * @param camelContext
-     *            the context the routes should by applied to
+     *                         the context the routes should by applied to
      * @throws Exception
-     *             if anything goes wrong
+     *                       if anything goes wrong
      */
     public void applyRoutes(CamelContext camelContext) throws Exception;
 }

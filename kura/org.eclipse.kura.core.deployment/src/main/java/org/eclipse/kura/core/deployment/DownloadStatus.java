@@ -17,6 +17,7 @@ package org.eclipse.kura.core.deployment;
  * failed
  */
 public enum DownloadStatus {
+
     IN_PROGRESS("IN_PROGRESS"),
     COMPLETED("COMPLETED"),
     FAILED("FAILED"),

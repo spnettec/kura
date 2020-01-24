@@ -31,12 +31,12 @@ public interface DriverDescriptorService {
      * identified by the provided Driver {@code kura.service.pid}.
      *
      * @param driverPid
-     *            the Driver {@code kura.service.pid} that identifies a Driver
-     *            Instance
+     *                      the Driver {@code kura.service.pid} that identifies a Driver
+     *                      Instance
      * @return the {@link DriverDescriptor} corresponding to the provided method
      *         argument. Or an empty Optional is the provided argument is not a Driver {@code kura.service.pid}
      * @throws NullPointerException
-     *             if the provided driver PID is null
+     *                                  if the provided driver PID is null
      * @since 1.4
      */
     Optional<DriverDescriptor> getDriverDescriptor(String driverPid);

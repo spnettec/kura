@@ -42,18 +42,19 @@ public class JoinComponentOptions {
         final boolean useBarrier = (Boolean) this.properties.getOrDefault(BARRIER_MODALITY_PROPERTY_KEY,
                 BARRIER_MODALITY_PROPERTY_DEFAULT);
         if (useBarrier) {
-            serviceReference = this.context.getServiceReference(BarrierAggregatorFactory.class);
-            return (PortAggregatorFactory) this.context.getService(serviceReference);
+            this.serviceReference = this.context.getServiceReference(BarrierAggregatorFactory.class);
+            return (PortAggregatorFactory) this.context.getService(this.serviceReference);
         } else {
-            serviceReference = this.context.getServiceReference(CachingAggregatorFactory.class);
-            return (PortAggregatorFactory) this.context.getService(serviceReference);
+            this.serviceReference = this.context.getServiceReference(CachingAggregatorFactory.class);
+            return (PortAggregatorFactory) this.context.getService(this.serviceReference);
         }
     }
 
     public void dispose() {
-        if (serviceReference != null)
-            this.context.ungetService(serviceReference);
-        serviceReference = null;
+        if (this.serviceReference != null) {
+            this.context.ungetService(this.serviceReference);
+        }
+        this.serviceReference = null;
     }
 
 }

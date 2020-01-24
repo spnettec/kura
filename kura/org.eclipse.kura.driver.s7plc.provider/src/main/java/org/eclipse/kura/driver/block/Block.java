@@ -26,9 +26,9 @@ public class Block {
      * two addresses will be swapped.
      *
      * @param start
-     *            the start address
+     *                  the start address
      * @param end
-     *            the end address
+     *                  the end address
      */
     public Block(int start, int end) {
         this.start = Math.min(start, end);
@@ -39,9 +39,9 @@ public class Block {
      * Sets the start address
      *
      * @param start
-     *            the start address
+     *                  the start address
      * @throws IllegalArgumentException
-     *             If the provided address is greater than the current end address
+     *                                      If the provided address is greater than the current end address
      */
     public void setStart(int start) {
         if (start > getEnd()) {
@@ -54,9 +54,9 @@ public class Block {
      * Sets the end address
      *
      * @param end
-     *            the end address
+     *                the end address
      * @throws IllegalArgumentException
-     *             If the provided address is greater than the current start address
+     *                                      If the provided address is greater than the current start address
      */
     public void setEnd(int end) {
         if (end < getStart()) {
@@ -88,7 +88,7 @@ public class Block {
      * This method returns true if {@code getStart() <= address && getEnd() > address}
      *
      * @param address
-     *            the address to be checked
+     *                    the address to be checked
      * @return {@code true} if the provided address is contained in this {@link Block}, {@code false} otherwise
      */
     public boolean contains(int address) {
@@ -100,7 +100,7 @@ public class Block {
      * This method returns true if {@code this.getStart() <= other.getStart() && this.getEnd() >= other.getEnd()}
      *
      * @param address
-     *            the {@link Block} to be checked
+     *                    the {@link Block} to be checked
      * @return {@code true} if the provided address is contained in this {@link Block}, {@code false} otherwise
      */
     public boolean contains(Block other) {

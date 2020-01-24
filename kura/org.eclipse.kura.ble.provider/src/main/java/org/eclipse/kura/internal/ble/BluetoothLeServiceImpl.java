@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -96,8 +96,9 @@ public class BluetoothLeServiceImpl implements BluetoothLeService {
             String s = stdin.readLine();
             if (s != null && !s.equals("")) {
                 String[] hcis = s.split("\\s+");
-                for (String hci : hcis)
+                for (String hci : hcis) {
                     Runtime.getRuntime().exec("hciconfig " + hci + " up");
+                }
             }
         } catch (IOException e) {
             logger.error("Failed to start linux hciconfig bluetooth", e);
@@ -132,8 +133,8 @@ public class BluetoothLeServiceImpl implements BluetoothLeService {
     }
 
     private boolean startBluetoothUbuntuSnap() {
-        String snap_name = System.getProperty("kura.os.snap.name");
-        if (snap_name != null && snap_name.length() != 0) {
+        String snapName = System.getProperty("kura.os.snap.name");
+        if (snapName != null && snapName.length() != 0) {
             // when running as snap, we assume bluez is installed as snap and running
             logger.info("We are running as snap, assume bluetooth is running");
             return true;

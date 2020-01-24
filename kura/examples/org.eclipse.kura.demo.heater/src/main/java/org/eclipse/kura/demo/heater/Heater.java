@@ -190,13 +190,9 @@ public class Heater implements ConfigurableComponent, CloudConnectionListener, C
 
         // schedule a new worker based on the properties of the service
         int pubrate = (Integer) this.properties.get(PUBLISH_RATE_PROP_NAME);
-        this.handle = this.worker.scheduleAtFixedRate(new Runnable() {
-
-            @Override
-            public void run() {
-                Thread.currentThread().setName(getClass().getSimpleName());
-                doPublish();
-            }
+        this.handle = this.worker.scheduleAtFixedRate(() -> {
+            Thread.currentThread().setName(getClass().getSimpleName());
+            doPublish();
         }, 0, pubrate, TimeUnit.SECONDS);
     }
 

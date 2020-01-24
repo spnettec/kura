@@ -185,8 +185,9 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
 
         try {
             factory = DocumentBuilderFactory.newInstance();
-            if (factory == null)
+            if (factory == null) {
                 throw KuraException.internalError("null DocumentBuilderFactory Instance");
+            }
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             parser = factory.newDocumentBuilder();
         } catch (FactoryConfigurationError fce) {
@@ -203,8 +204,9 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
         Document doc = null;
         try {
             doc = parser.parse(inputStream);
-            if (doc == null)
+            if (doc == null) {
                 throw KuraException.internalError("null doc");
+            }
             doc.getDocumentElement().normalize();
         } catch (SAXException | IOException | IllegalArgumentException se) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, se);

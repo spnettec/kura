@@ -24,9 +24,9 @@ public interface CellularModemFactory {
      * Obtains generic modem service
      *
      * @param modemDevice
-     *            - modem device as <code>ModemDevice</code>
+     *                        - modem device as <code>ModemDevice</code>
      * @param platform
-     *            - hardware platform as {@link String}
+     *                        - hardware platform as {@link String}
      * @return generic modem service as <code>CellularModemService</code>
      * @throws Exception
      */

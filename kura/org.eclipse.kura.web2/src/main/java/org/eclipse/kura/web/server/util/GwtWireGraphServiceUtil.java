@@ -49,7 +49,7 @@ public final class GwtWireGraphServiceUtil {
      * Gets the driver by PID.
      *
      * @param pid
-     *            the PID
+     *                the PID
      * @return the driver by PID
      */
     public static String getDriverByPid(final String pid) {
@@ -69,7 +69,7 @@ public final class GwtWireGraphServiceUtil {
      * Gets the factory PID.
      *
      * @param pid
-     *            the PID
+     *                the PID
      * @return the factory PID
      */
     public static String getFactoryPid(final String pid) {
@@ -88,11 +88,11 @@ public final class GwtWireGraphServiceUtil {
      * and OSGi filter.
      *
      * @param bundleContext
-     *            OSGi bundle context
+     *                          OSGi bundle context
      * @param clazz
-     *            fully qualified class name (can be <code>null</code>)
+     *                          fully qualified class name (can be <code>null</code>)
      * @param filter
-     *            valid OSGi filter (can be <code>null</code>)
+     *                          valid OSGi filter (can be <code>null</code>)
      * @return non-<code>null</code> array of references to matching services
      */
     public static ServiceReference<?>[] getServiceReferences(final BundleContext bundleContext, final String clazz,
@@ -109,7 +109,7 @@ public final class GwtWireGraphServiceUtil {
      * Gets the type.
      *
      * @param pid
-     *            the PID
+     *                the PID
      * @return the type
      */
     public static String getType(final String pid) {
@@ -149,7 +149,7 @@ public final class GwtWireGraphServiceUtil {
      *
      * @return the wire components
      * @throws GwtKuraException
-     *             the gwt kura exception
+     *                              the gwt kura exception
      */
     public static List<String> getWireComponents() throws GwtKuraException {
         final WireHelperService helperService = ServiceLocator.getInstance().getService(WireHelperService.class);
@@ -186,7 +186,7 @@ public final class GwtWireGraphServiceUtil {
      * Gets the wire configurations from JSON.
      *
      * @param json
-     *            the JSON
+     *                 the JSON
      * @return the wire configurations from JSON
      */
     public static List<GwtWireConfiguration> getWireConfigurationsFromJson(final JsonObject json) {
@@ -210,7 +210,7 @@ public final class GwtWireGraphServiceUtil {
      * Gets the wire configurations JSON.
      *
      * @param list
-     *            the list containing Wire Configurations
+     *                 the list containing Wire Configurations
      * @return the wire configurations JSON
      */
     public static String getWireConfigurationsJson(final List<GwtWireConfiguration> list) {

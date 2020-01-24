@@ -30,18 +30,18 @@ public class KuraAnchorListItem extends AbstractListItem implements HasHref, Has
     protected final KuraAnchor anchor;
 
     public KuraAnchorListItem() {
-        anchor = new KuraAnchor();
-        anchor.addClickHandler(new ClickHandler() {
+        this.anchor = new KuraAnchor();
+        this.anchor.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
                 delegateEvent(KuraAnchorListItem.this, event);
             }
         });
-        add(anchor, (Element) getElement());
+        add(this.anchor, (Element) getElement());
     }
 
-    private String data = "";
+    private final String data = "";
 
     public KuraAnchorListItem(final String text) {
         this(text, text);
@@ -53,7 +53,7 @@ public class KuraAnchorListItem extends AbstractListItem implements HasHref, Has
     }
 
     public void setData(final String data) {
-        anchor.setData(data);
+        this.anchor.setData(data);
     }
 
     public String getData() {
@@ -62,78 +62,78 @@ public class KuraAnchorListItem extends AbstractListItem implements HasHref, Has
 
     @Override
     public void setText(final String text) {
-        anchor.setText(text);
+        this.anchor.setText(text);
     }
 
     @Override
     public String getText() {
-        return anchor.getText();
+        return this.anchor.getText();
     }
 
     /** {@inheritDoc} */
     @Override
     public HandlerRegistration addClickHandler(final ClickHandler handler) {
-        return anchor.addHandler(handler, ClickEvent.getType());
+        return this.anchor.addHandler(handler, ClickEvent.getType());
     }
 
     /** {@inheritDoc} */
     @Override
     public BadgePosition getBadgePosition() {
-        return anchor.getBadgePosition();
+        return this.anchor.getBadgePosition();
     }
 
     /** {@inheritDoc} */
     @Override
     public String getBadgeText() {
-        return anchor.getBadgeText();
+        return this.anchor.getBadgeText();
     }
 
     /** {@inheritDoc} */
     @Override
     public Toggle getDataToggle() {
-        return anchor.getDataToggle();
+        return this.anchor.getDataToggle();
     }
 
     /** {@inheritDoc} */
     @Override
     public String getHref() {
-        return anchor.getHref();
+        return this.anchor.getHref();
     }
 
     /** {@inheritDoc} */
     @Override
     public IconType getIcon() {
-        return anchor.getIcon();
+        return this.anchor.getIcon();
     }
 
     /** {@inheritDoc} */
     @Override
     public IconFlip getIconFlip() {
-        return anchor.getIconFlip();
+        return this.anchor.getIconFlip();
     }
 
     /** {@inheritDoc} */
     @Override
     public IconPosition getIconPosition() {
-        return anchor.getIconPosition();
+        return this.anchor.getIconPosition();
     }
 
     /** {@inheritDoc} */
     @Override
     public IconRotate getIconRotate() {
-        return anchor.getIconRotate();
+        return this.anchor.getIconRotate();
     }
 
     /** {@inheritDoc} */
     @Override
     public IconSize getIconSize() {
-        return anchor.getIconSize();
+        return this.anchor.getIconSize();
     }
 
     /** {@inheritDoc} */
     @Override
     public int getTabIndex() {
-        return anchor.getTabIndex();
+        return this.anchor.getTabIndex();
     }
 
     /**
@@ -141,159 +141,159 @@ public class KuraAnchorListItem extends AbstractListItem implements HasHref, Has
      */
     @Override
     public String getTarget() {
-        return anchor.getTarget();
+        return this.anchor.getTarget();
     }
 
     /** {@inheritDoc} */
     @Override
     public String getTargetHistoryToken() {
-        return anchor.getTargetHistoryToken();
+        return this.anchor.getTargetHistoryToken();
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isIconBordered() {
-        return anchor.isIconBordered();
+        return this.anchor.isIconBordered();
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isIconFixedWidth() {
-        return anchor.isIconFixedWidth();
+        return this.anchor.isIconFixedWidth();
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isIconInverse() {
-        return anchor.isIconInverse();
+        return this.anchor.isIconInverse();
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isIconPulse() {
-        return anchor.isIconPulse();
+        return this.anchor.isIconPulse();
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isIconSpin() {
-        return anchor.isIconSpin();
+        return this.anchor.isIconSpin();
     }
 
     /** {@inheritDoc} */
     @Override
     public void setAccessKey(final char key) {
-        anchor.setAccessKey(key);
+        this.anchor.setAccessKey(key);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setBadgePosition(BadgePosition badgePosition) {
-        anchor.setBadgePosition(badgePosition);
+        this.anchor.setBadgePosition(badgePosition);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setBadgeText(String badgeText) {
-        anchor.setBadgeText(badgeText);
+        this.anchor.setBadgeText(badgeText);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setDataToggle(final Toggle toggle) {
-        anchor.setDataToggle(toggle);
+        this.anchor.setDataToggle(toggle);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
-        anchor.setEnabled(enabled);
+        this.anchor.setEnabled(enabled);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setFocus(final boolean focused) {
-        anchor.setFocus(focused);
+        this.anchor.setFocus(focused);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setHref(final String href) {
-        anchor.setHref(href);
+        this.anchor.setHref(href);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIcon(final IconType iconType) {
-        anchor.setIcon(iconType);
+        this.anchor.setIcon(iconType);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconBordered(final boolean iconBordered) {
-        anchor.setIconBordered(iconBordered);
+        this.anchor.setIconBordered(iconBordered);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconColor(String iconColor) {
-        anchor.setIconColor(iconColor);
+        this.anchor.setIconColor(iconColor);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconFixedWidth(final boolean iconFixedWidth) {
-        anchor.setIconFixedWidth(iconFixedWidth);
+        this.anchor.setIconFixedWidth(iconFixedWidth);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconFlip(final IconFlip iconFlip) {
-        anchor.setIconFlip(iconFlip);
+        this.anchor.setIconFlip(iconFlip);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconInverse(final boolean iconInverse) {
-        anchor.setIconInverse(iconInverse);
+        this.anchor.setIconInverse(iconInverse);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconPosition(final IconPosition iconPosition) {
-        anchor.setIconPosition(iconPosition);
+        this.anchor.setIconPosition(iconPosition);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconPulse(boolean iconPulse) {
-        anchor.setIconPulse(iconPulse);
+        this.anchor.setIconPulse(iconPulse);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconRotate(final IconRotate iconRotate) {
-        anchor.setIconRotate(iconRotate);
+        this.anchor.setIconRotate(iconRotate);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconSize(final IconSize iconSize) {
-        anchor.setIconSize(iconSize);
+        this.anchor.setIconSize(iconSize);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setIconSpin(final boolean iconSpin) {
-        anchor.setIconSpin(iconSpin);
+        this.anchor.setIconSpin(iconSpin);
     }
 
     /** {@inheritDoc} */
 
     @Override
     public void setTabIndex(final int index) {
-        anchor.setTabIndex(index);
+        this.anchor.setTabIndex(index);
     }
 
     /**
@@ -301,12 +301,12 @@ public class KuraAnchorListItem extends AbstractListItem implements HasHref, Has
      */
     @Override
     public void setTarget(final String target) {
-        anchor.setTarget(target);
+        this.anchor.setTarget(target);
     }
 
     /** {@inheritDoc} */
     @Override
     public void setTargetHistoryToken(final String targetHistoryToken) {
-        anchor.setTargetHistoryToken(targetHistoryToken);
+        this.anchor.setTargetHistoryToken(targetHistoryToken);
     }
 }

@@ -36,12 +36,12 @@ public interface GwtWireGraphService extends RemoteService {
      * Gets the channel descriptor.
      *
      * @param xsrfToken
-     *            the xsrf token
+     *                      the xsrf token
      * @param driverPid
-     *            the driver pid
+     *                      the driver pid
      * @return the gwt channel descriptor
      * @throws GwtKuraException
-     *             the gwt kura exception
+     *                              the gwt kura exception
      */
     public GwtConfigComponent getGwtChannelDescriptor(GwtXSRFToken xsrfToken, String driverPid) throws GwtKuraException;
 
@@ -49,10 +49,10 @@ public interface GwtWireGraphService extends RemoteService {
      * Returns the {@link GwtWireGraphConfiguration} instance associated.
      *
      * @param xsrfToken
-     *            the XSRF token
+     *                      the XSRF token
      * @return the {@link GwtWireGraphConfiguration} instance
      * @throws GwtKuraException
-     *             if the associated instance is not retrieved
+     *                              if the associated instance is not retrieved
      */
     public GwtWireGraphConfiguration getWiresConfiguration(GwtXSRFToken xsrfToken) throws GwtKuraException;
 

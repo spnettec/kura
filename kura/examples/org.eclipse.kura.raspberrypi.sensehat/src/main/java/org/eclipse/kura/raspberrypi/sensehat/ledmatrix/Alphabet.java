@@ -30,7 +30,7 @@ public class Alphabet {
 
     public Alphabet(URL url) {
 
-        letters = new HashMap<String, short[][][]>();
+        letters = new HashMap<>();
         short[][][] letter = new short[8][8][3];
         int c;
         try {
@@ -115,7 +115,7 @@ public class Alphabet {
             for (int y = 0; y < 8; y++) {
                 transposedLetter[x][y] = letter[y][x];
                 transposedLetter[y][x] = letter[x][y];
-                ;
+
             }
         }
 

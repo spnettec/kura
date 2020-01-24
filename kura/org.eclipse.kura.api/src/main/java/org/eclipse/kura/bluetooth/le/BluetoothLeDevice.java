@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -33,7 +33,7 @@ public interface BluetoothLeDevice {
      * Find a BluetoothLeGattService specifying the UUID of the service.
      *
      * @param uuid
-     *            The UUID of the GATT service
+     *                 The UUID of the GATT service
      * @return The BluetoothLeGattService
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -44,9 +44,9 @@ public interface BluetoothLeDevice {
      *
      * @since 1.4
      * @param uuid
-     *            The UUID of the GATT service
+     *                    The UUID of the GATT service
      * @param timeout
-     *            The timeout for retrieving the service
+     *                    The timeout for retrieving the service
      * @return The BluetoothLeGattService
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -79,7 +79,7 @@ public interface BluetoothLeDevice {
      * Connects a specific profile available on the device, given by UUID
      *
      * @param uuid
-     *            The UUID of the profile to be connected
+     *                 The UUID of the profile to be connected
      * @throws KuraBluetoothConnectionException
      */
     public void connectProfile(UUID uuid) throws KuraBluetoothConnectionException;
@@ -88,7 +88,7 @@ public interface BluetoothLeDevice {
      * Disconnects a specific profile available on the device, given by UUID
      *
      * @param uuid
-     *            The UUID of the profile to be disconnected
+     *                 The UUID of the profile to be disconnected
      * @throws KuraBluetoothConnectionException
      */
     public void disconnectProfile(UUID uuid) throws KuraBluetoothConnectionException;
@@ -254,7 +254,7 @@ public interface BluetoothLeDevice {
 
     /**
      * Returns if the service discovery is ended.
-     * 
+     *
      * @since 2.0
      */
     public boolean isServicesResolved();
@@ -262,10 +262,10 @@ public interface BluetoothLeDevice {
     /**
      * Remove this device from the system. Be aware that after the removing the object representing the device
      * will not be valid anymore and any operation on it will have no effect.
-     * 
+     *
      * @return TRUE if the device has been removed
      * @throws BluetKuraBluetoothRemoveExceptionoothException
-     * 
+     *
      * @since 2.0
      */
     public boolean remove() throws KuraBluetoothRemoveException;

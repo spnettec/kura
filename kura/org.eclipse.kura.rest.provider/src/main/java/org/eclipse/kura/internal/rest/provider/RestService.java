@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -45,7 +45,8 @@ import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
 public class RestService
         implements ConfigurableComponent, AuthenticationHandler, AuthorizationHandler, ContainerResponseFilter {
 
-    private static final String REST_FAILURE_RECEIVED_UNAUTHORIZED_REQUEST = "Rest - Failure - Received unauthorized REST request. Method: {}, path: {}, request IP: {}";
+    private static final String REST_FAILURE_RECEIVED_UNAUTHORIZED_REQUEST = "Rest - Failure - "
+            + "Received unauthorized REST request. Method: {}, path: {}, request IP: {}";
     private static final Logger logger = LoggerFactory.getLogger(RestService.class);
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
@@ -93,7 +94,7 @@ public class RestService
 
         String requestIp = request.getHeaderString("X-FORWARDED-FOR");
         if (isNull(requestIp)) {
-            requestIp = sr.getRemoteAddr();
+            requestIp = this.sr.getRemoteAddr();
         }
 
         String authHeader = request.getHeaderString("Authorization");

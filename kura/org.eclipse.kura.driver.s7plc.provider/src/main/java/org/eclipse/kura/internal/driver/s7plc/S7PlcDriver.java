@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
@@ -59,7 +59,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
     private static final Logger logger = LoggerFactory.getLogger(S7PlcDriver.class);
 
     private S7ClientState state = new S7ClientState(new S7PlcOptions(Collections.emptyMap()));
-    private AtomicReference<S7PlcOptions> options = new AtomicReference<>();
+    private final AtomicReference<S7PlcOptions> options = new AtomicReference<>();
 
     private CryptoService cryptoService;
 
@@ -67,7 +67,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
         this.cryptoService = cryptoService;
     }
 
-    public void unsetCryptoService(CryptoService cryptoService) {
+    public void unsetCryptoService() {
         this.cryptoService = null;
     }
 
@@ -80,7 +80,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
     public synchronized void deactivate() {
         logger.debug("Deactivating S7 PLC Driver...");
         try {
-            this.disconnect();
+            disconnect();
         } catch (final ConnectionException e) {
             logger.error("Error while disconnecting...", e);
         }
@@ -94,7 +94,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
     }
 
     private String decryptPassword(char[] encryptedPassword) throws KuraException {
-        final char[] decodedPasswordChars = cryptoService.decryptAes(encryptedPassword);
+        final char[] decodedPasswordChars = this.cryptoService.decryptAes(encryptedPassword);
         return new String(decodedPasswordChars);
     }
 
@@ -134,10 +134,11 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
                         currentOptions.getSlot(), currentOptions.getPort());
                 connectNum++;
             }
-            if (code != 0)
+            if (code != 0) {
                 throw new ConnectionException("Failed to connect to PLC. Error: " + S7Client.ErrorText(code) + ". IP:"
                         + currentOptions.getIp() + ", Rack:" + currentOptions.getRack() + ", Slot:"
                         + currentOptions.getSlot());
+            }
             if (currentOptions.shouldAuthenticate()) {
                 authenticate(this.state);
             }
@@ -208,15 +209,16 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
             final S7PlcOptions currentOptions = this.options.get();
             int reConnectTimes = 0;
             while (result > 0 && result <= 5) {
-                if (reConnectTimes >= 3)
+                if (reConnectTimes >= 3) {
                     break;
+                }
                 logger.warn(
                         "Write connection error---IP: {} Rack:{} Slot:{} Port:{} DB: {} off: {} len: {} status: {} Error: {}, Retry!!!",
                         currentOptions.getIp(), currentOptions.getRack(), currentOptions.getSlot(),
                         currentOptions.getPort(), db, offset, data.length, result, S7Client.ErrorText(result));
                 try {
-                    this.disconnect();
-                    this.connect();
+                    disconnect();
+                    connect();
                 } catch (ConnectionException e) {
                     throw new Moka7Exception("Write reConnection error IP:" + currentOptions.getIp() + " Rack:"
                             + currentOptions.getRack() + " Slot:" + currentOptions.getSlot() + " Port:"
@@ -229,11 +231,12 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
                 result = this.state.client.WriteArea(S7.S7AreaDB, db, offset, data.length, data);
             }
 
-            if (result != 0)
+            if (result != 0) {
                 throw new Moka7Exception("Write result error IP:" + currentOptions.getIp() + " Rack:"
                         + currentOptions.getRack() + " Slot:" + currentOptions.getSlot() + " Port:"
                         + currentOptions.getPort() + " DB: " + db + " off: " + offset + " len: " + data.length
                         + " status: " + result + "\n Error:" + S7Client.ErrorText(result), result);
+            }
         }
 
     }
@@ -244,14 +247,15 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
             final S7PlcOptions currentOptions = this.options.get();
             int reConnectTimes = 0;
             while (result > 0 && result <= 5) {
-                if (reConnectTimes >= 3)
+                if (reConnectTimes >= 3) {
                     break;
+                }
                 logger.warn("Read reConnection ---IP: {} Rack:{} Slot:{} Port:{} DB: {} off: {} len:{}",
                         currentOptions.getIp(), currentOptions.getRack(), currentOptions.getSlot(),
                         currentOptions.getPort(), db, offset, data.length);
                 try {
-                    this.disconnect();
-                    this.connect();
+                    disconnect();
+                    connect();
                 } catch (ConnectionException e) {
                     throw new Moka7Exception(
                             "Read reConnection error IP:" + currentOptions.getIp() + " Rack:" + currentOptions.getRack()
@@ -265,18 +269,19 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
                 result = this.state.client.ReadArea(S7.S7AreaDB, db, offset, data.length, data);
             }
 
-            if (result != 0)
+            if (result != 0) {
                 throw new Moka7Exception("Read result error IP:" + currentOptions.getIp() + " Rack:"
                         + currentOptions.getRack() + " Slot:" + currentOptions.getSlot() + " Port:"
                         + currentOptions.getPort() + " DB: " + db + " off: " + offset + " len: " + data.length
                         + " status: " + result + "\n Error:" + S7Client.ErrorText(result), result);
+            }
 
         }
     }
 
-    @SuppressWarnings("serial")
     static final class Moka7Exception extends IOException {
 
+        private static final long serialVersionUID = -6118257067654374279L;
         private final int statusCode;
 
         public Moka7Exception(String message, int statusCode) {
@@ -285,7 +290,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
         }
 
         public int getStatusCode() {
-            return statusCode;
+            return this.statusCode;
         }
     }
 

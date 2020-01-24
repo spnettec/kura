@@ -59,9 +59,10 @@ public class CloudSubscriberImpl
                 subscriptionProps.put(QOS.name(), CloudSubscriberImpl.this.cloudSubscriberOptions.getQos());
                 subscriptionProps.put(CONTROL.name(),
                         MessageType.CONTROL.equals(CloudSubscriberImpl.this.cloudSubscriberOptions.getMessageType()));
-                if (CloudSubscriberImpl.this.cloudSubscriberOptions.isAppTopicOnly())
+                if (CloudSubscriberImpl.this.cloudSubscriberOptions.isAppTopicOnly()) {
                     subscriptionProps.put(FULL_TOPIC.name(),
                             CloudSubscriberImpl.this.cloudSubscriberOptions.getAppTopic());
+                }
                 CloudSubscriberImpl.this.cloudService.registerSubscriber(subscriptionProps, CloudSubscriberImpl.this);
                 CloudSubscriberImpl.this.cloudService.registerCloudConnectionListener(CloudSubscriberImpl.this);
                 return tempCloudService;

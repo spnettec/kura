@@ -9,7 +9,7 @@
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
- *  
+ *
  *******************************************************************************/
 package org.eclipse.kura.internal.wire.h2db.store;
 
@@ -44,7 +44,7 @@ final class H2DbWireRecordStoreOptions {
      * Instantiates a new DB wire record store options.
      *
      * @param properties
-     *            the configured properties
+     *                       the configured properties
      */
     H2DbWireRecordStoreOptions(final Map<String, Object> properties) {
         requireNonNull(properties, "Properties cannot be null");

@@ -36,13 +36,13 @@ public interface KuraGPIOPin {
      * Used to set the value of an output pin.
      *
      * @param active
-     *            New state of the pin.
+     *                   New state of the pin.
      * @throws KuraUnavailableDeviceException
-     *             when the GPIO resource is not available
+     *                                            when the GPIO resource is not available
      * @throws KuraClosedDeviceException
-     *             when the GPIO resource has not yet been opened
+     *                                            when the GPIO resource has not yet been opened
      * @throws IOException
-     *             if an I/O error occurs
+     *                                            if an I/O error occurs
      */
     public void setValue(boolean active) throws KuraUnavailableDeviceException, KuraClosedDeviceException, IOException;
 
@@ -51,11 +51,11 @@ public interface KuraGPIOPin {
      *
      * @return true if the pin is in active state
      * @throws KuraUnavailableDeviceException
-     *             when the GPIO resource is not available
+     *                                            when the GPIO resource is not available
      * @throws KuraClosedDeviceException
-     *             when the GPIO resource has not yet been opened
+     *                                            when the GPIO resource has not yet been opened
      * @throws IOException
-     *             if an I/O error occurs
+     *                                            if an I/O error occurs
      */
     public boolean getValue() throws KuraUnavailableDeviceException, KuraClosedDeviceException, IOException;
 
@@ -65,11 +65,11 @@ public interface KuraGPIOPin {
      * Attaching a listener to an output pin should not raise an exception, but will have no result.
      *
      * @param listener
-     *            Listener to be added to this pin
+     *                     Listener to be added to this pin
      * @throws KuraClosedDeviceException
-     *             when the GPIO resource has not yet been opened
+     *                                       when the GPIO resource has not yet been opened
      * @throws IOException
-     *             if an I/O error occurs
+     *                                       if an I/O error occurs
      */
     public void addPinStatusListener(PinStatusListener listener) throws KuraClosedDeviceException, IOException;
 
@@ -78,11 +78,11 @@ public interface KuraGPIOPin {
      * If the pin has no listeners attached, this method should fail silently.<br>
      *
      * @param listener
-     *            Listener to be removed from this pin
+     *                     Listener to be removed from this pin
      * @throws KuraClosedDeviceException
-     *             when the GPIO resource has not yet been opened
+     *                                       when the GPIO resource has not yet been opened
      * @throws IOException
-     *             if an I/O error occurs
+     *                                       if an I/O error occurs
      */
     public void removePinStatusListener(PinStatusListener listener) throws KuraClosedDeviceException, IOException;
 
@@ -90,11 +90,11 @@ public interface KuraGPIOPin {
      * Opens the pin and allocates the needed resources to communicate with it.
      *
      * @throws KuraGPIODeviceException
-     *             when an exception occurs opening the pin
+     *                                            when an exception occurs opening the pin
      * @throws KuraUnavailableDeviceException
-     *             when the GPIO resource is not available
+     *                                            when the GPIO resource is not available
      * @throws IOException
-     *             if a generic I/O error occurs
+     *                                            if a generic I/O error occurs
      */
     public void open() throws KuraGPIODeviceException, KuraUnavailableDeviceException, IOException;
 
@@ -105,7 +105,7 @@ public interface KuraGPIOPin {
      * before closing the resource.
      *
      * @throws IOException
-     *             if a generic I/O error occurs
+     *                         if a generic I/O error occurs
      */
     public void close() throws IOException;
 

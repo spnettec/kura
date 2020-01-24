@@ -38,11 +38,11 @@ final class WireComponentTrackerCustomizer implements ServiceTrackerCustomizer<W
      * Instantiates a new wire service tracker.
      *
      * @param context
-     *            the bundle context
+     *                             the bundle context
      * @param wireGraphService
-     *            the wire graph service
+     *                             the wire graph service
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      */
     WireComponentTrackerCustomizer(final BundleContext context, final WireGraphServiceImpl wireGraphService) {
         requireNonNull(context, "Bundle context cannot be null");

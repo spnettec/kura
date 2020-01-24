@@ -32,13 +32,13 @@ public abstract class ChannelBlockTask extends BlockTask {
      * Creates a new {@link ChannelBlockTask} instance.
      *
      * @param record
-     *            the {@link ChannelRecord} instance
+     *                   the {@link ChannelRecord} instance
      * @param start
-     *            the start address for this task
+     *                   the start address for this task
      * @param end
-     *            the end address for this task
+     *                   the end address for this task
      * @param mode
-     *            the mode of this task
+     *                   the mode of this task
      */
     public ChannelBlockTask(ChannelRecord record, int start, int end, Mode mode) {
         super(start, end, mode);

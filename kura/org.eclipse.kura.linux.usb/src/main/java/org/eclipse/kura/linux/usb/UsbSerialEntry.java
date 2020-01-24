@@ -24,15 +24,15 @@ public class UsbSerialEntry {
      * UsbSerialEntry constructor
      *
      * @param ttyUsbPortNo
-     *            - ttyUSB port number
+     *                         - ttyUSB port number
      * @param vendor
-     *            - vendor ID
+     *                         - vendor ID
      * @param product
-     *            - product ID
+     *                         - product ID
      * @param portEnum
-     *            - port enumeration
+     *                         - port enumeration
      * @param path
-     *            - path to USB device
+     *                         - path to USB device
      */
     public UsbSerialEntry(int ttyUsbPortNo, String vendor, String product, int numPorts, int portEnum, String path) {
 

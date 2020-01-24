@@ -32,10 +32,10 @@ public interface AssetService {
      * ({@code kura.service.pid}).
      *
      * @param assetPid
-     *            the asset PID to check
+     *                     the asset PID to check
      * @return the asset instance
      * @throws NullPointerException
-     *             if the provided asset PID is null
+     *                                  if the provided asset PID is null
      */
     public Asset getAsset(String assetPid);
 
@@ -44,10 +44,10 @@ public interface AssetService {
      * instance
      *
      * @param asset
-     *            the asset instance to check
+     *                  the asset instance to check
      * @return the asset PID
      * @throws NullPointerException
-     *             if the provided asset instance is null
+     *                                  if the provided asset instance is null
      */
     public String getAssetPid(Asset asset);
 

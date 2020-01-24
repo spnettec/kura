@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -153,8 +153,9 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
             fileName = "test2.gpx";
         } else if ("test3".equals(this.source)) {
             fileName = "test3.gpx";
-        } else
+        } else {
             fileName = "test.gpx";
+        }
 
         GpsXmlHandler handler = new GpsXmlHandler();
         SAXParserFactory factory = SAXParserFactory.newInstance();

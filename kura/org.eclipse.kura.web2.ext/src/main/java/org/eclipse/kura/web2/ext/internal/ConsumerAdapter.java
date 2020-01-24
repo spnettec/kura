@@ -35,7 +35,7 @@ public class ConsumerAdapter<T> implements Adapter<Consumer<T>> {
     @Override
     public Consumer<T> adaptNonNull(final JavaScriptObject jsConsumer) {
 
-        return t -> JsObject.call(jsConsumer, adapter.adaptNullable(t));
+        return t -> JsObject.call(jsConsumer, this.adapter.adaptNullable(t));
 
     }
 

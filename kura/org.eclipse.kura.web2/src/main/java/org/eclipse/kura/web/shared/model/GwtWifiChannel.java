@@ -12,6 +12,7 @@
 package org.eclipse.kura.web.shared.model;
 
 public enum GwtWifiChannel {
+
     netWifiChannelAuto,
     netWifiChannel1,
     netWifiChannel2,

@@ -27,9 +27,10 @@ public interface GwtStatusService extends RemoteService {
      * Returns a list of name/value pairs describing status aspects of the device.
      *
      * @param xsrfToken
-     *            - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
+     *                        - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
      * @param hasNetAdmin
-     *            - Boolean value indicating if system is running with the network management services enabled.
+     *                        - Boolean value indicating if system is running with the network management services
+     *                        enabled.
      * @return
      * @throws GwtKuraException
      */
@@ -40,7 +41,7 @@ public interface GwtStatusService extends RemoteService {
      * Connects the local MQTT client to the specified broker.
      *
      * @param xsrfToken
-     *            - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
+     *                      - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
      * @throws GwtKuraException
      */
     public void connectDataService(GwtXSRFToken xsrfToken, String connectionId) throws GwtKuraException;
@@ -49,10 +50,10 @@ public interface GwtStatusService extends RemoteService {
      * Disconnects the local MQTT client.
      *
      * @param xsrfToken
-     *            - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
+     *                      - A GwtXSRFToken token necessary to prevent cross-site request forgery attacks.
      * @throws GwtKuraException
      */
     public void disconnectDataService(GwtXSRFToken xsrfToken, String connectionId) throws GwtKuraException;
-    
+
     public boolean isConnected(GwtXSRFToken xsrfToken, String connectionId) throws GwtKuraException;
 }

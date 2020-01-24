@@ -33,8 +33,8 @@ public interface Tab {
 
         @Override
         public void onClick(ClickEvent event) {
-            if (target.isDirty() || !initialized) {
-                target.refresh();
+            if (this.target.isDirty() || !this.initialized) {
+                this.target.refresh();
                 this.initialized = true;
             }
         }

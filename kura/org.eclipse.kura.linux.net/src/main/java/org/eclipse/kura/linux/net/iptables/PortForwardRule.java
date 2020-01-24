@@ -38,27 +38,28 @@ public class PortForwardRule {
      * Constructor of <code>PortForwardRule</code> object.
      *
      * @param inboundIface
-     *            interface name on which inbound connection is allowed (such as ppp0)
+     *                                 interface name on which inbound connection is allowed (such as ppp0)
      * @param outboundIface
-     *            interface name on which outbound connection is allowed (such as eth0)
+     *                                 interface name on which outbound connection is allowed (such as eth0)
      * @param inPort
-     *            inbound port on which to listen for port forward
+     *                                 inbound port on which to listen for port forward
      * @param protocol
-     *            protocol of port connection (tcp, udp)
+     *                                 protocol of port connection (tcp, udp)
      * @param address
-     *            destination IP address to forward IP traffic
+     *                                 destination IP address to forward IP traffic
      * @param outPort
-     *            destination port to forward IP traffic
+     *                                 destination port to forward IP traffic
      * @param masquerade
-     *            use masquerading
+     *                                 use masquerading
      * @param permittedNetwork
-     *            source network or ip address from which connection is allowed (such as 192.168.1.0)
+     *                                 source network or ip address from which connection is allowed (such as
+     *                                 192.168.1.0)
      * @param permittedNetworkMask
-     *            source network mask from which connection is allowed (e.g. 24 for 255.255.255.0)
+     *                                 source network mask from which connection is allowed (e.g. 24 for 255.255.255.0)
      * @param permittedMAC
-     *            MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
+     *                                 MAC address from which connection is allowed (such as AA:BB:CC:DD:EE:FF)
      * @param sourcePortRange
-     *            range of source ports allowed on IP connection (sourcePort1:sourcePort2)
+     *                                 range of source ports allowed on IP connection (sourcePort1:sourcePort2)
      */
     public PortForwardRule(String inboundIface, String outboundIface, String address, String protocol, int inPort,
             int outPort, boolean masquerade, String permittedNetwork, int permittedNetworkMask, String permittedMAC,
@@ -160,7 +161,7 @@ public class PortForwardRule {
      * Setter for iface
      *
      * @param iface
-     *            the iface to set
+     *                  the iface to set
      */
     public void setInboundIface(String iface) {
         this.inboundIface = iface;
@@ -179,7 +180,7 @@ public class PortForwardRule {
      * Setter for iface
      *
      * @param iface
-     *            the iface to set
+     *                  the iface to set
      */
     public void setOutboundIface(String iface) {
         this.outboundIface = iface;
@@ -198,7 +199,7 @@ public class PortForwardRule {
      * Setter for address
      *
      * @param address
-     *            the address to set
+     *                    the address to set
      */
     public void setAddress(String address) {
         this.address = address;
@@ -217,7 +218,7 @@ public class PortForwardRule {
      * Setter for protocol
      *
      * @param protocol
-     *            the protocol to set
+     *                     the protocol to set
      */
     public void setProtocol(String protocol) {
         this.protocol = protocol;
@@ -236,7 +237,7 @@ public class PortForwardRule {
      * Setter for inPort
      *
      * @param inPort
-     *            the inPort to set
+     *                   the inPort to set
      */
     public void setInPort(int inPort) {
         this.inPort = inPort;
@@ -255,7 +256,7 @@ public class PortForwardRule {
      * Setter for outPort
      *
      * @param outPort
-     *            the outPort to set
+     *                    the outPort to set
      */
     public void setOutPort(int outPort) {
         this.outPort = outPort;
@@ -274,7 +275,7 @@ public class PortForwardRule {
      * Setter for masquerade
      *
      * @param masquerade
-     *            - 'masquerade' flag
+     *                       - 'masquerade' flag
      */
     public void setMasquerade(boolean masquerade) {
         this.masquerade = masquerade;
@@ -293,7 +294,7 @@ public class PortForwardRule {
      * Setter for permittedNetwork
      *
      * @param permittedNetwork
-     *            the permittedNetwork to set
+     *                             the permittedNetwork to set
      */
     public void setPermittedNetwork(String permittedNetwork) {
         this.permittedNetwork = permittedNetwork;
@@ -312,7 +313,7 @@ public class PortForwardRule {
      * Setter for permittedNetworkMask
      *
      * @param permittedNetworkMask
-     *            of the permittedNetwork to set
+     *                                 of the permittedNetwork to set
      */
     public void setPermittedNetworkMask(int permittedNetworkMask) {
         this.permittedNetworkMask = permittedNetworkMask;
@@ -331,7 +332,7 @@ public class PortForwardRule {
      * Setter for permittedMAC
      *
      * @param permittedMAC
-     *            the permittedMAC to set
+     *                         the permittedMAC to set
      */
     public void setPermittedMAC(String permittedMAC) {
         this.permittedMAC = permittedMAC;
@@ -350,7 +351,7 @@ public class PortForwardRule {
      * Setter for sourcePortRange
      *
      * @param sourcePortRange
-     *            the sourcePortRange to set
+     *                            the sourcePortRange to set
      */
     public void setSourcePortRange(String sourcePortRange) {
         this.sourcePortRange = sourcePortRange;

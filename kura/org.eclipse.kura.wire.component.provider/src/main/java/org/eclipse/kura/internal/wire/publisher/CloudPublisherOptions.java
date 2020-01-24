@@ -39,7 +39,7 @@ final class CloudPublisherOptions {
      * Instantiates a new cloud publisher options.
      *
      * @param properties
-     *            the properties
+     *                       the properties
      */
     CloudPublisherOptions(final Map<String, Object> properties) {
         requireNonNull(properties, "Properties cannot be null");
@@ -68,7 +68,7 @@ final class CloudPublisherOptions {
     }
 
     Optional<String> getBodyProperty() {
-        final Object propertyRaw = properties.get(CONF_BODY_PROPERTY);
+        final Object propertyRaw = this.properties.get(CONF_BODY_PROPERTY);
 
         if (!(propertyRaw instanceof String)) {
             return Optional.empty();

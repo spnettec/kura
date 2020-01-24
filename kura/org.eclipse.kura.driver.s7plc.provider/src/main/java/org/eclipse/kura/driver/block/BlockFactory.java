@@ -16,7 +16,7 @@ package org.eclipse.kura.driver.block;
  * This class is responsible of creating new blocks of type {@code T}.
  *
  * @param <T>
- *            The type of the returned block
+ *                The type of the returned block
  */
 public interface BlockFactory<T extends Block> {
 
@@ -24,9 +24,9 @@ public interface BlockFactory<T extends Block> {
      * Creates a new block of type T, with the given start and end addresses.
      *
      * @param start
-     *            the start address of the new block
+     *                  the start address of the new block
      * @param end
-     *            the end address of the new block
+     *                  the end address of the new block
      * @return The new block
      */
     public T build(int start, int end);

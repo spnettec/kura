@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -59,7 +59,7 @@ import org.osgi.service.component.ComponentContext;
  * @since 1.0.8
  *
  * @noimplement This interface is not intended to be implemented by clients.
- * 
+ *
  * @deprecated Please consider using {@link CloudConnectionFactory}
  */
 @ProviderType
@@ -130,7 +130,7 @@ public interface CloudServiceFactory {
      * </pre>
      *
      * @param pid
-     *            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
+     *                the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
      * @throws KuraException
      */
     void createConfiguration(String pid) throws KuraException;
@@ -142,12 +142,13 @@ public interface CloudServiceFactory {
      * <i>kura.service.pid</i> of the factory component configuration.
      *
      * @param pid
-     *            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
+     *                the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
      * @return List&lt;String&gt;, the list of <i>kura.service.pid</i>s associated with the specified factory component
      *         configuration.
      * @throws KuraException
-     *             if the specified <i>kura.service.pid</i> is not correct or compliant with what the factory
-     *             implementation expects
+     *                           if the specified <i>kura.service.pid</i> is not correct or compliant with what the
+     *                           factory
+     *                           implementation expects
      * @since 1.1.0
      */
     List<String> getStackComponentsPids(String pid) throws KuraException;
@@ -156,7 +157,7 @@ public interface CloudServiceFactory {
      * Deletes a previously created configuration deactivating the associated {@link CloudService} instance.
      *
      * @param pid
-     *            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
+     *                the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
      * @throws KuraException
      */
     void deleteConfiguration(String pid) throws KuraException;

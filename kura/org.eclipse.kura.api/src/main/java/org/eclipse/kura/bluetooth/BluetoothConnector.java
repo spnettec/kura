@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -25,9 +25,9 @@ import org.osgi.service.io.ConnectorService;
 
 /**
  * @noimplement This interface is not intended to be implemented by clients.
- * 
+ *
  * @deprecated
- * 
+ *
  */
 @ProviderType
 @Deprecated
@@ -52,19 +52,19 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a Connection.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      *
      * @return A new Connection object.
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the requested connection cannot be made,
-     *             or the protocol type does not exist.
+     *                                         If the requested connection cannot be made,
+     *                                         or the protocol type does not exist.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If a requested protocol handler is not permitted.
+     *                                         If a requested protocol handler is not permitted.
      */
     @Deprecated
     @Override
@@ -74,21 +74,21 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a Connection.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      * @param mode
-     *            The access mode.
+     *                 The access mode.
      *
      * @return A new Connection object.
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the requested connection cannot be made,
-     *             or the protocol type does not exist.
+     *                                         If the requested connection cannot be made,
+     *                                         or the protocol type does not exist.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If a requested protocol handler is not permitted.
+     *                                         If a requested protocol handler is not permitted.
      */
     @Deprecated
     @Override
@@ -98,23 +98,23 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a Connection.
      *
      * @param name
-     *            The URL for the connection.
+     *                     The URL for the connection.
      * @param mode
-     *            The access mode.
+     *                     The access mode.
      * @param timeouts
-     *            A flag to indicate that the caller wants timeout exceptions
+     *                     A flag to indicate that the caller wants timeout exceptions
      *
      * @return A new Connection object.
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the requested connection cannot be made,
-     *             or the protocol type does not exist.
+     *                                         If the requested connection cannot be made,
+     *                                         or the protocol type does not exist.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If a requested protocol handler is not permitted.
+     *                                         If a requested protocol handler is not permitted.
      */
     @Deprecated
     @Override
@@ -124,17 +124,17 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a connection input stream.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      * @return A DataInputStream.
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the connection cannot be found.
+     *                                         If the connection cannot be found.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If access to the requested stream is not permitted.
+     *                                         If access to the requested stream is not permitted.
      */
     @Deprecated
     @Override
@@ -144,17 +144,17 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a connection output stream.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      * @return A DataOutputStream.
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the connection cannot be found.
+     *                                         If the connection cannot be found.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If access to the requested stream is not permitted.
+     *                                         If access to the requested stream is not permitted.
      */
     @Deprecated
     @Override
@@ -164,17 +164,17 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a connection input stream.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      * @return An InputStream
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the connection cannot be found.
+     *                                         If the connection cannot be found.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If access to the requested stream is not permitted.
+     *                                         If access to the requested stream is not permitted.
      */
     @Deprecated
     @Override
@@ -184,17 +184,17 @@ public interface BluetoothConnector extends ConnectorService {
      * Create and open a connection output stream.
      *
      * @param name
-     *            The URL for the connection.
+     *                 The URL for the connection.
      * @return An OutputStream
      *
      * @throws IllegalArgumentException
-     *             If a parameter is invalid.
+     *                                         If a parameter is invalid.
      * @throws ConnectionNotFoundException
-     *             If the connection cannot be found.
+     *                                         If the connection cannot be found.
      * @throws java.io.IOException
-     *             If some other kind of I/O error occurs.
+     *                                         If some other kind of I/O error occurs.
      * @throws SecurityException
-     *             If access to the requested stream is not permitted.
+     *                                         If access to the requested stream is not permitted.
      */
     @Deprecated
     @Override

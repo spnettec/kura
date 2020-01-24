@@ -298,7 +298,7 @@ public class ExecutorUtil {
     }
 
     private static String[] buildKillCommand(Pid pid, Signal signal) {
-        Integer pidNumber = (Integer) pid.getPid();
+        Integer pidNumber = pid.getPid();
         if (logger.isInfoEnabled()) {
             logger.info("Attempting to send {} to process with pid {}", ((LinuxSignal) signal).name(), pidNumber);
         }

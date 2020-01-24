@@ -86,11 +86,11 @@ public final class LocalizationAdapter {
      * Adapt the provided message resource to its {@code C10N} type with the current locale.
      *
      * @param <T>
-     *            the generic type
+     *                  the generic type
      * @param clazz
-     *            the message resource
+     *                  the message resource
      * @throws NullPointerException
-     *             if the argument is null
+     *                                  if the argument is null
      * @return the instance of the {@code C10N} resource
      */
     public static <T> T adapt(final Class<T> clazz) {
@@ -101,13 +101,13 @@ public final class LocalizationAdapter {
      * Adapt the provided message resource to its {@code C10N} type with provided locale.
      *
      * @param <T>
-     *            the generic type
+     *                   the generic type
      * @param clazz
-     *            the message resource
+     *                   the message resource
      * @param locale
-     *            the {@link Locale} instance to use
+     *                   the {@link Locale} instance to use
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                  if any of the arguments is null
      * @return the instance of the {@code C10N} resource adapting the specified {@link Locale} instance
      */
     @SuppressWarnings("unchecked")

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Red Hat Inc and others.
+ * Copyright (c) 2016, 2020 Red Hat Inc and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     Red Hat Inc
+ *     Eurotech
+ *
  *******************************************************************************/
 package org.eclipse.kura.camel.cloud.factory.internal;
 
@@ -18,7 +20,6 @@ import java.util.Map;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.camel.camelcloud.CamelCloudService;
 import org.eclipse.kura.cloud.CloudClient;
-import org.eclipse.kura.cloud.CloudService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
@@ -49,12 +50,13 @@ public class CamelFactory implements ConfigurableComponent, CamelCloudService {
     }
 
     private void setFromProperties(final Map<String, Object> properties) throws Exception {
-        final ServiceConfiguration configuration = new ServiceConfiguration();
-        configuration.setXml(asString(properties, "xml"));
-        configuration.setInitCode(asString(properties, "initCode"));
-        configuration.setEnableJmx(asBoolean(properties, "enableJmx", true));
 
-        createService(configuration);
+        final ServiceConfiguration serviceConfiguration = new ServiceConfiguration();
+        serviceConfiguration.setXml(asString(properties, "xml"));
+        serviceConfiguration.setInitCode(asString(properties, "initCode"));
+        serviceConfiguration.setEnableJmx(asBoolean(properties, "enableJmx", true));
+
+        createService(serviceConfiguration);
     }
 
     public void deactivate() {

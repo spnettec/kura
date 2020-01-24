@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -740,10 +740,11 @@ public class EntryClassUi extends Composite implements Context {
         this.contentPanel.setVisible(true);
 
         if (item != null) {
-            if (item.isFactoryComponent())
+            if (item.isFactoryComponent()) {
                 setHeader(item.getComponentName() + "(" + item.getComponentId() + ")", item.getComponentDescription());
-            else
+            } else {
                 setHeader(item.getComponentName(), item.getComponentDescription());
+            }
         }
 
         this.contentPanelBody.add(this.servicesUi);
@@ -1012,12 +1013,12 @@ public class EntryClassUi extends Composite implements Context {
 
         @Override
         public void onSuccess(Void result) {
-            wrapped.onSuccess(null);
+            this.wrapped.onSuccess(null);
         }
 
         @Override
         public void onFailure(String reason) {
-            wrapped.onFailure(new RuntimeException(reason));
+            this.wrapped.onFailure(new RuntimeException(reason));
         }
 
         @Override
@@ -1040,7 +1041,7 @@ public class EntryClassUi extends Composite implements Context {
 
     @Override
     public void showAlertDialog(final String message, final AlertSeverity severity, final Consumer<Boolean> callback) {
-        alertDialog.show(message,
+        this.alertDialog.show(message,
                 severity == AlertSeverity.INFO ? AlertDialog.Severity.INFO : AlertDialog.Severity.ALERT,
                 callback::accept);
     }

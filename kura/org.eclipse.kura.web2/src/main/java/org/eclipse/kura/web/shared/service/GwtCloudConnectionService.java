@@ -52,7 +52,7 @@ public interface GwtCloudConnectionService extends RemoteService {
      * @return the list of {@link GwtCloudConnectionEntry} that represent the
      *         different {@link org.eclipse.kura.cloud.CloudService} instances registered in the framework.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      */
     public List<GwtCloudEntry> findCloudEntries() throws GwtKuraException;
 
@@ -60,15 +60,15 @@ public interface GwtCloudConnectionService extends RemoteService {
      * Returns a list of PIDs that compose the cloud stack referenced by the specified factory and cloud service.
      *
      * @param factoryPid
-     *            the PID of the {@link CloudServiceFactory} this CloudService was registered with
+     *                            the PID of the {@link CloudServiceFactory} this CloudService was registered with
      * @param cloudServicePid
-     *            the PID of the selected Cloud Service
+     *                            the PID of the selected Cloud Service
      * @return the list of <i>kura.service.pid</i>s associated with the specified factory component
      *         configuration.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      * @throws GwtKuraException
-     *             if the invocation of the corresponding factory method returns an exception
+     *                              if the invocation of the corresponding factory method returns an exception
      */
     public List<String> findStackPidsByFactory(String factoryPid, String cloudServicePid) throws GwtKuraException;
 
@@ -77,10 +77,10 @@ public interface GwtCloudConnectionService extends RemoteService {
      * not specify a value, null is returned.
      *
      * @param factoryPid
-     *            the factory PID of the Factory Component
+     *                       the factory PID of the Factory Component
      * @return a String that represents the suggested cloud service PID. Null otherwise.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      */
     public String findSuggestedCloudServicePid(String factoryPid) throws GwtKuraException;
 
@@ -88,11 +88,11 @@ public interface GwtCloudConnectionService extends RemoteService {
      * Returns a string representing the regex specified by the specified Factory Component.
      *
      * @param factoryPid
-     *            the factory PID of the Factory Component
+     *                       the factory PID of the Factory Component
      * @return a String representing the regex to be used to verify the user's input. A null value is returned if the
      *         factory does not provide such value.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      */
     public String findCloudServicePidRegex(String factoryPid) throws GwtKuraException;
 
@@ -101,15 +101,16 @@ public interface GwtCloudConnectionService extends RemoteService {
      * PID.
      *
      * @param xsrfToken
-     *            the cross site request forgery token
+     *                            the cross site request forgery token
      * @param factoryPid
-     *            the factory PID of the Factory Component
+     *                            the factory PID of the Factory Component
      * @param cloudServicePid
-     *            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
+     *                            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component
+     *                            configuration.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      * @throws GwtKuraException
-     *             if the creation and initialization of a {@link CloudService} instance fails.
+     *                              if the creation and initialization of a {@link CloudService} instance fails.
      */
     public void createCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid,
             String name, String description) throws GwtKuraException;
@@ -118,15 +119,16 @@ public interface GwtCloudConnectionService extends RemoteService {
      * Invokes the deletion of the associated {@link CloudService} instance by the specified Factory Component.
      *
      * @param xsrfToken
-     *            the cross site request forgery token
+     *                            the cross site request forgery token
      * @param factoryPid
-     *            the factory PID of the Factory Component
+     *                            the factory PID of the Factory Component
      * @param cloudServicePid
-     *            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component configuration.
+     *                            the Kura persistent identifier, <i>kura.service.pid</i>, of the factory component
+     *                            configuration.
      * @throws GwtKuraException
-     *             when service referencing fails
+     *                              when service referencing fails
      * @throws GwtKuraException
-     *             if the deletion of the specified {@link CloudService} instance fails.
+     *                              if the deletion of the specified {@link CloudService} instance fails.
      */
     public void deleteCloudServiceFromFactory(GwtXSRFToken xsrfToken, String factoryPid, String cloudServicePid)
             throws GwtKuraException;

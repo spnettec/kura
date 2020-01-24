@@ -73,8 +73,9 @@ public final class JoinComponent implements MultiportWireReceiver, WireEmitter, 
     }
 
     public void updated(final Map<String, Object> properties) {
-        if (this.joinComponentOptions != null)
+        if (this.joinComponentOptions != null) {
             this.joinComponentOptions.dispose();
+        }
         logger.debug("Updating Join Wire Component...");
         this.joinComponentOptions = new JoinComponentOptions(properties, this.context.getBundleContext());
 
@@ -117,8 +118,9 @@ public final class JoinComponent implements MultiportWireReceiver, WireEmitter, 
     }
 
     protected void deactivate(final ComponentContext componentContext) {
-        if (this.joinComponentOptions != null)
+        if (this.joinComponentOptions != null) {
             this.joinComponentOptions.dispose();
+        }
         logger.debug("Deactivating Join Wire Component...");
         // remained for debugging purposes
         logger.debug("Deactivating Join Wire Component... Done");
@@ -148,8 +150,9 @@ public final class JoinComponent implements MultiportWireReceiver, WireEmitter, 
 
     private static Map<String, TypedValue<?>> covertProperies(final Map<String, TypedValue<?>> properties) {
         TypedValue<?> assertName = properties.get("assetName");
-        if (assertName == null)
+        if (assertName == null) {
             return properties;
+        }
         return properties.entrySet().stream().filter(v -> {
             return !v.getKey().equals("assetName");
         }).collect(Collectors.toMap(k -> assertName.getValue().toString() + "." + k.getKey(), Map.Entry::getValue));

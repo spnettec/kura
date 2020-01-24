@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -37,8 +37,8 @@ public class BeaconScannerExample implements ConfigurableComponent, BluetoothBea
     private static final String DEFAULT_COMPANY_CODE = "004c";
 
     // Configurable State
-    private String adapterName;		// eg. hci0
-    private int rateLimit;			// eg. 5000ms
+    private String adapterName; // eg. hci0
+    private int rateLimit; // eg. 5000ms
     private String companyCode;
     private Boolean enableScanning;
 
@@ -136,7 +136,7 @@ public class BeaconScannerExample implements ConfigurableComponent, BluetoothBea
 
     private void setup() {
 
-        this.publishTimes = new HashMap<String, Long>();
+        this.publishTimes = new HashMap<>();
 
         this.bluetoothAdapter = this.bluetoothService.getBluetoothAdapter(this.adapterName);
         if (this.bluetoothAdapter != null) {
@@ -192,7 +192,7 @@ public class BeaconScannerExample implements ConfigurableComponent, BluetoothBea
             kp.addMetric("minor", beaconData.minor);
             kp.addMetric("distance", calculateDistance(beaconData.rssi, beaconData.txpower));
 
-            Map<String, Object> properties = new HashMap<String, Object>();
+            Map<String, Object> properties = new HashMap<>();
             properties.put("address", beaconData.address);
             KuraMessage message = new KuraMessage(kp, properties);
             try {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -28,6 +28,8 @@ import org.eclipse.kura.executor.CommandExecutorService;
 public class BluetoothLeUtil {
 
     private static final Logger logger = LogManager.getLogger(BluetoothLeUtil.class);
+
+    @SuppressWarnings("checkstyle:constantName")
     private static final ExecutorService processExecutor = Executors.newSingleThreadExecutor();
 
     public static final String HCITOOL = "hcitool";
@@ -60,9 +62,9 @@ public class BluetoothLeUtil {
      * Start an hci dump process for the examination of BLE advertisement packets
      *
      * @param name
-     *            Name of HCI device (hci0, for example)
+     *                     Name of HCI device (hci0, for example)
      * @param listener
-     *            Listener for receiving btsnoop records
+     *                     Listener for receiving btsnoop records
      * @return BluetoothProcess created
      */
     public static BluetoothProcess btdumpCmd(String name, CommandExecutorService executorService,
@@ -147,7 +149,7 @@ public class BluetoothLeUtil {
      * See Bluetooth Core 4.0; 7.7.65.2 LE Advertising Report Event
      *
      * @param b
-     *            the byte stream
+     *              the byte stream
      * @return BluetoothAdvertisementData
      */
     public static List<AdvertisingReportRecord> parseLEAdvertisement(byte[] b) {

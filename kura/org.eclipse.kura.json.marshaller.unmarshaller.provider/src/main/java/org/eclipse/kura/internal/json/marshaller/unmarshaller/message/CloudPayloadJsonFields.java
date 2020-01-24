@@ -16,12 +16,14 @@ package org.eclipse.kura.internal.json.marshaller.unmarshaller.message;
  *
  */
 public enum CloudPayloadJsonFields {
+
     SENTON("sentOn"),
     POSITION("position"),
     METRICS("metrics"),
     BODY("body");
 
     public enum CloudPayloadJsonPositionFields {
+
         LATITUDE("latitude"),
         LONGITUDE("longitude"),
         ALTITUDE("altitude"),

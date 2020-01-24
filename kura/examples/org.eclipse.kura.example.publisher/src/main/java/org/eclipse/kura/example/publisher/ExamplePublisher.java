@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -156,13 +156,7 @@ public class ExamplePublisher
 
         // schedule a new worker based on the properties of the service
         int pubrate = this.examplePublisherOptions.getPublishRate();
-        this.handle = this.worker.scheduleAtFixedRate(new Runnable() {
-
-            @Override
-            public void run() {
-                doPublish();
-            }
-        }, 0, pubrate, TimeUnit.MILLISECONDS);
+        this.handle = this.worker.scheduleAtFixedRate(() -> doPublish(), 0, pubrate, TimeUnit.MILLISECONDS);
     }
 
     /**

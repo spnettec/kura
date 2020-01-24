@@ -80,7 +80,7 @@ public class AutoCharsetReader {
 
             byte[] buffer = new byte[512];
             boolean identified = false;
-            while ((input.read(buffer) != -1) && (!identified)) {
+            while (input.read(buffer) != -1 && !identified) {
                 identified = identify(buffer, decoder);
             }
 
@@ -107,13 +107,15 @@ public class AutoCharsetReader {
     }
 
     public static Charset getEncoding(String str) {
-        if (str == null || str.trim().length() < 1)
+        if (str == null || str.trim().length() < 1) {
             return null;
+        }
         for (String encode : _defaultCharsets) {
             try {
                 Charset charset = Charset.forName(encode);
-                if (str.equals(new String(str.getBytes(charset), charset)))
+                if (str.equals(new String(str.getBytes(charset), charset))) {
                     return charset;
+                }
             } catch (Exception er) {
             }
         }

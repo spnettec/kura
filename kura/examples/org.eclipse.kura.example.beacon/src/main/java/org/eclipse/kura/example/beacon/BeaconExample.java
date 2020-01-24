@@ -232,7 +232,7 @@ public class BeaconExample implements ConfigurableComponent, BluetoothBeaconComm
         if (value <= max && value >= min) {
             return value;
         } else {
-            return (value > max) ? max : min;
+            return value > max ? max : min;
         }
     }
 

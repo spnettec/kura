@@ -33,11 +33,11 @@ public abstract class BlockTask extends Block {
      * Creates a new {@link BlockTask}
      *
      * @param start
-     *            the start address of the interval involved by the operation
+     *                  the start address of the interval involved by the operation
      * @param end
-     *            the end address of the interval involved by the operation
+     *                  the end address of the interval involved by the operation
      * @param mode
-     *            the {@link Mode} of the operation
+     *                  the {@link Mode} of the operation
      */
     public BlockTask(int start, int end, Mode mode) {
         super(start, end);
@@ -50,7 +50,7 @@ public abstract class BlockTask extends Block {
      *
      * @see BlockTaskAggregator
      * @param parent
-     *            the parent task
+     *                   the parent task
      */
     public void setParent(ToplevelBlockTask parent) {
         this.parent = parent;
@@ -78,7 +78,7 @@ public abstract class BlockTask extends Block {
      * Performs the operation described by this task.
      *
      * @throws IOException
-     *             If an I/O error occurs during the operation
+     *                         If an I/O error occurs during the operation
      */
     public abstract void run() throws IOException;
 
@@ -86,7 +86,7 @@ public abstract class BlockTask extends Block {
      * Notifies this task that the operation performed by the parent task is failed.
      *
      * @param reason
-     *            An {@link Exception} instance describing the reason of the failure
+     *                   An {@link Exception} instance describing the reason of the failure
      */
     public abstract void onFailure(Exception exception);
 

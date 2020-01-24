@@ -50,7 +50,7 @@ public class BluetoothLeIBeaconDecoderImpl implements BluetoothLeIBeaconDecoder 
      * See Bluetooth Core 4.0; 8 EXTENDED INQUIRY RESPONSE DATA FORMAT
      *
      * @param b
-     *            Array containing EIR data
+     *              Array containing EIR data
      * @return BluetoothLeIBeacon or null if no beacon data present
      */
     private static BluetoothLeIBeacon parseEIRData(byte[] b) {

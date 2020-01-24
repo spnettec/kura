@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -56,19 +56,19 @@ public interface Asset {
      * thrown.
      *
      * @param channelNames
-     *            the set of channel names which are to be read. The channel name
-     *            must be unique for every channel belonging to an asset.
-     *            Channel names are case sensitive.
+     *                         the set of channel names which are to be read. The channel name
+     *                         must be unique for every channel belonging to an asset.
+     *                         Channel names are case sensitive.
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the asset then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the asset then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      * @throws KuraException
-     *             if the connection to the asset was interrupted, then error
-     *             code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
-     *             in the thrown {@link KuraException}.
+     *                                  if the connection to the asset was interrupted, then error
+     *                                  code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
+     *                                  in the thrown {@link KuraException}.
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      * @return the list of channel records which comprises the currently read
      *         value in case of success or the reason of failure
      */
@@ -77,17 +77,17 @@ public interface Asset {
     /**
      * Performs a read on all READ or READ_WRITE channels that are defined on this asset and returns
      * the result as a list of {@link ChannelRecord} instances.
-     * 
+     *
      * @see Asset#read(List)
      *
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the asset then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the asset then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      * @throws KuraException
-     *             if the connection to the asset was interrupted, then error
-     *             code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
-     *             in the thrown {@link KuraException}.
+     *                                  if the connection to the asset was interrupted, then error
+     *                                  code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
+     *                                  in the thrown {@link KuraException}.
      * @return the list of channel records which comprises the currently read
      *         value in case of success or the reason of failure
      */
@@ -98,28 +98,28 @@ public interface Asset {
      * operation on it.
      *
      * @param channelName
-     *            the channel name. The channel name
-     *            must be unique for every channel belonging to an asset.
-     *            Channel names are case sensitive.
+     *                            the channel name. The channel name
+     *                            must be unique for every channel belonging to an asset.
+     *                            Channel names are case sensitive.
      * @param channelListener
-     *            the channel listener
+     *                            the channel listener
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the asset then specific
-     *             error code {@link KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                      if the method is not implemented by the asset then specific
+     *                                      error code {@link KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                      needs to be set in the thrown {@link KuraRuntimeException}
      * @throws KuraException
-     *             if the connection to the asset was interrupted, then error
-     *             code {@link KuraErrorCode#CONNECTION_FAILED} needs to be set
-     *             in the thrown {@link KuraException} and if the channel is not
-     *             present, error code {@link KuraErrorCode#INTERNAL_ERROR}
-     *             needs to be set in the thrown {@link KuraException}. For any
-     *             other internal exception, then error code
-     *             {@link KuraErrorCode#INTERNAL_ERROR} will be set.
+     *                                      if the connection to the asset was interrupted, then error
+     *                                      code {@link KuraErrorCode#CONNECTION_FAILED} needs to be set
+     *                                      in the thrown {@link KuraException} and if the channel is not
+     *                                      present, error code {@link KuraErrorCode#INTERNAL_ERROR}
+     *                                      needs to be set in the thrown {@link KuraException}. For any
+     *                                      other internal exception, then error code
+     *                                      {@link KuraErrorCode#INTERNAL_ERROR} will be set.
      * @throws NullPointerException
-     *             if any of the arguments is null
+     *                                      if any of the arguments is null
      * @throws IllegalArgumentException
-     *             If the provided channel name is not present in the configuration
-     *             of this asset
+     *                                      If the provided channel name is not present in the configuration
+     *                                      of this asset
      */
     public void registerChannelListener(String channelName, ChannelListener channelListener) throws KuraException;
 
@@ -128,16 +128,16 @@ public interface Asset {
      * for a monitor operation
      *
      * @param channelListener
-     *            the channel listener to unregister
+     *                            the channel listener to unregister
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the asset then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the asset then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      * @throws KuraException
-     *             For any other internal exception, then error code
-     *             {@code KuraErrorCode#INTERNAL_ERROR} will be set.
+     *                                  For any other internal exception, then error code
+     *                                  {@code KuraErrorCode#INTERNAL_ERROR} will be set.
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     public void unregisterChannelListener(ChannelListener channelListener) throws KuraException;
 
@@ -151,20 +151,20 @@ public interface Asset {
      * thrown.
      *
      * @param channelRecords
-     *            the channel records hold the information of what channels are to
-     *            be written and the values that are to be written. They will be
-     *            filled by this function with a channel flag stating whether the
-     *            write process is successful or not.
+     *                           the channel records hold the information of what channels are to
+     *                           be written and the values that are to be written. They will be
+     *                           filled by this function with a channel flag stating whether the
+     *                           write process is successful or not.
      * @throws KuraRuntimeException
-     *             if the method is not implemented by the asset then specific
-     *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
-     *             needs to be set in the thrown {@link KuraRuntimeException}
+     *                                  if the method is not implemented by the asset then specific
+     *                                  error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
+     *                                  needs to be set in the thrown {@link KuraRuntimeException}
      * @throws KuraException
-     *             if the connection to the asset was interrupted, then error
-     *             code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
-     *             in the thrown {@link KuraException}
+     *                                  if the connection to the asset was interrupted, then error
+     *                                  code {@code KuraErrorCode#CONNECTION_FAILED} needs to be set
+     *                                  in the thrown {@link KuraException}
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     public void write(List<ChannelRecord> channelRecords) throws KuraException;
 

@@ -12,6 +12,7 @@
 package org.eclipse.kura.web.shared.model;
 
 public enum GwtWifiRadioMode {
+
     netWifiRadioModeBGN,
     netWifiRadioModeBG,
     netWifiRadioModeB,
@@ -21,7 +22,7 @@ public enum GwtWifiRadioMode {
      * Return mode based on given string
      *
      * @param mode
-     *            - "a", "b", "g", or "n"
+     *                 - "a", "b", "g", or "n"
      * @return
      */
     public static GwtWifiRadioMode getRadioMode(String mode) {

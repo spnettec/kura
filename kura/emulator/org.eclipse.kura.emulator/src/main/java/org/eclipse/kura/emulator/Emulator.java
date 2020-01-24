@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License v1.0 which
@@ -32,10 +32,10 @@ public class Emulator {
 
     private static final String SNAPSHOT_0_NAME = "snapshot_0.xml";
     private static final Logger logger = LoggerFactory.getLogger(Emulator.class);
-    private ComponentContext m_componentContext;
+    private ComponentContext componentContext;
 
     protected void activate(ComponentContext componentContext) {
-        this.m_componentContext = componentContext;
+        this.componentContext = componentContext;
 
         try {
             String mode = System.getProperty(KURA_MODE);
@@ -46,10 +46,11 @@ public class Emulator {
             }
             final String snapshotFolderPath = System.getProperty(KURA_SNAPSHOTS_PATH);
             if (snapshotFolderPath == null || snapshotFolderPath.isEmpty()) {
-                if (!EMULATOR.equals(mode))
+                if (!EMULATOR.equals(mode)) {
                     return;
-                else
+                } else {
                     throw new IllegalStateException("System property 'kura.snapshots' is not set");
+                }
             }
             final File snapshotFolder = new File(snapshotFolderPath);
             if (!snapshotFolder.exists()
@@ -65,19 +66,26 @@ public class Emulator {
     }
 
     protected void deactivate(ComponentContext componentContext) {
-        this.m_componentContext = null;
+        this.componentContext = null;
     }
 
     private void copySnapshot(String snapshotFolderPath) throws IOException {
-        URL internalSnapshotURL = this.m_componentContext.getBundleContext().getBundle().getResource(SNAPSHOT_0_NAME);
-        try (InputStream fileInput = internalSnapshotURL.openStream();
-                OutputStream fileOutput = new FileOutputStream(snapshotFolderPath + File.separator + SNAPSHOT_0_NAME)) {
-
+        InputStream fileInput = null;
+        OutputStream fileOutput = null;
+        try {
+            URL internalSnapshotURL = this.componentContext.getBundleContext().getBundle().getResource(SNAPSHOT_0_NAME);
+            fileInput = internalSnapshotURL.openStream();
+            fileOutput = new FileOutputStream(snapshotFolderPath + File.separator + SNAPSHOT_0_NAME);
             if (fileInput != null) {
                 IOUtils.copy(fileInput, fileOutput);
             }
-        } catch (Exception e) {
-            logger.error("copy snapshot file error", e);
+        } finally {
+            if (fileOutput != null) {
+                fileOutput.close();
+            }
+            if (fileInput != null) {
+                fileInput.close();
+            }
         }
     }
 }

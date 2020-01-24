@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and others
+ * Copyright (c) 2011, 2020 Eurotech and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -284,12 +284,12 @@ public class LinuxProcessUtil {
     /**
      * This method takes a pid and returns a boolean that defines if the corresponding process is running or not in the
      * host system.
-     * 
+     *
      * @param pid
-     *            integer representing the process id that has to be verified.
+     *                integer representing the process id that has to be verified.
      * @return true if the process in running in the system, false otherwise.
      * @throws IOException
-     *             if an I/O or execution error occurs
+     *                         if an I/O or execution error occurs
      */
     public static boolean isProcessRunning(int pid) throws IOException {
         boolean isRunning = false;
@@ -333,9 +333,9 @@ public class LinuxProcessUtil {
      * still alive, the code invokes a kill operation.
      *
      * @param pid
-     *            An int representing the linux pid.
+     *                An int representing the linux pid.
      * @throws KuraException
-     *             Thrown if one of the executed operations generate an exception.
+     *                           Thrown if one of the executed operations generate an exception.
      * @since {@link org.eclipse.kura.core.linux.util} 1.1.0
      */
     public static boolean stopAndKill(int pid) throws KuraException {

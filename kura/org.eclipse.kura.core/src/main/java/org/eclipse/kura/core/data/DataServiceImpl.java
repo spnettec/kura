@@ -616,8 +616,9 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
                                     .getAndIncrement() < DataServiceImpl.this.dataServiceOptions
                                             .getRecoveryMaximumAllowedFailures()) {
                                 logger.info("Checkin done.");
-                                if (DataServiceImpl.this.watchdogService != null)
+                                if (DataServiceImpl.this.watchdogService != null) {
                                     DataServiceImpl.this.watchdogService.checkin(DataServiceImpl.this);
+                                }
                             } else {
                                 logger.info("Maximum number of connection attempts reached. Requested reboot...");
                             }
@@ -682,8 +683,9 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
     }
 
     private void unregisterAsCriticalComponent() {
-        if (this.watchdogService != null)
+        if (this.watchdogService != null) {
             this.watchdogService.unregisterCriticalComponent(this);
+        }
     }
 
     private void disconnect() {

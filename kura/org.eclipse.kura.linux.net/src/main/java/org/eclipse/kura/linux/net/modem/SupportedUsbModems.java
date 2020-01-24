@@ -160,10 +160,10 @@ public class SupportedUsbModems {
      * Execute command and return splitted lines
      *
      * @param command
-     *            the command to execute
+     *                    the command to execute
      * @return the lines output by the command
      * @throws IOException
-     *             if executing the commands fails
+     *                         if executing the commands fails
      */
     private static List<String> execute(final String commandLine, CommandExecutorService executorService)
             throws IOException {
@@ -172,7 +172,7 @@ public class SupportedUsbModems {
         command.setOutputStream(new ByteArrayOutputStream());
 
         CommandStatus status = executorService.execute(command);
-        logger.debug("Called {} - rc = {}", commandLine, (Integer) status.getExitStatus().getExitCode());
+        logger.debug("Called {} - rc = {}", commandLine, status.getExitStatus().getExitCode());
 
         return IOUtils
                 .readLines(new ByteArrayInputStream(((ByteArrayOutputStream) command.getOutputStream()).toByteArray()));

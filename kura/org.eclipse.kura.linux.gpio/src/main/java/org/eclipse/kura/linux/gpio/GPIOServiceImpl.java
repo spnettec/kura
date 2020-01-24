@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2018 Eurotech and others
+ * Copyright (c) 2011, 2020 Eurotech and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -8,7 +8,7 @@
  *
  * Contributors:
  *     Eurotech
- *     Red Hat Inc - Clean up kura properties handling
+ *     Red Hat Inc
  *******************************************************************************/
 package org.eclipse.kura.linux.gpio;
 
@@ -36,7 +36,8 @@ public class GPIOServiceImpl implements GPIOService {
 
     private static final Logger logger = LoggerFactory.getLogger(GPIOServiceImpl.class);
 
-    private static final HashSet<JdkDioPin> pins = new HashSet<JdkDioPin>();
+    @SuppressWarnings("checkstyle:constantName")
+    private static final HashSet<JdkDioPin> pins = new HashSet<>();
 
     private SystemService systemService;
 
@@ -52,7 +53,7 @@ public class GPIOServiceImpl implements GPIOService {
      * Test if a file is available for loading
      *
      * @param path
-     *            the path to test
+     *                 the path to test
      * @return the path from input which can be used for loading, {@code null}
      *         if the file is not present or should not be used for loading
      */
@@ -232,7 +233,7 @@ public class GPIOServiceImpl implements GPIOService {
 
     @Override
     public Map<Integer, String> getAvailablePins() {
-        HashMap<Integer, String> result = new HashMap<Integer, String>();
+        HashMap<Integer, String> result = new HashMap<>();
         for (JdkDioPin p : pins) {
             result.put(p.getIndex(), p.getName());
         }

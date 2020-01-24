@@ -42,16 +42,17 @@ public final class ServiceUtil {
      * and OSGi filter.
      *
      * @param bundleContext
-     *            OSGi bundle context
+     *                          OSGi bundle context
      * @param clazz
-     *            qualified class type
+     *                          qualified class type
      * @param filter
-     *            valid OSGi filter (can be {@code null})
+     *                          valid OSGi filter (can be {@code null})
      * @return {@code non-null} array of references to matching services
      * @throws NullPointerException
-     *             if {@code bundleContext} or {@code clazz} is {@code null}
+     *                                      if {@code bundleContext} or {@code clazz} is {@code null}
      * @throws IllegalArgumentException
-     *             if the specified {@code filter} contains an invalid filter expression that cannot be parsed.
+     *                                      if the specified {@code filter} contains an invalid filter expression that
+     *                                      cannot be parsed.
      */
     @SuppressWarnings("unchecked")
     public static <T> ServiceReference<T>[] getServiceReferences(final BundleContext bundleContext,
@@ -74,11 +75,11 @@ public final class ServiceUtil {
      * is decremented by one.
      *
      * @param bundleContext
-     *            OSGi bundle context
+     *                          OSGi bundle context
      * @param refs
-     *            {@code non-null} array of all service references
+     *                          {@code non-null} array of all service references
      * @throws NullPointerException
-     *             if any of the arguments is {@code null}
+     *                                  if any of the arguments is {@code null}
      */
     public static void ungetServiceReferences(final BundleContext bundleContext, final ServiceReference<?>[] refs) {
         requireNonNull(bundleContext, "Bundle context cannot be null.");
@@ -93,19 +94,19 @@ public final class ServiceUtil {
      * Waits for the specified amount of time for the services that matches the provided OSGi filter
      *
      * @param filter
-     *            valid OSGi filter to match
+     *                     valid OSGi filter to match
      * @param timeout
-     *            the timeout period
+     *                     the timeout period
      * @param timeunit
-     *            the {@link TimeUnit} for the timeout
+     *                     the {@link TimeUnit} for the timeout
      * @throws NullPointerException
-     *             if the provided filter or the {@link TimeUnit} is {@code null}
+     *                                      if the provided filter or the {@link TimeUnit} is {@code null}
      * @throws IllegalArgumentException
-     *             if the timeout period is {@code zero} or {@code negative}
+     *                                      if the timeout period is {@code zero} or {@code negative}
      * @throws InterruptedException
-     *             if another thread has interrupted the current worker thread
+     *                                      if another thread has interrupted the current worker thread
      * @throws InvalidSyntaxException
-     *             if the provided filter syntax is erroneous
+     *                                      if the provided filter syntax is erroneous
      * @return an {@link Optional} with the tracked service instance if the service instance
      *         is {@code non-null}, otherwise an empty {@link Optional}
      */

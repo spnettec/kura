@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -77,7 +77,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * Note that the default subscription of a CloudClient allows remote servers
  * or applications running on other devices to publish messages addressed
  * to specific applications running on specific devices.
- * 
+ *
  * @noimplement This interface is not intended to be implemented by clients.
  * @deprecated Please consider using {@link CloudPublisher} and {@link CloudSubscriber}
  */
@@ -120,16 +120,16 @@ public interface CloudClient {
      * they are still in transit.
      *
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int publish(String appTopic, KuraPayload payload, int qos, boolean retain) throws KuraException;
 
@@ -145,18 +145,18 @@ public interface CloudClient {
      * they are still in transit.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      * @since 1.2
      */
     public int publish(String deviceId, String appTopic, KuraPayload payload, int qos, boolean retain)
@@ -186,18 +186,19 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int publish(String appTopic, KuraPayload payload, int qos, boolean retain, int priority)
             throws KuraException;
@@ -226,20 +227,21 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      * @since 1.2
      */
     public int publish(String deviceId, String appTopic, KuraPayload payload, int qos, boolean retain, int priority)
@@ -269,18 +271,19 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            Binary payload representing the message to be published
+     *                     Binary payload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int publish(String appTopic, byte[] payload, int qos, boolean retain, int priority) throws KuraException;
 
@@ -308,20 +311,21 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String specifying the application portion of the topic the message is published on.
+     *                     A String specifying the application portion of the topic the message is published on.
      * @param payload
-     *            Binary payload representing the message to be published
+     *                     Binary payload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      * @since 1.2
      */
     public int publish(String deviceId, String appTopic, byte[] payload, int qos, boolean retain, int priority)
@@ -353,18 +357,19 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param appTopic
-     *            A String specifying the application topic the message is published on.
+     *                     A String specifying the application topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int controlPublish(String appTopic, KuraPayload payload, int qos, boolean retain, int priority)
             throws KuraException;
@@ -395,20 +400,21 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String specifying the application topic the message is published on.
+     *                     A String specifying the application topic the message is published on.
      * @param payload
-     *            An KuraPayload representing the message to be published
+     *                     An KuraPayload representing the message to be published
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message
+     *                     Whether or not the broker should retain the message
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int controlPublish(String deviceId, String appTopic, KuraPayload payload, int qos, boolean retain,
             int priority) throws KuraException;
@@ -439,20 +445,21 @@ public interface CloudClient {
      * - birth and death certificates - and replies to request/response flows.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String specifying the application topic the message is published on.
+     *                     A String specifying the application topic the message is published on.
      * @param payload
-     *            Binary payload representing the message to be published.
+     *                     Binary payload representing the message to be published.
      * @param qos
-     *            An integer specifying the quality of service the message was published on.
+     *                     An integer specifying the quality of service the message was published on.
      * @param retain
-     *            Whether or not the broker should retain the message.
+     *                     Whether or not the broker should retain the message.
      * @param priority
-     *            Relative ordering of this message with other messages that may be currently queued for publishing.
+     *                     Relative ordering of this message with other messages that may be currently queued for
+     *                     publishing.
      * @return The published message's ID.
      * @throws KuraException
-     *             if one of the message composition or message publishing operation fails.
+     *                           if one of the message composition or message publishing operation fails.
      */
     public int controlPublish(String deviceId, String appTopic, byte[] payload, int qos, boolean retain, int priority)
             throws KuraException;
@@ -466,11 +473,11 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @param qos
-     *            An int containing the Quality of Service.
+     *                     An int containing the Quality of Service.
      * @throws KuraException
-     *             if the subscription fails.
+     *                           if the subscription fails.
      */
     public void subscribe(String appTopic, int qos) throws KuraException;
 
@@ -483,13 +490,13 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @param qos
-     *            An int containing the Quality of Service.
+     *                     An int containing the Quality of Service.
      * @throws KuraException
-     *             if the subscription fails.
+     *                           if the subscription fails.
      * @since 1.2
      */
     public void subscribe(String deviceId, String appTopic, int qos) throws KuraException;
@@ -503,11 +510,11 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @param qos
-     *            An int containing the Quality of Service.
+     *                     An int containing the Quality of Service.
      * @throws KuraException
-     *             if the subscription fails.
+     *                           if the subscription fails.
      */
     public void controlSubscribe(String appTopic, int qos) throws KuraException;
 
@@ -520,13 +527,13 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @param qos
-     *            An int containing the Quality of Service.
+     *                     An int containing the Quality of Service.
      * @throws KuraException
-     *             if the subscription fails.
+     *                           if the subscription fails.
      * @since 1.2
      */
     public void controlSubscribe(String deviceId, String appTopic, int qos) throws KuraException;
@@ -540,9 +547,9 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @throws KuraException
-     *             if the unsubscription fails.
+     *                           if the unsubscription fails.
      */
     public void unsubscribe(String appTopic) throws KuraException;
 
@@ -555,11 +562,11 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @throws KuraException
-     *             if the unsubscription fails.
+     *                           if the unsubscription fails.
      * @since 1.2
      */
     public void unsubscribe(String deviceId, String appTopic) throws KuraException;
@@ -573,9 +580,9 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @throws KuraException
-     *             if the unsubscription fails.
+     *                           if the unsubscription fails.
      */
     public void controlUnsubscribe(String appTopic) throws KuraException;
 
@@ -588,11 +595,11 @@ public interface CloudClient {
      * that will contain information about the cause of the failure.
      *
      * @param deviceId
-     *            A String specifying the device ID.
+     *                     A String specifying the device ID.
      * @param appTopic
-     *            A String object containing the application topic.
+     *                     A String object containing the application topic.
      * @throws KuraException
-     *             if the unsubscription fails.
+     *                           if the unsubscription fails.
      * @since 1.2
      */
     public void controlUnsubscribe(String deviceId, String appTopic) throws KuraException;
@@ -603,7 +610,7 @@ public interface CloudClient {
      * when a publish has been fully acknowledged by the remote server.
      *
      * @param cloudClientListener
-     *            An implementation of the CloudCallbackHandler interface.
+     *                                An implementation of the CloudCallbackHandler interface.
      */
     public void addCloudClientListener(CloudClientListener cloudClientListener);
 
@@ -619,7 +626,7 @@ public interface CloudClient {
      *
      * @return a list of integers.
      * @throws KuraException
-     *             if the operation fails.
+     *                           if the operation fails.
      */
     List<Integer> getUnpublishedMessageIds() throws KuraException;
 
@@ -630,7 +637,7 @@ public interface CloudClient {
      *
      * @return a list of integers.
      * @throws KuraException
-     *             if the operation fails.
+     *                           if the operation fails.
      */
     List<Integer> getInFlightMessageIds() throws KuraException;
 
@@ -645,7 +652,7 @@ public interface CloudClient {
      *
      * @return a list of integers.
      * @throws KuraException
-     *             if the operation fails.
+     *                           if the operation fails.
      */
     List<Integer> getDroppedInFlightMessageIds() throws KuraException;
 }

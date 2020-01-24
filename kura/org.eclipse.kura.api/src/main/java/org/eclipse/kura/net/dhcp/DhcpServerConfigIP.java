@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -20,7 +20,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The abstract representation of a DhcpServerConfig object.
  *
  * @param <T>
- *            is the an appropriate subclass of IPAddress
+ *                is the an appropriate subclass of IPAddress
  *
  * @noextend This class is not intended to be subclassed by clients.
  */
@@ -44,29 +44,29 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * The basic Constructor for a DhcpServerConfigIP
      *
      * @param interfaceName
-     *            the interface name associated with the DhcpServerConfig
+     *                             the interface name associated with the DhcpServerConfig
      * @param enabled
-     *            the status of the DhcpServer as a boolean
+     *                             the status of the DhcpServer as a boolean
      * @param subnet
-     *            the subnet of the DhcpServerConfig
+     *                             the subnet of the DhcpServerConfig
      * @param routerAddress
-     *            the router IPAddress
+     *                             the router IPAddress
      * @param subnetMask
-     *            the subnet mask of the DhcpServerConfig
+     *                             the subnet mask of the DhcpServerConfig
      * @param defaultLeaseTime
-     *            the default lease time to issue to DHCP clients
+     *                             the default lease time to issue to DHCP clients
      * @param maximumLeaseTime
-     *            the maximum lease time to issue to DHCP clients
+     *                             the maximum lease time to issue to DHCP clients
      * @param prefix
-     *            the network prefix associated with the DhcpServerConfig
+     *                             the network prefix associated with the DhcpServerConfig
      * @param rangeStart
-     *            the network starting address to issue to DHCP clients
+     *                             the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *            the network ending address to issue to DHCP clients
+     *                             the network ending address to issue to DHCP clients
      * @param passDns
-     *            whether or not to pass DNS to DHCP clients
+     *                             whether or not to pass DNS to DHCP clients
      * @param dnsServers
-     *            the DNS servers that will get passed to DHCP clients if passDns is true
+     *                             the DNS servers that will get passed to DHCP clients if passDns is true
      */
     @Deprecated
     public DhcpServerConfigIP(String interfaceName, boolean enabled, T subnet, T routerAddress, T subnetMask,
@@ -87,27 +87,29 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
         this.passDns = passDns;
         this.dnsServers = dnsServers;
     }
-    
+
     /**
      * The basic Constructor for a DhcpServerConfigIP
-     * 
-     * @param dhcpServerCfg DHCP server configuration
-     * @param dhcpServerCfgIP 'network' configuration 
+     *
+     * @param dhcpServerCfg
+     *                            DHCP server configuration
+     * @param dhcpServerCfgIP
+     *                            'network' configuration
      * @since 1.2
      */
     public DhcpServerConfigIP(DhcpServerCfg dhcpServerCfg, DhcpServerCfgIP<T> dhcpServerCfgIP) {
-    	 this.interfaceName = dhcpServerCfg.getInterfaceName();
-         this.enabled = dhcpServerCfg.isEnabled();
-         this.subnet = dhcpServerCfgIP.getSubnet();
-         this.routerAddress = dhcpServerCfgIP.getRouterAddress();
-         this.subnetMask = dhcpServerCfgIP.getSubnetMask();
-         this.defaultLeaseTime = dhcpServerCfg.getDefaultLeaseTime();
-         this.maximumLeaseTime = dhcpServerCfg.getMaximumLeaseTime();
-         this.prefix = dhcpServerCfgIP.getPrefix();
-         this.rangeStart = dhcpServerCfgIP.getRangeStart();
-         this.rangeEnd = dhcpServerCfgIP.getRangeEnd();
-         this.passDns = dhcpServerCfg.isPassDns();
-         this.dnsServers = dhcpServerCfgIP.getDnsServers();
+        this.interfaceName = dhcpServerCfg.getInterfaceName();
+        this.enabled = dhcpServerCfg.isEnabled();
+        this.subnet = dhcpServerCfgIP.getSubnet();
+        this.routerAddress = dhcpServerCfgIP.getRouterAddress();
+        this.subnetMask = dhcpServerCfgIP.getSubnetMask();
+        this.defaultLeaseTime = dhcpServerCfg.getDefaultLeaseTime();
+        this.maximumLeaseTime = dhcpServerCfg.getMaximumLeaseTime();
+        this.prefix = dhcpServerCfgIP.getPrefix();
+        this.rangeStart = dhcpServerCfgIP.getRangeStart();
+        this.rangeEnd = dhcpServerCfgIP.getRangeEnd();
+        this.passDns = dhcpServerCfg.isPassDns();
+        this.dnsServers = dhcpServerCfgIP.getDnsServers();
     }
 
     @Override
@@ -119,7 +121,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the interface name for the DhcpServerConfig
      *
      * @param interfaceName
-     *            the interface name in the form of a {@link String}
+     *                          the interface name in the form of a {@link String}
      */
     public void setInterfaceName(String interfaceName) {
         this.interfaceName = interfaceName;
@@ -134,7 +136,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the status for the DhcpServerConfig
      *
      * @param enabled
-     *            the Dhcp Server status in the form of a {@link boolean}
+     *                    the Dhcp Server status in the form of a {@link boolean}
      */
     public void setEnabledRouterMode(boolean enabled) {
         this.enabled = enabled;
@@ -149,7 +151,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the subnet for the DhcpServerConfig
      *
      * @param subnet
-     *            the subnet in the form of a {@link IPAddress}
+     *                   the subnet in the form of a {@link IPAddress}
      */
     public void setSubnet(T subnet) {
         this.subnet = subnet;
@@ -164,7 +166,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the router IPAddress for the DhcpServerConfig
      *
      * @param routerAddress
-     *            the router IPAddress in the form of a {@link IPAddress}
+     *                          the router IPAddress in the form of a {@link IPAddress}
      */
     public void setRouterAddress(T routerAddress) {
         this.routerAddress = routerAddress;
@@ -179,7 +181,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the subnet mask for the DhcpServerConfig
      *
      * @param subnetMask
-     *            the subnet mask in the form of a {@link IPAddress}
+     *                       the subnet mask in the form of a {@link IPAddress}
      */
     public void setSubnetMask(T subnetMask) {
         this.subnetMask = subnetMask;
@@ -194,7 +196,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the default lease time for DHCP clients
      *
      * @param defaultLeaseTime
-     *            the default lease time
+     *                             the default lease time
      */
     public void setDefaultLeaseTime(int defaultLeaseTime) {
         this.defaultLeaseTime = defaultLeaseTime;
@@ -209,7 +211,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the maximum lease time for DHCP clients
      *
      * @param maximumLeaseTime
-     *            the maximum lease time
+     *                             the maximum lease time
      */
     public void setMaximumLeaseTime(int maximumLeaseTime) {
         this.maximumLeaseTime = maximumLeaseTime;
@@ -224,7 +226,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the network prefix for the DhcpServerConfig
      *
      * @param prefix
-     *            the prefix
+     *                   the prefix
      */
     public void setPrefix(short prefix) {
         this.prefix = prefix;
@@ -239,7 +241,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the starting IPAddress in the pool for the DHCP clients
      *
      * @param m_rangeStart
-     *            the starting IPAddress
+     *                         the starting IPAddress
      */
     public void setRangeStart(T rangeStart) {
         this.rangeStart = rangeStart;
@@ -254,7 +256,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the ending IPAddress in the pool for the DHCP clients
      *
      * @param rangeEnd
-     *            the ending IPAddress
+     *                     the ending IPAddress
      */
     public void setRangeEnd(T rangeEnd) {
         this.rangeEnd = rangeEnd;
@@ -269,7 +271,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * whether or not to pass DNS to DHCP clients
      *
      * @param passDns
-     *            true to pass, false to not
+     *                    true to pass, false to not
      */
     public void setPassDns(boolean passDns) {
         this.passDns = passDns;
@@ -284,7 +286,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * the DNS servers to pass to DHCP clients if passDns is set to true
      *
      * @param m_dnsServers
-     *            the DNS servers to pass
+     *                         the DNS servers to pass
      */
     public void setDnsServers(List<T> dnsServers) {
         this.dnsServers = dnsServers;
@@ -292,25 +294,25 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
 
     @Override
     public boolean isValid() {
-		if (this.interfaceName == null || !isValidSubnet() ) {
-			return false;
-		}
+        if (this.interfaceName == null || !isValidSubnet()) {
+            return false;
+        }
         if (!isValidPoolRange() || !isValidLeaseTime() || this.prefix <= 0) {
-        	return false;
+            return false;
         }
         return true;
     }
-    
+
     private boolean isValidSubnet() {
-    	return (this.subnet != null && this.subnetMask != null)? true : false;
+        return this.subnet != null && this.subnetMask != null ? true : false;
     }
-    
+
     private boolean isValidPoolRange() {
-    	return (this.rangeStart !=null && this.rangeEnd != null)? true : false;
+        return this.rangeStart != null && this.rangeEnd != null ? true : false;
     }
-    
+
     private boolean isValidLeaseTime() {
-    	return (this.defaultLeaseTime > 0 && this.maximumLeaseTime > 0)? true : false;
+        return this.defaultLeaseTime > 0 && this.maximumLeaseTime > 0 ? true : false;
     }
 
     @Override
@@ -321,8 +323,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
         sb.append("# prefix: ").append(this.prefix).append("\n");
         sb.append("# pass DNS? ").append(this.passDns).append("\n\n");
 
-        sb.append(
-                "subnet " + this.subnet.getHostAddress() + " netmask " + this.subnetMask.getHostAddress() + " {\n");
+        sb.append("subnet " + this.subnet.getHostAddress() + " netmask " + this.subnetMask.getHostAddress() + " {\n");
 
         // DNS servers
         if (this.passDns && this.dnsServers != null && !this.dnsServers.isEmpty()) {
@@ -360,38 +361,30 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
 
         // Add the pool and range
         sb.append("    pool {\n");
-        sb.append(
-                "        range " + this.rangeStart.getHostAddress() + " " + this.rangeEnd.getHostAddress() + ";\n");
+        sb.append("        range " + this.rangeStart.getHostAddress() + " " + this.rangeEnd.getHostAddress() + ";\n");
         sb.append("    }\n");
         sb.append("}\n");
 
         return sb.toString();
     }
-    
+
     @Override
     public int hashCode() {
-    	final int prime = 59;
-		int result = super.hashCode();
-		result = prime * result + (this.enabled? 1 : 0);
-		result = prime * result
-				+ ((this.interfaceName == null) ? 0 : this.interfaceName.hashCode());
-		result = prime * result
-				+ ((this.subnet == null) ? 0 : this.subnet.hashCode());
-		result = prime * result
-				+ ((this.subnetMask == null) ? 0 : this.subnetMask.hashCode());
-		result = prime * result
-				+ ((this.routerAddress == null) ? 0 : this.routerAddress.hashCode());
-		result = prime * result
-				+ ((this.rangeStart == null) ? 0 : this.rangeStart.hashCode());
-		result = prime * result
-				+ ((this.rangeEnd == null) ? 0 : this.rangeEnd.hashCode());
-		result = prime * result
-				+ ((this.dnsServers == null) ? 0 : this.dnsServers.hashCode());
-		result = prime * result + this.defaultLeaseTime;
-		result = prime * result + this.maximumLeaseTime;
-		result = prime * result + this.prefix;
-		result = prime * result + (this.passDns? 1 : 0);
-    	return result;
+        final int prime = 59;
+        int result = super.hashCode();
+        result = prime * result + (this.enabled ? 1 : 0);
+        result = prime * result + (this.interfaceName == null ? 0 : this.interfaceName.hashCode());
+        result = prime * result + (this.subnet == null ? 0 : this.subnet.hashCode());
+        result = prime * result + (this.subnetMask == null ? 0 : this.subnetMask.hashCode());
+        result = prime * result + (this.routerAddress == null ? 0 : this.routerAddress.hashCode());
+        result = prime * result + (this.rangeStart == null ? 0 : this.rangeStart.hashCode());
+        result = prime * result + (this.rangeEnd == null ? 0 : this.rangeEnd.hashCode());
+        result = prime * result + (this.dnsServers == null ? 0 : this.dnsServers.hashCode());
+        result = prime * result + this.defaultLeaseTime;
+        result = prime * result + this.maximumLeaseTime;
+        result = prime * result + this.prefix;
+        result = prime * result + (this.passDns ? 1 : 0);
+        return result;
     }
 
     @Override
