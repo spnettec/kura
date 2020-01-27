@@ -63,9 +63,9 @@ public class BlockTaskAggregator extends BlockAggregator<ToplevelBlockTask> {
 
     private void assignTasks(ToplevelBlockTask toplevelTask, ListIterator<Block> tasks) {
         Block next = null;
-        while (tasks.hasNext() && tasks.next().getEnd() <= toplevelTask.getEnd()) {
+        while (tasks.hasNext()) {
             next = tasks.next();
-            if (next instanceof BlockTask) {
+            if (next instanceof BlockTask && next.getEnd() <= toplevelTask.getEnd()) {
                 toplevelTask.addChild((BlockTask) next);
             }
         }
