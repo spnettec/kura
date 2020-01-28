@@ -245,7 +245,7 @@ public class ExecutorUtil {
     private static DefaultExecutor configureExecutor(Command command) {
         DefaultExecutor executor = new DefaultExecutor();
         int timeout = command.getTimeout();
-        ExecuteWatchdog watchdog = timeout == -1 ? new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT)
+        ExecuteWatchdog watchdog = timeout <= 0 ? new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT)
                 : new ExecuteWatchdog(timeout * 1000L);
         executor.setWatchdog(watchdog);
 

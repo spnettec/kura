@@ -365,6 +365,7 @@
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.util.wire.test@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
