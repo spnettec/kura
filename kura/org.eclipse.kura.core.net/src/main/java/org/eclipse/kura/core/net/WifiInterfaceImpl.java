@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -70,7 +70,7 @@ public class WifiInterfaceImpl<T extends WifiInterfaceAddress> extends AbstractN
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(super.toString());
-        if (this.capabilities != null && this.capabilities.size() > 0) {
+        if (this.capabilities != null && !this.capabilities.isEmpty()) {
             sb.append(" :: capabilities=");
             for (Capability capability : this.capabilities) {
                 sb.append(capability).append(" ");

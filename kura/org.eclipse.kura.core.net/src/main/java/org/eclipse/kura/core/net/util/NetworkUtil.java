@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -16,7 +16,10 @@ import org.slf4j.LoggerFactory;
 
 public final class NetworkUtil {
 
-    private static final Logger s_logger = LoggerFactory.getLogger(NetworkUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(NetworkUtil.class);
+
+    private static final String FULL_FORM_IP6_ADDRESS_IS_INVALID_MESSAGE = "fullFormIP6Address is invalid: ";
+    private static final String MAC_IS_INVALID_MESSAGE = "mac is invalid: ";
 
     private NetworkUtil() {
     }
@@ -62,7 +65,7 @@ public final class NetworkUtil {
                 hitZero = true;
             } else {
                 if (hitZero) {
-                    s_logger.error("received invalid mask: " + netmask);
+                    logger.error("received invalid mask: {}", netmask);
                     throw new IllegalArgumentException("netmask is invalid: " + netmask);
                 }
 
@@ -146,7 +149,7 @@ public final class NetworkUtil {
         String[] ip6Split = fullFormIP6Address.split(":");
 
         if (ip6Split.length != 8) {
-            throw new IllegalArgumentException("fullFormIP6Address is invalid: " + fullFormIP6Address);
+            throw new IllegalArgumentException(FULL_FORM_IP6_ADDRESS_IS_INVALID_MESSAGE + fullFormIP6Address);
         }
 
         for (int i = 0; i < 8; i++) {
@@ -155,14 +158,14 @@ public final class NetworkUtil {
                 int value = Integer.parseInt(octet, 16);
 
                 if (value < 0 || value > 0xFFFF) {
-                    throw new IllegalArgumentException("fullFormIP6Address is invalid: " + fullFormIP6Address);
+                    throw new IllegalArgumentException(FULL_FORM_IP6_ADDRESS_IS_INVALID_MESSAGE + fullFormIP6Address);
                 }
 
                 int k = i * 2;
                 retVal[k] = (byte) (value >>> 8 & 0xFF);
                 retVal[k + 1] = (byte) (value & 0xFF);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("fullFormIP6Address is invalid: " + fullFormIP6Address, e);
+                throw new IllegalArgumentException(FULL_FORM_IP6_ADDRESS_IS_INVALID_MESSAGE + fullFormIP6Address, e);
             }
         }
 
@@ -211,20 +214,20 @@ public final class NetworkUtil {
         String[] items = mac.split("\\:");
 
         if (items.length != 6) {
-            throw new IllegalArgumentException("mac is invalid: " + mac);
+            throw new IllegalArgumentException(MAC_IS_INVALID_MESSAGE + mac);
         }
 
         byte[] bytes = new byte[6];
         for (int i = 0; i < 6; i++) {
             String item = items[i];
             if (item.isEmpty() || item.length() > 2) {
-                throw new IllegalArgumentException("mac is invalid: " + mac);
+                throw new IllegalArgumentException(MAC_IS_INVALID_MESSAGE + mac);
             }
 
             try {
                 bytes[i] = (byte) Integer.parseInt(items[i], 16);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("mac is invalid: " + mac, e);
+                throw new IllegalArgumentException(MAC_IS_INVALID_MESSAGE + mac, e);
             }
         }
 
