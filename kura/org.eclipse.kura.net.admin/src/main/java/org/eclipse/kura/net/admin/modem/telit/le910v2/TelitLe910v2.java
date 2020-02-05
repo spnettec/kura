@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2017, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -81,7 +81,6 @@ public class TelitLe910v2 extends TelitHe910 implements HspaCellularModem {
                     throw new KuraException(KuraErrorCode.NOT_CONNECTED, MODEM_NOT_AVAILABLE_FOR_AT_CMDS_MSG);
                 }
 
-                // TODO: we need an explicit initialization method.
                 if (!this.initialized) {
                     initialize(commAtConnection);
                 }
@@ -168,7 +167,8 @@ public class TelitLe910v2 extends TelitHe910 implements HspaCellularModem {
                     throw new KuraException(KuraErrorCode.CONNECTION_FAILED, "Set PDP context command failed");
                 }
                 if (configContext.getNumber() == 1) {
-                    String message = "FIXME: context #1 has been modified and will be updated on the network when PPP starts (e.g. LE910-EU1 fw v.20.00.412). This may lead to an unreasponsive modem";
+                    String message = "FIXME: context #1 has been modified and will be updated on the network when "
+                            + "PPP starts (e.g. LE910-EU1 fw v.20.00.412). This may lead to an unreasponsive modem";
                     logger.warn(message);
                 }
             }
@@ -276,13 +276,14 @@ public class TelitLe910v2 extends TelitHe910 implements HspaCellularModem {
                     if (resp.contains("OK")) {
                         if (enabled) {
                             logger.info("CELL DIV successfully enabled");
-                            this.setDiversityEnabled(true);
+                            setDiversityEnabled(true);
                         } else {
                             logger.info("CELL DIV successfully disabled");
-                            this.setDiversityEnabled(false);
+                            setDiversityEnabled(false);
                         }
-                    } else
+                    } else {
                         logger.info("Command returns : {}", resp);
+                    }
                 } else {
                     logger.error("No answer");
                 }

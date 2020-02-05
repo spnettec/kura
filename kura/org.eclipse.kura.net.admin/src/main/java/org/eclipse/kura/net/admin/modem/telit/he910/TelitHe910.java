@@ -48,11 +48,11 @@ public class TelitHe910 extends TelitModem implements HspaCellularModem {
      * TelitHe910 modem constructor
      *
      * @param usbDevice
-     *                              - modem USB device as {@link UsbModemDevice}
+     *            - modem USB device as {@link UsbModemDevice}
      * @param platform
-     *                              - hardware platform as {@link String}
+     *            - hardware platform as {@link String}
      * @param connectionFactory
-     *                              - connection factory {@link ConnectionFactory}
+     *            - connection factory {@link ConnectionFactory}
      */
     public TelitHe910(ModemDevice device, String platform, ConnectionFactory connectionFactory) {
 

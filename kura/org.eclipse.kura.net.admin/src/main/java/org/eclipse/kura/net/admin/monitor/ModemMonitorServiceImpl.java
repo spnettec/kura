@@ -441,8 +441,9 @@ public class ModemMonitorServiceImpl implements ModemMonitorService, ModemManage
         }
         logger.info("old diversity = {},  new diversity = {}", oldModemConfig.isDiversityEnabled(),
                 newModemConfig.isDiversityEnabled());
-        if (oldModemConfig.isDiversityEnabled() != newModemConfig.isDiversityEnabled())
+        if (oldModemConfig.isDiversityEnabled() != newModemConfig.isDiversityEnabled()) {
             ret = false;
+        }
         return ret;
     }
 

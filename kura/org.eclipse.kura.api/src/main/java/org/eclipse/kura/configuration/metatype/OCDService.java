@@ -14,7 +14,6 @@ package org.eclipse.kura.configuration.metatype;
 import java.util.List;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
-import org.eclipse.kura.configuration.ConfigurationService;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
