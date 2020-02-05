@@ -7,9 +7,9 @@ import org.eclipse.kura.annotation.Nullable;
 
 public final class LocaleContextHolder {
 
-    private static final ThreadLocal<LocaleContext> localeContextHolder = new NamedThreadLocal<>("LocaleContext");
+    private static final ThreadLocal<LocaleContext> LOCALECONTEXTHOLDER = new NamedThreadLocal<>("LocaleContext");
 
-    private static final ThreadLocal<LocaleContext> inheritableLocaleContextHolder = new NamedInheritableThreadLocal<>(
+    private static final ThreadLocal<LocaleContext> INHERITABLELOCALECONTEXTHOLDER = new NamedInheritableThreadLocal<>(
             "LocaleContext");
 
     // Shared default locale at the framework level
@@ -27,8 +27,8 @@ public final class LocaleContextHolder {
      * Reset the LocaleContext for the current thread.
      */
     public static void resetLocaleContext() {
-        localeContextHolder.remove();
-        inheritableLocaleContextHolder.remove();
+        LOCALECONTEXTHOLDER.remove();
+        INHERITABLELOCALECONTEXTHOLDER.remove();
     }
 
     /**
@@ -39,8 +39,8 @@ public final class LocaleContextHolder {
      * containing a locale with associated time zone information.
      *
      * @param localeContext
-     *                          the current LocaleContext,
-     *                          or {@code null} to reset the thread-bound context
+     *            the current LocaleContext,
+     *            or {@code null} to reset the thread-bound context
      * @see SimpleLocaleContext
      * @see SimpleTimeZoneAwareLocaleContext
      */
@@ -55,11 +55,11 @@ public final class LocaleContextHolder {
      * containing a locale with associated time zone information.
      *
      * @param localeContext
-     *                          the current LocaleContext,
-     *                          or {@code null} to reset the thread-bound context
+     *            the current LocaleContext,
+     *            or {@code null} to reset the thread-bound context
      * @param inheritable
-     *                          whether to expose the LocaleContext as inheritable
-     *                          for child threads (using an {@link InheritableThreadLocal})
+     *            whether to expose the LocaleContext as inheritable
+     *            for child threads (using an {@link InheritableThreadLocal})
      * @see SimpleLocaleContext
      * @see SimpleTimeZoneAwareLocaleContext
      */
@@ -68,11 +68,11 @@ public final class LocaleContextHolder {
             resetLocaleContext();
         } else {
             if (inheritable) {
-                inheritableLocaleContextHolder.set(localeContext);
-                localeContextHolder.remove();
+                INHERITABLELOCALECONTEXTHOLDER.set(localeContext);
+                LOCALECONTEXTHOLDER.remove();
             } else {
-                localeContextHolder.set(localeContext);
-                inheritableLocaleContextHolder.remove();
+                LOCALECONTEXTHOLDER.set(localeContext);
+                INHERITABLELOCALECONTEXTHOLDER.remove();
             }
         }
     }
@@ -84,9 +84,9 @@ public final class LocaleContextHolder {
      */
     @Nullable
     public static LocaleContext getLocaleContext() {
-        LocaleContext localeContext = localeContextHolder.get();
+        LocaleContext localeContext = LOCALECONTEXTHOLDER.get();
         if (localeContext == null) {
-            localeContext = inheritableLocaleContextHolder.get();
+            localeContext = INHERITABLELOCALECONTEXTHOLDER.get();
         }
         return localeContext;
     }
@@ -99,8 +99,8 @@ public final class LocaleContextHolder {
      * <i>not</i> exposing it as inheritable for child threads.
      *
      * @param locale
-     *                   the current Locale, or {@code null} to reset
-     *                   the locale part of thread-bound context
+     *            the current Locale, or {@code null} to reset
+     *            the locale part of thread-bound context
      * @see #setTimeZone(TimeZone)
      * @see SimpleLocaleContext#SimpleLocaleContext(Locale)
      */
@@ -115,11 +115,11 @@ public final class LocaleContextHolder {
      * Will implicitly create a LocaleContext for the given Locale.
      *
      * @param locale
-     *                        the current Locale, or {@code null} to reset
-     *                        the locale part of thread-bound context
+     *            the current Locale, or {@code null} to reset
+     *            the locale part of thread-bound context
      * @param inheritable
-     *                        whether to expose the LocaleContext as inheritable
-     *                        for child threads (using an {@link InheritableThreadLocal})
+     *            whether to expose the LocaleContext as inheritable
+     *            for child threads (using an {@link InheritableThreadLocal})
      * @see #setTimeZone(TimeZone, boolean)
      * @see SimpleLocaleContext#SimpleLocaleContext(Locale)
      */
@@ -149,8 +149,8 @@ public final class LocaleContextHolder {
      * as a shared library at the server level in such a scenario!
      *
      * @param locale
-     *                   the default locale (or {@code null} for none,
-     *                   letting lookups fall back to {@link Locale#getDefault()})
+     *            the default locale (or {@code null} for none,
+     *            letting lookups fall back to {@link Locale#getDefault()})
      * @since 4.3.5
      * @see #getLocale()
      * @see Locale#getDefault()
@@ -189,7 +189,7 @@ public final class LocaleContextHolder {
      * able to optionally respect a user-level Locale setting.
      *
      * @param localeContext
-     *                          the user-level locale context to check
+     *            the user-level locale context to check
      * @return the current Locale, or the system default Locale if no
      *         specific Locale has been associated with the current thread
      * @since 5.0
@@ -216,8 +216,8 @@ public final class LocaleContextHolder {
      * <i>not</i> exposing it as inheritable for child threads.
      *
      * @param timeZone
-     *                     the current TimeZone, or {@code null} to reset
-     *                     the time zone part of the thread-bound context
+     *            the current TimeZone, or {@code null} to reset
+     *            the time zone part of the thread-bound context
      * @see #setLocale(Locale)
      * @see SimpleTimeZoneAwareLocaleContext#SimpleTimeZoneAwareLocaleContext(Locale, TimeZone)
      */
@@ -232,11 +232,11 @@ public final class LocaleContextHolder {
      * Will implicitly create a LocaleContext for the given Locale.
      *
      * @param timeZone
-     *                        the current TimeZone, or {@code null} to reset
-     *                        the time zone part of the thread-bound context
+     *            the current TimeZone, or {@code null} to reset
+     *            the time zone part of the thread-bound context
      * @param inheritable
-     *                        whether to expose the LocaleContext as inheritable
-     *                        for child threads (using an {@link InheritableThreadLocal})
+     *            whether to expose the LocaleContext as inheritable
+     *            for child threads (using an {@link InheritableThreadLocal})
      * @see #setLocale(Locale, boolean)
      * @see SimpleTimeZoneAwareLocaleContext#SimpleTimeZoneAwareLocaleContext(Locale, TimeZone)
      */
@@ -264,8 +264,8 @@ public final class LocaleContextHolder {
      * as a shared library at the server level in such a scenario!
      *
      * @param timeZone
-     *                     the default time zone (or {@code null} for none,
-     *                     letting lookups fall back to {@link TimeZone#getDefault()})
+     *            the default time zone (or {@code null} for none,
+     *            letting lookups fall back to {@link TimeZone#getDefault()})
      * @since 4.3.5
      * @see #getTimeZone()
      * @see TimeZone#getDefault()
@@ -305,7 +305,7 @@ public final class LocaleContextHolder {
      * able to optionally respect a user-level TimeZone setting.
      *
      * @param localeContext
-     *                          the user-level locale context to check
+     *            the user-level locale context to check
      * @return the current TimeZone, or the system default TimeZone if no
      *         specific TimeZone has been associated with the current thread
      * @since 5.0

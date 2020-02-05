@@ -14,7 +14,6 @@ package org.eclipse.kura.configuration.metatype;
 import java.util.List;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
-import org.eclipse.kura.configuration.ConfigurationService;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -71,7 +70,7 @@ public interface OCDService {
      * </ul>
      *
      * @param clazzes
-     *                    The list of service classes to be used as search filter.
+     *            The list of service classes to be used as search filter.
      * @return A list of {@link ComponentConfiguration} instances representing the found Components.
      * @since 1.4
      */
@@ -81,7 +80,7 @@ public interface OCDService {
      * @see {@link ConfigurationService#getServiceProviderOCDs(Class...)
      *
      * @param classNames
-     *                       The list of service class or interface names to be used as search filter.
+     *            The list of service class or interface names to be used as search filter.
      * @return A list of {@link ComponentConfiguration} instances representing the found Components.
      * @since 1.4
      */

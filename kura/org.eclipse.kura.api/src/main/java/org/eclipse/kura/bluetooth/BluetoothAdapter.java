@@ -11,7 +11,6 @@
  *******************************************************************************/
 package org.eclipse.kura.bluetooth;
 
-import org.eclipse.kura.bluetooth.le.BluetoothLeAdapter;
 import org.eclipse.kura.bluetooth.listener.BluetoothAdvertisementScanListener;
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -20,7 +19,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *
  * @noimplement This interface is not intended to be implemented by clients.
  *
- * @deprecated This class is deprecated in favor of {@link BluetoothLeAdapter}
+ * @deprecated This class is deprecated in favor of {@link org.eclipse.kura.bluetooth.le.BluetoothLeAdapter}
  *
  */
 @ProviderType
@@ -77,7 +76,7 @@ public interface BluetoothAdapter {
      * is complete.
      *
      * @param listener
-     *                     Interface for collecting scan results
+     *            Interface for collecting scan results
      */
     public void startLeScan(BluetoothLeScanListener listener);
 
@@ -87,9 +86,9 @@ public interface BluetoothAdapter {
      * arrives.
      *
      * @param companyName
-     *                        Hexadecimal string representing the company code
+     *            Hexadecimal string representing the company code
      * @param listener
-     *                        Interface for collecting beacon data.
+     *            Interface for collecting beacon data.
      *
      * @since 1.0.9
      *
@@ -101,9 +100,9 @@ public interface BluetoothAdapter {
      * relayed through the {@link BluetoothBeaconScanListener} as it arrives.
      *
      * @param companyName
-     *                        Hexadecimal string representing the company code
+     *            Hexadecimal string representing the company code
      * @param listener
-     *                        Interface for collecting beacon data.
+     *            Interface for collecting beacon data.
      */
     void startBeaconScan(String companyName, BluetoothBeaconScanListener listener);
 
@@ -111,7 +110,7 @@ public interface BluetoothAdapter {
      * Get a remote Bluetooth device based on hardware adress
      *
      * @param address
-     *                    Hardware address of remote device
+     *            Hardware address of remote device
      * @return BluetoothDevice
      */
     public BluetoothDevice getRemoteDevice(String address);
@@ -132,9 +131,9 @@ public interface BluetoothAdapter {
      * Set the Beacon advertising interval for the given interface.
      *
      * @param min
-     *                Minimum time interval between advertises
+     *            Minimum time interval between advertises
      * @param max
-     *                Maximum time interval between advertises
+     *            Maximum time interval between advertises
      *
      */
     public void setBeaconAdvertisingInterval(Integer min, Integer max);
@@ -143,42 +142,43 @@ public interface BluetoothAdapter {
      * Set the data in to the Beacon advertising packet for the given interface.
      *
      * @param uuid
-     *                            Proximity UUID
+     *            Proximity UUID
      * @param major
-     *                            Groups beacons with the same proximity UUID
+     *            Groups beacons with the same proximity UUID
      * @param minor
-     *                            Differentiates beacons with the same proximity UUID and major value
+     *            Differentiates beacons with the same proximity UUID and major value
      * @param txPower
-     *                            Transmitting power \@1m
+     *            Transmitting power \@1m
      * @param companyCode
-     *                            Indicates the manufacturer
-     * @param LELimited
-     *                            Indicates LE Limited Discoverable Mode (the device advertises for 30.72s and then
-     *                            stops)
-     * @param LEGeneral
-     *                            Indicates LE General Discoverable Mode (the device advertises indefinitely)
-     * @param BR_EDRSupported
-     *                            Indicates whether BR/EDR is supported
-     * @param LE_BRController
-     *                            Indicates whether LE and BR/EDR Controller operates simultaneously
-     * @param LE_BRHost
-     *                            Indicates whether LE and BR/EDR Host operates simultaneously
+     *            Indicates the manufacturer
+     * @param leLimited
+     *            Indicates LE Limited Discoverable Mode (the device advertises for 30.72s and then stops)
+     * @param leGeneral
+     *            Indicates LE General Discoverable Mode (the device advertises indefinitely)
+     * @param brEDRSupported
+     *            Indicates whether BR/EDR is supported
+     * @param leBRController
+     *            Indicates whether LE and BR/EDR Controller operates simultaneously
+     * @param leBRHost
+     *            Indicates whether LE and BR/EDR Host operates simultaneously
      *
      */
+    @SuppressWarnings("checkstyle:parameterNumber")
     public void setBeaconAdvertisingData(String uuid, Integer major, Integer minor, String companyCode, Integer txPower,
-            boolean LELimited, boolean LEGeneral, boolean BR_EDRSupported, boolean LE_BRController, boolean LE_BRHost);
+            boolean leLimited, boolean leGeneral, boolean brEDRSupported, boolean leBRController, boolean leBRHost);
 
     /**
      * Execute a command to the given interface.
      *
      * @param ogf
-     *                      OpCode Group Field
+     *            OpCode Group Field
      * @param ocf
-     *                      OpCode Command Field
+     *            OpCode Command Field
      * @param parameter
-     *                      Parameters passed to the command
+     *            Parameters passed to the command
      *
      */
+    @SuppressWarnings("checkstyle:methodName")
     public void ExecuteCmd(String ogf, String ocf, String parameter);
 
 }

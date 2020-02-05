@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Eurotech and/or its affiliates
+ * Copyright (c) 2018, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,8 +17,6 @@ import java.util.Map;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.cloudconnection.listener.CloudDeliveryListener;
 import org.eclipse.kura.cloudconnection.message.KuraMessage;
-import org.eclipse.kura.cloudconnection.publisher.CloudPublisher;
-import org.eclipse.kura.cloudconnection.subscriber.CloudSubscriber;
 import org.eclipse.kura.cloudconnection.subscriber.listener.CloudSubscriberListener;
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -27,10 +25,13 @@ import org.osgi.annotation.versioning.ProviderType;
  * subscribers, subscribe to message delivery notification or get information about the specific cloud endpoint
  * configuration.
  *
- * Each CloudEndpoint is referenced by zero or more {@link CloudPublisher} and {@link CloudSubscriber} instances.
+ * Each CloudEndpoint is referenced by zero or more {@link org.eclipse.kura.cloudconnection.publisher.CloudPublisher}
+ * and {@link org.eclipse.kura.cloudconnection.subscriber.CloudSubscriber} instances.
  *
- * Applications should not use directly this API but, instead, use the {@link CloudPublisher} and the
- * {@link CloudSubscriber} interfaces to give applications the capabilities to publish and receive messages.
+ * Applications should not use directly this API but, instead, use the
+ * {@link org.eclipse.kura.cloudconnection.publisher.CloudPublisher} and the
+ * {@link org.eclipse.kura.cloudconnection.subscriber.CloudSubscriber} interfaces to give applications the capabilities
+ * to publish and receive messages.
  *
  * The implementor must register itself as a CloudEndpoint OSGi service provider.
  *
@@ -48,10 +49,10 @@ public interface CloudEndpoint {
      * request the confirmation.
      *
      * @param message
-     *                    the {@link KuraMessage} to be published
+     *            the {@link KuraMessage} to be published
      * @return a String representing the message ID or {@code null} if not supported
      * @throws KuraException
-     *                           if the publishing operation fails.
+     *             if the publishing operation fails.
      */
     public String publish(KuraMessage message) throws KuraException;
 
@@ -61,11 +62,11 @@ public interface CloudEndpoint {
      * to disambiguate the specific subscriptions.
      *
      * @param subscriptionProperties
-     *                                    a map representing the subscription context
+     *            a map representing the subscription context
      * @param cloudSubscriberListener
-     *                                    a {@link CloudSubscriberListener} object that will be notified when a message
-     *                                    is received in a context
-     *                                    that matches the one identified by the subscription properties.
+     *            a {@link CloudSubscriberListener} object that will be notified when a message
+     *            is received in a context
+     *            that matches the one identified by the subscription properties.
      */
     public void registerSubscriber(Map<String, Object> subscriptionProperties,
             CloudSubscriberListener cloudSubscriberListener);
@@ -74,7 +75,7 @@ public interface CloudEndpoint {
      * Unregisters the provided {@code cloudSubscriberListener}.
      *
      * @param cloudSubscriberListener
-     *                                    the {@link CloudSubscriberListener} to be unregistered.
+     *            the {@link CloudSubscriberListener} to be unregistered.
      */
     public void unregisterSubscriber(CloudSubscriberListener cloudSubscriberListener);
 
@@ -94,7 +95,7 @@ public interface CloudEndpoint {
      * connection related event happens, all the registered {@link CloudDeliveryListener}s will be notified.
      *
      * @param cloudDeliveryListener
-     *                                  a {@link CloudDeliveryListener} instance
+     *            a {@link CloudDeliveryListener} instance
      */
     public void registerCloudDeliveryListener(CloudDeliveryListener cloudDeliveryListener);
 

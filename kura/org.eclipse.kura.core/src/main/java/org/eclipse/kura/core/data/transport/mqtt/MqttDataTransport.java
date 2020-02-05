@@ -63,6 +63,8 @@ import groovy.lang.Script;
 public class MqttDataTransport implements DataTransportService, MqttCallback, ConfigurableComponent, SslServiceListener,
         CloudConnectionStatusComponent {
 
+    private static final String CLIENTID = "clientId";
+
     private static final String NOT_CONNECTED_MESSAGE = "Not connected";
 
     private static final String ALREADY_CONNECTED_MESSAGE = "Already connected";
@@ -73,7 +75,6 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
 
     private static final String MQTT_SCHEME = "mqtt://";
     private static final String MQTTS_SCHEME = "mqtts://";
-    // TODO: add mqtt+ssl for secure mqtt
 
     // '#' followed by one or more non-whitespace but not the '/'
     private static final String TOPIC_PATTERN_STRING = "#([^\\s/]+)";
@@ -404,9 +405,6 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
         return "";
     }
 
-    // TODO: java.lang.reflect.Proxy for every listener in order to catch
-    // runtime exceptions thrown by listener implementor and log them.
-
     @Override
     public synchronized void disconnect(long quiesceTimeout) {
         // Disconnect the client if it's connected. If it fails log the
@@ -709,6 +707,7 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
      * configuration cannot be assembled the method throws a RuntimeException
      * (assuming that this error is unrecoverable).
      */
+
     private MqttClientConfiguration buildConfiguration(Map<String, Object> properties) {
 
         MqttClientConfiguration clientConfiguration;
@@ -716,21 +715,17 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
         String clientId = null;
         String brokerUrl = null;
         try {
-            // Configure the client ID
             clientId = (String) properties.get(MQTT_CLIENT_ID_PROP_NAME);
             if (clientId == null || clientId.trim().length() == 0) {
                 clientId = this.systemService.getPrimaryMacAddress();
             }
-            ValidationUtil.notEmptyOrNull(clientId, "clientId");
+            ValidationUtil.notEmptyOrNull(clientId, CLIENTID);
 
-            // replace invalid token in the client ID as it is used as part of
-            // the topicname space
             clientId = clientId.replace('/', '-');
             clientId = clientId.replace('+', '-');
             clientId = clientId.replace('#', '-');
             clientId = clientId.replace('.', '-');
 
-            // Configure the broker URL
             brokerUrl = (String) properties.get(MQTT_BROKER_URL_PROP_NAME);
             ValidationUtil.notEmptyOrNull(brokerUrl, MQTT_BROKER_URL_PROP_NAME);
             brokerUrl = brokerUrl.trim();
@@ -826,48 +821,51 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
             logger.error(INVALID_CONFIGURATION_MESSAGE);
             throw new IllegalStateException("Invalid MQTT client configuration", e);
         }
-
-        //
         // SSL
         if (brokerUrl.startsWith("ssl") || brokerUrl.startsWith("wss")) {
-            try {
-                String alias = (String) this.properties.get(SSL_CERT_ALIAS);
-                if (alias == null || "".equals(alias.trim())) {
-                    alias = this.topicContext.get(TOPIC_ACCOUNT_NAME_CTX_NAME);
-                }
-
-                String protocol = (String) this.properties.get(SSL_PROTOCOL);
-                String ciphers = (String) this.properties.get(SSL_CIPHERS);
-                String hnVerification = (String) this.properties.get(SSL_HN_VERIFY);
-
-                SSLSocketFactory ssf;
-                if (SSL_DEFAULT_HN_VERIFY.equals(hnVerification)) {
-                    ssf = this.sslManagerService.getSSLSocketFactory(protocol, ciphers, null, null, null, alias);
-                } else {
-                    ssf = this.sslManagerService.getSSLSocketFactory(protocol, ciphers, null, null, null, alias,
-                            Boolean.valueOf(hnVerification));
-                }
-
-                conOpt.setSocketFactory(ssf);
-            } catch (Exception e) {
-                logger.error("SSL setup failed", e);
-                throw new IllegalStateException("SSL setup failed");
-            }
+            conOpt.setSocketFactory(buildSSLSocketFactory());
         }
 
         String sType = (String) properties.get(PERSISTENCE_TYPE_PROP_NAME);
-        PersistenceType persistenceType = null;
+        PersistenceType localPersistenceType = null;
         if ("file".equals(sType)) {
-            persistenceType = PersistenceType.FILE;
+            localPersistenceType = PersistenceType.FILE;
         } else if ("memory".equals(sType)) {
-            persistenceType = PersistenceType.MEMORY;
+            localPersistenceType = PersistenceType.MEMORY;
         } else {
-            throw new IllegalStateException("Invalid MQTT client configuration: persistenceType: " + persistenceType);
+            throw new IllegalStateException(
+                    "Invalid MQTT client configuration: persistenceType: " + localPersistenceType);
         }
 
-        clientConfiguration = new MqttClientConfiguration(brokerUrl, clientId, persistenceType, conOpt);
+        clientConfiguration = new MqttClientConfiguration(brokerUrl, clientId, localPersistenceType, conOpt);
 
         return clientConfiguration;
+    }
+
+    private SSLSocketFactory buildSSLSocketFactory() {
+        try {
+            String alias = (String) this.properties.get(SSL_CERT_ALIAS);
+            if (alias == null || "".equals(alias.trim())) {
+                alias = this.topicContext.get(TOPIC_ACCOUNT_NAME_CTX_NAME);
+            }
+
+            String protocol = (String) this.properties.get(SSL_PROTOCOL);
+            String ciphers = (String) this.properties.get(SSL_CIPHERS);
+            String hnVerification = (String) this.properties.get(SSL_HN_VERIFY);
+
+            SSLSocketFactory ssf;
+            if (SSL_DEFAULT_HN_VERIFY.equals(hnVerification)) {
+                ssf = this.sslManagerService.getSSLSocketFactory(protocol, ciphers, null, null, null, alias);
+            } else {
+                ssf = this.sslManagerService.getSSLSocketFactory(protocol, ciphers, null, null, null, alias,
+                        Boolean.valueOf(hnVerification));
+            }
+
+            return ssf;
+        } catch (Exception e) {
+            logger.error("SSL setup failed", e);
+            throw new IllegalStateException("SSL setup failed");
+        }
     }
 
     private String replaceTopicVariables(String topic) {
@@ -881,7 +879,6 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
                 // By default replace #variable-name (group 0) with itself
                 String replacement = topicMatcher.group(0);
 
-                // TODO: Try to get variable-name (group 1) from the context
                 String variableName = topicMatcher.group(1);
                 synchronized (this.topicContext) {
                     String value = this.topicContext.get(variableName);
@@ -931,7 +928,7 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
 
         // Connecting with Clean Session flag set to true always starts
         // a new session.
-        boolean newSession = this.clientConf.getConnectOptions().isCleanSession();
+        boolean newSessionTemp = this.clientConf.getConnectOptions().isCleanSession();
 
         if (this.mqttClient == null) {
 
@@ -980,8 +977,8 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
             // in-flight messages because
             // Paho won't do that.
 
-            PersistenceType persistenceType = this.clientConf.getPersistenceType();
-            if (persistenceType == PersistenceType.MEMORY) {
+            PersistenceType newPersistenceType = this.clientConf.getPersistenceType();
+            if (newPersistenceType == PersistenceType.MEMORY) {
                 logger.info("Using memory persistence for in-flight messages");
                 this.persistence = new MemoryPersistence();
             } else {
@@ -1020,7 +1017,7 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
                 throw new IllegalStateException("Client instantiation failed");
             }
 
-            this.persistenceType = persistenceType;
+            this.persistenceType = newPersistenceType;
 
             if (!this.clientConf.getConnectOptions().isCleanSession()) {
                 // This is tricky.
@@ -1039,12 +1036,12 @@ public class MqttDataTransport implements DataTransportService, MqttCallback, Co
                 // drop them.
                 IMqttDeliveryToken[] pendingDeliveryTokens = this.mqttClient.getPendingDeliveryTokens();
                 if (pendingDeliveryTokens != null && pendingDeliveryTokens.length != 0) {
-                    newSession = false;
+                    newSessionTemp = false;
                 }
             }
         }
 
-        this.newSession = newSession;
+        this.newSession = newSessionTemp;
         this.sessionId = generateSessionId();
     }
 
