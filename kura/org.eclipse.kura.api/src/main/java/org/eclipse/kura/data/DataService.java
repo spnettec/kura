@@ -89,7 +89,7 @@ public interface DataService {
      * @throws KuraTimeoutException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *                                       TODO
+     *             TODO
      */
     public void subscribe(String topic, int qos) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 
@@ -102,7 +102,7 @@ public interface DataService {
      * @throws KuraTimeoutException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *                                       TODO
+     *             TODO
      */
     public void unsubscribe(String topic) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 

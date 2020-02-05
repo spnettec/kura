@@ -60,7 +60,7 @@ public interface SslManagerService {
      * specified..<br>
      *
      * @param keyAlias
-     *                     alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @return the SSLContext
      * @since 2.2
      */
@@ -71,21 +71,21 @@ public interface SslManagerService {
      * like Hostname Verification (enabled by default) and disables the legacy SSL-2.0-compatible Client Hello.<br>
      *
      * @param protocol
-     *                             the protocol to use to initialize the SSLContext - e.g. TLSv1.2
+     *            the protocol to use to initialize the SSLContext - e.g. TLSv1.2
      * @param cipherSuites
-     *                             allowed cipher suites for the returned SSLSocketFactory
+     *            allowed cipher suites for the returned SSLSocketFactory
      * @param trustStorePath
-     *                             Location of the Java keystore file containing the collection of CA certificates
-     *                             trusted by this
-     *                             application process (trust store). Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing the collection of CA certificates
+     *            trusted by this
+     *            application process (trust store). Key store type is expected to be JKS.
      * @param keyStorePath
-     *                             Location of the Java keystore file containing an application process's own
-     *                             certificate and private
-     *                             key. Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing an application process's own
+     *            certificate and private
+     *            key. Key store type is expected to be JKS.
      * @param keyStorePassword
-     *                             Password to access the private key from the keystore file.
+     *            Password to access the private key from the keystore file.
      * @param keyAlias
-     *                             alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @return the SSLContext
      * @since 2.2
      */
@@ -97,23 +97,23 @@ public interface SslManagerService {
      * like Hostname Verification and disables the legacy SSL-2.0-compatible Client Hello.<br>
      *
      * @param protocol
-     *                                 the protocol to use to initialize the SSLContext - e.g. TLSv1.2
+     *            the protocol to use to initialize the SSLContext - e.g. TLSv1.2
      * @param cipherSuites
-     *                                 allowed cipher suites for the returned SSLSocketFactory
+     *            allowed cipher suites for the returned SSLSocketFactory
      * @param trustStorePath
-     *                                 Location of the Java keystore file containing the collection of CA certificates
-     *                                 trusted by this
-     *                                 application process (trust store). Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing the collection of CA certificates
+     *            trusted by this
+     *            application process (trust store). Key store type is expected to be JKS.
      * @param keyStorePath
-     *                                 Location of the Java keystore file containing an application process's own
-     *                                 certificate and private
-     *                                 key. Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing an application process's own
+     *            certificate and private
+     *            key. Key store type is expected to be JKS.
      * @param keyStorePassword
-     *                                 Password to access the private key from the keystore file.
+     *            Password to access the private key from the keystore file.
      * @param keyAlias
-     *                                 alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @param hostnameVerification
-     *                                 enable server Hostname Verification
+     *            enable server Hostname Verification
      * @return the SSLContext
      * @since 2.2
      */
@@ -132,7 +132,7 @@ public interface SslManagerService {
      * Shorthand for getSSLContext(String).getSocketFactory().
      *
      * @param keyAlias
-     *                     alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @return the SSLSocketFactory
      */
     public SSLSocketFactory getSSLSocketFactory(String keyAlias) throws GeneralSecurityException, IOException;
@@ -141,21 +141,21 @@ public interface SslManagerService {
      * Shorthand for getSSLContext(String, String, String, String, char[], String).getSocketFactory().
      *
      * @param protocol
-     *                             the protocol to use to initialize the SSLContext - e.g. TLSv1.2
+     *            the protocol to use to initialize the SSLContext - e.g. TLSv1.2
      * @param cipherSuites
-     *                             allowed cipher suites for the returned SSLSocketFactory
+     *            allowed cipher suites for the returned SSLSocketFactory
      * @param trustStorePath
-     *                             Location of the Java keystore file containing the collection of CA certificates
-     *                             trusted by this
-     *                             application process (trust store). Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing the collection of CA certificates
+     *            trusted by this
+     *            application process (trust store). Key store type is expected to be JKS.
      * @param keyStorePath
-     *                             Location of the Java keystore file containing an application process's own
-     *                             certificate and private
-     *                             key. Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing an application process's own
+     *            certificate and private
+     *            key. Key store type is expected to be JKS.
      * @param keyStorePassword
-     *                             Password to access the private key from the keystore file.
+     *            Password to access the private key from the keystore file.
      * @param keyAlias
-     *                             alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @return the SSLSocketFactory
      */
     public SSLSocketFactory getSSLSocketFactory(String protocol, String cipherSuites, String trustStorePath,
@@ -165,23 +165,23 @@ public interface SslManagerService {
      * Shorthand for getSSLContext(String, String, String, String, char[], String, boolean).getSocketFactory().
      *
      * @param protocol
-     *                                 the protocol to use to initialize the SSLContext - e.g. TLSv1.2
+     *            the protocol to use to initialize the SSLContext - e.g. TLSv1.2
      * @param cipherSuites
-     *                                 allowed cipher suites for the returned SSLSocketFactory
+     *            allowed cipher suites for the returned SSLSocketFactory
      * @param trustStorePath
-     *                                 Location of the Java keystore file containing the collection of CA certificates
-     *                                 trusted by this
-     *                                 application process (trust store). Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing the collection of CA certificates
+     *            trusted by this
+     *            application process (trust store). Key store type is expected to be JKS.
      * @param keyStorePath
-     *                                 Location of the Java keystore file containing an application process's own
-     *                                 certificate and private
-     *                                 key. Key store type is expected to be JKS.
+     *            Location of the Java keystore file containing an application process's own
+     *            certificate and private
+     *            key. Key store type is expected to be JKS.
      * @param keyStorePassword
-     *                                 Password to access the private key from the keystore file.
+     *            Password to access the private key from the keystore file.
      * @param keyAlias
-     *                                 alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
+     *            alias of the entry in the KeyStore to be used for the returned SSLSocketFactory
      * @param hostnameVerification
-     *                                 enable server Hostname Verification
+     *            enable server Hostname Verification
      * @return the SSLSocketFactory
      */
     public SSLSocketFactory getSSLSocketFactory(String protocol, String cipherSuites, String trustStorePath,
@@ -205,7 +205,7 @@ public interface SslManagerService {
      * Otherwise the certificate will be installed in the default Java VM trust store.
      *
      * @param x509crt
-     *                    certificate to be installed
+     *            certificate to be installed
      */
     public void installTrustCertificate(String alias, X509Certificate x509crt)
             throws GeneralSecurityException, IOException;
@@ -225,13 +225,13 @@ public interface SslManagerService {
      * defined alias.
      *
      * @param alias
-     *                        that is a string that will be used to identify the certificates in the key store
+     *            that is a string that will be used to identify the certificates in the key store
      * @param privateKey
-     *                        that represents PrivateKey object
+     *            that represents PrivateKey object
      * @param password
-     *                        that represents the password used to encode the keys in the key store
+     *            that represents the password used to encode the keys in the key store
      * @param publicCerts
-     *                        that represents an array of Certificate objects that contain the public certificate chain
+     *            that represents an array of Certificate objects that contain the public certificate chain
      *
      */
     public void installPrivateKey(String alias, PrivateKey privateKey, char[] password, Certificate[] publicCerts)

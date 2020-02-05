@@ -27,9 +27,9 @@ public interface BluetoothLeBeaconManager<T extends BluetoothLeBeacon> {
      * Instantiate a new scanner for beacons.
      *
      * @param adapter
-     *                    the bluetooth adapter used by the scanner
+     *            the bluetooth adapter used by the scanner
      * @param decoder
-     *                    the decoder used to parse the data acquired by the scanner
+     *            the decoder used to parse the data acquired by the scanner
      * @return BluetoothLeBeaconScanner
      */
     public BluetoothLeBeaconScanner<T> newBeaconScanner(BluetoothLeAdapter adapter,
@@ -39,9 +39,9 @@ public interface BluetoothLeBeaconManager<T extends BluetoothLeBeacon> {
      * Instantiate a new advertiser for beacons.
      *
      * @param adapter
-     *                    the bluetooth adapter used by the advertiser
+     *            the bluetooth adapter used by the advertiser
      * @param encoder
-     *                    the encoder used to encode the data to be broadcast
+     *            the encoder used to encode the data to be broadcast
      * @return BluetoothLeBeaconAdvertiser
      * @throws KuraBluetoothBeaconAdvertiserNotAvailable
      */
@@ -52,7 +52,7 @@ public interface BluetoothLeBeaconManager<T extends BluetoothLeBeacon> {
      * Delete the given scanner.
      *
      * @param scanner
-     *                    The scanner to be deleted
+     *            The scanner to be deleted
      */
     public void deleteBeaconScanner(BluetoothLeBeaconScanner<T> scanner);
 
@@ -60,7 +60,7 @@ public interface BluetoothLeBeaconManager<T extends BluetoothLeBeacon> {
      * Delete the given advertiser.
      *
      * @param advertiser
-     *                       The advertiser to be deleted
+     *            The advertiser to be deleted
      */
     public void deleteBeaconAdvertiser(BluetoothLeBeaconAdvertiser<T> advertiser);
 }

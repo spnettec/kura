@@ -28,7 +28,7 @@ public interface BluetoothLeGattService {
      * Find a BluetoothLeGattCharacteristic specifying the UUID of the characteristic.
      *
      * @param uuid
-     *                 The UUID of the GATT characteristic
+     *            The UUID of the GATT characteristic
      * @return The BluetoothLeGattCharacteristic
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -39,9 +39,9 @@ public interface BluetoothLeGattService {
      *
      * @since 1.4
      * @param uuid
-     *                    The UUID of the GATT characteristic
+     *            The UUID of the GATT characteristic
      * @param timeout
-     *                    The timeout for retrieving the service
+     *            The timeout for retrieving the service
      * @return The BluetoothLeGattCharacteristic
      * @throws KuraBluetoothResourceNotFoundException
      */

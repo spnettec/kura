@@ -59,7 +59,7 @@ public class CommURI {
      * Constructor to build the CommURI
      *
      * @param builder
-     *                    the builder that contains the comm port parameters
+     *            the builder that contains the comm port parameters
      */
     private CommURI(Builder builder) {
         this.port = builder.builderPort;
@@ -165,9 +165,9 @@ public class CommURI {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("comm:").append(this.port).append(";baudrate=").append(this.baudRate).append(";databits=")
-                .append(this.dataBits).append(";stopbits=").append(this.stopBits).append(";parity=")
-                .append(this.parity).append(";flowcontrol=").append(this.flowControl).append(";timeout=")
-                .append(this.openTimeout).append(";receivetimeout=").append(this.receiveTimeout);
+                .append(this.dataBits).append(";stopbits=").append(this.stopBits).append(";parity=").append(this.parity)
+                .append(";flowcontrol=").append(this.flowControl).append(";timeout=").append(this.openTimeout)
+                .append(";receivetimeout=").append(this.receiveTimeout);
         return sb.toString();
     }
 
@@ -175,7 +175,7 @@ public class CommURI {
      * Converts a String of the CommURI form to a CommURI Object
      *
      * @param uri
-     *                the {@link String } representing the CommURI
+     *            the {@link String } representing the CommURI
      * @return a CommURI Object based on the uri String
      * @throws URISyntaxException
      */
@@ -272,7 +272,7 @@ public class CommURI {
          * @deprecated use {@link #withOpenTimeout(int)} and {@link #withReceiveTimeout(int)} instead
          * @since 1.1.0
          * @param timeout
-         *                    The open timeout in milliseconds.
+         *            The open timeout in milliseconds.
          * @return
          */
         @Deprecated
@@ -284,7 +284,7 @@ public class CommURI {
          * Sets the open timeout associated with the port
          *
          * @param timeout
-         *                    The open timeout in milliseconds.
+         *            The open timeout in milliseconds.
          * @return
          * @since 1.2
          */
@@ -298,7 +298,7 @@ public class CommURI {
          * is disabled by default.
          *
          * @param timeout
-         *                    The receive timeout in milliseconds.
+         *            The receive timeout in milliseconds.
          * @return
          * @since 1.2
          */

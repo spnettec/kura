@@ -34,9 +34,9 @@ public class XdkOptions {
      * Instantiates a new BLE Xdk options.
      *
      * @param properties
-     *                       the properties
+     *            the properties
      * @throws NullPointerException
-     *                                  if any of the arguments is null
+     *             if any of the arguments is null
      */
     XdkOptions(final Map<String, Object> properties) {
 

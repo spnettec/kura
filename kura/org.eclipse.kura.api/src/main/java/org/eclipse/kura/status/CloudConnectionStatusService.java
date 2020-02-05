@@ -89,7 +89,7 @@ public interface CloudConnectionStatusService {
      * Registers a {@link CloudConnectionStatusComponent} in the component registry of the Service
      *
      * @param component
-     *                      CloudConnectionStatusComponent to be registered in the registry
+     *            CloudConnectionStatusComponent to be registered in the registry
      */
     public void register(CloudConnectionStatusComponent component);
 
@@ -97,7 +97,7 @@ public interface CloudConnectionStatusService {
      * Unregisters a {@link CloudConnectionStatusComponent} from the component registry of the Service
      *
      * @param component
-     *                      CloudConnectionStatusComponent to be unregistered from the registry
+     *            CloudConnectionStatusComponent to be unregistered from the registry
      */
     public void unregister(CloudConnectionStatusComponent component);
 
@@ -106,9 +106,9 @@ public interface CloudConnectionStatusService {
      * Implementation should also set the internal status of the CloudConnectionStatus component so to persist it.
      *
      * @param component
-     *                      {@link CloudConnectionStatusComponent} for which the status has to be changed
+     *            {@link CloudConnectionStatusComponent} for which the status has to be changed
      * @param status
-     *                      {@link CloudConnectionStatusEnum} representing the new status of the component
+     *            {@link CloudConnectionStatusEnum} representing the new status of the component
      * @return false if an error occurs, true otherwise
      */
     public boolean updateStatus(CloudConnectionStatusComponent component, CloudConnectionStatusEnum status);

@@ -38,7 +38,7 @@ public interface BluetoothLeScanListener {
      * Fired when the Bluetooth LE scan is complete.
      *
      * @param devices
-     *                    A list of found devices
+     *            A list of found devices
      */
     public void onScanResults(List<BluetoothDevice> devices);
 

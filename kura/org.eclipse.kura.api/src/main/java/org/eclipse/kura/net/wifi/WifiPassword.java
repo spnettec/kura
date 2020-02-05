@@ -25,7 +25,7 @@ public class WifiPassword extends Password {
      * WifiPassword constructor
      *
      * @param password
-     *                     - WiFi password as {@link String}
+     *            - WiFi password as {@link String}
      */
     public WifiPassword(String password) {
         super(password);
@@ -35,7 +35,7 @@ public class WifiPassword extends Password {
      * WifiPassword constructor
      *
      * @param password
-     *                     - - WiFi password as {@link char[]}
+     *            - - WiFi password as {@link char[]}
      */
     public WifiPassword(char[] password) {
         super(password);
@@ -45,7 +45,7 @@ public class WifiPassword extends Password {
      * Validates WiFi password
      *
      * @param wifiSecurity
-     *                         - WiFi security as {@link WifiSecurity}
+     *            - WiFi security as {@link WifiSecurity}
      * @throws KuraException
      */
     public void validate(WifiSecurity wifiSecurity) throws KuraException {

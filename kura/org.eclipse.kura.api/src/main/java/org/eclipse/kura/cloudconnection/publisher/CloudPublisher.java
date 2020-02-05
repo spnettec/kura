@@ -52,13 +52,13 @@ public interface CloudPublisher {
      * Publishes the received {@link KuraMessage} using the associated cloud connection.
      *
      * @param message
-     *                    The {@link KuraMessage} to be published
+     *            The {@link KuraMessage} to be published
      * @return a String representing the message ID. {@code null} is returned if the cloud endpoint will not confirm the
      *         message delivery, either because this is not supported by the underlying protocol or because the cloud
      *         endpoint itself is not implemented or configured to request the confirmation. The message ID can be
      *         confirmed when the message is delivered. See {@link CloudDeliveryListener}.
      * @throws KuraException
-     *                           if the publishing operation fails.
+     *             if the publishing operation fails.
      */
     public String publish(KuraMessage message) throws KuraException;
 
@@ -67,7 +67,7 @@ public interface CloudPublisher {
      * connection related event happens, all the registered {@link CloudConnectionListener}s will be notified.
      *
      * @param cloudConnectionListener
-     *                                    a {@link CloudConnectionListener} instance
+     *            a {@link CloudConnectionListener} instance
      */
     public void registerCloudConnectionListener(CloudConnectionListener cloudConnectionListener);
 
@@ -84,7 +84,7 @@ public interface CloudPublisher {
      * connection related event happens, all the registered {@link CloudDeliveryListener}s will be notified.
      *
      * @param cloudDeliveryListener
-     *                                  a {@link CloudDeliveryListener} instance
+     *            a {@link CloudDeliveryListener} instance
      */
     public void registerCloudDeliveryListener(CloudDeliveryListener cloudDeliveryListener);
 

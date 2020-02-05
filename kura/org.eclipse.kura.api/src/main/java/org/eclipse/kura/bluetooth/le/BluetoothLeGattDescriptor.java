@@ -35,7 +35,7 @@ public interface BluetoothLeGattDescriptor {
      * Writes the value of this descriptor.
      *
      * @param value
-     *                  The data as byte[] to be written
+     *            The data as byte[] to be written
      * @throws KuraBluetoothIOException
      */
     public void writeValue(byte[] value) throws KuraBluetoothIOException;

@@ -27,9 +27,9 @@ public class RequestContext {
      * Creates a new {@link RequestContext} instance.
      *
      * @param downloadFilePath
-     *                             the path of the downloaded file
+     *            the path of the downloaded file
      * @param requestType
-     *                             the value of the {@code request.type} metric contained in the request
+     *            the value of the {@code request.type} metric contained in the request
      */
     public RequestContext(String downloadFilePath, String requestType) {
         this.downloadFilePath = downloadFilePath;

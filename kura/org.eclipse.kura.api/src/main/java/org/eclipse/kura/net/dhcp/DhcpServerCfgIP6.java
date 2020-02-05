@@ -29,19 +29,19 @@ public class DhcpServerCfgIP6 extends DhcpServerCfgIP<IP6Address> {
      * The basic Constructor for a DhcpServerCfgIP6
      *
      * @param subnet
-     *                          the subnet of the DhcpServerConfig
+     *            the subnet of the DhcpServerConfig
      * @param subnetMask
-     *                          the subnet mask of the DhcpServerConfig
+     *            the subnet mask of the DhcpServerConfig
      * @param prefix
-     *                          the network prefix associated with the DhcpServerConfig
+     *            the network prefix associated with the DhcpServerConfig
      * @param routerAddress
-     *                          the router IPAddress
+     *            the router IPAddress
      * @param rangeStart
-     *                          the network starting address to issue to DHCP clients
+     *            the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *                          the network ending address to issue to DHCP clients
+     *            the network ending address to issue to DHCP clients
      * @param dnsServers
-     *                          the DNS servers that will get passed to DHCP clients if passDns is true
+     *            the DNS servers that will get passed to DHCP clients if passDns is true
      */
     public DhcpServerCfgIP6(IP6Address subnet, IP6Address subnetMask, short prefix, IP6Address routerAddress,
             IP6Address rangeStart, IP6Address rangeEnd, List<IP6Address> dnsServers) {

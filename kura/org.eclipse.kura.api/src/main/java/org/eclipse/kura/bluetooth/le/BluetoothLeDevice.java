@@ -33,7 +33,7 @@ public interface BluetoothLeDevice {
      * Find a BluetoothLeGattService specifying the UUID of the service.
      *
      * @param uuid
-     *                 The UUID of the GATT service
+     *            The UUID of the GATT service
      * @return The BluetoothLeGattService
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -44,9 +44,9 @@ public interface BluetoothLeDevice {
      *
      * @since 1.4
      * @param uuid
-     *                    The UUID of the GATT service
+     *            The UUID of the GATT service
      * @param timeout
-     *                    The timeout for retrieving the service
+     *            The timeout for retrieving the service
      * @return The BluetoothLeGattService
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -79,7 +79,7 @@ public interface BluetoothLeDevice {
      * Connects a specific profile available on the device, given by UUID
      *
      * @param uuid
-     *                 The UUID of the profile to be connected
+     *            The UUID of the profile to be connected
      * @throws KuraBluetoothConnectionException
      */
     public void connectProfile(UUID uuid) throws KuraBluetoothConnectionException;
@@ -88,7 +88,7 @@ public interface BluetoothLeDevice {
      * Disconnects a specific profile available on the device, given by UUID
      *
      * @param uuid
-     *                 The UUID of the profile to be disconnected
+     *            The UUID of the profile to be disconnected
      * @throws KuraBluetoothConnectionException
      */
     public void disconnectProfile(UUID uuid) throws KuraBluetoothConnectionException;

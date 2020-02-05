@@ -27,9 +27,9 @@ public interface ChannelListener {
      * Triggers on channel event
      *
      * @param event
-     *                  the fired channel event
+     *            the fired channel event
      * @throws NullPointerException
-     *                                  if event is null
+     *             if event is null
      */
     public void onChannelEvent(ChannelEvent event);
 

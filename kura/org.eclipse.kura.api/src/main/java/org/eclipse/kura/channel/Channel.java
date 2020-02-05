@@ -58,15 +58,15 @@ public class Channel {
      * Instantiates a new channel.
      *
      * @param name
-     *                      the name for this channel
+     *            the name for this channel
      * @param type
-     *                      the type
+     *            the type
      * @param valueType
-     *                      the value type
+     *            the value type
      * @param config
-     *                      the configuration
+     *            the configuration
      * @throws NullPointerException
-     *                                  if any of the arguments is null
+     *             if any of the arguments is null
      */
     public Channel(final String name, final ChannelType type, final DataType valueType,
             final Map<String, Object> config) {
@@ -132,9 +132,9 @@ public class Channel {
      * Sets the name.
      *
      * @param name
-     *                 the new name
+     *            the new name
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public void setName(final String name) {
         requireNonNull(name, "Channel name cannot be null");
@@ -145,9 +145,9 @@ public class Channel {
      * Sets the type.
      *
      * @param type
-     *                 the new type
+     *            the new type
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public void setType(final ChannelType type) {
         requireNonNull(type, "Channel type cannot be null");
@@ -158,9 +158,9 @@ public class Channel {
      * Sets the value type.
      *
      * @param valueType
-     *                      the new value type
+     *            the new value type
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public void setValueType(final DataType valueType) {
         requireNonNull(valueType, "Channel value type cannot be null");
@@ -172,7 +172,7 @@ public class Channel {
      *
      * @since 1.4
      * @param isEnabled
-     *                      a boolean indicating if this channel is enabled or not
+     *            a boolean indicating if this channel is enabled or not
      */
     public void setEnabled(boolean isEnabled) {
         this.isEnabled = isEnabled;
@@ -204,12 +204,12 @@ public class Channel {
      * {@code Channel}.
      *
      * @param vlaue
-     *                  The value to be written.
+     *            The value to be written.
      * @throws IllegalArgumentException
-     *                                      If the {@link DataType} of the provided value differs from the data type
-     *                                      of this channel
+     *             If the {@link DataType} of the provided value differs from the data type
+     *             of this channel
      * @throws NullPointerException
-     *                                      If the provided value is null
+     *             If the provided value is null
      * @return
      *         the {@link CheannelRecord}
      */

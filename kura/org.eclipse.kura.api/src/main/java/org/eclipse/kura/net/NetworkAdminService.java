@@ -56,11 +56,11 @@ public interface NetworkAdminService {
      * Updates the configuration of the specified EthernetInterface.
      *
      * @param interfaceName
-     *                          - name of the Ethernet interface
+     *            - name of the Ethernet interface
      * @param autoConnect
-     *                          - specifies the auto-connect value for the interface
+     *            - specifies the auto-connect value for the interface
      * @param mtu
-     *                          - required MTU for the interface, -1 to keep the automatic default
+     *            - required MTU for the interface, -1 to keep the automatic default
      * @throws KuraException
      */
     public void updateEthernetInterfaceConfig(String interfaceName, boolean autoConnect, int mtu,
@@ -70,9 +70,9 @@ public interface NetworkAdminService {
      * Updates the configuration of the specified WifiInterface.
      *
      * @param interfaceName
-     *                          - name of the wifi interface
+     *            - name of the wifi interface
      * @param autoConnect
-     *                          - specifies the auto-connect value for the interface
+     *            - specifies the auto-connect value for the interface
      * @throws KuraException
      */
     public void updateWifiInterfaceConfig(String interfaceName, boolean autoConnect, WifiAccessPoint accessPoint,
@@ -82,19 +82,19 @@ public interface NetworkAdminService {
      * Updates the configuration of the specified ModemInterface.
      *
      * @param interfaceName
-     *                          - name of the Modem interface
+     *            - name of the Modem interface
      * @param serialNum
-     *                          - the modem's serial number
+     *            - the modem's serial number
      * @param modemId
-     *                          - user string to identify the modem
+     *            - user string to identify the modem
      * @param pppNumber
-     *                          - ppp number to use for this interface
+     *            - ppp number to use for this interface
      * @param autoConnect
-     *                          - specifies the auto-connect value for the interface
+     *            - specifies the auto-connect value for the interface
      * @param mtu
-     *                          - required MTU for the interface, -1 to keep the automatic default
+     *            - required MTU for the interface, -1 to keep the automatic default
      * @param netConfigs
-     *                          - list of NetConfigs for this interface
+     *            - list of NetConfigs for this interface
      * @throws KuraException
      */
     public void updateModemInterfaceConfig(String interfaceName, String serialNum, String modemId, int pppNumber,
@@ -104,7 +104,7 @@ public interface NetworkAdminService {
      * Enables the specified interface.
      *
      * @param interfaceName
-     *                          - name of the interface to be enabled.
+     *            - name of the interface to be enabled.
      */
     public void enableInterface(String interfaceName, boolean dhcp) throws KuraException;
 
@@ -112,7 +112,7 @@ public interface NetworkAdminService {
      * Disables the specified interface.
      *
      * @param interfaceName
-     *                          - name of the interface to be disabled.
+     *            - name of the interface to be disabled.
      */
     public void disableInterface(String interfaceName) throws KuraException;
 
@@ -120,9 +120,9 @@ public interface NetworkAdminService {
      * Used to control DHCP clients on specified interfaces.
      *
      * @param interfaceName
-     *                          The interface of the DHCP server to modify the state
+     *            The interface of the DHCP server to modify the state
      * @param enable
-     *                          Whether to enable or disable the DHCP client
+     *            Whether to enable or disable the DHCP client
      * @throws KuraException
      */
     public void manageDhcpClient(String interfaceName, boolean enable) throws KuraException;
@@ -131,9 +131,9 @@ public interface NetworkAdminService {
      * Used to control DHCP servers on specified interfaces.
      *
      * @param interfaceName
-     *                          The interface of the DHCP server to modify the state
+     *            The interface of the DHCP server to modify the state
      * @param enable
-     *                          Whether to enable or disable the DHCP server
+     *            Whether to enable or disable the DHCP server
      * @throws KuraException
      */
     public void manageDhcpServer(String interfaceName, boolean enable) throws KuraException;
@@ -142,7 +142,7 @@ public interface NetworkAdminService {
      * Releases current IP address and acquires a new lease for the provided interface.
      *
      * @param interfaceName
-     *                          The interface on which to renew the lease
+     *            The interface on which to renew the lease
      * @throws KuraException
      */
     public void renewDhcpLease(String interfaceName) throws KuraException;
@@ -159,7 +159,7 @@ public interface NetworkAdminService {
      * Sets the 'open port' portion of the firewall configuration
      *
      * @param firewallConfiguration
-     *                                  A list of FirewallOpenPortConfigIP Objects representing the configuration to set
+     *            A list of FirewallOpenPortConfigIP Objects representing the configuration to set
      * @throws KuraException
      */
     public void setFirewallOpenPortConfiguration(
@@ -169,8 +169,8 @@ public interface NetworkAdminService {
      * Sets the 'port forwarding' portion of the firewall configuration
      *
      * @param firewallConfiguration
-     *                                  A list of FirewallPortForwardConfigIP Objects representing the configuration to
-     *                                  set
+     *            A list of FirewallPortForwardConfigIP Objects representing the configuration to
+     *            set
      * @throws KuraException
      */
     public void setFirewallPortForwardingConfiguration(
@@ -185,7 +185,7 @@ public interface NetworkAdminService {
      * on the gateway can and will maintain active Internet connections through the gateway.
      *
      * @param gatewayIface
-     *                         The new gateway interface that is now active as the WAN interface
+     *            The new gateway interface that is now active as the WAN interface
      * @throws KuraException
      */
     public void manageFirewall(String gatewayIface) throws KuraException;
@@ -194,7 +194,7 @@ public interface NetworkAdminService {
      * Obtains information for WiFi hotspots in range.
      *
      * @param ifaceName
-     *                      - name of WiFi interface
+     *            - name of WiFi interface
      * @return list of hotspot information.
      * @throws KuraException
      * @since 1.2
@@ -205,11 +205,11 @@ public interface NetworkAdminService {
      * Verifies WiFi credentials by trying to establish connection with access point.
      *
      * @param ifaceName
-     *                       - name of WiFi interface
+     *            - name of WiFi interface
      * @param wifiConfig
-     *                       WiFi configuration
+     *            WiFi configuration
      * @param tout
-     *                       - timeout (in seconds)
+     *            - timeout (in seconds)
      * @return status - <i>true</i> if credentials are correct, <i>false</i> otherwise
      */
     public boolean verifyWifiCredentials(String ifaceName, WifiConfig wifiConfig, int tout);

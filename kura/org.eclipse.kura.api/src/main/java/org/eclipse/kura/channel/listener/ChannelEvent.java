@@ -40,9 +40,9 @@ public class ChannelEvent {
      * Instantiates a new channel event.
      *
      * @param channelRecord
-     *                          the channel record
+     *            the channel record
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public ChannelEvent(final ChannelRecord channelRecord) {
         requireNonNull(channelRecord, "Channel record cannot be null");

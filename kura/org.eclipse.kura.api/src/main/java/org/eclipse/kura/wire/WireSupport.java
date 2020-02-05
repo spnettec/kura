@@ -34,9 +34,9 @@ public interface WireSupport extends Producer, Consumer {
      * Emit the provided {@link WireRecord}s
      *
      * @param wireRecords
-     *                        a List of {@link WireRecord} objects that will be sent to the receiver.
+     *            a List of {@link WireRecord} objects that will be sent to the receiver.
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public void emit(List<WireRecord> wireRecords);
 }

@@ -30,7 +30,7 @@ public interface CloudSubscriberListener {
      * The received message will be parsed and passed as a {@link KuraMessage} to the listener.
      *
      * @param message
-     *                    The {@link KuraMessage} that wraps the received message.
+     *            The {@link KuraMessage} that wraps the received message.
      */
     public void onMessageArrived(KuraMessage message);
 }

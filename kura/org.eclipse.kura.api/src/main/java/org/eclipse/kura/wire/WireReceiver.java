@@ -26,9 +26,9 @@ public interface WireReceiver extends WireComponent, Consumer {
      * Triggers when the wire component receives a {@link WireEnvelope}
      *
      * @param wireEnvelope
-     *                         the received {@link WireEnvelope}
+     *            the received {@link WireEnvelope}
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public void onWireReceive(WireEnvelope wireEnvelope);
 }

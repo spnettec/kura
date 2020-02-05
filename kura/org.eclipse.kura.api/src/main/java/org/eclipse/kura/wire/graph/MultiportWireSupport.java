@@ -45,7 +45,7 @@ public interface MultiportWireSupport extends WireSupport {
      * This method allows to create a {@link WireEnvelope} from the list of {@link WireRecord} passed as an argument.
      *
      * @param records
-     *                    a list of {@link WireRecord}s that will be wrapped into a {@link WireEnvelope}
+     *            a list of {@link WireRecord}s that will be wrapped into a {@link WireEnvelope}
      * @return a {@link WireEnvelope} that wraps the list of {@link WireRecord}s passed.
      */
     public WireEnvelope createWireEnvelope(List<WireRecord> records);

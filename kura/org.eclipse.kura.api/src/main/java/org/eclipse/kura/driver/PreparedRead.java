@@ -40,10 +40,10 @@ public interface PreparedRead extends AutoCloseable {
      *
      * @return the result of the request as a list of {@link ChannelRecord} instances.
      * @throws KuraException
-     *                                 if the provided {@link PreparedRead} is not valid (for example if it has been
-     *                                 closed)
+     *             if the provided {@link PreparedRead} is not valid (for example if it has been
+     *             closed)
      * @throws ConnectionException
-     *                                 if the connection to the field device is interrupted
+     *             if the connection to the field device is interrupted
      */
     public List<ChannelRecord> execute() throws ConnectionException, KuraException;
 

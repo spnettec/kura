@@ -27,7 +27,7 @@ public interface BluetoothLeBeaconScanner<T extends BluetoothLeBeacon> {
      * Start a scan for beacons of given duration in seconds.
      *
      * @param duration
-     *                     The scan duration in seconds
+     *            The scan duration in seconds
      * @throws KuraBluetoothCommandException
      */
     public void startBeaconScan(long duration) throws KuraBluetoothCommandException;
@@ -48,7 +48,7 @@ public interface BluetoothLeBeaconScanner<T extends BluetoothLeBeacon> {
      * Add a listener for detected beacons.
      *
      * @param listener
-     *                     The beacon listener
+     *            The beacon listener
      */
     public void addBeaconListener(BluetoothLeBeaconListener<T> listener);
 
@@ -56,7 +56,7 @@ public interface BluetoothLeBeaconScanner<T extends BluetoothLeBeacon> {
      * Remove the given beacon listener
      *
      * @param listener
-     *                     The beacon listener
+     *            The beacon listener
      */
     public void removeBeaconListener(BluetoothLeBeaconListener<T> listener);
 

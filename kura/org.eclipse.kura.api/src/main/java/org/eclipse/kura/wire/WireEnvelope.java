@@ -48,9 +48,9 @@ public class WireEnvelope extends BasicEnvelope {
      * Instantiates a new WireEnvelope.
      *
      * @param emitterPid
-     *                        the wire emitter PID
+     *            the wire emitter PID
      * @param wireRecords
-     *                        the {@link WireRecord}s
+     *            the {@link WireRecord}s
      */
     public WireEnvelope(final String emitterPid, final List<WireRecord> wireRecords) {
         super(Collections.unmodifiableList(wireRecords), emitterPid, SCOPE);

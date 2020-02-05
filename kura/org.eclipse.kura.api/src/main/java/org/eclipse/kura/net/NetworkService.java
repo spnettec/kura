@@ -69,7 +69,7 @@ public interface NetworkService {
      * which is itself.
      *
      * @param wifiInterfaceName
-     *                              name of the interface used to scan for the available access points
+     *            name of the interface used to scan for the available access points
      * @return the list of the WifiAccessPoints visible from the specified wifi network interface.
      */
     public List<WifiAccessPoint> getWifiAccessPoints(String wifiInterfaceName) throws KuraException;

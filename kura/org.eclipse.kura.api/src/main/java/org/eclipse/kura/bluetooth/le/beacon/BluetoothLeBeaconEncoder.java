@@ -23,7 +23,7 @@ public interface BluetoothLeBeaconEncoder<T extends BluetoothLeBeacon> {
      * Encodes a BluetoothLeBeacon into a byte array
      *
      * @param beacon
-     *                   the BluetoothLeBeacon to be broadcast by an advertiser
+     *            the BluetoothLeBeacon to be broadcast by an advertiser
      * @return byte[]
      */
     public byte[] encode(T beacon);

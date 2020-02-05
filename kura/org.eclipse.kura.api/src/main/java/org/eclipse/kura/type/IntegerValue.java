@@ -41,7 +41,7 @@ public class IntegerValue implements TypedValue<Integer> {
      * Instantiates a new integer value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public IntegerValue(final int value) {
         this.value = value;

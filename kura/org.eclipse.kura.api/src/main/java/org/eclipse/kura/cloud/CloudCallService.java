@@ -40,7 +40,7 @@ public interface CloudCallService {
      * @param appId
      * @param appTopic
      * @param appPayload
-     *                       the application specific payload of an KuraRequestPayload.
+     *            the application specific payload of an KuraRequestPayload.
      * @param timeout
      * @return
      * @throws KuraConnectException
@@ -70,7 +70,8 @@ public interface CloudCallService {
             throws KuraConnectException, KuraTimeoutException, KuraStoreException, KuraException;
 
     /**
-     * Returns true if the underlying {@link org.eclipse.kura.data.DataService} is currently connected to the remote server.
+     * Returns true if the underlying {@link org.eclipse.kura.data.DataService} is currently connected to the remote
+     * server.
      *
      * @return
      */

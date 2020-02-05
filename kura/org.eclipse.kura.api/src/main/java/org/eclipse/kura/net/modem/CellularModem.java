@@ -87,7 +87,7 @@ public interface CellularModem {
      * Reports if specified port can be opened
      *
      * @param port
-     *                 - modem's serial port
+     *            - modem's serial port
      * @return 'true' if port can be opened, 'false' otherwise
      */
     public boolean isPortReachable(String port);

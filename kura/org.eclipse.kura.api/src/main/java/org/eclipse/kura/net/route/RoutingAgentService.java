@@ -30,7 +30,7 @@ public interface RoutingAgentService {
      * Sets interface priorities
      *
      * @param priorities
-     *                       - list of interface priorities as {@link Map}
+     *            - list of interface priorities as {@link Map}
      */
     public void setPriorities(Map<String, Integer> priorities);
 
@@ -38,7 +38,7 @@ public interface RoutingAgentService {
      * Adds interface to RoutingAgent
      *
      * @param netIfaceConfig
-     *                           - interface configuration as {@link NetInterfaceConfig}
+     *            - interface configuration as {@link NetInterfaceConfig}
      * @throws KuraException
      */
     @SuppressWarnings("rawtypes")
@@ -48,7 +48,7 @@ public interface RoutingAgentService {
      * Removes interface from RoutingAgent
      *
      * @param interfaceName
-     *                          - interface name as {@link String}
+     *            - interface name as {@link String}
      * @throws KuraException
      */
     void removeInterface(String interfaceName) throws KuraException;

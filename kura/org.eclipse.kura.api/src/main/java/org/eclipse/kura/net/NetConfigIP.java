@@ -29,7 +29,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * configurations of IPv4 and IPv6 addresses respectively.
  *
  * @param <T>
- *                IPv4 or IPv6 address
+ *            IPv4 or IPv6 address
  *
  * @noextend This class is not intended to be subclassed by clients.
  */
@@ -137,7 +137,7 @@ public abstract class NetConfigIP<T extends IPAddress> implements NetConfig {
      * the configuration.
      *
      * @param dhcp
-     *                 whether or not dhcp client mode should be used
+     *            whether or not dhcp client mode should be used
      */
     public void setDhcp(boolean dhcp) {
         this.dhcp = dhcp;
@@ -160,7 +160,7 @@ public abstract class NetConfigIP<T extends IPAddress> implements NetConfig {
      * the NetConfigIP instance used. This is only used if dhcp is set to false.
      *
      * @param address
-     *                    - address to be statically assigned to the interface
+     *            - address to be statically assigned to the interface
      */
     public void setAddress(T address) {
         this.address = address;

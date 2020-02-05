@@ -41,7 +41,7 @@ public class DoubleValue implements TypedValue<Double> {
      * Instantiates a new double value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public DoubleValue(final double value) {
         this.value = value;

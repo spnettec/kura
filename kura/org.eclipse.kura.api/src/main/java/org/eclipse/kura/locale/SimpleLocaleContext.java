@@ -14,7 +14,7 @@ public class SimpleLocaleContext implements LocaleContext {
      * Every {@link #getLocale()} call will return this Locale.
      *
      * @param locale
-     *                   the Locale to expose, or {@code null} for no specific one
+     *            the Locale to expose, or {@code null} for no specific one
      */
     public SimpleLocaleContext(@Nullable Locale locale) {
         this.locale = locale;

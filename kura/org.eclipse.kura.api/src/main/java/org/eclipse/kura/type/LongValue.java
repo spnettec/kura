@@ -41,7 +41,7 @@ public class LongValue implements TypedValue<Long> {
      * Instantiates a new long value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public LongValue(final long value) {
         this.value = value;

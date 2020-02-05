@@ -41,7 +41,7 @@ public class BooleanValue implements TypedValue<Boolean> {
      * Instantiates a new boolean value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public BooleanValue(final boolean value) {
         this.value = value;

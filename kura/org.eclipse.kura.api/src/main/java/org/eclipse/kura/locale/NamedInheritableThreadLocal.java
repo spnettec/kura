@@ -8,7 +8,7 @@ public class NamedInheritableThreadLocal<T> extends InheritableThreadLocal<T> {
      * Create a new NamedInheritableThreadLocal with the given name.
      *
      * @param name
-     *                 a descriptive name for this ThreadLocal
+     *            a descriptive name for this ThreadLocal
      */
     public NamedInheritableThreadLocal(String name) {
         if (name == null) {

@@ -27,7 +27,7 @@ public interface EmitterPort extends Port {
      * This methods is invoked with the {@link WireEnvelope} that has to be sent to the other end of the wire.
      *
      * @param wireEnvelope
-     *                         the message that needs to be sent.
+     *            the message that needs to be sent.
      */
     public void emit(WireEnvelope wireEnvelope);
 

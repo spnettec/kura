@@ -50,9 +50,9 @@ public interface CloudSubscriber {
      * {@link CloudSubscriberListener}s will be notified by the implementation when a message is received.
      *
      * @param listener
-     *                     a {@link CloudSubscriberListener} instance that will be notified when a message will be
-     *                     received from
-     *                     the remote cloud platform.
+     *            a {@link CloudSubscriberListener} instance that will be notified when a message will be
+     *            received from
+     *            the remote cloud platform.
      */
     public void registerCloudSubscriberListener(CloudSubscriberListener listener);
 
@@ -68,7 +68,7 @@ public interface CloudSubscriber {
      * connection related event happens, all the registered {@link CloudConnectionListener}s will be notified.
      *
      * @param cloudConnectionListener
-     *                                    a {@link CloudConnectionListener} instance
+     *            a {@link CloudConnectionListener} instance
      */
     public void registerCloudConnectionListener(CloudConnectionListener cloudConnectionListener);
 

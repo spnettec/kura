@@ -25,7 +25,7 @@ public interface BluetoothLeBeaconListener<T extends BluetoothLeBeacon> {
      * Fired when Bluetooth LE beacons data is received
      *
      * @param beacon
-     *                   a received beacon
+     *            a received beacon
      */
     public void onBeaconsReceived(T beacon);
 }

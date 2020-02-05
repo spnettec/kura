@@ -120,23 +120,23 @@ public interface ConfigurationService {
      * properties.
      *
      * @param factoryPid
-     *                         the ID of the factory.
+     *            the ID of the factory.
      * @param pid
-     *                         the value of the {@link ConfigurationService#KURA_SERVICE_PID}
-     *                         that will be set in the component configuration properties.
+     *            the value of the {@link ConfigurationService#KURA_SERVICE_PID}
+     *            that will be set in the component configuration properties.
      * @param properties
-     *                         an optional map of properties describing the component configuration.
-     *                         The Configuration Service will first create an initial map of properties
-     *                         with the property {@link ConfigurationService#KURA_SERVICE_PID}
-     *                         set to the provided <i>pid</i> parameter and
-     *                         with the default component configuration from its OSGi Meta Type.
-     *                         If <i>properties</i> is not null, the Configuration Service will first remove
-     *                         {@link ConfigurationService#KURA_SERVICE_PID}
-     *                         from the provided properties and then it will merge them with the initial map.
+     *            an optional map of properties describing the component configuration.
+     *            The Configuration Service will first create an initial map of properties
+     *            with the property {@link ConfigurationService#KURA_SERVICE_PID}
+     *            set to the provided <i>pid</i> parameter and
+     *            with the default component configuration from its OSGi Meta Type.
+     *            If <i>properties</i> is not null, the Configuration Service will first remove
+     *            {@link ConfigurationService#KURA_SERVICE_PID}
+     *            from the provided properties and then it will merge them with the initial map.
      * @param takeSnapshot
-     *                         if set to true a snapshot will be taken.
+     *            if set to true a snapshot will be taken.
      * @throws KuraException
-     *                           if pid is null, it already exists or creation fails.
+     *             if pid is null, it already exists or creation fails.
      *
      * @since 1.0.8
      */
@@ -148,12 +148,12 @@ public interface ConfigurationService {
      * Removes the component configuration and takes a new snapshot.
      *
      * @param pid
-     *                         the PID of the component instance to delete.
+     *            the PID of the component instance to delete.
      * @param takeSnapshot
-     *                         if set to true a snapshot will be taken.
+     *            if set to true a snapshot will be taken.
      * @throws KuraException
-     *                           if the PID is not found or if the component instance was not created
-     *                           via {@link #createFactoryConfiguration(String, String, Map, boolean)}.
+     *             if the PID is not found or if the component instance was not created
+     *             via {@link #createFactoryConfiguration(String, String, Map, boolean)}.
      *
      * @since 1.0.8
      */
@@ -180,7 +180,7 @@ public interface ConfigurationService {
      * provided OSGi filter.
      *
      * @param filter
-     *                   the filter to be applied
+     *            the filter to be applied
      * @return list of registered ConfigurableComponents
      *
      * @since 2.1
@@ -191,7 +191,7 @@ public interface ConfigurationService {
      * Returns the ComponentConfiguration for the component identified with specified PID.
      *
      * @param pid
-     *                The ID of the component whose configuration is requested.
+     *            The ID of the component whose configuration is requested.
      * @return ComponentConfiguration of the requested Component.
      */
     public ComponentConfiguration getComponentConfiguration(String pid) throws KuraException;
@@ -201,7 +201,7 @@ public interface ConfigurationService {
      * for the component having the specified PID.
      *
      * @param pid
-     *                The ID of the component whose configuration is requested.
+     *            The ID of the component whose configuration is requested.
      * @return the ComponentConfiguration of the requested Component.
      * @throws KuraException
      *
@@ -227,11 +227,11 @@ public interface ConfigurationService {
      * <br>
      *
      * @param pid
-     *                       The PID of the component whose configuration is requested.
+     *            The PID of the component whose configuration is requested.
      * @param properties
-     *                       Properties to be used as the new Configuration for the specified Component.
+     *            Properties to be used as the new Configuration for the specified Component.
      * @throws KuraException
-     *                           if the properties specified do not pass the validation of the ObjectClassDefinition
+     *             if the properties specified do not pass the validation of the ObjectClassDefinition
      */
     public void updateConfiguration(String pid, Map<String, Object> properties) throws KuraException;
 
@@ -253,13 +253,13 @@ public interface ConfigurationService {
      * <br>
      *
      * @param pid
-     *                         The PID of the component whose configuration is requested.
+     *            The PID of the component whose configuration is requested.
      * @param properties
-     *                         Properties to be used as the new Configuration for the specified Component.
+     *            Properties to be used as the new Configuration for the specified Component.
      * @param takeSnapshot
-     *                         defines whether or not this configuration update should trigger a snapshot.
+     *            defines whether or not this configuration update should trigger a snapshot.
      * @throws KuraException
-     *                           if the properties specified do not pass the validation of the ObjectClassDefinition.
+     *             if the properties specified do not pass the validation of the ObjectClassDefinition.
      *
      * @since 1.0.8
      */
@@ -284,9 +284,9 @@ public interface ConfigurationService {
      * <br>
      *
      * @param configs
-     *                    The list of ComponentConfiguration whose update is requested.
+     *            The list of ComponentConfiguration whose update is requested.
      * @throws KuraException
-     *                           if the properties specified do not pass the validation of the ObjectClassDefinition
+     *             if the properties specified do not pass the validation of the ObjectClassDefinition
      */
     public void updateConfigurations(List<ComponentConfiguration> configs) throws KuraException;
 
@@ -308,11 +308,11 @@ public interface ConfigurationService {
      * <br>
      *
      * @param configs
-     *                         The list of ComponentConfiguration whose update is requested.
+     *            The list of ComponentConfiguration whose update is requested.
      * @param takeSnapshot
-     *                         defines whether or not this configuration update should trigger a snapshot.
+     *            defines whether or not this configuration update should trigger a snapshot.
      * @throws KuraException
-     *                           if the properties specified do not pass the validation of the ObjectClassDefinition
+     *             if the properties specified do not pass the validation of the ObjectClassDefinition
      *
      * @since 1.0.8
      */
@@ -333,7 +333,7 @@ public interface ConfigurationService {
      * Loads a snapshot given its ID and return the component configurations stored in that snapshot.
      *
      * @param sid
-     *                - ID of the snapshot to be loaded
+     *            - ID of the snapshot to be loaded
      * @return List of ComponentConfigurations contained in the snapshot
      * @throws KuraException
      */
@@ -353,7 +353,7 @@ public interface ConfigurationService {
      *
      * @return the ID of the snapshot it rolled back to
      * @throws KuraException
-     *                           if no snapshots are available or
+     *             if no snapshots are available or
      */
     public long rollback() throws KuraException;
 
@@ -361,9 +361,9 @@ public interface ConfigurationService {
      * Rolls back to the specified snapshot id.
      *
      * @param id
-     *               ID of the snapshot we need to rollback to
+     *            ID of the snapshot we need to rollback to
      * @throws KuraException
-     *                           if the snapshot is not found
+     *             if the snapshot is not found
      */
     public void rollback(long id) throws KuraException;
 }

@@ -20,7 +20,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The abstract representation of a 'networking' portion of DhcpServerConfig object.
  *
  * @param <T>
- *                is the an appropriate subclass of IPAddress
+ *            is the an appropriate subclass of IPAddress
  *
  * @noextend This class is not intended to be subclassed by clients.
  * @since 1.2
@@ -40,19 +40,19 @@ public abstract class DhcpServerCfgIP<T extends IPAddress> {
      * The basic Constructor for a DhcpServerConfigIP
      *
      * @param subnet
-     *                          the subnet of the DhcpServerConfig
+     *            the subnet of the DhcpServerConfig
      * @param subnetMask
-     *                          the subnet mask of the DhcpServerConfig
+     *            the subnet mask of the DhcpServerConfig
      * @param prefix
-     *                          the network prefix associated with the DhcpServerConfig
+     *            the network prefix associated with the DhcpServerConfig
      * @param routerAddress
-     *                          the router IPAddress
+     *            the router IPAddress
      * @param rangeStart
-     *                          the network starting address to issue to DHCP clients
+     *            the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *                          the network ending address to issue to DHCP clients
+     *            the network ending address to issue to DHCP clients
      * @param dnsServers
-     *                          the DNS servers that will get passed to DHCP clients if passDns is true
+     *            the DNS servers that will get passed to DHCP clients if passDns is true
      */
     public DhcpServerCfgIP(T subnet, T subnetMask, short prefix, T routerAddress, T rangeStart, T rangeEnd,
             List<T> dnsServers) {

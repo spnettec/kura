@@ -21,7 +21,7 @@ public interface LinuxUdevListener {
      * Callback for notifications of new UsbDevice ATTACH events
      *
      * @param device
-     *                   The UsbDevice that was just attached
+     *            The UsbDevice that was just attached
      */
     void attached(UsbDevice device);
 
@@ -29,7 +29,7 @@ public interface LinuxUdevListener {
      * Callback for notifications of new UsbDevice DETACH events
      *
      * @param device
-     *                   The UsbDevice that was just detached
+     *            The UsbDevice that was just detached
      */
     void detached(UsbDevice device);
 }

@@ -51,10 +51,10 @@ public interface H2DbService extends BaseDbService {
      * process.
      *
      * @param task
-     *                 the task to be executed.
+     *            the task to be executed.
      * @return the result of the executed task.
      * @throws SQLException
-     *                          if the provided task throws a {@link SQLException}.
+     *             if the provided task throws a {@link SQLException}.
      * @since 2.0
      */
     public <T> T withConnection(ConnectionCallable<T> task) throws SQLException;
@@ -63,7 +63,7 @@ public interface H2DbService extends BaseDbService {
      * Represents a task that can be executed using the {@link H2DbService#withConnection(ConnectionCallable)} method.
      *
      * @param <T>
-     *                The return type of the task.
+     *            The return type of the task.
      * @since 2.0
      */
     @FunctionalInterface

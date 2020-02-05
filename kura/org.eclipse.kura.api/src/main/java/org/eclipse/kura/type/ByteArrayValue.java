@@ -43,9 +43,9 @@ public class ByteArrayValue implements TypedValue<byte[]> {
      * Instantiates a new byte array value.
      *
      * @param value
-     *                  the value
+     *            the value
      * @throws NullPointerException
-     *                                  if the argument is null
+     *             if the argument is null
      */
     public ByteArrayValue(final byte[] value) {
         requireNonNull(value, "Provided Typed Value cannot be null");

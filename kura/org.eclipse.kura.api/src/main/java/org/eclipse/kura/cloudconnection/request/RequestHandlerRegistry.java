@@ -26,9 +26,9 @@ public interface RequestHandlerRegistry {
      * {@link RequestHandler} instance can be notified for request messages targeting the registered {@code id}
      *
      * @param id
-     *                           a String identifying a specific {@link RequestHandler}
+     *            a String identifying a specific {@link RequestHandler}
      * @param requestHandler
-     *                           a {@link RequestHandler} instance identified by the specified {@code id}
+     *            a {@link RequestHandler} instance identified by the specified {@code id}
      * @throws KuraException
      */
     public void registerRequestHandler(String id, RequestHandler requestHandler) throws KuraException;
@@ -38,7 +38,7 @@ public interface RequestHandlerRegistry {
      * notifications will be sent to the unregistered {@RequestHandler}
      *
      * @param id
-     *               a String identifying a specific {@link RequestHandler}
+     *            a String identifying a specific {@link RequestHandler}
      * @throws KuraException
      */
     public void unregister(String id) throws KuraException;

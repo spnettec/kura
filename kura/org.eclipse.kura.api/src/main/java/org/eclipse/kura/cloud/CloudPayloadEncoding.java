@@ -31,11 +31,11 @@ public enum CloudPayloadEncoding {
      * Allows to map a provided string with the corresponding {@link CloudPayloadEncoding}
      *
      * @param proposedEncoding
-     *                             the String that has to be mapped to the corresponding {@link CloudPayloadEncoding}
+     *            the String that has to be mapped to the corresponding {@link CloudPayloadEncoding}
      * @return {@link CloudPayloadEncoding} if the matching between passed string and enum values succeeds
      * @throws IllegalArgumentException
-     *                                      if the argument cannot be matched to a corresponding
-     *                                      {@link CloudPayloadEncoding} object.
+     *             if the argument cannot be matched to a corresponding
+     *             {@link CloudPayloadEncoding} object.
      */
     public static CloudPayloadEncoding getEncoding(String proposedEncoding) {
         for (CloudPayloadEncoding encoding : CloudPayloadEncoding.values()) {

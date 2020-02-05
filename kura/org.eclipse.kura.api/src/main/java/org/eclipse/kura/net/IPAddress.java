@@ -41,7 +41,7 @@ public abstract class IPAddress {
      * IPv4 address byte array must be 4 bytes long and IPv6 byte array must be 16 bytes long
      *
      * @param addr
-     *                 - the raw IP address in network byte order
+     *            - the raw IP address in network byte order
      * @return an InetAddress object created from the raw IP address.
      */
     public static IPAddress getByAddress(byte[] addr) throws UnknownHostException {

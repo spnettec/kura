@@ -19,7 +19,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * This interface wraps a Java data type with its represented value format
  *
  * @param <T>
- *                The Java Value Type to be represented
+ *            The Java Value Type to be represented
  *
  * @see TypedValues
  * @see BooleanValue

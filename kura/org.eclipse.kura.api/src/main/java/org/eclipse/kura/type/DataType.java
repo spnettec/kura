@@ -39,10 +39,10 @@ public enum DataType {
      * Converts {@code stringDataType}, if possible, to the related {@link DataType}.
      *
      * @param stringDataType
-     *                           String that we want to use to get the respective {@link DataType}.
+     *            String that we want to use to get the respective {@link DataType}.
      * @return a DataType that corresponds to the String passed as argument.
      * @throws IllegalArgumentException
-     *                                      if the passed string does not correspond to an existing {@link DataType}.
+     *             if the passed string does not correspond to an existing {@link DataType}.
      */
     public static DataType getDataType(String stringDataType) {
         if (INTEGER.name().equalsIgnoreCase(stringDataType)) {

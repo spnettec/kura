@@ -32,15 +32,15 @@ public class DhcpServerCfg {
      * The basic Constructor for a DhcpServerCfg
      *
      * @param interfaceName
-     *                             the interface name associated with the DhcpServerConfig
+     *            the interface name associated with the DhcpServerConfig
      * @param enabled
-     *                             the status of the DhcpServer as a boolean
+     *            the status of the DhcpServer as a boolean
      * @param defaultLeaseTime
-     *                             the default lease time to issue to DHCP clients
+     *            the default lease time to issue to DHCP clients
      * @param maximumLeaseTime
-     *                             the maximum lease time to issue to DHCP clients
+     *            the maximum lease time to issue to DHCP clients
      * @param passDns
-     *                             whether or not to pass DNS to DHCP clients
+     *            whether or not to pass DNS to DHCP clients
      */
     public DhcpServerCfg(String interfaceName, boolean enabled, int defaultLeaseTime, int maximumLeaseTime,
             boolean passDns) {

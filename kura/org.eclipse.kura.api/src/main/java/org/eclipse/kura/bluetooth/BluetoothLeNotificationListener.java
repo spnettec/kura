@@ -30,9 +30,9 @@ public interface BluetoothLeNotificationListener {
      * Bluetooth LE device.
      *
      * @param handle
-     *                   Handle of Characteristic
+     *            Handle of Characteristic
      * @param value
-     *                   Value received from the device
+     *            Value received from the device
      */
     public void onDataReceived(String handle, String value);
 }

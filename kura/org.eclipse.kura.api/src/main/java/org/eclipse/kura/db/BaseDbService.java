@@ -45,7 +45,7 @@ public interface BaseDbService {
      * Releases a previously acquired JDCB connection to the DbService.
      *
      * @param conn
-     *                 to be released
+     *            to be released
      */
     public void close(Connection conn);
 

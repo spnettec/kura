@@ -32,7 +32,7 @@ public interface BluetoothLeService {
      * If the adapter is not available, it returns null.
      *
      * @param interfaceName
-     *                          the name of the adapter (i.e. hci0)
+     *            the name of the adapter (i.e. hci0)
      */
     public BluetoothLeAdapter getAdapter(String interfaceName);
 

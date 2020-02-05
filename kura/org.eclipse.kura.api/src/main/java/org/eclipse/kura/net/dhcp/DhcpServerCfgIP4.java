@@ -34,19 +34,19 @@ public class DhcpServerCfgIP4 extends DhcpServerCfgIP<IP4Address> {
      * The basic Constructor for a DhcpServerCfgIP4
      *
      * @param subnet
-     *                          the subnet of the DhcpServerConfig
+     *            the subnet of the DhcpServerConfig
      * @param subnetMask
-     *                          the subnet mask of the DhcpServerConfig
+     *            the subnet mask of the DhcpServerConfig
      * @param prefix
-     *                          the network prefix associated with the DhcpServerConfig
+     *            the network prefix associated with the DhcpServerConfig
      * @param routerAddress
-     *                          the router IPAddress
+     *            the router IPAddress
      * @param rangeStart
-     *                          the network starting address to issue to DHCP clients
+     *            the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *                          the network ending address to issue to DHCP clients
+     *            the network ending address to issue to DHCP clients
      * @param dnsServers
-     *                          the DNS servers that will get passed to DHCP clients if passDns is true
+     *            the DNS servers that will get passed to DHCP clients if passDns is true
      */
     public DhcpServerCfgIP4(IP4Address subnet, IP4Address subnetMask, short prefix, IP4Address routerAddress,
             IP4Address rangeStart, IP4Address rangeEnd, List<IP4Address> dnsServers) {

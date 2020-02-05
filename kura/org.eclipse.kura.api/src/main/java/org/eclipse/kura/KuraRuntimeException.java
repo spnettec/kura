@@ -54,7 +54,7 @@ public class KuraRuntimeException extends RuntimeException {
      * Builds a new {@link KuraRuntimeException} instance based on the supplied {@link KuraErrorCode}.
      *
      * @param code
-     *                 the error code
+     *            the error code
      */
     public KuraRuntimeException(final KuraErrorCode code) {
         this.code = code;
@@ -64,9 +64,9 @@ public class KuraRuntimeException extends RuntimeException {
      * Builds a new {@link KuraRuntimeException} instance based on the supplied {@link KuraErrorCode}.
      *
      * @param code
-     *                      the error code
+     *            the error code
      * @param arguments
-     *                      the arguments
+     *            the arguments
      */
     public KuraRuntimeException(final KuraErrorCode code, final Object... arguments) {
         this.code = code;
@@ -78,11 +78,11 @@ public class KuraRuntimeException extends RuntimeException {
      * Throwable cause, and optional arguments for the associated exception message.
      *
      * @param code
-     *                      the error code
+     *            the error code
      * @param cause
-     *                      the cause
+     *            the cause
      * @param arguments
-     *                      the arguments
+     *            the arguments
      */
     public KuraRuntimeException(final KuraErrorCode code, final Throwable cause, final Object... arguments) {
         super(cause);
@@ -109,7 +109,7 @@ public class KuraRuntimeException extends RuntimeException {
      * Gets the localized message.
      *
      * @param locale
-     *                   the locale
+     *            the locale
      * @return the localized message
      */
     private String getLocalizedMessage(final Locale locale) {
@@ -138,9 +138,9 @@ public class KuraRuntimeException extends RuntimeException {
      * Gets the message pattern.
      *
      * @param locale
-     *                   the locale
+     *            the locale
      * @param code
-     *                   the code
+     *            the code
      * @return the message pattern
      */
     private String getMessagePattern(final Locale locale, final KuraErrorCode code) {

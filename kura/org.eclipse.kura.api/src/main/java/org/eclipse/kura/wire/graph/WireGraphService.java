@@ -30,10 +30,10 @@ public interface WireGraphService {
      * {@link WireGraphConfiguration}.
      *
      * @param graphConfiguration
-     *                               A {@link WireGraphConfiguration} object that represents an updated
-     *                               status of the Wire Graph
+     *            A {@link WireGraphConfiguration} object that represents an updated
+     *            status of the Wire Graph
      * @throws {@link
-     *                    KuraException} if the update operation fails
+     *             KuraException} if the update operation fails
      */
     public void update(WireGraphConfiguration graphConfiguration) throws KuraException;
 
@@ -41,7 +41,7 @@ public interface WireGraphService {
      * This method allows to delete the current Wire Graph.
      *
      * @throws {@link
-     *                    KuraException} if the delete operation fails
+     *             KuraException} if the delete operation fails
      */
     public void delete() throws KuraException;
 
@@ -51,7 +51,7 @@ public interface WireGraphService {
      * @return a {@link WireGraphConfiguration} object that represents the current
      *         configuration of the Wire Graph
      * @throws {@link
-     *                    KuraException} if the get operation fails
+     *             KuraException} if the get operation fails
      */
     public WireGraphConfiguration get() throws KuraException;
 

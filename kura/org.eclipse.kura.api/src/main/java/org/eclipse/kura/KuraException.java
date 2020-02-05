@@ -54,7 +54,7 @@ public class KuraException extends Exception {
      * Builds a new {@link KuraException} instance based on the supplied {@link KuraErrorCode}.
      *
      * @param code
-     *                 the error code
+     *            the error code
      */
     public KuraException(final KuraErrorCode code) {
         this.code = code;
@@ -64,9 +64,9 @@ public class KuraException extends Exception {
      * Builds a new {@link KuraException} instance based on the supplied {@link KuraErrorCode}.
      *
      * @param code
-     *                      the error code
+     *            the error code
      * @param arguments
-     *                      the arguments
+     *            the arguments
      */
     public KuraException(final KuraErrorCode code, final Object... arguments) {
         this.code = code;
@@ -78,11 +78,11 @@ public class KuraException extends Exception {
      * cause, and optional arguments for the associated exception message.
      *
      * @param code
-     *                      the error code
+     *            the error code
      * @param cause
-     *                      the cause
+     *            the cause
      * @param arguments
-     *                      the arguments
+     *            the arguments
      */
     public KuraException(final KuraErrorCode code, final Throwable cause, final Object... arguments) {
         super(cause);
@@ -98,7 +98,7 @@ public class KuraException extends Exception {
      * {@link KuraErrorCode}.
      *
      * @param message
-     *                    the message
+     *            the message
      * @return the kura exception
      */
     public static KuraException internalError(final String message) {
@@ -113,7 +113,7 @@ public class KuraException extends Exception {
      * proper {@link KuraErrorCode}.
      *
      * @param cause
-     *                  the cause
+     *            the cause
      * @return the kura exception
      */
     public static KuraException internalError(final Throwable cause) {
@@ -128,9 +128,9 @@ public class KuraException extends Exception {
      * proper {@link KuraErrorCode}.
      *
      * @param cause
-     *                    the cause
+     *            the cause
      * @param message
-     *                    the message
+     *            the message
      * @return the kura exception
      */
     public static KuraException internalError(final Throwable cause, final String message) {
@@ -156,7 +156,7 @@ public class KuraException extends Exception {
      * Gets the localized message.
      *
      * @param locale
-     *                   the locale
+     *            the locale
      * @return the localized message
      */
     private String getLocalizedMessage(final Locale locale) {
@@ -185,9 +185,9 @@ public class KuraException extends Exception {
      * Gets the message pattern.
      *
      * @param locale
-     *                   the locale
+     *            the locale
      * @param code
-     *                   the code
+     *            the code
      * @return the message pattern
      */
     private String getMessagePattern(final Locale locale, final KuraErrorCode code) {

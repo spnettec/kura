@@ -30,29 +30,29 @@ public class DhcpServerConfigIP6 extends DhcpServerConfigIP<IP6Address> implemen
      * The basic Constructor for a DhcpServerConfigIP6
      *
      * @param interfaceName
-     *                             the interface name associated with the DhcpServerConfig
+     *            the interface name associated with the DhcpServerConfig
      * @param enabled
-     *                             the status of the DhcpServer as a {@link boolean }
+     *            the status of the DhcpServer as a {@link boolean }
      * @param subnet
-     *                             the subnet of the DhcpServerConfig
+     *            the subnet of the DhcpServerConfig
      * @param routerAddress
-     *                             the router IPAddress
+     *            the router IPAddress
      * @param subnetMask
-     *                             the subnet mask of the DhcpServerConfig
+     *            the subnet mask of the DhcpServerConfig
      * @param defaultLeaseTime
-     *                             the default lease time to issue to DHCP clients
+     *            the default lease time to issue to DHCP clients
      * @param maximumLeaseTime
-     *                             the maximum lease time to issue to DHCP clients
+     *            the maximum lease time to issue to DHCP clients
      * @param prefix
-     *                             the network prefix associated with the DhcpServerConfig
+     *            the network prefix associated with the DhcpServerConfig
      * @param rangeStart
-     *                             the network starting address to issue to DHCP clients
+     *            the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *                             the network ending address to issue to DHCP clients
+     *            the network ending address to issue to DHCP clients
      * @param passDns
-     *                             whether or not to pass DNS to DHCP clients
+     *            whether or not to pass DNS to DHCP clients
      * @param dnsServers
-     *                             the DNS servers that will get passed to DHCP clients if passDns is true
+     *            the DNS servers that will get passed to DHCP clients if passDns is true
      */
     @Deprecated
     @SuppressWarnings("checkstyle:parameterNumber")
@@ -69,9 +69,9 @@ public class DhcpServerConfigIP6 extends DhcpServerConfigIP<IP6Address> implemen
      * The basic Constructor for a DhcpServerConfigIP6
      *
      * @param dhcpServerCfg
-     *                             DHCP server configuration
+     *            DHCP server configuration
      * @param dhcpServerCfgIP4
-     *                             'network' configuration
+     *            'network' configuration
      * @throws KuraException
      * @since 1.2
      */

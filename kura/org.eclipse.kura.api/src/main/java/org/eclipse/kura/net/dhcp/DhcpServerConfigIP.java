@@ -20,7 +20,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * The abstract representation of a DhcpServerConfig object.
  *
  * @param <T>
- *                is the an appropriate subclass of IPAddress
+ *            is the an appropriate subclass of IPAddress
  *
  * @noextend This class is not intended to be subclassed by clients.
  */
@@ -44,29 +44,29 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * The basic Constructor for a DhcpServerConfigIP
      *
      * @param interfaceName
-     *                             the interface name associated with the DhcpServerConfig
+     *            the interface name associated with the DhcpServerConfig
      * @param enabled
-     *                             the status of the DhcpServer as a boolean
+     *            the status of the DhcpServer as a boolean
      * @param subnet
-     *                             the subnet of the DhcpServerConfig
+     *            the subnet of the DhcpServerConfig
      * @param routerAddress
-     *                             the router IPAddress
+     *            the router IPAddress
      * @param subnetMask
-     *                             the subnet mask of the DhcpServerConfig
+     *            the subnet mask of the DhcpServerConfig
      * @param defaultLeaseTime
-     *                             the default lease time to issue to DHCP clients
+     *            the default lease time to issue to DHCP clients
      * @param maximumLeaseTime
-     *                             the maximum lease time to issue to DHCP clients
+     *            the maximum lease time to issue to DHCP clients
      * @param prefix
-     *                             the network prefix associated with the DhcpServerConfig
+     *            the network prefix associated with the DhcpServerConfig
      * @param rangeStart
-     *                             the network starting address to issue to DHCP clients
+     *            the network starting address to issue to DHCP clients
      * @param rangeEnd
-     *                             the network ending address to issue to DHCP clients
+     *            the network ending address to issue to DHCP clients
      * @param passDns
-     *                             whether or not to pass DNS to DHCP clients
+     *            whether or not to pass DNS to DHCP clients
      * @param dnsServers
-     *                             the DNS servers that will get passed to DHCP clients if passDns is true
+     *            the DNS servers that will get passed to DHCP clients if passDns is true
      */
     @Deprecated
     @SuppressWarnings("checkstyle:parameterNumber")
@@ -93,9 +93,9 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * The basic Constructor for a DhcpServerConfigIP
      *
      * @param dhcpServerCfg
-     *                            DHCP server configuration
+     *            DHCP server configuration
      * @param dhcpServerCfgIP
-     *                            'network' configuration
+     *            'network' configuration
      * @since 1.2
      */
     public DhcpServerConfigIP(DhcpServerCfg dhcpServerCfg, DhcpServerCfgIP<T> dhcpServerCfgIP) {
@@ -122,7 +122,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the interface name for the DhcpServerConfig
      *
      * @param interfaceName
-     *                          the interface name in the form of a {@link String}
+     *            the interface name in the form of a {@link String}
      */
     public void setInterfaceName(String interfaceName) {
         this.interfaceName = interfaceName;
@@ -137,7 +137,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the status for the DhcpServerConfig
      *
      * @param enabled
-     *                    the Dhcp Server status in the form of a {@link boolean}
+     *            the Dhcp Server status in the form of a {@link boolean}
      */
     public void setEnabledRouterMode(boolean enabled) {
         this.enabled = enabled;
@@ -152,7 +152,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the subnet for the DhcpServerConfig
      *
      * @param subnet
-     *                   the subnet in the form of a {@link IPAddress}
+     *            the subnet in the form of a {@link IPAddress}
      */
     public void setSubnet(T subnet) {
         this.subnet = subnet;
@@ -167,7 +167,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the router IPAddress for the DhcpServerConfig
      *
      * @param routerAddress
-     *                          the router IPAddress in the form of a {@link IPAddress}
+     *            the router IPAddress in the form of a {@link IPAddress}
      */
     public void setRouterAddress(T routerAddress) {
         this.routerAddress = routerAddress;
@@ -182,7 +182,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the subnet mask for the DhcpServerConfig
      *
      * @param subnetMask
-     *                       the subnet mask in the form of a {@link IPAddress}
+     *            the subnet mask in the form of a {@link IPAddress}
      */
     public void setSubnetMask(T subnetMask) {
         this.subnetMask = subnetMask;
@@ -197,7 +197,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the default lease time for DHCP clients
      *
      * @param defaultLeaseTime
-     *                             the default lease time
+     *            the default lease time
      */
     public void setDefaultLeaseTime(int defaultLeaseTime) {
         this.defaultLeaseTime = defaultLeaseTime;
@@ -212,7 +212,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the maximum lease time for DHCP clients
      *
      * @param maximumLeaseTime
-     *                             the maximum lease time
+     *            the maximum lease time
      */
     public void setMaximumLeaseTime(int maximumLeaseTime) {
         this.maximumLeaseTime = maximumLeaseTime;
@@ -227,7 +227,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the network prefix for the DhcpServerConfig
      *
      * @param prefix
-     *                   the prefix
+     *            the prefix
      */
     public void setPrefix(short prefix) {
         this.prefix = prefix;
@@ -242,7 +242,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the starting IPAddress in the pool for the DHCP clients
      *
      * @param m_rangeStart
-     *                         the starting IPAddress
+     *            the starting IPAddress
      */
     public void setRangeStart(T rangeStart) {
         this.rangeStart = rangeStart;
@@ -257,7 +257,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * sets the ending IPAddress in the pool for the DHCP clients
      *
      * @param rangeEnd
-     *                     the ending IPAddress
+     *            the ending IPAddress
      */
     public void setRangeEnd(T rangeEnd) {
         this.rangeEnd = rangeEnd;
@@ -272,7 +272,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * whether or not to pass DNS to DHCP clients
      *
      * @param passDns
-     *                    true to pass, false to not
+     *            true to pass, false to not
      */
     public void setPassDns(boolean passDns) {
         this.passDns = passDns;
@@ -287,7 +287,7 @@ public abstract class DhcpServerConfigIP<T extends IPAddress> implements DhcpSer
      * the DNS servers to pass to DHCP clients if passDns is set to true
      *
      * @param m_dnsServers
-     *                         the DNS servers to pass
+     *            the DNS servers to pass
      */
     public void setDnsServers(List<T> dnsServers) {
         this.dnsServers = dnsServers;

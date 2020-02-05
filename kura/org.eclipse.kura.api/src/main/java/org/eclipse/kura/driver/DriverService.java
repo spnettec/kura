@@ -32,10 +32,10 @@ public interface DriverService {
      * ({@code kura.service.pid}).
      *
      * @param driverPid
-     *                      the driver PID to check
+     *            the driver PID to check
      * @return the driver instance
      * @throws NullPointerException
-     *                                  if the provided driver PID is null
+     *             if the provided driver PID is null
      */
     public Driver getDriver(String driverPid);
 
@@ -44,10 +44,10 @@ public interface DriverService {
      * instance
      *
      * @param driver
-     *                   the driver instance to check
+     *            the driver instance to check
      * @return the driver PID
      * @throws NullPointerException
-     *                                  if the provided driver instance is null
+     *             if the provided driver instance is null
      */
     public String getDriverPid(Driver driver);
 

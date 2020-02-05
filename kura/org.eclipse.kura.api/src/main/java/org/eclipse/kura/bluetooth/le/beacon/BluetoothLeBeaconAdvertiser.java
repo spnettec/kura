@@ -47,9 +47,9 @@ public interface BluetoothLeBeaconAdvertiser<T extends BluetoothLeBeacon> {
      * Note that further limitations can be introduced by the hardware Bluetooth controller.
      *
      * @param min
-     *                Minimum time interval between advertises
+     *            Minimum time interval between advertises
      * @param max
-     *                Maximum time interval between advertises
+     *            Maximum time interval between advertises
      *
      * @throw KuraBluetoothCommandException
      */
@@ -59,7 +59,7 @@ public interface BluetoothLeBeaconAdvertiser<T extends BluetoothLeBeacon> {
      * Set the data in to the Beacon advertising packet.
      *
      * @param beacon
-     *                   An instance of BluetoothLeBeacon class
+     *            An instance of BluetoothLeBeacon class
      *
      * @throw KuraBluetoothCommandException
      */

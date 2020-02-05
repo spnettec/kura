@@ -42,7 +42,7 @@ public interface BluetoothGatt {
      * Connect to devices GATT server with a given adapter.
      *
      * @param adapterName
-     *                        the name of the bluetooth adapter
+     *            the name of the bluetooth adapter
      * @return If connection was successful
      * @since 1.0.8
      */
@@ -65,7 +65,7 @@ public interface BluetoothGatt {
      * server will be communicated.
      *
      * @param listener
-     *                     BluetoothLeListener
+     *            BluetoothLeListener
      */
     public void setBluetoothLeNotificationListener(BluetoothLeNotificationListener listener);
 
@@ -73,7 +73,7 @@ public interface BluetoothGatt {
      * Return a GATT service based on a UUID.
      *
      * @param uuid
-     *                 UUID of service
+     *            UUID of service
      * @return BluetoothGattService
      */
     public BluetoothGattService getService(UUID uuid);
@@ -90,9 +90,9 @@ public interface BluetoothGatt {
      * can be obtained from the {@link #getServices() getServices} method.
      *
      * @param startHandle
-     *                        Start handle
+     *            Start handle
      * @param endHandle
-     *                        End handle
+     *            End handle
      * @return List of GATT characteristics
      */
     public List<BluetoothGattCharacteristic> getCharacteristics(String startHandle, String endHandle);
@@ -101,7 +101,7 @@ public interface BluetoothGatt {
      * Read characteristic value from handle.
      *
      * @param handle
-     *                   Characteristic handle
+     *            Characteristic handle
      * @return Characteristic value
      */
     public String readCharacteristicValue(String handle) throws KuraException;
@@ -110,7 +110,7 @@ public interface BluetoothGatt {
      * Read value from characteristic by UUID.
      *
      * @param uuid
-     *                 UUID of Characteristic
+     *            UUID of Characteristic
      * @return Characteristic value
      */
     public String readCharacteristicValueByUuid(UUID uuid) throws KuraException;
@@ -119,9 +119,9 @@ public interface BluetoothGatt {
      * Write value to characteristic.
      *
      * @param handle
-     *                   Handle of Characteristic
+     *            Handle of Characteristic
      * @param value
-     *                   Value to write to Characteristic
+     *            Value to write to Characteristic
      */
     public void writeCharacteristicValue(String handle, String value);
 
@@ -137,7 +137,7 @@ public interface BluetoothGatt {
      * Set security level.
      *
      * @param level
-     *                  Security Level
+     *            Security Level
      * @since 1.2
      */
     public void setSecurityLevel(BluetoothGattSecurityLevel level);

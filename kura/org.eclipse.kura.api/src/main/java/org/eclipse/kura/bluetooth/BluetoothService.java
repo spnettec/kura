@@ -37,7 +37,7 @@ public interface BluetoothService {
      * Get the Bluetooth adapter specified by name.
      *
      * @param name
-     *                 Name of the Bluetooth Adapter
+     *            Name of the Bluetooth Adapter
      * @return Bluetooth Adapter
      */
     public BluetoothAdapter getBluetoothAdapter(String name);
@@ -46,9 +46,9 @@ public interface BluetoothService {
      * Get the Bluetooth adapter specified by name.
      *
      * @param name
-     *                 Name of the Bluetooth Adapter
+     *            Name of the Bluetooth Adapter
      * @param bbcl
-     *                 Bluetooth Beacon Listener for commands
+     *            Bluetooth Beacon Listener for commands
      * @return Bluetooth Adapter
      */
     public BluetoothAdapter getBluetoothAdapter(String name, BluetoothBeaconCommandListener bbcl);

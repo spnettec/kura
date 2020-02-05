@@ -128,7 +128,7 @@ public interface CommConnection extends StreamConnection {
      * Sends and array of bytes to a CommConnection
      *
      * @param message
-     *                    the array of bytes to send to the CommConnection
+     *            the array of bytes to send to the CommConnection
      * @throws KuraException
      * @throws IOException
      */
@@ -142,10 +142,10 @@ public interface CommConnection extends StreamConnection {
      * with serial devices
      *
      * @param command
-     *                    the array of bytes to send to the CommConnection
+     *            the array of bytes to send to the CommConnection
      * @param timeout
-     *                    the maximum length of time to wait before returning a null
-     *                    response in the event no response is ever returned.
+     *            the maximum length of time to wait before returning a null
+     *            response in the event no response is ever returned.
      * @return an array of bytes representing the response
      * @throws KuraException
      * @throws IOException

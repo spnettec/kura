@@ -34,9 +34,9 @@ public interface BluetoothLeAdapter {
      * method.
      *
      * @param timeout
-     *                    timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @param address
-     *                    MAC address of the BLE device
+     *            MAC address of the BLE device
      * @return Future
      */
     public Future<BluetoothLeDevice> findDeviceByAddress(long timeout, String address);
@@ -48,9 +48,9 @@ public interface BluetoothLeAdapter {
      * method.
      *
      * @param timeout
-     *                    timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @param name
-     *                    system name of the BLE device
+     *            system name of the BLE device
      * @return Future
      */
     public Future<BluetoothLeDevice> findDeviceByName(long timeout, String name);
@@ -61,11 +61,11 @@ public interface BluetoothLeAdapter {
      * get the device.
      *
      * @param timeout
-     *                     timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @param address
-     *                     MAC address of the BLE device
+     *            MAC address of the BLE device
      * @param consumer
-     *                     the consumer used to get the device
+     *            the consumer used to get the device
      */
     public void findDeviceByAddress(long timeout, String address, Consumer<BluetoothLeDevice> consumer);
 
@@ -75,11 +75,11 @@ public interface BluetoothLeAdapter {
      * get the device.
      *
      * @param timeout
-     *                     timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @param name
-     *                     system name of the BLE device
+     *            system name of the BLE device
      * @param consumer
-     *                     the consumer used to get the device
+     *            the consumer used to get the device
      */
     public void findDeviceByName(long timeout, String name, Consumer<BluetoothLeDevice> consumer);
 
@@ -89,7 +89,7 @@ public interface BluetoothLeAdapter {
      * is not supported and acts as the get() method.
      *
      * @param timeout
-     *                    timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @return Future
      */
     public Future<List<BluetoothLeDevice>> findDevices(long timeout);
@@ -99,9 +99,9 @@ public interface BluetoothLeAdapter {
      * the consumer is used to get the devices.
      *
      * @param timeout
-     *                     timeout in seconds for device discovery
+     *            timeout in seconds for device discovery
      * @param consumer
-     *                     the consumer used to get the device
+     *            the consumer used to get the device
      */
     public void findDevices(long timeout, Consumer<List<BluetoothLeDevice>> consumer);
 
@@ -267,13 +267,13 @@ public interface BluetoothLeAdapter {
      * To remove the filter, call this method with empty parameters.
      *
      * @param uuids
-     *                         the uuids advertised by the devices
+     *            the uuids advertised by the devices
      * @param rssi
-     *                         the Receiver Signal Strength Indication value
+     *            the Receiver Signal Strength Indication value
      * @param pathloss
-     *                         the pathloss value
+     *            the pathloss value
      * @param trasportType
-     *                         the trasportType (LE or BREDR)
+     *            the trasportType (LE or BREDR)
      *
      * @since 2.0
      */
@@ -284,7 +284,7 @@ public interface BluetoothLeAdapter {
      * reported. Set it to 0 to remove the filter.
      *
      * @param rssi
-     *                 the Receiver Signal Strength Indication value used by the filter
+     *            the Receiver Signal Strength Indication value used by the filter
      *
      * @since 2.0
      */

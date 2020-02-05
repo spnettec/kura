@@ -58,7 +58,7 @@ public interface CloudService {
      * in the CloudCallbackHandler to restore the subscriptions it needs.
      *
      * @param appId
-     *                  A String object specifying a unique application ID.
+     *            A String object specifying a unique application ID.
      * @return CloudClient instance
      * @throws KuraException
      */

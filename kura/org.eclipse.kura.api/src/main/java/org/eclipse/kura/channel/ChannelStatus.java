@@ -47,9 +47,9 @@ public class ChannelStatus {
      * Instantiates a new status.
      *
      * @param channelFlag
-     *                        the channel flag
+     *            the channel flag
      * @throws NullPointerException
-     *                                  if the channel flag is null
+     *             if the channel flag is null
      */
     public ChannelStatus(final ChannelFlag channelFlag) {
         requireNonNull(channelFlag, "Channel Flag cannot be null");
@@ -62,13 +62,13 @@ public class ChannelStatus {
      * Instantiates a new status.
      *
      * @param channelFlag
-     *                             the channel flag
+     *            the channel flag
      * @param exceptionMessage
-     *                             the exception message
+     *            the exception message
      * @param exception
-     *                             the exception
+     *            the exception
      * @throws NullPointerException
-     *                                  if the channel flag is null
+     *             if the channel flag is null
      */
     public ChannelStatus(final ChannelFlag channelFlag, @Nullable final String exceptionMessage,
             @Nullable final Exception exception) {

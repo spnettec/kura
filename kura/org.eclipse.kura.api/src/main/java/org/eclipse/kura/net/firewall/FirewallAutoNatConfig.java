@@ -43,11 +43,11 @@ public class FirewallAutoNatConfig implements NetConfig {
      * Creates a complete auto NAT configuration
      *
      * @param sourceInterface
-     *                                 The source interface (LAN interface) for the NAT configuration
+     *            The source interface (LAN interface) for the NAT configuration
      * @param destinationInterface
-     *                                 The destination interface (WAN interface) for the NAT configuration
+     *            The destination interface (WAN interface) for the NAT configuration
      * @param masquerade
-     *                                 Whether or not MASQUERADE should be enabled
+     *            Whether or not MASQUERADE should be enabled
      */
     public FirewallAutoNatConfig(String sourceInterface, String destinationInterface, boolean masquerade) {
         super();

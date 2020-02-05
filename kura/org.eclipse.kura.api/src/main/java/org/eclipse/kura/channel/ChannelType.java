@@ -41,10 +41,10 @@ public enum ChannelType {
      * Converts {@code channelTypeString}, if possible, to the related {@link ChannelType}.
      *
      * @param channelTypeString
-     *                              String that we want to use to get the respective {@link ChannelType}.
+     *            String that we want to use to get the respective {@link ChannelType}.
      * @return a ChannelType that corresponds to the String passed as argument.
      * @throws IllegalArgumentException
-     *                                      if the passed string does not correspond to an existing {@link ChannelType}.
+     *             if the passed string does not correspond to an existing {@link ChannelType}.
      */
     public static ChannelType getChannelType(String channelTypeString) {
         if (READ.name().equalsIgnoreCase(channelTypeString)) {

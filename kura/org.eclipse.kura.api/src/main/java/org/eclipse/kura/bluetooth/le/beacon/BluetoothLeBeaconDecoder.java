@@ -23,7 +23,7 @@ public interface BluetoothLeBeaconDecoder<T extends BluetoothLeBeacon> {
      * Decodes a byte array into a BluetoothLeBeacon object
      *
      * @param data
-     *                 the byte array acquired by a scanner
+     *            the byte array acquired by a scanner
      * @return BluetoothLeBeacon
      */
     public T decode(byte[] data);

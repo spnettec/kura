@@ -40,7 +40,7 @@ public class FloatValue implements TypedValue<Float> {
      * Instantiates a new {@link Float} value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public FloatValue(final float value) {
         this.value = value;

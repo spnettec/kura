@@ -33,7 +33,7 @@ public interface BluetoothLeGattCharacteristic {
      * Find a BluetoothLeGattDescriptor specifying the UUID of the descriptor.
      *
      * @param uuid
-     *                 The UUID of the GATT descriptor
+     *            The UUID of the GATT descriptor
      * @return The BluetoothLeGattDescriptor
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -44,9 +44,9 @@ public interface BluetoothLeGattCharacteristic {
      *
      * @since 1.4
      * @param uuid
-     *                    The UUID of the GATT descriptor
+     *            The UUID of the GATT descriptor
      * @param timeout
-     *                    The timeout for retrieving the characteristic
+     *            The timeout for retrieving the characteristic
      * @return The BluetoothLeGattDescriptor
      * @throws KuraBluetoothResourceNotFoundException
      */
@@ -76,8 +76,8 @@ public interface BluetoothLeGattCharacteristic {
      * to avoid that the garbage collector deletes it and removes the associated consumer.
      *
      * @param callback
-     *                     A Consumer<byte[]> object. Its accept function will be called
-     *                     when a notification is issued.
+     *            A Consumer<byte[]> object. Its accept function will be called
+     *            when a notification is issued.
      *
      * @throws KuraBluetoothNotificationException
      */
@@ -96,7 +96,7 @@ public interface BluetoothLeGattCharacteristic {
      * Writes the value of this characteristic.
      *
      * @param value
-     *                  The data as byte[] to be written
+     *            The data as byte[] to be written
      *
      * @throws KuraBluetoothIOException
      */

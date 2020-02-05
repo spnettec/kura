@@ -66,10 +66,10 @@ public interface CloudConnectionFactory {
      * set to the value provided in the {@code pid} parameter.
      *
      * @param pid
-     *                the Kura persistent identifier ({@code kura.service.pid}) of the Cloud Endpoint service
-     *                instance created by this factory.
+     *            the Kura persistent identifier ({@code kura.service.pid}) of the Cloud Endpoint service
+     *            instance created by this factory.
      * @throws KuraException
-     *                           an exception is thrown in case the creation operation fails
+     *             an exception is thrown in case the creation operation fails
      */
     public void createConfiguration(String pid) throws KuraException;
 
@@ -80,10 +80,10 @@ public interface CloudConnectionFactory {
      * {@code kura.service.pid}.
      *
      * @param pid
-     *                the Kura persistent identifier, {@code kura.service.pid}
+     *            the Kura persistent identifier, {@code kura.service.pid}
      * @return the {@link List} of {@code kura.service.pid}s related to the provided {@code pid}.
      * @throws KuraException
-     *                           if the specified {@code kura.service.pid} is incorrect.
+     *             if the specified {@code kura.service.pid} is incorrect.
      */
     public List<String> getStackComponentsPids(String pid) throws KuraException;
 
@@ -91,9 +91,9 @@ public interface CloudConnectionFactory {
      * Deletes a previously created configuration deactivating the associated instances.
      *
      * @param pid
-     *                the Kura persistent identifier, {@code kura.service.pid} of a Cloud Endpoint
+     *            the Kura persistent identifier, {@code kura.service.pid} of a Cloud Endpoint
      * @throws KuraException
-     *                           if the provided {@code kura.service.pid} is incorrect or the delete operation fails.
+     *             if the provided {@code kura.service.pid} is incorrect or the delete operation fails.
      */
     public void deleteConfiguration(String pid) throws KuraException;
 

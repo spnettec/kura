@@ -35,9 +35,9 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Creates a DNS configuration with a default set of forwarders and a set of allowed networks
      *
      * @param forwarders
-     *                            The recursive DNS servers to use
+     *            The recursive DNS servers to use
      * @param allowedNetworks
-     *                            The LAN networks that are allowed to make queries
+     *            The LAN networks that are allowed to make queries
      */
     public DnsServerConfigIP(Set<T> forwarders, Set<NetworkPair<T>> allowedNetworks) {
         super();
@@ -58,7 +58,7 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Sets the current recursive domain name servers to use to resolve queries
      *
      * @param forwarders
-     *                       The recursive DNS servers to use
+     *            The recursive DNS servers to use
      */
     public void setForwarders(Set<T> forwarders) {
         this.forwarders = forwarders;
@@ -76,7 +76,7 @@ public abstract class DnsServerConfigIP<T extends IPAddress> implements DnsServe
      * Sets a List of networks that are allowed to make DNS queries
      *
      * @param allowedNetworks
-     *                            The LAN networks that are allowed to make queries
+     *            The LAN networks that are allowed to make queries
      */
     public void setAllowedNetworks(Set<NetworkPair<T>> allowedNetworks) {
         this.allowedNetworks = allowedNetworks;

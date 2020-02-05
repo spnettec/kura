@@ -42,7 +42,7 @@ public interface DataTransportService {
      * exposed through the ConfigurationAdmin.
      *
      * @throws KuraConnectException
-     *                                  the caller MAY retry connecting a later time.
+     *             the caller MAY retry connecting a later time.
      */
     public void connect() throws KuraConnectException;
 
@@ -68,7 +68,7 @@ public interface DataTransportService {
      * in-flight messages before actually disconnecting from the broker.
      *
      * @param quiesceTimeout
-     *                           - timeout that will be used before forcing a disconnect
+     *            - timeout that will be used before forcing a disconnect
      */
     public void disconnect(long quiesceTimeout);
 
@@ -83,10 +83,10 @@ public interface DataTransportService {
      * @param topic
      * @param qos
      * @throws KuraTimeoutException
-     *                                       TODO
+     *             TODO
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *                                       TODO
+     *             TODO
      */
     public void subscribe(String topic, int qos) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 
@@ -101,7 +101,7 @@ public interface DataTransportService {
      * @throws KuraTimeoutException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *                                       TODO
+     *             TODO
      */
     public void unsubscribe(String topic) throws KuraTimeoutException, KuraException, KuraNotConnectedException;
 
@@ -117,7 +117,7 @@ public interface DataTransportService {
      * @throws KuraTooManyInflightMessagesException
      * @throws KuraException
      * @throws KuraNotConnectedException
-     *                                                  TODO
+     *             TODO
      */
     public DataTransportToken publish(String topic, byte[] payload, int qos, boolean retain)
             throws KuraTooManyInflightMessagesException, KuraException, KuraNotConnectedException;

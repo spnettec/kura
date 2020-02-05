@@ -29,10 +29,10 @@ public interface Marshaller {
      * Returns a {@link String} that represents the {@link Object} passed as input.
      *
      * @param object
-     *                   the object that will be marshalled.
+     *            the object that will be marshalled.
      * @return a {@link String} representing the string representation of the object passed as input
      * @throws KuraException
-     *                           when the marshalling operation fails.
+     *             when the marshalling operation fails.
      */
     public String marshal(Object object) throws KuraException;
 

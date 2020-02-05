@@ -43,16 +43,16 @@ public interface RequestHandler {
      * Used to implement a READ request for a resource identified by the supplied {@link CloudletResources)}
      *
      * @param context
-     *                       a request context that can be used, for example, to publish notification messages to the
-     *                       remote cloud
-     *                       platform
+     *            a request context that can be used, for example, to publish notification messages to the
+     *            remote cloud
+     *            platform
      * @param reqMessage
-     *                       represents, as a {@link KuraMessage}, the received message
+     *            represents, as a {@link KuraMessage}, the received message
      * @return the response to be provided back as {@link KuraMessage}
      * @throws KuraException
-     *                           An exception is thrown in every condition where the request cannot be full fitted due
-     *                           to wrong
-     *                           request parameters or exceptions during processing
+     *             An exception is thrown in every condition where the request cannot be full fitted due
+     *             to wrong
+     *             request parameters or exceptions during processing
      */
     public default KuraMessage doGet(RequestHandlerContext context, KuraMessage reqMessage) throws KuraException {
         throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
@@ -62,16 +62,16 @@ public interface RequestHandler {
      * Used to implement a CREATE or UPDATE request for a resource identified by the supplied {@link CloudletResources)}
      *
      * @param context
-     *                       a request context that can be used, for example, to publish notification messages to the
-     *                       remote cloud
-     *                       platform
+     *            a request context that can be used, for example, to publish notification messages to the
+     *            remote cloud
+     *            platform
      * @param reqMessage
-     *                       represents as a {@link KuraMessage} the received message
+     *            represents as a {@link KuraMessage} the received message
      * @return the response to be provided back as {@link KuraMessage}
      * @throws KuraException
-     *                           An exception is thrown in every condition where the request cannot be full fitted due
-     *                           to wrong
-     *                           request parameters or exceptions during processing
+     *             An exception is thrown in every condition where the request cannot be full fitted due
+     *             to wrong
+     *             request parameters or exceptions during processing
      */
     public default KuraMessage doPut(RequestHandlerContext context, KuraMessage reqMessage) throws KuraException {
         throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
@@ -81,16 +81,16 @@ public interface RequestHandler {
      * Used to implement other operations on a resource identified by the supplied {@link CloudletResources)}
      *
      * @param context
-     *                       a request context that can be used, for example, to publish notification messages to the
-     *                       remote cloud
-     *                       platform
+     *            a request context that can be used, for example, to publish notification messages to the
+     *            remote cloud
+     *            platform
      * @param reqMessage
-     *                       represents as a {@link KuraMessage} the received message
+     *            represents as a {@link KuraMessage} the received message
      * @return the response to be provided back as {@link KuraMessage}
      * @throws KuraException
-     *                           An exception is thrown in every condition where the request cannot be full fitted due
-     *                           to wrong
-     *                           request parameters or exceptions during processing
+     *             An exception is thrown in every condition where the request cannot be full fitted due
+     *             to wrong
+     *             request parameters or exceptions during processing
      */
     public default KuraMessage doPost(RequestHandlerContext context, KuraMessage reqMessage) throws KuraException {
         throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
@@ -100,16 +100,16 @@ public interface RequestHandler {
      * Used to implement a DELETE request for a resource identified by the supplied {@link CloudletResources)}
      *
      * @param context
-     *                       a request context that can be used, for example, to publish notification messages to the
-     *                       remote cloud
-     *                       platform
+     *            a request context that can be used, for example, to publish notification messages to the
+     *            remote cloud
+     *            platform
      * @param reqMessage
-     *                       represents as a {@link KuraMessage} the received message
+     *            represents as a {@link KuraMessage} the received message
      * @return the response to be provided back as {@link KuraMessage}
      * @throws KuraException
-     *                           An exception is thrown in every condition where the request cannot be full fitted due
-     *                           to wrong
-     *                           request parameters or exceptions during processing
+     *             An exception is thrown in every condition where the request cannot be full fitted due
+     *             to wrong
+     *             request parameters or exceptions during processing
      */
     public default KuraMessage doDel(RequestHandlerContext context, KuraMessage reqMessage) throws KuraException {
         throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
@@ -119,16 +119,16 @@ public interface RequestHandler {
      * Used to perform application operation not necessary tied to a given resource
      *
      * @param context
-     *                       a request context that can be used, for example, to publish notification messages to the
-     *                       remote cloud
-     *                       platform
+     *            a request context that can be used, for example, to publish notification messages to the
+     *            remote cloud
+     *            platform
      * @param reqMessage
-     *                       represents as a {@link KuraMessage} the received message
+     *            represents as a {@link KuraMessage} the received message
      * @return the response to be provided back as {@link KuraMessage}
      * @throws KuraException
-     *                           An exception is thrown in every condition where the request cannot be full fitted due
-     *                           to wrong
-     *                           request parameters or exceptions during processing
+     *             An exception is thrown in every condition where the request cannot be full fitted due
+     *             to wrong
+     *             request parameters or exceptions during processing
      */
     public default KuraMessage doExec(RequestHandlerContext context, KuraMessage reqMessage) throws KuraException {
         throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);

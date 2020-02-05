@@ -42,9 +42,9 @@ public class WireRecord {
      * Instantiates a new {@link WireRecord}.
      *
      * @param properties
-     *                       Map that represents the key-value pairs
+     *            Map that represents the key-value pairs
      * @throws NullPointerException
-     *                                  if any of the argument is null
+     *             if any of the argument is null
      */
     public WireRecord(final Map<String, TypedValue<?>> properties) {
         requireNonNull(properties, "Properties cannot be null");

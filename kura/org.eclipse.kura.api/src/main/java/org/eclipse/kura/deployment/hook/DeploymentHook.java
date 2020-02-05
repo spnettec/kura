@@ -88,11 +88,11 @@ public interface DeploymentHook {
      * This method is called at the {@code preDownload} phase, see class description for more details.
      *
      * @param context
-     *                       a {@link RequestContext} instance representing the current DEPLOY-V2 request
+     *            a {@link RequestContext} instance representing the current DEPLOY-V2 request
      * @param properties
-     *                       an hook-specific map of properties
+     *            an hook-specific map of properties
      * @throws KuraException
-     *                           if an exception is thrown the current request will be aborted
+     *             if an exception is thrown the current request will be aborted
      */
     public void preDownload(RequestContext context, Map<String, Object> properties) throws KuraException;
 
@@ -100,11 +100,11 @@ public interface DeploymentHook {
      * This method is called at the {@code preDownload} phase, see class description for more details.
      *
      * @param context
-     *                       a {@link RequestContext} instance representing the current DEPLOY-V2 request
+     *            a {@link RequestContext} instance representing the current DEPLOY-V2 request
      * @param properties
-     *                       an hook-specific map of properties
+     *            an hook-specific map of properties
      * @throws KuraException
-     *                           if an exception is thrown the current request will be aborted
+     *             if an exception is thrown the current request will be aborted
      */
     public void postDownload(RequestContext context, Map<String, Object> properties) throws KuraException;
 
@@ -112,11 +112,11 @@ public interface DeploymentHook {
      * This method is called at the {@code preDownload} phase, see class description for more details.
      *
      * @param context
-     *                       a {@link RequestContext} instance representing the current DEPLOY-V2 request
+     *            a {@link RequestContext} instance representing the current DEPLOY-V2 request
      * @param properties
-     *                       an hook-specific map of properties
+     *            an hook-specific map of properties
      * @throws KuraException
-     *                           if an exception is thrown the current request will be aborted
+     *             if an exception is thrown the current request will be aborted
      */
     public void postInstall(RequestContext context, Map<String, Object> properties) throws KuraException;
 
