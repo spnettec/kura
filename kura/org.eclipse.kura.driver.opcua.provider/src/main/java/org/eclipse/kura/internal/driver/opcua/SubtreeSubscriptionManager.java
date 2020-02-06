@@ -79,7 +79,7 @@ public class SubtreeSubscriptionManager implements ListenerRegistrationRegistry.
                 return;
             }
 
-            final Optional<NodeId> nodeId = n.getNodeId().local();
+            final Optional<NodeId> nodeId = n.getNodeId().local(null);
 
             if (logger.isTraceEnabled()) {
                 logger.trace("found variable node: {} {}", path, nodeId);
