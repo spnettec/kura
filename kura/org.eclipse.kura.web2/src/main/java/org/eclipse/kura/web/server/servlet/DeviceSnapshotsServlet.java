@@ -58,12 +58,7 @@ public class DeviceSnapshotsServlet extends LocaleServlet {
 
         String snapshotId = request.getParameter("snapshotId");
 
-        response.setCharacterEncoding("UTF-8");
-        response.setContentType("application/xml");
-        response.setHeader("Content-Disposition", "attachment; filename=snapshot_" + snapshotId + ".xml");
-        response.setHeader("Cache-Control", "no-transform, max-age=0");
-        OutputStream outputStream = response.getOutputStream();
-        try {
+        try (OutputStream outputStream = response.getOutputStream();) {
 
             ServiceLocator locator = ServiceLocator.getInstance();
             ConfigurationService cs = locator.getService(ConfigurationService.class);
@@ -80,6 +75,11 @@ public class DeviceSnapshotsServlet extends LocaleServlet {
                 XmlComponentConfigurations xmlConfigs = new XmlComponentConfigurations();
                 xmlConfigs.setConfigurations(configImpls);
 
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType("application/xml");
+                response.setHeader("Content-Disposition", "attachment; filename=snapshot_" + sid + ".xml");
+                response.setHeader("Cache-Control", "no-transform, max-age=0");
+
                 //
                 // marshall the response and write it
                 marshal(xmlConfigs, outputStream);
@@ -89,18 +89,10 @@ public class DeviceSnapshotsServlet extends LocaleServlet {
                         session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), snapshotId);
             }
         } catch (Exception e) {
-            logger.error("Error creating Excel export");
+            logger.error("Error exporting snapshot");
             auditLogger.warn("UI Snapshots - Failure - Failed to export device snapshot for user: {}, session: {}",
                     session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
             throw new ServletException(e);
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    logger.warn("Cannot close output stream", e);
-                }
-            }
         }
     }
 
