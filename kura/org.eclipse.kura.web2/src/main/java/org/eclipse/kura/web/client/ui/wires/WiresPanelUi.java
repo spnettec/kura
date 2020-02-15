@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -42,13 +42,16 @@ import org.eclipse.kura.web.shared.model.GwtWireComposerStaticInfo;
 import org.eclipse.kura.web.shared.model.GwtWireConfiguration;
 import org.eclipse.kura.web.shared.model.GwtWireGraphConfiguration;
 import org.gwtbootstrap3.client.ui.Alert;
+import org.gwtbootstrap3.client.ui.Anchor;
 import org.gwtbootstrap3.client.ui.Button;
 import org.gwtbootstrap3.client.ui.NavPills;
 import org.gwtbootstrap3.client.ui.Panel;
 import org.gwtbootstrap3.client.ui.PanelBody;
+import org.gwtbootstrap3.client.ui.PanelCollapse;
 import org.gwtbootstrap3.client.ui.PanelHeader;
 import org.gwtbootstrap3.client.ui.Row;
 import org.gwtbootstrap3.client.ui.constants.AlertType;
+import org.gwtbootstrap3.client.ui.constants.IconType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -97,9 +100,6 @@ public class WiresPanelUi extends Composite
     Row configurationRow;
 
     @UiField
-    NavPills wireComponentsMenu;
-
-    @UiField
     Widget composer;
 
     @UiField
@@ -107,6 +107,27 @@ public class WiresPanelUi extends Composite
 
     @UiField
     AlertDialog confirmDialog;
+
+    @UiField
+    PanelCollapse emitterCollapse;
+    @UiField
+    PanelCollapse receiverCollapse;
+    @UiField
+    PanelCollapse emitterReceiverCollapse;
+
+    @UiField
+    Anchor receiverAnchor;
+    @UiField
+    Anchor emitterAnchor;
+    @UiField
+    Anchor emitterReceiverAnchor;
+
+    @UiField
+    NavPills wireReceiversMenu;
+    @UiField
+    NavPills wireEmittersMenu;
+    @UiField
+    NavPills wireEmitterReceiverMenu;
 
     interface WiresPanelUiUiBinder extends UiBinder<Widget, WiresPanelUi> {
     }
@@ -188,7 +209,9 @@ public class WiresPanelUi extends Composite
     }
 
     private void populateComponentsPanel() {
-        this.wireComponentsMenu.clear();
+        this.wireReceiversMenu.clear();
+        this.wireEmittersMenu.clear();
+        this.wireEmitterReceiverMenu.clear();
 
         final WireComponentsAnchorListItem.Listener listener = WiresPanelUi.this::showComponentCreationDialog;
 
@@ -200,19 +223,36 @@ public class WiresPanelUi extends Composite
 
         Collections.sort(sortedDescriptors, (o1, o2) -> {
             int comp = Integer.compare(o2.getToolsSorted(), o1.getToolsSorted());
-            if (comp == 0) {
-                return Integer.compare(o1.getMinInputPorts() * 2 + o1.getMinOutputPorts(),
-                        o2.getMinInputPorts() * 2 + o2.getMinOutputPorts());
-            } else {
-                return comp;
-            }
+            if (comp == 0)
+                comp = o1.getName().compareToIgnoreCase(o2.getName());
+            return comp;
+
         });
 
         for (GwtWireComponentDescriptor descriptor : sortedDescriptors) {
             final WireComponentsAnchorListItem item = new WireComponentsAnchorListItem(getComponentLabel(descriptor),
                     descriptor.getFactoryPid(), descriptor.getMinInputPorts() > 0, descriptor.getMinOutputPorts() > 0);
             item.setListener(listener);
-            this.wireComponentsMenu.add(item);
+
+            // add handlers to set indicator for each PanelCollapse
+            this.receiverCollapse.addShowHandler(showEvent -> this.receiverAnchor.setIcon(IconType.CARET_DOWN));
+            this.receiverCollapse.addHideHandler(hideEvent -> this.receiverAnchor.setIcon(IconType.CARET_RIGHT));
+
+            this.emitterCollapse.addShowHandler(showEvent -> this.emitterAnchor.setIcon(IconType.CARET_DOWN));
+            this.emitterCollapse.addHideHandler(hideEvent -> this.emitterAnchor.setIcon(IconType.CARET_RIGHT));
+
+            this.emitterReceiverCollapse
+                    .addShowHandler(showEvent -> this.emitterReceiverAnchor.setIcon(IconType.CARET_DOWN));
+            this.emitterReceiverCollapse
+                    .addHideHandler(hideEvent -> this.emitterReceiverAnchor.setIcon(IconType.CARET_RIGHT));
+
+            if (descriptor.getMinInputPorts() > 0 && descriptor.getMinOutputPorts() > 0) {
+                this.wireEmitterReceiverMenu.add(item);
+            } else if (descriptor.getMinOutputPorts() > 0) {
+                this.wireEmittersMenu.add(item);
+            } else if (descriptor.getMinInputPorts() > 0) {
+                this.wireReceiversMenu.add(item);
+            }
         }
     }
 
