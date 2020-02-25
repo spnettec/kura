@@ -591,8 +591,8 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
 
                 @Override
                 public void run() {
-                    String originalName = Thread.currentThread().getName();
-                    Thread.currentThread().setName("DataServiceImpl:ReconnectTask");
+                    Thread.currentThread().setName("DataServiceImpl:ReconnectTask:"
+                            + DataServiceImpl.this.dataServiceOptions.getKuraServicePid());
                     boolean connected = false;
                     try {
                         if (DataServiceImpl.this.dbService == null) {
@@ -628,7 +628,6 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
                         logger.error("Unexpected Error. Task will be terminated", e);
                         throw e;
                     } finally {
-                        Thread.currentThread().setName(originalName);
                         if (connected) {
                             unregisterAsCriticalComponent();
                             // Throwing an exception will suppress subsequent executions of this periodic task.
