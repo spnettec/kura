@@ -11,7 +11,7 @@ Import-Package: org.apache.camel.component.mock;version="[2.17.2,3.1.0)",
  org.junit,
  org.junit.runner,
  org.junit.runners,
- org.mockito;version="3.1.0",
- org.mockito.invocation;version="3.1.0",
- org.mockito.stubbing;version="3.1.0"
+ org.mockito;version="[3.1.0,3.5.0)",
+ org.mockito.invocation;version="[3.1.0,3.5.0)",
+ org.mockito.stubbing;version="[3.1.0,3.5.0)"
 Automatic-Module-Name: org.eclipse.kura.camel.test

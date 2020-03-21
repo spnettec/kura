@@ -862,7 +862,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/javax.servlet_${javax.servlet.version}.jar@5:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.io_${org.apache.commons.io.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -918,7 +918,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gson_${com.google.gson.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.csv_${org.apache.commons.csv.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-csv_${org.apache.commons.csv.version}.jar@3" />
 			<!-- additional configs -->
 			<entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.fileinstall_${org.apache.felix.fileinstall.version}.jar@3:start" />
@@ -1446,7 +1446,7 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.httpcomponents.httpcore_${org.apache.httpcomponents.httpcore-osgi.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.codec_${org.apache.commons.codec.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-codec_${org.apache.commons.codec.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.logging_${org.apache.commons.logging.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
@@ -1515,7 +1515,7 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-native_${org.apache.activemq.artemis-native.version}.jar@3" />
 
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.beanutils_${commons-beanutils.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-beanutils_${commons-beanutils.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.collections_${commons-collections.version}.jar@3" />
 

@@ -489,9 +489,9 @@
                   <transitive>false</transitive>
                   <override>true</override>
                   <instructions>
-                      <Import-Package>org.apache.camel;version="[2.24,2.25)",org.apache.came
-                         l.spi;version="[2.24,2.25)",org.apache.camel.support;version="[2.24,2
-                         .25)",org.apache.camel.util;version="[2.24,2.25)",groovy.lang;version
+                      <Import-Package>org.apache.camel;version="[2.24,2.99)",org.apache.came
+                         l.spi;version="[2.24,2.99)",org.apache.camel.support;version="[2.24,2
+                         .99)",org.apache.camel.util;version="[2.24,2.99)",groovy.lang;version
                          ="[2.5,4)",org.codehaus.groovy.runtime;version="[2.5,4)",org.codehaus
                          .groovy.runtime.callsite;version="[2.5,4)",org.osgi.framework;version
                          ="[1.5,2)",org.osgi.framework.wiring;version="[1.0,2)"
@@ -545,7 +545,7 @@
               </artifact>   
               
               <artifact>
-                  <id>commons-fileupload:commons-fileupload:${org.apache.commons.fileupload.version}</id>
+                  <id>commons-fileupload:commons-fileupload:${org.apache.commons.fileupload-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
