@@ -213,12 +213,12 @@
         <setEntry value="org.apache.camel.camel-servlet@default:default"/>
         <setEntry value="org.apache.camel.camel-spring@default:default"/>
         <setEntry value="org.apache.camel.camel-stream@default:default"/>
-        <setEntry value="org.apache.commons.beanutils@default:default"/>
-        <setEntry value="org.apache.commons.codec@default:default"/>
         <setEntry value="org.apache.commons.collections@default:default"/>
-        <setEntry value="org.apache.commons.csv@default:default"/>
+        <setEntry value="org.apache.commons.commons-beanutils@default:default"/>
+        <setEntry value="org.apache.commons.commons-codec@default:default"/>
+        <setEntry value="org.apache.commons.commons-csv@default:default"/>
+        <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
-        <setEntry value="org.apache.commons.fileupload@default:default"/>
         <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.commons.logging@default:default"/>
