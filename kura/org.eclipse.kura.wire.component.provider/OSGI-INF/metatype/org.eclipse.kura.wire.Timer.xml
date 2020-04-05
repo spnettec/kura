@@ -46,23 +46,23 @@
         </AD> 
         
         <AD id="simple.first.tick.policy"
-            name="simple.first.tick.policy"
+            name="%simpleFirstTickPolicy"
             type="String"
             cardinality="0"
             required="true"
             default="DEFAULT"
-            description="Specifies the timer starting tick behavior. When set to DEFAULT the timer waits the time interval specified in simple.interval and simple.time.unit before executing the first time tick. When set to custom, the user can specify in simple.custom.first.tick.interval an interval before the first tick.">
+            description="%simpleFirstTickPolicyDesc">
             <Option label="DEFAULT" value="DEFAULT" />
             <Option label="CUSTOM" value="CUSTOM" />
         </AD>
         
         <AD id="simple.custom.first.tick.interval"
-            name="simple.custom.first.tick.interval"
+            name="%simpleCustomFirstTickInterval"
             type="Integer"
             cardinality="0"
             required="false"
             default="0"
-            description="Custom time before first tick. Effective only when simple.first.tick.policy is set to CUSTOM. This field uses the time unit specified in simple.time.unit.">
+            description="%simpleCustomFirstTickIntervalDesc">
         </AD>
         
         <AD id="cron.interval"
