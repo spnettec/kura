@@ -24,7 +24,7 @@ public interface BoardResourcePowerService {
      * Enables the resource specified by the passed identifier
      *
      * @param identifier
-     *                       a String object used to univocally identify a resource in the board.
+     *            a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void enable(String identifier) throws IOException;
@@ -33,7 +33,7 @@ public interface BoardResourcePowerService {
      * Disables the resource specified by the passed identifier
      *
      * @param identifier
-     *                       a String object used to univocally identify a resource in the board.
+     *            a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void disable(String identifier) throws IOException;
@@ -42,7 +42,7 @@ public interface BoardResourcePowerService {
      * Resets the resource specified by the passed identifier
      *
      * @param identifier
-     *                       a String object used to univocally identify a resource in the board.
+     *            a String object used to univocally identify a resource in the board.
      * @throws IOException
      */
     public void reset(String identifier) throws IOException;
@@ -51,7 +51,7 @@ public interface BoardResourcePowerService {
      * Returns the state of the resource specified by the passed identifier
      *
      * @param identifier
-     *                       a String object used to univocally identify a resource in the board.
+     *            a String object used to univocally identify a resource in the board.
      * @return a {@link BoardPowerState} representing the current status
      * @throws IOException
      */

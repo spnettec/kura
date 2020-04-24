@@ -160,10 +160,10 @@ public class SupportedUsbModems {
      * Execute command and return splitted lines
      *
      * @param command
-     *                    the command to execute
+     *            the command to execute
      * @return the lines output by the command
      * @throws IOException
-     *                         if executing the commands fails
+     *             if executing the commands fails
      */
     private static List<String> execute(final String commandLine, CommandExecutorService executorService)
             throws IOException {

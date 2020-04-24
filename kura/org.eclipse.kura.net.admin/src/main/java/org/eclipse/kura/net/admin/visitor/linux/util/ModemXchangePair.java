@@ -29,9 +29,9 @@ public class ModemXchangePair {
      * ModemXchangePair constructor
      *
      * @param send
-     *                   - 'send' string
+     *            - 'send' string
      * @param expect
-     *                   - 'expect' string
+     *            - 'expect' string
      */
     public ModemXchangePair(String send, String expect) {
         this.sendString = send;

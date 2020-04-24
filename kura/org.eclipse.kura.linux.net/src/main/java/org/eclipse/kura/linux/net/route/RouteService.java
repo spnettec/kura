@@ -40,7 +40,7 @@ public interface RouteService {
      * Returns the default route for a specified interface.
      *
      * @param interfaceName
-     *                          A String object specifying the interface name.
+     *            A String object specifying the interface name.
      * @return A Route object representing the default route or null if none
      *         exists.
      */
@@ -51,7 +51,7 @@ public interface RouteService {
      * address, or null if no route exists.
      *
      * @param destination
-     *                        An IPAddress object representing the destination IP address.
+     *            An IPAddress object representing the destination IP address.
      * @return A String object specifying the interface name, null if no route
      *         exists.
      */
@@ -61,17 +61,17 @@ public interface RouteService {
      * Adds a static route to the system's route table.
      *
      * @param destination
-     *                        An IPAddress object representing the destination IP address.
+     *            An IPAddress object representing the destination IP address.
      * @param gateway
-     *                        An IPAddress object representing the gateway IP address.
+     *            An IPAddress object representing the gateway IP address.
      * @param netmask
-     *                        An IPAddress object representing the netmask.
+     *            An IPAddress object representing the netmask.
      * @param iface
-     *                        A String object specifying the interface name.
+     *            A String object specifying the interface name.
      * @param metric
-     *                        An int representing the metric (priority) of the route.
+     *            An int representing the metric (priority) of the route.
      * @throws Exception
-     *                       for invalid supplied parameters, or failure to add.
+     *             for invalid supplied parameters, or failure to add.
      */
     public void addStaticRoute(IPAddress destination, IPAddress gateway, IPAddress netmask, String iface, int metric)
             throws Exception;
@@ -80,15 +80,15 @@ public interface RouteService {
      * Removes a static route in the system's route table.
      *
      * @param destination
-     *                        An InetAddress object representing the destination IP address.
+     *            An InetAddress object representing the destination IP address.
      * @param gateway
-     *                        An InetAddress object representing the gateway IP address.
+     *            An InetAddress object representing the gateway IP address.
      * @param netmask
-     *                        An InetAddress object representing the netmask.
+     *            An InetAddress object representing the netmask.
      * @param iface
-     *                        A String object specifying the interface name.
+     *            A String object specifying the interface name.
      * @throws Exception
-     *                       for invalid supplied parameters, or failure to remove.
+     *             for invalid supplied parameters, or failure to remove.
      */
     public void removeStaticRoute(IPAddress destination, IPAddress gateway, IPAddress netmask, String iface)
             throws Exception;

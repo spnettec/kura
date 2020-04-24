@@ -238,7 +238,7 @@ public class ModemConfiguration {
      * ModemConfiguration constructor
      *
      * @param configProps
-     *                        - configuration properties as <code>Properties</code>
+     *            - configuration properties as <code>Properties</code>
      */
     public ModemConfiguration(Properties configProps) {
 

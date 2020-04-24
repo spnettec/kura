@@ -12,7 +12,6 @@
 package org.eclipse.kura.linux.net.dhcp;
 
 public enum DhcpClientTool {
-
     NONE("none"),
     DHCLIENT("dhclient"),
     UDHCPC("udhcpc");

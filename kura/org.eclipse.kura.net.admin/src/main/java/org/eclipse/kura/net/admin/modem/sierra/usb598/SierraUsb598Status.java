@@ -110,7 +110,7 @@ public class SierraUsb598Status {
      * Reports activation status
      *
      * @param activationStatus
-     *                             as <code>String</code>
+     *            as <code>String</code>
      * @return
      */
     public static String getActivationStatus(int activationStatus) {

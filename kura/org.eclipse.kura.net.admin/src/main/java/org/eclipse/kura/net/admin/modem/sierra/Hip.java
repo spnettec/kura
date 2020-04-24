@@ -111,7 +111,7 @@ public class Hip {
      * HIP request constructor
      *
      * @param payload
-     *                    - HIP payload
+     *            - HIP payload
      */
     public Hip(byte[] payload) {
 
@@ -154,7 +154,7 @@ public class Hip {
      * HIP reply constructor
      *
      * @param alMsg
-     *                  - HIP reply
+     *            - HIP reply
      */
     public Hip(List<Byte> alMsg) {
 

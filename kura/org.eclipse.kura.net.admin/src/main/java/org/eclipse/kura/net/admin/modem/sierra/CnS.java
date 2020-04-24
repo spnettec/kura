@@ -73,11 +73,11 @@ public class CnS {
      * <p>
      *
      * @param objectID
-     *                     - object ID
+     *            - object ID
      * @param opType
-     *                     - operation type
+     *            - operation type
      * @param appID
-     *                     - application ID
+     *            - application ID
      */
     public CnS(int objectID, byte opType, int appID) {
 
@@ -116,13 +116,13 @@ public class CnS {
      * CnS message constructor
      *
      * @param objectID
-     *                     - object ID
+     *            - object ID
      * @param opType
-     *                     - operation type
+     *            - operation type
      * @param appID
-     *                     - application ID
+     *            - application ID
      * @param pload
-     *                     CnS payload
+     *            CnS payload
      */
     public CnS(int objectID, byte opType, int appID, byte[] pload) {
 
@@ -165,13 +165,13 @@ public class CnS {
      * CnS message constructor
      *
      * @param objectID
-     *                     - object ID
+     *            - object ID
      * @param opType
-     *                     - operation type
+     *            - operation type
      * @param appID
-     *                     - application ID
+     *            - application ID
      * @param param
-     *                     - payload
+     *            - payload
      */
     public CnS(int objectID, byte opType, int appID, int param) {
 
@@ -212,13 +212,13 @@ public class CnS {
      * CnS message constructor
      *
      * @param objectID
-     *                     - object ID
+     *            - object ID
      * @param opType
-     *                     - operation type
+     *            - operation type
      * @param appID
-     *                     - application ID
+     *            - application ID
      * @param param
-     *                     - payload
+     *            - payload
      */
     public CnS(int objectID, byte opType, int appID, long param) {
 
@@ -261,7 +261,7 @@ public class CnS {
      * CnS reply constructor.
      *
      * @param msg
-     *                byte array to hold CnS reply from modem
+     *            byte array to hold CnS reply from modem
      */
     public CnS(byte[] msg) {
 

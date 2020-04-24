@@ -59,7 +59,7 @@ public class DhcpClientLeaseBlock {
      * DhcpClientLeaseBlock
      *
      * @param leaseBlock
-     *                       - lease block
+     *            - lease block
      */
     public DhcpClientLeaseBlock(List<String> leaseBlock) throws KuraException {
         parseLeaseBlock(leaseBlock);
@@ -97,9 +97,9 @@ public class DhcpClientLeaseBlock {
      * Reports if supplied interface name and IP address match respective fields
      *
      * @param ifaceName
-     *                      - interface name
+     *            - interface name
      * @param address
-     *                      - fixed IP address
+     *            - fixed IP address
      * @return boolean
      */
     public boolean matches(String ifaceName, IPAddress address) {

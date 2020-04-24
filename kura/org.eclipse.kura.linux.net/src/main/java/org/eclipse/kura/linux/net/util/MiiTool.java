@@ -41,9 +41,9 @@ public class MiiTool implements LinkTool {
      * MiiTool constructor
      *
      * @param ifaceName
-     *                            - interface name as {@link String}
+     *            - interface name as {@link String}
      * @param executorService
-     *                            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
+     *            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
      */
     public MiiTool(String ifaceName, CommandExecutorService executorService) {
         this.ifaceName = ifaceName;

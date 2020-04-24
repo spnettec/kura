@@ -176,7 +176,7 @@ public class PppPeer {
      * Sets PPP unit number
      *
      * @param pppUnitNumber
-     *                          as <code>int</code>
+     *            as <code>int</code>
      */
     public void setPppUnitNumber(int pppUnitNumber) {
         this.pppUnitNumber = pppUnitNumber;
@@ -197,9 +197,9 @@ public class PppPeer {
      * Enables/disables PPP
      *
      * @param enabled
-     *                    <br>
-     *                    true - PPP is enabled
-     *                    false - PPP is disabled
+     *            <br>
+     *            true - PPP is enabled
+     *            false - PPP is disabled
      *
      */
     public void setEnabled(boolean enabled) {
@@ -219,7 +219,7 @@ public class PppPeer {
      * Sets service provider
      *
      * @param provider
-     *                     as String
+     *            as String
      */
     public void setProvider(String provider) {
         this.provider = provider;
@@ -238,7 +238,7 @@ public class PppPeer {
      * Sets APN (Access Point Name) for cellular data connection.
      *
      * @param apn
-     *                as String
+     *            as String
      */
     public void setApn(String apn) {
         this.apn = apn;
@@ -257,7 +257,7 @@ public class PppPeer {
      * Sets dial string
      *
      * @param dialString
-     *                       such as "atdt555-1212"
+     *            such as "atdt555-1212"
      */
     public void setDialString(String dialString) {
         this.dialString = dialString;
@@ -276,7 +276,7 @@ public class PppPeer {
      * Sets authentication type
      *
      * @param authType
-     *                     int (NONE, PAP, CHAP) as defined in {@link org.eclipe.kura.net.ppp.service.PppAuthentication}
+     *            int (NONE, PAP, CHAP) as defined in {@link org.eclipe.kura.net.ppp.service.PppAuthentication}
      */
     public void setAuthType(AuthType authType) {
         this.authType = authType;
@@ -295,7 +295,7 @@ public class PppPeer {
      * Sets user name used for authentication
      *
      * @param username
-     *                     as String
+     *            as String
      */
     public void setUsername(String username) {
         this.username = username;
@@ -314,7 +314,7 @@ public class PppPeer {
      * Sets password used for authentication
      *
      * @param password
-     *                     as String
+     *            as String
      */
     public void setPassword(Password password) {
         this.password = password;
@@ -333,7 +333,7 @@ public class PppPeer {
      * Sets baud rate used for PPP
      *
      * @param baudRate
-     *                     on serial port, as int
+     *            on serial port, as int
      */
     public void setBaudRate(int baudRate) {
         this.baudRate = baudRate;
@@ -352,7 +352,7 @@ public class PppPeer {
      * Sets the name of the log file
      *
      * @param logfile
-     *                    as String
+     *            as String
      */
     public void setLogfile(String logfile) {
         this.logfile = logfile;
@@ -371,7 +371,7 @@ public class PppPeer {
      * Sets connect script filename
      *
      * @param connectScript
-     *                          as <code>String</code>
+     *            as <code>String</code>
      */
     public void setConnectScript(String connectScript) {
         this.connectScriptFilename = connectScript;
@@ -390,7 +390,7 @@ public class PppPeer {
      * Sets disconnect script filename
      *
      * @param disconnectScript
-     *                             as <code>String</code>
+     *            as <code>String</code>
      */
     public void setDisconnectScript(String disconnectScript) {
         this.disconnectScriptFilename = disconnectScript;
@@ -411,9 +411,9 @@ public class PppPeer {
      * Sets 'defaultroute' option
      *
      * @param addDefaultRoute
-     *                            <br>
-     *                            true - add default route to the system routing table <br>
-     *                            false - do not add default route
+     *            <br>
+     *            true - add default route to the system routing table <br>
+     *            false - do not add default route
      */
     public void setAddDefaultRoute(boolean addDefaultRoute) {
         this.addDefaultRoute = addDefaultRoute;
@@ -434,9 +434,9 @@ public class PppPeer {
      * Sets whether peer is to supply local IP address or not
      *
      * @param peerToSupplyLocalIP
-     *                                <br>
-     *                                true - peer is expected to supply local IP address
-     *                                false - peer is not supplying local IP address
+     *            <br>
+     *            true - peer is expected to supply local IP address
+     *            false - peer is not supplying local IP address
      */
     public void setPeerToSupplyLocalIP(boolean peerToSupplyLocalIP) {
         this.peerToSupplyLocalIP = peerToSupplyLocalIP;
@@ -457,9 +457,9 @@ public class PppPeer {
      * Sets whether to use peer supplied DNS.
      *
      * @param usePeerDns
-     *                       <br>
-     *                       true - use peer DNS <br>
-     *                       false - do not use peer DNS
+     *            <br>
+     *            true - use peer DNS <br>
+     *            false - do not use peer DNS
      */
     public void setUsePeerDns(boolean usePeerDns) {
         this.usePeerDns = usePeerDns;
@@ -480,9 +480,9 @@ public class PppPeer {
      * Enable/disable 'proxyarp' option
      *
      * @param allowProxyArps
-     *                           <br>
-     *                           true - 'proxyarp' is enabled <br>
-     *                           false - 'proxyarp' is disabled
+     *            <br>
+     *            true - 'proxyarp' is enabled <br>
+     *            false - 'proxyarp' is disabled
      */
     public void setAllowProxyArps(boolean allowProxyArps) {
         this.allowProxyArps = allowProxyArps;
@@ -503,9 +503,9 @@ public class PppPeer {
      * Enable/disable Van Jacobson TCP/IP header compression
      *
      * @param allowVanJacobsonTcpIpHdrCompression
-     *                                                <br>
-     *                                                true - Van Jacobson TCP/IP header compression is allowed <br>
-     *                                                false - Van Jacobson TCP/IP header compression is not allowed
+     *            <br>
+     *            true - Van Jacobson TCP/IP header compression is allowed <br>
+     *            false - Van Jacobson TCP/IP header compression is not allowed
      *
      */
     public void setAllowVanJacobsonTcpIpHdrCompression(boolean allowVanJacobsonTcpIpHdrCompression) {
@@ -527,9 +527,9 @@ public class PppPeer {
      * Enable/disable Van Jacobson Connection ID compression
      *
      * @param allowVanJacobsonConnectionIDCompression
-     *                                                    <br>
-     *                                                    true - Van Jacobson Connection ID compression is allowed <br>
-     *                                                    false - Van Jacobson Connection ID compression is not allowed
+     *            <br>
+     *            true - Van Jacobson Connection ID compression is allowed <br>
+     *            false - Van Jacobson Connection ID compression is not allowed
      */
     public void setAllowVanJacobsonConnectionIDCompression(boolean allowVanJacobsonConnectionIDCompression) {
         this.allowVanJacobsonConnectionIDCompression = allowVanJacobsonConnectionIDCompression;
@@ -550,9 +550,9 @@ public class PppPeer {
      * Enable/disable BSD compression
      *
      * @param allowBsdCompression
-     *                                <br>
-     *                                true - BSD compression is allowed <br>
-     *                                false - BSD compression is not allowed
+     *            <br>
+     *            true - BSD compression is allowed <br>
+     *            false - BSD compression is not allowed
      */
     public void setAllowBsdCompression(boolean allowBsdCompression) {
         this.allowBsdCompression = allowBsdCompression;
@@ -573,9 +573,9 @@ public class PppPeer {
      * Enable/disable 'Deflate' compression
      *
      * @param allowDeflateCompression
-     *                                    <br>
-     *                                    true - 'Deflate' compression is allowed <br>
-     *                                    false - 'Deflate' compression is not allowed
+     *            <br>
+     *            true - 'Deflate' compression is allowed <br>
+     *            false - 'Deflate' compression is not allowed
      */
     public void setAllowDeflateCompression(boolean allowDeflateCompression) {
         this.allowDeflateCompression = allowDeflateCompression;
@@ -596,9 +596,9 @@ public class PppPeer {
      * Enable/disable magic number negotiation
      *
      * @param allowMagic
-     *                       <br>
-     *                       true - magic number negotiation is enabled <br>
-     *                       false - magic number negotiation is disabled
+     *            <br>
+     *            true - magic number negotiation is enabled <br>
+     *            false - magic number negotiation is disabled
      */
     public void setAllowMagic(boolean allowMagic) {
         this.allowMagic = allowMagic;
@@ -651,7 +651,7 @@ public class PppPeer {
      * Sets 'lcp-echo-faillure' parameter
      *
      * @param lcpEchoFailure
-     *                           number of unanswered LCP echo requests before peer is assumed dead
+     *            number of unanswered LCP echo requests before peer is assumed dead
      */
     public void setLcpEchoFailure(int lcpEchoFailure) {
         this.lcpEchoFailure = lcpEchoFailure;
@@ -670,7 +670,7 @@ public class PppPeer {
      * Sets LCP echo interval
      *
      * @param lcpEchoInterval
-     *                            in seconds
+     *            in seconds
      */
     public void setLcpEchoInterval(int lcpEchoInterval) {
         this.lcpEchoInterval = lcpEchoInterval;
@@ -691,9 +691,9 @@ public class PppPeer {
      * Enable/disable RTS/CTS flow control
      *
      * @param useRtsCtsFlowControl
-     *                                 <br>
-     *                                 true - use RTS/CTS flow control <br>
-     *                                 false - do not use RTS/CTS flow control
+     *            <br>
+     *            true - use RTS/CTS flow control <br>
+     *            false - do not use RTS/CTS flow control
      */
     public void setUseRtsCtsFlowControl(boolean useRtsCtsFlowControl) {
         this.useRtsCtsFlowControl = useRtsCtsFlowControl;
@@ -714,9 +714,9 @@ public class PppPeer {
      * Enable/disable lock file
      *
      * @param lockSerialDevice
-     *                             <br>
-     *                             true - create lock file <br>
-     *                             false - do not create lock file
+     *            <br>
+     *            true - create lock file <br>
+     *            false - do not create lock file
      */
     public void setLockSerialDevice(boolean lockSerialDevice) {
         this.lockSerialDevice = lockSerialDevice;
@@ -737,9 +737,9 @@ public class PppPeer {
      * Sets 'use modem control lines' flag
      *
      * @param useModemControlLines
-     *                                 <br>
-     *                                 true - use modem control lines
-     *                                 false - do not use modem control lines
+     *            <br>
+     *            true - use modem control lines
+     *            false - do not use modem control lines
      */
     public void setUseModemControlLines(boolean useModemControlLines) {
         this.useModemControlLines = useModemControlLines;
@@ -760,9 +760,9 @@ public class PppPeer {
      * Sets 'peer must authenticate itself' flag
      *
      * @param peerMustAuthenticateItself
-     *                                       <br>
-     *                                       true - peer must authenticate itself
-     *                                       false - peer is not required to authenticate itself
+     *            <br>
+     *            true - peer must authenticate itself
+     *            false - peer is not required to authenticate itself
      *
      */
     public void setPeerMustAuthenticateItself(boolean peerMustAuthenticateItself) {
@@ -782,7 +782,7 @@ public class PppPeer {
      * Sets connect delay
      *
      * @param connectDelay
-     *                         in milliseconds
+     *            in milliseconds
      */
     public void setConnectDelay(int connectDelay) {
         this.connectDelay = connectDelay;
@@ -803,7 +803,7 @@ public class PppPeer {
      * Sets 'enable connection debugging' flag
      *
      * @param enableDebug
-     *                        - enable connection debugging
+     *            - enable connection debugging
      */
     public void setEnableDebug(boolean enableDebug) {
         this.enableDebug = enableDebug;

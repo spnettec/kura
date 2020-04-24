@@ -31,9 +31,9 @@ public class IwLinkTool extends LinkToolImpl implements LinkTool {
      * constructor
      *
      * @param ifaceName
-     *                            - interface name as {@link String}
+     *            - interface name as {@link String}
      * @param executorService
-     *                            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
+     *            - the {@link org.eclipse.kura.executor.CommandExecutorService} used to run the command
      */
     public IwLinkTool(String ifaceName, CommandExecutorService executorService) {
         setIfaceName(ifaceName);
