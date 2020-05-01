@@ -169,7 +169,8 @@ public abstract class LinuxDnsServer {
             logger.debug("DNS server started.");
             logger.trace("{}", this.dnsServerConfigIP4);
         } else {
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to start named");
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to start named",
+                    status.getExitStatus().getExitCode());
         }
     }
 
@@ -181,7 +182,8 @@ public abstract class LinuxDnsServer {
             logger.trace("{}", this.dnsServerConfigIP4);
         } else {
             logger.debug("tried to kill DNS server for interface but it is not running");
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to stop named");
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to stop named",
+                    status.getExitStatus().getExitCode());
         }
     }
 
@@ -192,7 +194,8 @@ public abstract class LinuxDnsServer {
             logger.debug("DNS server restarted.");
         } else {
             logger.debug("tried to kill DNS server for interface but it is not running");
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to restart named");
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to restart named",
+                    status.getExitStatus().getExitCode());
         }
     }
 

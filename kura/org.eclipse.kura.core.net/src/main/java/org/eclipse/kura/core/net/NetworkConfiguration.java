@@ -2129,7 +2129,7 @@ public class NetworkConfiguration {
                     logger.trace("DHCP Server Pass DNS?: {}", passDns);
                 }
 
-                if (routerAddress != null && rangeStart != null && rangeEnd != null) {
+                if (dhcpServerEnabled && routerAddress != null && rangeStart != null && rangeEnd != null) {
                     // get the netmask and subnet
                     int prefixInt = prefix;
                     int mask = ~((1 << 32 - prefixInt) - 1);

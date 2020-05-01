@@ -214,7 +214,8 @@ public class LinuxDns {
             if (!status.getExitStatus().isSuccessful()) {
                 logger.error("Failed to move the {} file to {}. The 'mv' command has failed ...", DNS_FILE_NAME,
                         BACKUP_DNS_FILE_NAME);
-                throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to backup DNS file " + DNS_FILE_NAME);
+                throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to backup DNS file " + DNS_FILE_NAME,
+                        status.getExitStatus().getExitCode());
             } else {
                 logger.info("successfully backed up {}", DNS_FILE_NAME);
             }
@@ -228,7 +229,7 @@ public class LinuxDns {
         if (!status.getExitStatus().isSuccessful()) {
             logger.error("failed to create symbolic link: {} -> {}", DNS_FILE_NAME, sPppDnsFileName);
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
-                    "failed to create symbolic link to " + sPppDnsFileName);
+                    "failed to create symbolic link to " + sPppDnsFileName, status.getExitStatus().getExitCode());
         } else {
             logger.info("DNS is set to use ppp resolv.conf");
         }
@@ -243,7 +244,8 @@ public class LinuxDns {
             if (!status.getExitStatus().isSuccessful()) {
                 logger.error("failed to delete {} symlink that points to {}", DNS_FILE_NAME, pppDnsFilename);
                 throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
-                        "failed to delete " + DNS_FILE_NAME + " symlink that points to " + pppDnsFilename);
+                        "failed to delete " + DNS_FILE_NAME + " symlink that points to " + pppDnsFilename,
+                        status.getExitStatus().getExitCode());
             } else {
                 logger.info("successfully removed symlink that points to {}", pppDnsFilename);
             }
@@ -266,7 +268,8 @@ public class LinuxDns {
         if (!status.getExitStatus().isSuccessful()) {
             logger.error("failed to restore {} to {}", BACKUP_DNS_FILE_NAME, DNS_FILE_NAME);
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
-                    "failed to restore " + BACKUP_DNS_FILE_NAME + " to " + DNS_FILE_NAME);
+                    "failed to restore " + BACKUP_DNS_FILE_NAME + " to " + DNS_FILE_NAME,
+                    status.getExitStatus().getExitCode());
         } else {
             logger.info("successfully restored {} from {}", DNS_FILE_NAME, BACKUP_DNS_FILE_NAME);
         }
@@ -278,7 +281,8 @@ public class LinuxDns {
         CommandStatus status = executorService.execute(command);
         if (!status.getExitStatus().isSuccessful()) {
             logger.error("failed to create empty {}", DNS_FILE_NAME);
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "failed to create empty " + DNS_FILE_NAME);
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "failed to create empty " + DNS_FILE_NAME,
+                    status.getExitStatus().getExitCode());
         } else {
             logger.info("successfully created empty {}", DNS_FILE_NAME);
         }

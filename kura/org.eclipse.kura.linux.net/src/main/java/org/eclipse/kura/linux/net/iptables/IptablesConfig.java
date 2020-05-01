@@ -166,7 +166,8 @@ public class IptablesConfig {
             if (logger.isErrorEnabled()) {
                 logger.error("command {} :: failed - {}", command, new String(err.toByteArray(), Charsets.UTF_8));
             }
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to execute the {} command", command);
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to execute the {} command", command,
+                    status.getExitStatus().getExitCode());
         }
         return status;
     }

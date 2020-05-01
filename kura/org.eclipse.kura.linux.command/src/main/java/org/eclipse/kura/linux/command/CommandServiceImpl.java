@@ -21,11 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import org.apache.commons.io.Charsets;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.command.CommandService;
@@ -83,9 +83,9 @@ public class CommandServiceImpl implements CommandService {
         command.setErrorStream(new ByteArrayOutputStream());
         CommandStatus status = this.executorService.execute(command);
         if (status.getExitStatus().isSuccessful()) {
-            return new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8);
+            return new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), StandardCharsets.UTF_8);
         } else {
-            return new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), Charsets.UTF_8);
+            return new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), StandardCharsets.UTF_8);
         }
 
     }
