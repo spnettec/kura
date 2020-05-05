@@ -519,6 +519,11 @@
                   <transitive>false</transitive>
               </artifact> 
               <artifact>
+                  <id>org.slf4j:jcl-over-slf4j:${slf4j.api.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
                   <id>org.apache.logging.log4j:log4j-jul:${logging.log4j.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
@@ -633,11 +638,6 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
-              <artifact>
-                  <id>commons-logging:commons-logging:${org.apache.commons.logging-mvn.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact> 
               <artifact>
                   <id>org.apache.qpid:qpid-jms-client:${apache-qpid-jms-client.version}</id>
                   <source>true</source>

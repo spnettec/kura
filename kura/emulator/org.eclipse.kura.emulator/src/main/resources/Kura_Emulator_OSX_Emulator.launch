@@ -198,6 +198,7 @@
         <setEntry value="javax.el@default:default"/>
         <setEntry value="javax.servlet@default:default"/>
         <setEntry value="jaxb-api@default:default"/>
+        <setEntry value="jcl.over.slf4j@default:default"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-hornetq-protocol@default:default"/>
@@ -229,7 +230,6 @@
         <setEntry value="org.apache.commons.exec@default:default"/>
         <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
-        <setEntry value="org.apache.commons.logging@default:default"/>
         <setEntry value="org.apache.commons.net@default:default"/>
         <setEntry value="org.apache.commons.pool@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
@@ -248,6 +248,7 @@
         <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
+        <setEntry value="org.apache.logging.log4j.jcl@default:default"/>
         <setEntry value="org.apache.logging.log4j.jul@default:false"/>
         <setEntry value="org.apache.logging.log4j.slf4j-impl@default:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
