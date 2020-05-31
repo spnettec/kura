@@ -127,7 +127,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-13"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#13;&#10;-Dkura.have.net.admin=false &#13;&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#13;&#10;-Dosgi.clean=true -Dosgi.noShutdown=true &#13;&#10;-Declipse.ignoreApp=true  &#13;&#10;-Dorg.eclipse.kura.mode=macosx &#13;&#10;-Dkura.configuration=file:///${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#13;&#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#13;&#10;-Dlog4j.configurationFile=${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#13;&#10;-Dkura.data=${workspace_loc}/kura/data  &#13;&#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots &#13;&#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#13;&#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#13;&#10;-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#13;&#10;-Dkura.have.net.admin=false &#13;&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#13;&#10;-Dosgi.clean=true -Dosgi.noShutdown=true &#13;&#10;-Declipse.ignoreApp=true  &#13;&#10;-Dorg.eclipse.kura.mode=macosx &#13;&#10;-Dkura.configuration=file:////${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#13;&#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#13;&#10;-Dlog4j.configurationFile=${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#13;&#10;-Dkura.data=${workspace_loc}/kura/data  &#13;&#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots &#13;&#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#13;&#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#13;&#10;-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"/>
     <booleanAttribute key="pde.generated.config" value="true"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <setAttribute key="selected_features">
@@ -193,10 +193,15 @@
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.servlet@default:default"/>
         <setEntry value="jaxb-api@default:default"/>
+        <setEntry value="jcl.over.slf4j@default:default"/>
         <setEntry value="jdk.dio@default:default"/>
         <setEntry value="minimal-json@default:default"/>
+        <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
+        <setEntry value="org.apache.activemq.artemis-hornetq-protocol@default:default"/>
+        <setEntry value="org.apache.activemq.artemis-hqclient-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-native@default:default"/>
+        <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
         <setEntry value="org.apache.camel.camel-core-osgi@default:default"/>
@@ -221,7 +226,6 @@
         <setEntry value="org.apache.commons.exec@default:default"/>
         <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
-        <setEntry value="org.apache.commons.logging@default:default"/>
         <setEntry value="org.apache.commons.net@default:default"/>
         <setEntry value="org.apache.commons.pool@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
@@ -240,6 +244,7 @@
         <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
+        <setEntry value="org.apache.logging.log4j.jcl@default:default"/>
         <setEntry value="org.apache.logging.log4j.jul@default:false"/>
         <setEntry value="org.apache.logging.log4j.slf4j-impl@default:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
