@@ -396,18 +396,20 @@ public class S7Client {
         if (this.LastError == 0) {
             RecvPacket(this.PDU, 4, 3); // Skip remaining 3 COTP bytes
             this.LastPDUType = this.PDU[5];   // Stores PDU Type, we need it
-            logger.info("PDUType:{}", this.LastPDUType & 0x0FF);
+            //logger.info("PDUType:{}", this.LastPDUType & 0x0FF);
             // Receives the S7 Payload
             RecvPacket(this.PDU, 7, Size - IsoHSize);
         }
         if (this.LastError == 0) {
-            if (this.LastPDUType == (byte) 0xD0) {
-                int reference = S7.GetShortAt(this.PDU, 6);
-                logger.info("reference:{}", reference);
-            } else {
-                int reference = S7.GetShortAt(this.PDU, 11);
-                logger.info("reference:{}", reference);
-            }
+            /*
+             * if (this.LastPDUType == (byte) 0xD0) {
+             * int reference = S7.GetShortAt(this.PDU, 6);
+             * logger.info("reference:{}", reference);
+             * } else {
+             * int reference = S7.GetShortAt(this.PDU, 11);
+             * logger.info("reference:{}", reference);
+             * }
+             */
             return Size;
         } else {
             return 0;

@@ -117,7 +117,8 @@ public abstract class ToplevelBlockTask extends BlockTask {
      */
     protected void runChildren() throws IOException {
         this.isAborted = false;
-        for (BlockTask child : getChildren()) {
+        List<BlockTask> childs = getChildren();
+        for (BlockTask child : childs) {
             child.setParent(this);
             child.run();
             if (this.isAborted) {
