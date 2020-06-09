@@ -1115,16 +1115,6 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.eclipse.milo:bsd-parser-core:jar:${org.eclipse.milo.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.eclipse.milo:bsd-parser-gson:jar:${org.eclipse.milo.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
                   <id>org.eclipse.milo:sdk-client:jar:${org.eclipse.milo.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>

@@ -942,10 +942,6 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.driver.opcua.provider_${org.eclipse.kura.driver.opcua.provider.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.bsd-parser-core_${org.eclipse.milo.version}.jar@4:start" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.bsd-parser-gson_${org.eclipse.milo.version}.jar@4:start" />
-			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.sdk-client_${org.eclipse.milo.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.sdk-core_${org.eclipse.milo.version}.jar@4:start" />

@@ -87,5 +87,4 @@ public class ExternalKeystoreCertificateManager extends CertificateManager {
 
         return new X509Certificate[0];
     }
-
 }

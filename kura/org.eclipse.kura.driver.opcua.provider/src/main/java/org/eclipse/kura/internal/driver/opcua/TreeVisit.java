@@ -43,8 +43,9 @@ class TreeVisit {
     private static final Logger logger = LoggerFactory.getLogger(TreeVisit.class);
     private static final int BROWSE_RESULT_MASK = BrowseResultMask.BrowseName.getValue()
             | BrowseResultMask.TypeDefinition.getValue() | BrowseResultMask.NodeClass.getValue();
-    private static final ExpandedNodeId FOLDER_TYPE_EXPANDED_NODEID = new ExpandedNodeId(Identifiers.FolderType,
-            "http://opcfoundation.org/UA/", 0);
+    private static final ExpandedNodeId FOLDER_TYPE_EXPANDED_NODEID = new ExpandedNodeId(
+            Identifiers.FolderType.getNamespaceIndex(), "http://opcfoundation.org/UA/",
+            Identifiers.FolderType.getIdentifier(), UInteger.MIN);
 
     private final NodeId rootId;
     private final BiConsumer<String, ReferenceDescription> visitor;
