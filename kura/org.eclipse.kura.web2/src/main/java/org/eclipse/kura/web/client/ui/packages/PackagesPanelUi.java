@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -35,6 +35,7 @@ import org.eclipse.kura.web.shared.service.GwtSecurityTokenService;
 import org.eclipse.kura.web.shared.service.GwtSecurityTokenServiceAsync;
 import org.gwtbootstrap3.client.ui.Alert;
 import org.gwtbootstrap3.client.ui.Button;
+import org.gwtbootstrap3.client.ui.FormGroup;
 import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.ModalBody;
 import org.gwtbootstrap3.client.ui.ModalFooter;
@@ -42,6 +43,7 @@ import org.gwtbootstrap3.client.ui.Panel;
 import org.gwtbootstrap3.client.ui.TabListItem;
 import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.Well;
+import org.gwtbootstrap3.client.ui.constants.ValidationState;
 import org.gwtbootstrap3.client.ui.gwt.CellTable;
 import org.gwtbootstrap3.client.ui.html.Paragraph;
 import org.gwtbootstrap3.client.ui.html.Span;
@@ -87,7 +89,6 @@ public class PackagesPanelUi extends Composite {
     private final ListDataProvider<GwtDeploymentPackage> packagesDataProvider = new ListDataProvider<>();
     private final SingleSelectionModel<GwtDeploymentPackage> selectionModel = new SingleSelectionModel<>();
 
-    private GwtSession gwtSession;
     private GwtDeploymentPackage selected;
 
     interface PackagesPanelUiUiBinder extends UiBinder<Widget, PackagesPanelUi> {
@@ -102,6 +103,11 @@ public class PackagesPanelUi extends Composite {
     FormPanel packagesFormUrl;
 
     @UiField
+    FormGroup packagesGroupUrl;
+    @UiField
+    FormGroup packagesGroupFile;
+
+    @UiField
     Button fileCancel;
     @UiField
     Button fileSubmit;
@@ -110,14 +116,15 @@ public class PackagesPanelUi extends Composite {
     @UiField
     Button urlSubmit;
     @UiField
-    Button packagesRefresh;
-    @UiField
     Button packagesInstall;
     @UiField
     Button packagesUninstall;
 
     @UiField
     TabListItem fileLabel;
+
+    @UiField
+    TabListItem urlLabel;
 
     @UiField
     Alert notification;
@@ -183,6 +190,10 @@ public class PackagesPanelUi extends Composite {
         this.packagesIntro.add(description);
 
         this.packagesGrid.setSelectionModel(this.selectionModel);
+        this.selectionModel.addSelectionChangeHandler(event -> {
+            PackagesPanelUi.this.packagesUninstall
+                    .setEnabled(PackagesPanelUi.this.selectionModel.getSelectedObject() != null);
+        });
         initTable();
 
         initTabButtons();
@@ -216,7 +227,6 @@ public class PackagesPanelUi extends Composite {
     }
 
     public void setSession(GwtSession currentSession) {
-        this.gwtSession = currentSession;
     }
 
     public void setMainUi(EntryClassUi entryClassUi) {
@@ -225,18 +235,18 @@ public class PackagesPanelUi extends Composite {
 
     public void refresh() {
         refresh(100);
+        PackagesPanelUi.this.selectionModel.setSelected(PackagesPanelUi.this.selected, false);
+        PackagesPanelUi.this.packagesUninstall.setEnabled(false);
     }
 
     private void initTabButtons() {
-        // Refresh Button
-        this.packagesRefresh.setText(MSGS.refreshButton());
-        this.packagesRefresh.addClickHandler(event -> refresh());
         // Install Button
         this.packagesInstall.setText(MSGS.packageAddButton());
         this.packagesInstall.addClickHandler(event -> upload());
 
         // Uninstall Button
         this.packagesUninstall.setText(MSGS.packageDeleteButton());
+        this.packagesUninstall.setEnabled(false);
         this.packagesUninstall.addClickHandler(event -> {
             PackagesPanelUi.this.selected = PackagesPanelUi.this.selectionModel.getSelectedObject();
             if (PackagesPanelUi.this.selected != null && PackagesPanelUi.this.selected.getVersion() != null) {
@@ -250,6 +260,8 @@ public class PackagesPanelUi extends Composite {
                 modalFooter.add(new Button("Yes", event12 -> {
                     modal.hide();
                     uninstall(PackagesPanelUi.this.selected);
+                    PackagesPanelUi.this.selectionModel.setSelected(PackagesPanelUi.this.selected, false);
+                    PackagesPanelUi.this.packagesUninstall.setEnabled(false);
                 }));
 
                 modal.add(modalBody);
@@ -274,8 +286,7 @@ public class PackagesPanelUi extends Composite {
                         if (!"".equals(PackagesPanelUi.this.filePath.getFilename())) {
                             PackagesPanelUi.this.packagesFormFile.submit();
                         } else {
-                            PackagesPanelUi.this.uploadModal.hide();
-                            PackagesPanelUi.this.uploadErrorModal.show();
+                            PackagesPanelUi.this.packagesGroupFile.setValidationState(ValidationState.ERROR);
                         }
                     }
                 }));
@@ -296,8 +307,7 @@ public class PackagesPanelUi extends Composite {
                             PackagesPanelUi.this.xsrfTokenFieldUrl.setValue(token.getToken());
                             PackagesPanelUi.this.packagesFormUrl.submit();
                         } else {
-                            PackagesPanelUi.this.uploadModal.hide();
-                            PackagesPanelUi.this.uploadErrorModal.show();
+                            PackagesPanelUi.this.packagesGroupUrl.setValidationState(ValidationState.ERROR);
                         }
                     }
                 }));
@@ -324,10 +334,14 @@ public class PackagesPanelUi extends Composite {
     }
 
     private void upload() {
+        PackagesPanelUi.this.packagesGroupUrl.setValidationState(ValidationState.NONE);
+        PackagesPanelUi.this.packagesGroupFile.setValidationState(ValidationState.NONE);
         this.uploadModal.show();
 
         // ******FILE TAB ****//
         this.fileLabel.setText(MSGS.fileLabel());
+        this.fileLabel.addClickHandler(
+                event -> PackagesPanelUi.this.packagesGroupFile.setValidationState(ValidationState.NONE));
 
         this.filePath.setName("uploadedFile");
 
@@ -342,12 +356,18 @@ public class PackagesPanelUi extends Composite {
             String result = event.getResults();
             if (result == null || result.isEmpty()) {
                 PackagesPanelUi.this.uploadModal.hide();
+                PackagesPanelUi.this.selectionModel.setSelected(PackagesPanelUi.this.selected, false);
+                PackagesPanelUi.this.packagesUninstall.setEnabled(false);
             } else {
                 logger.log(Level.SEVERE, "Error uploading package!");
             }
         });
 
         // ******URL TAB ****//
+        this.urlLabel.setText(MSGS.urlLabel());
+        this.urlLabel.addClickHandler(
+                event -> PackagesPanelUi.this.packagesGroupUrl.setValidationState(ValidationState.NONE));
+
         this.formUrl.setName("packageUrl");
 
         this.xsrfTokenFieldUrl.setID(XSRF_TOKEN);
@@ -360,6 +380,8 @@ public class PackagesPanelUi extends Composite {
             String result = event.getResults();
             if (result == null || result.isEmpty()) {
                 PackagesPanelUi.this.uploadModal.hide();
+                PackagesPanelUi.this.selectionModel.setSelected(PackagesPanelUi.this.selected, false);
+                PackagesPanelUi.this.packagesUninstall.setEnabled(false);
             } else {
                 String errMsg = result;
                 int startIdx = result.indexOf("<pre>");
@@ -490,7 +512,7 @@ public class PackagesPanelUi extends Composite {
     }
 
     private void initUploadErrorModal() {
-        this.uploadErrorModal.setTitle(MSGS.warning());
+        this.uploadErrorModal.setTitle(MSGS.error());
         this.uploadErrorText.setText(MSGS.missingFileUpload());
     }
 
@@ -594,6 +616,9 @@ public class PackagesPanelUi extends Composite {
                     if (isEclipseMarketplaceUrl(url)) {
                         PackagesPanelUi.this.confirmDialog.show(MSGS.packagesMarketplaceInstallConfirmMessage(),
                                 () -> eclipseMarketplaceInstall(url));
+                    } else {
+                        PackagesPanelUi.this.uploadErrorText.setText(MSGS.packagesMarketplaceInstallDpNotValid());
+                        PackagesPanelUi.this.uploadErrorModal.show();
                     }
                     return true;
                 }

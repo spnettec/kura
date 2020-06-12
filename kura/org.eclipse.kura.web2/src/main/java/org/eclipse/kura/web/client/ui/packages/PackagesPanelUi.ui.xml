@@ -2,7 +2,7 @@
 
 <!--
 
-    Copyright (c) 2011, 2018 Eurotech and/or its affiliates
+    Copyright (c) 2011, 2020 Eurotech and/or its affiliates
 
      All rights reserved. This program and the accompanying materials
      are made available under the terms of the Eclipse Public License v1.0
@@ -37,7 +37,7 @@
     </ui:style>
 
 
-    <b:Container fluid="true" addStyleNames="packages-panel">
+    <b:Container fluid="true">
         <b:Row>
             <g:HTMLPanel ui:field="packagesIntro">
             </g:HTMLPanel>
@@ -58,7 +58,6 @@
                  <b:ButtonGroup size="SMALL">
                     <b:Button ui:field="packagesInstall" addStyleNames="fa fa-plus"></b:Button>
                     <b:Button ui:field="packagesUninstall" addStyleNames="fa fa-minus"></b:Button>
-                    <b:Button ui:field="packagesRefresh" addStyleNames="fa fa-refresh"></b:Button>
                 </b:ButtonGroup>
                 <gwt:CellTable bordered="true" condensed="true" striped="true" hover="true" width="100%"
                     height="100%" ui:field="packagesGrid" addStyleNames="{style.center-panel}" />
@@ -74,22 +73,24 @@
 
                         <b:NavTabs>
                             <b:TabListItem active="true" dataTarget="#tab1" ui:field="fileLabel" />
-                            <b:TabListItem dataTarget="#tab2" text="URL" />
+                            <b:TabListItem dataTarget="#tab2" ui:field="urlLabel" />
                         </b:NavTabs>
                         <b:TabContent>
 
                             <b:TabPane fade="true" in="true" active="true" b:id="tab1">
                                 <g:FormPanel ui:field="packagesFormFile">
                                     <b:FieldSet>
-                                        <b:FormLabel addStyleNames="{style.upload-label}" text="{msgs.selectDPFile}:"/>
-                                        <b:Well>
-                                            <g:FileUpload ui:field="filePath"></g:FileUpload>
-                                        </b:Well>
-                                        <b:ButtonGroup pull="RIGHT">
-                                            <b:Button ui:field="fileCancel" b:id="btnCancel1" text="{msgs.cancelButton}"/>
-                                            <b:Button ui:field="fileSubmit" b:id="btnSubmit1" text="{msgs.submitButton}"/>
-                                        </b:ButtonGroup>
-                                        <g:Hidden ui:field="xsrfTokenFieldFile"></g:Hidden>
+                                        <b:FormGroup ui:field="packagesGroupFile">
+	                                        <b:FormLabel addStyleNames="{style.upload-label}" text="{msgs.selectDPFile}:"/>
+	                                        <b:Well>
+	                                            <g:FileUpload ui:field="filePath"></g:FileUpload>
+	                                        </b:Well>
+	                                        <b:ButtonGroup pull="RIGHT">
+	                                            <b:Button ui:field="fileCancel" b:id="btnCancel1" text="{msgs.cancelButton}"/>
+	                                            <b:Button ui:field="fileSubmit" b:id="btnSubmit1" text="{msgs.submitButton}"/>
+	                                        </b:ButtonGroup>
+	                                        <g:Hidden ui:field="xsrfTokenFieldFile"></g:Hidden>
+                                        </b:FormGroup>
                                     </b:FieldSet>
                                 </g:FormPanel>
                             </b:TabPane>
@@ -97,13 +98,15 @@
                             <b:TabPane fade="true" b:id="tab2">
                                 <g:FormPanel ui:field="packagesFormUrl">
                                     <b:FieldSet>
-                                        <b:FormLabel addStyleNames="{style.upload-label}" for="formUrl" text="{msgs.enterdpUrl}"/>
-                                        <b:TextBox b:id="formUrl" ui:field="formUrl" />
-                                        <b:ButtonGroup pull="RIGHT">
-                                            <b:Button ui:field="urlCancel" b:id="btnCancel2" text="{msgs.cancelButton}"/>
-                                            <b:Button ui:field="urlSubmit" b:id="btnSubmit2" text="{msgs.submitButton}"/>
-                                        </b:ButtonGroup>
-                                        <g:Hidden ui:field="xsrfTokenFieldUrl"></g:Hidden>
+                                        <b:FormGroup ui:field="packagesGroupUrl">
+	                                        <b:FormLabel addStyleNames="{style.upload-label}" for="formUrl" text="{msgs.enterdpUrl}"/>
+	                                        <b:TextBox b:id="formUrl" ui:field="formUrl" />
+	                                        <b:ButtonGroup pull="RIGHT">
+	                                            <b:Button ui:field="urlCancel" b:id="btnCancel2" text="{msgs.cancelButton}"/>
+	                                            <b:Button ui:field="urlSubmit" b:id="btnSubmit2" text="{msgs.submitButton}"/>
+	                                        </b:ButtonGroup>
+	                                        <g:Hidden ui:field="xsrfTokenFieldUrl"></g:Hidden>
+                                        </b:FormGroup>
                                     </b:FieldSet>
                                 </g:FormPanel>
                             </b:TabPane>
@@ -125,7 +128,7 @@
             <b:ModalBody>
                 <b:Panel>
                     <b:PanelBody>
-                        <b:Alert type="WARNING">
+                        <b:Alert type="DANGER">
                             <b.html:Text ui:field="uploadErrorText" />
                         </b:Alert>
                     </b:PanelBody>
