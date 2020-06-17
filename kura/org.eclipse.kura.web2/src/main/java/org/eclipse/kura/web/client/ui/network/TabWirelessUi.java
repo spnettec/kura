@@ -47,6 +47,7 @@ import org.eclipse.kura.web.shared.service.GwtSecurityTokenService;
 import org.eclipse.kura.web.shared.service.GwtSecurityTokenServiceAsync;
 import org.gwtbootstrap3.client.ui.Alert;
 import org.gwtbootstrap3.client.ui.Button;
+import org.gwtbootstrap3.client.ui.Form;
 import org.gwtbootstrap3.client.ui.FormGroup;
 import org.gwtbootstrap3.client.ui.FormLabel;
 import org.gwtbootstrap3.client.ui.HelpBlock;
@@ -141,6 +142,9 @@ public class TabWirelessUi extends Composite implements NetworkTab {
     Alert noChannels;
     @UiField
     Text noChannelsText;
+    
+    @UiField
+    Form form;
 
     @UiField
     FormLabel labelWireless;
@@ -352,23 +356,19 @@ public class TabWirelessUi extends Composite implements NetworkTab {
 
     @Override
     public boolean isValid() {
-        boolean result = false;
-        if (isValidForm()) {
-            result = false;
-        } else {
-            result = true;
-        }
-        return result;
+        return isValidForm();
     }
 
     private boolean isValidForm() {
-        boolean result = this.groupWireless.getValidationState().equals(ValidationState.ERROR)
-                || this.groupPassword.getValidationState().equals(ValidationState.ERROR)
-                || this.groupVerify.getValidationState().equals(ValidationState.ERROR);
+        boolean result = form.validate();
+        result = result && !this.groupWireless.getValidationState().equals(ValidationState.ERROR)
+                && !this.groupPassword.getValidationState().equals(ValidationState.ERROR)
+                && !this.groupVerify.getValidationState().equals(ValidationState.ERROR);
 
-        result = result || this.groupRssi.getValidationState().equals(ValidationState.ERROR)
-                || this.groupShortI.getValidationState().equals(ValidationState.ERROR)
-                || this.groupLongI.getValidationState().equals(ValidationState.ERROR);
+        result = result && !this.groupRssi.getValidationState().equals(ValidationState.ERROR)
+                && !this.groupShortI.getValidationState().equals(ValidationState.ERROR)
+                && !this.groupLongI.getValidationState().equals(ValidationState.ERROR);
+        
         return result;
     }
 
@@ -568,6 +568,7 @@ public class TabWirelessUi extends Composite implements NetworkTab {
 
             if (WIFI_MODE_STATION_MESSAGE.equals(this.wireless.getSelectedItemText())) {
                 this.ssid.setEnabled(true);
+                this.verify.setEnabled(false);
                 if (!this.security.getSelectedItemText().equals(WIFI_SECURITY_NONE_MESSAGE)) {
                     if (this.password.getValue() != null && this.password.getValue().length() > 0) {
                         this.password.setEnabled(true);
@@ -736,7 +737,10 @@ public class TabWirelessUi extends Composite implements NetworkTab {
 
         // SSID
         this.labelSsid.setText(MSGS.netWifiNetworkName());
+        this.labelSsid.setShowRequiredIndicator(true);
         this.ssid.setMaxLength(MAX_SSID_LENGTH);
+        this.ssid.setAllowBlank(false);
+        this.ssid.setValidateOnBlur(true);
         this.ssid.addMouseOverHandler(event -> {
             if (TabWirelessUi.this.ssid.isEnabled()) {
                 TabWirelessUi.this.helpText.clear();
@@ -864,15 +868,8 @@ public class TabWirelessUi extends Composite implements NetworkTab {
         });
         this.verify.addMouseOutHandler(event -> resetHelp());
         this.verify.addChangeHandler(event -> {
-            if (TabWirelessUi.this.password != null
-                    && !TabWirelessUi.this.verify.getText().equals(TabWirelessUi.this.password.getText())) {
-                TabWirelessUi.this.helpVerify.setText(MSGS.netWifiWirelessPasswordDoesNotMatch());
-                TabWirelessUi.this.groupVerify.setValidationState(ValidationState.ERROR);
-
-            } else {
-                TabWirelessUi.this.helpVerify.setText("");
-                TabWirelessUi.this.groupVerify.setValidationState(ValidationState.NONE);
-            }
+            refreshForm();
+            checkPassword();
         });
 
         // Pairwise ciphers
@@ -884,8 +881,11 @@ public class TabWirelessUi extends Composite implements NetworkTab {
             }
         });
         this.pairwise.addMouseOutHandler(event -> resetHelp());
-        for (GwtWifiCiphers ciphers : GwtWifiCiphers.values()) {
-            this.pairwise.addItem(MessageUtils.get(ciphers.name()));
+        for (GwtWifiCiphers cipher : GwtWifiCiphers.values()) {
+            if (GwtWifiCiphers.netWifiCiphers_NONE == cipher) {
+                continue;
+            }
+            this.pairwise.addItem(MessageUtils.get(cipher.name()));
         }
         this.pairwise.addChangeHandler(event -> refreshForm());
 
@@ -898,8 +898,11 @@ public class TabWirelessUi extends Composite implements NetworkTab {
             }
         });
         this.group.addMouseOutHandler(event -> resetHelp());
-        for (GwtWifiCiphers ciphers : GwtWifiCiphers.values()) {
-            this.group.addItem(MessageUtils.get(ciphers.name()));
+        for (GwtWifiCiphers cipher : GwtWifiCiphers.values()) {
+            if (GwtWifiCiphers.netWifiCiphers_NONE == cipher) {
+                continue;
+            }
+            this.group.addItem(MessageUtils.get(cipher.name()));
         }
         this.group.addChangeHandler(event -> refreshForm());
 
@@ -1469,9 +1472,16 @@ public class TabWirelessUi extends Composite implements NetworkTab {
             this.groupPassword.setValidationState(ValidationState.NONE);
         }
 
-        if (!this.verify.isEnabled()) {
-            this.groupVerify.setValidationState(ValidationState.NONE);
+        if (this.verify.isEnabled() && TabWirelessUi.this.password != null
+                && !TabWirelessUi.this.verify.getText().equals(TabWirelessUi.this.password.getText())) {
+            TabWirelessUi.this.helpVerify.setText(MSGS.netWifiWirelessPasswordDoesNotMatch());
+            TabWirelessUi.this.groupVerify.setValidationState(ValidationState.ERROR);
+
+        } else {
+            TabWirelessUi.this.helpVerify.setText("");
+            TabWirelessUi.this.groupVerify.setValidationState(ValidationState.NONE);
         }
+
     }
 
     private void showPasswordVerificationStatus(String statusMessage) {
