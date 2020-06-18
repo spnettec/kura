@@ -31,7 +31,9 @@
             type="Integer"
             cardinality="0" 
             required="true"
-            default="8080" 
+            default="80" 
+            min = "1"
+            max = "65535"
             description="%portDesc">
         </AD>
         
@@ -50,6 +52,8 @@
             cardinality="0" 
             required="true"
             default="443" 
+            min = "1"
+            max = "65535"
             description="%httpsPortDesc">
         </AD>
         

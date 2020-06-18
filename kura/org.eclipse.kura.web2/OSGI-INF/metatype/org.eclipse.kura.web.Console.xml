@@ -69,8 +69,8 @@
             name="%bannerContent"
             type="String"
             cardinality="0"
-            required="false"
-            default=""
+            required="true"
+            default="Sample Banner Content"
             description="%bannerContentDesc">
         </AD>
         
