@@ -67,9 +67,16 @@ public class StringData implements BinaryData<String> {
         int i = 0;
         int totalByteSize = raw[i];
         if (totalByteSize <= 0) {
+            totalByteSize = totalByteSize & 0xFF;
+        }
+        if (totalByteSize <= 0) {
+            totalByteSize = totalByteSize & 0xFFFF;
+        }
+        if (totalByteSize <= 0) {
             return "";
         }
         int size = raw[i + 1]; // Current length of the string
+
         if (size <= 0) {
             return "";
         }
