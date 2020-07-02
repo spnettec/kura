@@ -292,8 +292,6 @@
         <setEntry value="org.eclipse.kura.camel.sun.misc@default:false"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
-        <setEntry value="org.eclipse.milo.bsd-parser-core@default:default"/>
-        <setEntry value="org.eclipse.milo.bsd-parser-gson@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
         <setEntry value="org.eclipse.milo.stack-client@default:default"/>
