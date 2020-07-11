@@ -175,7 +175,7 @@
         <setEntry value="groovy-jsr223@default:false"/>
         <setEntry value="groovy-sql@default:false"/>
         <setEntry value="groovy-templates@default:false"/>
-        <setEntry value="groovy-xml@default:default"/>
+        <setEntry value="groovy-xml@default:false"/>
         <setEntry value="groovy@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>

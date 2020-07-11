@@ -583,15 +583,6 @@
                   <id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-                  <override>true</override>
-                  <instructions>
-                        <Export-Package>groovy.xml;version="3.0.0.rc-1",groovy.xml.dom;version
-                        ="3.0.0.rc-1",groovy.xml.slurpersupport;version="3.0.0.rc-1",groovy.xm
-                        l.streamingmarkupsupport;version="3.0.0.rc-1",org.apache.groovy.xml.ex
-                        tensions;version="3.0.0.rc-1",org.apache.groovy.xml.tools;version="3.0
-                        .0.rc-1",org.codehaus.groovy.tools.xml;version="3.0.0.rc-1"
-                        </Export-Package>
-                  </instructions>
               </artifact>   
               <artifact>
                   <id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.groovy-mvn.version}</id>
