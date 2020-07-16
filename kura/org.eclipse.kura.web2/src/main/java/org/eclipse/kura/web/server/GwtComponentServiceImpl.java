@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2019 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
@@ -33,10 +34,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.cloud.factory.CloudServiceFactory;
-import org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory;
 import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
+import org.eclipse.kura.configuration.SelfConfiguringComponent;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Icon;
 import org.eclipse.kura.configuration.metatype.OCD;
@@ -90,6 +91,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
     private static final String DRIVER_PID = "driver.pid";
     private static final String KURA_SERVICE_PID = ConfigurationService.KURA_SERVICE_PID;
     private static final String SERVICE_FACTORY_PID = "service.factoryPid";
+    private static final String KURA_UI_SERVICE_HIDE = "kura.ui.service.hide";
 
     private static final int SERVICE_WAIT_TIMEOUT = 60;
 
@@ -316,7 +318,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
 
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
         List<String> result = new ArrayList<>();
-        List<String> cloudConnectionFactoriesToBeHidden = new ArrayList<>();
+        List<String> servicesToBeHidden = new ArrayList<>();
 
         // finding all wire components to remove from the list as these factory
         // instances
@@ -328,7 +330,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
         List<String> hiddenFactories = findFactoryHideComponents();
 
         // finding services with kura.service.ui.hide property
-        fillCloudConnectionFactoriesToHideList(cloudConnectionFactoriesToBeHidden);
+        fillServicesToHideList(servicesToBeHidden);
 
         // get all the factory PIDs tracked by Configuration Service
         result.addAll(cs.getFactoryComponentPids());
@@ -336,7 +338,7 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
         // remove all the wire components and the services to be hidden as these
         // are shown in different UI
         result.removeAll(allWireComponents);
-        result.removeAll(cloudConnectionFactoriesToBeHidden);
+        result.removeAll(servicesToBeHidden);
         result.removeAll(hiddenFactories);
 
         auditLogger.info(SUCCESSFULLY_LISTED_COMPONENT_CONFIGS_MESSAGE,
@@ -430,23 +432,25 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
         }
     }
 
-    private void fillCloudConnectionFactoriesToHideList(List<String> hidePidsList) throws GwtKuraException {
-        ServiceLocator.withAllServiceReferences(CloudConnectionFactory.class, null, (ref, ctx) -> {
-            try {
-                CloudConnectionFactory cloudServiceFactory = ctx.getService(ref);
-                hidePidsList.add(cloudServiceFactory.getFactoryPid());
-            } finally {
-                ctx.ungetService(ref);
+    private void fillServicesToHideList(List<String> hidePidsList) throws GwtKuraException {
+        Collection<ServiceReference<ConfigurableComponent>> configurableComponentReferences = ServiceLocator
+                .getInstance().getServiceReferences(ConfigurableComponent.class, null);
+
+        Collection<ServiceReference<SelfConfiguringComponent>> selfConfiguringComponentReferences = ServiceLocator
+                .getInstance().getServiceReferences(SelfConfiguringComponent.class, null);
+
+        List<ServiceReference<?>> componentReferences = new ArrayList<>();
+        componentReferences.addAll(configurableComponentReferences);
+        componentReferences.addAll(selfConfiguringComponentReferences);
+
+        for (ServiceReference<?> componentReference : componentReferences) {
+            Object propertyObject = componentReference.getProperty(KURA_SERVICE_PID);
+            if (componentReference.getProperty(KURA_UI_SERVICE_HIDE) != null && propertyObject != null) {
+                String servicePid = (String) propertyObject;
+                hidePidsList.add(servicePid);
             }
-        });
-        ServiceLocator.withAllServiceReferences(CloudServiceFactory.class, null, (ref, ctx) -> {
-            try {
-                CloudServiceFactory cloudServiceFactory = ctx.getService(ref);
-                hidePidsList.add(cloudServiceFactory.getFactoryPid());
-            } finally {
-                ctx.ungetService(ref);
-            }
-        });
+            ServiceLocator.getInstance().ungetService(componentReference);
+        }
     }
 
     private List<GwtConfigComponent> findFilteredComponentConfigurationsInternal() throws GwtKuraException {
@@ -805,15 +809,12 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                 try {
                     ServiceReference<?>[] serviceReferences = context.getServiceReferences(reference, null);
                     if (serviceReferences != null) {
-                        for (Object serviceReferenceObject : serviceReferences) {
-                            if (serviceReferenceObject instanceof ServiceReference) {
-                                ServiceReference<?> cloudServiceReference = (ServiceReference<?>) serviceReferenceObject;
-                                String servicePid = (String) cloudServiceReference.getProperty(KURA_SERVICE_PID);
-                                String serviceName = (String) cloudServiceReference
-                                        .getProperty(ConfigurationService.KURA_SERVICE_NAME);
-                                result.put(servicePid, serviceName);
-                                ServiceLocator.getInstance().ungetService(cloudServiceReference);
-                            }
+                        for (ServiceReference<?> serviceReference : serviceReferences) {
+                            String servicePid = (String) serviceReference.getProperty(KURA_SERVICE_PID);
+                            String serviceName = (String) serviceReference
+                                    .getProperty(ConfigurationService.KURA_SERVICE_NAME);
+                            result.put(servicePid, serviceName);
+                            ServiceLocator.getInstance().ungetService(serviceReference);
                         }
                     }
                 } catch (InvalidSyntaxException e) {

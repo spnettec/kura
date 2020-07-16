@@ -12,6 +12,9 @@
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui.cloudconnection;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+
 import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.FilterUtil;
 import org.eclipse.kura.web.shared.model.GwtCloudConnectionEntry;
@@ -137,8 +140,6 @@ public class CloudConnectionConfigurationsUi extends Composite {
     }
 
     private void getCloudStackConfigurations(final String factoryPid, final String cloudServicePid) {
-
-        this.connectionNavtabs.clear();
         RequestQueue.submit(context -> this.gwtCloudService.findStackPidsByFactory(factoryPid, cloudServicePid,
                 context.callback(pidsResult -> {
                     if (pidsResult.isEmpty()) {
@@ -148,13 +149,14 @@ public class CloudConnectionConfigurationsUi extends Composite {
                     this.gwtXSRFService.generateSecurityToken(
                             context.callback(token -> this.gwtComponentService.findComponentConfigurations(token,
                                     FilterUtil.getPidFilter(pidsResult.iterator()), context.callback(result -> {
+                                        final ArrayList<GwtConfigComponent> sorted = new ArrayList<>(result);
+                                        sorted.sort(Comparator.comparing(this::getSimplifiedComponentName));
+                                        this.connectionNavtabs.clear();
                                         boolean isFirstEntry = true;
-                                        for (String pid : pidsResult) {
-                                            for (GwtConfigComponent pair : result) {
-                                                if (pid.equals(pair.getComponentId())) {
-                                                    renderTabs(pair, isFirstEntry);
-                                                    isFirstEntry = false;
-                                                }
+                                        for (GwtConfigComponent pair : sorted) {
+                                            if (pidsResult.contains(pair.getComponentId())) {
+                                                renderTabs(pair, isFirstEntry);
+                                                isFirstEntry = false;
                                             }
                                         }
                                     }))));
@@ -163,10 +165,7 @@ public class CloudConnectionConfigurationsUi extends Composite {
     }
 
     private void renderTabs(GwtConfigComponent config, boolean isFirstEntry) {
-        String simplifiedComponentName = config.getComponentName();
-        if (simplifiedComponentName == null) {
-            simplifiedComponentName = config.getComponentId();
-        }
+        final String simplifiedComponentName = getSimplifiedComponentName(config);
         TabListItem item = new TabListItem(simplifiedComponentName);
         item.setDataTarget("#" + simplifiedComponentName);
         item.addClickHandler(event -> {
@@ -188,5 +187,21 @@ public class CloudConnectionConfigurationsUi extends Composite {
         }
 
         serviceConfigurationBinder.renderForm();
+    }
+
+    private String getSimplifiedComponentName(GwtConfigComponent config) {
+        String simplifiedComponentName = config.getComponentName();
+        if (simplifiedComponentName != null) 
+            return simplifiedComponentName;
+        String selectedCloudServicePid = config.getComponentId();
+        String tempName;
+        int start = selectedCloudServicePid.lastIndexOf('.');
+        int substringIndex = start + 1;
+        if (start != -1 && substringIndex < selectedCloudServicePid.length()) {
+            tempName = selectedCloudServicePid.substring(substringIndex);
+        } else {
+            tempName = selectedCloudServicePid;
+        }
+        return tempName;
     }
 }
