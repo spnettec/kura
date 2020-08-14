@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.kura.web.server;
 
+import static java.util.Objects.isNull;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -808,14 +810,17 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             referenceInterfaces.forEach(reference -> {
                 try {
                     ServiceReference<?>[] serviceReferences = context.getServiceReferences(reference, null);
-                    if (serviceReferences != null) {
-                        for (ServiceReference<?> serviceReference : serviceReferences) {
-                            String servicePid = (String) serviceReference.getProperty(KURA_SERVICE_PID);
-                            String serviceName = (String) serviceReference
-                                    .getProperty(ConfigurationService.KURA_SERVICE_NAME);
-                            result.put(servicePid, serviceName);
-                            ServiceLocator.getInstance().ungetService(serviceReference);
-                        }
+
+                    if (isNull(serviceReferences)) {
+                        return;
+                    }
+
+                    for (ServiceReference<?> serviceReference : serviceReferences) {
+                        String servicePid = (String) serviceReference.getProperty(KURA_SERVICE_PID);
+                        String serviceName = (String) serviceReference
+                                .getProperty(ConfigurationService.KURA_SERVICE_NAME);
+                        result.put(servicePid, serviceName);
+                        ServiceLocator.getInstance().ungetService(serviceReference);
                     }
                 } catch (InvalidSyntaxException e) {
 

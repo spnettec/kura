@@ -23,7 +23,7 @@
     </ui:style>
 
     <b:Container fluid="true">
-        <b:Modal closable="false" dataKeyboard="true" b:id="select-asset-modal" ui:field="selectAssetModal"
+        <b:Modal closable="false" fade="true" dataBackdrop="STATIC" dataKeyboard="true" b:id="select-asset-modal" ui:field="selectAssetModal"
             title="{msgs.selectAssetLabel}">
             <b:ModalBody>
                 <b.html:Paragraph text="{msgs.selectAssetIntroLabel}" />
@@ -47,7 +47,7 @@
             </b:ModalFooter>
         </b:Modal>
 
-        <b:Modal closable="false" hideOtherModals="true" dataKeyboard="true" b:id="select-driver-modal"
+        <b:Modal closable="false" fade="true" dataBackdrop="STATIC" dataKeyboard="true" b:id="select-driver-modal"
             ui:field="selectDriverModal" title="{msgs.selectDriverLabel}">
             <b:ModalBody>
                 <b.html:Paragraph text="{msgs.selectDriverIntroLabel}" />
@@ -70,7 +70,7 @@
             </b:ModalFooter>
         </b:Modal>
 
-        <b:Modal closable="false" hideOtherModals="true" dataKeyboard="true" b:id="new-asset-modal"
+        <b:Modal closable="false" fade="true" dataBackdrop="STATIC" dataKeyboard="true" b:id="new-asset-modal"
             ui:field="newAssetModal" title="{msgs.newAsset}">
             <b:ModalBody>
                 <b.html:Paragraph text="{msgs.createNewAssetIntroLabel2}" />
@@ -78,7 +78,7 @@
                     <b:FieldSet>
                         <b:FormGroup>
                             <b:FormLabel for="formNewAssetName" text="{msgs.assetName}" />
-                            <b:TextBox ui:field="newAssetName" b:id="formNewAssetName"
+                            <kura.util:PidTextBox ui:field="newAssetName" b:id="formNewAssetName"
                                 allowBlank="false" autoComplete="false" />
                         </b:FormGroup>
                         <b:FormGroup>
@@ -109,7 +109,7 @@
             </b:ModalFooter>
         </b:Modal>
 
-        <b:Modal closable="false" hideOtherModals="true" dataKeyboard="true" b:id="new-driver-modal"
+        <b:Modal closable="false" fade="true" dataBackdrop="STATIC" dataKeyboard="true" b:id="new-driver-modal"
             ui:field="newDriverModal" title="{msgs.newDriver}">
             <b:ModalBody>
                 <b.html:Paragraph text="{msgs.createNewDriverIntroLabel}" />
@@ -122,7 +122,7 @@
                         </b:FormGroup>
                         <b:FormGroup>
                             <b:FormLabel for="formNewDriverName" text="{msgs.driverName}" />
-                            <b:TextBox ui:field="newDriverName" b:id="formNewDriverName"
+                            <kura.util:PidTextBox ui:field="newDriverName" b:id="formNewDriverName"
                                 allowBlank="false" autoComplete="false" />
                         </b:FormGroup>
                         <b:FormGroup>
@@ -154,9 +154,12 @@
                 <b:Form>
                     <b:FieldSet>
                         <b:FormGroup>
-                            <b:FormLabel for="formComponentName" text="{msgs.wiresComponentName}" />
-                            <b:TextBox ui:field="componentName" b:id="formComponentName"
-                                allowBlank="false" autoComplete="false" />
+                            <b:FormLabel for="componentName" addStyleNames="{style.newComponentName}"
+                                ui:field="componentNameLabel" />
+                            <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
+                            <kura.util:PidTextBox ui:field="componentName" b:id="componentName"
+                                autoComplete="false" validateOnBlur="true"
+                                placeholder="{msgs.wiresComponentNamePlaceholder}" />
                         </b:FormGroup>
                         <b:FormGroup>
                             <b:FormLabel for="formComponentDesc" text="{msgs.wiresComponentDesc}" />

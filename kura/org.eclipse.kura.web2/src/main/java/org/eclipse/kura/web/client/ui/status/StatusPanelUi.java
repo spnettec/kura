@@ -15,6 +15,7 @@ import java.util.Iterator;
 
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.messages.ValidationMessages;
+import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.util.EventService;
 import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.ForwardedEventTopic;
@@ -56,6 +57,8 @@ public class StatusPanelUi extends Composite {
 
     private GwtSession currentSession;
     private final ListDataProvider<GwtGroupedNVPair> statusGridProvider = new ListDataProvider<>();
+    private EntryClassUi parent;
+
     @UiField
     Well statusWell;
     @UiField
@@ -167,6 +170,7 @@ public class StatusPanelUi extends Composite {
                         })))));
     }
 
-    // public void setParent(EntryClassUi parent) {
-    // }
+    public void setParent(EntryClassUi parent) {
+        this.parent = parent;
+    }
 }
