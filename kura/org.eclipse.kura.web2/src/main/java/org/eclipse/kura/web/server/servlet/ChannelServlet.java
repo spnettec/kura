@@ -57,7 +57,7 @@ public class ChannelServlet extends LocaleServlet {
             session.removeAttribute(attributeKey);
 
             resp.setCharacterEncoding("UTF-8");
-            resp.setContentType("text/csv");
+            resp.setContentType("text/csv;charset=utf-8");
             resp.setHeader("Content-Disposition", "attachment; filename=asset_" + assetPid + ".csv");
             resp.setHeader("Cache-Control", "no-transform, max-age=0");
             try (PrintWriter writer = resp.getWriter()) {
