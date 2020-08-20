@@ -340,7 +340,7 @@ public final class GwtServerUtil {
         }
         return gwtParams;
     }
-    
+
     public static GwtConfigParameter toGwtConfigParameter(final AD ad, final Object value) {
         GwtConfigParameter gwtParam = new GwtConfigParameter();
         gwtParam.setId(ad.getId());
@@ -502,6 +502,16 @@ public final class GwtServerUtil {
         // Force kura.service.pid into properties, if originally present
         if (currentConfigProp.get(KURA_SERVICE_PID) != null) {
             properties.put(KURA_SERVICE_PID, currentConfigProp.get(KURA_SERVICE_PID));
+        }
+        if (currentConfigProp.get(ConfigurationService.KURA_SERVICE_NAME) != null
+                && !properties.containsKey(ConfigurationService.KURA_SERVICE_NAME)) {
+            properties.put(ConfigurationService.KURA_SERVICE_NAME,
+                    currentConfigProp.get(ConfigurationService.KURA_SERVICE_NAME));
+        }
+        if (currentConfigProp.get(ConfigurationService.KURA_SERVICE_DESC) != null
+                && !properties.containsKey(ConfigurationService.KURA_SERVICE_DESC)) {
+            properties.put(ConfigurationService.KURA_SERVICE_DESC,
+                    currentConfigProp.get(ConfigurationService.KURA_SERVICE_DESC));
         }
         final String factoryPid = gwtCompConfig.getFactoryId();
         if (factoryPid != null) {

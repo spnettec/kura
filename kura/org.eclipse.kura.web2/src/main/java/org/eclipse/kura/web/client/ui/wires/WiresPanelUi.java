@@ -156,6 +156,7 @@ public class WiresPanelUi extends Composite
         this.btnZoomFit.addClickHandler(event -> WiresPanelUi.this.wireComposer.fitContent(true));
         this.btnSave.addClickHandler(event -> {
             final List<String> invalidConfigurationPids = this.configurations.getInvalidConfigurationPids();
+
             final long notBoundAssetsNotInGraphCount = invalidConfigurationPids.stream()
                     .filter(p -> wireComposer.getWireComponent(p) == null && isNotBoundAsset(p)).count();
 
@@ -544,8 +545,8 @@ public class WiresPanelUi extends Composite
                     component.getComponentName(), component.getComponentDescription());
             config.markAsDirty();
         }
-        this.dialogs.setAssetPidNames(getAssetsNotInComposer());
         updateComponentsValidState(config);
+        this.dialogs.setAssetPidNames(getAssetsNotInComposer());
     }
 
     @Override
