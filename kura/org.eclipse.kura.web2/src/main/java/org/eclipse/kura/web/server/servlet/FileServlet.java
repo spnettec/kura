@@ -460,18 +460,18 @@ public class FileServlet extends LocaleServlet {
             // END XSRF security check
 
             List<FileItem> fileItems = upload.getFileItems();
-            if (fileItems.size() != 1) {
-                logger.error(EXPECTED_1_FILE_PATTERN, fileItems.size());
+            int fileItemsSize = fileItems.size();
+            if (fileItemsSize != 1) {
+                logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
                 errors.add("Security error: please retry this operation.");
 
                 auditLogger.warn(
                         FAILED_TO_MANAGE_ASSET_CONFIGURATION_UPLOAD_FOR_USER_SESSION_CAUSE + EXPECTED_1_FILE_PATTERN,
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItems.size());
+                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
                 throw new ServletException();
             }
 
             FileItem fileItem = fileItems.get(0);
-            logger.info(fileItem.getName());
             byte[] data = fileItem.get();
             String csvString = new String(data, StandardCharsets.UTF_8);
             String assetPid = formFields.get("assetPid");
@@ -544,12 +544,13 @@ public class FileServlet extends LocaleServlet {
         // END XSRF security check
 
         List<FileItem> fileItems = upload.getFileItems();
-        if (fileItems.size() != 1) {
-            logger.error(EXPECTED_1_FILE_PATTERN, fileItems.size());
+        int fileItemsSize = fileItems.size();
+        if (fileItemsSize != 1) {
+            logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
             auditLogger.warn(
                     "UI Deploy Snapshots - Failure - Failed to upload snapshot for user: {}, session: {}. Cause: "
                             + EXPECTED_1_FILE_PATTERN,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItems.size());
+                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
             throw new ServletException("Wrong number of file items");
         }
 
@@ -657,12 +658,13 @@ public class FileServlet extends LocaleServlet {
         try {
             fileItems = upload.getFileItems();
 
-            if (fileItems.size() != 1) {
-                logger.error(EXPECTED_1_FILE_PATTERN, fileItems.size());
+            int fileItemsSize = fileItems.size();
+            if (fileItemsSize != 1) {
+                logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
                 auditLogger.warn(
                         "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: "
                                 + EXPECTED_1_FILE_PATTERN,
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItems.size());
+                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
                 throw new ServletException("Wrong number of file items");
             }
 
@@ -673,14 +675,12 @@ public class FileServlet extends LocaleServlet {
             String filePath = System.getProperty(JAVA_IO_TMPDIR) + File.separator + UUID.randomUUID() + ".dp";
 
             localFile = new File(filePath);
-            if (localFile.exists()) {
-                if (!localFile.delete()) {
-                    logger.error("Cannot delete file: {}", filePath);
-                    auditLogger.warn(
-                            "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Cannot delete file: {}",
-                            session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filePath);
-                    throw new ServletException("Cannot delete file: " + filePath);
-                }
+            if (localFile.exists() && !localFile.delete()) {
+                logger.error("Cannot delete file: {}", filePath);
+                auditLogger.warn(
+                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Cannot delete file: {}",
+                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filePath);
+                throw new ServletException("Cannot delete file: " + filePath);
             }
 
             try {
