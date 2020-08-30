@@ -73,6 +73,9 @@ public abstract class LinuxDnsServer {
 
     private void init() throws KuraException {
         File configFile = new File(getDnsConfigFileName());
+        if (!configFile.exists()) {
+            configFile = new File(getDnsConfigFileNameShort());
+        }
         if (!configFile.exists() || !isForwardOnlyConfiguration(configFile)) {
             logger.debug("There is no current DNS server configuration that allows forwarding");
             return;
@@ -228,6 +231,14 @@ public abstract class LinuxDnsServer {
 
     private void writeConfig() throws IOException {
         String persistentConfigFileName = getDnsConfigFileName();
+        File file = new File(persistentConfigFileName);
+        if (!file.exists()) {
+            persistentConfigFileName = getDnsConfigFileNameShort();
+            file = new File(persistentConfigFileName);
+        }
+        if (!file.exists()) {
+            file.createNewFile();
+        }
         try (FileOutputStream fos = new FileOutputStream(persistentConfigFileName);
                 PrintWriter pw = new PrintWriter(fos);) {
             // build up the file
@@ -327,6 +338,10 @@ public abstract class LinuxDnsServer {
 
     public String getDnsConfigFileName() {
         return "/etc/bind/named.conf";
+    }
+
+    public String getDnsConfigFileNameShort() {
+        return "/etc/named.conf";
     }
 
     public String getDnsRfcZonesFileName() {
