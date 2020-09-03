@@ -275,7 +275,21 @@ public abstract class LinuxDnsServer {
 
         Set<NetworkPair<IP4Address>> allowedNetworks = this.dnsServerConfigIP4.getAllowedNetworks();
         for (NetworkPair<IP4Address> pair : allowedNetworks) {
-            sb.append(pair.getIpAddress().getHostAddress()) //
+            String ipStr = pair.getIpAddress().getHostAddress();
+            String[] ips = ipStr.split("\\.");
+            int subs = pair.getPrefix() / 8;
+            if (subs > ips.length) {
+                subs = ips.length;
+            }
+            String ip = "";
+            for (int i = 0; i < subs; i++) {
+                if (ip.equals("")) {
+                    ip = ips[i];
+                } else {
+                    ip = ip + "." + ips[i];
+                }
+            }
+            sb.append(ip) //
                     .append("/") //
                     .append(pair.getPrefix()) //
                     .append(";");

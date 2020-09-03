@@ -103,7 +103,7 @@ public class IfcfgConfigReader implements NetworkConfigurationVisitor {
                 continue;
             }
 
-            Properties kuraProps = netConfigManager.read(interfaceName);
+            Properties kuraProps = netConfigManager.read(interfaceName, type);
 
             IfaceConfig ifaceConfig = getIfaceConfig(interfaceName, kuraProps, kuraExtendedProps);
 

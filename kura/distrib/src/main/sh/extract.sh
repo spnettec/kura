@@ -205,7 +205,7 @@ function require_java_8 {
   then
     return 0;
   fi
-  JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1,2)
+  JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1,2 |  sed -e 's/\.//g')
   if ! [[ $JAVA_VERSION =~ ^([1-9][0-9]*)+(\.[0-9]*)?$ ]];
   then
   	echo "Failed to determine Java version: $JAVA_VERSION"
@@ -213,7 +213,7 @@ function require_java_8 {
     echo "SKIP_JAVA_VERSION_CHECK=\"true\""
   	exit 1
   fi
-  if [ $(echo "$JAVA_VERSION < 1.8" | bc) -eq 1 ];
+  if [ $JAVA_VERSION -lt 18 ];
   then
     echo "Java version 8 or greater is required for running Kura, please upgrade"
     exit 1

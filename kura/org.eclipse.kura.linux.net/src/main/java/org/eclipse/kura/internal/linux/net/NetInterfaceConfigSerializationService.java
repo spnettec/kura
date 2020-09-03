@@ -16,6 +16,7 @@ import java.util.Properties;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.net.NetInterfaceAddressConfig;
 import org.eclipse.kura.net.NetInterfaceConfig;
+import org.eclipse.kura.net.NetInterfaceType;
 
 /**
  * Serialization service for network interface configuration
@@ -30,7 +31,7 @@ public interface NetInterfaceConfigSerializationService {
      * @return
      * @throws KuraException
      */
-    public Properties read(String interfaceName) throws KuraException;
+    public Properties read(String interfaceName, NetInterfaceType type) throws KuraException;
 
     /**
      * Persists the network configuration received as argument. Throws a {@link KuraException} if the persist operation

@@ -84,11 +84,8 @@ cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/s
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp2s0 /etc/sysconfig/network-scripts/ifcfg-enp2s0
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp2s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp2s0
 
-cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-enp3s0
-cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp3s0
-
-cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-lo
-cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-lo
+#cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-enp3s0
+#cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp3s0
 
 #cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 /etc/sysconfig/network-scripts/ifcfg-wlp4s0
 #cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 ${INSTALL_DIR}/kura/.data/ifcfg-wlp4s0

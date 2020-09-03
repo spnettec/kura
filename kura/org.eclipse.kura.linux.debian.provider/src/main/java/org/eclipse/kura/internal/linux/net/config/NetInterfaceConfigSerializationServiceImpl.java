@@ -37,6 +37,7 @@ import org.eclipse.kura.net.NetConfigIP4;
 import org.eclipse.kura.net.NetInterfaceAddressConfig;
 import org.eclipse.kura.net.NetInterfaceConfig;
 import org.eclipse.kura.net.NetInterfaceStatus;
+import org.eclipse.kura.net.NetInterfaceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,11 +64,40 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
             Arrays.asList("post-up route del default dev"));
 
     @Override
-    public Properties read(String interfaceName) throws KuraException {
+    public Properties read(String interfaceName, NetInterfaceType type) throws KuraException {
         logger.debug("Getting config for {}", interfaceName);
 
         File ifcfgFile = getIfcfgFile();
         if (!ifcfgFile.exists()) {
+            Properties kuraProps = new Properties();
+            if (type.equals(NetInterfaceType.LOOPBACK)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("IPADDR", "127.0.0.1");
+                kuraProps.put("NETMASK", "255.0.0.0");
+                kuraProps.put("NETWORK", "127.0.0.0");
+                kuraProps.put("BROADCAST", "127.255.255.255");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("NAME", "loopback");
+                return kuraProps;
+
+            } else if (type.equals(NetInterfaceType.ETHERNET)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("NAME", interfaceName);
+                kuraProps.put("TYPE", "ETHERNET");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("BOOTPROTO", "dhcp");
+                kuraProps.put("DEFROUTE", "yes");
+                return kuraProps;
+            } else if (type.equals(NetInterfaceType.WIFI)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("NAME", interfaceName);
+                kuraProps.put("TYPE", "WIFI");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("BOOTPROTO", "dhcp");
+                kuraProps.put("DEFROUTE", "yes");
+                kuraProps.put("MODE", "Master");
+                return kuraProps;
+            }
             logger.error("getConfig() :: The {} file doesn't exist", interfaceName);
             throw new KuraException(KuraErrorCode.INVALID_PARAMETER);
         }
@@ -437,9 +467,8 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                 continue;
             }
             logger.debug("Writing netconfig {} for {}", netConfig.getClass(), interfaceName);
-            
+
             NetConfigIP4 netConfigIP4 = (NetConfigIP4) netConfig;
-            
 
             // ONBOOT
             if (netConfigIP4.isAutoConnect()) {
@@ -469,16 +498,14 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                 sb.append("\taddress ").append(netConfigIP4.getAddress().getHostAddress()).append("\n");
 
                 // NETMASK
-                sb.append("\tnetmask ").append(netConfigIP4.getSubnetMask().getHostAddress())
-                        .append("\n");
+                sb.append("\tnetmask ").append(netConfigIP4.getSubnetMask().getHostAddress()).append("\n");
 
                 // NETWORK
                 // TODO: Handle Debian NETWORK value
 
                 // Gateway
                 if (netConfigIP4.getGateway() != null) {
-                    sb.append("\tgateway ").append(netConfigIP4.getGateway().getHostAddress())
-                            .append("\n");
+                    sb.append("\tgateway ").append(netConfigIP4.getGateway().getHostAddress()).append("\n");
                 }
             }
 

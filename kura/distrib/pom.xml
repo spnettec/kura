@@ -1408,7 +1408,6 @@
                                         <require>psmisc</require>
                                         <require>tar</require>
                                         <require>dos2unix</require>
-                                        <require>net-tools</require>
                                     </requires>
                                     <entries>
                                         <entry>
@@ -1426,6 +1425,7 @@
                                         <script>
     systemctl stop kura
     systemctl disable kura
+    systemctl enable NetworkManager
     rm -f /usr/lib/systemd/system/kura.service
     systemctl daemon-reload
     systemctl reset-failed
@@ -1546,6 +1546,7 @@
                                         <require>dhcp-server</require>
                                         <require>dhcp-client</require>
                                         <require>net-tools</require>
+                                        <require>network-scripts</require>
                                         <require>hostapd</require>
                                         <require>wpa_supplicant</require>
                                         <require>gzip</require>
@@ -1560,7 +1561,6 @@
                                         <require>psmisc</require>
                                         <require>tar</require>
                                         <require>dos2unix</require>
-                                        <require>net-tools</require>
                                     </requires>
                                     <entries>
                                         <entry>
@@ -1578,6 +1578,7 @@
                                         <script>
     systemctl stop kura
     systemctl disable kura
+    systemctl enable NetworkManager
     rm -f /usr/lib/systemd/system/kura.service
     systemctl daemon-reload
     systemctl reset-failed

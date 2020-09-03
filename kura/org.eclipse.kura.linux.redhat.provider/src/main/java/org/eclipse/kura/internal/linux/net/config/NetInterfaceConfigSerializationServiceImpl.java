@@ -33,6 +33,7 @@ import org.eclipse.kura.net.NetConfigIP4;
 import org.eclipse.kura.net.NetInterfaceAddressConfig;
 import org.eclipse.kura.net.NetInterfaceConfig;
 import org.eclipse.kura.net.NetInterfaceStatus;
+import org.eclipse.kura.net.NetInterfaceType;
 import org.eclipse.kura.net.wifi.WifiInterfaceAddressConfig;
 import org.eclipse.kura.net.wifi.WifiMode;
 import org.slf4j.Logger;
@@ -55,12 +56,42 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
     private static final String TYPE_PROP_NAME = "TYPE";
 
     @Override
-    public Properties read(String interfaceName) throws KuraException {
+    public Properties read(String interfaceName, NetInterfaceType type) throws KuraException {
         logger.debug("Getting config for {}", interfaceName);
 
         String ifcfgFileName = getIfcfgFileName(interfaceName);
         File ifcfgFile = new File(ifcfgFileName);
         if (!ifcfgFile.exists()) {
+            Properties kuraProps = new Properties();
+            if (type.equals(NetInterfaceType.LOOPBACK)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("IPADDR", "127.0.0.1");
+                kuraProps.put("NETMASK", "255.0.0.0");
+                kuraProps.put("NETWORK", "127.0.0.0");
+                kuraProps.put("BROADCAST", "127.255.255.255");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("NAME", "loopback");
+                return kuraProps;
+
+            } else if (type.equals(NetInterfaceType.ETHERNET)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("NAME", interfaceName);
+                kuraProps.put("TYPE", "ETHERNET");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("BOOTPROTO", "dhcp");
+                kuraProps.put("DEFROUTE", "yes");
+                return kuraProps;
+            } else if (type.equals(NetInterfaceType.WIFI)) {
+                kuraProps.put("DEVICE", interfaceName);
+                kuraProps.put("NAME", interfaceName);
+                kuraProps.put("TYPE", "WIFI");
+                kuraProps.put("ONBOOT", "yes");
+                kuraProps.put("BOOTPROTO", "dhcp");
+                kuraProps.put("DEFROUTE", "yes");
+                kuraProps.put("MODE", "Master");
+                return kuraProps;
+            }
+
             logger.error("getConfig() :: The {} file doesn't exist", interfaceName);
             throw new KuraException(KuraErrorCode.INVALID_PARAMETER);
         }
@@ -221,7 +252,7 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
     private void writeConfigFile(String tmpFileName, String dstFileName, StringBuilder sb) throws KuraException {
         File srcFile = new File(tmpFileName);
         File dstFile = new File(dstFileName);
-        
+
         // write tmp configuration file
         try (FileOutputStream fos = new FileOutputStream(srcFile); PrintWriter pw = new PrintWriter(fos)) {
             pw.write(sb.toString());
