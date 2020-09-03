@@ -152,11 +152,6 @@
 
     <repositories>
         <repository>
-            <id>p2-repo</id>
-            <layout>p2</layout>
-            <url>file:///${kura.basedir}/org.eclipse.kura-p2/target/repository/</url>
-        </repository>
-        <repository>
             <id>p2-repo-common</id>
             <layout>p2</layout>
             <url>file:///${kura.basedir}/target-definition/common/repository/</url>
@@ -167,7 +162,6 @@
             <url>file:///${kura.basedir}/target-definition/mvn-deps/repository/</url>
         </repository>
     </repositories>
-
 
     <build>
         <extensions>

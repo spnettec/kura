@@ -908,7 +908,7 @@ public class FileServlet extends LocaleServlet {
             ungetServiceReferences(unmarshallerSRs);
         }
         if (result == null) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR);
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, "configuration");
         }
         return result;
     }

@@ -83,18 +83,17 @@ public class GraphBuilder {
             public OCD getDefinition() {
                 return null;
             }
+            
+            @Override
+            public OCD getLocalizedDefinition(String locale) {
+                return null;
+            }
 
             @Override
             public Map<String, Object> getConfigurationProperties() {
                 Map<String, Object> properties = new HashMap<>(configuration);
                 properties.put(ConfigurationAdmin.SERVICE_FACTORYPID, factoryPid);
                 return properties;
-            }
-
-            @Override
-            public OCD getLocalizedDefinition(String locale) {
-                // TODO Auto-generated method stub
-                return null;
             }
         };
 

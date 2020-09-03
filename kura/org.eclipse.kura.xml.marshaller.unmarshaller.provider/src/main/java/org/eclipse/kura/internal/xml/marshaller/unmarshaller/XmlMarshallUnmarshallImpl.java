@@ -60,7 +60,7 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
         try {
             marshal(object, buffer);
         } catch (Exception e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR);
+            throw new KuraException(KuraErrorCode.ENCODE_ERROR, "value");
         }
         return buffer.toString();
     }
@@ -209,11 +209,18 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
             }
             doc.getDocumentElement().normalize();
         } catch (SAXException | IOException | IllegalArgumentException se) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR, se);
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, "value", se);
         }
 
         // identify the correct parser that has to execute
-        if (clazz.equals(MetaData.class) || clazz.equals(Tmetadata.class)) {
+        if (clazz.equals(XmlComponentConfigurations.class)) {
+            try {
+                // Snapshot parser
+                return new XmlJavaComponentConfigurationsMapper().unmarshal(doc);
+            } catch (Exception e) {
+                throw new KuraException(KuraErrorCode.DECODER_ERROR, "value", e);
+            }
+        } else if (clazz.equals(MetaData.class) || clazz.equals(Tmetadata.class)) {
             // MetaData parser
             return new XmlJavaMetadataMapper().unmarshal(doc);
         } else {

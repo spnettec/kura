@@ -653,7 +653,7 @@ public class ComponentUtil {
             ungetServiceReferences(unmarshallerSRs);
         }
         if (result == null) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR);
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, "value");
         }
         return result;
     }
