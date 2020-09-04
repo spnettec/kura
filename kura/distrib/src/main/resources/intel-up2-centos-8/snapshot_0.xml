@@ -55,9 +55,6 @@
             <esf:property name="net.interface.enp2s0.eth.link.up" array="false" encrypted="false" type="Boolean">
                 <esf:value>false</esf:value>
             </esf:property>
-            <esf:property name="net.interface.enp3s0.config.ip4.status" array="false" encrypted="false" type="String">
-                <esf:value>netIPv4StatusEnabledWAN</esf:value>
-            </esf:property>
             <esf:property name="net.interface.lo.ip4.address" array="false" encrypted="false" type="String">
                 <esf:value>127.0.0.1</esf:value>
             </esf:property>
@@ -65,9 +62,6 @@
                 <esf:value>true</esf:value>
             </esf:property>
             <esf:property name="net.interface.lo.loopback" array="false" encrypted="false" type="Boolean">
-                <esf:value>true</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp3s0.eth.link.up" array="false" encrypted="false" type="Boolean">
                 <esf:value>true</esf:value>
             </esf:property>
             <esf:property name="net.interface.lo.firmware.version" array="false" encrypted="false" type="String">
