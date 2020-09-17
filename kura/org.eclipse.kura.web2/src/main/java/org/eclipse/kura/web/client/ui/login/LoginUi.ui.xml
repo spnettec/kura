@@ -41,6 +41,7 @@
                     <b:ListBox ui:field="languageBox" />
                 </b:InputGroup>
                 <b.html:Br/>
+                <b:Button type="PRIMARY" text="{msgs.reset}" b:id="reset-button" ui:field="loginResetButton"/>
 				<b:SubmitButton text="{msgs.login}" b:id="login-button" />
 			</b:ModalFooter>
 		
