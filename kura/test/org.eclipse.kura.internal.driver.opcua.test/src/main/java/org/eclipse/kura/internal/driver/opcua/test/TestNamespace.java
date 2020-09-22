@@ -180,8 +180,8 @@ public class TestNamespace implements Namespace {
 
             UaVariableNode node = new UaVariableNode.UaVariableNodeBuilder(this.server.getNodeMap())
                     .setNodeId(new NodeId(this.namespaceIndex, name))
-                    .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_WRITE)))
-                    .setUserAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_WRITE)))
+                    .setAccessLevel(AccessLevel.toValue(AccessLevel.READ_WRITE))
+                    .setUserAccessLevel(AccessLevel.toValue(AccessLevel.READ_WRITE))
                     .setBrowseName(new QualifiedName(this.namespaceIndex, name))
                     .setDisplayName(LocalizedText.english(name)).setDataType(typeId)
                     .setTypeDefinition(Identifiers.BaseDataVariableType).setValueRank(ValueRank.OneDimension.getValue())
@@ -209,8 +209,8 @@ public class TestNamespace implements Namespace {
 
             UaVariableNode node = new UaVariableNode.UaVariableNodeBuilder(this.server.getNodeMap())
                     .setNodeId(new NodeId(this.namespaceIndex, name))
-                    .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_WRITE)))
-                    .setUserAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_WRITE)))
+                    .setAccessLevel(AccessLevel.toValue(AccessLevel.READ_WRITE))
+                    .setUserAccessLevel(AccessLevel.toValue(AccessLevel.READ_WRITE))
                     .setBrowseName(new QualifiedName(this.namespaceIndex, name))
                     .setDisplayName(LocalizedText.english(name)).setDataType(typeId)
                     .setTypeDefinition(Identifiers.BaseDataVariableType).build();
