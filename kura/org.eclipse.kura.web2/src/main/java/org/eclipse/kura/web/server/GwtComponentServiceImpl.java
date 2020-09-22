@@ -797,15 +797,22 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
         try {
             final ServiceComponentRuntime scrService = context.getService(scrServiceRef);
 
-            final Set<String> referenceInterfaces = scrService.getComponentDescriptionDTOs().stream().map(component -> {
-                ReferenceDTO[] references = component.references;
-                for (ReferenceDTO reference : references) {
-                    if (targetRef.equals(reference.name)) {
-                        return reference.interfaceName;
-                    }
-                }
-                return null;
-            }).filter(Objects::nonNull).collect(Collectors.toSet());
+            final Set<String> referenceInterfaces = scrService.getComponentDescriptionDTOs().stream()
+                    .filter(componentDescription -> scrService.getComponentConfigurationDTOs(componentDescription)
+                            .stream().anyMatch(componentConfiguration -> {
+                                String kuraServicePid = (String) componentConfiguration.properties
+                                        .get(ConfigurationService.KURA_SERVICE_PID);
+                                return kuraServicePid != null && kuraServicePid.equals(pid);
+                            }))
+                    .map(componentDescription -> {
+                        ReferenceDTO[] references = componentDescription.references;
+                        for (ReferenceDTO reference : references) {
+                            if (targetRef.equals(reference.name)) {
+                                return reference.interfaceName;
+                            }
+                        }
+                        return null;
+                    }).filter(Objects::nonNull).collect(Collectors.toSet());
 
             referenceInterfaces.forEach(reference -> {
                 try {
@@ -815,15 +822,15 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                         return;
                     }
 
-                    for (ServiceReference<?> serviceReference : serviceReferences) {
+                    Arrays.stream(serviceReferences).forEach(serviceReference -> {
                         String servicePid = (String) serviceReference.getProperty(KURA_SERVICE_PID);
                         String serviceName = (String) serviceReference
                                 .getProperty(ConfigurationService.KURA_SERVICE_NAME);
                         result.put(servicePid, serviceName);
                         ServiceLocator.getInstance().ungetService(serviceReference);
-                    }
+                    });
                 } catch (InvalidSyntaxException e) {
-
+                    // Nothing to do
                 }
             });
 
