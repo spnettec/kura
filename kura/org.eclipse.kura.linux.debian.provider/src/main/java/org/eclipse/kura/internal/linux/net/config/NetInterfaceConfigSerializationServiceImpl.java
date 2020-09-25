@@ -20,7 +20,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -58,10 +57,13 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
     private static final String LOCALHOST = "127.0.0.1";
     private static final String CLASS_A_NETMASK = "255.0.0.0";
 
-    private static List<String> debianInterfaceComandOptions = new ArrayList<>(
-            Arrays.asList("pre-up", "up", "post-up", "pre-down", "down", "post-down"));
-    private static List<String> debianIgnoreInterfaceCommands = new ArrayList<>(
-            Arrays.asList("post-up route del default dev"));
+    private static final String REMOVE_ROUTE_COMMAND = "if ip route show dev ${IFACE} | grep default; then ip route del default dev ${IFACE}; fi";
+
+    private static List<String> debianInterfaceComandOptions = Arrays.asList("pre-up", "up", "post-up", "pre-down",
+            "down", "post-down");
+    private static List<String> debianIgnoreInterfaceCommands = Arrays.asList("post-up route del default dev", //
+            "post-up " + REMOVE_ROUTE_COMMAND //
+    );
 
     @Override
     public Properties read(String interfaceName, NetInterfaceType type) throws KuraException {
@@ -339,7 +341,9 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                 sb.append(args[i]);
                 sb.append(' ');
             }
-            if (sb.toString().trim().equals("route del default dev " + ifaceName)) {
+            final String trimmed = sb.toString().trim();
+
+            if (trimmed.equals("route del default dev " + ifaceName) || trimmed.equals(REMOVE_ROUTE_COMMAND)) {
                 kuraProps.setProperty(DEFROUTE_PROP_NAME, "no");
             }
         }
@@ -486,9 +490,7 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                 if (netConfigIP4.getStatus() == NetInterfaceStatus.netIPv4StatusEnabledLAN) {
                     // delete default route if configured as LAN
                     if (this.isDelDefaultRoute) {
-                        sb.append("\tpost-up route del default dev ");
-                        sb.append(interfaceName);
-                        sb.append("\n");
+                        sb.append("\t").append(REMOVE_ROUTE_COMMAND).append("\n");
                     }
                 }
             } else {
