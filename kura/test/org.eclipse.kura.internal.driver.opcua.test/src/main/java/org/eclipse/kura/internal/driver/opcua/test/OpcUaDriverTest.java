@@ -14,12 +14,15 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -41,12 +44,15 @@ import org.eclipse.kura.type.TypedValues;
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfigBuilder;
+import org.eclipse.milo.opcua.sdk.server.identity.UsernameIdentityValidator;
 import org.eclipse.milo.opcua.stack.core.UaException;
-import org.eclipse.milo.opcua.stack.core.application.CertificateManager;
-import org.eclipse.milo.opcua.stack.core.application.CertificateValidator;
-import org.eclipse.milo.opcua.stack.core.application.DefaultCertificateManager;
-import org.eclipse.milo.opcua.stack.core.application.DefaultCertificateValidator;
+import org.eclipse.milo.opcua.stack.core.security.CertificateManager;
+import org.eclipse.milo.opcua.stack.core.security.DefaultCertificateManager;
+import org.eclipse.milo.opcua.stack.core.security.DefaultTrustListManager;
+import org.eclipse.milo.opcua.stack.core.transport.TransportProfile;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
+import org.eclipse.milo.opcua.stack.server.EndpointConfiguration;
+import org.eclipse.milo.opcua.stack.server.security.DefaultServerCertificateValidator;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -64,7 +70,7 @@ public class OpcUaDriverTest {
     private static OpcUaServer server;
 
     @BeforeClass
-    public static void setup() throws KuraException, UaException {
+    public static void setup() throws KuraException, UaException, IOException {
         startServer();
 
         try {
@@ -76,20 +82,32 @@ public class OpcUaDriverTest {
         }
     }
 
-    private static void startServer() throws UaException {
+    private static void startServer() throws UaException, IOException {
         CertificateManager certificateManager = new DefaultCertificateManager();
-        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("/tmp"));
-        List<String> bindAddresses = new ArrayList<>();
-        bindAddresses.add("localhost");
+        DefaultTrustListManager trustListManager = new DefaultTrustListManager(new File("/tmp"));
+        DefaultServerCertificateValidator certificateValidator = new DefaultServerCertificateValidator(
+                trustListManager);
         List<String> endpointAddresses = new ArrayList<>();
         endpointAddresses.add("localhost");
-        OpcUaServerConfig config = new OpcUaServerConfigBuilder().setBindPort(12685).setApplicationUri("opcsvr")
-                .setBindAddresses(bindAddresses).setEndpointAddresses(endpointAddresses).setServerName("opcsvr")
-                .setApplicationName(LocalizedText.english("opcsvr")).setCertificateManager(certificateManager)
-                .setCertificateValidator(certificateValidator)
-                .setUserTokenPolicies(Arrays.asList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS)).build();
+        EndpointConfiguration endpointConfiguration = EndpointConfiguration.newBuilder().setBindPort(12685)
+                .setBindAddress("localhost").setTransportProfile(TransportProfile.TCP_UASC_UABINARY).build();
+        Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
+        UsernameIdentityValidator identityValidator = new UsernameIdentityValidator(true, authChallenge -> {
+            String username = authChallenge.getUsername();
+            String password = authChallenge.getPassword();
+
+            boolean userOk = "user".equals(username) && "password1".equals(password);
+            boolean adminOk = "admin".equals(username) && "password2".equals(password);
+
+            return userOk || adminOk;
+        });
+        endpointConfigurations.add(endpointConfiguration);
+        OpcUaServerConfig config = new OpcUaServerConfigBuilder().setApplicationUri("opcsvr")
+                .setEndpoints(endpointConfigurations).setApplicationName(LocalizedText.english("opcsvr"))
+                .setCertificateManager(certificateManager).setIdentityValidator(identityValidator)
+                .setCertificateValidator(certificateValidator).setProductUri("urn:eclipse:milo:hello-world")
+                .setApplicationUri("urn:eclipse:milo:hello-world").build();
         server = new OpcUaServer(config);
-        server.getNamespaceManager().registerAndAdd(TestNamespace.NAMESPACE_URI, idx -> new TestNamespace(server, idx));
         server.startup();
     }
 
