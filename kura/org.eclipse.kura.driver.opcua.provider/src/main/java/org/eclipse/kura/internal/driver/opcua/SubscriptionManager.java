@@ -225,7 +225,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
         protected CompletableFuture<Void> createMonitoredItems(final UaSubscription subscription,
                 final List<MonitoredItemHandler> handlers) {
             final List<MonitoredItemCreateRequest> requests = handlers.stream()
-                    .map(handler -> handler.getMonitoredItemCreateRequest(subscription.getSubscriptionId()))
+                    .map(handler -> handler.getMonitoredItemCreateRequest(this.subscription.nextClientHandle()))
                     .collect(Collectors.toList());
 
             logger.debug("Creating {} monitored items", handlers.size());
