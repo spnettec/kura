@@ -723,7 +723,17 @@
                   <id>org.apache.activemq:artemis-hqclient-protocol:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>   
+              </artifact>
+              <artifact>
+                  <id>org.apache.activemq:artemis-core-client:${org.apache.activemq.artemis.upstream.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>  
+              <artifact>
+                  <id>org.apache.activemq:artemis-commons:${org.apache.activemq.artemis.upstream.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
               <artifact>
                   <id>io.netty:netty-buffer:${io.netty.version}</id>
                   <source>true</source>
