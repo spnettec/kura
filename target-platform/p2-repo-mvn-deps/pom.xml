@@ -703,12 +703,7 @@
                   <id>org.apache.activemq:artemis-amqp-protocol:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
-              <artifact>
-                  <id>org.apache.activemq:artemis-hornetq-protocol:${org.apache.activemq.artemis.upstream.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>   
+              </artifact> 
               <artifact>
                   <id>org.apache.activemq:artemis-stomp-protocol:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>
@@ -720,20 +715,81 @@
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.apache.activemq:artemis-hqclient-protocol:${org.apache.activemq.artemis.upstream.version}</id>
+                  <id>org.apache.activemq:artemis-server-osgi:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.activemq:artemis-core-client:${org.apache.activemq.artemis.upstream.version}</id>
+                  <id>org.apache.commons:commons-configuration2:${commons-configuration2-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>org.apache.commons.beanutils;resolution:=optional,org.
+                         apache.commons.codec.binary;resolution:=optional,org.apache.commons.j
+                         xpath;resolution:=optional,org.apache.commons.jxpath.ri;resolution:=o
+                         ptional,org.apache.commons.jxpath.ri.compiler;resolution:=optional,or
+                         g.apache.commons.jxpath.ri.model;resolution:=optional,org.apache.xml.
+                         resolver;resolution:=optional,org.apache.xml.resolver.helpers;resolut
+                         ion:=optional,org.apache.xml.resolver.readers;resolution:=optional,or
+                         g.apache.xml.resolver.tools;resolution:=optional,javax.servlet;resolu
+                         tion:=optional,org.apache.commons.jexl2;resolution:=optional,org.apac
+                         he.commons.vfs2;resolution:=optional,org.apache.commons.vfs2.provider
+                         ;resolution:=optional,org.springframework.beans.factory;resolution:=o
+                         ptional,org.springframework.core.env;resolution:=optional,org.springf
+                         ramework.core.io;resolution:=optional,org.springframework.util;resolu
+                         tion:=optional,com.fasterxml.jackson.databind;resolution:=optional,co
+                         m.fasterxml.jackson.databind.type;resolution:=optional,org.yaml.snake
+                         yaml;resolution:=optional,org.yaml.snakeyaml.constructor;resolution:=
+                         optional,org.yaml.snakeyaml.representer;resolution:=optional,javax.ma
+                         il.internet;resolution:=optional,javax.naming,javax.sql;resolution:=o
+                         ptional,javax.xml.parsers;resolution:=optional,javax.xml.transform;re
+                         solution:=optional,javax.xml.transform.dom;resolution:=optional,javax
+                         .xml.transform.stream;resolution:=optional,org.apache.commons.lang3,o
+                         rg.apache.commons.lang3.builder,org.apache.commons.lang3.concurrent,o
+                         rg.apache.commons.lang3.mutable,org.apache.commons.logging,org.apache
+                         .commons.logging.impl,org.apache.commons.text,org.apache.commons.text
+                         .lookup,org.apache.commons.text.translate,org.w3c.dom,org.xml.sax,org
+                         .xml.sax.helpers
+                      </Import-Package>
+                      <Export-Package>org.apache.commons.configuration2;version="2.7",org.ap
+                         ache.commons.configuration2.beanutils;version="2.7",org.apache.common
+                         s.configuration2.builder;version="2.7",org.apache.commons.configurati
+                         on2.builder.combined;version="2.7",org.apache.commons.configuration2.
+                         builder.fluent;version="2.7",org.apache.commons.configuration2.conver
+                         t;version="2.7",org.apache.commons.configuration2.event;version="2.7"
+                         ,org.apache.commons.configuration2.ex;version="2.7",org.apache.common
+                         s.configuration2.interpol;version="2.7",org.apache.commons.configurat
+                         ion2.io;version="2.7",org.apache.commons.configuration2.plist;version
+                         ="2.7",org.apache.commons.configuration2.reloading;version="2.7",org.
+                         apache.commons.configuration2.resolver;version="2.7",org.apache.commo
+                         ns.configuration2.spring;version="2.7",org.apache.commons.configurati
+                         on2.sync;version="2.7",org.apache.commons.configuration2.tree;version
+                         ="2.7",org.apache.commons.configuration2.tree.xpath;version="2.7",org
+                         .apache.commons.configuration2.web;version="2.7"
+                         </Export-Package>
+                  </instructions>
+              </artifact>
               <artifact>
-                  <id>org.apache.activemq:artemis-commons:${org.apache.activemq.artemis.upstream.version}</id>
+                  <id>org.apache.commons:commons-text:${commons-text-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact> 
+              </artifact>
+              <artifact>
+                  <id>org.jctools:jctools-core:${jctools-core.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.jgroups:jgroups:${jgroups.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.johnzon:johnzon-core:${johnzon-core.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
               <artifact>
                   <id>io.netty:netty-buffer:${io.netty.version}</id>
                   <source>true</source>

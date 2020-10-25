@@ -191,11 +191,13 @@
                                     <artifactId>com.eclipsesource.jaxrs.provider.security</artifactId>
                                     <version>${com.eclipsesource.jaxrs.provider.security.version}</version>
                                 </artifactItem>
+                                <!-- 
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.apache.activemq.artemis</artifactId>
                                     <version>${org.apache.activemq.artemis.version}</version>
                                 </artifactItem>
+                                -->
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.jetty.customizer</artifactId>
