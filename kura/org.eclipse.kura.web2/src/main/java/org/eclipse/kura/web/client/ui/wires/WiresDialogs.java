@@ -127,9 +127,7 @@ public class WiresDialogs extends Composite {
 
     public void setDriverFactoryPids(Map<String, String> driverFactoryPidNames) {
         this.newDriverFactory.clear();
-        driverFactoryPidNames.entrySet().stream().forEach(entry -> {
-            this.newDriverFactory.addItem(entry.getValue(), entry.getKey());
-        });
+        driverFactoryPidNames.forEach((entryKey, entryValue) -> this.newDriverFactory.addItem(entryValue, entryKey));
 
         this.newDriverFactory.setEnabled(!driverFactoryPidNames.isEmpty());
         this.newDriverOk.setEnabled(!driverFactoryPidNames.isEmpty());
@@ -137,9 +135,7 @@ public class WiresDialogs extends Composite {
 
     public void setAssetPidNames(Map<String, String> assetPidNames) {
         this.assetInstance.clear();
-        assetPidNames.entrySet().stream().forEach(entry -> {
-            this.assetInstance.addItem(entry.getValue(), entry.getKey());
-        });
+        assetPidNames.forEach((entryKey, entryValue) -> this.assetInstance.addItem(entryValue, entryKey));
 
         this.buttonSelectAssetOk.setEnabled(!assetPidNames.isEmpty());
     }

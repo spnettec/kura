@@ -256,9 +256,9 @@ public abstract class AbstractServicesUi extends Composite {
             KuraTextBox kuraTextBox = (KuraTextBox) textBox;
             kuraTextBox.setData(formattedValue);
             kuraTextBox.setText(MSGS.noTargetsAvailable());
-            RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
-                    context.callback(token -> AbstractServicesUi.this.gwtComponentService.getPidNamesFromTarget(token,
-                            this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
+            RequestQueue.submit(context -> this.gwtXSRFService
+                    .generateSecurityToken(context.callback(token -> AbstractServicesUi.this.gwtComponentService
+                            .getPidNamesFromTarget(token, this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
                                 dropDownHeader.setText(MSGS.noTargetsAvailable());
                                 if (!data.isEmpty()) {
                                     final String targetData;
@@ -267,9 +267,9 @@ public abstract class AbstractServicesUi extends Composite {
                                     } else {
                                         targetData = "";
                                     }
-                                    data.entrySet().forEach(targetEntry -> {
-                                        KuraAnchorListItem listItem = createListItem(kuraTextBox, targetEntry.getKey(),
-                                                targetEntry.getValue(), targetData);
+                                    data.forEach((targetEntryKey, targetEntryName) -> {
+                                        KuraAnchorListItem listItem = createListItem(kuraTextBox, targetEntryKey,
+                                                targetEntryName, targetData);
                                         dropDownMenu.add(listItem);
                                     });
                                 }

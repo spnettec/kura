@@ -22,7 +22,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.eclipse.kura.wire.WireComponent;
@@ -53,6 +60,8 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
 
     private final String servicePid;
 
+    private final ExecutorService receiverExecutor;
+
     private final Map<Wire, ReceiverPortImpl> receiverPortByWire;
 
     WireSupportImpl(final WireComponent wireComponent, final String servicePid, final String kuraServicePid,
@@ -60,7 +69,8 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         requireNonNull(wireComponent, "Wire component cannot be null");
         requireNonNull(servicePid, "service pid cannot be null");
         requireNonNull(kuraServicePid, "kura service pid cannot be null");
-
+        receiverExecutor = new ThreadPoolExecutor(2, 10, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
         this.servicePid = servicePid;
         this.wireComponent = wireComponent;
 
@@ -76,11 +86,11 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         this.receiverPortByWire = new HashMap<>();
 
         for (int i = 0; i < inputPortCount; i++) {
-            this.receiverPorts.add(new ReceiverPortImpl());
+            receiverPorts.add(new ReceiverPortImpl());
         }
 
         for (int i = 0; i < outputPortCount; i++) {
-            this.emitterPorts.add(new EmitterPortImpl());
+            emitterPorts.add(new EmitterPortImpl());
         }
     }
 
@@ -119,9 +129,23 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     public synchronized void emit(final List<WireRecord> wireRecords) {
         requireNonNull(wireRecords, "Wire Records cannot be null");
         final WireEnvelope envelope = createWireEnvelope(wireRecords);
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (EmitterPort emitterPort : this.emitterPorts) {
-            emitterPort.emit(envelope);
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                try {
+                    emitterPort.emit(envelope);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            futures.add(future);
         }
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            logger.error("emit error", e);
+        }
+
     }
 
     /** {@inheritDoc} */
@@ -157,11 +181,13 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
             return;
         }
         final WireEnvelope envelope = (WireEnvelope) value;
-        if (this.wireComponent instanceof WireReceiver) {
-            ((WireReceiver) this.wireComponent).onWireReceive(envelope);
+        if (wireComponent instanceof WireReceiver) {
+            receiverExecutor.execute(() -> ((WireReceiver) WireSupportImpl.this.wireComponent).onWireReceive(envelope));
         } else {
-            final ReceiverPortImpl receiverPort = this.receiverPortByWire.get(wire);
-            receiverPort.consumer.accept(envelope);
+            receiverExecutor.execute(() -> {
+                final ReceiverPortImpl receiverPort = WireSupportImpl.this.receiverPortByWire.get(wire);
+                receiverPort.consumer.accept(envelope);
+            });
         }
     }
 
@@ -181,7 +207,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
 
         @Override
         public List<Wire> listConnectedWires() {
-            return Collections.unmodifiableList(this.connectedWires);
+            return Collections.unmodifiableList(connectedWires);
         }
     }
 
@@ -210,6 +236,31 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
 
     @Override
     public WireEnvelope createWireEnvelope(List<WireRecord> records) {
-        return new WireEnvelope(this.servicePid, records);
+        return new WireEnvelope(servicePid, records);
+    }
+
+    static class WireDefaultThreadFactory implements ThreadFactory {
+
+        private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String namePrefix;
+
+        WireDefaultThreadFactory(String name) {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "WirePool-" + POOL_NUMBER.getAndIncrement() + "-" + name + "-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if (t.isDaemon()) {
+                t.setDaemon(false);
+            }
+            if (t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            return t;
+        }
     }
 }

@@ -40,7 +40,7 @@ public final class TimerJobDataMap extends JobDataMap {
      * Put wire support.
      *
      * @param wireSupport
-     *                        the wire support
+     *            the wire support
      */
     public void putWireSupport(final WireSupport wireSupport) {
         super.put(WIRE_SUPPORT, wireSupport);

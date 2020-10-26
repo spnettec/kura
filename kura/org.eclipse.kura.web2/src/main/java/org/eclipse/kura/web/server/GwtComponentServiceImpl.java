@@ -802,7 +802,11 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                             .stream().anyMatch(componentConfiguration -> {
                                 String kuraServicePid = (String) componentConfiguration.properties
                                         .get(ConfigurationService.KURA_SERVICE_PID);
-                                return kuraServicePid != null && kuraServicePid.equals(pid);
+                                if (kuraServicePid == null)
+                                    return false;
+                                if (pid == null || pid.equals(""))
+                                    return true;
+                                return kuraServicePid.equals(pid);
                             }))
                     .map(componentDescription -> {
                         ReferenceDTO[] references = componentDescription.references;

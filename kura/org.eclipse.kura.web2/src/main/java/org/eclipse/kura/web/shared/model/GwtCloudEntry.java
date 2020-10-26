@@ -89,33 +89,28 @@ public class GwtCloudEntry extends KuraBaseModel implements Serializable {
         final String pid = getPid();
         final int prime = 31;
         int result = 1;
-        result = prime * result + (pid == null ? 0 : pid.hashCode());
+        result = prime * result + ((pid == null) ? 0 : pid.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null) {
+        if (obj == null)
             return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (getClass() != obj.getClass())
             return false;
-        }
         GwtCloudEntry other = (GwtCloudEntry) obj;
 
         final String pid = getPid();
         final String otherPid = other.getPid();
 
         if (pid == null) {
-            if (otherPid != null) {
+            if (otherPid != null)
                 return false;
-            }
-        } else if (!pid.equals(otherPid)) {
+        } else if (!pid.equals(otherPid))
             return false;
-        }
         return true;
     }
 

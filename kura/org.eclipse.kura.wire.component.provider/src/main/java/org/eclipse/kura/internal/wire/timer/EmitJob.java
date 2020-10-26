@@ -29,9 +29,9 @@ public final class EmitJob implements Job {
      * Emits a {@link org.eclipse.kura.wire.WireRecord} every specified interval.
      *
      * @param context
-     *                    the Job Execution context
+     *            the Job Execution context
      * @throws JobExecutionException
-     *                                   the job execution exception
+     *             the job execution exception
      */
     @Override
     public void execute(final JobExecutionContext context) throws JobExecutionException {

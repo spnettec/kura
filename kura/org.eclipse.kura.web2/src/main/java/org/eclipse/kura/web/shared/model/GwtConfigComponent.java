@@ -20,7 +20,7 @@ public class GwtConfigComponent extends KuraBaseModel implements Serializable {
     private static final long serialVersionUID = -6388356998309026758L;
 
     private List<GwtConfigParameter> m_parameters;
-
+    
     public GwtConfigComponent() {
         this.m_parameters = new ArrayList<>();
     }

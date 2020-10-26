@@ -48,7 +48,7 @@ final class TimerOptions {
      * Instantiates a new Timer options.
      *
      * @param properties
-     *                       the provided properties
+     *            the provided properties
      */
     TimerOptions(final Map<String, Object> properties) {
         requireNonNull(properties, "Properties cannot be null");
