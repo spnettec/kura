@@ -12,12 +12,12 @@ package org.eclipse.kura.internal.driver.opcua;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -30,7 +30,7 @@ import org.eclipse.kura.internal.driver.opcua.request.SingleNodeListenParams;
 
 public class ListenerRegistrationRegistry {
 
-    private final Map<ListenParams, Collection<ListenRequest>> registeredListeners = new HashMap<>();
+    private final Map<ListenParams, Collection<ListenRequest>> registeredListeners = new ConcurrentHashMap<>();
     private final List<Listener> itemListeners = new CopyOnWriteArrayList<>();
     private long state;
 

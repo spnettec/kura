@@ -16,12 +16,12 @@ import static org.eclipse.kura.internal.driver.opcua.Utils.fillValue;
 import static org.eclipse.kura.internal.driver.opcua.Utils.splitInMultipleRequests;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -121,7 +121,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
 
     private class Subscribed implements State {
 
-        private final Map<ListenParams, MonitoredItemHandler> monitoredItemHandlers = new HashMap<>();
+        private final Map<ListenParams, MonitoredItemHandler> monitoredItemHandlers = new ConcurrentHashMap<>();
         final UaSubscription subscription;
 
         Subscribed(final UaSubscription subscription) {

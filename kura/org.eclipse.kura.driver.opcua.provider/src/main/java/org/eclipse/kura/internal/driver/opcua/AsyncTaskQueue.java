@@ -10,34 +10,33 @@
 
 package org.eclipse.kura.internal.driver.opcua;
 
-import java.util.ArrayDeque;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class AsyncTaskQueue {
 
-    private final ArrayDeque<Supplier<CompletableFuture<Void>>> pending = new ArrayDeque<>();
+    private final LinkedBlockingDeque<Supplier<CompletableFuture<Void>>> pending = new LinkedBlockingDeque<>();
     private final AtomicBoolean enabled = new AtomicBoolean(true);
 
     private CompletableFuture<Void> inProgress = CompletableFuture.completedFuture(null);
     private Consumer<Throwable> failureHandler = ex -> {
     };
 
-    private synchronized void runNext() {
+    private void runNext() {
         if (!this.pending.isEmpty()) {
             this.inProgress = this.pending.pop().get();
         }
     }
 
     private CompletableFuture<Void> addCompletionHandler(CompletableFuture<Void> task) {
-        return task.whenComplete((ok, err) -> {
+        return task.whenCompleteAsync((ok, err) -> {
             if (err != null && this.enabled.get()) {
                 this.failureHandler.accept(err);
             }
-            runNext();
-        });
+        }).thenAcceptAsync(v -> runNext());
     }
 
     public synchronized void push(final Supplier<CompletableFuture<Void>> next) {
