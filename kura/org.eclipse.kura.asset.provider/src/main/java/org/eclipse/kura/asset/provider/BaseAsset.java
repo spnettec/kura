@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
@@ -320,7 +321,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final BaseAssetConfiguration conf = this.config;
 
-        final List<ChannelRecord> channelRecords = unwrap(this.executor.runIO(() -> {
+        final List<ChannelRecord> channelRecords = unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
             final List<ChannelRecord> records;
             final PreparedRead preparedRead = state.getPreparedRead();
             if (preparedRead != null) {
@@ -385,7 +386,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.executor.runIO(() -> {
+            unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
                 state.getDriver().read(validRecords);
                 return null;
             }));
@@ -513,7 +514,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.executor.runIO(() -> {
+            unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
                 state.getDriver().write(validRecords);
                 return null;
             }));
@@ -521,12 +522,16 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         logger.debug("Writing to channels...Done");
     }
 
-    private static <T> T unwrap(final CompletableFuture<T> future) throws KuraException {
+    private static <T> T unwrap(int timeOut, final CompletableFuture<T> future) throws KuraException {
         try {
-            return future.get();
+            return future.get(timeOut, TimeUnit.SECONDS);
         } catch (final ExecutionException e) {
             final Throwable cause = e.getCause();
             throw new KuraException(KuraErrorCode.CONNECTION_FAILED, cause, cause.getMessage());
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, new RuntimeException("runIO TimeOut"),
+                    "Read write TimeOut");
         } catch (final Exception e) {
             throw new KuraException(KuraErrorCode.CONNECTION_FAILED, e, e.getMessage());
         }

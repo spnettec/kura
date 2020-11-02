@@ -168,7 +168,6 @@ public class LoginUi extends Composite implements Context {
     @Override
     protected void onAttach() {
         super.onAttach();
-        this.usernameInput.setFocus(true);
 
         this.loginForm.addSubmitHandler(e -> {
             e.cancel();
@@ -189,6 +188,7 @@ public class LoginUi extends Composite implements Context {
         });
 
         this.loginDialog.show();
+        this.usernameInput.setFocus(true);
         initLoginBannerModal();
     }
     

@@ -18,6 +18,14 @@
             cardinality="0"
             required="false"
             description="%assetdescdesc"/>
+        <AD id="request.timeout"
+            name="%requestTimeout"
+            type="Integer"
+            cardinality="0"
+            required="true"
+            default="10"
+            description="%requestTimeoutDesc">
+        </AD>
         <AD id="driver.pid"
             name="%driverpidname"
             type="String"

@@ -72,6 +72,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
     private CryptoService cryptoService;
     private OpcUaOptions options;
     private long connectAttempt = 0;
+    private int autoConnectAttempt = 0;
 
     protected ScheduledExecutorService connectionMonitorExecutor;
     private ScheduledFuture<?> connectionMonitorFuture;
@@ -95,11 +96,22 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         }
     }
 
-    protected synchronized CompletableFuture<ConnectionManager> connectAsync() {
+    protected CompletableFuture<ConnectionManager> connectAsync() {
         if (this.connectionManager.isPresent()) {
             return CompletableFuture.completedFuture(this.connectionManager.get());
         }
-        if (this.connectTask.isPresent() && !this.connectTask.get().isDone()) {
+        return connectAsyncInternal();
+    }
+
+    private synchronized CompletableFuture<ConnectionManager> connectAsyncInternal() {
+        if (this.connectionManager.isPresent()) {
+            return CompletableFuture.completedFuture(this.connectionManager.get());
+        }
+
+        if (this.connectTask.isPresent()) {
+            if (this.connectTask.get().isDone()) {
+                return CompletableFuture.completedFuture(this.connectionManager.get());
+            }
             return this.connectTask.get();
         }
         this.connectAttempt++;
@@ -136,7 +148,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         connectSync();
     }
 
-    protected synchronized void deactivate() {
+    protected void deactivate() {
         logger.info("Deactivating OPC-UA Driver...");
         try {
             disconnect();
@@ -225,7 +237,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
      * @param properties
      *                       the properties
      */
-    public synchronized void updated(final Map<String, Object> properties) {
+    public void updated(final Map<String, Object> properties) {
         logger.info("Updating OPC-UA Driver...");
 
         extractProperties(properties);
@@ -244,7 +256,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         logger.info("Updating OPC-UA Driver... Done");
     }
 
-    private synchronized void onFailure(final ConnectionManager manager, final Throwable ex) {
+    private void onFailure(final ConnectionManager manager, final Throwable ex) {
         if (this.connectionManager.isPresent() && this.connectionManager.get() == manager) {
             logger.debug("Unrecoverable failure, forcing disconnect", ex);
             try {
@@ -279,14 +291,22 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
                 try {
                     if (!OpcUaDriver.this.connectionManager.isPresent()) {
                         connectAsync();
+                        OpcUaDriver.this.autoConnectAttempt++;
                     }
                 } catch (Exception e) {
                     logger.warn("Connect failed", e);
                 } finally {
                     Thread.currentThread().setName(originalName);
                     if (OpcUaDriver.this.connectionManager.isPresent()) {
+                        OpcUaDriver.this.autoConnectAttempt = 0;
                         logger.info("Connected. Reconnect task will be terminated.");
                         throw new RuntimeException("OpcUaDriver Connected. Reconnect task will be terminated.");
+                    } else {
+                        if (OpcUaDriver.this.autoConnectAttempt > OpcUaDriver.this.options.getMaxConnectRetry()) {
+                            logger.error("Auto connect retry {} times. Reconnect task will be terminated.",
+                                    OpcUaDriver.this.autoConnectAttempt);
+                            throw new RuntimeException("Auto connect retry. Reconnect task will be terminated.");
+                        }
                     }
                 }
 

@@ -33,15 +33,9 @@ import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaMonitoredItem;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscription;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscriptionManager.SubscriptionListener;
-import org.eclipse.milo.opcua.sdk.client.model.types.objects.BaseEventType;
 import org.eclipse.milo.opcua.sdk.client.subscriptions.OpcUaSubscriptionManager;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.NamespaceTable;
-import org.eclipse.milo.opcua.stack.core.serialization.EncodingLimits;
-import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
-import org.eclipse.milo.opcua.stack.core.types.DataTypeManager;
-import org.eclipse.milo.opcua.stack.core.types.OpcUaDataTypeManager;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ExtensionObject;
@@ -64,33 +58,19 @@ import org.slf4j.LoggerFactory;
 public class SubscriptionManager implements SubscriptionListener, ListenerRegistrationRegistry.Listener {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionManager.class);
-    private static final ExtensionObject DEFAULT_EVENT_FILTER = ExtensionObject.encode(new SerializationContext() {
-
-        private final NamespaceTable namespaceTable = new NamespaceTable();
-
-        @Override
-        public EncodingLimits getEncodingLimits() {
-            return EncodingLimits.DEFAULT;
-        }
-
-        @Override
-        public NamespaceTable getNamespaceTable() {
-            return this.namespaceTable;
-        }
-
-        @Override
-        public DataTypeManager getDataTypeManager() {
-            return OpcUaDataTypeManager.getInstance();
-        }
-
-    }, new EventFilter(new SimpleAttributeOperand[] {
-            new SimpleAttributeOperand(Identifiers.BaseEventType,
-                    new QualifiedName[] { new QualifiedName(0, BaseEventType.TIME.getBrowseName()) },
-                    AttributeId.Value.uid(), null),
-            new SimpleAttributeOperand(Identifiers.BaseEventType,
-                    new QualifiedName[] { new QualifiedName(0, BaseEventType.MESSAGE.getBrowseName()) },
-                    AttributeId.Value.uid(), null) },
-            new ContentFilter(null)));
+    private static final EventFilter DEFAULT_EVENT_FILTER = new EventFilter(
+            new SimpleAttributeOperand[] {
+                    new SimpleAttributeOperand(Identifiers.BaseEventType,
+                            new QualifiedName[] { new QualifiedName(0, "EventId") }, AttributeId.Value.uid(), null),
+                    new SimpleAttributeOperand(Identifiers.BaseEventType,
+                            new QualifiedName[] { new QualifiedName(0, "EventType") }, AttributeId.Value.uid(), null),
+                    new SimpleAttributeOperand(Identifiers.BaseEventType,
+                            new QualifiedName[] { new QualifiedName(0, "Severity") }, AttributeId.Value.uid(), null),
+                    new SimpleAttributeOperand(Identifiers.BaseEventType,
+                            new QualifiedName[] { new QualifiedName(0, "Time") }, AttributeId.Value.uid(), null),
+                    new SimpleAttributeOperand(Identifiers.BaseEventType,
+                            new QualifiedName[] { new QualifiedName(0, "Message") }, AttributeId.Value.uid(), null) },
+            new ContentFilter(null));
 
     private final OpcUaClient client;
     private final OpcUaOptions options;
@@ -321,11 +301,11 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
         }
     }
 
-    private static class MonitoredItemHandler {
+    private class MonitoredItemHandler {
 
-        private static final Consumer<Variant[]> NOP_VARIANT_CONSUMER = v -> {
+        private final Consumer<Variant[]> nopVariantConsumer = v -> {
         };
-        private static final Consumer<DataValue> NOP_VALUE_CONSUMER = v -> {
+        private final Consumer<DataValue> nopValueConsumer = v -> {
         };
 
         Optional<UaMonitoredItem> monitoredItem = Optional.empty();
@@ -340,7 +320,11 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             final ReadValueId readValueId = params.getReadValueId();
             final boolean isEventNotifier = AttributeId.EventNotifier.uid().equals(readValueId.getAttributeId());
             final MonitoringParameters monitoringParams = new MonitoringParameters(requestHandle,
-                    isEventNotifier ? 0.0 : params.getSamplingInterval(), isEventNotifier ? DEFAULT_EVENT_FILTER : null,
+                    isEventNotifier ? 0.0 : params.getSamplingInterval(),
+                    isEventNotifier
+                            ? ExtensionObject.encode(SubscriptionManager.this.client.getSerializationContext(),
+                                    DEFAULT_EVENT_FILTER)
+                            : null,
                     UInteger.valueOf(params.getQueueSize()), params.getDiscardOldest());
             return new MonitoredItemCreateRequest(params.getReadValueId(), MonitoringMode.Reporting, monitoringParams);
         }
@@ -391,8 +375,8 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
 
         public void close() {
             this.monitoredItem.ifPresent(item -> {
-                item.setValueConsumer(NOP_VALUE_CONSUMER);
-                item.setEventConsumer(NOP_VARIANT_CONSUMER);
+                item.setValueConsumer(nopValueConsumer);
+                item.setEventConsumer(nopVariantConsumer);
             });
             this.monitoredItem = Optional.empty();
         }

@@ -139,6 +139,8 @@ final class OpcUaOptions {
 
     private static final String MAX_REQUEST_ITEMS = "max.request.items";
 
+    private static final String MAX_CONNECT_RETRY = "max.connect.retry";
+
     private static final String FORCE_ENDPOINT_URL = "force.endpoint.url";
 
     private static final String SUBTREE_SUBSCRIPTION_CHANNEL_NAME_FORMAT = "subtree.subscription.name.format";
@@ -428,6 +430,14 @@ final class OpcUaOptions {
             return (Integer) maxRequestItems;
         }
         return 10;
+    }
+
+    int getMaxConnectRetry() {
+        final Object maxConnectRetry = this.properties.get(MAX_CONNECT_RETRY);
+        if (maxConnectRetry instanceof Integer) {
+            return (Integer) maxConnectRetry;
+        }
+        return 50;
     }
 
     boolean shouldForceEndpointUrl() {

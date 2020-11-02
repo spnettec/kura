@@ -80,7 +80,7 @@ class TreeVisit {
 
             this.visitor.accept(path, ref);
 
-            final Optional<NodeId> nodeId = ref.getNodeId().local(null);
+            final Optional<NodeId> nodeId = ref.getNodeId().toNodeId(null);
 
             if (nodeId.isPresent() && FOLDER_TYPE_EXPANDED_NODEID.equals(ref.getTypeDefinition())) {
                 childrenVisits.add(visitSubtree(nodeId.get(), path));

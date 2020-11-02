@@ -60,10 +60,16 @@ public final class BaseAssetConfiguration {
     private AssetConfiguration assetConfiguration;
     private final boolean hasReadChannels;
     private final String kuraServicePid;
+    private final int requestTimeOut;
 
     public BaseAssetConfiguration(final Tocd baseOcd, final ComponentContext context,
             final Map<String, Object> properties) {
         this.properties = fillOcdDefaults(properties, baseOcd, context);
+        if (this.properties.get("request.timeout") != null) {
+            this.requestTimeOut = 10;
+        } else {
+            this.requestTimeOut = Integer.valueOf(this.getProperties().get("request.timeout").toString());
+        }
         this.assetConfiguration = new AssetConfiguration(getDescription(properties), getDriverPid(properties),
                 retreiveChannelList(properties));
         this.hasReadChannels = !getAllReadRecords().isEmpty();
@@ -80,6 +86,10 @@ public final class BaseAssetConfiguration {
 
     public AssetConfiguration getAssetConfiguration() {
         return this.assetConfiguration;
+    }
+
+    public int getRequestTimeOut() {
+        return requestTimeOut;
     }
 
     public boolean hasReadChannels() {

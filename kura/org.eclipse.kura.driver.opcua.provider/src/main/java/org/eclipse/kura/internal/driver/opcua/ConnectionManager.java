@@ -294,7 +294,7 @@ public class ConnectionManager {
                     .setSessionTimeout(UInteger.valueOf(this.options.getSessionTimeout()))
                     .setIdentityProvider(this.options.getIdentityProvider())
                     .setKeyPair(this.certificateManager.getClientKeyPair())
-                    .setCertificate(this.certificateManager.getClientCertificate()).build();
+                    .setCertificate(this.certificateManager.getClientCertificate());
 
             OpcUaClient cl = null;
             try {

@@ -185,6 +185,14 @@
 			required="true" 
 			default="200"
 			description="%maxReqItemsDesc" />
+            
+        <AD id="max.connect.retry" 
+            name="%maxConretry"
+            type="Integer" 
+            cardinality="0" 
+            required="true" 
+            default="10"
+            description="%maxConretryDesc" />
 			
 		<AD id="subtree.subscription.name.format" 
 			name="%subtreeNameFormat"
