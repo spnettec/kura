@@ -20,25 +20,15 @@ public class AsyncTaskQueue {
 
     private final ArrayDeque<Supplier<CompletableFuture<Void>>> pending = new ArrayDeque<>();
     private final AtomicBoolean enabled = new AtomicBoolean(true);
-    private final AtomicBoolean running = new AtomicBoolean(false);
 
     private CompletableFuture<Void> inProgress = CompletableFuture.completedFuture(null);
     private Consumer<Throwable> failureHandler = ex -> {
     };
 
     private synchronized void runNext() {
-        this.enabled.set(true);
         if (!this.pending.isEmpty()) {
-            while (!this.inProgress.isDone()) {
-                try {
-                    wait(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
             this.inProgress = this.pending.pop().get();
         }
-        this.enabled.set(false);
     }
 
     private CompletableFuture<Void> addCompletionHandler(CompletableFuture<Void> task) {
@@ -54,9 +44,11 @@ public class AsyncTaskQueue {
         if (!this.enabled.get()) {
             return;
         }
-        this.pending.push(() -> addCompletionHandler(next.get()));
-        if (!this.running.get()) {
+        if (this.pending.isEmpty() && this.inProgress.isDone()) {
+            this.pending.push(() -> addCompletionHandler(next.get()));
             runNext();
+        } else {
+            this.pending.push(() -> addCompletionHandler(next.get()));
         }
     }
 

@@ -292,9 +292,11 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
 
         @Override
         public CompletableFuture<Void> updateSubscriptionState() {
-            if (SubscriptionManager.this.registrations.isEmpty()) {
-                logger.debug("No need to subscribe");
-                return CompletableFuture.completedFuture(null);
+            synchronized (SubscriptionManager.this) {
+                if (SubscriptionManager.this.registrations.isEmpty()) {
+                    logger.debug("No need to subscribe");
+                    return CompletableFuture.completedFuture(null);
+                }
             }
             return subscribe() //
                     .thenCompose(ok -> SubscriptionManager.this.state.updateSubscriptionState());
