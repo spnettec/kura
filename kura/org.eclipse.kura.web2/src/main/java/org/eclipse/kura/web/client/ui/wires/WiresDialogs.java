@@ -26,6 +26,7 @@ import org.gwtbootstrap3.client.ui.ListBox;
 import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.ModalHeader;
 import org.gwtbootstrap3.client.ui.TextArea;
+import org.gwtbootstrap3.client.ui.TextBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -87,6 +88,8 @@ public class WiresDialogs extends Composite {
     @UiField
     ModalHeader newAssetModalHeader;
     @UiField
+    FormLabel componentPidLabel;
+    @UiField
     FormLabel componentNameLabel;
     @UiField
     Modal genericCompModal;
@@ -95,7 +98,9 @@ public class WiresDialogs extends Composite {
     @UiField
     Button btnComponentModalNo;
     @UiField
-    PidTextBox componentName;
+    PidTextBox componentPid;
+    @UiField
+    TextBox componentName;
     @UiField
     TextArea componentDesc;
     @UiField
@@ -233,21 +238,22 @@ public class WiresDialogs extends Composite {
 
     private void initGenericComponentModal() {
         this.componentNameLabel.setText(MSGS.wiresComponentName());
+        this.componentPidLabel.setText(MSGS.wiresComponentPid());
         this.btnComponentModalYes.addClickHandler(event -> {
-            String value = WiresDialogs.this.componentName.getPid();
+            String value = WiresDialogs.this.componentPid.getPid();
             String name = WiresDialogs.this.componentName.getText();
             String desc = WiresDialogs.this.componentDesc.getText();
-            if (value != null) {
-                if (WiresDialogs.this.listener == null || !WiresDialogs.this.listener.onNewPidInserted(value)) {
-                    return;
-                }
-                if (WiresDialogs.this.pickCallback.isPresent()) {
-                    WiresDialogs.this.pickCallback.get().onNewComponentCreated(value, name, desc);
-                    WiresDialogs.this.pickCallback = Optional.empty();
-                }
-                WiresDialogs.this.genericCompModal.hide();
-                WiresDialogs.this.componentName.clear();
+            if (WiresDialogs.this.listener == null)
+                return;
+            if (value != null && !WiresDialogs.this.listener.onNewPidInserted(value)) {
+                return;
             }
+            if (WiresDialogs.this.pickCallback.isPresent()) {
+                WiresDialogs.this.pickCallback.get().onNewComponentCreated(value, name, desc);
+                WiresDialogs.this.pickCallback = Optional.empty();
+            }
+            WiresDialogs.this.genericCompModal.hide();
+            WiresDialogs.this.componentName.clear();
         });
 
         this.genericCompModal.addHideHandler(this.modalVisibilityHandler);
@@ -269,6 +275,7 @@ public class WiresDialogs extends Composite {
         } else {
             this.newAssetModalHeader.setTitle(MSGS.wiresComponentNew());
             this.componentNameLabel.setText(MSGS.wiresComponentName());
+            this.componentPidLabel.setText(MSGS.wiresComponentPid());
             this.componentName.clear();
             this.newAssetName.clear();
             this.newDriverName.clear();

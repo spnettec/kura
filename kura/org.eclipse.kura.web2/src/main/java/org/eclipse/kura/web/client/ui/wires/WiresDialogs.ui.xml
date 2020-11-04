@@ -157,7 +157,7 @@
                             <b:FormLabel for="componentName" addStyleNames="{style.newComponentName}"
                                 ui:field="componentNameLabel" />
                             <b:HelpBlock iconType="EXCLAMATION_TRIANGLE" />
-                            <kura.util:PidTextBox ui:field="componentName" b:id="componentName"
+                            <b:TextBox ui:field="componentName" b:id="componentName"
                                 autoComplete="false" validateOnBlur="true"
                                 placeholder="{msgs.wiresComponentNamePlaceholder}" />
                         </b:FormGroup>
