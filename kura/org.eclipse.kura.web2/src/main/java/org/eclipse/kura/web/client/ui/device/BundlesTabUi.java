@@ -19,6 +19,7 @@ import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.ui.Tab;
 import org.eclipse.kura.web.client.util.EventService;
 import org.eclipse.kura.web.client.util.FailureHandler;
+import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.ForwardedEventTopic;
 import org.eclipse.kura.web.shared.model.GwtGroupedNVPair;
 import org.eclipse.kura.web.shared.model.GwtXSRFToken;
@@ -124,7 +125,7 @@ public class BundlesTabUi extends Composite implements Tab {
     private void startSelectedBundle() {
         EntryClassUi.showWaitModal();
 
-        this.securityTokenService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onSuccess(GwtXSRFToken token) {
@@ -151,12 +152,12 @@ public class BundlesTabUi extends Composite implements Tab {
                 EntryClassUi.hideWaitModal();
                 FailureHandler.handle(caught);
             }
-        });
+        })));
     }
 
     private void stopSelectedBundle() {
         EntryClassUi.showWaitModal();
-        this.securityTokenService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable caught) {
@@ -183,7 +184,7 @@ public class BundlesTabUi extends Composite implements Tab {
                             }
                         });
             }
-        });
+        })));
     }
 
     private void loadBundlesTable(CellTable<GwtGroupedNVPair> bundlesGrid2,
@@ -265,7 +266,7 @@ public class BundlesTabUi extends Composite implements Tab {
         EntryClassUi.showWaitModal();
 
         this.bundlesDataProvider.getList().clear();
-        this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -302,7 +303,7 @@ public class BundlesTabUi extends Composite implements Tab {
                 });
             }
 
-        });
+        })));
     }
 
     @Override

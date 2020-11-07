@@ -151,12 +151,12 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
                     logger.debug("XSRF Token is VALID - {}", userToken);
 
                     // Reset used token
-                    session.setAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY, null);
-                    return true;
+                    // session.setAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY, null);
                 } else {
                     session.setAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY, null);
-                    logger.error("XSRF Token is EXPIRED - {}", userToken);
+                    logger.debug("XSRF Token is EXPIRED - {}", userToken);
                 }
+                return true;
             }
         }
 

@@ -221,15 +221,14 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         }
 
         void run() {
-            logger.info("Session started: {}", this.requestId);
+            logger.debug("Session started: {}", this.requestId);
 
             final long startTime = System.currentTimeMillis();
 
             while (processEvent(startTime)) {
-                ;
-            }
 
-            logger.info("Session ended: {}", this.requestId);
+            }
+            logger.debug("Session ended: {}", this.requestId);
 
             try {
                 this.response.getWriter().close();

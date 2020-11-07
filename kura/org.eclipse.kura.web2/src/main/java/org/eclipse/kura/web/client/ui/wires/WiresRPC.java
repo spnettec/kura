@@ -14,6 +14,7 @@ import java.util.List;
 import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.util.DownloadHelper;
 import org.eclipse.kura.web.client.util.FailureHandler;
+import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.eclipse.kura.web.shared.model.GwtWireComposerStaticInfo;
 import org.eclipse.kura.web.shared.model.GwtWireGraph;
@@ -40,7 +41,7 @@ public final class WiresRPC {
 
     public static void loadStaticInfo(final Callback<GwtWireComposerStaticInfo> callback) {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -65,12 +66,12 @@ public final class WiresRPC {
                     }
                 });
             }
-        });
+        })));
     }
 
     public static void loadWiresConfiguration(final Callback<GwtWireGraphConfiguration> callback) {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -95,12 +96,12 @@ public final class WiresRPC {
                     }
                 });
             }
-        });
+        })));
     }
 
     public static void loadWireGraph(final Callback<GwtWireGraph> callback) {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -125,13 +126,13 @@ public final class WiresRPC {
                     }
                 });
             }
-        });
+        })));
     }
 
     public static void updateWiresConfiguration(final GwtWireGraphConfiguration wireGraph,
             final List<GwtConfigComponent> additionalConfigs, final Callback<Void> callback) {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -157,13 +158,13 @@ public final class WiresRPC {
                             }
                         });
             }
-        });
+        })));
     }
 
     public static void createNewDriver(final String factoryPid, final String pid, String name, String desc,
             final Callback<GwtConfigComponent> callback, final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -226,12 +227,12 @@ public final class WiresRPC {
                             }
                         });
             }
-        });
+        })));
     }
 
     public static void downloadWiresSnapshot() {
         EntryClassUi.showWaitModal();
-        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -244,7 +245,7 @@ public final class WiresRPC {
                 EntryClassUi.hideWaitModal();
                 DownloadHelper.instance().startDownload(token, "/wiresSnapshot");
             }
-        });
+        })));
     }
 
     public static interface Callback<T> {

@@ -56,6 +56,7 @@ public class RequestQueue {
             FailureHandler.handle(e);
             EntryClassUi.hideWaitModal();
             this.pending = null;
+            runNext();
         }
     }
 

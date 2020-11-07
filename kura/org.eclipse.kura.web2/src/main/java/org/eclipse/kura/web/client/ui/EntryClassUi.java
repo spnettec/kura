@@ -357,6 +357,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initWiresPanel() {
         this.wires.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.wires(), null);
@@ -450,7 +451,7 @@ public class EntryClassUi extends Composite implements Context {
             EntryClassUi.this.contentPanelBody.clear();
             EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
             EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.statusBinder.setParent(instanceReference);
+            // EntryClassUi.this.statusBinder.setParent(instanceReference);
             EntryClassUi.this.statusBinder.loadStatusData();
         }));
     }
@@ -848,7 +849,7 @@ public class EntryClassUi extends Composite implements Context {
         this.contentPanelBody.clear();
         this.contentPanelBody.add(EntryClassUi.this.statusBinder);
         this.statusBinder.setSession(EntryClassUi.this.currentSession);
-        this.statusBinder.setParent(this);
+        // this.statusBinder.setParent(this);
         this.statusBinder.loadStatusData();
     }
 
@@ -892,7 +893,7 @@ public class EntryClassUi extends Composite implements Context {
 
     @Override
     public void getXSRFToken(Callback<String, String> callback) {
-        this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onSuccess(GwtXSRFToken result) {
@@ -904,7 +905,7 @@ public class EntryClassUi extends Composite implements Context {
                 callback.onFailure(caught.getMessage());
             }
 
-        });
+        })));
 
     }
 

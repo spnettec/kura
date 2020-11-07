@@ -65,10 +65,14 @@ public class GwtSecurityTokenServiceImpl extends OsgiRemoteServiceServlet implem
         // Before to generate a token we must to check if the user is correctly authenticated
         HttpSession session = getHttpSession();
         if (session != null) {
-            token = new GwtXSRFToken(UUID.randomUUID().toString());
-            session.setAttribute(XSRF_TOKEN_KEY, token);
-
-            logger.debug("Generated XSRF token: {} for HTTP session: {}", token.getToken(), session.getId());
+            Object tokenObject = session.getAttribute(XSRF_TOKEN_KEY);
+            if (tokenObject instanceof GwtXSRFToken) {
+                token = (GwtXSRFToken) tokenObject;
+            } else {
+                token = new GwtXSRFToken(UUID.randomUUID().toString());
+                session.setAttribute(XSRF_TOKEN_KEY, token);
+                logger.debug("Generated XSRF token: {} for HTTP session: {}", token.getToken(), session.getId());
+            }
         }
         return token;
     }
