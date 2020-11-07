@@ -418,7 +418,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
                                 if (channels != null) {
                                     ArrayList<Integer> alChannels = new ArrayList<>();
                                     for (int channel : channels) {
-                                        alChannels.add(new Integer(channel));
+                                        alChannels.add(Integer.valueOf(channel));
                                     }
                                     gwtWifiConfig.setChannels(alChannels);
                                 }

@@ -36,7 +36,6 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     private static final Messages MSGS = GWT.create(Messages.class);
 
-    private final GwtSession session;
     private final NetworkTabsUi tabs;
     private boolean dirty;
     GwtModemInterfaceConfig selectedModemIfConfig;
@@ -64,7 +63,6 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     public TabModemGpsUi(GwtSession currentSession, NetworkTabsUi tabs) {
         initWidget(uiBinder.createAndBindUi(this));
-        this.session = currentSession;
         this.tabs = tabs;
         initForm();
 

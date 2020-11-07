@@ -73,7 +73,6 @@ public class TabModemUi extends Composite implements NetworkTab {
     private static final Messages MSGS = GWT.create(Messages.class);
     private static final String REGEX_NUM = "(?:\\d*)?\\d+";
 
-    private final GwtSession session;
     private final TabTcpIpUi tcpTab;
     private final NetworkTabsUi tabs;
     private boolean dirty;
@@ -263,7 +262,6 @@ public class TabModemUi extends Composite implements NetworkTab {
     public TabModemUi(GwtSession currentSession, TabTcpIpUi tcp, NetworkTabsUi tabs) {
         this.pdpInit = false;
         initWidget(uiBinder.createAndBindUi(this));
-        this.session = currentSession;
         this.tcpTab = tcp;
         this.tabs = tabs;
 

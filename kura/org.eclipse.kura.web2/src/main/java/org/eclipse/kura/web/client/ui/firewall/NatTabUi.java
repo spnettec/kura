@@ -615,7 +615,8 @@ public class NatTabUi extends Composite implements Tab, ButtonBar.Listener {
                 List<EditorError> result = new ArrayList<>();
                 if (!NatTabUi.this.source.getText().trim().isEmpty()
                         && !NatTabUi.this.source.getText().trim().matches(FieldType.NETWORK.getRegex())) {
-                    result.add(new BasicEditorError(NatTabUi.this.source, value, MSGS.firewallNatFormSourceNetworkErrorMessage()));
+                    result.add(new BasicEditorError(NatTabUi.this.source, value,
+                            MSGS.firewallNatFormSourceNetworkErrorMessage()));
                 }
                 return result;
             }
@@ -687,12 +688,6 @@ public class NatTabUi extends Composite implements Tab, ButtonBar.Listener {
         this.tooltipSource.setTitle(MSGS.firewallNatFormSourceNetworkToolTip());
         this.tooltipDestination.setTitle(MSGS.firewallNatFormDestinationNetworkToolTip());
         this.tooltipEnable.setTitle(MSGS.firewallNatFormMasqueradingToolTip());
-        this.tooltipInput.reconfigure();
-        this.tooltipOutput.reconfigure();
-        this.tooltipProtocol.reconfigure();
-        this.tooltipSource.reconfigure();
-        this.tooltipDestination.reconfigure();
-        this.tooltipEnable.reconfigure();
     }
 
     private void setModalFieldsLabels() {

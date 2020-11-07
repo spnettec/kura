@@ -71,7 +71,6 @@ public class BundlesTabUi extends Composite implements Tab {
     private final SingleSelectionModel<GwtGroupedNVPair> selectionModel = new SingleSelectionModel<>();
 
     private final GwtDeviceServiceAsync deviceService = GWT.create(GwtDeviceService.class);
-    private final GwtSecurityTokenServiceAsync securityTokenService = GWT.create(GwtSecurityTokenService.class);
 
     public BundlesTabUi() {
         initWidget(uiBinder.createAndBindUi(this));

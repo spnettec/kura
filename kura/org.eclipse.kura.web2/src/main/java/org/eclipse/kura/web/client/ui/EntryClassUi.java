@@ -318,13 +318,12 @@ public class EntryClassUi extends Composite implements Context {
     }
 
     public void initSystemPanel(GwtSession gwtSession) {
-        final EntryClassUi instanceReference = this;
         if (!gwtSession.isNetAdminAvailable()) {
             this.network.setVisible(false);
             this.firewall.setVisible(false);
         }
 
-        initStatusPanel(instanceReference);
+        initStatusPanel();
 
         initDevicePanel();
 
@@ -443,15 +442,14 @@ public class EntryClassUi extends Composite implements Context {
         }));
     }
 
-    private void initStatusPanel(final EntryClassUi instanceReference) {
+    private void initStatusPanel() {
         this.status.addClickHandler(event -> confirmIfUiDirty(() -> {
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
             EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader("Status", null);
+            setHeader(MSGS.status(), null);
             EntryClassUi.this.contentPanelBody.clear();
             EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
             EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
-            // EntryClassUi.this.statusBinder.setParent(instanceReference);
             EntryClassUi.this.statusBinder.loadStatusData();
         }));
     }
@@ -849,7 +847,6 @@ public class EntryClassUi extends Composite implements Context {
         this.contentPanelBody.clear();
         this.contentPanelBody.add(EntryClassUi.this.statusBinder);
         this.statusBinder.setSession(EntryClassUi.this.currentSession);
-        // this.statusBinder.setParent(this);
         this.statusBinder.loadStatusData();
     }
 

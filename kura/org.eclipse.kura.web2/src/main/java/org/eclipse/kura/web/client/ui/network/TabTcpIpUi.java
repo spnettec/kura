@@ -89,7 +89,6 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
     interface TabTcpIpUiUiBinder extends UiBinder<Widget, TabTcpIpUi> {
     }
 
-    private final GwtSession session;
     boolean dirty;
     private GwtNetInterfaceConfig selectedNetIfConfig;
     private final NetworkTabsUi tabs;
@@ -176,7 +175,6 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
     public TabTcpIpUi(GwtSession currentSession, NetworkTabsUi netTabs) {
         initWidget(uiBinder.createAndBindUi(this));
-        this.session = currentSession;
         this.tabs = netTabs;
         this.helpTitle.setText(MSGS.netHelpTitle());
         initForm();

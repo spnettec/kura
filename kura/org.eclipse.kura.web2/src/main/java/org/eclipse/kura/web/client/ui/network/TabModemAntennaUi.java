@@ -36,7 +36,6 @@ public class TabModemAntennaUi extends Composite implements NetworkTab {
 
     private static final Messages MSGS = GWT.create(Messages.class);
 
-    private final GwtSession session;
     private final NetworkTabsUi tabs;
     boolean dirty;
     GwtModemInterfaceConfig selectedModemIfConfig;
@@ -65,7 +64,6 @@ public class TabModemAntennaUi extends Composite implements NetworkTab {
 
     public TabModemAntennaUi(GwtSession currentSession, NetworkTabsUi tabs) {
         initWidget(uiBinder.createAndBindUi(this));
-        this.session = currentSession;
         this.tabs = tabs;
         initForm();
 
