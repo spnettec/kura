@@ -345,6 +345,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initDriversAndAssetsPanel() {
         this.driversAndAssetsServices.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.driversAndAssetsServices(), null);
@@ -368,6 +369,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initCloudServicesPanel() {
         this.cloudServices.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.cloudServices(), null);
@@ -380,6 +382,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initSettingsPanel() {
         this.settings.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.settings(), null);
@@ -392,6 +395,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initPackagesPanel() {
         this.packages.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.packages(), null);
@@ -406,6 +410,7 @@ public class EntryClassUi extends Composite implements Context {
     private void initFirewallPanel() {
         if (this.firewall.isVisible()) {
             this.firewall.addClickHandler(event -> confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.firewall(), null);
@@ -419,6 +424,7 @@ public class EntryClassUi extends Composite implements Context {
     private void initNetworkPanel() {
         if (this.network.isVisible()) {
             this.network.addClickHandler(event -> confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.network(), null);
@@ -432,6 +438,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initDevicePanel() {
         this.device.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.device(), null);
@@ -444,6 +451,7 @@ public class EntryClassUi extends Composite implements Context {
 
     private void initStatusPanel() {
         this.status.addClickHandler(event -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
             EntryClassUi.this.contentPanel.setVisible(true);
             setHeader(MSGS.status(), null);
@@ -861,6 +869,7 @@ public class EntryClassUi extends Composite implements Context {
         }
 
         item.addClickHandler(evt -> confirmIfUiDirty(() -> {
+            this.wiresBinder.unload();
             EntryClassUi.this.contentPanelBody.clear();
 
             forceTabsCleaning();
