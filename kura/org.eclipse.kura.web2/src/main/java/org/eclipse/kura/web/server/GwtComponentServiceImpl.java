@@ -225,6 +225,9 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
                     session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
             KuraExceptionHandler.handle(e);
         }
+        catch (Exception e) {
+            KuraExceptionHandler.handle(e);
+        }
     }
 
     @Override

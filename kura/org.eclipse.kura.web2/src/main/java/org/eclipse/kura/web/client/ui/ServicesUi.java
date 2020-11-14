@@ -322,6 +322,7 @@ public class ServicesUi extends AbstractServicesUi {
 
                                         @Override
                                         public void onFailure(Throwable caught) {
+                                            ServicesUi.this.modal.hide();
                                             FailureHandler.handle(caught);
                                             errorLogger.log(Level.SEVERE,
                                                     caught.getLocalizedMessage() != null ? caught.getLocalizedMessage()
