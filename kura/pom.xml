@@ -115,7 +115,7 @@
     </modules>
 
     <properties>
-        <tycho-version>1.6.0</tycho-version>
+        <tycho-version>2.1.0</tycho-version>
 
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
@@ -134,7 +134,7 @@
         <sonar.jacoco.reportPath>target/jacoco.exec</sonar.jacoco.reportPath>
 
         <!-- BND baseline plugin -->
-        <bnd.baseline.version>5.0.0</bnd.baseline.version>
+        <bnd.baseline.version>5.2.0</bnd.baseline.version>
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
 
         <kura.skip.can>true</kura.skip.can>
