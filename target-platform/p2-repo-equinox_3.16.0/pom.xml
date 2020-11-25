@@ -8,7 +8,7 @@
         <version>5.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>p2-repo-equinox_3.12.50</artifactId>
+    <artifactId>p2-repo-equinox_3.16.0</artifactId>
     <packaging>pom</packaging>
 
     <properties>
@@ -103,9 +103,9 @@
                         </goals>
                         <configuration>
                             <target>
-                                <delete dir="../../kura/target-definition/equinox_3.12.50/" />
-                                <mkdir dir="../../kura/target-definition/equinox_3.12.50/repository" />
-                                <copy todir="../../kura/target-definition/equinox_3.12.50/repository">
+                                <delete dir="../../kura/target-definition/equinox_3.16.0/" />
+                                <mkdir dir="../../kura/target-definition/equinox_3.16.0/repository" />
+                                <copy todir="../../kura/target-definition/equinox_3.16.0/repository">
                                     <fileset dir="${project.build.directory}/repository" />
                                 </copy>
                             </target>
