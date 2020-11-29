@@ -640,12 +640,12 @@
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-beans:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-beans:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-aop:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-aop:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
@@ -655,27 +655,27 @@
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-context:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-context:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-core:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-core:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-expression:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-expression:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-jms:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-jms:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact> 
               <artifact>
-                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-tx:${spring.version}</id>
+                  <id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-tx:${spring-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
