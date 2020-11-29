@@ -123,6 +123,7 @@
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
     <stringAttribute key="featurePluginResolution" value="workspace"/>
     <booleanAttribute key="includeOptional" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
@@ -197,12 +198,10 @@
         <setEntry value="jdk.dio@default:default"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-hornetq-protocol@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-hqclient-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-native@default:default"/>
+        <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
         <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
-        <setEntry value="org.apache.activemq.artemis@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
         <setEntry value="org.apache.camel.camel-core-osgi@default:default"/>
         <setEntry value="org.apache.camel.camel-core-xml@default:default"/>
@@ -221,8 +220,10 @@
         <setEntry value="org.apache.commons.collections@default:default"/>
         <setEntry value="org.apache.commons.commons-beanutils@default:default"/>
         <setEntry value="org.apache.commons.commons-codec@default:default"/>
+        <setEntry value="org.apache.commons.commons-configuration2@default:default"/>
         <setEntry value="org.apache.commons.commons-csv@default:default"/>
         <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
+        <setEntry value="org.apache.commons.commons-text@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
         <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
@@ -241,6 +242,7 @@
         <setEntry value="org.apache.geronimo.specs.geronimo-jta_1.1_spec@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
+        <setEntry value="org.apache.johnzon.core@default:default"/>
         <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
@@ -303,6 +305,8 @@
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
+        <setEntry value="org.jctools.core@default:default"/>
+        <setEntry value="org.jgroups@default:default"/>
         <setEntry value="org.knowhowlab.osgi.monitoradmin@default:default"/>
         <setEntry value="org.objectweb.asm.all@default:default"/>
         <setEntry value="org.osgi.service.http.whiteboard@default:default"/>
@@ -362,6 +366,7 @@
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.stress@default:default"/>
+        <setEntry value="org.eclipse.kura.util.wire.test@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
