@@ -51,7 +51,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-all</artifactId>
-                <version>3.0.2</version>
+                <version>3.0.6</version>
                 <type>pom</type>
             </dependency>            
             <dependency>
@@ -1050,12 +1050,12 @@
               </artifact>
               
               <artifact>
-                  <id>org.graalvm.sdk:graal-sdk:jar:20.2.0</id>
+                  <id>org.graalvm.sdk:graal-sdk:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js:jar:20.2.0</id>
+                  <id>org.graalvm.js:js:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -1067,7 +1067,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js-scriptengine:jar:20.2.0</id>
+                  <id>org.graalvm.js:js-scriptengine:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -1078,7 +1078,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.truffle:truffle-api:jar:20.2.0</id>
+                  <id>org.graalvm.truffle:truffle-api:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
