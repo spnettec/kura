@@ -127,6 +127,7 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
      * two connection types are available:
      * <ul>
      * <li>serial mode (PROTOCOL_CONNECTION_TYPE_SERIAL)
+     *
      * <li>Ethernet with 2 possible modes : RTU over TCP/IP (PROTOCOL_CONNECTION_TYPE_ETHER_RTU) or real MODBUS-TCP/IP
      * (PROTOCOL_CONNECTION_TYPE_ETHER_TCP).
      * <ul>
@@ -837,6 +838,24 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
                             } else if (respIndex == minimumLength) {
                                 endFrame = true;
                             }
+                        } else if (PROTOCOL_CONNECTION_TYPE_ETHER_RTU.equals(this.connType)) {
+                            if (respIndex == 1) {
+                                // test modbus id
+                                if (response[0] != msg[0]) {
+                                    throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
+                                            "incorrect modbus id " + String.format("%02X", response[6]));
+                                }
+                            } else if (respIndex == 2) {
+                                if ((response[1] & 0x7f) != msg[1]) {
+                                    throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
+                                            "incorrect function number " + String.format("%02X", response[7]));
+                                }
+                            } else if (respIndex == 3) {
+                                minimumLength = (response[2] & 0xff) + 5;
+                            } else if (respIndex == minimumLength) {
+                                endFrame = true;
+                            }
+
                         } else {
 
                         }
@@ -853,6 +872,10 @@ public class ModbusProtocolDevice implements ModbusProtocolDeviceService {
                     throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE, "Recv failure");
                 }
 
+            }
+            if (PROTOCOL_CONNECTION_TYPE_ETHER_RTU.equals(this.connType)) {
+
+                return response;
             }
 
             // then check for a valid message
