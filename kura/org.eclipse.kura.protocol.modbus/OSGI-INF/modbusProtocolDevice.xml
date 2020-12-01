@@ -12,9 +12,9 @@
       Eurotech
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" name="org.eclipse.kura.protocol.modbus.ModbusProtocolDevice">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" activate="activate" deactivate="deactivate" name="org.eclipse.kura.protocol.modbus.ModbusProtocolDevice">
    <implementation class="org.eclipse.kura.protocol.modbus.ModbusProtocolDevice"/>
-   <service>
+   <service scope="prototype">
       <provide interface="org.eclipse.kura.protocol.modbus.ModbusProtocolDeviceService"/>
    </service>
    <property name="service.pid" value="org.eclipse.kura.protocol.modbus.ModbusProtocolDeviceService"/>
