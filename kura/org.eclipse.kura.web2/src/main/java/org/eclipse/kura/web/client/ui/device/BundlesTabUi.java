@@ -19,7 +19,6 @@ import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.ui.Tab;
 import org.eclipse.kura.web.client.util.EventService;
 import org.eclipse.kura.web.client.util.FailureHandler;
-import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.ForwardedEventTopic;
 import org.eclipse.kura.web.shared.model.GwtGroupedNVPair;
 import org.eclipse.kura.web.shared.model.GwtXSRFToken;
@@ -71,6 +70,7 @@ public class BundlesTabUi extends Composite implements Tab {
     private final SingleSelectionModel<GwtGroupedNVPair> selectionModel = new SingleSelectionModel<>();
 
     private final GwtDeviceServiceAsync deviceService = GWT.create(GwtDeviceService.class);
+    private final GwtSecurityTokenServiceAsync securityTokenService = GWT.create(GwtSecurityTokenService.class);
 
     public BundlesTabUi() {
         initWidget(uiBinder.createAndBindUi(this));
@@ -124,7 +124,7 @@ public class BundlesTabUi extends Composite implements Tab {
     private void startSelectedBundle() {
         EntryClassUi.showWaitModal();
 
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        this.securityTokenService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onSuccess(GwtXSRFToken token) {
@@ -151,12 +151,12 @@ public class BundlesTabUi extends Composite implements Tab {
                 EntryClassUi.hideWaitModal();
                 FailureHandler.handle(caught);
             }
-        })));
+        });
     }
 
     private void stopSelectedBundle() {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        this.securityTokenService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable caught) {
@@ -183,7 +183,7 @@ public class BundlesTabUi extends Composite implements Tab {
                             }
                         });
             }
-        })));
+        });
     }
 
     private void loadBundlesTable(CellTable<GwtGroupedNVPair> bundlesGrid2,
@@ -265,7 +265,7 @@ public class BundlesTabUi extends Composite implements Tab {
         EntryClassUi.showWaitModal();
 
         this.bundlesDataProvider.getList().clear();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -302,7 +302,7 @@ public class BundlesTabUi extends Composite implements Tab {
                 });
             }
 
-        })));
+        });
     }
 
     @Override

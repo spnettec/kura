@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.util.FailureHandler;
-import org.eclipse.kura.web.client.util.request.RequestQueue;
 import org.eclipse.kura.web.shared.model.GwtChannelOperationResult;
 import org.eclipse.kura.web.shared.model.GwtChannelRecord;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
@@ -46,7 +45,7 @@ public final class DriversAndAssetsRPC {
 
     public static void loadStaticInfo(final Callback<GwtWireComposerStaticInfo> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -71,12 +70,12 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static void loadWireGraph(final Callback<GwtWireGraph> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -101,12 +100,12 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static void updateConfiguration(final GwtConfigComponent config, final Callback<Void> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -131,14 +130,14 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static void createFactoryConfiguration(final String pid, final String factoryPid,
             final GwtConfigComponent configuration, final Callback<Void> callback,
             final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -168,12 +167,12 @@ public final class DriversAndAssetsRPC {
                             }
                         });
             }
-        })));
+        });
     }
 
     public static void deleteFactoryConfiguration(final String pid, final Callback<Void> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -198,12 +197,12 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static void readAllChannels(final String assetPid, final Callback<GwtChannelOperationResult> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -228,13 +227,13 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static void createNewDriver(final String factoryPid, final String pid, String name, String desc,
             final Callback<GwtConfigComponent> callback, final ErrorCallback<Throwable> errorCallback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -293,13 +292,13 @@ public final class DriversAndAssetsRPC {
                             }
                         });
             }
-        })));
+        });
     }
 
     public static void write(final String assetPid, final List<GwtChannelRecord> records,
             final Callback<GwtChannelOperationResult> callback) {
         EntryClassUi.showWaitModal();
-        RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(c.callback(new AsyncCallback<GwtXSRFToken>() {
+        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
             @Override
             public void onFailure(Throwable ex) {
@@ -324,7 +323,7 @@ public final class DriversAndAssetsRPC {
                     }
                 });
             }
-        })));
+        });
     }
 
     public static interface Callback<T> {
