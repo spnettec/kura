@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Eurotech and/or its affiliates
+x * Copyright (c) 2019, 2020 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -12,94 +12,269 @@
  *******************************************************************************/
 package org.eclipse.kura.web;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.eclipse.kura.util.configuration.Property;
+import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
+import org.eclipse.kura.core.configuration.metatype.Tocd;
+import org.eclipse.kura.core.configuration.metatype.Tscalar;
+import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkUtil;
 
 public class ConsoleOptions {
 
-    static final String PROP_CONSOLE_USERNAME = "console.username.value";
-    static final String PROP_CONSOLE_PASSWORD = "console.password.value";
-    static final String PROP_APP_ROOT = "app.root";
-    static final String PROP_SESSION_MAX_INACTIVITY_INTERVAL = "session.max.inactivity.interval";
-    static final String PROP_ACCESS_BANNER_ENABLED = "access.banner.enabled";
-    static final String PROP_ACCESS_BANNER_CONTENT = "access.banner.content";
+    private final SelfConfiguringComponentProperty<String> username = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("console.username.value", "%username", Tscalar.STRING) //
+                    .setDefault("admin") //
+                    .setDescription("%usernameDesc") //
+                    .build(), //
+            String.class);
 
-    private static final String PROP_PW_MIN_LENGTH = "new.password.min.length";
-    private static final String PROP_PW_REQUIRE_DIGITS = "new.password.require.digits";
-    private static final String PROP_PW_REQUIRE_SPECIAL_CHARS = "new.password.require.special.characters";
-    private static final String PROP_PW_REQUIRE_BOTH_CASES = "new.password.require.both.cases";
+    private final SelfConfiguringComponentProperty<String> userPassword;
 
-    private static final Property<String> CONSOLE_USERNAME = new Property<>(PROP_CONSOLE_USERNAME, "admin");
-    private static final Property<String> CONSOLE_PASSWORD = new Property<>(PROP_CONSOLE_PASSWORD, "admin");
-    private static final Property<String> CONSOLE_APP_ROOT = new Property<>(PROP_APP_ROOT, "/admin/console");
-    private static final Property<Integer> SESSION_MAX_INACTIVITY_INTERVAL = new Property<>(
-            PROP_SESSION_MAX_INACTIVITY_INTERVAL, 15);
-    private static final Property<Boolean> ACCESS_BANNER_ENABLED = new Property<>(PROP_ACCESS_BANNER_ENABLED, false);
-    private static final Property<String> ACCESS_BANNER_CONTENT = new Property<>(PROP_ACCESS_BANNER_CONTENT, "");
+    private final SelfConfiguringComponentProperty<String> appRoot = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("app.root", "%root", Tscalar.STRING) //
+                    .setDefault("/admin/console") //
+                    .setDescription("%rootDesc") //
+                    .build(), //
+            String.class);
 
-    private static final Property<Integer> PW_MIN_LENGTH = new Property<>(PROP_PW_MIN_LENGTH, 0);
-    private static final Property<Boolean> PW_REQUIRE_DIGITS = new Property<>(PROP_PW_REQUIRE_DIGITS, false);
-    private static final Property<Boolean> PW_REQUIRE_SPECIAL_CHARS = new Property<>(PROP_PW_REQUIRE_SPECIAL_CHARS,
-            false);
-    private static final Property<Boolean> PW_REQUIRE_BOTH_CASES = new Property<>(PROP_PW_REQUIRE_BOTH_CASES, false);
+    private final SelfConfiguringComponentProperty<Integer> sessionMaxInactivityInterval = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("session.max.inactivity.interval", "%sessionMaxInactivityInterval", Tscalar.INTEGER) //
+                    .setDefault("15") //
+                    .setMin("1") //
+                    .setDescription("%sessionMaxInactivityIntervalDesc") //
+                    .build(), //
+            Integer.class);
 
-    private final String username;
-    private final String userPassword;
-    private final String appRoot;
-    private final int sessionMaxInactivityInterval;
-    private final boolean bannerEnabled;
-    private final String bannerContent;
-    private final GwtConsoleUserOptions userOptions;
+    private final SelfConfiguringComponentProperty<Boolean> bannerEnabled = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("access.banner.enabled", "%bannerEnabled", Tscalar.BOOLEAN) //
+                    .setDefault("false") //
+                    .setDescription("%bannerEnabledDesc") //
+                    .build(), //
+            Boolean.class);
 
-    public ConsoleOptions(Map<String, Object> properties) {
-        this.username = CONSOLE_USERNAME.get(properties);
-        this.userPassword = CONSOLE_PASSWORD.get(properties); // TODO: to Password object?
-        this.appRoot = CONSOLE_APP_ROOT.get(properties);
-        this.sessionMaxInactivityInterval = SESSION_MAX_INACTIVITY_INTERVAL.get(properties);
-        this.bannerEnabled = ACCESS_BANNER_ENABLED.get(properties);
-        this.bannerContent = ACCESS_BANNER_CONTENT.get(properties);
-        this.userOptions = extractUserOptions(properties);
+    private final SelfConfiguringComponentProperty<String> bannerContent = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("access.banner.content", "%bannerContent", Tscalar.STRING) //
+                    .setDefault("Sample Banner Content") //
+                    .setDescription("%bannerContentDesc |TextArea") //
+                    .build(), //
+            String.class);
+
+    private final SelfConfiguringComponentProperty<Integer> passwordMinLength = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("new.password.min.length", "%minPasswordLength", Tscalar.INTEGER) //
+                    .setDefault("8") //
+                    .setMin("0") //
+                    .setDescription("%minPasswordLengthDesc") //
+                    .build(), //
+            Integer.class);
+
+    private final SelfConfiguringComponentProperty<Boolean> passwordRequireDigits = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("new.password.require.digits", "%passwordRequireDigits", Tscalar.BOOLEAN) //
+                    .setDefault("false") //
+                    .setDescription("%passwordRequireDigitsDesc") //
+                    .build(), //
+            Boolean.class);
+
+    private final SelfConfiguringComponentProperty<Boolean> passwordRequireSpecialCharacters = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("new.password.require.special.characters", "%passwordRequireSpecialCharacters",
+                    Tscalar.BOOLEAN) //
+                            .setDefault("false") //
+                            .setDescription("%passwordRequireSpecialCharactersDesc") //
+                            .build(), //
+            Boolean.class);
+
+    private final SelfConfiguringComponentProperty<Boolean> passwordRequireBothCases = new SelfConfiguringComponentProperty<>(
+            new AdBuilder("new.password.require.both.cases", "%passwordRequireBothCases", Tscalar.BOOLEAN) //
+                    .setDefault("false") //
+                    .setDescription("%passwordRequireBothCasesDesc") //
+                    .build(), //
+            Boolean.class);
+
+    private final List<SelfConfiguringComponentProperty<?>> configurationProperties = new ArrayList<>();
+    private final Map<String, SelfConfiguringComponentProperty<Boolean>> authenticationMethodProperties = new HashMap<>();
+    private final ComponentConfiguration config;
+
+    private ConsoleOptions(final CryptoService cryptoService) {
+        this.userPassword = initPasswordProperty(cryptoService);
+
+        initProperties();
+
+        this.config = toComponentConfiguration();
+    }
+
+    private ConsoleOptions(final Map<String, Object> properties, final CryptoService cryptoService) {
+        this.userPassword = initPasswordProperty(cryptoService);
+
+        initProperties();
+
+        for (final SelfConfiguringComponentProperty<?> property : configurationProperties) {
+            property.update(properties);
+        }
+
+        this.config = toComponentConfiguration();
+    }
+
+    public static ConsoleOptions defaultConfiguration(final CryptoService cryptoService) {
+        return new ConsoleOptions(cryptoService);
+    }
+
+    public static ConsoleOptions fromProperties(final Map<String, Object> properties,
+            final CryptoService cryptoService) {
+        return new ConsoleOptions(properties, cryptoService);
     }
 
     public String getUsername() {
-        return this.username;
+        return this.username.get();
     }
 
     public String getUserPassword() {
-        return this.userPassword;
+        return this.userPassword.get();
     }
 
     public String getAppRoot() {
-        return this.appRoot;
+        return this.appRoot.get();
     }
 
     public int getSessionMaxInactivityInterval() {
-        return this.sessionMaxInactivityInterval;
+        return this.sessionMaxInactivityInterval.get();
     }
 
     public boolean isBannerEnabled() {
-        return this.bannerEnabled;
+        return this.bannerEnabled.get();
     }
 
     public String getBannerContent() {
-        return this.bannerContent;
+        return this.bannerContent.get();
+    }
+
+    public Set<String> getEnabledAuthMethods() {
+        return authenticationMethodProperties.entrySet().stream().filter(e -> e.getValue().get()).map(e -> e.getKey())
+                .collect(Collectors.toSet());
+    }
+
+    public ComponentConfiguration getConfiguration() {
+        return this.config;
+    }
+
+    public boolean isAuthenticationMethodEnabled(final String name) {
+        final SelfConfiguringComponentProperty<Boolean> property = this.authenticationMethodProperties.get(name);
+
+        if (property == null) {
+            return false;
+        }
+
+        return property.get();
     }
 
     public GwtConsoleUserOptions getUserOptions() {
-        return new GwtConsoleUserOptions(this.userOptions);
-    }
-
-    public static GwtConsoleUserOptions extractUserOptions(final Map<String, Object> properties) {
         final GwtConsoleUserOptions result = new GwtConsoleUserOptions();
 
-        result.setPasswordMinimumLength(PW_MIN_LENGTH.get(properties));
-        result.setPasswordRequireDigits(PW_REQUIRE_DIGITS.get(properties));
-        result.setPasswordRequireSpecialChars(PW_REQUIRE_SPECIAL_CHARS.get(properties));
-        result.setPasswordRequireBothCases(PW_REQUIRE_BOTH_CASES.get(properties));
+        result.setPasswordMinimumLength(passwordMinLength.get());
+        result.setPasswordRequireDigits(passwordRequireDigits.get());
+        result.setPasswordRequireSpecialChars(passwordRequireSpecialCharacters.get());
+        result.setPasswordRequireBothCases(passwordRequireBothCases.get());
 
         return result;
+    }
+
+    private void initProperties() {
+        configurationProperties.add(username);
+        configurationProperties.add(userPassword);
+        configurationProperties.add(appRoot);
+        configurationProperties.add(sessionMaxInactivityInterval);
+        configurationProperties.add(bannerEnabled);
+        configurationProperties.add(bannerContent);
+        configurationProperties.add(passwordMinLength);
+        configurationProperties.add(passwordRequireDigits);
+        configurationProperties.add(passwordRequireSpecialCharacters);
+        configurationProperties.add(passwordRequireBothCases);
+
+        addAuthenticationMethodProperties();
+    }
+
+    private static SelfConfiguringComponentProperty<String> initPasswordProperty(final CryptoService cryptoService) {
+
+        return new SelfConfiguringComponentProperty<>(
+                new AdBuilder("console.password.value", "%password", Tscalar.PASSWORD) //
+                        .setDefault("admin") //
+                        .setDescription("%passwordDesc") //
+                        .build(), //
+                String.class, cryptoService);
+    }
+
+    private ComponentConfiguration toComponentConfiguration() {
+        final Tocd definition = new Tocd();
+
+        definition.setId("org.eclipse.kura.web.Console");
+        definition.setName("%name");
+        definition.setLocalization("OSGI-INF/l10n/WebConsole");
+        definition
+                .setLocaleUrls(findAllEntries(FrameworkUtil.getBundle(this.getClass()), definition.getLocalization()));
+        definition.setDescription("%description");
+
+        final Map<String, Object> properties = new HashMap<>();
+
+        for (final SelfConfiguringComponentProperty<?> property : configurationProperties) {
+            definition.addAD(property.getAd());
+            property.fillValue(properties);
+        }
+
+        return new ComponentConfigurationImpl("org.eclipse.kura.web.Console", definition, properties);
+    }
+
+    private static URL[] findAllEntries(Bundle bundle, String path) {
+        path = path == null ? Constants.BUNDLE_LOCALIZATION_DEFAULT_BASENAME : path;
+        String directory = "/"; //$NON-NLS-1$
+        String file = "*"; //$NON-NLS-1$
+        int index = path.lastIndexOf('/');
+        if (index > 0) {
+            directory = path.substring(0, index);
+        }
+
+        Enumeration<URL> entries = bundle.findEntries(directory, file, false);
+        if (entries == null) {
+            return new URL[0];
+        }
+        List<URL> list = Collections.list(entries);
+        return list.toArray(new URL[list.size()]);
+    }
+
+    private void addAuthenticationMethodProperty(final String name, final boolean enabledByDefault) {
+        final SelfConfiguringComponentProperty<Boolean> result = new SelfConfiguringComponentProperty<>(
+                new AdBuilder(getAuthenticationMethodPropertyId(name), "%authenticationMethod" + name + "Enabled",
+                        Tscalar.BOOLEAN) //
+                                .setDefault(Boolean.toString(enabledByDefault)) //
+                                .setDescription("%authenticationMethod" + name + "EnabledDesc") //
+                                .build(), //
+                Boolean.class);
+
+        authenticationMethodProperties.put(name, result);
+        configurationProperties.add(result);
+
+    }
+
+    private static String getAuthenticationMethodPropertyId(final String name) {
+        return "auth.method" + name.replaceAll(" ", ".");
+    }
+
+    private void addAuthenticationMethodProperties() {
+        final Set<String> builtinAuthenticationMethods = Console.instance().getBuiltinAuthenticationMethods();
+
+        for (final String authMethod : Console.instance().getAuthenticationMethods()) {
+            addAuthenticationMethodProperty(authMethod, builtinAuthenticationMethods.contains(authMethod));
+        }
     }
 
 }

@@ -32,6 +32,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -183,11 +184,32 @@ public class HttpService implements ConfigurableComponent {
         config.put(JettyConstants.HTTP_ENABLED, this.options.isHttpEnabled());
         config.put(JettyConstants.HTTP_HOST, "0.0.0.0");
 
+        config.put("kura.https.client.auth.enabled", this.options.isHttpsClientAuthEnabled());
+        config.put("kura.https.client.auth.port", this.options.getHttpsClientAuthPort());
+
         final String customizerClass = System
                 .getProperty(JettyConstants.PROPERTY_PREFIX + JettyConstants.CUSTOMIZER_CLASS);
 
         if (customizerClass instanceof String) {
             config.put(JettyConstants.CUSTOMIZER_CLASS, customizerClass);
+        }
+
+        final boolean isRevocationEnabled = this.options.isRevocationEnabled();
+
+        config.put("org.eclipse.kura.revocation.check.enabled", isRevocationEnabled);
+
+        final Optional<String> ocspURI = this.options.getOcspURI();
+        final Optional<String> crlPath = this.options.getCrlPath();
+        final boolean softFail = this.options.isRevocationSoftFailEnabled();
+
+        if (isRevocationEnabled) {
+            if (ocspURI.isPresent() && !ocspURI.get().trim().isEmpty()) {
+                config.put("org.eclipse.kura.revocation.ocsp.uri", ocspURI.get());
+            }
+            if (crlPath.isPresent() && !crlPath.get().trim().isEmpty()) {
+                config.put("org.eclipse.kura.revocation.crl.path", crlPath.get());
+            }
+            config.put("org.eclipse.kura.revocation.soft.fail", softFail);
         }
 
         return config;
@@ -202,11 +224,32 @@ public class HttpService implements ConfigurableComponent {
 
         config.put(JettyConstants.HTTPS_ENABLED, false);
 
+        config.put("kura.https.client.auth.enabled", this.options.isHttpsClientAuthEnabled());
+        config.put("kura.https.client.auth.port", this.options.getHttpsClientAuthPort());
+
         final String customizerClass = System
                 .getProperty(JettyConstants.PROPERTY_PREFIX + JettyConstants.CUSTOMIZER_CLASS);
 
         if (customizerClass instanceof String) {
             config.put(JettyConstants.CUSTOMIZER_CLASS, customizerClass);
+        }
+
+        final boolean isRevocationEnabled = this.options.isRevocationEnabled();
+
+        config.put("org.eclipse.kura.revocation.check.enabled", isRevocationEnabled);
+
+        final Optional<String> ocspURI = this.options.getOcspURI();
+        final Optional<String> crlPath = this.options.getCrlPath();
+        final boolean softFail = this.options.isRevocationSoftFailEnabled();
+
+        if (isRevocationEnabled) {
+            if (ocspURI.isPresent() && !ocspURI.get().trim().isEmpty()) {
+                config.put("org.eclipse.kura.revocation.ocsp.uri", ocspURI.get());
+            }
+            if (crlPath.isPresent() && !crlPath.get().trim().isEmpty()) {
+                config.put("org.eclipse.kura.revocation.crl.path", crlPath.get());
+            }
+            config.put("org.eclipse.kura.revocation.soft.fail", softFail);
         }
 
         return config;
