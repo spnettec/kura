@@ -54,7 +54,9 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -227,6 +229,25 @@ public class LoginUi extends Composite implements Context {
 
         if (this.authenticationMethodWidget != null) {
             this.loginModalBody.add(this.authenticationMethodWidget);
+            if (authenticationMethodWidget instanceof ComplexPanel) {
+                ComplexPanel cw0 = (ComplexPanel) authenticationMethodWidget;
+                if (cw0.getWidgetCount() < 1) {
+                    return;
+                }
+                Widget w0 = cw0.getWidget(0);
+                if (!(w0 instanceof ComplexPanel)) {
+                    return;
+                }
+                ComplexPanel cw1 = (ComplexPanel) w0;
+                if (cw1.getWidgetCount() < 2) {
+                    return;
+                }
+                Widget w1 = cw1.getWidget(1);
+                if (w1 instanceof Focusable) {
+                    ((Focusable) w1).setFocus(true);
+                }
+
+            }
         }
 
     }
