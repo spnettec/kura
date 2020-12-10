@@ -1147,6 +1147,11 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
+                  <id>org.eclipse.jetty:jetty-util-ajax:jar:${org.eclipse.jetty.util.ajax.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
                   <id>org.osgi:org.osgi.service.http.whiteboard:jar:${org.osgi.service.http.whiteboard.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>

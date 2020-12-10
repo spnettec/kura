@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
+ * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
  * Contributors:
- *     Eurotech
+ *  Eurotech
  *******************************************************************************/
 package org.eclipse.kura.core.data;
 
@@ -525,7 +526,7 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
     public int publish(String topic, byte[] payload, int qos, boolean retain, int priority) throws KuraStoreException {
 
         logger.info("Storing message on topic: {}, priority: {}", topic, priority);
-
+        
         DataMessage dataMsg = this.store.store(topic, payload, qos, retain, priority);
         logger.info("Stored message on topic: {}, priority: {}", topic, priority);
 
@@ -623,10 +624,6 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
                                 logger.info("Maximum number of connection attempts reached. Requested reboot...");
                             }
                         }
-                    } catch (Error e) {
-                        // There's nothing we can do here but log an exception.
-                        logger.error("Unexpected Error. Task will be terminated", e);
-                        throw e;
                     } finally {
                         if (connected) {
                             unregisterAsCriticalComponent();
