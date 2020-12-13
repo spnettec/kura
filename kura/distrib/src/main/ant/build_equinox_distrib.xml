@@ -236,7 +236,6 @@
 				</not>
 			</and>
 		</condition>
-		
 		<antcall target="emulator-config" />
 		<antcall target="linux-sysv-config" />
 		<antcall target="linux-debian-config" />
@@ -968,19 +967,24 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.alibaba.fastjson_${fastjson.version}.jar@4:start" />
 		</propertyfile>
 	</target>
-	<!-- OSGi java9 configs -->
+	<!-- OSGi java11 configs -->
 	<target name="osgi-java9-config">
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.annotation-api_${jakarta.annotation-api.version}.jar@3:start" />			
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.activation-api_${jakarta.activation-api.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.sun.activation.javax.activation_${com.sun.activation.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.annotation-api_${jakarta.annotation-api.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jaxb-api_${javax.xml.bind.jaxb-api.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.sun.xml.bind.jaxb-osgi_${jaxb-osgi.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.sun.xml.bind.jaxb-osgi_${com.sun.xml.bind.jaxb-osgi.version}.jar@3:start" />
-			
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.bind-api_${jakarta.xml.bind-api.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.ws-api_${jakarta.xml.ws-api.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.soap-api_${jakarta.xml.soap-api.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.hk2.osgi-resource-locator_${osgi-resource-locator.version}.jar@3:start" />
 		</propertyfile>
 	</target>
 

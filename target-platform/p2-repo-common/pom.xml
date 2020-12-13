@@ -102,20 +102,11 @@
                                     <artifactId>org.tigris.mtoolkit.iagent.rpc</artifactId>
                                     <version>${org.tigris.mtoolkit.iagent.rpc.version}</version>
                                 </artifactItem>
-                                <!--
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>com.gwt.user</artifactId>
-                                    <version>${com.gwt.user.version}</version>
-                                </artifactItem>
-                                -->
-                                
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.usb4java</artifactId>
                                     <version>${org.usb4java.version}</version>
                                 </artifactItem>
-                                
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>jdk.dio</artifactId>

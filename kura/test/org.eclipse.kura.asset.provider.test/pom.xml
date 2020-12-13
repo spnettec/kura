@@ -52,21 +52,12 @@
                         -Ddpa.configuration=/tmp/kura/dpa.properties</argLine>
 <!--
                        -Dosgi.noShutdown=true
+                      
                     <appArgLine>-consoleLog -console 1450</appArgLine>
--->
+ -->
                     <bundleStartLevel>
                         <bundle>
                             <id>org.apache.felix.scr</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>                        
-                        <bundle>
-                            <id>org.apache.felix.deploymentadmin</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>
-                        <bundle>
-                            <id>org.apache.felix.dependencymanager</id>
                             <level>4</level>
                             <autoStart>true</autoStart>
                         </bundle>
@@ -166,6 +157,11 @@
                             <autoStart>true</autoStart>
                         </bundle>
                         <bundle>
+                            <id>mqtt-client</id>
+                            <level>4</level>
+                            <autoStart>true</autoStart>
+                        </bundle>
+                        <bundle>
                             <id>org.junit</id>
                             <level>4</level>
                             <autoStart>true</autoStart>
@@ -205,28 +201,6 @@
                             <level>4</level>
                             <autoStart>true</autoStart>
                         </bundle>
-                        
-                        <bundle>
-                            <id>jakarta.annotation-api</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>
-                        <bundle>
-                            <id>com.sun.activation.javax.activation</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>
-                        <bundle>
-                            <id>jaxb-api</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>
-                        <bundle>
-                            <id>com.sun.xml.bind.jaxb-osgi</id>
-                            <level>4</level>
-                            <autoStart>true</autoStart>
-                        </bundle>
-                            
                     </bundleStartLevel>
                     <dependencies>
                         <dependency>
@@ -240,14 +214,6 @@
                         <dependency>
                             <type>p2-installable-unit</type>
                             <artifactId>org.apache.felix.scr</artifactId>
-                        </dependency> 
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>org.apache.felix.deploymentadmin</artifactId>
-                        </dependency>
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>org.apache.felix.dependencymanager</artifactId>
                         </dependency>
                         <dependency>
                             <type>p2-installable-unit</type>
@@ -325,24 +291,6 @@
                             <type>p2-installable-unit</type>
                             <artifactId>org.apache.logging.log4j.api</artifactId>
                         </dependency>
-                       
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>jakarta.annotation-api</artifactId>
-                        </dependency>
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>com.sun.activation.javax.activation</artifactId>
-                        </dependency>
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>jaxb-api</artifactId>
-                        </dependency>
-                        <dependency>
-                            <type>p2-installable-unit</type>
-                            <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
-                        </dependency>
-                        
                     </dependencies>
                 </configuration>
             </plugin>
@@ -413,27 +361,11 @@
                                 <id>org.apache.logging.log4j.slf4j-impl</id>
                                 <versionRange>0.0.0</versionRange>
                             </requirement>
-                           
                             <requirement>
                                 <type>p2-installable-unit</type>
                                 <id>jakarta.annotation-api</id>
                                 <versionRange>0.0.0</versionRange>
                             </requirement>
-                            <requirement>
-                                <type>p2-installable-unit</type>
-                                <id>com.sun.activation.javax.activation</id>
-                                <versionRange>0.0.0</versionRange>
-                            </requirement>
-                            <requirement>
-                                <type>p2-installable-unit</type>
-                                <id>jaxb-api</id>
-                                <versionRange>0.0.0</versionRange>
-                            </requirement>
-                            <requirement>
-                                <type>p2-installable-unit</type>
-                                <id>com.sun.xml.bind.jaxb-osgi</id>
-                                <versionRange>0.0.0</versionRange>
-                            </requirement>       
                         </extraRequirements>
                     </dependency-resolution>
                 </configuration>

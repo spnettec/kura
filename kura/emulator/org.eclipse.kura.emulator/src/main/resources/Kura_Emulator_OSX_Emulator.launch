@@ -168,7 +168,6 @@
         <setEntry value="com.google.gwt.user@default:default"/>
         <setEntry value="com.google.protobuf@default:default"/>
         <setEntry value="com.h2database@default:default"/>
-        <setEntry value="com.sun.activation.javax.activation@default:default"/>
         <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
@@ -194,11 +193,14 @@
         <setEntry value="io.netty.transport-native-kqueue@default:default"/>
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
+        <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
+        <setEntry value="jakarta.xml.bind-api@default:default"/>
+        <setEntry value="jakarta.xml.soap-api@default:default"/>
+        <setEntry value="jakarta.xml.ws-api@default:default"/>
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.el@default:default"/>
         <setEntry value="javax.servlet@default:default"/>
-        <setEntry value="jaxb-api@default:default"/>
         <setEntry value="jcl.over.slf4j@default:default"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
@@ -309,6 +311,7 @@
         <setEntry value="org.eclipse.paho.client.mqttv3@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm.macosx@default:false"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
+        <setEntry value="org.glassfish.hk2.osgi-resource-locator@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
