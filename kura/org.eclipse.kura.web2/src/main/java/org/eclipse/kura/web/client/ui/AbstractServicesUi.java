@@ -239,6 +239,7 @@ public abstract class AbstractServicesUi extends Composite {
         if (param.getId().endsWith(TARGET_SUFFIX)) {
             textBox.setReadOnly(true);
             String targetedService = param.getId().split(TARGET_SUFFIX)[0];
+
             DropDown dropDown = new DropDown();
             Anchor dropDownAnchor = new Anchor();
             dropDownAnchor.setText(MSGS.selectAvailableTargets());
@@ -257,9 +258,9 @@ public abstract class AbstractServicesUi extends Composite {
             KuraTextBox kuraTextBox = (KuraTextBox) textBox;
             kuraTextBox.setData(formattedValue);
             kuraTextBox.setText(MSGS.noTargetsAvailable());
-            RequestQueue.submit(context -> this.gwtXSRFService
-                    .generateSecurityToken(context.callback(token -> AbstractServicesUi.this.gwtComponentService
-                            .getPidNamesFromTarget(token, this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
+            RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
+                    context.callback(token -> AbstractServicesUi.this.gwtComponentService.getPidNamesFromTarget(token,
+                            this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
                                 dropDownHeader.setText(MSGS.noTargetsAvailable());
                                 if (!data.isEmpty()) {
                                     final String targetData;
@@ -285,16 +286,19 @@ public abstract class AbstractServicesUi extends Composite {
 
     private KuraAnchorListItem createListItem(final KuraTextBox textBox, String targetEntryKey, String targetEntryName,
             String targetData) {
+        String textDisplay = (targetEntryName == null ? targetEntryKey : targetEntryName) + "(" + targetEntryKey + ")";
+        if (targetEntryName == null || "".equals(targetEntryName))
+            textDisplay = targetEntryKey;
         if (targetEntryKey.equals(targetData)) {
-            textBox.setText(targetEntryName + "(" + targetEntryKey + ")");
+            textBox.setText(textDisplay);
         }
         KuraAnchorListItem listItem = new KuraAnchorListItem();
-        listItem.setText(targetEntryName);
+        listItem.setText(textDisplay);
         listItem.setData("(kura.service.pid=" + targetEntryKey + ")");
         listItem.addClickHandler(event -> {
             KuraAnchor eventGenerator = (KuraAnchor) event.getSource();
             textBox.setData(eventGenerator.getData());
-            textBox.setText(targetEntryName + "(" + targetEntryKey + ")");
+            textBox.setText(eventGenerator.getText());
             setDirty(true);
         });
         return listItem;

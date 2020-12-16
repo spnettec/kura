@@ -689,6 +689,11 @@
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
+                  <id>org.apache.felix:org.apache.felix.useradmin:${org.apache.felix.useradmin.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
                   <id>org.apache.felix:org.apache.felix.ipojo:${org.apache.felix.ipojo.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>

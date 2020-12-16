@@ -27,10 +27,11 @@
 
 <g:FormPanel ui:field="loginForm">
 		<b:Modal ui:field="loginDialog" title="{msgs.login}" closable="false"
-			fade="false" dataBackdrop="FALSE" addStyleNames="login-form">
+			fade="false" dataBackdrop="FALSE" addStyleNames="login-form" visible="false">
 			
 			<b:ModalBody ui:field="loginModalBody">
-						<b:FormGroup ui:field="authenticationMethodGroup">
+						<b.html:Paragraph text="Web UI access is not enabled." ui:field="noAuthMethodsWarning" />
+						<b:FormGroup ui:field="authenticationMethodGroup" visible="false">
                             <b:FormLabel for="authenticationMethod" text="{msgs.authenticationMethod}"/>
                             <g:FlowPanel>
                                 <b:ListBox ui:field="authenticationMethod" b:id="authenticationMethod">
@@ -46,7 +47,7 @@
                 </b:InputGroup>
                 <b.html:Br/>
                 <b:Button type="PRIMARY" text="{msgs.reset}" b:id="reset-button" ui:field="loginResetButton"/>
-				<b:SubmitButton text="{msgs.login}" b:id="login-button" />
+				<b:SubmitButton text="{msgs.login}" b:id="login-button" ui:field="loginButton" visible="false"/>
 			</b:ModalFooter>
 		
 				

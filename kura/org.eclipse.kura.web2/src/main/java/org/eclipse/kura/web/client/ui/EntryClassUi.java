@@ -22,9 +22,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.eclipse.kura.web.client.messages.Messages;
+import org.eclipse.kura.web.client.ui.AlertDialog.ConfirmListener;
+import org.eclipse.kura.web.client.ui.AlertDialog.Severity;
 import org.eclipse.kura.web.client.ui.cloudconnection.CloudConnectionsUi;
 import org.eclipse.kura.web.client.ui.device.DevicePanelUi;
 import org.eclipse.kura.web.client.ui.drivers.assets.DriversAndAssetsUi;
@@ -34,16 +37,21 @@ import org.eclipse.kura.web.client.ui.packages.PackagesPanelUi;
 import org.eclipse.kura.web.client.ui.security.SecurityPanelUi;
 import org.eclipse.kura.web.client.ui.settings.SettingsPanelUi;
 import org.eclipse.kura.web.client.ui.status.StatusPanelUi;
+import org.eclipse.kura.web.client.ui.users.UsersPanelUi;
 import org.eclipse.kura.web.client.ui.wires.WiresPanelUi;
+import org.eclipse.kura.web.client.util.EventService;
 import org.eclipse.kura.web.client.util.FailureHandler;
 import org.eclipse.kura.web.client.util.FilterBuilder;
 import org.eclipse.kura.web.client.util.PidTextBox;
 import org.eclipse.kura.web.client.util.request.Request;
 import org.eclipse.kura.web.client.util.request.RequestContext;
 import org.eclipse.kura.web.client.util.request.RequestQueue;
+import org.eclipse.kura.web.shared.ForwardedEventTopic;
+import org.eclipse.kura.web.shared.KuraPermission;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
 import org.eclipse.kura.web.shared.model.GwtSession;
+import org.eclipse.kura.web.shared.model.GwtUserData;
 import org.eclipse.kura.web.shared.model.GwtXSRFToken;
 import org.eclipse.kura.web.shared.service.GwtComponentService;
 import org.eclipse.kura.web.shared.service.GwtComponentServiceAsync;
@@ -73,6 +81,7 @@ import org.gwtbootstrap3.client.ui.TextArea;
 import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.constants.IconSize;
 import org.gwtbootstrap3.client.ui.constants.IconType;
+import org.gwtbootstrap3.client.ui.html.Span;
 import org.gwtbootstrap3.client.ui.html.Strong;
 
 import com.google.gwt.core.client.Callback;
@@ -81,6 +90,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Composite;
@@ -129,6 +139,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     AnchorListItem settings;
     @UiField
     AnchorListItem security;
+    @UiField
+    AnchorListItem users;
     @UiField
     AnchorListItem wires;
     @UiField
@@ -193,6 +205,12 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     NavPills sidenavPills;
     @UiField
     AlertDialog alertDialog;
+    @UiField
+    Widget servicesContainer;
+    @UiField
+    Span userNameLarge;
+    @UiField
+    Span userNameSmall;
 
     private static final Messages MSGS = GWT.create(Messages.class);
     private static final EntryClassUIUiBinder uiBinder = GWT.create(EntryClassUIUiBinder.class);
@@ -214,6 +232,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     private final PackagesPanelUi packagesBinder = GWT.create(PackagesPanelUi.class);
     private final SettingsPanelUi settingsBinder = GWT.create(SettingsPanelUi.class);
     private final SecurityPanelUi securityBinder = GWT.create(SecurityPanelUi.class);
+    private final UsersPanelUi usersBinder = GWT.create(UsersPanelUi.class);
     private final FirewallPanelUi firewallBinder = GWT.create(FirewallPanelUi.class);
     private final NetworkPanelUi networkBinder = GWT.create(NetworkPanelUi.class);
     private final CloudConnectionsUi cloudServicesBinder = GWT.create(CloudConnectionsUi.class);
@@ -233,6 +252,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     };
 
     private final EntryClassUi ui;
+    private GwtUserData userData;
 
     private GwtSession currentSession;
     private GwtConfigComponent selected = null;
@@ -240,11 +260,35 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     private ServicesUi servicesUi;
     private AnchorListItem selectedAnchorListItem;
 
+    private final Timer userConfigReloadTimer = new Timer() {
+
+        @Override
+        public void run() {
+            RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(
+                    c.callback(token -> gwtSessionService.getUserConfig(token, c.callback(config -> {
+                        if (config == null) {
+                            logout();
+                            return;
+                        }
+
+                        if (!config.equals(userData)) {
+                            alertDialog.show(MSGS.usersIdentityConfigChanged(userData.getUserName()),
+                                    AlertDialog.Severity.ALERT, (ConfirmListener) null);
+                        }
+
+                        userData = config;
+                    })))), false);
+        }
+    };
+
     private static GwtConsoleUserOptions userOptions;
 
-    public EntryClassUi() {
+    public EntryClassUi(final GwtUserData gwtUserData) {
         this.ui = this;
+        this.userData = gwtUserData;
+
         initWidget(uiBinder.createAndBindUi(this));
+
         initWaitModal();
         initNewComponentErrorModal();
         initExceptionReportModal();
@@ -324,7 +368,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void initSystemPanel(GwtSession gwtSession) {
-        if (!gwtSession.isNetAdminAvailable()) {
+        if (!gwtSession.isNetAdminAvailable()
+                || !checkPermissions(Collections.singleton(KuraPermission.NETWORK_ADMIN))) {
             this.network.setVisible(false);
             this.firewall.setVisible(false);
         }
@@ -343,6 +388,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
         initSecurityPanel();
 
+        initUsersPanel();
+
         initCloudServicesPanel();
 
         initWiresPanel();
@@ -352,134 +399,247 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     private void initDriversAndAssetsPanel() {
-        this.driversAndAssetsServices.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.driversAndAssetsServices(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.driversAndTwinsBinder);
-            EntryClassUi.this.driversAndTwinsBinder.refresh();
-        }));
+        if (!checkPermission(KuraPermission.WIRES_ADMIN)) {
+            this.driversAndAssetsServices.setVisible(false);
+            return;
+        }
+
+        this.driversAndAssetsServices.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.driversAndAssetsServices) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.driversAndAssetsServices(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.driversAndTwinsBinder);
+                EntryClassUi.this.driversAndTwinsBinder.refresh();
+            });
+        });
     }
 
     private void initWiresPanel() {
-        this.wires.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.wires(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.wiresBinder);
-            EntryClassUi.this.wiresBinder.load();
-        }));
+        if (!checkPermission(KuraPermission.WIRES_ADMIN)) {
+            this.wires.setVisible(false);
+            return;
+        }
+
+        this.wires.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.wires) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.wires(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.wiresBinder);
+                EntryClassUi.this.wiresBinder.load();
+            });
+        });
     }
 
     private void initCloudServicesPanel() {
-        this.cloudServices.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.cloudServices(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.cloudServicesBinder);
-            EntryClassUi.this.cloudServicesBinder.refresh();
+        if (!checkPermission(KuraPermission.CLOUD_CONNECTION_ADMIN)) {
+            this.cloudServices.setVisible(false);
+            return;
+        }
 
-        }));
+        this.cloudServices.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.cloudServices) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.cloudServices(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.cloudServicesBinder);
+                EntryClassUi.this.cloudServicesBinder.refresh();
+
+            });
+        });
     }
 
     private void initSettingsPanel() {
-        this.settings.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.settings(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.settingsBinder);
-            EntryClassUi.this.settingsBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.settingsBinder.load();
-        }));
+        if (!checkPermission(KuraPermission.ADMIN)) {
+            this.settings.setVisible(false);
+            return;
+        }
+
+        this.settings.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.settings) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.settings(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.settingsBinder);
+                EntryClassUi.this.settingsBinder.setSession(EntryClassUi.this.currentSession);
+                EntryClassUi.this.settingsBinder.load();
+            });
+        });
     }
 
     private void initSecurityPanel() {
-        this.security.addClickHandler(event -> confirmIfUiDirty(() -> {
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.security);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.security(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.securityBinder);
-            EntryClassUi.this.securityBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.securityBinder.load();
-        }));
+        if (!checkPermission(KuraPermission.ADMIN)) {
+            this.security.setVisible(false);
+            return;
+        }
+
+        this.security.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.security) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.security);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.security(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.securityBinder);
+                EntryClassUi.this.securityBinder.setSession(EntryClassUi.this.currentSession);
+                EntryClassUi.this.securityBinder.load();
+            });
+        });
+    }
+
+    private void initUsersPanel() {
+        if (!checkPermission(KuraPermission.ADMIN)) {
+            this.users.setVisible(false);
+            return;
+        }
+
+        this.users.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.users) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.users);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.users(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.usersBinder);
+                EntryClassUi.this.usersBinder.refresh();
+            });
+        });
     }
 
     private void initPackagesPanel() {
-        this.packages.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.packages(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.packagesBinder);
-            EntryClassUi.this.packagesBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.packagesBinder.setMainUi(EntryClassUi.this.ui);
-            EntryClassUi.this.packagesBinder.refresh();
-        }));
+        if (!checkPermission(KuraPermission.PACKAGES_ADMIN)) {
+            this.packages.setVisible(false);
+            return;
+        }
+
+        this.packages.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.packages) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.packages(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.packagesBinder);
+                EntryClassUi.this.packagesBinder.setSession(EntryClassUi.this.currentSession);
+                EntryClassUi.this.packagesBinder.setMainUi(EntryClassUi.this.ui);
+                EntryClassUi.this.packagesBinder.refresh();
+            });
+        });
     }
 
     private void initFirewallPanel() {
         if (this.firewall.isVisible()) {
-            this.firewall.addClickHandler(event -> confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.firewall(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.firewallBinder);
-                EntryClassUi.this.firewallBinder.initFirewallPanel();
-            }));
+            this.firewall.addClickHandler(event -> {
+                if (this.selectedAnchorListItem == this.firewall) {
+                    return;
+                }
+                confirmIfUiDirty(() -> {
+                    this.wiresBinder.unload();
+                    EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
+                    EntryClassUi.this.contentPanel.setVisible(true);
+                    setHeader(MSGS.firewall(), null);
+                    EntryClassUi.this.contentPanelBody.clear();
+                    EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.firewallBinder);
+                    EntryClassUi.this.firewallBinder.initFirewallPanel();
+                });
+            });
         }
     }
 
     private void initNetworkPanel() {
         if (this.network.isVisible()) {
-            this.network.addClickHandler(event -> confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
-                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
-                EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader(MSGS.network(), null);
-                EntryClassUi.this.contentPanelBody.clear();
-                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.networkBinder);
-                EntryClassUi.this.networkBinder.setSession(EntryClassUi.this.currentSession);
-                EntryClassUi.this.networkBinder.initNetworkPanel();
-            }));
+            this.network.addClickHandler(event -> {
+                if (this.selectedAnchorListItem == this.network) {
+                    return;
+                }
+                confirmIfUiDirty(() -> {
+                    this.wiresBinder.unload();
+                    EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
+                    EntryClassUi.this.contentPanel.setVisible(true);
+                    setHeader(MSGS.network(), null);
+                    EntryClassUi.this.contentPanelBody.clear();
+                    EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.networkBinder);
+                    EntryClassUi.this.networkBinder.setSession(EntryClassUi.this.currentSession);
+                    EntryClassUi.this.networkBinder.initNetworkPanel();
+                });
+            });
         }
     }
 
     private void initDevicePanel() {
-        this.device.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.device(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.deviceBinder);
-            EntryClassUi.this.deviceBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.deviceBinder.initDevicePanel();
-        }));
+        if (!checkPermission(KuraPermission.DEVICE)) {
+            this.device.setVisible(false);
+            return;
+        }
+
+        this.device.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.device) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader(MSGS.device(), null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.deviceBinder);
+                EntryClassUi.this.deviceBinder.setSession(EntryClassUi.this.currentSession);
+                EntryClassUi.this.deviceBinder.initDevicePanel();
+            });
+        });
     }
 
     private void initStatusPanel() {
-        this.status.addClickHandler(event -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
-            EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
-            EntryClassUi.this.contentPanel.setVisible(true);
-            setHeader(MSGS.status(), null);
-            EntryClassUi.this.contentPanelBody.clear();
-            EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
-            EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
-            EntryClassUi.this.statusBinder.loadStatusData();
-        }));
+        if (!checkPermission(KuraPermission.DEVICE)) {
+            this.status.setVisible(false);
+            return;
+        }
+
+        this.status.addClickHandler(event -> {
+            if (this.selectedAnchorListItem == this.status) {
+                return;
+            }
+            confirmIfUiDirty(() -> {
+                this.wiresBinder.unload();
+                EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
+                EntryClassUi.this.contentPanel.setVisible(true);
+                setHeader("Status", null);
+                EntryClassUi.this.contentPanelBody.clear();
+                EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
+                EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
+                EntryClassUi.this.statusBinder.loadStatusData();
+            });
+        });
     }
 
     private void filterAvailableServices(String serviceName) {
@@ -542,75 +702,49 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         })));
     }
 
-    public void fetchAvailableServices(final AsyncCallback<Void> callback) {
-        // (Re)Fetch Available Services
-        RequestQueue.submit(c -> this.gwtXSRFService.generateSecurityToken(
-                c.callback(token -> EntryClassUi.this.gwtComponentService.findComponentConfigurations(token,
-                        SERVICES_FILTER, c.callback(new AsyncCallback<List<GwtConfigComponent>>() {
+    public void fetchAvailableServices() {
+        if (!checkPermission(KuraPermission.ADMIN)) {
+            return;
+        }
 
-                            @Override
-                            public void onFailure(Throwable ex) {
-                                FailureHandler.handle(ex, EntryClassUi.class.getName());
-                                if (callback != null) {
-                                    callback.onFailure(ex);
-                                }
-                            }
-
-                            @Override
-                            public void onSuccess(List<GwtConfigComponent> result) {
-                                sortConfigurationsByName(result);
-                                EntryClassUi.this.servicesMenu.clear();
-                                for (GwtConfigComponent configComponent : result) {
-                                    if (!configComponent.isWireComponent()) {
-                                        final ServicesAnchorListItem item = new ServicesAnchorListItem(configComponent);
-                                        item.addClickHandler(e -> confirmIfUiDirty(() -> {
-                                            setSelected(configComponent);
-                                            setSelectedAnchorListItem(item);
-                                            render(configComponent);
-                                        }));
-                                        EntryClassUi.this.servicesMenu.add(item);
-                                    }
-                                }
-                                filterAvailableServices(EntryClassUi.this.textSearch.getValue());
-                                if (callback != null) {
-                                    callback.onSuccess(null);
-                                }
-                            }
-                        })))));
+        RequestQueue.submit(c -> this.gwtXSRFService.generateSecurityToken(c.callback(
+                token -> gwtComponentService.findComponentConfigurations(token, SERVICES_FILTER, c.callback(result -> {
+                    sortConfigurationsByName(result);
+                    EntryClassUi.this.servicesMenu.clear();
+                    for (GwtConfigComponent configComponent : result) {
+                        if (!configComponent.isWireComponent()) {
+                            final ServicesAnchorListItem item = new ServicesAnchorListItem(configComponent);
+                            item.addClickHandler(e -> confirmIfUiDirty(() -> {
+                                setSelected(configComponent);
+                                setSelectedAnchorListItem(item);
+                                render(configComponent);
+                            }));
+                            EntryClassUi.this.servicesMenu.add(item);
+                        }
+                    }
+                    filterAvailableServices(EntryClassUi.this.textSearch.getValue());
+                })))));
 
     }
 
     private void initLogoutButtons() {
-        final ClickHandler logoutHandler = e -> this.gwtXSRFService
-                .generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
-
-                    @Override
-                    public void onSuccess(GwtXSRFToken result) {
-                        EntryClassUi.this.gwtSessionService.logout(result, new AsyncCallback<Void>() {
-
-                            @Override
-                            public void onSuccess(Void result) {
-                                Window.Location.reload();
-                            }
-
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                FailureHandler.handle(caught);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        FailureHandler.handle(caught);
-                    }
-                });
+        final ClickHandler logoutHandler = e -> confirmIfUiDirty(() -> logout());
 
         this.logoutButton.addClickHandler(logoutHandler);
         this.headerLogoutButton.addClickHandler(logoutHandler);
     }
 
+    private void logout() {
+        RequestQueue.submit(c -> this.gwtXSRFService.generateSecurityToken(
+                c.callback(token -> gwtSessionService.logout(token, c.callback(ok -> Window.Location.reload())))));
+    }
+
     private void initServicesTree() {
+        if (!checkPermission(KuraPermission.ADMIN)) {
+            servicesContainer.setVisible(false);
+            return;
+        }
+
         // Keypress handler
         this.textSearch.addKeyUpHandler(this.searchBoxChangeHandler);
 
@@ -672,7 +806,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
             String pid = EntryClassUi.this.componentPid.getPid();
             String desc = EntryClassUi.this.componentDesc.getText();
 
-            if (SELECT_COMPONENT.equalsIgnoreCase(factoryPid) || "".equals(pid)) {
+            if (SELECT_COMPONENT.equalsIgnoreCase(factoryPid) || "".equals(factoryPid)) {
                 EntryClassUi.this.errorAlertText.setText(MSGS.servicesComponentFactoryAlertNotSelected());
                 errorModal.show();
                 return;
@@ -692,7 +826,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
                                     @Override
                                     public void onSuccess(Void result) {
-                                        context.defer(2000, () -> fetchAvailableServices(null));
+                                        context.defer(2000, () -> fetchAvailableServices());
                                     }
                                 }));
                     })));
@@ -734,7 +868,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
     public boolean isUiDirty() {
         return isServicesUiDirty() || isNetworkDirty() || isFirewallDirty() || isSettingsDirty()
-                || isCloudServicesDirty() || isWiresDirty() || isDriversAndTwinsDirty();
+                || isCloudServicesDirty() || isWiresDirty() || isDriversAndTwinsDirty() || isUsersDirty()
+                || isSecurityDirty();
     }
 
     public boolean isServicesUiDirty() {
@@ -756,6 +891,22 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     public boolean isFirewallDirty() {
         if (this.firewall.isVisible()) {
             return this.firewallBinder.isDirty();
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isSecurityDirty() {
+        if (this.security.isVisible()) {
+            return this.securityBinder.isDirty();
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isUsersDirty() {
+        if (this.users.isVisible()) {
+            return this.usersBinder.isDirty();
         } else {
             return false;
         }
@@ -838,6 +989,9 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         if (this.cloudServices.isVisible()) {
             this.cloudServicesBinder.setDirty(false);
         }
+        if (this.security.isVisible()) {
+            this.securityBinder.setDirty(false);
+        }
         if (this.wires.isVisible()) {
             this.wiresBinder.clearDirtyState();
             this.wiresBinder.unload();
@@ -853,19 +1007,38 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void init() {
-        fetchAvailableServices(new AsyncCallback<Void>() {
+        userNameLarge.setText(userData.getUserName());
+        userNameSmall.setText(userData.getUserName());
 
-            @Override
-            public void onSuccess(Void result) {
-                EntryClassUi.this.showStatusPanel();
-            }
+        if (userData.getPermissions().isEmpty()) {
+            alertDialog.show("The current user has no permissions", Severity.ALERT, (ConfirmListener) null);
+            return;
+        }
 
-            @Override
-            public void onFailure(Throwable caught) {
-                EntryClassUi.this.showStatusPanel();
+        if (checkPermission(KuraPermission.ADMIN)) {
+            fetchAvailableServices();
+        }
+        if (checkPermission(KuraPermission.DEVICE)) {
+            showStatusPanel();
+        }
+        fetchUserOptions();
+
+        Window.addWindowClosingHandler(e -> {
+            if (isUiDirty()) {
+                e.setMessage(MSGS.deviceConfigDirty());
             }
         });
-        fetchUserOptions();
+
+        final EventService.Handler userAdminEventHandler = e -> {
+            userConfigReloadTimer.schedule(1000);
+        };
+
+        EventService.subscribe(ForwardedEventTopic.ROLE_CHANGED, userAdminEventHandler);
+        EventService.subscribe(ForwardedEventTopic.ROLE_CREATED, userAdminEventHandler);
+        EventService.subscribe(ForwardedEventTopic.ROLE_CHANGED, userAdminEventHandler);
+        EventService.subscribe(ForwardedEventTopic.ROLE_CHANGED_SHORT, userAdminEventHandler);
+        EventService.subscribe(ForwardedEventTopic.ROLE_CREATED_SHORT, userAdminEventHandler);
+        EventService.subscribe(ForwardedEventTopic.ROLE_CHANGED_SHORT, userAdminEventHandler);
     }
 
     private void showStatusPanel() {
@@ -976,6 +1149,20 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
     @Override
     public void onConfigurationChanged() {
-        fetchAvailableServices(null);
+        fetchAvailableServices();
+    }
+
+    public boolean checkPermissions(final Set<String> permissions) {
+        if (userData.isAdmin()) {
+            return true;
+        }
+        return userData.getPermissions().containsAll(permissions);
+    }
+
+    public boolean checkPermission(String permission) {
+        if (userData.isAdmin()) {
+            return true;
+        }
+        return userData.getPermissions().contains(permission);
     }
 }

@@ -16,10 +16,14 @@ package org.eclipse.kura.web.server.servlet;
 import static org.eclipse.kura.util.base.StringUtil.isNullOrEmpty;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +83,8 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
 
     private static ServiceRegistration<WireAdminListener> registration;
 
+    private boolean shutdown = false;
+
     /** {@inheritDoc} */
     @Override
     public void destroy() {
@@ -86,17 +92,32 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         requests.clear();
     }
 
+    public synchronized void stop() {
+        logger.info("stopping WiresBlinkServlet...");
+        shutdown = true;
+
+        final Iterator<Entry<String, RequestContext>> iter = requests.entrySet().iterator();
+
+        while (iter.hasNext()) {
+            final Entry<String, RequestContext> next = iter.next();
+
+            next.getValue().close();
+            iter.remove();
+        }
+        logger.info("stopping WiresBlinkServlet...done");
+    }
+
     /**
      * Performs a GET request for Server Sent Event Value.
      *
      * @param request
-     *                     the request
+     *            the request
      * @param response
-     *                     the response
+     *            the response
      * @throws ServletException
-     *                              the servlet exception
+     *             the servlet exception
      * @throws IOException
-     *                              Signals that an I/O exception has occurred.
+     *             Signals that an I/O exception has occurred.
      */
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response)
@@ -122,19 +143,37 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
             return;
         }
 
-        // set the response headers for SSE
-        response.setContentType("text/event-stream");
-        response.setCharacterEncoding("UTF-8");
-        response.setHeader("Cache-control", "no-cache");
-        response.setHeader("Connection", "keep-alive");
-        response.setHeader("Access-Control-Allow-Credentials", "true");
-        response.setHeader("Access-Control-Allow-Origin", "*"); // required for IE9
-        response.setHeader("Content-Encoding", "identity"); // allow compressed data
         final RequestContext context;
 
         synchronized (this) {
 
-            context = new RequestContext(requestId, response);
+            if (shutdown) {
+                try {
+                    response.sendError(400);
+                } catch (final Exception e) {
+                    logger.warn("Failed to send status");
+                }
+                return;
+            }
+
+            // set the response headers for SSE
+            response.setContentType("text/event-stream");
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Cache-control", "no-cache");
+            response.setHeader("Connection", "keep-alive");
+            response.setHeader("Access-Control-Allow-Origin", "*"); // required for IE9
+            response.setHeader("Content-Encoding", "identity"); // allow compressed data
+
+            final OutputStream outputStream;
+
+            try {
+                outputStream = response.getOutputStream();
+            } catch (final Exception e) {
+                logger.warn("failed to open response stream");
+                return;
+            }
+
+            context = new RequestContext(requestId, outputStream);
             addContext(context);
         }
 
@@ -166,15 +205,17 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
     private final class RequestContext {
 
         private final String requestId;
-        private final HttpServletResponse response;
+        private final OutputStream outputStream;
+        private final PrintStream printStream;
         private final Map<WireEvent, Long> lastSentTimestamp = new HashMap<>();
         private final LinkedBlockingQueue<Wire> events = new LinkedBlockingQueue<>(MAX_SIZE_OF_QUEUE);
 
         private boolean run;
 
-        RequestContext(final String requestId, HttpServletResponse response) throws IOException {
+        RequestContext(final String requestId, final OutputStream outputStream) {
             this.requestId = requestId;
-            this.response = response;
+            this.outputStream = outputStream;
+            this.printStream = new PrintStream(outputStream);
             this.run = true;
         }
 
@@ -209,9 +250,8 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
             }
 
             try {
-                this.response.getWriter().printf("data: %s %s%n%n", wireEvent.emitterKuraServicePid,
-                        wireEvent.emitterPort);
-                this.response.getWriter().flush();
+                this.printStream.printf("data: %s %s%n%n", wireEvent.emitterKuraServicePid, wireEvent.emitterPort);
+                this.printStream.flush();
 
                 this.lastSentTimestamp.put(wireEvent, System.currentTimeMillis());
                 return true;
@@ -221,17 +261,18 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
         }
 
         void run() {
-            logger.debug("Session started: {}", this.requestId);
+            logger.info("Session started: {}", this.requestId);
 
             final long startTime = System.currentTimeMillis();
 
             while (processEvent(startTime)) {
-
+                ;
             }
-            logger.debug("Session ended: {}", this.requestId);
+
+            logger.info("Session ended: {}", this.requestId);
 
             try {
-                this.response.getWriter().close();
+                this.outputStream.close();
             } catch (Exception e) {
                 logger.warn("failed to close stream", e);
             }

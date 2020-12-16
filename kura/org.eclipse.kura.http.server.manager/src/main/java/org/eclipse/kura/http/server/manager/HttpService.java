@@ -46,7 +46,6 @@ import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.system.SystemService;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,12 +94,6 @@ public class HttpService implements ConfigurableComponent {
     }
 
     public void activate(ComponentContext context, Map<String, Object> properties) {
-        ServiceReference<?> osgiHttpService = context.getBundleContext()
-                .getServiceReference("org.osgi.service.http.HttpService");
-        if (osgiHttpService != null) {
-            logger.warn("Default http server is running. Use default http server");
-            return;
-        }
         logger.info("Activating {}", this.getClass().getSimpleName());
         this.componentContext = context;
 
@@ -109,14 +102,10 @@ public class HttpService implements ConfigurableComponent {
         this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
         this.selfUpdaterExecutor = Executors.newSingleThreadScheduledExecutor();
 
-        if (keystoreExists(this.options.getHttpsKeystorePath())) {
-            if (isFirstBoot()) {
-                changeDefaultKeystorePassword();
-            } else {
-                activateHttpService();
-            }
+        if (keystoreExists(this.options.getHttpsKeystorePath()) && isFirstBoot()) {
+            changeDefaultKeystorePassword();
         } else {
-            activateOnlyHttpService();
+            activateHttpService();
         }
 
         logger.info("Activating... Done.");
@@ -133,17 +122,13 @@ public class HttpService implements ConfigurableComponent {
             logger.debug("Updating, new props");
             this.options = updatedOptions;
 
+            deactivateHttpService();
+
             if (keystoreExists(this.options.getHttpsKeystorePath())) {
-
-                deactivateHttpService();
-
                 accessKeystore();
-
-                activateHttpService();
-            } else {
-                deactivateHttpService();
-                activateOnlyHttpService();
             }
+
+            activateHttpService();
         }
 
         logger.info("Updating... Done.");
@@ -166,10 +151,28 @@ public class HttpService implements ConfigurableComponent {
 
         final Hashtable<String, Object> config = new Hashtable<>();
 
-        config.put(JettyConstants.HTTPS_PORT, this.options.getHttpsPort());
-        config.put(JettyConstants.HTTPS_ENABLED, this.options.isHttpsEnabled());
-        config.put(JettyConstants.HTTPS_HOST, "0.0.0.0");
-        config.put(JettyConstants.SSL_KEYSTORE, this.options.getHttpsKeystorePath());
+        config.put(JettyConstants.HTTP_PORT, this.options.getHttpPort());
+        config.put(JettyConstants.HTTP_ENABLED, this.options.isHttpEnabled());
+
+        final String customizerClass = System
+                .getProperty(JettyConstants.PROPERTY_PREFIX + JettyConstants.CUSTOMIZER_CLASS);
+
+        if (customizerClass instanceof String) {
+            config.put(JettyConstants.CUSTOMIZER_CLASS, customizerClass);
+        }
+
+        if (!(options.isHttpsEnabled() || options.isHttpsClientAuthEnabled())) {
+            return config;
+        }
+
+        if (!keystoreExists(options.getHttpsKeystorePath())) {
+            logger.warn("HTTPS is enabled but keystore at {} does not exist, disabling HTTPS",
+                    options.getHttpsKeystorePath());
+            config.put(JettyConstants.HTTPS_ENABLED, false);
+            config.put(JettyConstants.HTTP_ENABLED, true);
+            config.put("kura.https.client.auth.enabled", false);
+            return config;
+        }
 
         char[] decryptedPassword;
         try {
@@ -179,20 +182,19 @@ public class HttpService implements ConfigurableComponent {
             decryptedPassword = this.options.getHttpsKeystorePassword();
         }
 
+        config.put(JettyConstants.HTTPS_PORT, this.options.getHttpsPort());
+        config.put(JettyConstants.HTTPS_ENABLED,
+                this.options.isHttpsEnabled() || this.options.isHttpsClientAuthEnabled());
+        config.put(JettyConstants.HTTPS_HOST, "0.0.0.0");
+        config.put(JettyConstants.SSL_KEYSTORE, this.options.getHttpsKeystorePath());
         config.put(JettyConstants.SSL_PASSWORD, new String(decryptedPassword));
-        config.put(JettyConstants.HTTP_PORT, this.options.getHttpPort());
-        config.put(JettyConstants.HTTP_ENABLED, this.options.isHttpEnabled());
-        config.put(JettyConstants.HTTP_HOST, "0.0.0.0");
+
+        if (!this.options.isHttpsEnabled()) {
+            config.put("kura.https.no.client.auth.disabled", true);
+        }
 
         config.put("kura.https.client.auth.enabled", this.options.isHttpsClientAuthEnabled());
         config.put("kura.https.client.auth.port", this.options.getHttpsClientAuthPort());
-
-        final String customizerClass = System
-                .getProperty(JettyConstants.PROPERTY_PREFIX + JettyConstants.CUSTOMIZER_CLASS);
-
-        if (customizerClass instanceof String) {
-            config.put(JettyConstants.CUSTOMIZER_CLASS, customizerClass);
-        }
 
         final boolean isRevocationEnabled = this.options.isRevocationEnabled();
 
@@ -213,57 +215,6 @@ public class HttpService implements ConfigurableComponent {
         }
 
         return config;
-    }
-
-    private Dictionary<String, Object> getJettyHttpConfig() {
-
-        final Hashtable<String, Object> config = new Hashtable<>();
-
-        config.put(JettyConstants.HTTP_PORT, this.options.getHttpPort());
-        config.put(JettyConstants.HTTP_ENABLED, this.options.isHttpEnabled());
-
-        config.put(JettyConstants.HTTPS_ENABLED, false);
-
-        config.put("kura.https.client.auth.enabled", this.options.isHttpsClientAuthEnabled());
-        config.put("kura.https.client.auth.port", this.options.getHttpsClientAuthPort());
-
-        final String customizerClass = System
-                .getProperty(JettyConstants.PROPERTY_PREFIX + JettyConstants.CUSTOMIZER_CLASS);
-
-        if (customizerClass instanceof String) {
-            config.put(JettyConstants.CUSTOMIZER_CLASS, customizerClass);
-        }
-
-        final boolean isRevocationEnabled = this.options.isRevocationEnabled();
-
-        config.put("org.eclipse.kura.revocation.check.enabled", isRevocationEnabled);
-
-        final Optional<String> ocspURI = this.options.getOcspURI();
-        final Optional<String> crlPath = this.options.getCrlPath();
-        final boolean softFail = this.options.isRevocationSoftFailEnabled();
-
-        if (isRevocationEnabled) {
-            if (ocspURI.isPresent() && !ocspURI.get().trim().isEmpty()) {
-                config.put("org.eclipse.kura.revocation.ocsp.uri", ocspURI.get());
-            }
-            if (crlPath.isPresent() && !crlPath.get().trim().isEmpty()) {
-                config.put("org.eclipse.kura.revocation.crl.path", crlPath.get());
-            }
-            config.put("org.eclipse.kura.revocation.soft.fail", softFail);
-        }
-
-        return config;
-    }
-
-    private void activateOnlyHttpService() {
-        logger.warn("no keystore https disabled.");
-        try {
-            logger.info("starting Jetty http only instance...");
-            JettyConfigurator.startServer(KURA_JETTY_PID, getJettyHttpConfig());
-            logger.info("starting Jetty http onlny instance...done");
-        } catch (final Exception e) {
-            logger.error("Could not start Jetty http only Web server", e);
-        }
     }
 
     private void activateHttpService() {

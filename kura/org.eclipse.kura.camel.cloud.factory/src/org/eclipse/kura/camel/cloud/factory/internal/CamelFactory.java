@@ -111,7 +111,10 @@ public class CamelFactory implements ConfigurableComponent, CamelCloudService {
 
     @Override
     public boolean isConnected() {
-        return this.service.getService().isConnected();
+        if (configuration.isValid()) {
+            return this.service.getService().isConnected();
+        }
+        return false;
     }
 
     @Override

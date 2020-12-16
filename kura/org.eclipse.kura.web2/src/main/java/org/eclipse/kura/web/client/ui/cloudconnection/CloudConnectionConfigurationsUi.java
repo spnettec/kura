@@ -46,7 +46,6 @@ public class CloudConnectionConfigurationsUi extends Composite {
     private final GwtSecurityTokenServiceAsync gwtXSRFService = GWT.create(GwtSecurityTokenService.class);
     private final GwtCloudConnectionServiceAsync gwtCloudService = GWT.create(GwtCloudConnectionService.class);
     private final GwtComponentServiceAsync gwtComponentService = GWT.create(GwtComponentService.class);
-
     private TabListItem currentlySelectedTab;
 
     interface CloudServiceConfigurationsUiUiBinder extends UiBinder<Widget, CloudConnectionConfigurationsUi> {
@@ -132,12 +131,11 @@ public class CloudConnectionConfigurationsUi extends Composite {
     }
 
     private void getPubSubConfiguration(final String pid) {
-        RequestQueue.submit(
-                context -> this.gwtXSRFService.generateSecurityToken(context.callback(token -> this.gwtComponentService
-                        .findFilteredComponentConfiguration(token, pid, context.callback(confs -> {
-                            this.connectionNavtabs.clear();
-                            renderTabs(confs.get(0), true);
-                        })))));
+        RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(context
+                .callback(token -> this.gwtCloudService.getPubSubConfiguration(token, pid, context.callback(conf -> {
+                    this.connectionNavtabs.clear();
+                    renderTabs(conf, true);
+                })))));
     }
 
     private void getCloudStackConfigurations(final String factoryPid, final String cloudServicePid) {

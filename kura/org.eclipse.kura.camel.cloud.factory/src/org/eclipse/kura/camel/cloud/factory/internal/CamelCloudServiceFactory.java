@@ -61,11 +61,11 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
      * Add a new CamelFactory
      *
      * @param userPid
-     *            the PID as entered by the user
+     *                       the PID as entered by the user
      * @param properties
-     *            the provided configuration properties
+     *                       the provided configuration properties
      * @throws KuraException
-     *             if anything goes wrong
+     *                           if anything goes wrong
      */
     protected void add(String pid, String name, String description, final Map<String, Object> properties)
             throws KuraException {
@@ -125,6 +125,10 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
             ComponentConfiguration config = this.configurationService.getComponentConfiguration(pid);
             String name = (String) config.getConfigurationProperties()
                     .get(ConfigurationService.KURA_CLOUD_FACTORY_NAME);
+            if (name != null) {
+                return name;
+            }
+            name = (String) config.getConfigurationProperties().get(ConfigurationService.KURA_SERVICE_NAME);
             if (name != null) {
                 return name;
             }
