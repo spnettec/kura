@@ -59,7 +59,7 @@
                 
                 <b:Column size="MD_4">
 	                <b:PanelHeader>
-						<b:Heading size="H3" text="Identities" />
+						<b:Heading size="H3" text="{msgs.users}" />
 					</b:PanelHeader>
 					<b:Row>
 						<g:Label text="{msgs.usersNoSelection}" />

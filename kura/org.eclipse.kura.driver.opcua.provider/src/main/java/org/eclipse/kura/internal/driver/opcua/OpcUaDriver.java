@@ -110,7 +110,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         }
 
         if (this.connectTask.isPresent()) {
-            if (this.connectTask.get().isDone()) {
+            if (this.connectTask.get().isDone() && this.connectionManager.isPresent()) {
                 return CompletableFuture.completedFuture(this.connectionManager.get());
             }
             return this.connectTask.get();
