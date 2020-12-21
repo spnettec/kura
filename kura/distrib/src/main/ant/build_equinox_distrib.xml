@@ -299,14 +299,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dkura.home=${DIR} \
         -Dkura.configuration=file:${DIR}/framework/kura.properties \
         -Dkura.custom.configuration=file:${DIR}/user/kura_custom.properties \
-<<<<<<< HEAD
-        -Ddpa.configuration=${DIR}/data/dpa.properties \
-        -Dlog4j.configurationFile=file:${DIR}/user/log4j.xml \
-		-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
-=======
         -Ddpa.configuration=${DIR}/packages/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
->>>>>>> refs/remotes/origin/develop
         -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
@@ -351,14 +345,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dkura.home=${DIR} \
         -Dkura.configuration=file:${DIR}/framework/kura.properties \
         -Dkura.custom.configuration=file:${DIR}/user/kura_custom.properties \
-<<<<<<< HEAD
-        -Ddpa.configuration=${DIR}/data/dpa.properties \
-        -Dlog4j.configurationFile=file:${DIR}/user/log4j.xml \
-		-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
-=======
         -Ddpa.configuration=${DIR}/packages/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
->>>>>>> refs/remotes/origin/develop
         -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
@@ -401,14 +389,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dkura.home=${DIR} \
         -Dkura.configuration=file:${DIR}/framework/kura.properties \
         -Dkura.custom.configuration=file:${DIR}/user/kura_custom.properties \
-<<<<<<< HEAD
-        -Ddpa.configuration=${DIR}/data/dpa.properties \
-        -Dlog4j.configurationFile=file:${DIR}/user/log4j.xml \
-		-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
-=======
         -Ddpa.configuration=${DIR}/packages/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
->>>>>>> refs/remotes/origin/develop
         -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
@@ -956,7 +938,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gson_${com.google.gson.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.csv_${org.apache.commons.csv.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-csv_${org.apache.commons.csv.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.useradmin_${org.apache.felix.useradmin.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"

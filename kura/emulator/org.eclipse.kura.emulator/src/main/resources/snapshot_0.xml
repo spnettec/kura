@@ -214,10 +214,10 @@
                 <esf:value>4442</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="https.enabled" type="Boolean">
-                <esf:value>true</esf:value>
+                <esf:value>false</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="http.enabled" type="Boolean">
-                <esf:value>false</esf:value>
+                <esf:value>true</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="http.port" type="Integer">
                 <esf:value>8080</esf:value>
