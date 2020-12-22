@@ -187,6 +187,7 @@
         <setEntry value="io.netty.common@default:default"/>
         <setEntry value="io.netty.handler-proxy@default:default"/>
         <setEntry value="io.netty.handler@default:default"/>
+        <setEntry value="io.netty.resolver-dns-native-macos@default:default"/>
         <setEntry value="io.netty.resolver-dns@default:default"/>
         <setEntry value="io.netty.resolver@default:default"/>
         <setEntry value="io.netty.transport-native-epoll@default:default"/>
