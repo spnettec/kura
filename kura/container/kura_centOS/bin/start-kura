@@ -38,7 +38,7 @@ else
 fi
 
 JAVA_INT_OPTS="$JAVA_INT_OPTS -Dkura.custom.configuration=file:\"${KURA_CUSTOM_PROPERTIES_FILE:-${KURA_DIR}/user/kura_custom.properties}\""
-JAVA_INT_OPTS="$JAVA_INT_OPTS -Dlog4j.configurationFile=file:\"${KURA_LOG4J_FILE:-${KURA_DIR}/user/log4j.xml}\""
+JAVA_INT_OPTS="$JAVA_INT_OPTS -Dlog4j.configurationFile=file:\"${KURA_LOG4J_FILE:-${KURA_DIR}/log4j/log4j.xml}\""
 
 set -x
 

@@ -362,6 +362,7 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     private static void setConsoleOptions(final ConsoleOptions options) {
         Console.consoleOptions = options;
+        consoleOptions = options;
     }
 
     public BundleContext getBundleContext() {

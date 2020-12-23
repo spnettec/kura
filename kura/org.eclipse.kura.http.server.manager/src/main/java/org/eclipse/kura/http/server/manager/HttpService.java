@@ -46,6 +46,7 @@ import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.system.SystemService;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +95,12 @@ public class HttpService implements ConfigurableComponent {
     }
 
     public void activate(ComponentContext context, Map<String, Object> properties) {
+        ServiceReference<?> osgiHttpService = context.getBundleContext()
+                .getServiceReference("org.osgi.service.http.HttpService");
+        if (osgiHttpService != null) {
+            logger.warn("Default http server is running. Use default http server");
+            return;
+        }
         logger.info("Activating {}", this.getClass().getSimpleName());
         this.componentContext = context;
 
@@ -102,8 +109,12 @@ public class HttpService implements ConfigurableComponent {
         this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
         this.selfUpdaterExecutor = Executors.newSingleThreadScheduledExecutor();
 
-        if (keystoreExists(this.options.getHttpsKeystorePath()) && isFirstBoot()) {
-            changeDefaultKeystorePassword();
+        if (keystoreExists(this.options.getHttpsKeystorePath())) {
+            if (isFirstBoot()) {
+                changeDefaultKeystorePassword();
+            } else {
+                activateHttpService();
+            }
         } else {
             activateHttpService();
         }
@@ -249,7 +260,8 @@ public class HttpService implements ConfigurableComponent {
         try {
             newPassword = this.cryptoService.decryptAes(this.options.getHttpsKeystorePassword());
         } catch (KuraException e) {
-            logger.warn("Failed to decrypt keystore password");
+            logger.warn("Failed to decrypt keystore password:{},old password:{}",
+                    this.options.getHttpsKeystorePassword(), oldPassword, e);
         }
         updateKeystorePassword(oldPassword, newPassword);
     }

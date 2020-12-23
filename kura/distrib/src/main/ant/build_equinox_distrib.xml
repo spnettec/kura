@@ -292,6 +292,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -337,6 +339,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -347,6 +351,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dkura.custom.configuration=file:${DIR}/user/kura_custom.properties \
         -Ddpa.configuration=${DIR}/data/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
+		-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
         -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
@@ -382,6 +387,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -391,6 +398,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dkura.custom.configuration=file:${DIR}/user/kura_custom.properties \
         -Ddpa.configuration=${DIR}/data/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
+        -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager \
         -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
@@ -828,7 +836,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.ds_${org.eclipse.equinox.ds.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />			
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -895,10 +903,12 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.core_${logging.log4j.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.slf4j-impl_${logging.log4j.version}.jar@3:start" />
+			<!--
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.jul_${logging.log4j.version}.jar@3" />
+			-->
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/minimal-json_${com.eclipsesource.minimal-json.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/minimal-json_${com.eclipsesource.minimal-json.version}.jar" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.h2database_${com.h2database.h2.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -1454,16 +1464,32 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-templates_${org.codehaus.groovy.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-sql_${org.codehaus.groovy.groovy.version}.jar@3" />
+			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-json_${org.codehaus.groovy.groovy.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-jsr223_${org.codehaus.groovy.groovy.version}.jar@3" />	
+			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-datetime_${org.codehaus.groovy.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-dateutil_${org.codehaus.groovy.groovy.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-jsr223_${org.codehaus.groovy.groovy.version}.jar@3" />	
+			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm_${org.ow2.asm.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.commons_${org.ow2.asm-commons.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.util_${org.ow2.asm-util.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree.analysis_${org.ow2.asm-analysis.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree_${org.ow2.asm-tree.version}.jar@3:start" />
+			
+			<entry key="osgi.bundles" operation="+"
+							value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.pool_${org.apache.commons-pool.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"

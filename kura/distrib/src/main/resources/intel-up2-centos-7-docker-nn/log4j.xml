@@ -53,7 +53,7 @@
     </Appenders>
  
     <Loggers>
-        <Logger name="org.eclipse" level="warn" additivity="false">
+        <Logger name="org.eclipse" level="info" additivity="false">
             <AppenderRef ref="RollingFile"/>
             <AppenderRef ref="Console"/>
         </Logger>
@@ -61,7 +61,7 @@
             <AppenderRef ref="audit"/>
             <AppenderRef ref="Console"/>
         </Logger>
-        <Root level="warn">
+        <Root level="info">
             <AppenderRef ref="RollingFile"/>
             <AppenderRef ref="Console"/>
         </Root>

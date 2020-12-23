@@ -635,12 +635,14 @@
                   <id>org.apache.geronimo.specs:geronimo-jta_1.1_spec:${org.apache.geronimo.specs.jta.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
+              </artifact>
+              <!-- 
               <artifact>
                   <id>org.ow2.asm:asm-all:${org.ow2.asm-all.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
+              -->
               <artifact>
                 <id>commons-pool:commons-pool:${org.apache.commons-pool-mvn.version}</id>
                   <source>true</source>
@@ -666,7 +668,12 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
-              <!--
+              
+              <artifact>
+                  <id>org.ow2.asm:asm:${org.ow2.asm-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
               <artifact>
                   <id>org.ow2.asm:asm-commons:${org.ow2.asm-mvn.version}</id>
                   <source>true</source>
@@ -687,7 +694,7 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
-              -->
+              
               <artifact>
                   <id>org.apache.felix:org.apache.felix.fileinstall:${org.apache.felix.fileinstall.version}</id>
                   <source>true</source>

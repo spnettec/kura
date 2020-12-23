@@ -968,7 +968,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     logger.warn("could not find ComponentConfiguration for pid:{}", pid);
                 }
             } catch (Exception e) {
-                logger.error("Error getting configuration for component " + pid, e);
+                logger.error("Error getting configuration for component {}", pid, e);
                 throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e,
                         "Error getting configuration for component " + pid);
             }
