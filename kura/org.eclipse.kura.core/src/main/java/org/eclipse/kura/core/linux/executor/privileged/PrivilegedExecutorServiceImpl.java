@@ -14,10 +14,10 @@ package org.eclipse.kura.core.linux.executor.privileged;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.apache.commons.io.Charsets;
 import org.eclipse.kura.core.internal.linux.executor.ExecutorUtil;
 import org.eclipse.kura.core.linux.executor.LinuxExitStatus;
 import org.eclipse.kura.core.linux.executor.LinuxSignal;
@@ -111,7 +111,7 @@ public class PrivilegedExecutorServiceImpl implements PrivilegedExecutorService 
         CommandStatus status = new CommandStatus(command, new LinuxExitStatus(1));
         ByteArrayOutputStream err = new ByteArrayOutputStream();
         try {
-            err.write("The commandLine cannot be empty or not defined".getBytes(Charsets.UTF_8));
+            err.write("The commandLine cannot be empty or not defined".getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             logger.error("Cannot write to error stream", e);
         }

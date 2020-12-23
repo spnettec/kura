@@ -13,8 +13,8 @@
 package org.eclipse.kura.core.system;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.io.Charsets;
 import org.eclipse.kura.executor.Command;
 import org.eclipse.kura.executor.CommandExecutorService;
 import org.eclipse.kura.executor.CommandStatus;
@@ -38,7 +38,8 @@ public class SuperSystemService {
         command.setExecuteInAShell(runInShell);
         CommandStatus status = executorService.execute(command);
         if (status.getExitStatus().isSuccessful()) {
-            response = new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8);
+            response = new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                    StandardCharsets.UTF_8);
         } else {
             if (logger.isErrorEnabled()) {
                 logger.error("failed to run commands {}", String.join(" ", commandLine));

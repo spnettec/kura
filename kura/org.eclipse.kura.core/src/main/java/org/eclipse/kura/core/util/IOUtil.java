@@ -17,6 +17,7 @@ import static java.lang.Thread.currentThread;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 import org.osgi.framework.Bundle;
@@ -87,6 +88,6 @@ public final class IOUtil {
             return null;
         }
 
-        return IOUtils.toString(resourceUrl);
+        return IOUtils.toString(resourceUrl, StandardCharsets.UTF_8);
     }
 }

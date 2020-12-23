@@ -22,9 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import javax.servlet.Servlet;
@@ -78,10 +75,7 @@ import org.eclipse.kura.web.session.RoutingSecurityHandler;
 import org.eclipse.kura.web.session.SecurityHandler;
 import org.eclipse.kura.web.session.SessionAutorizationSecurityHandler;
 import org.eclipse.kura.web.session.SessionExpirationSecurityHandler;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -119,6 +113,13 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     private HttpService httpService;
 
+    @SuppressWarnings("unused")
+    private RoleRepositoryStore roleRepositoryStore;
+
+    public void setRoleRepositoryStore(RoleRepositoryStore roleRepositoryStore) {
+        this.roleRepositoryStore = roleRepositoryStore;
+    }
+
     private SystemService systemService;
     private CryptoService cryptoService;
 
@@ -140,7 +141,7 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     private static ConsoleOptions consoleOptions;
 
-    private final ExecutorService configUpdateExecutor = Executors.newSingleThreadExecutor();
+    // private final ExecutorService configUpdateExecutor = Executors.newSingleThreadExecutor();
 
     // ----------------------------------------------------------------
     //
@@ -178,49 +179,49 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     protected void activate(ComponentContext context, Map<String, Object> properties) {
 
-        configUpdateExecutor.execute(() -> {
-            waitUserAdminReady();
+        // configUpdateExecutor.execute(() -> {
+        // waitUserAdminReady();
 
-            setInstance(this);
-            try {
-                setConsoleOptions(properties == null ? ConsoleOptions.defaultConfiguration()
-                        : ConsoleOptions.fromProperties(properties));
-            } catch (final Exception e) {
-                logger.warn("failed to build console options", e);
-                return;
-            }
+        setInstance(this);
+        try {
+            setConsoleOptions(properties == null ? ConsoleOptions.defaultConfiguration()
+                    : ConsoleOptions.fromProperties(properties));
+        } catch (final Exception e) {
+            logger.warn("failed to build console options", e);
+            return;
+        }
 
-            // Check if web interface is enabled.
-            boolean webEnabled = Boolean.parseBoolean(this.systemService.getKuraWebEnabled());
+        // Check if web interface is enabled.
+        boolean webEnabled = Boolean.parseBoolean(this.systemService.getKuraWebEnabled());
 
-            if (!webEnabled) {
-                logger.info("Web interface disabled in Kura properties file.");
-                return;
-            }
+        if (!webEnabled) {
+            logger.info("Web interface disabled in Kura properties file.");
+            return;
+        }
 
-            logger.info("activate...");
+        logger.info("activate...");
 
-            setComponentContext(context);
-            this.userManager = new UserManager(this.userAdmin, this.cryptoService);
+        setComponentContext(context);
+        this.userManager = new UserManager(this.userAdmin, this.cryptoService);
 
-            doUpdate(properties);
+        doUpdate(properties);
 
-            Map<String, Object> props = new HashMap<>();
-            props.put("kura.version", this.systemService.getKuraVersion());
-            EventProperties eventProps = new EventProperties(props);
+        Map<String, Object> props = new HashMap<>();
+        props.put("kura.version", this.systemService.getKuraVersion());
+        EventProperties eventProps = new EventProperties(props);
 
-            try {
-                logger.info("initializing useradmin...");
-                this.userManager.update(consoleOptions);
-                logger.info("initializing useradmin...done");
-            } catch (final Exception e) {
-                logger.warn("failed to update UserAdmin", e);
-            }
+        try {
+            logger.info("initializing useradmin...");
+            this.userManager.update(consoleOptions);
+            logger.info("initializing useradmin...done");
+        } catch (final Exception e) {
+            logger.warn("failed to update UserAdmin", e);
+        }
 
-            logger.info("postInstalledEvent() :: posting KuraConfigReadyEvent");
+        logger.info("postInstalledEvent() :: posting KuraConfigReadyEvent");
 
-            this.eventAdmin.postEvent(new Event(KuraConfigReadyEvent.KURA_CONFIG_EVENT_READY_TOPIC, eventProps));
-        });
+        this.eventAdmin.postEvent(new Event(KuraConfigReadyEvent.KURA_CONFIG_EVENT_READY_TOPIC, eventProps));
+        // });
     }
 
     public Boolean isInvalidateSession() {
@@ -240,15 +241,15 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     }
 
     protected void updated(Map<String, Object> properties) {
-        configUpdateExecutor.execute(() -> {
-            boolean webEnabled = Boolean.parseBoolean(this.systemService.getKuraWebEnabled());
-            if (!webEnabled) {
-                return;
-            }
+        // configUpdateExecutor.execute(() -> {
+        boolean webEnabled = Boolean.parseBoolean(this.systemService.getKuraWebEnabled());
+        if (!webEnabled) {
+            return;
+        }
 
-            unregisterServlet();
-            doUpdate(properties);
-        });
+        unregisterServlet();
+        doUpdate(properties);
+        // });
     }
 
     private void doUpdate(Map<String, Object> properties) {
@@ -280,19 +281,19 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     }
 
     protected void deactivate(BundleContext context) {
-        configUpdateExecutor.submit(() -> {
-            logger.info("deactivate...");
+        // configUpdateExecutor.submit(() -> {
+        logger.info("deactivate...");
 
-            unregisterServlet();
-        });
+        unregisterServlet();
+        // });
 
-        configUpdateExecutor.shutdown();
-        try {
-            configUpdateExecutor.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            logger.warn("Interrupted while waiting executor termination");
-            Thread.currentThread().interrupt();
-        }
+        // configUpdateExecutor.shutdown();
+        // try {
+        // configUpdateExecutor.awaitTermination(1, TimeUnit.MINUTES);
+        // } catch (InterruptedException e) {
+        // logger.warn("Interrupted while waiting executor termination");
+        // Thread.currentThread().interrupt();
+        // }
     }
 
     // ----------------------------------------------------------------
@@ -362,7 +363,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     private static void setConsoleOptions(final ConsoleOptions options) {
         Console.consoleOptions = options;
-        consoleOptions = options;
     }
 
     public BundleContext getBundleContext() {
@@ -587,35 +587,35 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     @Override
     public void registerConsoleExtensionBundle(ClientExtensionBundle extension) {
-        configUpdateExecutor.execute(() -> {
-            this.consoleExtensions.add(extension);
-            refreshOptions();
-        });
+        // configUpdateExecutor.execute(() -> {
+        this.consoleExtensions.add(extension);
+        refreshOptions();
+        // });
 
     }
 
     @Override
     public void unregisterConsoleExtensionBundle(ClientExtensionBundle extension) {
-        configUpdateExecutor.execute(() -> {
-            this.consoleExtensions.remove(extension);
-            refreshOptions();
-        });
+        // configUpdateExecutor.execute(() -> {
+        this.consoleExtensions.remove(extension);
+        refreshOptions();
+        // });
     }
 
     @Override
     public void registerLoginExtensionBundle(ClientExtensionBundle extension) {
-        configUpdateExecutor.execute(() -> {
-            this.loginExtensions.add(extension);
-            refreshOptions();
-        });
+        // configUpdateExecutor.execute(() -> {
+        this.loginExtensions.add(extension);
+        refreshOptions();
+        // });
     }
 
     @Override
     public void unregisterLoginExtensionBundle(ClientExtensionBundle extension) {
-        configUpdateExecutor.execute(() -> {
-            this.loginExtensions.remove(extension);
-            refreshOptions();
-        });
+        // configUpdateExecutor.execute(() -> {
+        this.loginExtensions.remove(extension);
+        refreshOptions();
+        // });
     }
 
     @Override
@@ -666,29 +666,30 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     public ComponentConfiguration getConfiguration() throws KuraException {
         return consoleOptions.getConfiguration();
     }
-
-    private void waitUserAdminReady() {
-        final BundleContext context = FrameworkUtil.getBundle(Console.class).getBundleContext();
-
-        while (true) {
-
-            try {
-                Thread.sleep(100);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            final ServiceReference<RoleRepositoryStore> ref = context.getServiceReference(RoleRepositoryStore.class);
-            if (ref == null)
-                break;
-
-            final Bundle[] usingBundles = ref.getUsingBundles();
-
-            if (usingBundles != null && usingBundles.length > 0) {
-                break;
-            }
-
-        }
-    }
-
+    /*
+     * 
+     * private void waitUserAdminReady() {
+     * final BundleContext context = FrameworkUtil.getBundle(Console.class).getBundleContext();
+     * 
+     * while (true) {
+     * 
+     * try {
+     * Thread.sleep(100);
+     * } catch (final InterruptedException e) {
+     * Thread.currentThread().interrupt();
+     * }
+     * 
+     * final ServiceReference<RoleRepositoryStore> ref = context.getServiceReference(RoleRepositoryStore.class);
+     * if (ref == null)
+     * break;
+     * 
+     * final Bundle[] usingBundles = ref.getUsingBundles();
+     * 
+     * if (usingBundles != null && usingBundles.length > 0) {
+     * break;
+     * }
+     * 
+     * }
+     * }
+     */
 }
