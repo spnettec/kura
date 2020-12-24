@@ -116,7 +116,7 @@ public class HttpService implements ConfigurableComponent {
                 activateHttpService();
             }
         } else {
-            activateHttpService();
+            activateOnlyHttpService();
         }
 
         logger.info("Activating... Done.");

@@ -468,7 +468,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             mergedProperties.put(ConfigurationService.KURA_SERVICE_PID, pid);
 
             Dictionary<String, Object> dict = CollectionsUtil.mapToDictionary(mergedProperties);
-            config.update(dict);
+            config.updateIfDifferent(dict);
 
             registerNewFactoryComponentConfiguration(pid, servicePid, factoryPid);
 
@@ -1004,7 +1004,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             // merge the current properties, if any, with the defaults from metatype
             mergeWithDefaults(ocd, props);
 
-            config.update(CollectionsUtil.mapToDictionary(props));
+            config.updateIfDifferent(CollectionsUtil.mapToDictionary(props));
             logger.info("Seeding updated configuration for pid: {}", pid);
         }
     }
@@ -1748,7 +1748,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         // Update the new properties
         // use ConfigurationAdmin to do the update
         Configuration config = this.configurationAdmin.getConfiguration(this.servicePidByPid.get(pid), "?");
-        config.update(CollectionsUtil.mapToDictionary(mergedProperties));
+        config.updateIfDifferent(CollectionsUtil.mapToDictionary(mergedProperties));
 
         if (snapshotOnConfirmation) {
             snapshot();

@@ -43,7 +43,7 @@ public class HttpServiceOptions {
     private static final Property<Boolean> HTTPS_ENABLED = new Property<>(PROP_HTTPS_ENABLED, false);
     private static final Property<Integer> HTTPS_PORT = new Property<>(PROP_HTTPS_PORT, 443);
     private static final Property<Boolean> HTTPS_CLIENT_AUTH_ENABLED = new Property<>(PROP_HTTPS_CLIENT_AUTH_ENABLED,
-            false);
+            true);
     private static final Property<Integer> HTTPS_CLIENT_AUTH_PORT = new Property<>(PROP_HTTPS_CLIENT_AUTH_PORT, 4443);
     private static final Property<String> HTTPS_KEYSTORE_PASSWORD = new Property<>(PROP_HTTPS_KEYSTORE_PASSWORD,
             DEFAULT_HTTPS_KEYSTORE_PASSWORD);
