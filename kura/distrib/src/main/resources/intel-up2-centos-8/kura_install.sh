@@ -1,15 +1,16 @@
 #!/bin/bash
 #
-# Copyright (c) 2016, 2018 Red Hat Inc and others
+#  Copyright (c) 2016, 2020 Red Hat Inc and others
 #
-#  All rights reserved. This program and the accompanying materials
-#  are made available under the terms of the Eclipse Public License v1.0
-#  which accompanies this distribution, and is available at
-#  http://www.eclipse.org/legal/epl-v10.html
+#  This program and the accompanying materials are made
+#  available under the terms of the Eclipse Public License 2.0
+#  which is available at https://www.eclipse.org/legal/epl-2.0/
 #
-# Contributors:
-#     Red Hat Inc
-#	  Eurotech
+#  SPDX-License-Identifier: EPL-2.0
+#
+#  Contributors:
+#   Red Hat Inc
+#	Eurotech
 #
 
 set -e
@@ -89,8 +90,8 @@ cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/s
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp2s0 /etc/sysconfig/network-scripts/ifcfg-enp2s0
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp2s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp2s0
 
-#cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-enp3s0
-#cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp3s0
+cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-enp3s0
+cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp3s0
 
 #cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 /etc/sysconfig/network-scripts/ifcfg-wlp4s0
 #cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 ${INSTALL_DIR}/kura/.data/ifcfg-wlp4s0
