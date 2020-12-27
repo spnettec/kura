@@ -18,7 +18,7 @@ set -e
 INSTALL_DIR=/opt/eclipse
 
 #create known kura install location
-ln -sf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
+mv ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 
 #set up Kura init
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
