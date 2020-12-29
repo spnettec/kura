@@ -751,15 +751,30 @@
                   <id>org.graalvm.sdk:graal-sdk:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <instructions>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"</Require-Capability>
+                      <Provide-Capability>
+                            osgi.serviceloader; osgi.serviceloader=org.graalvm.home.HomeFinder,
+                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.js.runtime.Evaluator
+                      </Provide-Capability>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.graalvm.js:js:jar:20.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=org.graalvm.home.HomeFinder)";
+                                            cardinality:=multiple
+                      </Require-Capability>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=com.oracle.truffle.js.runtime.Evaluator)";
+                                            cardinality:=multiple
+                      </Require-Capability>
                       <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"</Require-Capability>
                       <Provide-Capability>
-                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.js.runtime.builtins.JSFunctionLookup,
+                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.api.TruffleLanguage$Provider,
                             osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.js.runtime.Evaluator
                       </Provide-Capability>
                   </instructions>
@@ -769,6 +784,14 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=org.graalvm.home.HomeFinder)";
+                                            cardinality:=multiple
+                      </Require-Capability>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=com.oracle.truffle.js.runtime.Evaluator)";
+                                            cardinality:=multiple
+                      </Require-Capability>
                       <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"</Require-Capability>
                       <Provide-Capability>
                             osgi.serviceloader; osgi.serviceloader=javax.script.ScriptEngineFactory
@@ -780,10 +803,20 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=org.graalvm.home.HomeFinder)";
+                                            cardinality:=multiple
+                      </Require-Capability>
+                      <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
+                                            osgi.serviceloader;filter:="(osgi.serviceloader=com.oracle.truffle.js.runtime.Evaluator)";
+                                            cardinality:=multiple
+                      </Require-Capability>
                       <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"</Require-Capability>
                       <Provide-Capability>
-                            osgi.serviceloader; osgi.serviceloader=org.graalvm.polyglot.impl.AbstractPolyglotimpl,
-                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.api.object.LayoutFactory
+                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.api.instrumentation.TruffleInstrument$Provider,
+                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.api.library.DefaultExportProvider,
+                            osgi.serviceloader; osgi.serviceloader=com.oracle.truffle.api.object.LayoutFactory,
+                            osgi.serviceloader; osgi.serviceloader=org.graalvm.polyglot.impl.AbstractPolyglotImpl
                       </Provide-Capability>
                   </instructions>
               </artifact>
