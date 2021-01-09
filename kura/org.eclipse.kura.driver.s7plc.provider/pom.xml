@@ -14,8 +14,8 @@
 	 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>org.eclipse.kura</groupId>
@@ -23,23 +23,82 @@
 		<version>5.0.0-SNAPSHOT</version>
 	</parent>
 
-    <artifactId>org.eclipse.kura.driver.s7plc.provider</artifactId>
-    <version>1.0.400-SNAPSHOT</version>
-    <packaging>eclipse-plugin</packaging>
+	<artifactId>org.eclipse.kura.driver.s7plc.provider</artifactId>
+	<version>1.0.400-SNAPSHOT</version>
+	<packaging>eclipse-plugin</packaging>
 
-    <properties>
-        <optimizer.version>1.0.0</optimizer.version>
-        <kura.basedir>${project.basedir}/..</kura.basedir>
-    </properties>
-    <build>
-        <plugins>
-            <plugin>
+	<properties>
+		<optimizer.version>1.0.0</optimizer.version>
+		<kura.basedir>${project.basedir}/..</kura.basedir>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.internal.driver.s7plc.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <configuration>
                     <excludes>Moka7/*</excludes>
                 </configuration>
             </plugin>
-        </plugins>
-    </build>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<configuration>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.eclipse.kura</groupId>
+									<artifactId>org.eclipse.kura.driver.block</artifactId>
+									<version>${optimizer.version}</version>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<id>copy-optimizer-jar</id>
+						<configuration>
+							<target>
+								<copy
+									file="${project.build.directory}/org.eclipse.kura.driver.block-${optimizer.version}.jar"
+									tofile="lib/org.eclipse.kura.driver.block.jar" overwrite="true" />
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<phase>clean</phase>
+						<id>clean-optimizer-jar</id>
+						<configuration>
+							<target>
+								<delete file="lib/org.eclipse.kura.driver.block.optimizer.jar"></delete>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>
