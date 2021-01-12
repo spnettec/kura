@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -598,8 +599,8 @@ public class LinuxNetworkUtil {
                 }
                 return driver;
             }
-            getEthernetDriverParse(driver,
-                    new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+            getEthernetDriverParse(driver, new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                    StandardCharsets.UTF_8));
         }
         return driver;
     }
@@ -653,8 +654,8 @@ public class LinuxNetworkUtil {
                     logger.error(ERR_EXECUTING_CMD_MSG, String.join(" ", cmd), status.getExitStatus().getExitCode());
                 }
             } else {
-                mode = getWifiModeParseIw(
-                        new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+                mode = getWifiModeParseIw(new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                        StandardCharsets.UTF_8));
             }
         }
 
@@ -672,8 +673,8 @@ public class LinuxNetworkUtil {
                         status.getExitStatus().getExitCode());
             }
             // get the output
-            mode = getWifiModeParseIwconfig(
-                    new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+            mode = getWifiModeParseIwconfig(new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                    StandardCharsets.UTF_8));
         }
 
         return mode;
@@ -747,8 +748,8 @@ public class LinuxNetworkUtil {
                 }
             } else {
                 // get the output
-                bitRate = getWifiBitrateParseIw(
-                        new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+                bitRate = getWifiBitrateParseIw(new String(
+                        ((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), StandardCharsets.UTF_8));
             }
         } else if (toolExists(IWCONFIG)) {
             // start the process
@@ -766,8 +767,8 @@ public class LinuxNetworkUtil {
             }
 
             // get the output
-            bitRate = getWifiBitrateParseIwconfig(
-                    new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+            bitRate = getWifiBitrateParseIwconfig(new String(
+                    ((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), StandardCharsets.UTF_8));
         }
         return bitRate;
     }
@@ -844,8 +845,8 @@ public class LinuxNetworkUtil {
                 }
             } else {
                 // get the output
-                ssid = getSSIDParseIw(
-                        new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+                ssid = getSSIDParseIw(new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                        StandardCharsets.UTF_8));
             }
         } else if (toolExists(IWCONFIG)) {
             // start the process
@@ -863,8 +864,8 @@ public class LinuxNetworkUtil {
             }
 
             // get the output
-            ssid = getSSIDParseIwconfig(
-                    new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8));
+            ssid = getSSIDParseIwconfig(new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(),
+                    StandardCharsets.UTF_8));
         }
         return ssid;
     }
@@ -1088,4 +1089,25 @@ public class LinuxNetworkUtil {
         sb.append("'").append(cmd).append("' interrupted");
         return sb.toString();
     }
+
+    public boolean isVirtual(String interfaceName) {
+        boolean virtual = false;
+        Command command = new Command(new String[] { "ls", "-all", "/sys/class/net", "|", "grep", interfaceName });
+        command.setExecuteInAShell(true);
+        command.setTimeout(60);
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setErrorStream(new ByteArrayOutputStream());
+        CommandStatus status = this.executorService.execute(command);
+        if (status.getExitStatus().isSuccessful()) {
+            virtual = new String(((ByteArrayOutputStream) status.getOutputStream()).toByteArray(), Charsets.UTF_8)
+                    .contains("virtual");
+        } else {
+            if (logger.isWarnEnabled()) {
+                logger.warn("Failed to check if interface is virtual {}",
+                        new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), Charsets.UTF_8));
+            }
+        }
+        return virtual;
+    }
+
 }
