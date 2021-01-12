@@ -48,7 +48,7 @@
                         ui:field="snapshots" active="true"/>
                     <b:TabListItem dataTarget="#sslConfigPanel" text="{msgs.settingsSSLConfiguration}"
                         ui:field="sslConfig" />
-                    <b:TabListItem dataTarget="#commandUserPanel" text="Command User"
+                    <b:TabListItem dataTarget="#commandUserPanel" text="{msgs.settingsCommandUser}"
                         ui:field="commandUser" />
                 </b:NavTabs>
                 <b:TabContent ui:field="tabContent">

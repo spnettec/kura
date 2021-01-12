@@ -959,12 +959,14 @@ public class LinuxNetworkUtil {
             command.setErrorStream(new ByteArrayOutputStream());
             status = this.executorService.execute(command);
             if (!status.getExitStatus().isSuccessful()) {
+                logger.error("ifup --force {} error:{}", interfaceName, status.getOutputStream());
                 command = new Command(new String[] { "ifup", interfaceName });
                 command.setTimeout(60);
                 command.setOutputStream(new ByteArrayOutputStream());
                 command.setErrorStream(new ByteArrayOutputStream());
                 status = this.executorService.execute(command);
                 if (!status.getExitStatus().isSuccessful()) {
+                    logger.error("ifup {} error:{}", interfaceName, status.getOutputStream());
                     throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
                             "Failed to bring up interface " + interfaceName);
                 }

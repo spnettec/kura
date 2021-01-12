@@ -13,18 +13,18 @@
 	 Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/UnprivilegedExecutorService">
     <OCD id="org.eclipse.kura.executor.UnprivilegedExecutorService"
-         name="UnprivilegedExecutorService"
-         description="The UnprivilegedExecutorService is responsible to execute commands on the system with a specific and limited user.">
+         name="%name"
+         description="%description">
 
         <AD id="command.username"
-            name="command.username"
+            name="%command.username"
             type="String"
             cardinality="0"
             required="true"
             default="kura"
-            description="The name of the user for executing commands on the system using the UnprivilegedExecutorService."/>
+            description="%command.usernameDesc"/>
 
     </OCD>
 
