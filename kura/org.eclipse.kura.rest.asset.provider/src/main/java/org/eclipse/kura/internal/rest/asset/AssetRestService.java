@@ -32,14 +32,13 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.felix.useradmin.RoleRepositoryStore;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.asset.Asset;
 import org.eclipse.kura.asset.AssetService;
 import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.type.TypedValue;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -63,13 +62,14 @@ public class AssetRestService {
 
     private AssetService assetService;
     private Gson channelSerializer;
+    @SuppressWarnings("unused")
+    private RoleRepositoryStore roleRepositoryStore;
+
+    public void setRoleRepositoryStore(RoleRepositoryStore roleRepositoryStore) {
+        this.roleRepositoryStore = roleRepositoryStore;
+    }
 
     private UserAdmin userAdmin;
-    private Thread userAdminUpdateThread = new Thread(() -> {
-        waitUserAdminReady();
-
-        userAdmin.createRole("kura.permission.rest.assets", Role.GROUP);
-    });
 
     protected void setUserAdmin(UserAdmin userAdmin) {
         this.userAdmin = userAdmin;
@@ -80,15 +80,11 @@ public class AssetRestService {
     }
 
     public void activate() {
-        this.userAdminUpdateThread.start();
+        userAdmin.createRole("kura.permission.rest.assets", Role.GROUP);
     }
 
     public void deactivate() {
-        try {
-            this.userAdminUpdateThread.join(30000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+
     }
 
     @GET
@@ -172,28 +168,5 @@ public class AssetRestService {
                     }).create();
         }
         return this.channelSerializer;
-    }
-
-    private void waitUserAdminReady() {
-        final BundleContext context = FrameworkUtil.getBundle(AssetRestService.class).getBundleContext();
-
-        while (true) {
-
-            try {
-                Thread.sleep(100);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            final ServiceReference<?> ref = context
-                    .getServiceReference("org.apache.felix.useradmin.RoleRepositoryStore");
-
-            final Bundle[] usingBundles = ref.getUsingBundles();
-
-            if (usingBundles != null && usingBundles.length > 0) {
-                break;
-            }
-
-        }
     }
 }
