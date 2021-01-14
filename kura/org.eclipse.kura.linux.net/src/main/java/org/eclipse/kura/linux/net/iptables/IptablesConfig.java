@@ -261,17 +261,7 @@ public class IptablesConfig extends IptablesConfigConstants {
     }
 
     private void saveFilterTable(PrintWriter writer) {
-        writer.println(ALLOW_ALL_TRAFFIC_TO_LOOPBACK);
-        writer.println(ALLOW_ONLY_INCOMING_TO_OUTGOING);
-        if (this.allowIcmp) {
-            for (String sAllowIcmp : ALLOW_ICMP) {
-                writer.println(sAllowIcmp);
-            }
-        } else {
-            for (String sDoNotAllowIcmp : DO_NOT_ALLOW_ICMP) {
-                writer.println(sDoNotAllowIcmp);
-            }
-        }
+        writeLoAndIcmp(writer);
         writeLocalRulesToFilterTable(writer);
         writePortForwardRulesToFilterTable(writer);
         writeAutoNatRulesToFilterTable(writer);
@@ -279,6 +269,35 @@ public class IptablesConfig extends IptablesConfigConstants {
         writer.println(RETURN_INPUT_KURA_CHAIN);
         writer.println(RETURN_OUTPUT_KURA_CHAIN);
         writer.println(RETURN_FORWARD_KURA_CHAIN);
+    }
+
+    private void writeLoAndIcmp(PrintWriter writer) {
+        if (writer == null) {
+            execute((IPTABLES_COMMAND + " " + ALLOW_ALL_TRAFFIC_TO_LOOPBACK).split(" "));
+            execute((IPTABLES_COMMAND + " " + ALLOW_ONLY_INCOMING_TO_OUTGOING).split(" "));
+        } else {
+            writer.println(ALLOW_ALL_TRAFFIC_TO_LOOPBACK);
+            writer.println(ALLOW_ONLY_INCOMING_TO_OUTGOING);
+        }
+
+        if (this.allowIcmp) {
+            for (String sAllowIcmp : ALLOW_ICMP) {
+                if (writer == null) {
+                    execute((IPTABLES_COMMAND + " " + sAllowIcmp).split(" "));
+                } else {
+                    writer.println(sAllowIcmp);
+                }
+
+            }
+        } else {
+            for (String sDoNotAllowIcmp : DO_NOT_ALLOW_ICMP) {
+                if (writer == null) {
+                    execute((IPTABLES_COMMAND + " " + sDoNotAllowIcmp).split(" "));
+                } else {
+                    writer.println(sDoNotAllowIcmp);
+                }
+            }
+        }
     }
 
     private void writeNatRulesToFilterTable(PrintWriter writer) {
@@ -394,8 +413,9 @@ public class IptablesConfig extends IptablesConfigConstants {
         if (this.portForwardRules != null && !this.portForwardRules.isEmpty()) {
             for (PortForwardRule portForwardRule : this.portForwardRules) {
                 if (writer == null) {
-                    execute((IPTABLES_COMMAND + " -t " + NAT + portForwardRule.getNatPreroutingChainRule()).split(" "));
-                    execute((IPTABLES_COMMAND + " -t " + NAT + portForwardRule.getNatPostroutingChainRule())
+                    execute((IPTABLES_COMMAND + " -t " + NAT + " " + portForwardRule.getNatPreroutingChainRule())
+                            .split(" "));
+                    execute((IPTABLES_COMMAND + " -t " + NAT + " " + portForwardRule.getNatPostroutingChainRule())
                             .split(" "));
                 } else {
                     writer.println(portForwardRule.getNatPreroutingChainRule());
@@ -619,6 +639,7 @@ public class IptablesConfig extends IptablesConfigConstants {
     public void applyRules() {
         applyPolicies();
         createKuraChains();
+        writeLoAndIcmp(null);
         writeLocalRulesToFilterTable(null);
         writePortForwardRulesToFilterTable(null);
         writeAutoNatRulesToFilterTable(null);
