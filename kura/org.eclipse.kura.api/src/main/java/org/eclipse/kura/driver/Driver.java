@@ -10,7 +10,7 @@
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
- *
+ *  Abe Shmookler
  *******************************************************************************/
 package org.eclipse.kura.driver;
 
@@ -42,7 +42,7 @@ public interface Driver {
     /**
      * Each driver is identified by the value of this property in the Component Configuration
      */
-    public static final String DRIVER_PID_PROPERTY_NAME = "driver.pid";
+    public static final String DRIVER_PID_PROPERTY_NAME = "kura.service.pid";
 
     /**
      * The Class ConnectionException is a driver specific exception which is
