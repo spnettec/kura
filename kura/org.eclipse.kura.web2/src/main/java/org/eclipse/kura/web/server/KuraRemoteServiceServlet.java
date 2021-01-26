@@ -1,39 +1,46 @@
 /*******************************************************************************
  * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
 package org.eclipse.kura.web.server;
 
-import java.io.IOException;
-import java.util.Date;
+import static java.util.Objects.isNull;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
+import java.util.Optional;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.eclipse.kura.locale.LocaleContextHolder;
+import org.eclipse.kura.crypto.CryptoService;
+import org.eclipse.kura.web.server.util.ServiceLocator;
 import org.eclipse.kura.web.session.Attributes;
 import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
 import org.eclipse.kura.web.shared.model.GwtXSRFToken;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 public class KuraRemoteServiceServlet extends RemoteServiceServlet {
@@ -44,36 +51,6 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
     private static final long serialVersionUID = 3473193315046407200L;
     private static final Logger logger = LoggerFactory.getLogger(KuraRemoteServiceServlet.class);
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
-
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String localeName = null;
-        Cookie[] cookies = req.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("GWT_LOCALE")) {
-                    localeName = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (localeName == null || localeName.equals("")) {
-            localeName = System.getProperty("osgi.nl");
-        }
-        Locale locale = null;
-        if (localeName != null) {
-            locale = new Locale(localeName);
-        } else {
-            locale = req.getLocale();
-        }
-        try {
-            LocaleContextHolder.setLocale(locale);
-            super.service(req, resp);
-        } finally {
-            LocaleContextHolder.resetLocaleContext();
-        }
-    }
 
     /**
      *
@@ -100,12 +77,10 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
             throws GwtKuraException {
         HttpSession session = req.getSession(false);
 
-        if (!isValidXSRFToken(session, userToken.getToken())) {
+        if (!isValidXSRFToken(req, userToken.getToken())) {
             logger.info("XSRF token is NOT VALID");
 
-            if (userToken != null) {
-                logger.info("Invalid User Token={}", userToken.getToken());
-            }
+            logger.info("Invalid User Token={}", userToken.getToken());
             logger.debug("\tSender IP: {}", req.getRemoteAddr());
             logger.debug("\tSender Host: {}", req.getRemoteHost());
             logger.debug("\tSender Port: {}", req.getRemotePort());
@@ -132,52 +107,39 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
      * @param userToken
      * @return boolean
      */
-    public static boolean isValidXSRFToken(HttpSession session, String userToken) {
+    public static boolean isValidXSRFToken(HttpServletRequest req, String userToken) {
         logger.debug("Starting XSRF Token validation...'");
 
-        if (userToken == null || session == null) {
+        if (userToken == null) {
             logger.debug("XSRF Token is NOT VALID -> NULL TOKEN");
             return false;
         }
 
-        // Retrieve the server side token
-        GwtXSRFToken serverXSRFToken = (GwtXSRFToken) session.getAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY);
-        if (serverXSRFToken != null) {
-            String serverToken = serverXSRFToken.getToken();
+        Optional<Cookie> cookie = Arrays.stream(req.getCookies()).filter(c -> "JSESSIONID".equals(c.getName()))
+                .findAny();
 
-            // Checking the XSRF validity on the serverToken
-            if (isValidStringToken(serverToken) && isValidStringToken(userToken) && serverToken.equals(userToken)) {
-                // Checking expire date
-                if (new Date().before(serverXSRFToken.getExpiresOn())) {
-                    logger.debug("XSRF Token is VALID - {}", userToken);
+        if (!cookie.isPresent() || isNull(cookie.get().getValue()) || cookie.get().getValue().isEmpty()) {
+            throw new RpcTokenException("Unable to generate XSRF cookie: the session cookie is not set or empty!");
+        }
 
-                    // Reset used token
-                    // session.setAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY, null);
-                } else {
-                    session.setAttribute(GwtSecurityTokenServiceImpl.XSRF_TOKEN_KEY, null);
-                    logger.debug("XSRF Token is EXPIRED - {}", userToken);
-                }
-                return true;
-            }
+        String serverXSRFToken = null;
+        final BundleContext context = FrameworkUtil.getBundle(GwtSecurityTokenServiceImpl.class).getBundleContext();
+        final ServiceReference<CryptoService> ref = context.getServiceReference(CryptoService.class);
+        try {
+            CryptoService cryptoService = ServiceLocator.getInstance().getService(ref);
+            serverXSRFToken = cryptoService.sha1Hash(cookie.get().getValue());
+        } catch (GwtKuraException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new RpcTokenException("Unable to verify the XSRF token: the crypto service is unavailable!");
+        } finally {
+            context.ungetService(ref);
+        }
+
+        if (!isNull(serverXSRFToken) && serverXSRFToken.equals(userToken)) {
+            return true;
         }
 
         logger.debug("XSRF Token is NOT VALID - {}", userToken);
         return false;
-    }
-
-    /**
-     *
-     * Performs some basic string validation on the given String token.
-     *
-     * @param token
-     * @return boolean
-     */
-    private static boolean isValidStringToken(String token) {
-        boolean result = false;
-        if (token != null && !token.isEmpty()) {
-            result = true;
-        }
-        return result;
     }
 
     /**
@@ -188,9 +150,9 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
      * @param req
      * @param fieldName
      * @return String
-     * @throws Exception
+     * @throws FileUploadException 
      */
-    public static String getFieldFromMultiPartForm(HttpServletRequest req, String fieldName) throws Exception {
+    public static String getFieldFromMultiPartForm(HttpServletRequest req, String fieldName) throws FileUploadException {
         String fieldValue = null;
 
         ServletFileUpload upload = new ServletFileUpload();
@@ -213,7 +175,7 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
         return fieldValue;
     }
 
-    public static void checkXSRFToken(HttpServletRequest req, GwtXSRFToken token) throws Exception {
+    public static void checkXSRFToken(HttpServletRequest req, GwtXSRFToken token) throws GwtKuraException {
         performXSRFTokenValidation(req, token);
     }
 
@@ -223,9 +185,9 @@ public class KuraRemoteServiceServlet extends RemoteServiceServlet {
      * This is the checkXSRFToken for the MultiPart Servlet support.
      *
      * @param req
-     * @throws Exception
+     * @throws GwtKuraException 
      */
-    public static void checkXSRFTokenMultiPart(HttpServletRequest req, GwtXSRFToken token) throws Exception {
+    public static void checkXSRFTokenMultiPart(HttpServletRequest req, GwtXSRFToken token) throws GwtKuraException  {
         performXSRFTokenValidation(req, token);
     }
 
