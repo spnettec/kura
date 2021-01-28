@@ -131,6 +131,7 @@ public class LogServlet extends LocaleServlet {
                 zipFile(bytes, zos, file);
             }
             zos.flush();
+            zos.close();
             baos.flush();
             return baos.toByteArray();
         }
