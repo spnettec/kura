@@ -500,7 +500,12 @@
                   <id>io.netty:netty-codec-dns:${io.netty.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
+              </artifact>
+              <artifact>
+                  <id>io.netty:netty-resolver-dns-native-macos:${io.netty.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
               <artifact>
                   <id>io.netty:netty-common:${io.netty.version}</id>
                   <source>true</source>
@@ -550,12 +555,7 @@
                   <id>io.netty:netty-transport-native-epoll::linux-x86_64:${io.netty.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>io.netty:netty-resolver-dns-native-macos:${io.netty.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>    
+              </artifact>  
               <artifact>
                   <id>com.fasterxml.jackson.core:jackson-core:${com.fasterxml.jackson.core.version}</id>
                   <source>true</source>
