@@ -16,12 +16,12 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-logconfig"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-jolokia"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-s7plc"/>
+        <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
-        <setEntry value="org.eclipse.kura.cloud.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
         <setEntry value="org.eclipse.kura.core.cloud.test"/>
         <setEntry value="org.eclipse.kura.core.comm.test"/>
@@ -85,7 +85,6 @@
         <setEntry value="org.eclipse.kura.internal.driver.ibeacon.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.s7plc.test"/>
-        <setEntry value="org.eclipse.kura.internal.wire.test"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider.test"/>
         <setEntry value="org.eclipse.kura.linux.bluetooth"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
@@ -121,9 +120,11 @@
         <setEntry value="org.eclipse.kura.stress.test"/>
         <setEntry value="org.eclipse.kura.test"/>
         <setEntry value="org.eclipse.kura.util.test"/>
+        <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
+        <setEntry value="org.eclipse.kura.wire.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.script.filter.provider.test"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
@@ -383,7 +384,6 @@
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@3:default"/>
-        <setEntry value="org.eclipse.kura.util.wire.test@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
