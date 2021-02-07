@@ -61,7 +61,7 @@ public class ConsoleOptions {
     private final SelfConfiguringComponentProperty<String> bannerContent = new SelfConfiguringComponentProperty<>(
             new AdBuilder("access.banner.content", "%bannerContent", Tscalar.STRING) //
                     .setDefault("Sample Banner Content") //
-                    .setDescription("%bannerContentDesc |TextArea") //
+                    .setDescription("%bannerContentDesc") //
                     .build(), //
             String.class);
 
@@ -96,11 +96,10 @@ public class ConsoleOptions {
             Boolean.class);
 
     private final SelfConfiguringComponentProperty<Integer[]> allowedPorts = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("allowed.ports", "Allowed ports", Tscalar.INTEGER) //
+            new AdBuilder("allowed.ports", "%allowedPorts", Tscalar.INTEGER) //
                     .setRequired(false) //
                     .setCardinality(3) //
-                    .setDescription(
-                            "If set to a non empty list, Web Console access will be allowed only on the specified ports. If set to an empty list, access will be allowed on all ports. Please make sure that the allowed ports are open in HttpService and Firewall configuration.") //
+                    .setDescription("%allowedPortsDesc") //
                     .build(), //
             Integer[].class);
 
