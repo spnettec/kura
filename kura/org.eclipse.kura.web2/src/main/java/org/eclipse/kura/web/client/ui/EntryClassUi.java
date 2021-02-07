@@ -633,7 +633,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
                 EntryClassUi.this.contentPanel.setVisible(true);
-                setHeader("Status", null);
+                setHeader(MSGS.status(), null);
                 EntryClassUi.this.contentPanelBody.clear();
                 EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
                 EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);

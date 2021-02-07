@@ -57,7 +57,7 @@ public interface DataStore {
      * @param msgId
      * @param publishedMsgId
      * @param sessionId
-     *                           TODO
+     *            TODO
      * @throws KuraStoreException
      */
     public void published(int msgId, int publishedMsgId, String sessionId) throws KuraStoreException;
@@ -96,7 +96,7 @@ public interface DataStore {
      * Returns a message from the DataStore by its message id.
      *
      * @param msgId
-     *                  ID of the message to be loaded
+     *            ID of the message to be loaded
      * @return Loaded message or null if not found.
      * @throws KuraStoreException
      */

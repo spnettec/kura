@@ -22,7 +22,7 @@ public class CriticalServiceImpl {
      *
      * @param name
      * @param timeout
-     *                    timeout for reporting interval in seconds
+     *            timeout for reporting interval in seconds
      */
     public CriticalServiceImpl(String name, long timeout) {
         this.name = name;

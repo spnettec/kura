@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -88,7 +88,7 @@ public class SystemAdminServiceImpl extends SuperSystemService implements System
                 String[] lastBootUpTime = runSystemCommand("wmic os get LastBootUpTime ", false, this.executorService)
                         .split("\n");
                 if (lastBootUpTime[0].toLowerCase().startsWith("lastbootuptime")) {
-                    String lastBoot = lastBootUpTime[1];
+                    String lastBoot = lastBootUpTime[2];
                     DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
                     Date bootDate = df.parse(lastBoot);
                     uptime = System.currentTimeMillis() - bootDate.getTime();

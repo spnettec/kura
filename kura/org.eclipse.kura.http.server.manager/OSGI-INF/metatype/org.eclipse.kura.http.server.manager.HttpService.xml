@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
+    Copyright (c) 2019, 2021 Eurotech and/or its affiliates and others
   
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -15,66 +15,36 @@
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/HttpService">
     <OCD id="org.eclipse.kura.http.server.manager.HttpService"
-         name="%name" 
+         name="%name"
          description="%description">
 
-        <AD id="http.enabled"
-            name="%enabled"
-            type="Boolean"
-            cardinality="0"
-            required="true"
-            default="true"
-            description="%enabledDesc">
+        <AD id="http.ports"
+            name="%httpPorts"
+            type="Integer"
+            cardinality="3"
+            required="false"
+            min="1"
+            max="65535"
+            description="%httpPortsDesc">
+        </AD>
+
+        <AD id="https.ports"
+            name="%httpsPorts"
+            type="Integer"
+            cardinality="3"
+            required="false"
+            min="1"
+            max="65535"
+            description="%httpsPortsDesc">
         </AD>
         
-        <AD id="http.port"  
-            name="%port"
-            type="Integer"
-            cardinality="0"
-            required="true"
-            default="80"
-            min = "1"
-            max = "65535"
-            description="%portDesc">
-        </AD>
-
-        <AD id="https.enabled"
-            name="%httpsEnabled"
-            type="Boolean"
-            cardinality="0"
-            required="true"
-            default="false"
-            description="%httpsEnabledDesc">
-        </AD>
-        
-        <AD id="https.port"  
-            name="%httpsPort"
-            type="Integer"
-            cardinality="0"
-            required="true"
-            default="443"
-            min = "1"
-            max = "65535"
-            description="%httpsPortDesc">
-        </AD>
-
-        <AD id="https.client.auth.enabled"
-            name="%httpsClientAuthenticationEnabled"
-            type="Boolean"
-            cardinality="0"
-            required="true"
-            default="true"
-            description="%httpsClientAuthenticationEnabledDesc">
-        </AD>
-
-        <AD id="https.client.auth.port"
+        <AD id="https.client.auth.ports"
             name="%httpsClientAuthenticationPort"
             type="Integer"
-            cardinality="0"
-            required="true"
-            default="4443"
-            min = "1"
-            max = "65535"
+            cardinality="3"
+            required="false"
+            min="1"
+            max="65535"
             description="%httpsClientAuthenticationPortDesc">
         </AD>
 
@@ -84,13 +54,13 @@
             cardinality="0"
             required="false"
             description="%httpsKeystorePathDesc"/>
-        
-        <AD id="https.keystore.password"  
+
+        <AD id="https.keystore.password"
             name="%httpsKeystorePassword"
             type="Password"
             cardinality="0"
             required="false"
-            default="changeit" 
+            default="changeit"
             description="%httpsKeystorePasswordDesc"/>
 
         <AD id="https.revocation.check.enabled"
@@ -124,6 +94,7 @@
             required="false"
             default="false"
             description="%httpsRevocationSoft-failEnabledDesc"/>
+
     </OCD>
 
     <Designate pid="org.eclipse.kura.http.server.manager.HttpService">
