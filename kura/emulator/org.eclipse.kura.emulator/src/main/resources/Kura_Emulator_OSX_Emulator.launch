@@ -64,6 +64,7 @@
         <setEntry value="org.eclipse.kura.example.eddystone.advertiser"/>
         <setEntry value="org.eclipse.kura.example.eddystone.scanner"/>
         <setEntry value="org.eclipse.kura.example.gpio"/>
+        <setEntry value="org.eclipse.kura.example.gpio.led"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.advertiser"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.project"/>
@@ -71,10 +72,12 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig"/>
         <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -374,9 +377,6 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
-        <setEntry value="org.eclipse.kura.example.gpio.led@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
