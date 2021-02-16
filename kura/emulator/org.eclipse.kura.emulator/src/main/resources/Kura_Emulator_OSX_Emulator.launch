@@ -341,6 +341,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.asset.helper.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.broker.artemis.core@default:default"/>
@@ -376,6 +377,8 @@
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
+        <setEntry value="org.eclipse.kura.network.threat.manager.test@default:false"/>
+        <setEntry value="org.eclipse.kura.network.threat.manager@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>

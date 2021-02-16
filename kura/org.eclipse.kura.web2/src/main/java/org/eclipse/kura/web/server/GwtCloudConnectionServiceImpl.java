@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2021 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,7 @@ import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.data.DataService;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.web.server.util.GwtComponentServiceInternal;
+import org.eclipse.kura.web.server.util.GwtServerUtil;
 import org.eclipse.kura.web.server.util.ServiceLocator;
 import org.eclipse.kura.web.server.util.ServiceLocator.ServiceConsumer;
 import org.eclipse.kura.web.server.util.ServiceLocator.ServiceReferenceConsumer;
@@ -186,7 +188,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         return result;
     }
-    
+
     @Override
     public List<String> findStackPidsByFactory(final String factoryPid, final String cloudServicePid)
             throws GwtKuraException {
@@ -208,7 +210,6 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         return result;
     }
-
 
     @Override
     public List<GwtConfigComponent> getStackConfigurationsByFactory(final String factoryPid,
@@ -351,6 +352,9 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
             pid = factoryPid + "-Component-" + new Date().getTime();
         }
         final String pubSubPid = pid;
+
+        requireIsPubSubFactory(factoryPid);
+
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
@@ -373,6 +377,8 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     public void deletePubSubInstance(final GwtXSRFToken token, final String pid) throws GwtKuraException {
         checkXSRFToken(token);
 
+        requireIsPubSub(pid);
+
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
@@ -387,7 +393,55 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         });
     }
 
-    private static GwtCloudEntry toGwt(final ComponentDescriptionDTO component) {
+    private static void requireIsPubSubFactory(final String factoryPid) throws GwtKuraException {
+        final boolean isPubSub = ServiceLocator.applyToServiceOptionally(ServiceComponentRuntime.class, scr -> {
+            return scr.getComponentDescriptionDTOs().stream().anyMatch(c -> {
+                final Map<String, Object> properties = c.properties;
+
+                if (properties == null) {
+                    return false;
+                }
+
+                return Objects.equals(factoryPid, properties.get("service.pid")) && pubSubToGwt(c) != null;
+            });
+        });
+
+        if (!isPubSub) {
+            throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
+        }
+    }
+
+    private static boolean isPubSub(final String pid) {
+        return GwtServerUtil.providesService(pid, CloudPublisher.class)
+                || GwtServerUtil.providesService(pid, CloudSubscriber.class);
+    }
+
+    private static boolean isComponentManagedByFactory(final String pid) {
+        final AtomicBoolean result = new AtomicBoolean(false);
+
+        try {
+            withAllCloudConnectionFactories(f -> {
+                for (final String stackPid : f.getManagedCloudConnectionPids()) {
+                    if (f.getStackComponentsPids(stackPid).contains(pid)) {
+                        result.set(true);
+                        return;
+                    }
+                }
+            });
+        } catch (final Exception e) {
+            return false;
+        }
+
+        return result.get();
+    }
+
+    private static void requireIsPubSub(final String pid) throws GwtKuraException {
+        if (!isPubSub(pid)) {
+            throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
+        }
+    }
+
+    private static GwtCloudEntry pubSubToGwt(final ComponentDescriptionDTO component) {
 
         if (Arrays.stream(component.serviceInterfaces)
                 .noneMatch(intf -> CLOUD_PUBLISHER.equals(intf) || CLOUD_SUBSCRIBER.equals(intf))) {
@@ -441,11 +495,12 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         return ServiceLocator.applyToServiceOptionally(ServiceComponentRuntime.class, scr ->
 
-        scr.getComponentDescriptionDTOs().stream().map(GwtCloudConnectionServiceImpl::toGwt).filter(Objects::nonNull)
-                .collect(Collectors.toList()));
+        scr.getComponentDescriptionDTOs().stream().map(GwtCloudConnectionServiceImpl::pubSubToGwt)
+                .filter(Objects::nonNull).collect(Collectors.toList()));
     }
 
-    private static GwtCloudPubSubEntry toGwt(final ServiceReference<?> ref, final GwtCloudPubSubEntry.Type type) {
+    private static GwtCloudPubSubEntry pubSubRefToGwt(final ServiceReference<?> ref,
+            final GwtCloudPubSubEntry.Type type) {
         final Object ccsPid = ref.getProperty(CloudConnectionConstants.CLOUD_ENDPOINT_SERVICE_PID_PROP_NAME.value());
         Object factoryPid = ref.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID);
 
@@ -484,7 +539,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         try {
             context.getServiceReferences(CloudPublisher.class, null).stream()
-                    .map(ref -> toGwt(ref, GwtCloudPubSubEntry.Type.PUBLISHER)).filter(Objects::nonNull)
+                    .map(ref -> pubSubRefToGwt(ref, GwtCloudPubSubEntry.Type.PUBLISHER)).filter(Objects::nonNull)
                     .forEach(result::add);
 
             return result;
@@ -500,7 +555,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         try {
             context.getServiceReferences(CloudSubscriber.class, null).stream()
-                    .map(ref -> toGwt(ref, GwtCloudPubSubEntry.Type.SUBSCRIBER)).filter(Objects::nonNull)
+                    .map(ref -> pubSubRefToGwt(ref, GwtCloudPubSubEntry.Type.SUBSCRIBER)).filter(Objects::nonNull)
                     .forEach(result::add);
 
             return result;
@@ -575,6 +630,8 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     public GwtConfigComponent getPubSubConfiguration(GwtXSRFToken xsrfToken, String pid) throws GwtKuraException {
         checkXSRFToken(xsrfToken);
 
+        requireIsPubSub(pid);
+
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);
 
@@ -585,6 +642,10 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     public void updateStackComponentConfiguration(GwtXSRFToken xsrfToken, GwtConfigComponent component)
             throws GwtKuraException {
         checkXSRFToken(xsrfToken);
+
+        if (!(isPubSub(component.getComponentId()) || isComponentManagedByFactory(component.getComponentId()))) {
+            throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR);
+        }
 
         final HttpServletRequest request = getThreadLocalRequest();
         final HttpSession session = request.getSession(false);

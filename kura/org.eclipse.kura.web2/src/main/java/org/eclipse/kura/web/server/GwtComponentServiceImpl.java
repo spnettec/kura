@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -104,10 +104,18 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             throws GwtKuraException {
         checkXSRFToken(xsrfToken);
 
-        final HttpServletRequest request = getThreadLocalRequest();
-        final HttpSession session = request.getSession(false);
+        updateComponentConfigurationInternal(gwtCompConfig);
+    }
 
-        GwtComponentServiceInternal.updateComponentConfiguration(session, gwtCompConfig);
+    @Override
+    public void updateComponentConfigurations(GwtXSRFToken xsrfToken, List<GwtConfigComponent> gwtCompConfigs)
+            throws GwtKuraException {
+        checkXSRFToken(xsrfToken);
+
+        for (GwtConfigComponent gwtCompConfig : gwtCompConfigs) {
+            updateComponentConfigurationInternal(gwtCompConfig);
+        }
+
     }
 
     @Override
@@ -203,6 +211,13 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
             OCD ocd = cc.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage());
             return ocd.getName();
         }));
+    }
+
+    private void updateComponentConfigurationInternal(GwtConfigComponent gwtCompConfig) throws GwtKuraException {
+        final HttpServletRequest request = getThreadLocalRequest();
+        final HttpSession session = request.getSession(false);
+
+        GwtComponentServiceInternal.updateComponentConfiguration(session, gwtCompConfig);
     }
 
 }
