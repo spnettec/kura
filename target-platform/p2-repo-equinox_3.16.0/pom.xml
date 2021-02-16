@@ -130,7 +130,7 @@
             <!-- profile for falling back to non-mirror download links -->
             <id>no-mirror</id>
             <properties>
-                <equinox.download.url>https://download.eclipse.org/equinox/drops/I20201222-1800/equinox-SDK-I20201222-1800.zip</equinox.download.url>
+                <equinox.download.url>https://mirrors.neusoft.edu.cn/eclipse/equinox/drops/R-4.18-202012021800/equinox-SDK-4.18.zip</equinox.download.url>
             </properties>
         </profile>
     </profiles>

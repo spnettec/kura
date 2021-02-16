@@ -16,6 +16,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-logconfig"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-jolokia"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-s7plc"/>
+        <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
@@ -109,6 +110,7 @@
         <setEntry value="org.eclipse.kura.localization.resources"/>
         <setEntry value="org.eclipse.kura.net.admin"/>
         <setEntry value="org.eclipse.kura.net.admin.test"/>
+        <setEntry value="org.eclipse.kura.network.threat.manager.test"/>
         <setEntry value="org.eclipse.kura.protocol.can"/>
         <setEntry value="org.eclipse.kura.protocol.modbus.test"/>
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat"/>
@@ -341,7 +343,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.asset.helper.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.broker.artemis.core@default:default"/>
@@ -377,7 +378,6 @@
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
-        <setEntry value="org.eclipse.kura.network.threat.manager.test@default:false"/>
         <setEntry value="org.eclipse.kura.network.threat.manager@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>

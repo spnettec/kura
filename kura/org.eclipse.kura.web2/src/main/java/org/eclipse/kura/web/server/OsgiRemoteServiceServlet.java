@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -70,7 +71,24 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // Cache the current thread
-        Locale locale = LocaleContextHolder.getLocale();
+        String localeName = null;
+        Cookie[] cookies = req.getCookies();
+        if (cookies != null)
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("GWT_LOCALE")) {
+                    localeName = cookie.getValue();
+                    break;
+                }
+            }
+
+        if (localeName == null || localeName.equals(""))
+            localeName = System.getProperty("osgi.nl");
+        Locale locale = null;
+        if (localeName != null)
+            locale = new Locale(localeName);
+        else
+            locale = req.getLocale();
+        // Locale locale = LocaleContextHolder.getLocale();
         Thread currentThread = Thread.currentThread();
         // We are going to swap the class loader
         ClassLoader oldContextClassLoader = currentThread.getContextClassLoader();

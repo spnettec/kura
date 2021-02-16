@@ -139,7 +139,7 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
             }
             if (System.getProperty(DPA_CONFIGURATION) != null
                     && System.getProperty(DPA_CONFIGURATION).trim().equals("kura/dpa.properties")) {
-                System.setProperty(DPA_CONFIGURATION, "/opt/eclipse/kura/data/dpa.properties");
+                System.setProperty(DPA_CONFIGURATION, "/opt/eclipse/kura/packages/dpa.properties");
                 updateTriggered = true;
                 logger.warn("Overridding invalid dpa.properties location");
             }
