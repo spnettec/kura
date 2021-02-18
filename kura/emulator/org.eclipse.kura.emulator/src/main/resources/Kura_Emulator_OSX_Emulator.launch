@@ -77,6 +77,7 @@
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
+        <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.ibeacon.test"/>
@@ -112,6 +113,7 @@
         <setEntry value="org.eclipse.kura.localization.resources"/>
         <setEntry value="org.eclipse.kura.net.admin"/>
         <setEntry value="org.eclipse.kura.net.admin.test"/>
+        <setEntry value="org.eclipse.kura.network.threat.manager.test"/>
         <setEntry value="org.eclipse.kura.protocol.can"/>
         <setEntry value="org.eclipse.kura.protocol.modbus.test"/>
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat"/>
@@ -381,6 +383,7 @@
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
+        <setEntry value="org.eclipse.kura.network.threat.manager@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
