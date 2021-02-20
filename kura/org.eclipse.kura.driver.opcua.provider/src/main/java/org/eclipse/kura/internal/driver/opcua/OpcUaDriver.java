@@ -172,8 +172,9 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
             }
         } catch (Exception e) {
             throw new ConnectionException(e);
+        } finally {
+            stopConnectionMonitorTask();
         }
-        stopConnectionMonitorTask();
     }
 
     private void extractProperties(final Map<String, Object> properties) {
@@ -236,7 +237,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
      * OSGi service component callback while updating.
      *
      * @param properties
-     *                       the properties
+     *            the properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.info("Updating OPC-UA Driver...");
@@ -262,11 +263,11 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
             logger.debug("Unrecoverable failure, forcing disconnect", ex);
             try {
                 disconnect();
-                startConnectionMonitorTask();
             } catch (ConnectionException e) {
                 logger.warn("Unable to Disconnect...");
+            } finally {
+                startConnectionMonitorTask();
             }
-            startConnectionMonitorTask();
         } else {
             logger.debug("Ignoring failure from old connection", ex);
         }
