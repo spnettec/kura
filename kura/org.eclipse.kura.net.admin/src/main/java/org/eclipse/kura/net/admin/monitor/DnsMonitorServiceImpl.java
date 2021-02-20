@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -12,10 +12,8 @@
  *******************************************************************************/
 package org.eclipse.kura.net.admin.monitor;
 
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +48,7 @@ import org.eclipse.kura.net.dhcp.DhcpServerConfig;
 import org.eclipse.kura.net.dns.DnsMonitorService;
 import org.eclipse.kura.net.dns.DnsServerConfig;
 import org.eclipse.kura.net.dns.DnsServerConfigIP4;
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,10 +56,6 @@ import org.slf4j.LoggerFactory;
 public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DnsMonitorServiceImpl.class);
-
-    private static final String[] EVENT_TOPICS = new String[] {
-            NetworkStatusChangeEvent.NETWORK_EVENT_STATUS_CHANGE_TOPIC,
-            NetworkConfigurationChangeEvent.NETWORK_EVENT_CONFIG_CHANGE_TOPIC };
 
     private static final long THREAD_INTERVAL = 60000;
     private static final long THREAD_TERMINATION_TOUT = 1; // in seconds
@@ -77,7 +69,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
     private Set<NetworkPair<IP4Address>> allowedNetworks;
     private Set<IP4Address> forwarders;
 
-    // private LinuxDns dnsUtil;
+    private LinuxDns dnsUtil = LinuxDns.getInstance();
     private DnsServerService dnsServer;
     private CommandExecutorService executorService;
 
@@ -107,12 +99,8 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
         this.executorService = null;
     }
 
-    protected void activate(ComponentContext componentContext) {
+    protected void activate() {
         logger.debug("Activating DnsProxyMonitor Service...");
-
-        Dictionary<String, String[]> d = new Hashtable<>();
-        d.put(EventConstants.EVENT_TOPIC, EVENT_TOPICS);
-        componentContext.getBundleContext().registerService(EventHandler.class.getName(), this, d);
 
         try {
             this.networkConfiguration = this.netConfigService.getNetworkConfiguration();
@@ -120,7 +108,6 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
             logger.error("Could not get initial network configuration", e);
         }
 
-        // this.dnsUtil = LinuxDns.getInstance();
         this.linuxNetworkUtil = new LinuxNetworkUtil(this.executorService);
 
         stopThread = new AtomicBoolean();
@@ -131,7 +118,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
         monitorTask = this.executor.submit(() -> {
             while (!stopThread.get()) {
                 Thread.currentThread().setName("DnsMonitorServiceImpl");
-                Set<IPAddress> dnsServers = LinuxDns.getInstance().getDnServers();
+                Set<IPAddress> dnsServers = DnsMonitorServiceImpl.this.dnsUtil.getDnServers();
 
                 // Check that resolv.conf matches what is configured
                 Set<IPAddress> configuredServers = getConfiguredDnsServers();
@@ -175,7 +162,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
 
     }
 
-    protected void deactivate(ComponentContext componentContext) {
+    protected void deactivate() {
         if (monitorTask != null && !monitorTask.isDone()) {
             stopThread.set(true);
             monitorNotity();
@@ -285,7 +272,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
             }
         }
 
-        Set<IPAddress> dnsServers = LinuxDns.getInstance().getDnServers();
+        Set<IPAddress> dnsServers = this.dnsUtil.getDnServers();
         if (dnsServers != null && !dnsServers.isEmpty()) {
             for (IPAddress dnsServerTmp : dnsServers) {
                 logger.debug("Found DNS Server: {}", dnsServerTmp.getHostAddress());
@@ -322,8 +309,8 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
     }
 
     private void setDnsServers(Set<IPAddress> newServers) {
-        // LinuxDns linuxDns = this.dnsUtil;
-        Set<IPAddress> currentServers = LinuxDns.getInstance().getDnServers();
+        LinuxDns linuxDns = this.dnsUtil;
+        Set<IPAddress> currentServers = linuxDns.getDnServers();
 
         if (newServers == null || newServers.isEmpty()) {
             logger.debug("Not Setting DNS servers to empty");
@@ -333,13 +320,13 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
         if (currentServers != null && !currentServers.isEmpty()) {
             if (!currentServers.equals(newServers)) {
                 logger.info("Change to DNS - setting dns servers: {}", newServers);
-                LinuxDns.getInstance().setDnServers(newServers);
+                linuxDns.setDnServers(newServers);
             } else {
                 logger.debug("No change to DNS servers - not updating");
             }
         } else {
             logger.info("Current DNS servers are null - setting dns servers: {}", newServers);
-            LinuxDns.getInstance().setDnServers(newServers);
+            linuxDns.setDnServers(newServers);
         }
     }
 
@@ -374,7 +361,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
             NetInterfaceConfig<? extends NetInterfaceAddressConfig> netInterfaceConfig) throws KuraException {
         String interfaceName = netInterfaceConfig.getName();
         logger.trace("Getting dns servers for {}", interfaceName);
-        // LinuxDns linuxDns = this.dnsUtil;
+        LinuxDns linuxDns = this.dnsUtil;
         LinkedHashSet<IPAddress> serverList = new LinkedHashSet<>();
 
         NetConfigIP4 netConfigIP4 = ((AbstractNetInterface<?>) netInterfaceConfig).getIP4config();
@@ -391,7 +378,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
                         // cannot use interfaceName here because it one config behind
                         int pppNo = ((ModemInterfaceConfigImpl) netInterfaceConfig).getPppNum();
                         if (pppHasAddress(pppNo)) {
-                            List<IPAddress> servers = LinuxDns.getInstance().getPppDnServers();
+                            List<IPAddress> servers = linuxDns.getPppDnServers();
                             if (servers != null) {
                                 logger.debug("Adding PPP dns servers: {}", servers);
                                 serverList.addAll(servers);
@@ -399,8 +386,7 @@ public class DnsMonitorServiceImpl implements DnsMonitorService, EventHandler {
                         }
                     } else {
                         String currentAddress = getCurrentIpAddress(interfaceName);
-                        List<IPAddress> servers = LinuxDns.getInstance().getDhcpDnsServers(interfaceName,
-                                currentAddress);
+                        List<IPAddress> servers = linuxDns.getDhcpDnsServers(interfaceName, currentAddress);
                         if (!servers.isEmpty()) {
                             logger.debug("Configured for DHCP - adding DHCP servers: {}", servers);
                             serverList.addAll(servers);
