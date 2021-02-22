@@ -32,11 +32,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.eclipse.kura.audit.AuditContext;
+import org.eclipse.kura.audit.AuditContext.Scope;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.web.Console;
 import org.eclipse.kura.web.UserManager;
 import org.eclipse.kura.web.session.Attributes;
 import org.eclipse.kura.web.shared.model.GwtUserConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPCRequest;
@@ -45,8 +49,11 @@ import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 
 public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
 
+    private final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
+
     private final Set<String> servicePermissionRequirements = new HashSet<>();
     private final Map<Method, Set<String>> methodPermissionRequirements = new HashMap<>();
+    private final Map<Method, Audit> methodAuditSettings = new HashMap<>();
 
     public OsgiRemoteServiceServlet() {
         for (final Class<?> intf : getClass().getInterfaces()) {
@@ -61,6 +68,12 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
 
                 if (methodPermissions != null) {
                     methodPermissionRequirements.put(method, new HashSet<>(Arrays.asList(methodPermissions.value())));
+                }
+
+                final Audit methodAudit = method.getAnnotation(Audit.class);
+
+                if (methodAudit != null) {
+                    methodAuditSettings.put(method, methodAudit);
                 }
             }
         }
@@ -93,7 +106,10 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
         // We are going to swap the class loader
         ClassLoader oldContextClassLoader = currentThread.getContextClassLoader();
         currentThread.setContextClassLoader(this.getClass().getClassLoader());
-        try {
+
+        final AuditContext auditContext = Console.instance().initAuditContext(req);
+
+        try (final Scope scope = AuditContext.openScope(auditContext)) {
             LocaleContextHolder.setLocale(locale);
             super.service(req, resp);
         } finally {
@@ -110,12 +126,12 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
      * alternative approach.
      *
      * @param request
-     *                          the HTTP request being serviced
+     *            the HTTP request being serviced
      * @param moduleBaseURL
-     *                          as specified in the incoming payload
+     *            as specified in the incoming payload
      * @param strongName
-     *                          a strong name that uniquely identifies a serialization policy
-     *                          file
+     *            a strong name that uniquely identifies a serialization policy
+     *            file
      * @return a {@link SerializationPolicy} for the given module base URL and
      *         strong name, or <code>null</code> if there is none
      */
@@ -199,9 +215,38 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
     @Override
     public String processCall(final RPCRequest rpcRequest) throws SerializationException {
 
+        final Method method = rpcRequest.getMethod();
+
+        AuditContext.currentOrInternal().getProperties().put("rpc.method",
+                getClass().getSimpleName() + "." + method.getName());
+
         checkPermissions(rpcRequest);
 
-        return super.processCall(rpcRequest);
+        final Optional<Audit> methodAudit = Optional.ofNullable(methodAuditSettings.get(method));
+
+        try {
+            final String result = super.processCall(rpcRequest);
+
+            if (methodAudit.isPresent()) {
+                if (result == null || result.startsWith("//EX")) {
+                    auditLogger.warn("{} {} - Failure - {}", AuditContext.currentOrInternal(),
+                            methodAudit.get().componentName(), methodAudit.get().description());
+                } else {
+                    auditLogger.info("{} {} - Success - {}", AuditContext.currentOrInternal(),
+                            methodAudit.get().componentName(), methodAudit.get().description());
+                }
+            }
+
+            return result;
+
+        } catch (final Exception e) {
+            if (methodAudit.isPresent()) {
+                auditLogger.warn("{} {} - Failure - {}", AuditContext.currentOrInternal(),
+                        methodAudit.get().componentName(), methodAudit.get().description());
+            }
+
+            throw e;
+        }
     }
 
     private void checkPermissions(final RPCRequest request) {

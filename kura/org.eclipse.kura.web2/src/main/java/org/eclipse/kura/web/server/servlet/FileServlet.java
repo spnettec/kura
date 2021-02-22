@@ -63,7 +63,6 @@ import org.eclipse.kura.util.service.ServiceUtil;
 import org.eclipse.kura.web.server.KuraRemoteServiceServlet;
 import org.eclipse.kura.web.server.util.AssetConfigValidator;
 import org.eclipse.kura.web.server.util.ServiceLocator;
-import org.eclipse.kura.web.session.Attributes;
 import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
@@ -78,9 +77,7 @@ import org.osgi.service.metatype.MetaTypeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileServlet extends LocaleServlet {
-
-    private static final String FAILED_TO_MANAGE_ASSET_CONFIGURATION_UPLOAD_FOR_USER_SESSION_CAUSE = "UI Asset - Failure - Failed to manage asset configuration upload for user: {}, session: {}. Cause: ";
+public class FileServlet extends AuditServlet {
 
     private static final String CANNOT_CLOSE_INPUT_STREAM = "Cannot close input stream";
 
@@ -97,7 +94,6 @@ public class FileServlet extends LocaleServlet {
     private static final long serialVersionUID = -5016170117606322129L;
 
     private static Logger logger = LoggerFactory.getLogger(FileServlet.class);
-    private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
     private static final String EXPECTED_1_FILE_PATTERN = "expected 1 file item but found {}";
@@ -112,6 +108,7 @@ public class FileServlet extends LocaleServlet {
     private final BundleContext bundleContext;
 
     public FileServlet() {
+        super("UI FileServlet", "Handle upload request");
         this.bundleContext = FrameworkUtil.getBundle(FileServlet.class).getBundleContext();
     }
 
@@ -175,20 +172,11 @@ public class FileServlet extends LocaleServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("text/html");
 
-        HttpSession session = req.getSession(false);
-
         String reqPathInfo = req.getPathInfo();
         if (reqPathInfo == null) {
             logger.error(REQUEST_PATH_INFO_NOT_FOUND);
-            auditLogger.warn(
-                    FAILED_TO_MANAGE_ASSET_CONFIGURATION_UPLOAD_FOR_USER_SESSION_CAUSE + REQUEST_PATH_INFO_NOT_FOUND,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
             throw new ServletException(REQUEST_PATH_INFO_NOT_FOUND);
         }
-
-        logger.debug("req.getRequestURI(): {}", req.getRequestURI());
-        logger.debug("req.getRequestURL(): {}", req.getRequestURL());
-        logger.debug("req.getPathInfo(): {}", req.getPathInfo());
 
         if (reqPathInfo.startsWith("/deploy")) {
             doPostDeploy(req);
@@ -200,12 +188,9 @@ public class FileServlet extends LocaleServlet {
             doPostAsset(req, resp);
         } else {
             logger.error("Unknown request path info: {}", reqPathInfo);
-
-            auditLogger.warn(
-                    "UI Asset - Failure - Failed to manage asset configuration upload for user: {}, session: {}. Cause: Unknown request path info: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), reqPathInfo);
             throw new ServletException("Unknown request path info: " + reqPathInfo);
         }
+
     }
 
     private void doGetIcon(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -303,16 +288,10 @@ public class FileServlet extends LocaleServlet {
         UploadRequest upload = new UploadRequest(this.diskFileItemFactory);
         upload.setHeaderEncoding("UTF-8");
 
-        HttpSession session = req.getSession(false);
-
         try {
             upload.parse(req);
         } catch (FileUploadException e) {
             logger.error(ERROR_PARSING_THE_FILE_UPLOAD_REQUEST);
-            auditLogger.warn(
-                    "UI Command - Failure - Failed to execute command file upload for user: {}, session: {}. Cause: "
-                            + ERROR_PARSING_THE_FILE_UPLOAD_REQUEST,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
             throw new ServletException(ERROR_PARSING_THE_FILE_UPLOAD_REQUEST);
         }
 
@@ -381,15 +360,9 @@ public class FileServlet extends LocaleServlet {
 
                     entries++;
                     if (entries > tooMany) {
-                        auditLogger.warn(
-                                "UI Command - Failure - Failed to execute command file upload for user: {}, session: {}. Cause: Too many files to unzip.",
-                                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
                         throw new IllegalStateException("Too many files to unzip.");
                     }
                     if (total > tooBig) {
-                        auditLogger.warn(
-                                "UI Command - Failure - Failed to execute command file upload for user: {}, session: {}. Cause: the unzipped file is too big.",
-                                session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
                         throw new IllegalStateException("File being unzipped is too big.");
                     }
 
@@ -399,16 +372,7 @@ public class FileServlet extends LocaleServlet {
                 zis.closeEntry();
                 zis.close();
             }
-            auditLogger.info(
-                    "UI Command - Success - Successfully executed command file upload for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
-        } catch (IOException e) {
-            auditLogger.warn("UI Command - Failure - Failed to execute command file upload for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
-            throw e;
         } catch (GwtKuraException e) {
-            auditLogger.warn("UI Command - Failure - Failed to execute command file upload for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
             throw new ServletException("File is outside extraction target directory.");
         } finally {
             if (os != null) {
@@ -459,11 +423,7 @@ public class FileServlet extends LocaleServlet {
         } catch (FileUploadException e) {
             errors.add(ERROR_PARSING_THE_FILE_UPLOAD_REQUEST);
             resp.getWriter().write("Error parsing the file upload request.");
-            auditLogger.warn(
-                    FAILED_TO_MANAGE_ASSET_CONFIGURATION_UPLOAD_FOR_USER_SESSION_CAUSE
-                            + ERROR_PARSING_THE_FILE_UPLOAD_REQUEST,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
-            return;
+            throw new IOException(e);
         }
 
         Map<String, String> formFields = upload.getFormFields();
@@ -478,10 +438,6 @@ public class FileServlet extends LocaleServlet {
             if (fileItemsSize != 1) {
                 logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
                 errors.add("Security error: please retry this operation.");
-
-                auditLogger.warn(
-                        FAILED_TO_MANAGE_ASSET_CONFIGURATION_UPLOAD_FOR_USER_SESSION_CAUSE + EXPECTED_1_FILE_PATTERN,
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
                 throw new ServletException();
             }
 
@@ -499,14 +455,9 @@ public class FileServlet extends LocaleServlet {
 
             session.setAttribute("kura.csv.config." + assetPid, config);
 
-            auditLogger.info(
-                    "UI Asset - Success - Successfully parsed CSV asset configuration for user: {}, session: {}, asset PID: {}, driver PID: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), assetPid, driverPid);
         } catch (GwtKuraException e) {
             logger.error("Error updating device configuration", e);
-            auditLogger.warn(
-                    "UI Asset - Failure - Failed to manage asset configuration upload for user: {}, session: {}. Cause: Error updating device configuration",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
+            throw new ServletException(e);
         } catch (ServletException ex) {
             if (!errors.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
@@ -519,12 +470,11 @@ public class FileServlet extends LocaleServlet {
             } else {
                 logger.error("Servlet exception.", ex);
             }
+            throw ex;
         } catch (Exception ex2) {
             logger.warn("Security error: please retry this operation correctly.", ex2);
             resp.getWriter().write("Security error: please retry this operation.");
-            auditLogger.warn(
-                    "UI Asset - Failure - Failed to manage asset configuration upload for user: {}, session: {}. Cause: Security error, please retry this operation correctly.",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), ex2);
+            throw ex2;
         }
 
     }
@@ -533,16 +483,10 @@ public class FileServlet extends LocaleServlet {
 
         UploadRequest upload = new UploadRequest(this.diskFileItemFactory);
 
-        HttpSession session = req.getSession(false);
-
         try {
             upload.parse(req);
         } catch (FileUploadException e) {
             logger.error(ERROR_PARSING_THE_FILE_UPLOAD_REQUEST);
-            auditLogger.warn(
-                    "UI Deploy Snapshots - Failure - Failed to upload snapshot for user: {}, session: {}. Cause: "
-                            + ERROR_PARSING_THE_FILE_UPLOAD_REQUEST,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
             throw new ServletException(ERROR_PARSING_THE_FILE_UPLOAD_REQUEST);
         }
 
@@ -561,10 +505,6 @@ public class FileServlet extends LocaleServlet {
         int fileItemsSize = fileItems.size();
         if (fileItemsSize != 1) {
             logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
-            auditLogger.warn(
-                    "UI Deploy Snapshots - Failure - Failed to upload snapshot for user: {}, session: {}. Cause: "
-                            + EXPECTED_1_FILE_PATTERN,
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
             throw new ServletException("Wrong number of file items");
         }
 
@@ -575,9 +515,6 @@ public class FileServlet extends LocaleServlet {
             xmlConfigs = unmarshal(data, XmlComponentConfigurations.class);
         } catch (Exception e) {
             logger.error("Error unmarshaling device configuration");
-            auditLogger.warn(
-                    "UI Deploy Snapshots - Failure - Failed to upload snapshot for user: {}, session: {}. Cause: Error unmarshaling device configuration",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
             throw new ServletException("Error unmarshaling device configuration");
         }
 
@@ -601,14 +538,8 @@ public class FileServlet extends LocaleServlet {
             if (delay > 0) {
                 Thread.sleep(delay);
             }
-            auditLogger.info(
-                    "UI Deploy Snapshots - Success - Successfully uploaded and applied snapshot for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
         } catch (Exception e) {
             logger.error("Error updating device configuration");
-            auditLogger.warn(
-                    "UI Deploy Snapshots - Failure - Failed to upload snapshot for user: {}, session: {}. Cause: Error updating device configuration",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
             throw new ServletException("Error updating device configuration");
         } finally {
             if (data != null) {
@@ -675,10 +606,6 @@ public class FileServlet extends LocaleServlet {
             int fileItemsSize = fileItems.size();
             if (fileItemsSize != 1) {
                 logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
-                auditLogger.warn(
-                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: "
-                                + EXPECTED_1_FILE_PATTERN,
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), fileItemsSize);
                 throw new ServletException("Wrong number of file items");
             }
 
@@ -691,9 +618,6 @@ public class FileServlet extends LocaleServlet {
             localFile = new File(filePath);
             if (localFile.exists() && !localFile.delete()) {
                 logger.error("Cannot delete file: {}", filePath);
-                auditLogger.warn(
-                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Cannot delete file: {}",
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filePath);
                 throw new ServletException("Cannot delete file: " + filePath);
             }
 
@@ -702,9 +626,6 @@ public class FileServlet extends LocaleServlet {
                 localFile.deleteOnExit();
             } catch (IOException e) {
                 logger.error("Cannot create file: {}", filePath);
-                auditLogger.warn(
-                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Cannot create file: {}",
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filename, e);
                 throw new ServletException("Cannot create file: " + filePath);
             }
 
@@ -712,9 +633,6 @@ public class FileServlet extends LocaleServlet {
                 os = new FileOutputStream(localFile);
             } catch (FileNotFoundException e) {
                 logger.error("Cannot find file: {}", filePath);
-                auditLogger.warn(
-                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Cannot find file: {}",
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filename, e);
                 throw new ServletException("Cannot find file: " + filePath);
             }
 
@@ -724,9 +642,6 @@ public class FileServlet extends LocaleServlet {
                 IOUtils.copy(is, os);
             } catch (IOException e) {
                 logger.error("Failed to copy deployment package file: {}", filename);
-                auditLogger.warn(
-                        "UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}. Cause: Failed to copy deployment package file: {}",
-                        session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), filename, e);
                 throw new ServletException("Failed to copy deployment package file: " + filename);
             }
 
@@ -748,17 +663,6 @@ public class FileServlet extends LocaleServlet {
                 throw new ServletException("Package installation failed", e);
             }
 
-            auditLogger.info(
-                    "UI Deploy - Success - Successfully uploaded and installed package for user: {}, session: {}, URL: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), sUrl);
-        } catch (IOException e) {
-            auditLogger.warn("UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
-            throw e;
-        } catch (ServletException e) {
-            auditLogger.warn("UI Deploy - Failure - Failed to upload and install package for user: {}, session: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), e);
-            throw e;
         } finally {
             if (os != null) {
                 try {
@@ -830,16 +734,10 @@ public class FileServlet extends LocaleServlet {
                 throw new ServletException("Error installing deployment package", e);
             }
 
-            auditLogger.info(
-                    "UI Deploy - Success - Successfully deployed package from URL for user: {}, session: {}, package URL: {}",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId(), packageDownloadUrl);
         } else if (reqPathInfo.endsWith("upload")) {
             doPostDeployUpload(req, session);
         } else {
             logger.error("Unsupported package deployment request");
-            auditLogger.warn(
-                    "UI Snapshots - Failure - Failed to deploy new package for user: {}, session: {}. Cause: Unsupported package deployment request",
-                    session.getAttribute(Attributes.AUTORIZED_USER.getValue()), session.getId());
             throw new ServletException("Unsupported package deployment request");
         }
     }
