@@ -29,6 +29,7 @@
         <setEntry value="org.eclipse.kura.core.crypto.test"/>
         <setEntry value="org.eclipse.kura.core.db.test"/>
         <setEntry value="org.eclipse.kura.core.deployment.test"/>
+        <setEntry value="org.eclipse.kura.core.inventory.test"/>
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.ssl.test"/>
         <setEntry value="org.eclipse.kura.core.status.test"/>
@@ -361,6 +362,7 @@
         <setEntry value="org.eclipse.kura.core.configuration@default:default"/>
         <setEntry value="org.eclipse.kura.core.crypto@default:default"/>
         <setEntry value="org.eclipse.kura.core.deployment@default:default"/>
+        <setEntry value="org.eclipse.kura.core.inventory@default:default"/>
         <setEntry value="org.eclipse.kura.core.net@default:default"/>
         <setEntry value="org.eclipse.kura.core.status@default:default"/>
         <setEntry value="org.eclipse.kura.core.system@default:default"/>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -17,6 +17,10 @@ import java.io.OutputStream;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.core.inventory.resources.SystemBundles;
+import org.eclipse.kura.core.inventory.resources.SystemDeploymentPackages;
+import org.eclipse.kura.core.inventory.resources.SystemPackages;
+import org.eclipse.kura.core.inventory.resources.SystemResourcesInfo;
 import org.eclipse.kura.internal.json.marshaller.unmarshaller.message.CloudPayloadJsonDecoder;
 import org.eclipse.kura.internal.json.marshaller.unmarshaller.message.CloudPayloadJsonEncoder;
 import org.eclipse.kura.internal.json.marshaller.unmarshaller.wiregraph.WireGraphJsonMarshallUnmarshallImpl;
@@ -37,6 +41,14 @@ public class JsonMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
             return result.toString();
         } else if (object instanceof KuraPayload) {
             return CloudPayloadJsonEncoder.marshal((KuraPayload) object);
+        } else if (object instanceof SystemDeploymentPackages) {
+            return JsonJavaSystemDeploymentPackagesMapper.marshal((SystemDeploymentPackages) object);
+        } else if (object instanceof SystemBundles) {
+            return JsonJavaSystemBundlesMapper.marshal((SystemBundles) object);
+        } else if (object instanceof SystemPackages) {
+            return JsonJavaSystemPackagesMapper.marshal((SystemPackages) object);
+        } else if (object instanceof SystemResourcesInfo) {
+            return JsonJavaSystemResourcesMapper.marshal((SystemResourcesInfo) object);
         }
         throw new KuraException(KuraErrorCode.INVALID_PARAMETER);
     }
