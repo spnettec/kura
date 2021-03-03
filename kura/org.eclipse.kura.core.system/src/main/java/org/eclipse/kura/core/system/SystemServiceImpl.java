@@ -444,6 +444,9 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
             if (System.getProperty(KEY_CPU_VERSION) != null) {
                 this.kuraProperties.put(KEY_CPU_VERSION, System.getProperty(KEY_CPU_VERSION));
             }
+            if (System.getProperty(KEY_COMMAND_USER) != null) {
+                this.kuraProperties.put(KEY_COMMAND_USER, System.getProperty(KEY_COMMAND_USER));
+            }
 
             if (getKuraHome() == null) {
                 logger.error("Did not initialize kura.home");
@@ -1408,5 +1411,15 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
     @Override
     public Optional<ExtendedProperties> getExtendedProperties() {
         return Optional.empty();
+    }
+
+    @Override
+    public String getCommandUser() {
+        final Optional<String> override = getProperty(KEY_COMMAND_USER);
+        if (override.isPresent()) {
+            return override.get();
+        }
+
+        return "unknown";
     }
 }
