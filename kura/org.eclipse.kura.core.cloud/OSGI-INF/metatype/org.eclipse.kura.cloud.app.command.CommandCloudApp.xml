@@ -66,12 +66,12 @@
         </AD>
         
         <AD id="privileged.command.service.enable"
-            name="Privileged/Unprivileged Command Service Selection"
+            name="%privilegedEnable"
             type="Boolean"
             cardinality="0"
             required="true"
             default="false"
-            description="If set to true, the Privileged Command Executor Service will be used to run the commands. If set to false, the Unprivileged Command Executor Service will be used.">
+            description="%privilegedEnableDesc">
         </AD>
                     
     </OCD>
