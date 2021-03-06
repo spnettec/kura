@@ -142,7 +142,7 @@ public class AssetRestService {
     }
 
     private Asset getAsset(String assetPid) {
-        final Asset asset = this.assetService.getAsset(assetPid);
+        final Asset asset = assetService.getAsset(assetPid);
         if (asset == null) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).type(MediaType.TEXT_PLAIN)
                     .entity("Asset not found: " + assetPid).build());
@@ -151,8 +151,8 @@ public class AssetRestService {
     }
 
     private Gson getChannelSerializer() {
-        if (this.channelSerializer == null) {
-            this.channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
+        if (channelSerializer == null) {
+            channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
                     (JsonSerializer<TypedValue<?>>) (typedValue, type, context) -> {
                         final Object value = typedValue.getValue();
                         if (value instanceof Number) {
