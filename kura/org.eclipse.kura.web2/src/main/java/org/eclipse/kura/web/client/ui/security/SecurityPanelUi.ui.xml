@@ -54,6 +54,8 @@
                         ui:field="console" />
                     <b:TabListItem dataTarget="#threatManagerPanel" text="{msgs.settingsNetworkThreatManager}"
                         ui:field="threatManager" visible="false"/>
+                    <b:TabListItem dataTarget="#tamperDetectionPanel" text="{msgs.settingsSecurityTamperDetection}"
+                        ui:field="tamperDetection" visible="false"/>
                     <b:TabListItem dataTarget="#securityPanel" text="{msgs.settingsSecuritySecurityPolicies}"
                         ui:field="security" visible="false"/>
                 </b:NavTabs>
@@ -67,6 +69,9 @@
                     </b:TabPane>
                     <b:TabPane b:id="threatManagerPanel">
                     	<security:ThreatManagerTabUi ui:field="threatManagerPanel"></security:ThreatManagerTabUi>
+                    </b:TabPane>
+                    <b:TabPane b:id="tamperDetectionPanel">
+                        <security:TamperDetectionTabUi ui:field="tamperDetectionPanel"></security:TamperDetectionTabUi>
                     </b:TabPane>
                     <b:TabPane b:id="securityPanel">
                         <security:SecurityTabUi ui:field="securityPanel"></security:SecurityTabUi>

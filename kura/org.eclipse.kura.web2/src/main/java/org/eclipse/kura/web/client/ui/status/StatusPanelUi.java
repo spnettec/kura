@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -36,7 +36,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.RowStyles;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
@@ -69,17 +68,24 @@ public class StatusPanelUi extends Composite {
         // Set text for buttons
         this.statusRefresh.setText(MSG.refresh());
 
-        this.statusGrid.setRowStyles(new RowStyles<GwtGroupedNVPair>() {
-
-            @Override
-            public String getStyleNames(GwtGroupedNVPair row, int rowIndex) {
-                if ("cloudStatus".equals(row.getName()) || "connectionName".equals(row.getName())
-                        || "networkStatusEthernet".equals(row.getName()) || "networkStatusWifi".equals(row.getName())
-                        || "networkStatusModem".equals(row.getName()) || "positionStatus".equals(row.getName())) {
-                    return "rowHeader";
-                } else {
-                    return " ";
-                }
+        /*
+         * if ("Cloud Services".equals(row.getName()) || "Connection Name".equals(row.getName())
+         * || "Ethernet Settings".equals(row.getName()) || "Wireless Settings".equals(row.getName())
+         * || "Cellular Settings".equals(row.getName()) || "Position Status".equals(row.getName())
+         * || "Tamper Detection Status".equals(row.getName())) {
+         * return "rowHeader";
+         * } else {
+         * return " ";
+         * }
+         */
+        this.statusGrid.setRowStyles((row, rowIndex) -> {
+            if ("cloudStatus".equals(row.getName()) || "connectionName".equals(row.getName())
+                    || "networkStatusEthernet".equals(row.getName()) || "networkStatusWifi".equals(row.getName())
+                    || "networkStatusModem".equals(row.getName()) || "positionStatus".equals(row.getName())
+                    || "tamperDetection".equals(row.getName())) {
+                return "rowHeader";
+            } else {
+                return " ";
             }
         });
 
@@ -87,14 +93,15 @@ public class StatusPanelUi extends Composite {
 
         this.statusRefresh.addClickHandler(e -> loadStatusData());
 
-        EventService.Handler connectionStateChangeHandler = eventInfo -> {
+        EventService.Handler stateChangeHandler = eventInfo -> {
             if (StatusPanelUi.this.isVisible() && StatusPanelUi.this.isAttached()) {
                 loadStatusData();
             }
         };
 
-        EventService.subscribe(ForwardedEventTopic.CLOUD_CONNECTION_STATUS_ESTABLISHED, connectionStateChangeHandler);
-        EventService.subscribe(ForwardedEventTopic.CLOUD_CONNECTION_STATUS_LOST, connectionStateChangeHandler);
+        EventService.subscribe(ForwardedEventTopic.CLOUD_CONNECTION_STATUS_ESTABLISHED, stateChangeHandler);
+        EventService.subscribe(ForwardedEventTopic.CLOUD_CONNECTION_STATUS_LOST, stateChangeHandler);
+        EventService.subscribe(ForwardedEventTopic.TAMPER_EVENT, stateChangeHandler);
 
     }
 
