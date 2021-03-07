@@ -100,7 +100,7 @@
 
 
 		<condition property="kura.osgi.repo"
-			value="../../target-platform/p2-repo-equinox_3.16.0/target/source">
+			value="../../target-platform/p2-repo-equinox_3.16.0/target/repository">
 			<or>
 				<not>
 					<isset property="kura.osgi" />
@@ -188,9 +188,6 @@
 
 		<!-- Miscellaneous bundles config -->
 		<antcall target="misc-config" />
-
-		<!-- Threat Management bundles config -->
-		<antcall target="threat-management-config" />
 		
 		<!-- Conditional entries. Check for jar presence, and invoke relevant ant
 			target -->
@@ -242,6 +239,8 @@
 				</not>
 			</and>
 		</condition>
+		<!-- Threat Management bundles config -->
+		<antcall target="threat-management-config" />
 		<antcall target="emulator-config" />
 		<antcall target="linux-sysv-config" />
 		<antcall target="linux-debian-config" />
