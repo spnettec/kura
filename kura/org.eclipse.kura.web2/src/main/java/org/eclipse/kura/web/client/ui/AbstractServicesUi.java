@@ -664,7 +664,7 @@ public abstract class AbstractServicesUi extends Composite {
                 if (tb instanceof KuraTextBox) {
                     value = ((KuraTextBox) tb).getData();
                 }
-                if (value != null && !value.trim().isEmpty()) {
+                if (value != null) {
                     return value.trim();
                 } else {
                     return null;

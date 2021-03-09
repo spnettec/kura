@@ -20,8 +20,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -235,30 +233,30 @@ public abstract class LinuxDnsServer {
     }
 
     private void writeConfig() throws IOException {
-
-        final File tempFile = new File(getDnsConfigFileName() + ".tmp");
-        final File persistentConfigFile = new File(getDnsConfigFileName());
-
-        try (FileOutputStream fos = new FileOutputStream(tempFile); PrintWriter pw = new PrintWriter(fos);) {
+        String persistentConfigFileName = getDnsConfigFileName();
+        File file = new File(persistentConfigFileName);
+        if (!file.exists()) {
+            persistentConfigFileName = getDnsConfigFileNameShort();
+            file = new File(persistentConfigFileName);
+        }
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        try (FileOutputStream fos = new FileOutputStream(persistentConfigFileName);
+                PrintWriter pw = new PrintWriter(fos);) {
             // build up the file
             if (isConfigured()) {
-                logger.debug("writing custom named.conf to {} with: {}", persistentConfigFile.getAbsolutePath(),
+                logger.debug("writing custom named.conf to {} with: {}", persistentConfigFileName,
                         this.dnsServerConfigIP4);
                 pw.print(getForwardingNamedFile());
             } else {
-                logger.debug("writing default named.conf to {} with: {}", persistentConfigFile.getAbsolutePath(),
+                logger.debug("writing default named.conf to {} with: {}", persistentConfigFileName,
                         this.dnsServerConfigIP4);
                 pw.print(getDefaultNamedFile());
             }
             pw.flush();
             fos.getFD().sync();
         }
-
-        if (!tempFile.setReadable(true, false)) {
-            logger.warn("failed to set permissions to {}", tempFile.getAbsolutePath());
-        }
-
-        Files.move(tempFile.toPath(), persistentConfigFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private String getForwardingNamedFile() {

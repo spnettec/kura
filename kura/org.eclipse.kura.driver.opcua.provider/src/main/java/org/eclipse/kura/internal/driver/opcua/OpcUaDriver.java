@@ -109,12 +109,10 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
             return CompletableFuture.completedFuture(this.connectionManager.get());
         }
 
-        if (this.connectTask.isPresent()) {
-            if (this.connectTask.get().isDone() && this.connectionManager.isPresent()) {
-                return CompletableFuture.completedFuture(this.connectionManager.get());
-            }
+        if (this.connectTask.isPresent() && !this.connectTask.get().isDone()) {
             return this.connectTask.get();
         }
+
         this.connectAttempt++;
         final long currentConnectAttempt = this.connectAttempt;
         final CompletableFuture<ConnectionManager> currentConnectTask = ConnectionManager.connect(this.options,
