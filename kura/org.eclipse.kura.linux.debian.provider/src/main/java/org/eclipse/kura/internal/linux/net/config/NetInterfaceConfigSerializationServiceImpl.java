@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2018, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -493,6 +493,7 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                     if (this.isDelDefaultRoute) {
                         sb.append("\t").append(REMOVE_ROUTE_COMMAND).append("\n");
                     }
+                    sb.append("\t post-up ").append(REMOVE_ROUTE_COMMAND).append("\n");
                 }
             } else {
                 logger.debug("new config is STATIC for {}", interfaceName);

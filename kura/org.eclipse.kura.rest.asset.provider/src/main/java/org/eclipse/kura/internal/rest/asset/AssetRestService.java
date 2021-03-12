@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -32,7 +32,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.felix.useradmin.RoleRepositoryStore;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.asset.Asset;
 import org.eclipse.kura.asset.AssetService;
@@ -62,12 +61,6 @@ public class AssetRestService {
 
     private AssetService assetService;
     private Gson channelSerializer;
-    @SuppressWarnings("unused")
-    private RoleRepositoryStore roleRepositoryStore;
-
-    public void setRoleRepositoryStore(RoleRepositoryStore roleRepositoryStore) {
-        this.roleRepositoryStore = roleRepositoryStore;
-    }
 
     private UserAdmin userAdmin;
 
@@ -80,11 +73,7 @@ public class AssetRestService {
     }
 
     public void activate() {
-        userAdmin.createRole("kura.permission.rest.assets", Role.GROUP);
-    }
-
-    public void deactivate() {
-
+        this.userAdmin.createRole("kura.permission.rest.assets", Role.GROUP);
     }
 
     @GET
@@ -142,7 +131,7 @@ public class AssetRestService {
     }
 
     private Asset getAsset(String assetPid) {
-        final Asset asset = assetService.getAsset(assetPid);
+        final Asset asset = this.assetService.getAsset(assetPid);
         if (asset == null) {
             throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).type(MediaType.TEXT_PLAIN)
                     .entity("Asset not found: " + assetPid).build());
@@ -151,8 +140,8 @@ public class AssetRestService {
     }
 
     private Gson getChannelSerializer() {
-        if (channelSerializer == null) {
-            channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
+        if (this.channelSerializer == null) {
+            this.channelSerializer = new GsonBuilder().registerTypeAdapter(TypedValue.class,
                     (JsonSerializer<TypedValue<?>>) (typedValue, type, context) -> {
                         final Object value = typedValue.getValue();
                         if (value instanceof Number) {

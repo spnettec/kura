@@ -30,7 +30,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.felix.useradmin.RoleRepositoryStore;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.audit.AuditConstants;
@@ -116,13 +115,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     private HttpService httpService;
 
-    @SuppressWarnings("unused")
-    private RoleRepositoryStore roleRepositoryStore;
-
-    public void setRoleRepositoryStore(RoleRepositoryStore roleRepositoryStore) {
-        this.roleRepositoryStore = roleRepositoryStore;
-    }
-
     private SystemService systemService;
     private CryptoService cryptoService;
 
@@ -143,8 +135,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     private static Console instance;
 
     private static ConsoleOptions consoleOptions;
-
-    // private final ExecutorService configUpdateExecutor = Executors.newSingleThreadExecutor();
 
     // ----------------------------------------------------------------
     //
@@ -172,8 +162,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
         this.userAdmin = userAdmin;
     }
 
-    private Boolean invalidateSession = false;
-
     // ----------------------------------------------------------------
     //
     // Activation APIs
@@ -181,9 +169,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     // ----------------------------------------------------------------
 
     protected void activate(ComponentContext context, Map<String, Object> properties) {
-
-        // this.configUpdateExecutor.execute(() -> {
-        // waitUserAdminReady();
 
         setInstance(this);
         try {
@@ -224,11 +209,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
         logger.info("postInstalledEvent() :: posting KuraConfigReadyEvent");
 
         this.eventAdmin.postEvent(new Event(KuraConfigReadyEvent.KURA_CONFIG_EVENT_READY_TOPIC, eventProps));
-        // });
-    }
-
-    public Boolean isInvalidateSession() {
-        return this.invalidateSession;
     }
 
     private void setAppRoot(String propertiesAppRoot) {
@@ -244,7 +224,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     }
 
     protected void updated(Map<String, Object> properties) {
-        // this.configUpdateExecutor.execute(() -> {
         boolean webEnabled = Boolean.parseBoolean(this.systemService.getKuraWebEnabled());
         if (!webEnabled) {
             return;
@@ -252,7 +231,6 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
         unregisterServlet();
         doUpdate(properties);
-        // });
     }
 
     private void doUpdate(Map<String, Object> properties) {
@@ -284,19 +262,9 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
     }
 
     protected void deactivate(BundleContext context) {
-        // this.configUpdateExecutor.submit(() -> {
         logger.info("deactivate...");
 
         unregisterServlet();
-        // });
-
-        // this.configUpdateExecutor.shutdown();
-        // try {
-        // this.configUpdateExecutor.awaitTermination(1, TimeUnit.MINUTES);
-        // } catch (InterruptedException e) {
-        // logger.warn("Interrupted while waiting executor termination");
-        // Thread.currentThread().interrupt();
-        // }
     }
 
     // ----------------------------------------------------------------
@@ -590,35 +558,26 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     @Override
     public void registerConsoleExtensionBundle(ClientExtensionBundle extension) {
-        // this.configUpdateExecutor.execute(() -> {
         this.consoleExtensions.add(extension);
         refreshOptions();
-        // });
-
     }
 
     @Override
     public void unregisterConsoleExtensionBundle(ClientExtensionBundle extension) {
-        // this.configUpdateExecutor.execute(() -> {
         this.consoleExtensions.remove(extension);
         refreshOptions();
-        // });
     }
 
     @Override
     public void registerLoginExtensionBundle(ClientExtensionBundle extension) {
-        // this.configUpdateExecutor.execute(() -> {
         this.loginExtensions.add(extension);
         refreshOptions();
-        // });
     }
 
     @Override
     public void unregisterLoginExtensionBundle(ClientExtensionBundle extension) {
-        // this.configUpdateExecutor.execute(() -> {
         this.loginExtensions.remove(extension);
         refreshOptions();
-        // });
     }
 
     @Override
@@ -694,35 +653,11 @@ public class Console implements SelfConfiguringComponent, org.eclipse.kura.web.a
 
     @Override
     public Optional<String> getUsername(HttpSession session) {
-        return Optional.ofNullable(session.getAttribute(Attributes.AUTORIZED_USER.getValue())).map(o -> (String) o);
+        return Optional.ofNullable(session.getAttribute(Attributes.AUTORIZED_USER.getValue())).map(String.class::cast);
     }
 
     @Override
     public ComponentConfiguration getConfiguration() throws KuraException {
         return consoleOptions.getConfiguration();
     }
-    /*
-     * 
-     * private void waitUserAdminReady() {
-     * final BundleContext context = FrameworkUtil.getBundle(Console.class).getBundleContext();
-     * 
-     * while (true) {
-     * 
-     * try {
-     * Thread.sleep(100);
-     * } catch (final InterruptedException e) {
-     * Thread.currentThread().interrupt();
-     * }
-     * 
-     * final ServiceReference<RoleRepositoryStore> ref = context.getServiceReference(RoleRepositoryStore.class);
-     * 
-     * final Bundle[] usingBundles = ref.getUsingBundles();
-     * 
-     * if (usingBundles != null && usingBundles.length > 0) {
-     * break;
-     * }
-     * 
-     * }
-     * }
-     */
 }

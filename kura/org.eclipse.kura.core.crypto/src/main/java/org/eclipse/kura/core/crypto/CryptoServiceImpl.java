@@ -110,11 +110,17 @@ public class CryptoServiceImpl implements CryptoService {
 
     @Override
     public void encryptAes(InputStream value, OutputStream out) throws KuraException {
+
         CipherOutputStream cipherOutputStream = null;
         try {
             Key key = generateKey();
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, key);
+            Cipher cipher = Cipher.getInstance(CIPHER);
+            byte[] iv = new byte[IV_SIZE];
+            this.random.nextBytes(iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
+            String ivString = base64Encode(iv) + ENCRYPTED_STRING_SEPARATOR;
+            out.write(ivString.getBytes());
+
             OutputStream wrapOut = Base64.getEncoder().wrap(out);
             cipherOutputStream = new CipherOutputStream(wrapOut, cipher);
 
@@ -128,13 +134,9 @@ public class CryptoServiceImpl implements CryptoService {
                 }
             }
 
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
-        } catch (NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
-        } catch (InvalidKeyException e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR);
-        } catch (IOException e) {
+        } catch (InvalidKeyException | IOException | InvalidAlgorithmParameterException e) {
             throw new KuraException(KuraErrorCode.ENCODE_ERROR);
         } finally {
             if (cipherOutputStream != null) {
@@ -160,8 +162,16 @@ public class CryptoServiceImpl implements CryptoService {
         CipherInputStream cipherInputStream = null;
         try {
             Key key = generateKey();
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key);
+            Cipher cipher = Cipher.getInstance(CIPHER);
+            char bit;
+            StringBuilder encodedIv = new StringBuilder();
+            while ((bit = (char) value.read()) != '-') {
+                encodedIv.append(bit);
+                if (encodedIv.length() > 20)
+                    throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
+            }
+            byte[] iv = base64Decode(encodedIv.toString());
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
             InputStream wrapValue = Base64.getDecoder().wrap(value);
             cipherInputStream = new CipherInputStream(wrapValue, cipher);
 
@@ -173,14 +183,10 @@ public class CryptoServiceImpl implements CryptoService {
                     out.flush();
                 }
             }
-        } catch (NoSuchAlgorithmException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, e);
-        } catch (NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, e);
-        } catch (InvalidKeyException e) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-        } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
+        } catch (InvalidKeyException | IOException | InvalidAlgorithmParameterException e) {
+            throw new KuraException(KuraErrorCode.ENCODE_ERROR);
         } finally {
             if (cipherInputStream != null) {
                 try {
