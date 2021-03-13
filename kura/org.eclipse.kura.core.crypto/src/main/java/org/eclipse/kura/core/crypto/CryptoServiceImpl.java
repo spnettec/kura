@@ -167,8 +167,9 @@ public class CryptoServiceImpl implements CryptoService {
             StringBuilder encodedIv = new StringBuilder();
             while ((bit = (char) value.read()) != '-') {
                 encodedIv.append(bit);
-                if (encodedIv.length() > 20)
+                if (encodedIv.length() > 20) {
                     throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
+                }
             }
             byte[] iv = base64Decode(encodedIv.toString());
             cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
