@@ -278,7 +278,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         return new OpcUaPreparedRead(Request.extractReadRequests(channelRecords), channelRecords);
     }
 
-    private void startConnectionMonitorTask() {
+    private synchronized void startConnectionMonitorTask() {
         if (this.connectionMonitorFuture != null && !this.connectionMonitorFuture.isDone()) {
             return;
         }
@@ -315,7 +315,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         }, 10, 10, TimeUnit.SECONDS);
     }
 
-    private void stopConnectionMonitorTask() {
+    private synchronized void stopConnectionMonitorTask() {
         if (this.connectionMonitorFuture != null && !this.connectionMonitorFuture.isDone()) {
 
             logger.info("Reconnect task running. Stopping it");

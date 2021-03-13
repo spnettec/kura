@@ -44,8 +44,6 @@ import org.gwtbootstrap3.client.ui.InlineHelpBlock;
 import org.gwtbootstrap3.client.ui.InlineRadio;
 import org.gwtbootstrap3.client.ui.Input;
 import org.gwtbootstrap3.client.ui.ListBox;
-import org.gwtbootstrap3.client.ui.TextArea;
-import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.base.TextBoxBase;
 import org.gwtbootstrap3.client.ui.constants.IconType;
 import org.gwtbootstrap3.client.ui.constants.InputType;
@@ -232,8 +230,13 @@ public abstract class AbstractServicesUi extends Composite {
         textBox.addKeyUpHandler(event -> {
             textBox.validate(true);
         });
+        final String originValue = formattedValue;
         textBox.addValueChangeHandler(event -> {
-            setDirty(true);
+            if (originValue.equals(event.getValue())) {
+                setDirty(false);
+            } else {
+                setDirty(true);
+            }
         });
 
         if (param.getId().endsWith(TARGET_SUFFIX)) {
@@ -309,14 +312,14 @@ public abstract class AbstractServicesUi extends Composite {
             return new KuraTextBox();
         }
         if (param.getDescription() != null && param.getDescription().contains("\u200B\u200B\u200B\u200B\u200B")) {
-            final TextArea result = createTextArea();
+            final ExtendedTextArea result = createTextArea();
             result.setHeight("500px");
             return result;
         }
         if (isTextArea(param)) {
             return createTextArea();
         }
-        return new TextBox();
+        return new ExtendedTextBox();
     }
 
     private boolean isTextArea(final GwtConfigParameter param) {
@@ -365,8 +368,8 @@ public abstract class AbstractServicesUi extends Composite {
         return new String[] { description.substring(0, idx), description.substring(idx + 1) };
     }
 
-    private TextArea createTextArea() {
-        final TextArea textArea = new TextArea();
+    private ExtendedTextArea createTextArea() {
+        final ExtendedTextArea textArea = new ExtendedTextArea();
         textArea.setVisibleLines(10);
         textArea.setCharacterWidth(120);
         return textArea;
