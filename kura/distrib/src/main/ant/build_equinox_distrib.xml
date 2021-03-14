@@ -1515,7 +1515,9 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.pool_${org.apache.commons-pool.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.paho.client.mqttv3_${org.eclipse.paho.client.mqttv3.version}.jar@3:start" />
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.paho.client.mqttv3_${org.eclipse.paho.client.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.paho.mqttv5.client_${org.eclipse.paho.client.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.httpcomponents.httpclient_${org.apache.httpcomponents.httpclient-osgi.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"

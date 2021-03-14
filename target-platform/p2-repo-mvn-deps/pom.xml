@@ -737,7 +737,12 @@
                   <transitive>false</transitive>
               </artifact> 
               <artifact>
-                  <id>org.eclipse.paho:org.eclipse.paho.client.mqttv3:${org.eclipse.paho.client.mqttv3.version}</id>
+                  <id>org.eclipse.paho:org.eclipse.paho.client.mqttv3:${org.eclipse.paho.client.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.paho:org.eclipse.paho.mqttv5.client:${org.eclipse.paho.client.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>

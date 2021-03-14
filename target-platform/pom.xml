@@ -59,7 +59,7 @@
             <url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</url>
             <snapshots>
                 <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
+                <!-- <updatePolicy>always</updatePolicy> -->
             </snapshots>
         </repository>
         <repository>
