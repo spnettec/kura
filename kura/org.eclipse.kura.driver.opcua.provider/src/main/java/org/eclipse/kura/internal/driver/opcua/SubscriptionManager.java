@@ -36,6 +36,7 @@ import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaMonitoredItem;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscription;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscriptionManager.SubscriptionListener;
+import org.eclipse.milo.opcua.sdk.client.model.types.objects.BaseEventType;
 import org.eclipse.milo.opcua.sdk.client.subscriptions.OpcUaSubscriptionManager;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
@@ -64,15 +65,9 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
     private static final EventFilter DEFAULT_EVENT_FILTER = new EventFilter(
             new SimpleAttributeOperand[] {
                     new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, "EventId") }, AttributeId.Value.uid(), null),
+                            new QualifiedName[] { new QualifiedName(0, BaseEventType.TIME.getBrowseName()) }, AttributeId.Value.uid(), null),
                     new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, "EventType") }, AttributeId.Value.uid(), null),
-                    new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, "Severity") }, AttributeId.Value.uid(), null),
-                    new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, "Time") }, AttributeId.Value.uid(), null),
-                    new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, "Message") }, AttributeId.Value.uid(), null) },
+                            new QualifiedName[] { new QualifiedName(0, BaseEventType.MESSAGE.getBrowseName()) }, AttributeId.Value.uid(), null) },
             new ContentFilter(null));
 
     private final OpcUaClient client;
