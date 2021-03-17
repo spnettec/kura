@@ -40,6 +40,7 @@ import org.eclipse.milo.opcua.sdk.client.model.types.objects.BaseEventType;
 import org.eclipse.milo.opcua.sdk.client.subscriptions.OpcUaSubscriptionManager;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ExtensionObject;
@@ -62,12 +63,13 @@ import org.slf4j.LoggerFactory;
 public class SubscriptionManager implements SubscriptionListener, ListenerRegistrationRegistry.Listener {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionManager.class);
-    private static final EventFilter DEFAULT_EVENT_FILTER = new EventFilter(
-            new SimpleAttributeOperand[] {
-                    new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, BaseEventType.TIME.getBrowseName()) }, AttributeId.Value.uid(), null),
-                    new SimpleAttributeOperand(Identifiers.BaseEventType,
-                            new QualifiedName[] { new QualifiedName(0, BaseEventType.MESSAGE.getBrowseName()) }, AttributeId.Value.uid(), null) },
+    private static final EventFilter DEFAULT_EVENT_FILTER = new EventFilter(new SimpleAttributeOperand[] {
+            new SimpleAttributeOperand(Identifiers.BaseEventType,
+                    new QualifiedName[] { new QualifiedName(0, BaseEventType.TIME.getBrowseName()) },
+                    AttributeId.Value.uid(), null),
+            new SimpleAttributeOperand(Identifiers.BaseEventType,
+                    new QualifiedName[] { new QualifiedName(0, BaseEventType.MESSAGE.getBrowseName()) },
+                    AttributeId.Value.uid(), null) },
             new ContentFilter(null));
 
     private final OpcUaClient client;
@@ -353,7 +355,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             }
             this.monitoredItem = Optional.of(item);
             item.setEventConsumer(this::dispatchEvent);
-            item.setValueConsumer(this::dispatchValue);
+            item.setValueConsumer(new MonitoredValueConsumer());
         }
 
         public void dispatchEvent(final Variant[] values) {
@@ -369,16 +371,31 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             });
         }
 
-        public void dispatchValue(final DataValue value) {
-            this.dispatcher.dispatch(record -> fillRecord(value, record));
-        }
-
+        /*
+         * public void dispatchValue(SerializationContext context, UaMonitoredItem item, DataValue value) {
+         * this.dispatcher.dispatch(record -> fillRecord(value, record));
+         * }
+         */
         public void close() {
             this.monitoredItem.ifPresent(item -> {
                 item.setValueConsumer(nopValueConsumer);
                 item.setEventConsumer(nopVariantConsumer);
             });
             this.monitoredItem = Optional.empty();
+        }
+
+        private class MonitoredValueConsumer implements UaMonitoredItem.ValueConsumer {
+
+            private DataValue preValue = null;
+
+            @Override
+            public void onValueArrived(SerializationContext context, UaMonitoredItem item, DataValue value) {
+                if (preValue != null) {
+                    MonitoredItemHandler.this.dispatcher.dispatch(record -> fillRecord(value, record));
+                }
+                preValue = value;
+            }
+
         }
     }
 
