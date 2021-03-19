@@ -343,7 +343,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="https.keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
+                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="kura.service.pid" type="String">
                 <esf:value>org.eclipse.kura.http.server.manager.HttpService</esf:value>
