@@ -844,8 +844,6 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.console_${org.eclipse.equinox.console.version}.jar@1" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.ds_${org.eclipse.equinox.ds.version}.jar@1:start" />
-			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar@1:start" />
@@ -858,7 +856,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.osgi.util_${org.eclipse.osgi.util.version}.jar@2:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.scr_${org.apache.felix.scr.version}.jar@5" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.scr_${org.apache.felix.scr.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.command_${org.apache.felix.gogo.command.version}.jar@5" />
 			<entry key="osgi.bundles" operation="+"
@@ -1541,77 +1539,77 @@ fi]]>
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_${guava.distrib.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_${guava.distrib.version}.jar@3" />
 
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.buffer_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.buffer_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-dns_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-dns_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-http_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-http_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-http2_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-http2_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-mqtt_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-mqtt_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-socks_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.codec-socks_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.common_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.common_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.handler_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.handler_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.handler-proxy_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.handler-proxy_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver-dns_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver-dns_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-epoll_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-epoll_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-kqueue_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-kqueue_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-unix-common_${io.netty.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-unix-common_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-server-osgi_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-mqtt-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-amqp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-amqp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-stomp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-stomp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-native_${org.apache.activemq.artemis-native.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-native_${org.apache.activemq.artemis-native.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-configuration2_${commons-configuration2.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-configuration2_${commons-configuration2.version}.jar@3" />
 						
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-text_${commons-text.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-text_${commons-text.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jctools.core_${jctools-core.version}.jar@3:start" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jgroups_${jgroups.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jgroups_${jgroups.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.johnzon.core_${johnzon-core.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.johnzon.core_${johnzon-core.version}.jar@3" />
 
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-beanutils_${commons-beanutils.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-beanutils_${commons-beanutils.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.collections_${commons-collections.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.collections_${commons-collections.version}.jar@3" />
 
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.geronimo.specs.geronimo-jms_2.0_spec_${org.apache.geronimo.specs.jms.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.geronimo.specs.geronimo-json_1.0_spec_${org.apache.geronimo.specs.json.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.geronimo.specs.geronimo-jta_1.1_spec_${org.apache.geronimo.specs.jta.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.geronimo.specs.geronimo-jta_1.1_spec_${org.apache.geronimo.specs.jta.version}.jar@3:" />
 
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jboss.logging.jboss-logging_${org.jboss.logging.version}.jar@3:start" />

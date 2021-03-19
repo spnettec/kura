@@ -34,17 +34,17 @@
         <dependency>
             <groupId>org.eclipse.platform</groupId>
             <artifactId>org.eclipse.equinox.http.jetty</artifactId>
-            <version>3.7.400</version>
+            <version>3.7.600</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>9.4.35.v20201120</version>
+            <version>9.4.37.v20210219</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>9.4.35.v20201120</version>
+            <version>9.4.37.v20210219</version>
         </dependency>
     </dependencies>
 
