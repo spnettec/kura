@@ -230,7 +230,7 @@ public abstract class AbstractServicesUi extends Composite {
         textBox.addKeyUpHandler(event -> {
             textBox.validate(true);
         });
-        final String originValue = formattedValue;
+        final String originValue = formattedValue == null ? "" : formattedValue;
         textBox.addValueChangeHandler(event -> {
             if (originValue.equals(event.getValue())) {
                 setDirty(false);
