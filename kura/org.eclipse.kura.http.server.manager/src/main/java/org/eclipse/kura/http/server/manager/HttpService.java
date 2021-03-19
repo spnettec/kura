@@ -105,7 +105,13 @@ public class HttpService implements ConfigurableComponent {
         this.selfUpdaterExecutor = Executors.newSingleThreadScheduledExecutor();
 
         if (keystoreExists(this.options.getHttpsKeystorePath()) && isFirstBoot()) {
-            changeDefaultKeystorePassword();
+            Boolean change = Boolean.valueOf(
+                    systemService.getProperties().getProperty("kura.https.changedefaultkeystorepassword", "true"));
+            if (Boolean.TRUE.equals(change)) {
+                changeDefaultKeystorePassword();
+            } else {
+                activateHttpService();
+            }
         } else {
             activateHttpService();
         }
@@ -265,7 +271,9 @@ public class HttpService implements ConfigurableComponent {
         } catch (KuraException e) {
             logger.warn("Failed to decrypt keystore password");
         }
-        updateKeystorePassword(oldPassword, newPassword);
+        if (!Arrays.equals(oldPassword, newPassword)) {
+            updateKeystorePassword(oldPassword, newPassword);
+        }
     }
 
     private boolean keystoreExists(String keystorePath) {
