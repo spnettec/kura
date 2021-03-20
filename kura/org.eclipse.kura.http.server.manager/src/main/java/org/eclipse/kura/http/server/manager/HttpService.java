@@ -105,13 +105,7 @@ public class HttpService implements ConfigurableComponent {
         this.selfUpdaterExecutor = Executors.newSingleThreadScheduledExecutor();
 
         if (keystoreExists(this.options.getHttpsKeystorePath()) && isFirstBoot()) {
-            Boolean change = Boolean.valueOf(
-                    systemService.getProperties().getProperty("kura.https.changedefaultkeystorepassword", "true"));
-            if (Boolean.TRUE.equals(change)) {
-                changeDefaultKeystorePassword();
-            } else {
-                activateHttpService();
-            }
+            changeDefaultKeystorePassword();
         } else {
             activateHttpService();
         }
