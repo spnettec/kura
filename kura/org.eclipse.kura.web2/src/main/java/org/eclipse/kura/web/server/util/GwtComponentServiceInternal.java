@@ -17,7 +17,6 @@ import static java.util.Objects.isNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +46,7 @@ import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Icon;
 import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.configuration.metatype.Option;
+import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.util.service.ServiceUtil;
 import org.eclipse.kura.web.shared.GwtKuraErrorCode;
@@ -132,35 +132,52 @@ public class GwtComponentServiceInternal {
 
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
         try {
-            // Build the new properties
-            Map<String, Object> properties = new HashMap<>();
-            ComponentConfiguration currentCC = cs.getComponentConfiguration(gwtCompConfig.getComponentId());
-
-            Map<String, Object> currentConfigProp = currentCC.getConfigurationProperties();
-            for (GwtConfigParameter gwtConfigParam : gwtCompConfig.getParameters()) {
-                Object objValue;
-                Object currentValue = currentConfigProp.get(gwtConfigParam.getId());
-
-                boolean isReadOnly = gwtConfigParam.getMin() != null
-                        && gwtConfigParam.getMin().equals(gwtConfigParam.getMax());
-                if (isReadOnly) {
-                    objValue = currentValue;
-                } else {
-                    objValue = GwtServerUtil.getUserDefinedObject(gwtConfigParam, currentValue);
-                }
-                properties.put(gwtConfigParam.getId(), objValue);
-            }
-
-            // Force kura.service.pid into properties, if originally present
-            if (currentConfigProp.get(KURA_SERVICE_PID) != null) {
-                properties.put(KURA_SERVICE_PID, currentConfigProp.get(KURA_SERVICE_PID));
-            }
-            //
-            // apply them
-            cs.updateConfiguration(gwtCompConfig.getComponentId(), properties);
+            ComponentConfiguration componentConfiguration = getComponentConfiguration(cs, gwtCompConfig);
+            cs.updateConfiguration(gwtCompConfig.getComponentId(), componentConfiguration.getConfigurationProperties());
         } catch (KuraException e) {
             KuraExceptionHandler.handle(e);
         }
+    }
+
+    public static void updateComponentConfigurations(List<GwtConfigComponent> gwtCompConfigs) throws GwtKuraException {
+
+        ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
+        List<ComponentConfiguration> componentConfigurations = new ArrayList<>();
+        try {
+            for (GwtConfigComponent gwtCompConfig : gwtCompConfigs) {
+                componentConfigurations.add(getComponentConfiguration(cs, gwtCompConfig));
+            }
+            cs.updateConfigurations(componentConfigurations);
+        } catch (KuraException e) {
+            KuraExceptionHandler.handle(e);
+        }
+    }
+
+    private static ComponentConfiguration getComponentConfiguration(ConfigurationService cs,
+            GwtConfigComponent gwtCompConfig) throws KuraException {
+        Map<String, Object> properties = new HashMap<>();
+        ComponentConfiguration currentCC = cs.getComponentConfiguration(gwtCompConfig.getComponentId());
+
+        Map<String, Object> currentConfigProp = currentCC.getConfigurationProperties();
+        for (GwtConfigParameter gwtConfigParam : gwtCompConfig.getParameters()) {
+            Object objValue;
+            Object currentValue = currentConfigProp.get(gwtConfigParam.getId());
+
+            boolean isReadOnly = gwtConfigParam.getMin() != null
+                    && gwtConfigParam.getMin().equals(gwtConfigParam.getMax());
+            if (isReadOnly) {
+                objValue = currentValue;
+            } else {
+                objValue = GwtServerUtil.getUserDefinedObject(gwtConfigParam, currentValue);
+            }
+            properties.put(gwtConfigParam.getId(), objValue);
+        }
+
+        // Force kura.service.pid into properties, if originally present
+        if (currentConfigProp.get(KURA_SERVICE_PID) != null) {
+            properties.put(KURA_SERVICE_PID, currentConfigProp.get(KURA_SERVICE_PID));
+        }
+        return new ComponentConfigurationImpl(currentCC.getPid(), null, properties);
     }
 
     public static void createFactoryComponent(String factoryPid, String pid) throws GwtKuraException {
@@ -174,11 +191,13 @@ public class GwtComponentServiceInternal {
 
         internalCreateFactoryComponent(factoryPid, pid, propertiesMap);
     }
-    public static void createFactoryComponent(String factoryPid, String pid,
-            Map<String, Object> properties) throws GwtKuraException {
+
+    public static void createFactoryComponent(String factoryPid, String pid, Map<String, Object> properties)
+            throws GwtKuraException {
 
         internalCreateFactoryComponent(factoryPid, pid, properties);
     }
+
     private static void internalCreateFactoryComponent(String factoryPid, String pid, Map<String, Object> properties)
             throws GwtKuraException {
         ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
