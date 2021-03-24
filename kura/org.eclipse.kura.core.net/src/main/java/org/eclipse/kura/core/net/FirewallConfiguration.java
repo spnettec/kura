@@ -28,6 +28,7 @@ import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP4;
+import org.eclipse.kura.net.firewall.RuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,7 +197,7 @@ public class FirewallConfiguration {
                         }
                         boolean masquerade = Boolean.parseBoolean(sa[5]);
                         FirewallNatConfig natEntry = new FirewallNatConfig(srcIface, dstIface, protocol, src, dst,
-                                masquerade);
+                                masquerade, RuleType.IP_FORWARDING);
                         this.natConfigs.add(natEntry);
                     }
                 }
