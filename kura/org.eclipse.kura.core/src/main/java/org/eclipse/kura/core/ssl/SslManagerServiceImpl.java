@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -327,18 +327,20 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
 
         if (isFirstBoot()) {
             changeDefaultKeystorePassword();
-        } else {
-            char[] oldPassword = getOldKeystorePassword(keystorePath);
+            return;
+        }
 
-            char[] newPassword = new char[] {};
-            try {
-                newPassword = this.cryptoService.decryptAes(this.options.getSslKeystorePassword().toCharArray());
-            } catch (KuraException e) {
-                logger.warn("Failed to decrypt keystore password");
-            }
-            if (!Arrays.equals(oldPassword, newPassword)) {
-                updateKeystorePassword(oldPassword, newPassword);
-            }
+        char[] oldPassword = getOldKeystorePassword(keystorePath);
+        char[] newPassword = null;
+
+        try {
+            newPassword = this.cryptoService.decryptAes(this.options.getSslKeystorePassword().toCharArray());
+        } catch (KuraException e) {
+            logger.warn("Failed to decrypt keystore password");
+        }
+
+        if (newPassword != null && !Arrays.equals(oldPassword, newPassword)) {
+            updateKeystorePassword(oldPassword, newPassword);
         }
     }
 
@@ -465,7 +467,6 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
         // for a new alias.
         // This allows for SSL Context Resumption and abbreviated SSL handshake
         // in case of reconnects to the same host.
-
         SSLContext context = this.sslContexts.get(options);
         if (context == null) {
             String alias = options.getAlias();
@@ -579,17 +580,7 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
                 ks.load(null, null);
                 ks.setEntry(keyAlias, entry, pp);
             }
-            /*
-             * else if (ks.containsAlias(keyAlias) && ks.isCertificateEntry(keyAlias)) {
-             * Certificate cert = ks.getCertificate(keyAlias);
-             * ks = KeyStore.getInstance(KeyStore.getDefaultType());
-             * ks.load(null, null);
-             * ks.setCertificateEntry(keyAlias, cert);
-             * } else {
-             * ks = KeyStore.getInstance(KeyStore.getDefaultType());
-             * ks.load(null, null);
-             * }
-             */
+
             return ks;
         }
     }
