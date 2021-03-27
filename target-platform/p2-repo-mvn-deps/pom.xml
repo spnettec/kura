@@ -767,6 +767,27 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Import-Package>jdk.vm.ci.services;resolution:=optional,org.graalvm.co
+                         llections;resolution:=optional,org.graalvm.home;resolution:=optional,
+                         org.graalvm.home.impl;resolution:=optional,org.graalvm.nativeimage;re
+                         solution:=optional,org.graalvm.nativeimage.c.function;resolution:=opt
+                         ional,org.graalvm.nativeimage.c.struct;resolution:=optional,org.graal
+                         vm.nativeimage.c.type;resolution:=optional,org.graalvm.nativeimage.ho
+                         sted;resolution:=optional,org.graalvm.nativeimage.impl;resolution:=op
+                         tional,org.graalvm.options;resolution:=optional,org.graalvm.polyglot;
+                         resolution:=optional,org.graalvm.polyglot.impl;resolution:=optional,o
+                         rg.graalvm.polyglot.io;resolution:=optional,org.graalvm.polyglot.mana
+                         gement;resolution:=optional,org.graalvm.polyglot.proxy;resolution:=op
+                         tional,org.graalvm.word;resolution:=optional,org.graalvm.word.impl;re
+                         solution:=optional,com.oracle.truffle.polyglot,com.oracle.truffle.api
+                         ,com.oracle.truffle.api.exception,com.oracle.truffle.api.instrumentat
+                         ion,com.oracle.truffle.api.nodes,com.oracle.truffle.api.frame,com.ora
+                         cle.truffle.api.object,com.oracle.truffle.api.interop,com.oracle.truf
+                         fle.api.dsl,com.oracle.truffle.api.library,com.oracle.truffle.api.uti
+                         lities,com.oracle.truffle.api.source,com.oracle.truffle.api.profiles,
+                         com.ibm.icu.lang,com.ibm.icu.math,com.ibm.icu.number,com.ibm.icu.text
+                         ,com.ibm.icu.util
+                      </Import-Package>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -777,6 +798,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                       <Import-Package>javax.script;resolution:=optional,org.graalvm.collecti
+                         ons;resolution:=optional,org.graalvm.polyglot;resolution:=optional,or
+                         g.graalvm.polyglot.proxy;resolution:=optional,com.oracle.truffle.poly
+                         glot,com.oracle.truffle.api,com.oracle.truffle.api.exception
+                      </Import-Package>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -791,6 +817,21 @@
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
                   </instructions>
+              </artifact>
+              <artifact>
+                  <id>org.graalvm.regex:regex:jar:21.0.0.2</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+                  <instructions>
+                      <Multi-Release>true</Multi-Release>
+                      <SPI-Consumer>*</SPI-Consumer>
+                      <SPI-Provider>*</SPI-Provider>
+                  </instructions>
+              </artifact>
+               <artifact>
+                  <id>com.ibm.icu:icu4j:jar:68.2</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
               </artifact>
               <artifact>
                   <id>org.eclipse.platform:org.eclipse.equinox.io:jar:${org.eclipse.equinox.io-mvn.version}</id>
