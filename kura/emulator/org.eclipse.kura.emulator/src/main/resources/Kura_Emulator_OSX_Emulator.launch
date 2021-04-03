@@ -34,6 +34,7 @@
         <setEntry value="org.eclipse.kura.core.ssl.test"/>
         <setEntry value="org.eclipse.kura.core.status.test"/>
         <setEntry value="org.eclipse.kura.core.system.test"/>
+        <setEntry value="org.eclipse.kura.core.tamper.detection.test"/>
         <setEntry value="org.eclipse.kura.core.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.core.util.test"/>
@@ -73,13 +74,8 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -125,6 +121,7 @@
         <setEntry value="org.eclipse.kura.stress"/>
         <setEntry value="org.eclipse.kura.stress.test"/>
         <setEntry value="org.eclipse.kura.test"/>
+        <setEntry value="org.eclipse.kura.useradmin.store.test"/>
         <setEntry value="org.eclipse.kura.util.test"/>
         <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
@@ -373,6 +370,7 @@
         <setEntry value="org.eclipse.kura.core.net@default:default"/>
         <setEntry value="org.eclipse.kura.core.status@default:default"/>
         <setEntry value="org.eclipse.kura.core.system@default:default"/>
+        <setEntry value="org.eclipse.kura.core.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
         <setEntry value="org.eclipse.kura.deployment.agent@default:default"/>
         <setEntry value="org.eclipse.kura.docs@default:default"/>
