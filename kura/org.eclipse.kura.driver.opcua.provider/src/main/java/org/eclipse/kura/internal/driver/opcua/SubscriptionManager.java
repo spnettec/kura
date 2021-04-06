@@ -40,7 +40,6 @@ import org.eclipse.milo.opcua.sdk.client.model.types.objects.BaseEventType;
 import org.eclipse.milo.opcua.sdk.client.subscriptions.OpcUaSubscriptionManager;
 import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
-import org.eclipse.milo.opcua.stack.core.serialization.SerializationContext;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ExtensionObject;
@@ -323,9 +322,8 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             final boolean isEventNotifier = AttributeId.EventNotifier.uid().equals(readValueId.getAttributeId());
             final MonitoringParameters monitoringParams = new MonitoringParameters(requestHandle,
                     isEventNotifier ? 0.0 : params.getSamplingInterval(),
-                    isEventNotifier
-                            ? ExtensionObject.encode(SubscriptionManager.this.client.getSerializationContext(),
-                                    DEFAULT_EVENT_FILTER)
+                    isEventNotifier ? ExtensionObject.encode(
+                            SubscriptionManager.this.client.getStaticSerializationContext(), DEFAULT_EVENT_FILTER)
                             : null,
                     UInteger.valueOf(params.getQueueSize()), params.getDiscardOldest());
             return new MonitoredItemCreateRequest(params.getReadValueId(), MonitoringMode.Reporting, monitoringParams);
@@ -389,7 +387,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             private DataValue preValue = null;
 
             @Override
-            public void onValueArrived(SerializationContext context, UaMonitoredItem item, DataValue value) {
+            public void onValueArrived(UaMonitoredItem item, DataValue value) {
                 if (preValue != null) {
                     MonitoredItemHandler.this.dispatcher.dispatch(record -> fillRecord(value, record));
                 }
