@@ -140,7 +140,7 @@
         <jacoco.version>0.8.6</jacoco.version>
 
         <!-- BND baseline plugin -->
-        <bnd.baseline.version>5.2.0</bnd.baseline.version>
+        <bnd.baseline.version>5.3.0</bnd.baseline.version>
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
 
         <kura.skip.can>true</kura.skip.can>

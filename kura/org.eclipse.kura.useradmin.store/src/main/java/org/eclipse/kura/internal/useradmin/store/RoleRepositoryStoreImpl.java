@@ -154,7 +154,6 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
         return this.roles.get(name);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public synchronized Role[] getRoles(final String filterString) throws Exception {
 

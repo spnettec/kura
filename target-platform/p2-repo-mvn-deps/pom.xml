@@ -35,12 +35,12 @@
       <plugin>
         <groupId>org.reficio</groupId>
         <artifactId>p2-maven-plugin</artifactId>
-        <version>1.3.0</version>
+        <version>1.5.0</version>
         <dependencies>
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>5.1.1</version>
+                <version>5.1.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.osgi</groupId>
@@ -51,7 +51,7 @@
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-all</artifactId>
-                <version>3.0.6</version>
+                <version>3.0.7</version>
                 <type>pom</type>
             </dependency>            
             <dependency>
@@ -101,7 +101,7 @@
                     <transitive>false</transitive>
                 </artifact>
                 <artifact>
-                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator.version}</id>
+                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator-mvn.version}</id>
                     <source>true</source>
                     <transitive>false</transitive>
                 </artifact>
@@ -374,7 +374,7 @@
                   <id>com.google.guava:guava:${guava.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
+              </artifact> 
               <artifact>
                   <id>org.apache.activemq:artemis-mqtt-protocol:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>
@@ -909,12 +909,124 @@
                   <id>org.apache.felix:org.apache.felix.deploymentadmin:jar:${org.apache.felix.deploymentadmin.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.felix:org.apache.felix.gogo.command:jar:${org.apache.felix.gogo.command.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
               </artifact> 
+              <artifact>
+                  <id>org.apache.felix:org.apache.felix.gogo.runtime:jar:${org.apache.felix.gogo.runtime.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.apache.felix:org.apache.felix.gogo.shell:jar:${org.apache.felix.gogo.shell.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.apache.felix:org.apache.felix.scr:jar:${org.apache.felix.scr.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.core.contenttype:jar:${org.eclipse.core.contenttype-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.core.jobs:jar:${org.eclipse.core.jobs-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.core.runtime:jar:${org.eclipse.core.runtime-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.app:jar:${org.eclipse.equinox.app-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact> 
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.cm:jar:${org.eclipse.equinox.cm-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.common:jar:${org.eclipse.equinox.common-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.console:jar:${org.eclipse.equinox.console-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.event:jar:${org.eclipse.equinox.event-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.http.jetty:jar:${org.eclipse.equinox.http.jetty-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.http.registry:jar:${org.eclipse.equinox.http.registry-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.http.servlet:jar:${org.eclipse.equinox.http.servlet-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.launcher:jar:${org.eclipse.equinox.launcher-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.metatype:jar:${org.eclipse.equinox.metatype-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.preferences:jar:${org.eclipse.equinox.preferences-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.equinox.registry:jar:${org.eclipse.equinox.registry-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.osgi.services:jar:${org.eclipse.osgi.services-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.osgi.util:jar:${org.eclipse.osgi.util-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.platform:org.eclipse.osgi:jar:${org.eclipse.osgi-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <!-- 
               <artifact>
                   <id>org.knowhowlab.osgi:monitoradmin:jar:${org.knowhowlab.osgi.monitoradmin.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>                 
+              </artifact>  
+              -->               
               <artifact>
                   <id>com.eclipsesource.minimal-json:minimal-json:jar:${com.eclipsesource.minimal-json.version}</id>
                   <source>true</source>

@@ -74,8 +74,13 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -139,7 +144,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#10;-Dkura.have.net.admin=false&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#10;-Dosgi.clean=true &#10;-Dosgi.noShutdown=true&#10;-Declipse.ignoreApp=true  &#10;-Dorg.eclipse.kura.mode=macosx &#10;-Dkura.configuration=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#10;-Dlog4j.configurationFile=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#10;-Dkura.data=${workspace_loc}/kura/data  &#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots &#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#10;--add-opens java.base/jdk.internal.misc=ALL-UNNAMED&#10;-Dio.netty.tryReflectionSetAccessible=true&#10;-XX:+UnlockExperimentalVMOptions &#10;-XX:+EnableJVMCI &#10;-XX:+UseJVMCICompiler"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#10;-Dkura.have.net.admin=false&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#10;-Dosgi.clean=true &#10;-Dosgi.noShutdown=true&#10;-Declipse.ignoreApp=true  &#10;-Dorg.eclipse.kura.mode=macosx &#10;-Dkura.configuration=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#10;-Dlog4j.configurationFile=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#10;-Dkura.data=${workspace_loc}/kura/data  &#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots &#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#10;--add-opens java.base/jdk.internal.misc=ALL-UNNAMED&#10;-Dio.netty.tryReflectionSetAccessible=true"/>
     <booleanAttribute key="pde.generated.config" value="true"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <setAttribute key="selected_features">
@@ -217,7 +222,7 @@
         <setEntry value="org.apache.activemq.artemis-native@default:default"/>
         <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
         <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
-        <setEntry value="org.apache.aries.spifly.dynamic.bundle@1:default"/>
+        <setEntry value="org.apache.aries.spifly.dynamic.bundle@2:true"/>
         <setEntry value="org.apache.camel.camel-core-osgi@default:default"/>
         <setEntry value="org.apache.camel.camel-core-xml@default:default"/>
         <setEntry value="org.apache.camel.camel-core@default:default"/>
@@ -275,17 +280,13 @@
         <setEntry value="org.apache.servicemix.bundles.spring-jms@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-tx@default:default"/>
         <setEntry value="org.eclipse.core.contenttype@default:default"/>
-        <setEntry value="org.eclipse.core.expressions@default:default"/>
         <setEntry value="org.eclipse.core.jobs@default:default"/>
         <setEntry value="org.eclipse.core.runtime@default:true"/>
-        <setEntry value="org.eclipse.core.variables@default:default"/>
         <setEntry value="org.eclipse.equinox.app@default:default"/>
         <setEntry value="org.eclipse.equinox.cm@default:default"/>
         <setEntry value="org.eclipse.equinox.common@2:true"/>
         <setEntry value="org.eclipse.equinox.console@default:default"/>
         <setEntry value="org.eclipse.equinox.event@default:default"/>
-        <setEntry value="org.eclipse.equinox.frameworkadmin.equinox@default:default"/>
-        <setEntry value="org.eclipse.equinox.frameworkadmin@default:default"/>
         <setEntry value="org.eclipse.equinox.http.jetty@default:false"/>
         <setEntry value="org.eclipse.equinox.http.registry@default:default"/>
         <setEntry value="org.eclipse.equinox.http.servlet@default:default"/>
@@ -328,7 +329,6 @@
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
         <setEntry value="org.jgroups@default:default"/>
-        <setEntry value="org.knowhowlab.osgi.monitoradmin@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
         <setEntry value="org.objectweb.asm.tree.analysis@default:default"/>
         <setEntry value="org.objectweb.asm.tree@default:default"/>

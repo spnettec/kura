@@ -867,8 +867,10 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.runtime_${org.apache.felix.gogo.runtime.version}.jar@5" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.shell_${org.apache.felix.gogo.shell.version}.jar@5" />
+			<!--
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar@3:start" />
+			-->
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.dependencymanager_${org.apache.felix.dependencymanager.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"

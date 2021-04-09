@@ -28,8 +28,8 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
-        <moquette-broker.version>0.8.1</moquette-broker.version>
+        <maven-bundle-plugin.version>5.1.2</maven-bundle-plugin.version>
+        <moquette-broker.version>0.12.1</moquette-broker.version>
     </properties>
 
     <repositories>
