@@ -374,7 +374,17 @@
                   <id>com.google.guava:guava:${guava.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.google.guava:guava:${guava30.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
               </artifact> 
+              <artifact>
+                  <id>com.google.guava:failureaccess:jar:${guava.failureaccess.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>  
               <artifact>
                   <id>org.apache.activemq:artemis-mqtt-protocol:${org.apache.activemq.artemis.upstream.version}</id>
                   <source>true</source>

@@ -61,6 +61,19 @@
 				</pathconvert>
 			</sequential>
 		</macrodef>
+		<macrodef name="find-jar-version2">
+			<attribute name="dir" />
+			<attribute name="prefix" />
+			<attribute name="property" />
+			<sequential>
+				<fileset dir="@{dir}" id="target.path">
+					<include name="@{prefix}*.jar" />
+				</fileset>
+				<pathconvert property="@{property}" refid="target.path">
+					<mapper type="regexp" from=".*/@{prefix}(.*).jar" to="\1" />
+				</pathconvert>
+			</sequential>
+		</macrodef>
 
 		<echo message="Building Kura Distribution for ${build.output.name}..." />
 
@@ -1547,13 +1560,19 @@ fi]]>
 
 	<!-- Artemis config targets -->
 	<target name="artemis-config">
-		<find-jar-version dir="../target-definition/mvn-deps/repository/plugins"
-			prefix="com.google.guava" property="guava.distrib.version" />
+		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
+			prefix="com.google.guava_2" property="guava2.distrib.version" />
+		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
+			prefix="com.google.guava_3" property="guava3.distrib.version" />
 
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_${guava.distrib.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_2${guava2.distrib.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_3${guava3.distrib.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava.failureaccess_${guava.failureaccess.version}.jar@3" />
 
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.buffer_${io.netty.version}.jar@3" />

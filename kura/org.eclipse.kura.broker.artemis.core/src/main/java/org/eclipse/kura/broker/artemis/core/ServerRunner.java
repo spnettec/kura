@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.activemq.artemis.core.config.FileDeploymentManager;
 import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import org.apache.activemq.artemis.core.config.impl.SecurityConfiguration;
+import org.apache.activemq.artemis.core.server.ActivateCallback;
 import org.apache.activemq.artemis.core.server.ActiveMQComponent;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.jms.server.config.impl.FileJMSConfiguration;
@@ -84,8 +85,28 @@ public class ServerRunner {
         fileDeploymentManager.readConfiguration();
 
         // load components
+        ActivateCallback callBack = new ActivateCallback() {
 
-        this.components = fileDeploymentManager.buildService(security, ManagementFactory.getPlatformMBeanServer());
+            @Override
+            public void preActivate() {
+            }
+
+            @Override
+            public void activated() {
+            }
+
+            @Override
+            public void deActivate() {
+            }
+
+            @Override
+            public void activationComplete() {
+
+            }
+        };
+
+        this.components = fileDeploymentManager.buildService(security, ManagementFactory.getPlatformMBeanServer(),
+                callBack);
 
         logger.info("Loaded components: {}", this.components.size());
         for (final Map.Entry<String, ActiveMQComponent> entry : this.components.entrySet()) {
