@@ -46,7 +46,7 @@
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-api</artifactId>
           <scope>provided</scope>
-          <version>1.7.26</version>
+          <version>2.0.0-alpha1</version>
         </dependency>
     </dependencies>
 
@@ -83,7 +83,7 @@
                             about_files=${project.basedir}/about_files/
                         </Include-Resource>
                         <Import-Package>
-                            org.osgi.framework;version="[1.5.0,2.0.0)",org.slf4j;version="[1.7,2)"
+                            org.osgi.framework;version="[1.5.0,2.0.0)",org.slf4j;version="[1.7,3)"
                         </Import-Package>
                         <Export-Package>
                             javax.comm;version="1.2.0",

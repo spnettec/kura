@@ -9,7 +9,7 @@ Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Import-Package: org.junit,
  org.junit.runners,
- org.slf4j;version="[1.7.0,2.0.0)",
+ org.slf4j;version="[1.7.0,3)",
  org.eclipse.kura.core.testutil,
  org.mockito;version="1.10.19",
  org.mockito.invocation;version="1.10.19",

@@ -9,6 +9,6 @@ Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Import-Package: org.junit,
  org.junit.runners,
- org.slf4j;version="[1.7.0,2.0.0)"
+ org.slf4j;version="[1.7.0,3)"
 Fragment-Host: org.eclipse.kura.core.comm;bundle-version="1.0.100"
 Automatic-Module-Name: org.eclipse.kura.core.comm.test
