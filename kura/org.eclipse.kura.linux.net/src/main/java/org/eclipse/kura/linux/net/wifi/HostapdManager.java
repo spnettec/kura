@@ -60,8 +60,9 @@ public class HostapdManager {
             logger.info("starting hostapd for the {} interface --> {}", ifaceName, launchHostapdCommand);
             CommandStatus status = this.executorService.execute(new Command(launchHostapdCommand));
             if (!status.getExitStatus().isSuccessful()) {
-                logger.error("failed to start hostapd for the {} interface for unknown reason - errorCode={}",
-                        ifaceName, status.getExitStatus().getExitCode());
+                logger.error(
+                        "failed to start hostapd for the {} interface for unknown reason - errorCode={},command:{}",
+                        ifaceName, status.getExitStatus().getExitCode(), launchHostapdCommand);
                 throw KuraException.internalError("failed to start hostapd for unknown reason");
             }
             Thread.sleep(1000);
