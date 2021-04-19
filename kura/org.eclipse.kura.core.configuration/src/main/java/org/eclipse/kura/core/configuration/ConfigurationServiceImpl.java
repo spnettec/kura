@@ -326,7 +326,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     @Override
     public Set<String> getConfigurableComponentPids() {
-        Set<String> result = Collections.emptySet();
+        Set<String> result = new HashSet<>();
         result.addAll(this.allActivatedPids);
         result.addAll(this.waittingForActivatedPids);
 
@@ -1907,7 +1907,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *                  the input value
+     *            the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {

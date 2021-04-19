@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    
-    Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
-  
+
+    Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
+
 	SPDX-License-Identifier: EPL-2.0
-	
+
 	Contributors:
      Eurotech
-     
+
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/DeploymentService">
     <OCD id="org.eclipse.kura.core.deployment.CloudDeploymentHandlerV2" 
@@ -26,7 +26,7 @@
             default="/tmp"
             description="%downloadsDirectoryDesc">
         </AD>
-        
+
         <AD id="deployment.hook.associations"
             name="%deploymentHookAssociations"
             type="String"
@@ -36,8 +36,16 @@
             description="%deploymentHookAssociationsDesc">
         </AD>
 
+        <AD id="SslManagerService.target"
+            name="SslManagerService Target Filter"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="(kura.service.pid=org.eclipse.kura.ssl.SslManagerService)"
+            description="Specifies, as an OSGi target filter, the pid of the SslManagerService used to create SSL connections."/>
+
     </OCD>
-    
+
     <Designate pid="org.eclipse.kura.core.deployment.CloudDeploymentHandlerV2">
         <Object ocdref="org.eclipse.kura.core.deployment.CloudDeploymentHandlerV2"/>
     </Designate>

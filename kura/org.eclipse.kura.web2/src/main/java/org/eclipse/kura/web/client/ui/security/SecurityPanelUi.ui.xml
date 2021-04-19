@@ -48,6 +48,10 @@
                 <b:NavTabs ui:field="navTabs">
                 	<b:TabListItem dataTarget="#certificateListPanel" text="{msgs.settingsSecurityCertificatesList}"
                         ui:field="certificateList" visible="false"/>
+                    <b:TabListItem dataTarget="#sslPanel" text="{msgs.settingsSSLConfiguration}"
+                        ui:field="ssl" visible="false"/>
+                     <b:TabListItem dataTarget="#keystorePanel" text="{msgs.settingsKeyStoreConfig}"
+                        ui:field="keystore" visible="false"/>
                     <b:TabListItem dataTarget="#httpServicePanel" text="{msgs.settingsSecurityHttpService}"
                         ui:field="httpService" visible="false"/>
                     <b:TabListItem dataTarget="#consolePanel" text="{msgs.settingsSecurityWebConsole}"
@@ -61,7 +65,27 @@
                 </b:NavTabs>
                 <b:TabContent ui:field="tabContent">
                 	<b:TabPane b:id="certificateListPanel">
-                        <security:CertificateListTabUi ui:field="certificateListPanel"></security:CertificateListTabUi>
+                        <security:CertificateListTabUi ui:field="certificateListPanel" />
+                    </b:TabPane>
+                    <b:TabPane b:id="sslPanel">
+                        <kura:RestrictedComponentServiceUi 
+                        ui:field="sslPanel" 
+                        ids="ssl"
+                        intro="{msgs.securitySslManagerServicesIntro}" 
+                        emptyLabelText="{msgs.securityNoSslManagerServices}"
+                        newServiceModalTitle="{msgs.securityNewSslManagerService}"
+                        newServiceModalIntro="{msgs.securityNewSslManagerServiceIntro}"
+                        />
+                    </b:TabPane>
+                    <b:TabPane b:id="keystorePanel">
+                        <kura:RestrictedComponentServiceUi 
+                        ui:field="keystorePanel"
+                        ids="keystore"
+                        intro="{msgs.securityKeystoreServicesIntro}" 
+                        emptyLabelText="{msgs.securityNoSslManagerServices}"
+                        newServiceModalTitle="{msgs.securityNewKeystoreService}"
+                        newServiceModalIntro="{msgs.securityNewKeystoreServiceIntro}"
+                        />
                     </b:TabPane>
                     <b:TabPane b:id="httpServicePanel" ui:field="httpServicePanel">
                     </b:TabPane>

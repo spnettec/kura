@@ -159,6 +159,7 @@
             <Option label="3.1.1" value="4"/>
         </AD>
         
+<<<<<<< HEAD
         <AD id="ssl.default.protocol"
             name="%sSLDefaultProtocol"
             type="String"
@@ -169,9 +170,14 @@
                         
         <AD id="ssl.hostname.verification"
             name="%sSLHostnameVerification"
+=======
+        <AD id="SslManagerService.target"
+            name="SslManagerService Target Filter"
+>>>>>>> refs/remotes/origin/develop
             type="String"
             cardinality="0"
             required="true"
+<<<<<<< HEAD
             default="use-ssl-service-config"
             description="%sSLHostnameVerificationDesc">
         	<Option label="%labelUseSslServiceConfig" value="use-ssl-service-config" />
@@ -194,6 +200,10 @@
             required="false"
             default=""
             description="%sSLCertificateAliasDesc"/>
+=======
+            default="(kura.service.pid=org.eclipse.kura.ssl.SslManagerService)"
+            description="Specifies, as an OSGi target filter, the pid of the SslManagerService used to create SSL connections."/>
+>>>>>>> refs/remotes/origin/develop
         
         </OCD>
     <Designate pid = "org.eclipse.kura.core.data.transport.mqtt.MqttDataTransport" factoryPid = "org.eclipse.kura.core.data.transport.mqtt.MqttDataTransport">

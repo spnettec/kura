@@ -47,21 +47,15 @@
             max="65535"
             description="%httpsClientAuthenticationPortDesc">
         </AD>
-
-        <AD id="https.keystore.path"
-            name="%httpsKeystorePath"
+        
+        <AD id="KeystoreService.target"
+            name="%keystoreServiceTarget"
             type="String"
             cardinality="0"
-            required="false"
-            description="%httpsKeystorePathDesc"/>
-
-        <AD id="https.keystore.password"
-            name="%httpsKeystorePassword"
-            type="Password"
-            cardinality="0"
-            required="false"
-            default="changeit"
-            description="%httpsKeystorePasswordDesc"/>
+            required="true"
+            default="(kura.service.pid=changeme)"
+            description="%keystoreServiceTargetDesc">
+        </AD>
 
         <AD id="https.revocation.check.enabled"
             name="%httpsRevocationCheckEnabled"

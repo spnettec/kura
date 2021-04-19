@@ -202,6 +202,12 @@
 
 		<!-- Miscellaneous bundles config -->
 		<antcall target="misc-config" />
+
+		<!-- Threat Management bundles config -->
+		<antcall target="threat-management-config" />
+		
+		<!-- Keystore Management bundles config -->
+		<antcall target="keystore-management-config" />
 		
 		<!-- Conditional entries. Check for jar presence, and invoke relevant ant
 			target -->
@@ -767,6 +773,8 @@ fi]]>
 		<antcall target="misc-jar" />
 		
 		<antcall target="threat-management-jar" />
+		
+		<antcall target="keystore-management-jar" />
 
 		<!-- Conditional inclusion of jar files in the distribution jar -->
 		<antcall target="web2-jar" />
@@ -998,11 +1006,11 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.digitalpetri.netty.channel-fsm_${netty-channel-fsm.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcpkix_${org.bouncycastle.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcpkix_${org.bouncycastle.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcprov_${org.bouncycastle.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcprov_${org.bouncycastle.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.alibaba.fastjson_${fastjson.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.alibaba.fastjson_${fastjson.version}.jar@3" />
 		</propertyfile>
 	</target>
 	<!-- OSGi java11 configs -->
@@ -1970,6 +1978,22 @@ fi]]>
 			update="true">
 			<zipfileset
 				file="${project.build.directory}/plugins/org.eclipse.kura.network.threat.manager_${org.eclipse.kura.network.threat.manager.version}.jar"
+				prefix="${build.output.name}/${plugins.folder}" />
+		</zip>
+	</target>
+	
+	<target name="keystore-management-config">
+		<propertyfile
+			file="${project.build.directory}/${build.output.name}/config.ini">
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.keystore_${org.eclipse.kura.core.keystore.version}.jar@4:start" />
+		</propertyfile>
+	</target>
+	<target name="keystore-management-jar">
+		<zip destfile="${project.build.directory}/${build.output.name}.zip"
+			update="true">
+			<zipfileset
+				file="${project.build.directory}/plugins/org.eclipse.kura.core.keystore_${org.eclipse.kura.core.keystore.version}.jar"
 				prefix="${build.output.name}/${plugins.folder}" />
 		</zip>
 	</target>
