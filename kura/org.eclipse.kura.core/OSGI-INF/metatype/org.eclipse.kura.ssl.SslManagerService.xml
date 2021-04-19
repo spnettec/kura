@@ -36,35 +36,14 @@
         	default="true"
         	description="%verificationDesc" />
 
-<<<<<<< HEAD
-        <AD id="ssl.default.trustStore"
-            name="%trustStore"
-=======
         <AD id="KeystoreService.target"
-            name="KeystoreService Target Filter"
->>>>>>> refs/remotes/origin/develop
+            name="%keystoreServiceTarget"
             type="String"
             cardinality="0"
-<<<<<<< HEAD
-            required="false"
-            default="/opt/eclipse/security/cacerts"
-            description="%trustStore"/>
-
-        <AD id="ssl.keystore.password"
-            name="%password"
-            type="Password"
-            cardinality="0"
-=======
->>>>>>> refs/remotes/origin/develop
             required="true"
-<<<<<<< HEAD
-            default="changeit"
-            description="%passwordDesc"/>
-=======
             default="(kura.service.pid=changeme)"
-            description="Specifies, as an OSGi target filter, the pid of the KeystoreService used to manage the HTTPS Keystore.">
+            description="%keystoreServiceTargetDesc">
         </AD>
->>>>>>> refs/remotes/origin/develop
 
         <AD id="ssl.default.cipherSuites"
             name="%cipherSuites"

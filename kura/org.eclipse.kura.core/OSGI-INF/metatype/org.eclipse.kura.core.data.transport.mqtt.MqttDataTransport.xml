@@ -159,51 +159,13 @@
             <Option label="3.1.1" value="4"/>
         </AD>
         
-<<<<<<< HEAD
-        <AD id="ssl.default.protocol"
-            name="%sSLDefaultProtocol"
-            type="String"
-            cardinality="0"
-            required="false"
-            default=""
-            description="%sSLDefaultProtocolDesc"/>
-                        
-        <AD id="ssl.hostname.verification"
-            name="%sSLHostnameVerification"
-=======
         <AD id="SslManagerService.target"
-            name="SslManagerService Target Filter"
->>>>>>> refs/remotes/origin/develop
+            name="%sslManagerServiceTarget"
             type="String"
             cardinality="0"
             required="true"
-<<<<<<< HEAD
-            default="use-ssl-service-config"
-            description="%sSLHostnameVerificationDesc">
-        	<Option label="%labelUseSslServiceConfig" value="use-ssl-service-config" />
-        	<Option label="%labelYes" value="true" />
-        	<Option label="%labelNo" value="false" />
-        </AD>
-        
-        <AD id="ssl.default.cipherSuites"
-            name="%sSLDefaultCipherSuites"
-            type="String"
-            cardinality="0"
-            required="false"
-            default=""
-            description="%sSLDefaultCipherSuitesDesc"/>
-            
-        <AD id="ssl.certificate.alias"
-            name="%sSLCertificateAlias"
-            type="String"
-            cardinality="0"
-            required="false"
-            default=""
-            description="%sSLCertificateAliasDesc"/>
-=======
             default="(kura.service.pid=org.eclipse.kura.ssl.SslManagerService)"
-            description="Specifies, as an OSGi target filter, the pid of the SslManagerService used to create SSL connections."/>
->>>>>>> refs/remotes/origin/develop
+            description="%sslManagerServiceTargetDesc"/>
         
         </OCD>
     <Designate pid = "org.eclipse.kura.core.data.transport.mqtt.MqttDataTransport" factoryPid = "org.eclipse.kura.core.data.transport.mqtt.MqttDataTransport">
