@@ -15,6 +15,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-log4j"/>
         <setEntry value="com.yofc.iot.yofc-iot-api-logconfig"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-jolokia"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-s7plc"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
