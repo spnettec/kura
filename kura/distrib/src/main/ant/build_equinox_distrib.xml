@@ -190,6 +190,9 @@
 
 		<!-- Added Artemis bundles configs -->
 		<antcall target="artemis-config" />
+		
+		<!-- Added plc4j bundles configs -->
+		<antcall target="plc4j-config" />
 
 		<!-- Deployment hook bundles configs -->
 		<antcall target="deployment-hooks-config" />
@@ -202,9 +205,6 @@
 
 		<!-- Miscellaneous bundles config -->
 		<antcall target="misc-config" />
-
-		<!-- Threat Management bundles config -->
-		<antcall target="threat-management-config" />
 		
 		<!-- Keystore Management bundles config -->
 		<antcall target="keystore-management-config" />
@@ -1531,7 +1531,7 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-dateutil_${org.codehaus.groovy.groovy.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@2:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -1663,7 +1663,89 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.broker.artemis.xml_${org.eclipse.kura.broker.artemis.xml.version}.jar@4:start" />
 		</propertyfile>
 	</target>
-
+	<target name="plc4j-config">
+	    <find-jar-version dir="../target-definition/mvn-deps/repository/plugins"
+			prefix="org.apache.plc4x.plc4j-api" property="plc4j.distrib.version" />
+		<propertyfile
+			file="${project.build.directory}/${build.output.name}/config.ini">
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vavr_${io.vavr.version}.jar@4:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-pool2_${org.apache.commons-pool2.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.dictionary-manager_${org.eclipse.milo.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.bsd-core_${org.eclipse.milo.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.bsd-generator_${org.eclipse.milo.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.sdk-server_${org.eclipse.milo.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.stack-server_${org.eclipse.milo.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcmail_${org.bouncycastle.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-api_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-spi_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-tcp_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-udp_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-serial_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-socketcan_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-raw-socket_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-pcap-shared_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-utils-raw-sockets_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-utils-pcap-shared_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-utils-pcap-replay_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-transport-pcap-replay_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-connection-pool_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-ab-eth_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-ads_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-canopen_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-eip_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-firmata_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-knxnetip_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-modbus_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-opcua_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-s7_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-driver-simulated_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.plc4x.plc4j-osgi_${plc4j.distrib.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.fazecast.jSerialComm_${jSerialComm.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/tel.schich.javacan_${javacan.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.pcap4j.core_${pcap4j.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.pcap4j.packetfactory-static_${pcap4j.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.github.jinahya.bit-io_${bit-io.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-compress_${commons-compress.version}.jar@4:start"/>
+		</propertyfile>
+	</target>
 
 	<!-- Jar targets -->
 	<target name="camel-jar">
@@ -1965,7 +2047,7 @@ fi]]>
 				prefix="${build.output.name}/${plugins.folder}" />
 		</zip>
 	</target>
-	
+
 	<target name="threat-management-config" unless="is.nn">
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">

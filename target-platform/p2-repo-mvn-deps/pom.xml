@@ -246,7 +246,12 @@
                   <transitive>false</transitive>
               </artifact>    
               <artifact>
-                  <id>org.apache.commons:commons-lang3:${org.apache.commons.lang3.maven.version}</id>
+                  <id>io.vavr:vavr:${io.vavr.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>   
+              <artifact>
+                  <id>org.apache.commons:commons-lang3:${org.apache.commons.lang3.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
@@ -659,6 +664,11 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
+                <id>org.apache.commons:commons-pool2:jar:${org.apache.commons-pool2.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
                 <id>org.quartz-scheduler:quartz:${org.quartz-scheduler.quartz.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
@@ -1063,6 +1073,31 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
+                  <id>org.eclipse.milo:dictionary-manager:jar:${org.eclipse.milo.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.milo:bsd-core:jar:${org.eclipse.milo.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.milo:bsd-generator:jar:${org.eclipse.milo.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.milo:sdk-server:jar:${org.eclipse.milo.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.eclipse.milo:stack-server:jar:${org.eclipse.milo.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
                   <id>org.jooq:jool:jar:${org.jooq.jool.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
@@ -1088,7 +1123,162 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
+                  <id>org.bouncycastle:bcmail-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
                   <id>com.alibaba:fastjson:jar:${fastjson.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-api:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-spi:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-tcp:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-udp:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-serial:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-socketcan:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-raw-socket:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-pcap-shared:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-utils-raw-sockets:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-utils-pcap-shared:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-utils-pcap-replay:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-transport-pcap-replay:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-connection-pool:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-ab-eth:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-ads:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-canopen:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-eip:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-firmata:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-knxnetip:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-modbus:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-opcua:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-s7:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-driver-simulated:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.plc4x:plc4j-osgi:jar:${plc4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>tel.schich:javacan:jar:${javacan.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.pcap4j:pcap4j-core:jar:${pcap4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.pcap4j:pcap4j-packetfactory-static:jar:${pcap4j.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.github.jinahya:bit-io:jar:${bit-io.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.commons:commons-compress:jar:${commons-compress-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
