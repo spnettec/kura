@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  ******************************************************************************/
@@ -66,8 +66,8 @@ public class JsonMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
             return (T) WireGraphJsonMarshallUnmarshallImpl.unmarshalToWireGraphConfiguration(s);
         } else if (clazz.equals(KuraPayload.class)) {
             return (T) CloudPayloadJsonDecoder.buildFromString(s);
-        } else if (clazz.equals(EntryInfo.class)) {
-            return (T) KeystoreEntryInfoMapper.unmarshal(s);
+        } else if (EntryInfo.class.isAssignableFrom(clazz)) {
+            return (T) KeystoreEntryInfoMapper.unmarshal(s, clazz);
         }
         throw new IllegalArgumentException("Invalid parameter!");
     }
