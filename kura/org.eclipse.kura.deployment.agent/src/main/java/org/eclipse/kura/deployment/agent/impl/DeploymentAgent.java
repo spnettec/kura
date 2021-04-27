@@ -305,6 +305,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
     private void installer() {
         do {
             try {
+                if (instPackageUrls == null) {
+                    break;
+                }
                 while (this.instPackageUrls.isEmpty()) {
                     synchronized (this.instPackageUrls) {
                         this.instPackageUrls.wait();
@@ -346,6 +349,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
     private void uninstaller() {
         do {
             try {
+                if (uninstPackageNames == null) {
+                    break;
+                }
                 while (this.uninstPackageNames.isEmpty()) {
                     synchronized (this.uninstPackageNames) {
                         this.uninstPackageNames.wait();
@@ -361,7 +367,7 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
                 logger.info("Exiting...");
                 Thread.currentThread().interrupt();
                 return;
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 logger.error("Unexpected throwable", t);
             }
         } while (true);
