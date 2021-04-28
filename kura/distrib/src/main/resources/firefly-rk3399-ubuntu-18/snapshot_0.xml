@@ -323,8 +323,8 @@
             <esf:property name="ssl.hostname.verification" array="false" encrypted="false" type="Boolean">
                 <esf:value>true</esf:value>
             </esf:property>
-            <esf:property name="ssl.default.trustStore" array="false" encrypted="false" type="String">
-                <esf:value>/opt/eclipse/kura/user/security/cacerts.ks</esf:value>
+            <esf:property name="KeystoreService.target" type="String">
+                <esf:value>(kura.service.pid=org.eclipse.kura.core.keystore.KeystoreServiceImpl)</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.ssl.SslManagerService</esf:value>
@@ -345,6 +345,9 @@
             <esf:property array="true" encrypted="false" name="http.ports" type="Integer">
                 <esf:value>80</esf:value>
             </esf:property>
+            <esf:property name="KeystoreService.target" type="String">
+                <esf:value>(kura.service.pid=org.eclipse.kura.core.keystore.KeystoreServiceImpl)</esf:value>
+            </esf:property>           
             <esf:property array="false" encrypted="false" name="kura.service.pid" type="String">
                 <esf:value>org.eclipse.kura.http.server.manager.HttpService</esf:value>
             </esf:property>
@@ -363,4 +366,26 @@
             </esf:property>
         </esf:properties>
     </esf:configuration>
+    <esf:configuration pid="org.eclipse.kura.core.keystore.KeystoreServiceImpl">
+        <esf:properties>
+            <esf:property name="keystore.path" type="String">
+                <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
+            </esf:property>
+            <esf:property encrypted="true" name="keystore.password" type="Password">
+                <esf:value>MFpJcG9Vay9sMkhpSzc2YS1XQ0tjZTRJbzVWUlhodXVaeHN0b2t2VGZOREIxMXk3MQ==</esf:value>
+            </esf:property>
+            <esf:property name="randomize.password" type="Boolean">
+                <esf:value>false</esf:value>
+            </esf:property>
+            <esf:property name="service.factoryPid" type="String">
+                <esf:value>org.eclipse.kura.core.keystore.KeystoreServiceImpl</esf:value>
+            </esf:property>
+            <esf:property name="kura.service.pid" type="String">
+                <esf:value>org.eclipse.kura.core.keystore.KeystoreServiceImpl</esf:value>
+            </esf:property>
+            <esf:property name="service.pid" type="String">
+                <esf:value>org.eclipse.kura.core.keystore.KeystoreServiceImpl</esf:value>
+            </esf:property>
+        </esf:properties>
+    </esf:configuration>    
 </esf:configurations>

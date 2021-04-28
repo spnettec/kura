@@ -341,7 +341,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
             boolean successful = dp != null;
             logger.info("Posting INSTALLED event for package at URL {}: {}", url,
                     successful ? "successful" : "unsuccessful");
-            this.instPackageUrls.poll();
+            if (this.instPackageUrls != null) {
+                this.instPackageUrls.poll();
+            }
             postInstalledEvent(dp, url, successful, ex);
         }
     }
@@ -397,7 +399,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
         } finally {
             logger.info("Posting UNINSTALLED event for package {}: {}", name,
                     successful ? "successful" : "unsuccessful");
-            this.uninstPackageNames.poll();
+            if (uninstPackageNames != null) {
+                this.uninstPackageNames.poll();
+            }
             postUninstalledEvent(name, successful, ex);
         }
     }
