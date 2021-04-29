@@ -36,6 +36,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -68,7 +71,7 @@ public class HttpServiceTest {
     private static final String TEST_KEYSTORE_PID = "testKeystore";
     private static final Logger logger = LoggerFactory.getLogger(HttpServiceTest.class);
     private static final String HTTP_SERVER_MANAGER_PID = "org.eclipse.kura.http.server.manager.HttpService";
-    private static final String HTTPS_KEYSTORE_SERVICE_PID = "org.eclipse.kura.core.keystore.HttpsKeystore";
+    private static final String HTTPS_KEYSTORE_SERVICE_PID = "HttpsKeystore";
 
     private static CompletableFuture<ConfigurationService> configurationService = new CompletableFuture<>();
     private static CompletableFuture<CryptoService> cryptoService = new CompletableFuture<>();
@@ -253,7 +256,7 @@ public class HttpServiceTest {
 
             WireTestUtil
                     .createFactoryConfiguration(configSvc, ConfigurableComponent.class, pid,
-                            "org.eclipse.kura.core.keystore.KeystoreServiceImpl",
+                            "org.eclipse.kura.core.keystore.FilesystemKeystoreServiceImpl",
                             options.withKeystorePath(httpsKeystore.getAbsolutePath())
                                     .withKeystorePassword("changeit", cryptoSvc).toProperties())
                     .get(30, TimeUnit.SECONDS);
@@ -462,18 +465,28 @@ public class HttpServiceTest {
     static CompletableFuture<Void> updateComponentConfiguration(final ConfigurationService configurationService,
             final String pid, final Map<String, Object> properties) throws KuraException, InvalidSyntaxException {
 
-        final CompletableFuture<Void> tracked = new CompletableFuture<>();
-
         final CompletableFuture<Void> result = new CompletableFuture<>();
         final BundleContext context = FrameworkUtil.getBundle(WireTestUtil.class).getBundleContext();
+
+        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
         final ServiceTracker<?, ?> tracker = new ServiceTracker<>(context,
                 FrameworkUtil.createFilter("(kura.service.pid=" + pid + ")"),
                 new ServiceTrackerCustomizer<Object, Object>() {
 
+                    Optional<ScheduledFuture<?>> task = Optional.empty();
+
                     @Override
                     public Object addingService(ServiceReference<Object> reference) {
-                        tracked.complete(null);
+
+                        task = Optional.of(executor.schedule(() -> {
+                            try {
+                                configurationService.updateConfiguration(pid, properties);
+                            } catch (KuraException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }, 5, TimeUnit.SECONDS));
+
                         return context.getService(reference);
                     }
 
@@ -485,20 +498,20 @@ public class HttpServiceTest {
                     @Override
                     public void removedService(ServiceReference<Object> reference, Object service) {
                         context.ungetService(reference);
+                        final Optional<ScheduledFuture<?>> currentTask = task;
+                        if (currentTask.isPresent()) {
+                            currentTask.get().cancel(false);
+                            task = Optional.empty();
+                        }
                     }
                 });
 
         tracker.open();
 
-        return tracked.thenCompose(ok -> {
-            try {
-                configurationService.updateConfiguration(pid, properties);
-            } catch (KuraException e) {
-                throw new RuntimeException(e);
-            }
-
-            return result;
-        }).whenComplete((ok, ex) -> tracker.close());
+        return result.whenComplete((ok, ex) -> {
+            tracker.close();
+            executor.shutdown();
+        });
     }
 
     private static File deployResource(final String resourcePath) throws IOException {
