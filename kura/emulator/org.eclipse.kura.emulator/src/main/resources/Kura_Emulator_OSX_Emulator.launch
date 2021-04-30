@@ -12,10 +12,6 @@
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="5"/>
     <setAttribute key="deselected_workspace_bundles">
-        <setEntry value="com.yofc.iot.yofc-iot-api-log4j"/>
-        <setEntry value="com.yofc.iot.yofc-iot-api-logconfig"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-jolokia"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-s7plc"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
@@ -75,8 +71,11 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -378,7 +377,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-enip@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
@@ -419,6 +417,8 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
