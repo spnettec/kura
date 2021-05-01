@@ -71,11 +71,8 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -222,7 +219,7 @@
         <setEntry value="org.apache.activemq.artemis-native@default:default"/>
         <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
         <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
-        <setEntry value="org.apache.aries.spifly.dynamic.bundle@2:true"/>
+        <setEntry value="org.apache.aries.spifly.dynamic.bundle@2:default"/>
         <setEntry value="org.apache.camel.camel-core-osgi@default:default"/>
         <setEntry value="org.apache.camel.camel-core-xml@default:default"/>
         <setEntry value="org.apache.camel.camel-core@default:default"/>
@@ -257,7 +254,7 @@
         <setEntry value="org.apache.felix.gogo.command@default:default"/>
         <setEntry value="org.apache.felix.gogo.runtime@default:default"/>
         <setEntry value="org.apache.felix.gogo.shell@default:default"/>
-        <setEntry value="org.apache.felix.scr@1:true"/>
+        <setEntry value="org.apache.felix.scr@default:true"/>
         <setEntry value="org.apache.felix.useradmin@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-jms_2.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-json_1.0_spec@default:default"/>
@@ -351,11 +348,11 @@
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm.macosx@default:false"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
-        <setEntry value="org.graalvm.js.scriptengine@1:default"/>
-        <setEntry value="org.graalvm.js@1:default"/>
-        <setEntry value="org.graalvm.regex@1:default"/>
-        <setEntry value="org.graalvm.sdk.graal-sdk@1:default"/>
-        <setEntry value="org.graalvm.truffle.api@1:default"/>
+        <setEntry value="org.graalvm.js.scriptengine@default:default"/>
+        <setEntry value="org.graalvm.js@default:default"/>
+        <setEntry value="org.graalvm.regex@default:default"/>
+        <setEntry value="org.graalvm.sdk.graal-sdk@default:default"/>
+        <setEntry value="org.graalvm.truffle.api@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
@@ -416,9 +413,7 @@
         <setEntry value="org.eclipse.kura.emulator.position@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
-        <setEntry value="org.eclipse.kura.emulator@default:true"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
+        <setEntry value="org.eclipse.kura.emulator@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>

@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.function.Function;
 
+import org.eclipse.kura.type.BigIntegerValue;
 import org.eclipse.kura.type.BooleanValue;
 import org.eclipse.kura.type.ByteArrayValue;
 import org.eclipse.kura.type.DataType;
@@ -57,6 +58,8 @@ public final class TypeUtil {
             return value -> new IntegerValue(Integer.parseInt((String) value));
         } else if (targetType == DataType.LONG) {
             return value -> new LongValue(Long.parseLong((String) value));
+        } else if (targetType == DataType.BIGINTEGER) {
+            return value -> new BigIntegerValue(new BigInteger((String) value));
         } else if (targetType == DataType.FLOAT) {
             return value -> new FloatValue(java.lang.Float.parseFloat((String) value));
         } else if (targetType == DataType.DOUBLE) {
@@ -73,6 +76,8 @@ public final class TypeUtil {
             return value -> new IntegerValue(((Number) value).intValue());
         } else if (targetType == DataType.LONG) {
             return value -> new LongValue(((Number) value).longValue());
+        } else if (targetType == DataType.BIGINTEGER) {
+            return value -> new BigIntegerValue(((BigInteger) value));
         } else if (targetType == DataType.FLOAT) {
             return value -> new FloatValue(((Number) value).floatValue());
         } else if (targetType == DataType.DOUBLE) {

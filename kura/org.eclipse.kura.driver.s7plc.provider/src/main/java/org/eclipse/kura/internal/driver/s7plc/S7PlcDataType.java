@@ -20,6 +20,8 @@ public enum S7PlcDataType {
     WORD,
     DWORD,
     INT,
+    LINT,
+    ULINT,
     DINT,
     REAL,
     CHAR,

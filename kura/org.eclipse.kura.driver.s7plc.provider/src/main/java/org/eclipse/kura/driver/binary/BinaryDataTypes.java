@@ -12,6 +12,7 @@
 
 package org.eclipse.kura.driver.binary;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,8 @@ public final class BinaryDataTypes {
 
     public static final BinaryData<Long> INT64_LE = new Int64(Endianness.LITTLE_ENDIAN);
     public static final BinaryData<Long> INT64_BE = new Int64(Endianness.BIG_ENDIAN);
+    public static final BinaryData<BigInteger> ULINT64_LE = new UInt64(Endianness.LITTLE_ENDIAN);
+    public static final BinaryData<BigInteger> ULINT64_BE = new UInt64(Endianness.BIG_ENDIAN);
 
     public static final BinaryData<java.lang.Float> FLOAT_LE = new Float(Endianness.LITTLE_ENDIAN);
     public static final BinaryData<java.lang.Float> FLOAT_BE = new Float(Endianness.BIG_ENDIAN);

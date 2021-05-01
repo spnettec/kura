@@ -100,6 +100,14 @@ public final class S7PlcTaskBuilder {
 
             return new BinaryDataTask<>(record, offset, BinaryDataTypes.INT32_BE, type, mode);
 
+        } else if (S7PlcDataType.LINT.name().equals(s7DataTypeId)) {
+
+            return new BinaryDataTask<>(record, offset, BinaryDataTypes.INT64_BE, type, mode);
+
+        } else if (S7PlcDataType.ULINT.name().equals(s7DataTypeId)) {
+
+            return new BinaryDataTask<>(record, offset, BinaryDataTypes.ULINT64_BE, type, mode);
+
         } else if (S7PlcDataType.BOOL.name().equals(s7DataTypeId)) {
 
             assertChannelType(record, DataType.BOOLEAN);

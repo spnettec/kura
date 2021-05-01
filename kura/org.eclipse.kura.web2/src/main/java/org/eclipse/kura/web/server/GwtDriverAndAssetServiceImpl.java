@@ -18,6 +18,7 @@ import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_P
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -245,6 +246,9 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
         }
         if (DataType.LONG == dataType) {
             return TypedValues.newLongValue(Long.parseLong(userValue));
+        }
+        if (DataType.BIGINTEGER == dataType) {
+            return TypedValues.newBigIntegerValue(new BigInteger(userValue));
         }
         if (DataType.STRING == dataType) {
             return TypedValues.newStringValue(userValue);
