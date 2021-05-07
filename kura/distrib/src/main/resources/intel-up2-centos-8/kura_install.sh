@@ -62,15 +62,15 @@ systemctl stop firewalld
 systemctl start iptables
 
 #set up networking configuration
-#mac_addr=$(head /sys/class/net/enp2s0/address | tr '[:lower:]' '[:upper:]')
-#sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlp4s0.conf
-#cp /etc/hostapd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/hostapd-wlp4s0.conf
+mac_addr=$(head /sys/class/net/enp2s0/address | tr '[:lower:]' '[:upper:]')
+sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlp4s0.conf
+cp /etc/hostapd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/hostapd-wlp4s0.conf
 
 cp ${INSTALL_DIR}/kura/install/dhcpd-enp2s0.conf /etc/dhcpd-enp2s0.conf
 cp ${INSTALL_DIR}/kura/install/dhcpd-enp2s0.conf ${INSTALL_DIR}/kura/.data/dhcpd-enp2s0.conf
 
-#cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf /etc/dhcpd-wlan0.conf
-#cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
+cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf /etc/dhcpd-wlan0.conf
+cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
 
 #set up kuranet.conf
 cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/user/kuranet.conf
@@ -93,8 +93,8 @@ cp ${INSTALL_DIR}/kura/install/ifcfg-enp2s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp2
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 /etc/sysconfig/network-scripts/ifcfg-enp3s0
 cp ${INSTALL_DIR}/kura/install/ifcfg-enp3s0 ${INSTALL_DIR}/kura/.data/ifcfg-enp3s0
 
-#cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 /etc/sysconfig/network-scripts/ifcfg-wlp4s0
-#cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 ${INSTALL_DIR}/kura/.data/ifcfg-wlp4s0
+cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 /etc/sysconfig/network-scripts/ifcfg-wlp4s0
+cp ${INSTALL_DIR}/kura/install/ifcfg-wlp4s0 ${INSTALL_DIR}/kura/.data/ifcfg-wlp4s0
 
 # Set up logrotate
 cp ${INSTALL_DIR}/kura/install/logrotate.conf /etc/logrotate.conf

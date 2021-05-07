@@ -339,4 +339,5 @@ public class DefaultCloudServiceFactory implements CloudConnectionFactory {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, e);
         }
     }
+
 }

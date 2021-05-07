@@ -71,8 +71,11 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -254,7 +257,7 @@
         <setEntry value="org.apache.felix.gogo.command@default:default"/>
         <setEntry value="org.apache.felix.gogo.runtime@default:default"/>
         <setEntry value="org.apache.felix.gogo.shell@default:default"/>
-        <setEntry value="org.apache.felix.scr@default:true"/>
+        <setEntry value="org.apache.felix.scr@1:true"/>
         <setEntry value="org.apache.felix.useradmin@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-jms_2.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-json_1.0_spec@default:default"/>
@@ -391,6 +394,7 @@
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
+        <setEntry value="org.eclipse.kura.core.cloud.factory@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud@default:default"/>
         <setEntry value="org.eclipse.kura.core.comm@default:default"/>
         <setEntry value="org.eclipse.kura.core.configuration@default:default"/>
@@ -414,6 +418,8 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
