@@ -713,12 +713,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         } else // non factory instance
         {
             if (servicePid == null) {
-                logger.error("non factory instance PID : {} have not Service PID (service.pid) ", pid);
+                // logger.error("non factory instance PID : {} have not Service PID (service.pid) ", pid);
                 return;
             } else if (pid == null) {
-                logger.warn(
-                        "non factory instance Service PID (service.pid) is {}, Can not find  PID (kura.service.pid). Maybe OCD not registed",
-                        servicePid);
+                // logger.warn(
+                // "non factory instance Service PID (service.pid) is {}, Can not find PID (kura.service.pid). Maybe OCD
+                // not registed",
+                // servicePid);
                 pid = servicePid;
             }
         }
@@ -802,7 +803,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
         logger.info("Registering SelfConfiguringComponent - {}....", pid);
         if (!this.servicePidByPid.containsKey(pid)) {
-            logger.error("servicePid:{} is not created by Factory,PID is:{}", servicePid, pid);
+            // logger.error("servicePid:{} is not created by Factory,PID is:{}", servicePid, pid);
             this.servicePidByPid.put(pid, servicePid);
         }
         if (this.allActivatedPids.contains(pid)) {
@@ -1016,9 +1017,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             servicePid = pid;
         } else {
             if (!this.allActivatedPids.contains(pid)) {
-                logger.error("non factory instance (service.pid): {} is created error before OCD registed", servicePid);
+                // logger.error("non factory instance (service.pid): {} is created error before OCD registed",
+                // servicePid);
             } else {
-                logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+                // logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
             }
         }
         updateDefaultConfiguration(pid, servicePid, ocd);
@@ -1044,7 +1046,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (servicePid == null) {
             servicePid = pid;
         } else if (!this.factoryPidByPid.containsKey(pid)) {
-            logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+            // logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
         }
         updateDefaultConfiguration(pid, servicePid, ocd);
     }
@@ -1907,7 +1909,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *            the input value
+     *                  the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {

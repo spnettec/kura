@@ -28,6 +28,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -520,7 +521,7 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
             return null;
         }
 
-        return IOUtils.toString(resourceUrl);
+        return IOUtils.toString(resourceUrl, StandardCharsets.UTF_8);
     }
 
     protected void deactivate(ComponentContext componentContext) {

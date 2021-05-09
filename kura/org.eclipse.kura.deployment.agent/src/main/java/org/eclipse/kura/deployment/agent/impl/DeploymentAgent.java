@@ -407,6 +407,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
     }
 
     private void postInstalledEvent(DeploymentPackage dp, String url, boolean successful, Exception e) {
+        if (this.eventAdmin == null) {
+            return;
+        }
         Map<String, Object> props = new HashMap<>();
 
         if (dp != null) {
@@ -425,6 +428,9 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
     }
 
     private void postUninstalledEvent(String name, boolean successful, Exception e) {
+        if (this.eventAdmin == null) {
+            return;
+        }
         Map<String, Object> props = new HashMap<>();
         props.put(EVENT_PACKAGE_NAME, name);
         props.put(EVENT_SUCCESSFUL, successful);

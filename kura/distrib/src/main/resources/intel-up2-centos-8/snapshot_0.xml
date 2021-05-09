@@ -141,7 +141,7 @@
                 <esf:value>7200</esf:value>
             </esf:property>
             <esf:property name="net.interface.wlp4s0.config.wifi.master.ssid" array="false" encrypted="false" type="String">
-                <esf:value>kura_gateway_B8:27:EB:2B:4E:35</esf:value>
+                <esf:value>yofciot_gateway_B8:27:EB:2B:4E:35</esf:value>
             </esf:property>
             <esf:property name="net.interface.wlp4s0.config.dhcpServer4.prefix" array="false" encrypted="false" type="Short">
                 <esf:value>24</esf:value>
@@ -748,7 +748,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
+                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>

@@ -19,5 +19,4 @@
       <provide interface="org.eclipse.kura.executor.UnprivilegedExecutorService"/>
    </service>
    <property name="service.pid" value="org.eclipse.kura.executor.UnprivilegedExecutorService"/>
-   <reference bind="setSystemService" cardinality="1..1" interface="org.eclipse.kura.system.SystemService" name="SystemService" policy="static" unbind="unsetSystemService"/>
 </scr:component>

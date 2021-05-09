@@ -953,19 +953,20 @@ public class LinuxNetworkUtil {
                         "Failed to bring up interface " + interfaceName);
             }
 
-            command = new Command(new String[] { "sudo", "ifup", "--force", interfaceName });
+            command = new Command(new String[] { "ifup", "--force", interfaceName });
             command.setTimeout(60);
             command.setOutputStream(new ByteArrayOutputStream());
             command.setErrorStream(new ByteArrayOutputStream());
             status = this.executorService.execute(command);
             if (!status.getExitStatus().isSuccessful()) {
-                command = new Command(new String[] { "sudo", "ifup", interfaceName });
+                command = new Command(new String[] { "ifup", interfaceName });
                 command.setTimeout(60);
                 command.setOutputStream(new ByteArrayOutputStream());
                 command.setErrorStream(new ByteArrayOutputStream());
                 status = this.executorService.execute(command);
                 if (!status.getExitStatus().isSuccessful()) {
-                    logger.error("ifup {} error:{}", interfaceName, status.getOutputStream());
+                    logger.error("ifup {} errorCode:{},command:{}", interfaceName, status.getExitStatus().getExitCode(),
+                            command.getCommandLine());
                     throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
                             "Failed to bring up interface " + interfaceName);
                 }
