@@ -46,9 +46,9 @@ function create_users {
        echo $os
     }
     if [ $(os) == "\"centos\"" ]; then
-       POLKIT=`yum list --installed | grep libpolkit`
+       POLKIT=`yum list --installed | grep polkit`
     else
-       POLKIT=`apt list --installed | grep libpolkit`
+       POLKIT=`apt list --installed | grep polkit`
     fi
 	IFS=" " POLKIT_ARRAY=($POLKIT)
 	POLKIT_VERSION=${POLKIT_ARRAY[1]}
@@ -88,7 +88,11 @@ ResultAny=yes" > /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.syst
 	
 	# modify pam policy
 	if [ -f /etc/pam.d/su ]; then
-		sed -i '/^auth       sufficient pam_rootok.so/a auth       [success=ignore default=1] pam_succeed_if.so user = kura\nauth       sufficient                 pam_succeed_if.so use_uid user = kurad' /etc/pam.d/su 
+	   if [ $(os) == "\"centos\"" ]; then
+          sed -i '/pam_wheel.so use_uid/a auth       [success=ignore default=1] pam_succeed_if.so user = kura\nauth       sufficient                 pam_succeed_if.so use_uid user = kurad' /etc/pam.d/su 
+       else
+          sed -i '/^auth       sufficient pam_rootok.so/a auth       [success=ignore default=1] pam_succeed_if.so user = kura\nauth       sufficient                 pam_succeed_if.so use_uid user = kurad' /etc/pam.d/su 
+       fi		
 	fi
 	
         
@@ -120,6 +124,23 @@ ResultAny=yes" > /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.syst
 }
 
 function delete_users {
+    trim() {
+       str=""
+       if [ $# -gt 0 ]; then
+          str="$1"
+       fi
+       echo "$str" | sed -e 's/^[ \t\r\n]*//g' | sed -e 's/[ \t\r\n]*$//g'
+    }
+    os() {
+       os=$(trim $(cat /etc/os-release 2>/dev/null | grep ^ID= | awk -F= '{print $2}'))
+       if [ "$os" = "" ]; then
+          os=$(trim $(lsb_release -i 2>/dev/null | awk -F: '{print $2}'))
+       fi
+       if [ ! "$os" = "" ]; then
+          os=$(echo $os | tr '[A-Z]' '[a-z]')
+       fi
+       echo $os
+    }
 	# delete kura user
 	userdel kura
 	
@@ -140,9 +161,14 @@ function delete_users {
 	fi
 	
 	# recover pam policy
-	if [ -f /etc/pam.d/su ]; then
-		sed -i '/^auth       sufficient pam_rootok.so/ {n;d}' /etc/pam.d/su
-		sed -i '/^auth       sufficient pam_rootok.so/ {n;d}' /etc/pam.d/su
+	if [ -f /etc/pam.d/su ]; then	
+	   if [ $(os) == "\"centos\"" ]; then
+          sed -i '/pam_wheel.so use_uid/ {n;d}' /etc/pam.d/su
+		  sed -i '/pam_wheel.so use_uid/ {n;d}' /etc/pam.d/su
+       else
+          sed -i '/^auth       sufficient pam_rootok.so/ {n;d}' /etc/pam.d/su
+		  sed -i '/^auth       sufficient pam_rootok.so/ {n;d}' /etc/pam.d/su
+       fi		
 	fi
 	
 	# recover old dbus config
