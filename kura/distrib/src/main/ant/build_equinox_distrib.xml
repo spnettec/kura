@@ -774,9 +774,9 @@ fi]]>
 		<antcall target="wires-jar" />
 
 		<antcall target="misc-jar" />
-		
+
 		<antcall target="threat-management-jar" />
-		
+
 		<antcall target="keystore-management-jar" />
 
 		<!-- Conditional inclusion of jar files in the distribution jar -->
@@ -970,9 +970,9 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.net_${org.apache.commons.net.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.exec_${org.apache.commons.exec.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.exec_${org.apache.commons.exec.version}.jar" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.jersey-min_${com.eclipsesource.jaxrs.jersey-min.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.jersey-min_${com.eclipsesource.jaxrs.jersey-min.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.publisher_${com.eclipsesource.jaxrs.publisher.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -980,7 +980,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.security_${com.eclipsesource.jaxrs.provider.security.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gson_${com.google.gson.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gson_${com.google.gson.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-csv_${org.apache.commons.csv.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
@@ -1050,7 +1050,7 @@ fi]]>
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar@3:start" />
 		</propertyfile>
 	</target>
 
@@ -1222,7 +1222,7 @@ fi]]>
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.status_${org.eclipse.kura.core.status.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.status_${org.eclipse.kura.core.status.version}.jar@4" />
 		</propertyfile>
 	</target>
 
@@ -1230,9 +1230,9 @@ fi]]>
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gwt.user_${gwt-user.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gwt.user_${gwt-user.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.gwtbootstrap3_${org.gwtbootstrap3.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.gwtbootstrap3_${org.gwtbootstrap3.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar@6:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -1752,6 +1752,7 @@ fi]]>
 		</propertyfile>
 	</target>
 
+
 	<!-- Jar targets -->
 	<target name="camel-jar">
 		<zip destfile="${project.build.directory}/${build.output.name}.zip"
@@ -2068,7 +2069,7 @@ fi]]>
 				prefix="${build.output.name}/${plugins.folder}" />
 		</zip>
 	</target>
-	
+
 	<target name="keystore-management-config">
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
