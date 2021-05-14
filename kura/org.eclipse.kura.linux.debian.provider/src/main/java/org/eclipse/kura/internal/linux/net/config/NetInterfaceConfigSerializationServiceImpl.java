@@ -496,20 +496,28 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
                     sb.append("\t post-up ").append(REMOVE_ROUTE_COMMAND).append("\n");
                 }
             } else {
-                logger.debug("new config is STATIC for {}", interfaceName);
-                sb.append("static\n");
-                // IPADDR
-                sb.append("\taddress ").append(netConfigIP4.getAddress().getHostAddress()).append("\n");
+                // in Debian, loopback interface cannot have assigned a static address
+                if (netInterfaceConfig.getType() == NetInterfaceType.LOOPBACK) {
+                    sb.append("loopback\n");
+                } else {
 
-                // NETMASK
-                sb.append("\tnetmask ").append(netConfigIP4.getSubnetMask().getHostAddress()).append("\n");
+                    logger.debug("new config is STATIC for {}", interfaceName);
 
-                // NETWORK
-                // TODO: Handle Debian NETWORK value
+                    sb.append("static\n");
 
-                // Gateway
-                if (netConfigIP4.getGateway() != null) {
-                    sb.append("\tgateway ").append(netConfigIP4.getGateway().getHostAddress()).append("\n");
+                    // IPADDR
+                    sb.append("\taddress ").append(netConfigIP4.getAddress().getHostAddress()).append("\n");
+
+                    // NETMASK
+                    sb.append("\tnetmask ").append(netConfigIP4.getSubnetMask().getHostAddress()).append("\n");
+
+                    // NETWORK
+                    // TODO: Handle Debian NETWORK value
+
+                    // Gateway
+                    if (netConfigIP4.getGateway() != null) {
+                        sb.append("\tgateway ").append(netConfigIP4.getGateway().getHostAddress()).append("\n");
+                    }
                 }
             }
 
