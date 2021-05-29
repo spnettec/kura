@@ -12,7 +12,6 @@
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="5"/>
     <setAttribute key="deselected_workspace_bundles">
-        <setEntry value="com.yofc.iot.yofc-iot-apps-visa"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
@@ -20,7 +19,6 @@
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
-        <setEntry value="org.eclipse.kura.core.cloud.factory.test"/>
         <setEntry value="org.eclipse.kura.core.cloud.test"/>
         <setEntry value="org.eclipse.kura.core.comm.test"/>
         <setEntry value="org.eclipse.kura.core.configuration.test"/>
@@ -73,8 +71,11 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -417,6 +418,8 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>

@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -36,11 +36,11 @@ import org.slf4j.LoggerFactory;
 public class PppAuthSecrets {
 
     /*
-     * #Secrets for authentication using PAP/CHAP
-     * #client server secret IP addresses Provider
-     * ISP@CINGULARGPRS.COM * CINGULAR1 * #att
+     * #Secrets for authentication using PAP/CHAP 
+     * #client server secret IP addresses Provider 
+     * ISP@CINGULARGPRS.COM * CINGULAR1 * #att 
      * mobileweb * password * #o2
-     * user * pass * #orange
+     * user * pass * #orange 
      * web * web * #vodaphone
      */
 
@@ -70,6 +70,7 @@ public class PppAuthSecrets {
         this.ipAddresses = new ArrayList<>();
 
         BufferedReader br = null;
+        FileReader fr = null;
         try {
             File secretsFile = new File(this.secretsFilename);
 
@@ -77,7 +78,8 @@ public class PppAuthSecrets {
                 String currentLine = null;
                 StringTokenizer st = null;
 
-                br = new BufferedReader(new FileReader(this.secretsFilename));
+                fr = new FileReader(this.secretsFilename);
+                br = new BufferedReader(fr);
 
                 while ((currentLine = br.readLine()) != null) {
                     currentLine = currentLine.trim();
@@ -107,9 +109,11 @@ public class PppAuthSecrets {
         } catch (Exception e) {
             s_logger.error("Could not initialize", e);
         } finally {
+
             if (br != null) {
                 try {
                     br.close();
+                    fr.close();
                 } catch (IOException ex) {
                     s_logger.error("I/O Exception while closing BufferedReader!");
                 }
@@ -187,7 +191,7 @@ public class PppAuthSecrets {
         try (final FileOutputStream fos = new FileOutputStream(tempFile);
                 final PrintWriter pw = new PrintWriter(fos);) {
             pw.write("#Secrets for authentication using " + authType + "\n");
-            pw.write("#client					server			secret			IP addresses	#Provider\n");
+            pw.write("#client server secret IP addresses #Provider\n");
 
             for (int i = 0; i < this.providers.size(); ++i) {
                 pw.write(this.clients.get(i) + "\t");
@@ -210,8 +214,8 @@ public class PppAuthSecrets {
 
     /**
      * Removed an entry based on a 'type' where the type can be either provider,
-     * client, server, secret, or ipaddress. Note if the type occurs more than
-     * once, all entries of 'type' matching 'value' will be removed
+     * client, server, secret, or ipaddress. Note if the type occurs more than once,
+     * all entries of 'type' matching 'value' will be removed
      *
      * @param type
      *            can be either provider, client, server, secret, or ipaddress
@@ -284,9 +288,7 @@ public class PppAuthSecrets {
      *            secret/password for this account
      * @param ipAddress
      *            ipaddress for this account
-     * @return boolean
-     *         true - entry found
-     *         false - entry not found
+     * @return boolean true - entry found false - entry not found
      */
     public boolean checkForEntry(String provider, String client, String server, String secret, String ipAddress) {
         for (int i = 0; i < this.providers.size(); ++i) {
@@ -305,7 +307,8 @@ public class PppAuthSecrets {
     }
 
     /**
-     * Return the secret as a string, given the other parameters. Return null if not found.
+     * Return the secret as a string, given the other parameters. Return null if not
+     * found.
      *
      * @param provider
      *            cellular provider for which this secret applies
