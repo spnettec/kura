@@ -48,24 +48,29 @@ public class Emulator {
 
         try {
             String mode = System.getProperty(KURA_MODE);
-
             if (EMULATOR.equals(mode)) {
                 logger.info("Framework is running in emulation mode");
-                final String snapshotFolderPath = System.getProperty(KURA_SNAPSHOTS_PATH);
-                if (snapshotFolderPath == null || snapshotFolderPath.isEmpty()) {
-                    throw new IllegalStateException("System property 'kura.snapshots' is not set");
-                }
-                final File snapshotFolder = new File(snapshotFolderPath);
-                if (!snapshotFolder.exists() || snapshotFolder.list().length == 0) {
-                    snapshotFolder.mkdirs();
-                    copySnapshot(snapshotFolderPath);
-                }
             } else {
                 logger.info("Framework is not running in emulation mode");
             }
+            final String snapshotFolderPath = System.getProperty(KURA_SNAPSHOTS_PATH);
+            if (snapshotFolderPath == null || snapshotFolderPath.isEmpty()) {
+                if (!EMULATOR.equals(mode)) {
+                    return;
+                } else {
+                    throw new IllegalStateException("System property 'kura.snapshots' is not set");
+                }
+            }
+            final File snapshotFolder = new File(snapshotFolderPath);
+            if (!snapshotFolder.exists()
+                    || snapshotFolder.list((File dir, String name) -> name.equals(SNAPSHOT_0_NAME)).length == 0) {
+                snapshotFolder.mkdirs();
+                logger.warn("No init snapshot file,copy one.");
+                copySnapshot(snapshotFolderPath);
+            }
 
         } catch (Exception e) {
-            logger.info("Framework is not running in emulation mode or initialization failed!: {}", e.getMessage());
+            logger.error("Framework is not running in emulation mode or initialization failed!: ", e);
         }
     }
 
