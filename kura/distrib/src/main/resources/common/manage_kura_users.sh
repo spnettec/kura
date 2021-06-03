@@ -26,7 +26,8 @@ function create_users {
     passwd -l kurad
     # add kurad to dialout group (for managing serial ports)
     gpasswd -a kurad dialout
-    
+    tee /etc/sudoers.d/kurad <<< '%kurad ALL=(ALL) NOPASSWD: ALL'
+    chmod 440 /etc/sudoers.d/kurad
 	# get polkit package version
 	trim() {
        str=""

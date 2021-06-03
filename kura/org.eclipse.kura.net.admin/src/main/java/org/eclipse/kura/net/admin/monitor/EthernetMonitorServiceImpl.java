@@ -299,7 +299,7 @@ public class EthernetMonitorServiceImpl implements EthernetMonitorService, Event
                             }
                         }
                     } else {
-                        logger.debug("No current net interface addresses for {}", interfaceName);
+                        logger.info("No current net interface addresses for {}", interfaceName);
                     }
                 }
 
@@ -308,27 +308,27 @@ public class EthernetMonitorServiceImpl implements EthernetMonitorService, Event
                 if (interfaceEnabled) {
                     if (currentInterfaceState.isUp()) {
                         if (!currentInterfaceState.isLinkUp()) {
-                            logger.debug("link is down - disabling {}", interfaceName);
+                            logger.info("link is down - disabling {}", interfaceName);
                             disableInterface(interfaceName);
                             interfaceStateChanged = true;
                         } else if (isDhcpClient && (prevInterfaceState == null || currentInterfaceState
                                 .getCarrierChanges() != prevInterfaceState.getCarrierChanges())) {
                             // Carrier counter changed - cable has been plugged or unplugged
-                            logger.debug("link is up, carrier changes counter updated - enabling {}", interfaceName);
+                            logger.info("link is up, carrier changes counter updated - enabling {}", interfaceName);
                             this.netAdminService.enableInterface(interfaceName, isDhcpClient);
                             interfaceStateChanged = true;
                         }
                     } else {
                         // State is currently down
                         if (currentInterfaceState.isLinkUp()) {
-                            logger.debug("link is up - enabling {}", interfaceName);
+                            logger.info("link is up - enabling {}", interfaceName);
                             this.netAdminService.enableInterface(interfaceName, isDhcpClient);
                             interfaceStateChanged = true;
                         }
                     }
                 } else {
                     if (currentInterfaceState.isUp()) {
-                        logger.debug("{} is currently up - disable interface", interfaceName);
+                        logger.info("{} is currently up - disable interface", interfaceName);
                         disableInterface(interfaceName);
                         interfaceStateChanged = true;
                     }
@@ -374,7 +374,7 @@ public class EthernetMonitorServiceImpl implements EthernetMonitorService, Event
                     } else if (netInterfaceStatus == NetInterfaceStatus.netIPv4StatusEnabledLAN && isDhcpClient) {
                         RouteConfig rconf = this.routeService.getDefaultRoute(interfaceName);
                         if (rconf != null) {
-                            logger.debug("{} is configured for LAN/DHCP - removing GATEWAY route ...",
+                            logger.info("{} is configured for LAN/DHCP - removing GATEWAY route ...",
                                     rconf.getInterfaceName());
                             this.routeService.removeStaticRoute(rconf.getDestination(), rconf.getGateway(),
                                     rconf.getNetmask(), rconf.getInterfaceName());
@@ -390,14 +390,14 @@ public class EthernetMonitorServiceImpl implements EthernetMonitorService, Event
 
                 // post event if there were any changes
                 if (postStatusChangeEvent) {
-                    logger.debug("Posting NetworkStatusChangeEvent for {}: {}", interfaceName, currentInterfaceState);
+                    logger.info("Posting NetworkStatusChangeEvent for {}: {}", interfaceName, currentInterfaceState);
                     this.eventAdmin.postEvent(new NetworkStatusChangeEvent(interfaceName, currentInterfaceState, null));
                     this.interfaceState.put(interfaceName, currentInterfaceState);
                 }
 
                 // If the interface is disabled in Denali, stop the monitor
                 if (!interfaceEnabled) {
-                    logger.debug("{} is disabled - stopping monitor", interfaceName);
+                    logger.info("{} is disabled - stopping monitor", interfaceName);
                     stopMonitor(interfaceName);
                 }
             } catch (Exception e) {

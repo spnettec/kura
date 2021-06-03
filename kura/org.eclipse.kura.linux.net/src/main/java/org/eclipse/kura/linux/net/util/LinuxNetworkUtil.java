@@ -921,15 +921,29 @@ public class LinuxNetworkUtil {
             // FIXME:
             // * Do we really need to bring down the interface before deleting addresses?
             if (hasAddress(interfaceName)) {
-                Command command = new Command(new String[] { "ifdown", interfaceName });
+                Command command = new Command(new String[] { "sudo", "ifdown", interfaceName });
+                command.setTimeout(60);
+                command.setOutputStream(new ByteArrayOutputStream());
+                command.setErrorStream(new ByteArrayOutputStream());
                 command.setTimeout(60);
                 // Intentionally ignore exit status
-                this.executorService.execute(command);
+                CommandStatus status = this.executorService.execute(command);
+                if (!status.getExitStatus().isSuccessful()) {
+                    logger.error("error msg:{}", new String(
+                            ((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), StandardCharsets.UTF_8));
+                }
 
                 command = new Command(new String[] { IFCONFIG, interfaceName, "down" });
                 command.setTimeout(60);
+                command.setOutputStream(new ByteArrayOutputStream());
+                command.setErrorStream(new ByteArrayOutputStream());
+                command.setTimeout(60);
                 // Intentionally ignore exit status
-                this.executorService.execute(command);
+                status = this.executorService.execute(command);
+                if (!status.getExitStatus().isSuccessful()) {
+                    logger.error("error msg:{}", new String(
+                            ((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), StandardCharsets.UTF_8));
+                }
 
             }
 
@@ -947,26 +961,34 @@ public class LinuxNetworkUtil {
 
             Command command = new Command(new String[] { IFCONFIG, interfaceName, "up" });
             command.setTimeout(60);
+            command.setOutputStream(new ByteArrayOutputStream());
+            command.setErrorStream(new ByteArrayOutputStream());
             CommandStatus status = this.executorService.execute(command);
             if (!status.getExitStatus().isSuccessful()) {
+                logger.error("error msg:{}", new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(),
+                        StandardCharsets.UTF_8));
                 throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
                         "Failed to bring up interface " + interfaceName);
             }
 
-            command = new Command(new String[] { "ifup", "--force", interfaceName });
+            command = new Command(new String[] { "sudo", "ifup", interfaceName });
             command.setTimeout(60);
             command.setOutputStream(new ByteArrayOutputStream());
             command.setErrorStream(new ByteArrayOutputStream());
             status = this.executorService.execute(command);
             if (!status.getExitStatus().isSuccessful()) {
-                command = new Command(new String[] { "ifup", interfaceName });
+                logger.error("error msg:{}", new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(),
+                        StandardCharsets.UTF_8));
+                command = new Command(new String[] { "sudo", "ifup", "--force", interfaceName });
                 command.setTimeout(60);
                 command.setOutputStream(new ByteArrayOutputStream());
                 command.setErrorStream(new ByteArrayOutputStream());
                 status = this.executorService.execute(command);
                 if (!status.getExitStatus().isSuccessful()) {
-                    logger.error("ifup {} errorCode:{},command:{}", interfaceName, status.getExitStatus().getExitCode(),
-                            command.getCommandLine());
+                    logger.error("ifup {} errorCode:{},command:{},error msg:{}", interfaceName,
+                            status.getExitStatus().getExitCode(), command.getCommandLine(),
+                            new String(((ByteArrayOutputStream) status.getErrorStream()).toByteArray(),
+                                    StandardCharsets.UTF_8));
                     throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR,
                             "Failed to bring up interface " + interfaceName);
                 }

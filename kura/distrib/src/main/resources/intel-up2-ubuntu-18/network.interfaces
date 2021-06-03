@@ -10,7 +10,7 @@ iface lo inet loopback
 # The primary network interface
 auto enp2s0
 iface enp2s0 inet static
-    address 192.168.5.2
+    address 172.16.0.1
     netmask 255.255.255.0
 
 auto enp3s0
