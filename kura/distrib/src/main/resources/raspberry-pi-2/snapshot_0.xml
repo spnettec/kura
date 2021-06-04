@@ -41,8 +41,8 @@
             <esf:property name="net.interface.eth0.config.dhcpServer4.passDns" array="false" encrypted="false" type="Boolean">
                 <esf:value>false</esf:value>
             </esf:property>
-            <esf:property name="net.interface.wlan0.config.wifi.master.passphrase" array="false" encrypted="false" type="Password">
-                <esf:value>12345678</esf:value>
+            <esf:property name="net.interface.wlan0.config.wifi.master.passphrase" array="false" encrypted="true" type="Password">
+                <esf:value>MTIzNDU2Nzg=</esf:value>
             </esf:property>
             <esf:property name="net.interface.eth0.driver" array="false" encrypted="false" type="String">
                 <esf:value>unknown</esf:value>

@@ -715,7 +715,7 @@ public class GwtComponentServiceInternal {
         return driverFactoriesPids;
     }
 
-    public static Map<String, String> getPidsFromTarget(String pid, String targetRef) {
+    public static Map<String, String> getPidsFromTarget(final String componentName, final String targetRef) {
 
         Map<String, String> result = new HashMap<>();
 
@@ -726,16 +726,7 @@ public class GwtComponentServiceInternal {
             final ServiceComponentRuntime scrService = context.getService(scrServiceRef);
 
             final Set<String> referenceInterfaces = scrService.getComponentDescriptionDTOs().stream()
-                    .filter(componentDescription -> scrService.getComponentConfigurationDTOs(componentDescription)
-                            .stream().anyMatch(componentConfiguration -> {
-                                String kuraServicePid = (String) componentConfiguration.properties
-                                        .get(ConfigurationService.KURA_SERVICE_PID);
-                                if (kuraServicePid == null)
-                                    return false;
-                                if (pid == null || pid.equals(""))
-                                    return true;
-                                return kuraServicePid.equals(pid);
-                            }))
+                    .filter(componentDescription -> componentDescription.name.equals(componentName))
                     .map(componentDescription -> {
                         ReferenceDTO[] references = componentDescription.references;
                         for (ReferenceDTO reference : references) {

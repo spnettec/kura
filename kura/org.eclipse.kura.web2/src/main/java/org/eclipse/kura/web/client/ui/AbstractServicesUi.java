@@ -263,7 +263,7 @@ public abstract class AbstractServicesUi extends Composite {
             kuraTextBox.setText(MSGS.noTargetsAvailable());
             RequestQueue.submit(context -> this.gwtXSRFService.generateSecurityToken(
                     context.callback(token -> AbstractServicesUi.this.gwtComponentService.getPidNamesFromTarget(token,
-                            this.configurableComponent.getComponentId(), targetedService, context.callback(data -> {
+                            getSCRComponentName(this.configurableComponent), targetedService, context.callback(data -> {
                                 dropDownHeader.setText(MSGS.noTargetsAvailable());
                                 if (!data.isEmpty()) {
                                     final String targetData;
@@ -285,6 +285,16 @@ public abstract class AbstractServicesUi extends Composite {
         }
 
         textBox.validate(true);
+    }
+
+    private static final String getSCRComponentName(final GwtConfigComponent component) {
+        final String factoryPid = component.getFactoryId();
+
+        if (factoryPid != null) {
+            return factoryPid;
+        }
+
+        return component.getComponentId();
     }
 
     private KuraAnchorListItem createListItem(final KuraTextBox textBox, String targetEntryKey, String targetEntryName,
