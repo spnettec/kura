@@ -65,21 +65,17 @@
             default="false"
             description="%httpsRevocationCheckEnabledDesc"/>
 
-        <AD id="https.client.ocsp.url"
-            name="%httpsClientRevocationURL"
+        <AD id="ssl.revocation.mode"
+            name="%sslRevocationMode"
             type="String"
             cardinality="0"
-            required="false"
-            default=""
-            description="%httpsClientRevocationURLDesc"/>
-
-        <AD id="https.client.crl.path"
-            name="%httpsClientCRLpath"
-            type="String"
-            cardinality="0"
-            required="false"
-            default=""
-            description="%httpsClientCRLpathDesc"/>
+            required="true"
+            default="PREFER_OCSP"
+            description="%sslRevocationModeDesc">
+            <Option label="%revModPreOcsp" value="PREFER_OCSP"/>
+            <Option label="%revModPreCrl" value="PREFER_CRL"/>
+            <Option label="%revModCrlOnly" value="CRL_ONLY"/>
+        </AD>
 
         <AD id="https.client.revocation.soft.fail"
             name="%httpsRevocationSoft-failEnabled"

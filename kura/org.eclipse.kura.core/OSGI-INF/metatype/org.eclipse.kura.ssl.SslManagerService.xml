@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+    Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
   
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -52,7 +52,34 @@
             required="false"
             default=""
             description="%cipherSuitesDesc"/>
+        
+         <AD id="ssl.revocation.check.enabled"
+            name="%revCheckEnabled"
+            type="Boolean"
+            cardinality="0"
+            required="false"
+            default="false"
+            description="%revCheckEnabledDesc"/>
+            
+        <AD id="ssl.revocation.mode"
+            name="%revCheckMode"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="PREFER_OCSP"
+            description="%revCheckModeDesc">
+            <Option label="%revModPreOcsp" value="PREFER_OCSP"/>
+            <Option label="%revModPreCrl" value="PREFER_CRL"/>
+            <Option label="%revModCrlOnly" value="CRL_ONLY"/>
+        </AD>
 
+        <AD id="ssl.revocation.soft.fail"
+            name="%revSoftEnabled"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="%revSoftEnabledDesc"/>
     </OCD>
 
     <Designate factoryPid="org.eclipse.kura.ssl.SslManagerService">
