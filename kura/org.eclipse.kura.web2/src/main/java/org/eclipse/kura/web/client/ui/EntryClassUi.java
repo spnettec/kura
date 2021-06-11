@@ -203,6 +203,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     Span userNameLarge;
     @UiField
     Span userNameSmall;
+    @UiField
+    Row mainContainer;
 
     private static final Messages MSGS = GWT.create(Messages.class);
     private static final EntryClassUIUiBinder uiBinder = GWT.create(EntryClassUIUiBinder.class);
@@ -314,7 +316,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         initLogoutButtons();
         initServicesTree();
         initExtensions();
-        init();
     }
 
     private void initExtensions() {
@@ -972,6 +973,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public static void showWaitModal() {
+        waitModal.center();
         waitModal.show();
     }
 
@@ -1017,8 +1019,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void init() {
-        this.userNameLarge.setText(this.userData.getUserName());
-        this.userNameSmall.setText(this.userData.getUserName());
+        this.userNameLarge.setText(this.userData.getUserNameEllipsed());
+        this.userNameSmall.setText(this.userData.getUserNameEllipsed());
 
         final EventService.Handler userAdminEventHandler = e -> {
             this.userConfigReloadTimer.schedule(1000);
@@ -1033,6 +1035,9 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
         if (this.userData.getPermissions().isEmpty()) {
             this.alertDialog.show("The current user has no permissions", Severity.ALERT, (ConfirmListener) null);
+            // hamburger button and sidenav are not more useful since menus not contain anything
+            this.mainContainer.addStyleName("no-sidenav");
+            this.sidenavButton.removeFromParent();
             return;
         }
 

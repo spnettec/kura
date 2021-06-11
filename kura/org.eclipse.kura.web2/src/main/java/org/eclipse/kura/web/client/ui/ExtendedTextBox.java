@@ -20,6 +20,7 @@ public class ExtendedTextBox extends TextBox {
         super.onBrowserEvent(event);
         switch (DOM.eventGetType(event)) {
         case Event.ONPASTE:
+        case Event.ONMOUSEUP:
         case Event.ONKEYUP:
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
@@ -29,6 +30,8 @@ public class ExtendedTextBox extends TextBox {
                 }
 
             });
+            break;
+        default:
             break;
         }
     }

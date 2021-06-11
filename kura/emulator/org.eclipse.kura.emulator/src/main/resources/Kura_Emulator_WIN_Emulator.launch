@@ -12,10 +12,6 @@
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="4"/>
     <setAttribute key="deselected_workspace_bundles">
-        <setEntry value="com.yofc.iot.yofc-iot-api-log4j"/>
-        <setEntry value="com.yofc.iot.yofc-iot-api-logconfig"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-jolokia"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-s7plc"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
@@ -309,10 +305,10 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-enip@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-visa@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
@@ -328,6 +324,7 @@
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
+        <setEntry value="org.eclipse.kura.core.cloud.factory@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud@default:default"/>
         <setEntry value="org.eclipse.kura.core.comm@default:default"/>
         <setEntry value="org.eclipse.kura.core.configuration@default:default"/>
