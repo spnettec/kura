@@ -53,7 +53,6 @@ COMMIT
 -A input-kura -i wlp4s0 -p tcp -m tcp --dport 1450 -j ACCEPT
 -A input-kura -i enp2s0 -p tcp -m tcp --dport 1450 -j ACCEPT
 -A input-kura -i enp3s0 -p tcp -m tcp --dport 1450 -j ACCEPT
--A input-kura -s 10.234.0.0/16 -p tcp -m tcp --dport 443 -j ACCEPT
 -A input-kura -i wlp4s0 -p tcp -m tcp --dport 443 -j ACCEPT
 -A input-kura -i enp2s0 -p tcp -m tcp --dport 443 -j ACCEPT
 -A input-kura -i enp3s0 -p tcp -m tcp --dport 443 -j ACCEPT
@@ -61,7 +60,6 @@ COMMIT
 -A input-kura -i enp3s0 -p tcp -m tcp --dport 80 -j ACCEPT
 -A input-kura -i enp2s0 -p tcp -m tcp --dport 8088 -j ACCEPT
 -A input-kura -i enp3s0 -p tcp -m tcp --dport 8088 -j ACCEPT
--A input-kura -s 10.234.0.0/16 -p tcp -m tcp --dport 4443 -j ACCEPT
 -A input-kura -i wlp4s0 -p tcp -m tcp --dport 4443 -j ACCEPT
 -A input-kura -i enp2s0 -p tcp -m tcp --dport 4443 -j ACCEPT
 -A input-kura -i enp3s0 -p tcp -m tcp --dport 4443 -j ACCEPT
