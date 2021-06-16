@@ -18,7 +18,6 @@
    <property name="service.pid" type="String" value="org.eclipse.kura.http.server.manager.HttpService"/>
    <service>
        <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
-       <provide interface="org.osgi.service.event.EventHandler"/>
    </service>
 
    <reference name="SystemService"
@@ -27,11 +26,9 @@
               policy="static"
               interface="org.eclipse.kura.system.SystemService"/>
    <reference name="KeystoreService"
-           policy="static"
-           policy-option="greedy"
+           policy="dynamic"
            bind="setKeystoreService"
            cardinality="0..1"
            interface="org.eclipse.kura.security.keystore.KeystoreService"/>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>
-   <property name="event.topics" type="String">org/eclipse/kura/security/keystore/KeystoreChangedEvent/KEYSTORE_CHANGED</property>
 </scr:component>
