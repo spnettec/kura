@@ -20,6 +20,7 @@
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
+        <setEntry value="org.eclipse.kura.core.cloud.factory.test"/>
         <setEntry value="org.eclipse.kura.core.cloud.test"/>
         <setEntry value="org.eclipse.kura.core.comm.test"/>
         <setEntry value="org.eclipse.kura.core.configuration.test"/>
@@ -54,8 +55,6 @@
         <setEntry value="org.eclipse.kura.example.beacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag.test"/>
-        <setEntry value="org.eclipse.kura.example.ble.tisensortag.tinyb"/>
-        <setEntry value="org.eclipse.kura.example.ble.tisensortag.tinyb.test"/>
         <setEntry value="org.eclipse.kura.example.camel.aggregation"/>
         <setEntry value="org.eclipse.kura.example.camel.publisher"/>
         <setEntry value="org.eclipse.kura.example.camel.quickstart"/>

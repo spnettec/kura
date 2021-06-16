@@ -374,7 +374,12 @@
                   <id>com.google.code.gson:gson:${com.google.gson.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>  
+              </artifact>
+              <artifact>
+                  <id>com.github.hypfvieh:bluez-dbus-osgi:${bluez-dbus-osgi.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
               <artifact>
                   <id>com.google.guava:guava:${guava.version}</id>
                   <source>true</source>

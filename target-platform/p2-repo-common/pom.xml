@@ -65,28 +65,7 @@
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>com.codeminders.hidapi.aarch64</artifactId>
                                     <version>${com.codeminders.hidapi.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>tinyb</artifactId>
-                                    <version>${tinyb.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>tinyb.armv6hf</artifactId>
-                                    <version>${tinyb.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>tinyb.x86_64</artifactId>
-                                    <version>${tinyb.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>tinyb.aarch64</artifactId>
-                                    <version>${tinyb.version}</version>
-                                </artifactItem>
-                                
+                                </artifactItem>                               
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.camel.sun.misc</artifactId>
@@ -182,13 +161,6 @@
                                     <artifactId>com.eclipsesource.jaxrs.provider.security</artifactId>
                                     <version>${com.eclipsesource.jaxrs.provider.security.version}</version>
                                 </artifactItem>
-                                <!-- 
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.apache.activemq.artemis</artifactId>
-                                    <version>${org.apache.activemq.artemis.version}</version>
-                                </artifactItem>
-                                -->
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.jetty.customizer</artifactId>
