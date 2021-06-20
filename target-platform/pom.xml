@@ -31,7 +31,6 @@
         <module>usb4java-javax</module>
         <module>org.eclipse.soda.dk.comm-parent</module>
         <module>jdk.dio-parent</module>
-        <module>com.gwt.user</module>
         <module>moquette-broker</module>
         <module>org.apache.log4j2-api-config</module>
         <module>org.eclipse.kura.jetty.customizer</module>
@@ -49,15 +48,6 @@
             </releases>
             <snapshots>
               <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>kura_addons</id>
-            <name>Kura Addons Maven Repository</name>
-            <url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <!-- <updatePolicy>always</updatePolicy> -->
             </snapshots>
         </repository>
         <repository>

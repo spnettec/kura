@@ -71,7 +71,7 @@
               <artifacts>
 		      <!-- Java 11 -->
                 <artifact>
-                    <id>jakarta.servlet:jakarta.servlet-api:${jakarta.servlet-api.version}</id>
+                    <id>jakarta.servlet:jakarta.servlet-api:${jakarta.servlet-api-mvn.version}</id>
                     <source>true</source>
                     <transitive>false</transitive>
                 </artifact>
@@ -308,42 +308,42 @@
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  
               <artifact>
-                  <id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy.groovy-mvn.version}</id>
+                  <id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>   
@@ -799,7 +799,7 @@
                   <transitive>false</transitive>
               </artifact> 
               <artifact>
-                  <id>org.apache:org.apache.commons.net:${org.apache.commons.net.version}</id>
+                  <id>commons-net:commons-net:${org.apache.commons.net.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  

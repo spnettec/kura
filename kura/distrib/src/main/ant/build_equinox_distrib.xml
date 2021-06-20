@@ -111,17 +111,6 @@
 			file="${project.build.directory}/${build.output.name}/kura.properties"
 			token="{kura.symlink}" value="${kura.symlink}" />
 
-
-		<condition property="kura.osgi.repo"
-			value="../../target-platform/p2-repo-equinox_3.16.0/target/repository">
-			<or>
-				<not>
-					<isset property="kura.osgi" />
-				</not>
-				<equals arg1="${kura.osgi}" arg2="equinox" />
-			</or>
-		</condition>
-
 		<copy file="src/main/resources/${build.name}/snapshot_0.xml"
 			tofile="${project.build.directory}/${build.output.name}/snapshot_0.xml" />
 		<copy file="src/main/osgi/equinox_3.16.0/configuration/config.ini"
@@ -612,14 +601,6 @@ fi]]>
 				file="${project.build.directory}/${build.output.name}/kura.properties"
 				prefix="${build.output.name}/${framework.config.folder}/" />
 
-			<zipfileset dir="${kura.osgi.repo}/plugins/" prefix="${build.output.name}/${plugins.folder}">
-
-				<!-- exclude source bundles -->
-				<exclude name="*.source_*.jar" />
-				<!-- exclude .SNAPSHOT bundles -->
-				<exclude name="*.SNAPSHOT.jar" />
-
-			</zipfileset>
 
 			<zipfileset dir="../target-definition/common/repository/plugins"
 				prefix="${build.output.name}/${plugins.folder}">
@@ -645,11 +626,6 @@ fi]]>
 			</zipfileset>
 
 			<!-- add .SNAPSHOT as -SNAPSHOT -->
-			<mappedresources>
-				<fileset dir="${kura.osgi.repo}/plugins" includes="*.SNAPSHOT.jar" />
-				<globmapper from="*.SNAPSHOT.jar"
-					to="${build.output.name}/${plugins.folder}/*-SNAPSHOT.jar" />
-			</mappedresources>
 			<mappedresources>
 				<fileset dir="../target-definition/common/repository/plugins"
 					includes="*.SNAPSHOT.jar" />
@@ -920,7 +896,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.util.ajax_${org.eclipse.jetty.util.ajax.version}.jar@5:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.servlet_${jakarta.servlet-api.version}.jar@5:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.servlet-api_${jakarta.servlet-api.version}.jar@5:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -960,7 +936,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jdk.dio_${jdk.dio.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.net_${org.apache.commons.net.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-net_${org.apache.commons.net.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.exec_${org.apache.commons.exec.version}.jar" />
 			<entry key="osgi.bundles" operation="+"
@@ -1511,23 +1487,23 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.yaml.snakeyaml_${org.yaml.snakeyaml.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy_${org.codehaus.groovy.groovy.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy_${org.codehaus.groovy.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-xml_${org.codehaus.groovy.groovy.version}.jar@3" />
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-xml_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-templates_${org.codehaus.groovy.groovy.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-templates_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-sql_${org.codehaus.groovy.groovy.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-sql_${org.codehaus.groovy.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-json_${org.codehaus.groovy.groovy.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-json_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-jsr223_${org.codehaus.groovy.groovy.version}.jar@3" />	
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-jsr223_${org.codehaus.groovy.version}.jar@3" />	
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-datetime_${org.codehaus.groovy.groovy.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-datetime_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-dateutil_${org.codehaus.groovy.groovy.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-dateutil_${org.codehaus.groovy.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@2:start" />

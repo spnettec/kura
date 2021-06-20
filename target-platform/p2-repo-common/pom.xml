@@ -77,11 +77,6 @@
                                     <version>${org.eclipse.kura.sun.misc.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.tigris</groupId>
-                                    <artifactId>org.tigris.mtoolkit.iagent.rpc</artifactId>
-                                    <version>${org.tigris.mtoolkit.iagent.rpc.version}</version>
-                                </artifactItem>
-                                <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.usb4java</artifactId>
                                     <version>${org.usb4java.version}</version>

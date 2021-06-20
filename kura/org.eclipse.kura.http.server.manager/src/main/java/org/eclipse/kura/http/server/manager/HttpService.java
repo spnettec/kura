@@ -56,7 +56,9 @@ public class HttpService implements ConfigurableComponent {
     public void setKeystoreService(KeystoreService keystoreService) {
         if (this.keystoreService != keystoreService) {
             this.keystoreService = keystoreService;
-            restartHttpService();
+            if (this.options != null) {
+                restartHttpService();
+            }
         }
     }
 
