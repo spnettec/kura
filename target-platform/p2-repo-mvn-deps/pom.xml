@@ -70,6 +70,11 @@
             <configuration>
               <artifacts>
 		      <!-- Java 11 -->
+                <artifact>
+                    <id>jakarta.servlet:jakarta.servlet-api:${jakarta.servlet-api.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
                 <artifact>                    
                     <id>jakarta.activation:jakarta.activation-api:${jakarta.activation-api.version}</id>
                     <source>true</source>
@@ -143,6 +148,27 @@
                   <id>org.apache.camel:camel-http-common:${org.apache.camel.camel-http-common.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
+                                     l.cloud;version="[2.25,2.26)",org.apache.camel.converter;version="[2.
+                                     25,2.26)",org.apache.camel.converter.stream;version="[2.25,2.26)",org
+                                     .apache.camel.impl;version="[2.25,2.26)",org.apache.camel.runtimecata
+                                     log;version="[2.25,2.26)",org.apache.camel.spi;version="[2.25,2.26)",
+                                     org.apache.camel.support;version="[2.25,2.26)",org.apache.camel.util;
+                                     version="[2.25,2.26)",javax.servlet;version="[3,5)",javax.servlet.htt
+                                     p;version="[3,5)",org.slf4j;version="[1.7,2)",javax.activation,org.os
+                                     gi.framework;version="[1.5,2)",org.osgi.framework.wiring;version="[1.
+                                     0,2)"
+                      </Import-Package>
+                      <Export-Package>org.apache.camel.http.common;version="2.25.4";uses:="j
+                                     avax.activation,javax.servlet,javax.servlet.http,org.apache.camel,org
+                                     .apache.camel.cloud,org.apache.camel.http.common.cookie,org.apache.ca
+                                     mel.impl,org.apache.camel.spi,org.apache.camel.support,org.slf4j",org
+                                     .apache.camel.http.common.cookie;version="2.25.4";uses:="org.apache.c
+                                     amel"
+                     </Export-Package>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-http4:${org.apache.camel.camel-http4.version}</id>
@@ -170,19 +196,40 @@
                   <transitive>false</transitive>
                   <override>true</override>
                   <instructions>
-                      <Import-Package>org.apache.camel;version="[2.24,2.99)",org.apache.came
-                         l.spi;version="[2.24,2.99)",org.apache.camel.support;version="[2.24,2
-                         .99)",org.apache.camel.util;version="[2.24,2.99)",groovy.lang;version
-                         ="[2.5,4)",org.codehaus.groovy.runtime;version="[2.5,4)",org.codehaus
-                         .groovy.runtime.callsite;version="[2.5,4)",org.osgi.framework;version
-                         ="[1.5,2)",org.osgi.framework.wiring;version="[1.0,2)"
+                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
+                                     l.spi;version="[2.25,2.26)",org.apache.camel.support;version="[2.25,2
+                                     .26)",org.apache.camel.util;version="[2.25,2.26)",groovy.lang;version
+                                     ="[2.5,4)",org.codehaus.groovy.runtime;version="[2.5,4)",org.codehaus
+                                     .groovy.runtime.callsite;version="[2.5,4)",org.osgi.framework;version
+                                     ="[1.5,2)",org.osgi.framework.wiring;version="[1.0,2)"
                       </Import-Package>
+                      <Export-Package>org.apache.camel.language.groovy;uses:="groovy.lang,or
+                                    g.apache.camel,org.apache.camel.support";version="2.25.4"
+                      </Export-Package>
                   </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-servlet:${org.apache.camel.camel-servlet.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
+                                     l.converter;version="[2.25,2.26)",org.apache.camel.http.common;versio
+                                     n="[2.25,2.26)",org.apache.camel.impl;version="[2.25,2.26)",org.apach
+                                     e.camel.spi;version="[2.25,2.26)",org.apache.camel.util;version="[2.2
+                                     5,2.26)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3
+                                     ,5)",org.slf4j;version="[1.7,2)",javax.activation,org.osgi.service.ht
+                                     tp;version="[1.2,2)",org.osgi.framework;version="[1.5,2)",org.osgi.fr
+                                     amework.wiring;version="[1.0,2)"
+                      </Import-Package>
+                      <Export-Package>org.apache.camel.component.servlet;version="2.25.4";us
+                                     es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
+                                     el,org.apache.camel.http.common,org.apache.camel.spi",org.apache.came
+                                     l.component.servlet.osgi;version="2.25.4";uses:="javax.servlet.http,o
+                                     rg.osgi.service.http"
+                      </Export-Package>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-core-xml:${org.apache.camel.camel-core-xml.version}</id>
@@ -881,11 +928,6 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.eclipse.jetty:jetty-continuation:jar:${org.eclipse.jetty.continuation.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
                   <id>org.eclipse.jetty:jetty-io:jar:${org.eclipse.jetty.io.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
@@ -920,11 +962,6 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
-              <artifact>
-                  <id>org.osgi:org.osgi.service.http.whiteboard:jar:${org.osgi.service.http.whiteboard.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact> 
               <artifact>
                   <id>org.apache.felix:org.apache.felix.dependencymanager:jar:${org.apache.felix.dependencymanager.version}</id>
                   <source>true</source>
@@ -1138,126 +1175,6 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.plc4x:plc4j-api:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-spi:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-tcp:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-udp:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-serial:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-socketcan:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-raw-socket:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-pcap-shared:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-utils-raw-sockets:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-utils-pcap-shared:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-utils-pcap-replay:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-transport-pcap-replay:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-connection-pool:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-ab-eth:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-ads:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-canopen:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-eip:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-firmata:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-knxnetip:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-modbus:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-opcua:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-s7:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-driver-simulated:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>org.apache.plc4x:plc4j-osgi:jar:${plc4j.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
-              <artifact>
                   <id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
@@ -1284,6 +1201,43 @@
               </artifact>
               <artifact>
                   <id>org.apache.commons:commons-compress:jar:${commons-compress-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>net.java.dev.jna:jna:jar:${net.java.dev.jna.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.eclipsesource.jaxrs:jersey-min:jar:${com.eclipsesource.jaxrs.jersey-min.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.eclipsesource.jaxrs:publisher:jar:${com.eclipsesource.jaxrs.publisher-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>javax.servlet;version="[2.3.0,5.0.0)",javax.servlet.ht
+                                     tp;version="[2.3.0,5.0.0)",javax.ws.rs;version="[2.0.0,3.0.0)",javax.
+                                     ws.rs.core;version="[2.0.0,3.0.0)",javax.ws.rs.ext;version="[2.0.0,3.
+                                     0.0)",org.glassfish.jersey.internal;version="[2.3.0,3.0.0)",org.glass
+                                     fish.jersey.server;version="[2.3.0,3.0.0)",org.glassfish.jersey.servl
+                                     et;version="[2.3.0,3.0.0)",org.osgi.framework;version="[1.5.0,2.0.0)"
+                                     ,org.osgi.service.cm;version="[1.2.0,2.0.0)",org.osgi.service.http;ve
+                                     rsion="[1.2.0,2.0.0)",org.osgi.util.tracker;version="[1.4.0,2.0.0)"
+                      </Import-Package>
+                  </instructions>
+              </artifact>
+              <artifact>
+                  <id>com.eclipsesource.jaxrs:provider-gson:jar:${com.eclipsesource.jaxrs.provider.gson-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>com.eclipsesource.jaxrs:provider-security:jar:${com.eclipsesource.jaxrs.provider.security-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>

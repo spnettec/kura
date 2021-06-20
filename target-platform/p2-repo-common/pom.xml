@@ -143,26 +143,6 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>com.eclipsesource.jaxrs.jersey-min</artifactId>
-                                    <version>${com.eclipsesource.jaxrs.jersey-min.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>com.eclipsesource.jaxrs.publisher</artifactId>
-                                    <version>${com.eclipsesource.jaxrs.publisher.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>com.eclipsesource.jaxrs.provider.gson</artifactId>
-                                    <version>${com.eclipsesource.jaxrs.provider.gson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>com.eclipsesource.jaxrs.provider.security</artifactId>
-                                    <version>${com.eclipsesource.jaxrs.provider.security.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.jetty.customizer</artifactId>
                                     <version>${org.eclipse.kura.jetty.customizer.version}</version>
                                 </artifactItem>

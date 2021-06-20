@@ -59,9 +59,8 @@ public class KuraJettyCustomizer extends JettyCustomizer {
         final ServletContextHandler servletContextHandler = (ServletContextHandler) context;
 
         final GzipHandler gzipHandler = new GzipHandler();
-        gzipHandler.setCompressionLevel(9);
 
-        servletContextHandler.setGzipHandler(gzipHandler);
+        servletContextHandler.insertHandler(gzipHandler);
 
         servletContextHandler.setErrorHandler(new KuraErrorHandler());
 
