@@ -181,7 +181,7 @@ public class KuraJettyCustomizer extends JettyCustomizer {
         sslContextFactory.setNeedClientAuth(enableClientAuth);
 
         final HttpConfiguration httpsConfig = new HttpConfiguration();
-        httpsConfig.addCustomizer(new SecureRequestCustomizer());
+        httpsConfig.addCustomizer(new SecureRequestCustomizer(false));
 
         final ServerConnector connector = new ServerConnector(server,
                 new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
