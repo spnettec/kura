@@ -615,8 +615,7 @@ public class GwtComponentServiceInternal {
         return gwtParams;
     }
 
-    public static boolean updateProperties(String pid, Map<String, Object> properties) throws GwtKuraException {
-
+    public static void updateProperties(String pid, Map<String, Object> properties) throws GwtKuraException {
         final ConfigurationAdmin configAdmin = ServiceLocator.getInstance().getService(ConfigurationAdmin.class);
         final WireHelperService wireHelperService = ServiceLocator.getInstance().getService(WireHelperService.class);
         try {
@@ -642,10 +641,7 @@ public class GwtComponentServiceInternal {
             }
         } catch (IOException e) {
             KuraExceptionHandler.handle(e);
-            return false;
         }
-        return true;
-
     }
 
     public static List<String> getDriverFactoriesList() throws GwtKuraException {

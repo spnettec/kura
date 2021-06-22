@@ -56,7 +56,7 @@
             default="(kura.service.pid=changeme)"
             description="%keystoreServiceTargetDesc">
         </AD>
-
+      
         <AD id="https.revocation.check.enabled"
             name="%httpsRevocationCheckEnabled"
             type="Boolean"

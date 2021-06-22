@@ -121,11 +121,11 @@ public class GwtComponentServiceImpl extends OsgiRemoteServiceServlet implements
     }
 
     @Override
-    public boolean updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties)
+    public void updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties)
             throws GwtKuraException {
         this.checkXSRFToken(xsrfToken);
 
-        return GwtComponentServiceInternal.updateProperties(pid, properties);
+        GwtComponentServiceInternal.updateProperties(pid, properties);
     }
 
     @Override

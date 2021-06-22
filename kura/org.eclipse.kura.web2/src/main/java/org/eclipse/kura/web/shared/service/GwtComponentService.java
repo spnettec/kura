@@ -186,7 +186,7 @@ public interface GwtComponentService extends RemoteService {
     public List<String> findFactoryComponents(GwtXSRFToken xsrfToken) throws GwtKuraException;
 
     @Audit(componentName = "UI Component", description = "Update component configuration")
-    public boolean updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties)
+    public void updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties)
             throws GwtKuraException;
 
     public List<String> getDriverFactoriesList(GwtXSRFToken xsrfToken) throws GwtKuraException;

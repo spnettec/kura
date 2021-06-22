@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.eclipse.kura.core.configuration.ConfigurationChangeEvent;
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.ui.AlertDialog.ConfirmListener;
 import org.eclipse.kura.web.client.ui.AlertDialog.Severity;
@@ -49,6 +50,7 @@ import org.eclipse.kura.web.shared.ForwardedEventTopic;
 import org.eclipse.kura.web.shared.KuraPermission;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
+import org.eclipse.kura.web.shared.model.GwtEventInfo;
 import org.eclipse.kura.web.shared.model.GwtSecurityCapabilities;
 import org.eclipse.kura.web.shared.model.GwtSession;
 import org.eclipse.kura.web.shared.model.GwtUserData;
@@ -188,8 +190,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     @UiField
     Panel sidenavOverlay;
     @UiField
-    Label serviceDescription;
-    @UiField
     Button logoutButton;
     @UiField
     Button headerLogoutButton;
@@ -205,6 +205,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     Span userNameSmall;
     @UiField
     Row mainContainer;
+    @UiField
+    DropdownNotification dropdownNotification;
 
     private static final Messages MSGS = GWT.create(Messages.class);
     private static final EntryClassUIUiBinder uiBinder = GWT.create(EntryClassUIUiBinder.class);
@@ -846,7 +848,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
 
     private void setHeader(final String title, final String subTitle) {
         this.contentPanelHeader.setText(title);
-        this.serviceDescription.setText(subTitle != null ? subTitle : "");
     }
 
     public void render(GwtConfigComponent item) {
@@ -1055,6 +1056,16 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
             }
         });
 
+        EventService.subscribe(ForwardedEventTopic.CONF_CHANGE_EVENT, this::handleConcurrencyEvent);
+    }
+
+    private void handleConcurrencyEvent(GwtEventInfo eventInfo) {
+        String eventPid = (String) eventInfo.getProperties().get(ConfigurationChangeEvent.CONF_CHANGE_EVENT_PID_PROP);
+        if (eventPid.length() == 0) {
+            this.dropdownNotification.show(MSGS.configurationChangeEventNotificationGeneric());
+        } else {
+            this.dropdownNotification.show(MSGS.configurationChangeEventNotification(eventPid));
+        }
     }
 
     private void showStatusPanel() {
