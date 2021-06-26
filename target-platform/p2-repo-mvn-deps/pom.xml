@@ -115,132 +115,160 @@
                 
 		      <!-- End Java 11 -->
               <artifact>
-                  <id>org.apache.camel:camel-amqp:${org.apache.camel.camel-amqp.version}</id>
+                  <id>org.apache.camel:camel-amqp:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-core:${org.apache.camel.camel-core.version}</id>
+                  <id>org.apache.camel:camel-core:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-core-osgi:${org.apache.camel.camel-core-osgi.version}</id>
+                  <id>org.apache.camel:camel-core-languages:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-jms:${org.apache.camel.camel-jms.version}</id>
+                  <id>org.apache.camel:camel-xml-io-util:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-stream:${org.apache.camel.camel-stream.version}</id>
+                  <id>org.apache.camel:camel-xml-io:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-spring:${org.apache.camel.camel-spring.version}</id>
+                  <id>org.apache.camel:camel-xml-io-dsl:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-http-common:${org.apache.camel.camel-http-common.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-                  <override>true</override>
-                  <instructions>
-                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
-                                     l.cloud;version="[2.25,2.26)",org.apache.camel.converter;version="[2.
-                                     25,2.26)",org.apache.camel.converter.stream;version="[2.25,2.26)",org
-                                     .apache.camel.impl;version="[2.25,2.26)",org.apache.camel.runtimecata
-                                     log;version="[2.25,2.26)",org.apache.camel.spi;version="[2.25,2.26)",
-                                     org.apache.camel.support;version="[2.25,2.26)",org.apache.camel.util;
-                                     version="[2.25,2.26)",javax.servlet;version="[3,5)",javax.servlet.htt
-                                     p;version="[3,5)",org.slf4j;version="[1.7,2)",javax.activation,org.os
-                                     gi.framework;version="[1.5,2)",org.osgi.framework.wiring;version="[1.
-                                     0,2)"
-                      </Import-Package>
-                      <Export-Package>org.apache.camel.http.common;version="2.25.4";uses:="j
-                                     avax.activation,javax.servlet,javax.servlet.http,org.apache.camel,org
-                                     .apache.camel.cloud,org.apache.camel.http.common.cookie,org.apache.ca
-                                     mel.impl,org.apache.camel.spi,org.apache.camel.support,org.slf4j",org
-                                     .apache.camel.http.common.cookie;version="2.25.4";uses:="org.apache.c
-                                     amel"
-                     </Export-Package>
-                  </instructions>
-              </artifact>
-              <artifact>
-                  <id>org.apache.camel:camel-http4:${org.apache.camel.camel-http4.version}</id>
+                  <id>org.apache.camel:camel-base-engine:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-netty4:${org.apache.camel.camel-netty4.version}</id>
+                  <id>org.apache.camel:camel-core-engine:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-netty4-http:${org.apache.camel.camel-netty4-http.version}</id>
+                  <id>org.apache.camel:camel-api:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-gson:${org.apache.camel.camel-gson.version}</id>
+                  <id>org.apache.camel:camel-util:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-groovy:${org.apache.camel.camel-groovy.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-                  <override>true</override>
-                  <instructions>
-                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
-                                     l.spi;version="[2.25,2.26)",org.apache.camel.support;version="[2.25,2
-                                     .26)",org.apache.camel.util;version="[2.25,2.26)",groovy.lang;version
-                                     ="[2.5,4)",org.codehaus.groovy.runtime;version="[2.5,4)",org.codehaus
-                                     .groovy.runtime.callsite;version="[2.5,4)",org.osgi.framework;version
-                                     ="[1.5,2)",org.osgi.framework.wiring;version="[1.0,2)"
-                      </Import-Package>
-                      <Export-Package>org.apache.camel.language.groovy;uses:="groovy.lang,or
-                                    g.apache.camel,org.apache.camel.support";version="2.25.4"
-                      </Export-Package>
-                  </instructions>
-              </artifact>
-              <artifact>
-                  <id>org.apache.camel:camel-servlet:${org.apache.camel.camel-servlet.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-                  <override>true</override>
-                  <instructions>
-                      <Import-Package>org.apache.camel;version="[2.25,2.26)",org.apache.came
-                                     l.converter;version="[2.25,2.26)",org.apache.camel.http.common;versio
-                                     n="[2.25,2.26)",org.apache.camel.impl;version="[2.25,2.26)",org.apach
-                                     e.camel.spi;version="[2.25,2.26)",org.apache.camel.util;version="[2.2
-                                     5,2.26)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3
-                                     ,5)",org.slf4j;version="[1.7,2)",javax.activation,org.osgi.service.ht
-                                     tp;version="[1.2,2)",org.osgi.framework;version="[1.5,2)",org.osgi.fr
-                                     amework.wiring;version="[1.0,2)"
-                      </Import-Package>
-                      <Export-Package>org.apache.camel.component.servlet;version="2.25.4";us
-                                     es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
-                                     el,org.apache.camel.http.common,org.apache.camel.spi",org.apache.came
-                                     l.component.servlet.osgi;version="2.25.4";uses:="javax.servlet.http,o
-                                     rg.osgi.service.http"
-                      </Export-Package>
-                  </instructions>
-              </artifact>
-              <artifact>
-                  <id>org.apache.camel:camel-core-xml:${org.apache.camel.camel-core-xml.version}</id>
+                  <id>org.apache.camel:camel-base:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.apache.camel:camel-jackson:${org.apache.camel.camel-jackson.version}</id>
+                  <id>org.apache.camel:camel-management-api:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact> 
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-support:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-core-reifier:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-core-model:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-core-processor:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-groovy:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-spring:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-stream:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-cloud:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-attachments:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-http-base:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-http-common:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-jms:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-core-xml:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-dsl-support:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-endpointdsl:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-jackson:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-servlet:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-gson:${org.apache.camel.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel.karaf:camel-core-osgi:${camel-core-osgi.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
               <artifact>
                   <id>org.slf4j:slf4j-api:${slf4j.api.version}</id>
                   <source>true</source>

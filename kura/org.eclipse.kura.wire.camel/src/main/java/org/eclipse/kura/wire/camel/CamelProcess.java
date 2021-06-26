@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.kura.wire.camel;
 
-import static org.apache.camel.builder.DefaultFluentProducerTemplate.on;
+import static org.apache.camel.impl.engine.DefaultFluentProducerTemplate.on;
 
 import java.util.Arrays;
 

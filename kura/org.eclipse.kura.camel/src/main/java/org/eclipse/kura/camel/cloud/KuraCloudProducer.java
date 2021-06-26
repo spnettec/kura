@@ -21,7 +21,7 @@ import static org.eclipse.kura.camel.camelcloud.KuraCloudClientConstants.CAMEL_K
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
-import org.apache.camel.impl.DefaultProducer;
+import org.apache.camel.support.DefaultProducer;
 import org.eclipse.kura.cloud.CloudClient;
 import org.eclipse.kura.message.KuraPayload;
 

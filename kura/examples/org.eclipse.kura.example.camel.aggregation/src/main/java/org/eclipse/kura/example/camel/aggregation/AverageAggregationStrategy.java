@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.kura.example.camel.aggregation;
 
+import org.apache.camel.AggregationStrategy;
 import org.apache.camel.Exchange;
-import org.apache.camel.processor.aggregate.AggregationStrategy;
 
 final class AverageAggregationStrategy implements AggregationStrategy {
 

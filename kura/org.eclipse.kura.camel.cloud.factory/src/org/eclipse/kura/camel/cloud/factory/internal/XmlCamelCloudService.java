@@ -15,18 +15,21 @@ package org.eclipse.kura.camel.cloud.factory.internal;
 import static org.eclipse.kura.camel.utils.CamelContexts.scriptInitCamelContext;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.script.ScriptException;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
-import org.apache.camel.core.osgi.OsgiServiceRegistry;
-import org.apache.camel.impl.CompositeRegistry;
-import org.apache.camel.impl.SimpleRegistry;
+import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.model.RoutesDefinition;
+import org.apache.camel.support.SimpleRegistry;
 import org.eclipse.kura.camel.bean.PayloadFactory;
 import org.eclipse.kura.camel.camelcloud.DefaultCamelCloudService;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
+import org.eclipse.kura.camel.runner.OsgiDefaultKuraCamelContext;
+import org.eclipse.kura.cloud.CloudService;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +56,7 @@ public class XmlCamelCloudService {
         return this.service;
     }
 
-    private OsgiDefaultCamelContext router;
+    private OsgiDefaultKuraCamelContext router;
 
     // private ServiceRegistration<CloudService> handle;
 
@@ -67,15 +70,14 @@ public class XmlCamelCloudService {
         // new registry
 
         final SimpleRegistry simpleRegistry = new SimpleRegistry();
-        simpleRegistry.put("payloadFactory", new PayloadFactory());
-
-        final CompositeRegistry registry = new CompositeRegistry();
-        registry.addRegistry(new OsgiServiceRegistry(this.context));
-        registry.addRegistry(simpleRegistry);
+        Map<Class<?>, Object> mapClass = new HashMap<>();
+        mapClass.put(PayloadFactory.class, new PayloadFactory());
+        simpleRegistry.put("payloadFactory", mapClass);
 
         // new router
 
-        this.router = new OsgiDefaultCamelContext(this.context, registry);
+        this.router = new OsgiDefaultKuraCamelContext(this.context, simpleRegistry);
+
         if (!this.configuration.isEnableJmx()) {
             this.router.disableJMX();
         }
@@ -92,10 +94,12 @@ public class XmlCamelCloudService {
 
         final KuraCloudComponent cloudComponent = new KuraCloudComponent(this.router, this.service);
         this.router.addComponent("kura-cloud", cloudComponent);
+        ExtendedCamelContext ecc = this.router.adapt(ExtendedCamelContext.class);
 
-        final RoutesDefinition routesDefinition = this.router
-                .loadRoutesDefinition(new ByteArrayInputStream(this.configuration.getXml().getBytes()));
-        this.router.addRouteDefinitions(routesDefinition.getRoutes());
+        final Optional<RoutesDefinition> routesDefinition = (Optional<RoutesDefinition>) ecc
+                .getXMLRoutesDefinitionLoader()
+                .loadRoutesDefinition(this.router, new ByteArrayInputStream(this.configuration.getXml().getBytes()));
+        this.router.addRouteDefinitions(routesDefinition.get().getRoutes());
 
         // start
 

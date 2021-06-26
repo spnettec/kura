@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.kura.camel.runner;
 
-import org.apache.camel.spi.Registry;
+import org.apache.camel.spi.BeanRepository;
 
 public interface RegistryFactory {
 
-    public Registry createRegistry();
+    public BeanRepository createRegistry();
 }

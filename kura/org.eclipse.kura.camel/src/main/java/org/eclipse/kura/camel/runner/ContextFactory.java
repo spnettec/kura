@@ -13,9 +13,9 @@
 package org.eclipse.kura.camel.runner;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.spi.Registry;
+import org.apache.camel.spi.BeanRepository;
 
 public interface ContextFactory {
 
-    public CamelContext createContext(Registry registry);
+    public CamelContext createContext(BeanRepository registry);
 }

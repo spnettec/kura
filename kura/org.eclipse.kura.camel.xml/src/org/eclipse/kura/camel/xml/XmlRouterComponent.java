@@ -127,8 +127,10 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         // build registry
 
         final BundleContext ctx = getBundle(XmlRouterComponent.class).getBundleContext();
-        final Map<String, Object> services = new HashMap<>();
-        services.put("payloadFactory", new PayloadFactory());
+        final Map<String, Map<Class<?>, Object>> services = new HashMap<>();
+        final Map<Class<?>, Object> classMap = new HashMap<>();
+        classMap.put(PayloadFactory.class, new PayloadFactory());
+        services.put("payloadFactory", classMap);
         builder.registryFactory(createOsgiRegistry(ctx, services));
 
         // assign new state

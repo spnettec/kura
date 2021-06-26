@@ -17,9 +17,11 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.model.RoutesDefinition;
 import org.apache.commons.io.input.ReaderInputStream;
 
@@ -40,7 +42,10 @@ public class XmlRoutesProvider extends AbstractRoutesProvider {
     @Override
     protected RoutesDefinition getRoutes(final CamelContext camelContext) throws Exception {
         try (final InputStream in = this.inputStreamProvider.get()) {
-            return camelContext.loadRoutesDefinition(in);
+            ExtendedCamelContext ecc = camelContext.adapt(ExtendedCamelContext.class);
+            final Optional<RoutesDefinition> routesDefinition = (Optional<RoutesDefinition>) ecc
+                    .getXMLRoutesDefinitionLoader().loadRoutesDefinition(camelContext, in);
+            return routesDefinition.get();
         }
     }
 
