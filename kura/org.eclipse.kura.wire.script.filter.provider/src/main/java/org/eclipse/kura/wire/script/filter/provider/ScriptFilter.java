@@ -154,6 +154,7 @@ public class ScriptFilter implements WireEmitter, WireReceiver, ConfigurableComp
         if (engineScopeBindings != null) {
             engineScopeBindings.put("polyglot.js.allowHostAccess", true);
             engineScopeBindings.put("polyglot.js.allowHostClassLookup", (Predicate<String>) s -> true);
+            engineScopeBindings.put("javaObj", new Object());
             engineScopeBindings.remove("exit");
             engineScopeBindings.remove("quit");
         }

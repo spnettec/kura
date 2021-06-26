@@ -68,11 +68,6 @@
                                 </artifactItem>                               
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.eclipse.kura.camel.sun.misc</artifactId>
-                                    <version>${org.eclipse.kura.camel.sun.misc.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.sun.misc</artifactId>
                                     <version>${org.eclipse.kura.sun.misc.version}</version>
                                 </artifactItem>

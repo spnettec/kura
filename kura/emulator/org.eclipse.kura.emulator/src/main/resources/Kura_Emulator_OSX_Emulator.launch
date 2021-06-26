@@ -71,11 +71,8 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -221,7 +218,7 @@
         <setEntry value="org.apache.activemq.artemis-native@default:default"/>
         <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
         <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
-        <setEntry value="org.apache.aries.spifly.dynamic.bundle@2:default"/>
+        <setEntry value="org.apache.aries.spifly.dynamic.bundle@1:default"/>
         <setEntry value="org.apache.camel.camel-amqp@default:default"/>
         <setEntry value="org.apache.camel.camel-api@default:default"/>
         <setEntry value="org.apache.camel.camel-attachments@default:default"/>
@@ -229,7 +226,7 @@
         <setEntry value="org.apache.camel.camel-base@default:default"/>
         <setEntry value="org.apache.camel.camel-cloud@default:default"/>
         <setEntry value="org.apache.camel.camel-core-engine@default:default"/>
-        <setEntry value="org.apache.camel.camel-core-languages@default:default"/>
+        <setEntry value="org.apache.camel.camel-core-languages@4:default"/>
         <setEntry value="org.apache.camel.camel-core-model@default:default"/>
         <setEntry value="org.apache.camel.camel-core-processor@default:default"/>
         <setEntry value="org.apache.camel.camel-core-reifier@default:default"/>
@@ -240,9 +237,12 @@
         <setEntry value="org.apache.camel.camel-groovy@default:default"/>
         <setEntry value="org.apache.camel.camel-gson@default:default"/>
         <setEntry value="org.apache.camel.camel-http-base@default:default"/>
+        <setEntry value="org.apache.camel.camel-http-common@default:default"/>
         <setEntry value="org.apache.camel.camel-jackson@default:default"/>
         <setEntry value="org.apache.camel.camel-jms@default:default"/>
         <setEntry value="org.apache.camel.camel-management-api@default:default"/>
+        <setEntry value="org.apache.camel.camel-seda@default:default"/>
+        <setEntry value="org.apache.camel.camel-servlet@default:default"/>
         <setEntry value="org.apache.camel.camel-spring@default:default"/>
         <setEntry value="org.apache.camel.camel-stream@default:default"/>
         <setEntry value="org.apache.camel.camel-support@default:default"/>
@@ -250,7 +250,7 @@
         <setEntry value="org.apache.camel.camel-xml-io-dsl@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io-util@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io@default:default"/>
-        <setEntry value="org.apache.camel.karaf.camel-core-osgi@3:default"/>
+        <setEntry value="org.apache.camel.karaf.camel-core-osgi@2:default"/>
         <setEntry value="org.apache.commons.collections@default:default"/>
         <setEntry value="org.apache.commons.commons-beanutils@default:default"/>
         <setEntry value="org.apache.commons.commons-codec@default:default"/>
@@ -321,9 +321,8 @@
         <setEntry value="org.eclipse.jetty.servlets@default:default"/>
         <setEntry value="org.eclipse.jetty.util.ajax@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.camel.sun.misc@default:false"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
-        <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
+        <setEntry value="org.eclipse.kura.sun.misc@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
         <setEntry value="org.eclipse.milo.dictionary-manager@default:default"/>
@@ -340,11 +339,6 @@
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm.macosx@default:false"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
-        <setEntry value="org.graalvm.js.scriptengine@default:default"/>
-        <setEntry value="org.graalvm.js@default:default"/>
-        <setEntry value="org.graalvm.regex@default:default"/>
-        <setEntry value="org.graalvm.sdk.graal-sdk@default:default"/>
-        <setEntry value="org.graalvm.truffle.api@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
@@ -406,11 +400,8 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
         <setEntry value="org.eclipse.kura.network.threat.manager@default:default"/>

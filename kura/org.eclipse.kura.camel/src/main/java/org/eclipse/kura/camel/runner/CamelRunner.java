@@ -26,7 +26,6 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Route;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.core.osgi.OsgiBeanRepository;
-import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
 import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.RouteDefinition;
@@ -58,11 +57,11 @@ public class CamelRunner {
     private static final Logger logger = LoggerFactory.getLogger(CamelRunner.class);
 
     /**
-     * Creates a new {@link ContextFactory} backed by {@link OsgiDefaultCamelContext}
+     * Creates a new {@link ContextFactory} backed by {@link OsgiDefaultKuraCamelContext}
      *
      * @param bundleContext
      *            the bundle context to use
-     * @return a context factory creating {@link OsgiDefaultCamelContext}s
+     * @return a context factory creating {@link OsgiDefaultKuraCamelContext}
      */
     public static ContextFactory createOsgiFactory(final BundleContext bundleContext) {
         Objects.requireNonNull(bundleContext);

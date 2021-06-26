@@ -9,11 +9,16 @@ Import-Package: javax.script,
  org.eclipse.kura.type;version="[1.0,2.0)",
  org.eclipse.kura.wire;version="[2.0,3.0)",
  org.osgi.framework;version="1.8.0",
- org.osgi.service.component;version="1.2.0",
+ org.osgi.service.component;version="1.4",
  org.osgi.service.wireadmin;version="1.0.1",
  org.slf4j;version="[1.7.0,3)"
 Bundle-ActivationPolicy: lazy
 Service-Component: OSGI-INF/*.xml
 Eclipse-BuddyPolicy: ext
+Require-Capability: osgi.extender;filter:="(osgi.extender=osgi.servicelo
+ ader.processor)";resolution:=optional,osgi.extender;filter:="(osgi.exte
+ nder=osgi.serviceloader.registrar)";resolution:=optional,osgi.servicelo
+ ader;cardinality:=multiple;filter:="(osgi.serviceloader=javax.script.Sc
+ riptEngineFactory)";resolution:=optional
 Bundle-Vendor: Eclipse Kura
 Bundle-License: Eclipse Public License v2.0

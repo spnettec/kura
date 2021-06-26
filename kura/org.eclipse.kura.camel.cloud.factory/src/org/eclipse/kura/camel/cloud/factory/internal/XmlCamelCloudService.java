@@ -29,16 +29,15 @@ import org.eclipse.kura.camel.bean.PayloadFactory;
 import org.eclipse.kura.camel.camelcloud.DefaultCamelCloudService;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
 import org.eclipse.kura.camel.runner.OsgiDefaultKuraCamelContext;
-import org.eclipse.kura.cloud.CloudService;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An service managing a single Camel context as {@link CloudService}
+ * An service managing a single Camel context
  * <p>
  * This service component does manage the lifecycle of a single {@link DefaultCamelCloudService}
- * instance. It will instantiate the Camel context and register the {@link CloudService} instance
+ * instance. It will instantiate the Camel context and register the XmlCamelCloudService instance
  * with OSGi.
  * </p>
  */
