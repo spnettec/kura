@@ -98,6 +98,9 @@ public class FirewallConfiguration {
                             }
                             int port = 0;
                             String portRange = null;
+                            if (permittedNetwork.isEmpty()) {
+                                permittedNetwork = "0.0.0.0";
+                            }
                             FirewallOpenPortConfigIP<? extends IPAddress> openPortEntry = null;
                             if (sa[0].indexOf(':') > 0) {
                                 portRange = sa[0];
