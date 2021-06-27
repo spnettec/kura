@@ -78,6 +78,9 @@ public class FirewallConfiguration {
                             short permittedNetworkMask = 0;
                             if (!permittedNetwork.isEmpty()) {
                                 permittedNetwork = sa[2].split("/")[0];
+                                if (permittedNetwork == null || permittedNetwork.isEmpty()) {
+                                    permittedNetwork = "0.0.0.0";
+                                }
                                 permittedNetworkMask = Short.parseShort(sa[2].split("/")[1]);
                             }
                             String permittedIface = null;
@@ -98,7 +101,7 @@ public class FirewallConfiguration {
                             }
                             int port = 0;
                             String portRange = null;
-                            if (permittedNetwork.isEmpty()) {
+                            if (permittedNetwork == null || permittedNetwork.isEmpty()) {
                                 permittedNetwork = "0.0.0.0";
                             }
                             FirewallOpenPortConfigIP<? extends IPAddress> openPortEntry = null;
@@ -149,6 +152,9 @@ public class FirewallConfiguration {
                             if (!sa[7].isEmpty()) {
                                 permittedNetwork = sa[7].split("/")[0];
                                 permittedNetworkMask = Short.parseShort(sa[7].split("/")[1]);
+                            }
+                            if (permittedNetwork == null || permittedNetwork.isEmpty()) {
+                                permittedNetwork = "0.0.0.0";
                             }
                             String permittedMAC = null;
                             if (!sa[8].isEmpty()) {
