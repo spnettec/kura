@@ -150,7 +150,7 @@
                 <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property name="net.interface.eth0.driver" type="String">
-                <esf:value> smsc95xx</esf:value>
+                <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property encrypted="true" name="net.interface.wlan0.config.wifi.infra.passphrase" type="Password">
                 <esf:value></esf:value>
