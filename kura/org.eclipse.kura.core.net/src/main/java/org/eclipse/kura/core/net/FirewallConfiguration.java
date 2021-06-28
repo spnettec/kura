@@ -78,9 +78,6 @@ public class FirewallConfiguration {
                             short permittedNetworkMask = 0;
                             if (!permittedNetwork.isEmpty()) {
                                 permittedNetwork = sa[2].split("/")[0];
-                                if (permittedNetwork == null || permittedNetwork.isEmpty()) {
-                                    permittedNetwork = "0.0.0.0";
-                                }
                                 permittedNetworkMask = Short.parseShort(sa[2].split("/")[1]);
                             }
                             String permittedIface = null;
