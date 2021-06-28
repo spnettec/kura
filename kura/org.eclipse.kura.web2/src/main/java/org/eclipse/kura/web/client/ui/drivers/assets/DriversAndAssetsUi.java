@@ -252,13 +252,13 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
             }
             final String pid = driverpPid;
             if (this.driverFactoriesList.getSelectedIndex() == 0) {
-                this.confirmDialog.show(MSGS.driversAssetsInvalidDriverFactory(), AlertDialog.Severity.ALERT,
+                this.confirmDialog.show(MSGS.driversAssetsInvalidDriverFactory(), AlertDialog.Severity.ERROR,
                         (ConfirmListener) null);
                 return;
             }
 
             if (this.configurations.isPidExisting(pid)) {
-                this.confirmDialog.show(MSGS.wiresComponentNameAlreadyUsed(pid), AlertDialog.Severity.ALERT,
+                this.confirmDialog.show(MSGS.wiresComponentNameAlreadyUsed(pid), AlertDialog.Severity.ERROR,
                         (ConfirmListener) null);
                 return;
             }
@@ -295,6 +295,11 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
             }
 
             createAsset(pid, newDriverPid, name, desc);
+
+            // reset pid textbox
+            this.assetPid.setValue("");
+            this.assetName.setValue("");
+            this.assetDesc.setValue("");
         });
     }
 
