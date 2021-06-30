@@ -43,7 +43,6 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(CamelCloudServiceFactory.class);
 
-    // public static final String PID = "org.eclipse.kura.camel.cloud.factory.CamelCloudServiceFactory";
     public static final String CLOUD_SERVICE_FACTORY_PID = "org.eclipse.kura.camel.cloud.factory.CamelFactory";
     private ConfigurationService configurationService;
 
@@ -61,11 +60,11 @@ public class CamelCloudServiceFactory implements CloudConnectionFactory {
      * Add a new CamelFactory
      *
      * @param userPid
-     *                       the PID as entered by the user
+     *            the PID as entered by the user
      * @param properties
-     *                       the provided configuration properties
+     *            the provided configuration properties
      * @throws KuraException
-     *                           if anything goes wrong
+     *             if anything goes wrong
      */
     protected void add(String pid, String name, String description, final Map<String, Object> properties)
             throws KuraException {
