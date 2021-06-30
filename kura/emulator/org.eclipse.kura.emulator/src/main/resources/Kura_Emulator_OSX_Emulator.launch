@@ -68,11 +68,8 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -227,6 +224,7 @@
         <setEntry value="org.apache.camel.camel-base@default:default"/>
         <setEntry value="org.apache.camel.camel-bean@default:default"/>
         <setEntry value="org.apache.camel.camel-cloud@default:default"/>
+        <setEntry value="org.apache.camel.camel-cluster@default:default"/>
         <setEntry value="org.apache.camel.camel-core-engine@default:default"/>
         <setEntry value="org.apache.camel.camel-core-languages@4:default"/>
         <setEntry value="org.apache.camel.camel-core-model@default:default"/>
@@ -412,8 +410,6 @@
         <setEntry value="org.eclipse.kura.example.camel.aggregation@default:default"/>
         <setEntry value="org.eclipse.kura.example.camel.publisher@default:default"/>
         <setEntry value="org.eclipse.kura.example.camel.quickstart@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
