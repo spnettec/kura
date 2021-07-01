@@ -341,9 +341,9 @@ public class CloudInstancesUi extends Composite {
                 final String name = object.getName();
 
                 if (object instanceof GwtCloudPubSubEntry) {
-                    return " -> " + (name == null ? pid : name);
+                    return " -> " + getNameOrPid(name, pid);
                 } else {
-                    return cloudName == null ? pid : cloudName;
+                    return getNameOrPid(cloudName, pid);
                 }
             }
 
@@ -359,16 +359,25 @@ public class CloudInstancesUi extends Composite {
                             .getType() == GwtCloudPubSubEntry.Type.PUBLISHER ? "fa-arrow-up" : "fa-arrow-down";
 
                     sb.append(() -> "&ensp;<i class=\"fa assets-status-icon " + iconStyle + "\"></i>"
-                            + (name == null ? pid : name));
+                            + getNameOrPid(name, pid));
                 } else {
-                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>"
-                            + (cloudName == null ? pid : cloudName));
+                    sb.append(() -> "<i class=\"fa assets-status-icon fa-cloud\"></i>" + getNameOrPid(cloudName, pid));
                 }
             }
         };
         col.setCellStyleNames(STATUS_TABLE_ROW);
         this.connectionsGrid.addColumn(col, MSGS.connectionCloudConnectionPidHeader());
 
+    }
+
+    private String getNameOrPid(String name, String pid) {
+        String value = name;
+        if (value == null) {
+            value = pid;
+        } else if (!value.equals(pid)) {
+            value = value + "(" + pid + ")";
+        }
+        return value;
     }
 
     private void initTypeColumn() {

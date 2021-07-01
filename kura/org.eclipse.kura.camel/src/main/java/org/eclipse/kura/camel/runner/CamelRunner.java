@@ -501,9 +501,10 @@ public class CamelRunner {
 
         this.context = camelContext;
 
-        this.routes.applyRoutes(this.context);
         this.context.start();
-
+        
+        this.routes.applyRoutes(this.context);
+        
         fireLifecycle(this.context, ContextLifecycleListener::started);
     }
 
@@ -635,7 +636,7 @@ public class CamelRunner {
         this.routes = routes;
 
         final CamelContext camelContext = this.context;
-        if (camelContext != null) {
+        if (camelContext != null && camelContext.isStarted()) {
             try {
                 this.routes.applyRoutes(camelContext);
             } catch (final Exception e) {

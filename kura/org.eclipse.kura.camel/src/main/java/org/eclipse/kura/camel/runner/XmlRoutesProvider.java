@@ -21,8 +21,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.model.RoutesDefinition;
+import org.apache.camel.xml.in.ModelParser;
 import org.apache.commons.io.input.ReaderInputStream;
 
 public class XmlRoutesProvider extends AbstractRoutesProvider {
@@ -42,10 +42,9 @@ public class XmlRoutesProvider extends AbstractRoutesProvider {
     @Override
     protected RoutesDefinition getRoutes(final CamelContext camelContext) throws Exception {
         try (final InputStream in = this.inputStreamProvider.get()) {
-            ExtendedCamelContext ecc = camelContext.adapt(ExtendedCamelContext.class);
-            final Optional<RoutesDefinition> routesDefinition = (Optional<RoutesDefinition>) ecc
-                    .getXMLRoutesDefinitionLoader().loadRoutesDefinition(camelContext, in);
-            return routesDefinition.get();
+            ModelParser parser = new ModelParser(in, "http://camel.apache.org/schema/spring");
+            Optional<RoutesDefinition> value = parser.parseRoutesDefinition();
+            return value.orElse(null);
         }
     }
 

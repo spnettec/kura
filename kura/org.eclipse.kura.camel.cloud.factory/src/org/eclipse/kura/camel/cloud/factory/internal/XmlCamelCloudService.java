@@ -22,9 +22,9 @@ import java.util.Optional;
 import javax.script.ScriptException;
 
 import org.apache.camel.CamelContext;
-import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.model.RoutesDefinition;
 import org.apache.camel.support.SimpleRegistry;
+import org.apache.camel.xml.in.ModelParser;
 import org.eclipse.kura.camel.bean.PayloadFactory;
 import org.eclipse.kura.camel.camelcloud.DefaultCamelCloudService;
 import org.eclipse.kura.camel.cloud.KuraCloudComponent;
@@ -93,12 +93,14 @@ public class XmlCamelCloudService {
 
         final KuraCloudComponent cloudComponent = new KuraCloudComponent(this.router, this.service);
         this.router.addComponent("kura-cloud", cloudComponent);
-        ExtendedCamelContext ecc = this.router.adapt(ExtendedCamelContext.class);
 
-        final Optional<RoutesDefinition> routesDefinition = (Optional<RoutesDefinition>) ecc
-                .getXMLRoutesDefinitionLoader()
-                .loadRoutesDefinition(this.router, new ByteArrayInputStream(this.configuration.getXml().getBytes()));
-        this.router.addRouteDefinitions(routesDefinition.get().getRoutes());
+        ModelParser parser = new ModelParser(new ByteArrayInputStream(this.configuration.getXml().getBytes()),
+                "http://camel.apache.org/schema/spring");
+        Optional<RoutesDefinition> value = parser.parseRoutesDefinition();
+
+        if (value.isPresent()) {
+            this.router.addRouteDefinitions(value.get().getRoutes());
+        }
 
         // start
 
