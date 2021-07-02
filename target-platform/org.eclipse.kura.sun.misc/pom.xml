@@ -45,7 +45,7 @@
 						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
 						<manifestEntries>
 							<Export-Package>
-                                sun.misc, com.sun
+                                sun.misc, com.sun, sun.security.provider.certpath, sun.security.tools.keytool
                             </Export-Package>
 						</manifestEntries>
 					</archive>
