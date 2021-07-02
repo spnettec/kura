@@ -22,8 +22,8 @@ final class AverageAggregationStrategy implements AggregationStrategy {
         if (oldExchange == null) {
             return newExchange;
         } else {
-            double incomingValue = newExchange.getIn().getBody(double.class);
-            double existingValue = oldExchange.getIn().getBody(double.class);
+            double incomingValue = newExchange.getIn().getBody(Double.class);
+            double existingValue = oldExchange.getIn().getBody(Double.class);
             newExchange.getIn().setBody((incomingValue + existingValue) / 2d);
             return newExchange;
         }

@@ -62,7 +62,7 @@ public abstract class AbstractJavaCamelComponent extends RouteBuilder implements
         builder.disableJmx(getBoolean(PROP_DISABLE_JMX));
         builder.addBeforeStart(camelContext -> {
             beforeStart(camelContext);
-            camelContext.addRoutes(AbstractJavaCamelComponent.this);
+            AbstractJavaCamelComponent.this.runner.setRoutes(AbstractJavaCamelComponent.this);
         });
 
         this.runner = builder.build();
@@ -87,7 +87,7 @@ public abstract class AbstractJavaCamelComponent extends RouteBuilder implements
      * Called before the context is started
      *
      * @param camelContext
-     *                         the Camel context which is being prepared for starting
+     *            the Camel context which is being prepared for starting
      */
     protected void beforeStart(final CamelContext camelContext) {
     }
