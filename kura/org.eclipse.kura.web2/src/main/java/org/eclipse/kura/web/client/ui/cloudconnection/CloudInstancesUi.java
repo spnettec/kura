@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2016, 2021 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *  Red Hat Inc
@@ -18,10 +18,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.ui.AlertDialog;
 import org.eclipse.kura.web.client.ui.AlertDialog.ConfirmListener;
+import org.eclipse.kura.web.client.ui.validator.StringNotInListValidator;
 import org.eclipse.kura.web.client.util.FailureHandler;
 import org.eclipse.kura.web.client.util.PidTextBox;
 import org.eclipse.kura.web.client.util.request.RequestContext;
@@ -252,7 +254,7 @@ public class CloudInstancesUi extends Composite {
 
     public GwtCloudEntry getSelectedObject() {
         GwtCloudEntry selectedCloudEntry = this.selectionModel.getSelectedObject();
-        if (selectedCloudEntry == null && !cloudServicesDataProvider.getList().isEmpty()) {
+        if (selectedCloudEntry == null && !this.cloudServicesDataProvider.getList().isEmpty()) {
             GwtCloudEntry firstEntry = this.cloudServicesDataProvider.getList().get(0);
             this.selectionModel.setSelected(firstEntry, true);
         }
@@ -593,14 +595,14 @@ public class CloudInstancesUi extends Composite {
 
         RequestQueue.submit(context -> this.gwtXSRFService
                 .generateSecurityToken(context.callback(token -> CloudInstancesUi.this.gwtCloudConnection
-                        .connectDataService(token, connectionId, context.<Void> callback()))));
+                        .connectDataService(token, connectionId, context.<Void>callback()))));
     }
 
     private void disconnectDataService(final String connectionId) {
 
         RequestQueue.submit(context -> this.gwtXSRFService
                 .generateSecurityToken(context.callback(token -> CloudInstancesUi.this.gwtCloudConnection
-                        .disconnectDataService(token, connectionId, context.<Void> callback()))));
+                        .disconnectDataService(token, connectionId, context.<Void>callback()))));
 
     }
 
@@ -614,7 +616,7 @@ public class CloudInstancesUi extends Composite {
     }
 
     private void showDeleteModal() {
-        alertDialog.show(MSGS.cloudServiceDeleteConfirmation(), () -> {
+        this.alertDialog.show(MSGS.cloudServiceDeleteConfirmation(), () -> {
             GwtCloudEntry selection = CloudInstancesUi.this.selectionModel.getSelectedObject();
 
             if (selection instanceof GwtCloudConnectionEntry) {
@@ -655,10 +657,18 @@ public class CloudInstancesUi extends Composite {
             }
 
             if (result != null) {
-                pidTextBox.setValidators(new RegExValidator(result, validationMessage));
+                List<String> factoyPidList = this.cloudServicesDataProvider.getList().stream()
+                        .map(GwtCloudEntry::getPid).collect(Collectors.toList());
+
+                pidTextBox.setValidators(new RegExValidator(result, validationMessage),
+                        new StringNotInListValidator(factoyPidList, MSGS.newConnectionServicePIDUsed()));
+
             } else {
                 pidTextBox.setValidators();
             }
+
+            pidTextBox.addKeyUpHandler(event -> pidTextBox.validate());
+
             pidTextBox.setPlaceholder(placeholder);
             pidTextBox.setEnabled(true);
             this.cloudConnectionPidSpinner.setVisible(false);
@@ -692,6 +702,7 @@ public class CloudInstancesUi extends Composite {
                 } else {
                     pidTextBox.setValidators();
                 }
+
                 pidTextBox.setPlaceholder(placeholder);
                 pidTextBox.setEnabled(true);
                 this.pubSubPidSpinner.setVisible(false);
