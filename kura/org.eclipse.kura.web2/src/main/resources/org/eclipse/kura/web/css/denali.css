@@ -787,22 +787,6 @@ Help panel START
 Help panel END
 ***********************/
 
-/**********************
-Modem Help Fix START
-***********************/
-
-#modem-help {
-	max-width: 20%;
-}
-
-#modem-help * {
-	max-width: 100%;
-}
-
-/**********************
-Modem Help Fix END
-***********************/
-
 /** Most GWT widgets already have a style name defined */
 .gwt-DialogBox {
 	width: 400px;
@@ -952,15 +936,6 @@ img.x-tree3-node-icon {
 
 .devs.Atomic.invalid .label, .devs.Atomic.invalid .port-label, .devs.Atomic.invalid circle {
 	fill: red;
-}
-
-.devs.Atomic.selected .body {
-	stroke: red;
-	fill: orange;
-}
-
-.devs.Atomic.selected .label, .devs.Atomic.selected .port-label, .devs.Atomic.selected circle {
-	fill: green;
 }
 
 .port {
