@@ -46,7 +46,9 @@ systemctl disable hostapd || true
 systemctl disable wpa_supplicant || true
 
 # remove existing /etc/resolv.conf file (it should be a link)
-rm /etc/resolv.conf
+if [ -f "/etc/resolv.conf" ]; then
+  rm /etc/resolv.conf
+fi
 
 #set up recover default configuration script
 cp ${INSTALL_DIR}/kura/install/recover_default_config.init ${INSTALL_DIR}/kura/bin/.recoverDefaultConfig.sh

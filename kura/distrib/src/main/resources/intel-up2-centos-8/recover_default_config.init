@@ -25,9 +25,27 @@ case $response in
 	if [ "$?" = "0" ]; then
 		echo "  done"
 	fi
+
+	echo Copying the $dflt_data_dir/udhcpd-wlp4s0.conf file to the /etc directory ...
+	cp $dflt_data_dir/udhcpd-wlp4s0.conf /etc
+	if [ "$?" = "0" ]; then
+        echo "  done"
+    fi
+
+	echo Copying the $dflt_data_dir/hostapd.conf file to the /etc directory ...
+	cp $dflt_data_dir/hostapd.conf /etc
+	if [ "$?" = "0" ]; then
+        echo "  done"
+    fi
 	
 	echo Copying the $dflt_data_dir/ifcfg-enp2s0 file to the /etc/sysconfig/network-scripts directory ...
     cp $dflt_data_dir/ifcfg-enp2s0 /etc/sysconfig/network-scripts
+    if [ "$?" = "0" ]; then
+        echo "  done"
+    fi
+
+    echo Copying the $dflt_data_dir/ifcfg-wlp4s0 file to the /etc/sysconfig/network-scripts directory ...
+    cp $dflt_data_dir/ifcfg-wlp4s0 /etc/sysconfig/network-scripts
     if [ "$?" = "0" ]; then
         echo "  done"
     fi

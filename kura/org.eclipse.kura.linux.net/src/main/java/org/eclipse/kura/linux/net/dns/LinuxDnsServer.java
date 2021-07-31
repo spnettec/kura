@@ -14,12 +14,14 @@
 package org.eclipse.kura.linux.net.dns;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -182,11 +184,17 @@ public abstract class LinuxDnsServer {
 
     public void stop() throws KuraException {
         // Stop named
-        CommandStatus status = this.executorService.execute(new Command(getDnsStopCommand()));
+        Command command = new Command(getDnsStopCommand());
+        command.setTimeout(60);
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setErrorStream(new ByteArrayOutputStream());
+        CommandStatus status = this.executorService.execute(command);
         if (status.getExitStatus().isSuccessful()) {
             logger.debug("DNS server stopped.");
             logger.trace("{}", this.dnsServerConfigIP4);
         } else {
+            logger.error("command:{},error msg:{}", command.getCommandLine(), new String(
+                    ((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), StandardCharsets.UTF_8));
             logger.debug("tried to kill DNS server for interface but it is not running");
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to stop named",
                     status.getExitStatus().getExitCode());
@@ -357,14 +365,14 @@ public abstract class LinuxDnsServer {
     }
 
     public String[] getDnsStartCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "start", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "start", NAMED };
     }
 
     public String[] getDnsRestartCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "restart", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "restart", NAMED };
     }
 
     public String[] getDnsStopCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "stop", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "stop", NAMED };
     }
 }

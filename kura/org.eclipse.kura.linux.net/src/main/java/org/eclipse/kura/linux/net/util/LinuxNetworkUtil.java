@@ -931,7 +931,6 @@ public class LinuxNetworkUtil {
                 command.setTimeout(60);
                 command.setOutputStream(new ByteArrayOutputStream());
                 command.setErrorStream(new ByteArrayOutputStream());
-                command.setTimeout(60);
                 // Intentionally ignore exit status
                 CommandStatus status = this.executorService.execute(command);
                 if (!status.getExitStatus().isSuccessful()) {
@@ -943,7 +942,6 @@ public class LinuxNetworkUtil {
                 command.setTimeout(60);
                 command.setOutputStream(new ByteArrayOutputStream());
                 command.setErrorStream(new ByteArrayOutputStream());
-                command.setTimeout(60);
                 // Intentionally ignore exit status
                 status = this.executorService.execute(command);
                 if (!status.getExitStatus().isSuccessful()) {
