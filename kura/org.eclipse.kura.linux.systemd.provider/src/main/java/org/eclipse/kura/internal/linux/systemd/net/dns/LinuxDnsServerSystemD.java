@@ -34,17 +34,17 @@ public class LinuxDnsServerSystemD extends LinuxDnsServer implements DnsServerSe
 
     @Override
     public String[] getDnsStartCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "start", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "start", NAMED };
     }
 
     @Override
     public String[] getDnsRestartCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "restart", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "restart", NAMED };
     }
 
     @Override
     public String[] getDnsStopCommand() {
-        return new String[] { SYSTEMCTL_COMMAND, "stop", NAMED };
+        return new String[] { "sudo", SYSTEMCTL_COMMAND, "stop", NAMED };
     }
 
 }

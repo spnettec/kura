@@ -117,11 +117,11 @@
         <module>org.eclipse.kura.network.threat.manager</module>
         <module>org.eclipse.kura.core.tamper.detection</module>
 
-        <module>features</module>
+       <!--  <module>features</module> -->
         <module>emulator</module>
 
         <!-- final p2 repository -->
-        <module>org.eclipse.kura-p2</module>
+       <!--  <module>org.eclipse.kura-p2</module> -->
 
         <module>test-util</module>
     </modules>
@@ -263,11 +263,7 @@
     </profiles>
 
     <repositories>
-        <repository>
-            <id>license-feature</id>
-            <url>http://download.eclipse.org/cbi/updates/license/</url>
-            <layout>p2</layout>
-        </repository>
+        
         <repository>
             <id>p2-repo-common</id>
             <layout>p2</layout>
