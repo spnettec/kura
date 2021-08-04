@@ -12,7 +12,6 @@
     <booleanAttribute key="default_auto_start" value="true"/>
     <intAttribute key="default_start_level" value="5"/>
     <setAttribute key="deselected_workspace_bundles">
-        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-visa"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider.test"/>
         <setEntry value="org.eclipse.kura.asset.provider.test"/>
@@ -375,6 +374,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
