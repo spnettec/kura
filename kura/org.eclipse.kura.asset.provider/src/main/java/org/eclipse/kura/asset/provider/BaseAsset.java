@@ -136,9 +136,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while activation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the service properties
+     *            the service properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.info("activating...");
@@ -152,7 +152,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component update callback.
      *
      * @param properties
-     *                       the service properties
+     *            the service properties
      */
     public void updated(final Map<String, Object> properties) {
 
@@ -172,7 +172,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while deactivation.
      *
      * @param context
-     *                    the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext context) {
         logger.debug("deactivating...");
@@ -191,9 +191,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * PID.
      *
      * @param driverId
-     *                     the identifier of the driver
+     *            the identifier of the driver
      * @throws NullPointerException
-     *                                  if driver id provided is null
+     *             if driver id provided is null
      */
     private void reopenDriverTracker(final String driverId) {
         requireNonNull(driverId, "Driver PID cannot be null");
@@ -238,7 +238,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             updateChannelListenerRegistrations(this.channelListeners, this.config.getAssetConfiguration());
             newState.syncChannelListeners(this.channelListeners,
                     this.config.getAssetConfiguration().getAssetChannels());
-        });
+        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
     }
 
     public void unsetDriver() {
@@ -251,7 +251,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                     onPreparedReadReleased(preparedRead);
                 }
                 oldState.shutdown();
-            });
+            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
         }
     }
 
@@ -334,7 +334,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 }
             }
             return records;
-        }));
+        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
 
         logger.debug("Reading asset channels...Done");
         return channelRecords;
@@ -390,7 +390,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
                 state.getDriver().read(validRecords);
                 return null;
-            }));
+            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
         }
         logger.debug("Reading asset channels...Done");
         return channelRecords;
@@ -430,7 +430,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             return;
         }
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels));
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels),
+                this.config.getRequestTimeOut(), TimeUnit.SECONDS);
     }
 
     /** {@inheritDoc} */
@@ -455,7 +456,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final Map<String, Channel> channels = this.config.getAssetConfiguration().getAssetChannels();
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels));
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels),
+                this.config.getRequestTimeOut(), TimeUnit.SECONDS);
     }
 
     protected void onPreparedReadCreated(PreparedRead preparedRead) {
@@ -518,7 +520,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
                 state.getDriver().write(validRecords);
                 return null;
-            }));
+            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
         }
         logger.debug("Writing to channels...Done");
     }
