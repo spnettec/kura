@@ -332,7 +332,7 @@
                                      ion;version="[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;
                                      version="[3,5)",org.slf4j;version="[1.7,2)"
                       </Import-Package>
-                      <Export-Package>org.apache.camel.component.servlet;version="3.11.0";us
+                      <Export-Package>org.apache.camel.component.servlet;version="3.11.1";us
                                      es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
                                      el,org.apache.camel.http.common,org.apache.camel.spi,org.apache.camel
                                      .spi.annotations,org.apache.camel.support.component"
@@ -938,7 +938,7 @@
               </artifact>
               
               <artifact>
-                  <id>org.graalvm.sdk:graal-sdk:jar:21.1.0</id>
+                  <id>org.graalvm.sdk:graal-sdk:jar:21.2.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -948,7 +948,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js:jar:21.1.0</id>
+                  <id>org.graalvm.js:js:jar:21.2.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -979,7 +979,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js-scriptengine:jar:21.1.0</id>
+                  <id>org.graalvm.js:js-scriptengine:jar:21.2.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -994,7 +994,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.truffle:truffle-api:jar:21.1.0</id>
+                  <id>org.graalvm.truffle:truffle-api:jar:21.2.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -1004,7 +1004,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.regex:regex:jar:21.1.0</id>
+                  <id>org.graalvm.regex:regex:jar:21.2.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
