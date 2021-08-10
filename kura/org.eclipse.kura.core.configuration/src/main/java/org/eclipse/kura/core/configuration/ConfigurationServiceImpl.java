@@ -1409,7 +1409,16 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 for (File file : files) {
                     Matcher m = p.matcher(file.getName());
                     if (m.matches()) {
-                        ids.add(Long.parseLong(m.group(1)));
+                        if (file.length() > 0) {
+                            ids.add(Long.parseLong(m.group(1)));
+                        } else {
+                            logger.warn("error config file length. delete it");
+                            try {
+                                Files.delete(file.toPath());
+                            } catch (IOException e) {
+
+                            }
+                        }
                     }
                 }
             }
@@ -1516,7 +1525,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         // Get the latest snapshot file to use as initialization
         Set<Long> snapshotIDs = getSnapshots();
         if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         Long[] snapshots = snapshotIDs.toArray(new Long[] {});
@@ -1536,9 +1545,15 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             Boolean isEncrypt = Boolean
                     .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
                             : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
+            if (e instanceof KuraException && ((KuraException) e).getCode() == KuraErrorCode.DECODER_ERROR) {
+                logger.error("error snapshot config file, id:{}. delete it", lastestID);
+                deleteSnapshotId(lastestID);
+                return loadLatestSnapshotConfigurations();
+            }
             if (isEncrypt != null && !isEncrypt) {
                 throw KuraException.internalError(e);
             }
+
             logger.info("Unable to decrypt snapshot! Fallback to unencrypted snapshots mode.");
             try {
                 if (allSnapshotsUnencrypted()) {
@@ -1546,6 +1561,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     configs = loadEncryptLatestSnapshotConfigurations();
                 }
             } catch (Exception ex) {
+                if (ex instanceof KuraException && ((KuraException) ex).getCode() == KuraErrorCode.DECODER_ERROR) {
+                    logger.error("error encrypt snapshot config file, id:{}. delete it", lastestID);
+                    deleteSnapshotId(lastestID);
+                    return loadLatestSnapshotConfigurations();
+                }
                 throw KuraException.internalError(e);
             }
         }
@@ -1558,7 +1578,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         // Get the latest snapshot file to use as initialization
         Set<Long> snapshotIDs = getSnapshots();
         if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         Long[] snapshots = snapshotIDs.toArray(new Long[] {});
@@ -1575,6 +1595,25 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
 
         return configs;
+    }
+
+    private void deleteSnapshotId(long snapshotID) throws KuraException {
+        String configDir = getSnapshotsDirectory();
+
+        if (configDir == null) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND,
+                    configDir != null ? configDir : "null");
+        }
+
+        StringBuilder sbSnapshot = new StringBuilder(configDir);
+        sbSnapshot.append(File.separator).append("snapshot_").append(snapshotID).append(".xml");
+
+        String snapshot = sbSnapshot.toString();
+        try {
+            Files.deleteIfExists(new File(snapshot).toPath());
+        } catch (IOException e) {
+
+        }
     }
 
     XmlComponentConfigurations loadEncryptedSnapshotFileContent(long snapshotID) throws KuraException {
@@ -1929,7 +1968,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *                  the input value
+     *            the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
