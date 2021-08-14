@@ -113,6 +113,8 @@ public class AssetDataUi extends Composite {
 
         this.assetDataTable.addColumn(new StaticColumn(AssetConstants.NAME.value()),
                 new TextHeader(MSGS.wiresChannelName()));
+        this.assetDataTable.addColumn(new StaticColumn(AssetConstants.NAMEDESC.value()),
+                new TextHeader(MSGS.wiresChannelNameDesc()));
         this.assetDataTable.addColumn(new StaticColumn(AssetConstants.TYPE.value()),
                 new TextHeader(MSGS.wiresChannelOperation()));
         this.assetDataTable.addColumn(new StaticColumn(AssetConstants.VALUE_TYPE.value()),

@@ -15,6 +15,7 @@
 package org.eclipse.kura.asset.provider;
 
 import static org.eclipse.kura.asset.provider.AssetConstants.NAME;
+import static org.eclipse.kura.asset.provider.AssetConstants.NAMEDESC;
 import static org.eclipse.kura.asset.provider.AssetConstants.TYPE;
 import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_TYPE;
 
@@ -105,6 +106,17 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         name.setRequired(true);
 
         this.defaultElements.add(name);
+
+        final Tad nameDesc = new Tad();
+        nameDesc.setId(NAMEDESC.value());
+        nameDesc.setName("%channel" + NAMEDESC.value().substring(1));
+        nameDesc.setType(Tscalar.STRING);
+        nameDesc.setDefault("Channel-1-Desc");
+        nameDesc.setDescription("%channeldescDesc");
+        nameDesc.setCardinality(0);
+        nameDesc.setRequired(false);
+
+        this.defaultElements.add(nameDesc);
 
         final Tad type = new Tad();
         type.setName("%channel" + TYPE.value().substring(1));

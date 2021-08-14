@@ -39,6 +39,9 @@ public enum AssetConstants {
     /** Name Property to be used in the configuration. */
     NAME(CHANNEL_DEFAULT_PROPERTY_PREFIX.value() + "name"),
 
+    /** Name Description Property to be used in the configuration. */
+    NAMEDESC(CHANNEL_DEFAULT_PROPERTY_PREFIX.value() + "desc"),
+
     /** Type Property to be used in the configuration. */
     TYPE(CHANNEL_DEFAULT_PROPERTY_PREFIX.value() + "type"),
 
@@ -52,7 +55,7 @@ public enum AssetConstants {
      * Instantiates a new asset constants.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     private AssetConstants(final String value) {
         this.value = value;
