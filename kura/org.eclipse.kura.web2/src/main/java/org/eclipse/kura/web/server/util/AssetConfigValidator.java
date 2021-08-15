@@ -17,6 +17,7 @@ import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_P
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,10 +28,16 @@ import javax.servlet.ServletException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.configuration.metatype.Option;
+import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.metatype.Tad;
+import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.driver.Driver;
 import org.eclipse.kura.internal.wire.asset.WireAssetChannelDescriptor;
+import org.eclipse.kura.internal.wire.asset.WireAssetOCD;
+import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.web.server.util.ServiceLocator.ServiceConsumer;
 import org.eclipse.kura.web.shared.model.GwtConfigParameter;
 import org.osgi.framework.BundleContext;
@@ -41,6 +48,9 @@ import org.slf4j.LoggerFactory;
 
 public class AssetConfigValidator {
 
+    private static final ComponentConfiguration WIRE_ASSET_OCD_CONFIG = new ComponentConfigurationImpl(
+            "org.eclipse.kura.wire.WireAsset", new WireAssetOCD(), new HashMap<>());
+
     private static Logger logger = LoggerFactory.getLogger(AssetConfigValidator.class);
 
     private static final AssetConfigValidator _instance = new AssetConfigValidator();
@@ -50,10 +60,37 @@ public class AssetConfigValidator {
         return _instance;
     }
 
+    private ComponentConfiguration toComponentConfiguration(String pid, Object descriptor) {
+        if (!(descriptor instanceof List<?>)) {
+            return null;
+        }
+
+        final List<?> ads = (List<?>) descriptor;
+
+        final Tocd ocd = new Tocd();
+        ocd.setId(pid);
+        for (final Object ad : ads) {
+            if (!(ad instanceof Tad)) {
+                return null;
+            }
+            ocd.addAD((Tad) ad);
+        }
+        Tocd tocd = (Tocd) WIRE_ASSET_OCD_CONFIG.getDefinition();
+        ocd.setLocalization(tocd.getLocalization());
+        ocd.setLocaleUrls(tocd.getLocaleUrls());
+        return new ComponentConfigurationImpl(pid, ocd, null);
+    }
+
     @SuppressWarnings("unchecked")
     private void fillLists(List<Tad> metatypes, List<String> properties, String driverPid) throws Exception {
-        ((List<Tad>) WireAssetChannelDescriptor.get().getDescriptor()).forEach(element -> {
-            metatypes.add(element);
+        ComponentConfiguration componentConfiguration = toComponentConfiguration(driverPid,
+                WireAssetChannelDescriptor.get().getDescriptor());
+        if (componentConfiguration == null) {
+            return;
+        }
+        OCD ocd = componentConfiguration.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage());
+        ocd.getAD().forEach(element -> {
+            metatypes.add((Tad) element);
             properties.add(element.getId());
         });
 
