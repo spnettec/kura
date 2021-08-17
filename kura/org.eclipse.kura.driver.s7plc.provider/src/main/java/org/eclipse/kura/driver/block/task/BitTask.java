@@ -12,9 +12,13 @@
 
 package org.eclipse.kura.driver.block.task;
 
+import org.eclipse.kura.channel.ChannelFlag;
 import org.eclipse.kura.channel.ChannelRecord;
+import org.eclipse.kura.channel.ChannelStatus;
 import org.eclipse.kura.driver.binary.Buffer;
-import org.eclipse.kura.type.BooleanValue;
+import org.eclipse.kura.type.DataType;
+import org.eclipse.kura.type.TypedValue;
+import org.eclipse.kura.type.TypedValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +47,42 @@ public class BitTask extends UpdateBlockTask {
 
         logger.debug("Reading Bit: offset {} bit index {} result {}", getStart(), this.bit, result);
 
-        this.record.setValue(new BooleanValue(result));
+        try {
+            this.record.setValue(map(result, this.record.getValueType()));
+        } catch (Exception e) {
+            this.record.setChannelStatus(new ChannelStatus(ChannelFlag.FAILURE, e.getMessage(), e));
+        }
         onSuccess();
+    }
+
+    private static TypedValue<?> map(final Object value, final DataType targetType) throws Exception {
+        switch (targetType) {
+        case LONG:
+            return TypedValues.newLongValue(((Number) (value == null ? 0 : value)).longValue());
+        case FLOAT:
+            return TypedValues.newFloatValue(((Number) (value == null ? 0 : value)).floatValue());
+        case DOUBLE:
+            return TypedValues.newDoubleValue(((Number) (value == null ? 0 : value)).doubleValue());
+        case INTEGER:
+            if (value instanceof Boolean) {
+                return TypedValues.newIntegerValue(((Boolean) value) == Boolean.TRUE ? 1 : 0);
+            }
+            return TypedValues.newIntegerValue(((Number) (value == null ? 0 : value)).intValue());
+        case BOOLEAN:
+            if (value instanceof Number) {
+                return TypedValues.newBooleanValue(((Number) (value == null ? 0 : value)).intValue() > 0);
+            } else if (value instanceof Boolean) {
+                return TypedValues.newBooleanValue((Boolean) (value == null ? false : value));
+            } else {
+                return TypedValues.newBooleanValue(Boolean.parseBoolean(value == null ? "" : (String) value));
+            }
+        case STRING:
+            return TypedValues.newStringValue(value == null ? "" : (String) value);
+        case BYTE_ARRAY:
+            return TypedValues.newByteArrayValue((byte[]) (value == null ? (new byte[] {}) : value));
+        default:
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override

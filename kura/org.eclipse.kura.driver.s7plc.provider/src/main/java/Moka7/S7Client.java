@@ -396,7 +396,7 @@ public class S7Client {
         if (this.LastError == 0) {
             RecvPacket(this.PDU, 4, 3); // Skip remaining 3 COTP bytes
             this.LastPDUType = this.PDU[5];   // Stores PDU Type, we need it
-            //logger.info("PDUType:{}", this.LastPDUType & 0x0FF);
+            // logger.info("PDUType:{}", this.LastPDUType & 0x0FF);
             // Receives the S7 Payload
             RecvPacket(this.PDU, 7, Size - IsoHSize);
         }
@@ -590,6 +590,10 @@ public class S7Client {
             System.arraycopy(S7_RW, 0, this.PDU, 0, Size_RD);
             // Set DB Number
             this.PDU[27] = (byte) Area;
+            if (Area == S7.S7AreaV) {
+                this.PDU[26] = (byte) 0x01;
+                this.PDU[27] = (byte) 0x84;
+            }
             // Set Area
             if (Area == S7.S7AreaDB) {
                 S7.SetWordAt(this.PDU, 25, DBNumber);
@@ -683,6 +687,10 @@ public class S7Client {
             this.PDU[17] = (byte) 0x05;
             // Set DB Number
             this.PDU[27] = (byte) Area;
+            if (Area == S7.S7AreaV) {
+                this.PDU[26] = (byte) 0x01;
+                this.PDU[27] = (byte) 0x84;
+            }
             if (Area == S7.S7AreaDB) {
                 S7.SetWordAt(this.PDU, 25, DBNumber);
             }
@@ -773,11 +781,11 @@ public class S7Client {
     /**
      *
      * @param DBNumber
-     *                     DB Number
+     *            DB Number
      * @param Buffer
-     *                     Destination buffer
+     *            Destination buffer
      * @param SizeRead
-     *                     How many bytes were read
+     *            How many bytes were read
      * @return
      */
     public int DBGet(int DBNumber, byte[] Buffer, IntByRef SizeRead) {

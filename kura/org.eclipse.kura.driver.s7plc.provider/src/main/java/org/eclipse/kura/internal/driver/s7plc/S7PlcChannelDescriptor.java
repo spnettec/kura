@@ -71,6 +71,9 @@ public final class S7PlcChannelDescriptor implements ChannelDescriptor {
         case S7.S7AreaTM:
             option.setLabel("T");
             break;
+        case S7.S7AreaV:
+            option.setLabel("V");
+            break;
         default:
             break;
         }
@@ -96,6 +99,7 @@ public final class S7PlcChannelDescriptor implements ChannelDescriptor {
         dbType.setOption(generateDbTypeOption(S7.S7AreaMK));
         dbType.setOption(generateDbTypeOption(S7.S7AreaCT));
         dbType.setOption(generateDbTypeOption(S7.S7AreaTM));
+        dbType.setOption(generateDbTypeOption(S7.S7AreaV));
         elements.add(dbType);
 
         final Tad s7ElementType = new Tad();

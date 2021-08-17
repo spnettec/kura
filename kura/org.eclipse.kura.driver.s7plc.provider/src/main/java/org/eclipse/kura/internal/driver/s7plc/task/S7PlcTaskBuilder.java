@@ -110,7 +110,7 @@ public final class S7PlcTaskBuilder {
 
         } else if (S7PlcDataType.BOOL.name().equals(s7DataTypeId)) {
 
-            assertChannelType(record, DataType.BOOLEAN);
+            // assertChannelType(record, DataType.BOOLEAN);
             int bitIndex = getIntProperty(record, S7PlcChannelDescriptor.BIT_INDEX_ID,
                     "Error while retreiving bit index");
             return new BitTask(record, offset, bitIndex, mode == Mode.WRITE ? Mode.UPDATE : Mode.READ);

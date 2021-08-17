@@ -231,7 +231,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
 
                 }
                 reConnectTimes++;
-                result = this.state.client.WriteArea(S7.S7AreaDB, db, offset, data.length, data);
+                result = this.state.client.WriteArea(dbType, db, offset, data.length, data);
             }
 
             if (result != 0) {
@@ -269,7 +269,7 @@ public class S7PlcDriver extends AbstractBlockDriver<S7PlcDomain> implements Con
 
                 }
                 reConnectTimes++;
-                result = this.state.client.ReadArea(S7.S7AreaDB, db, offset, data.length, data);
+                result = this.state.client.ReadArea(dbType, db, offset, data.length, data);
             }
 
             if (result != 0) {
