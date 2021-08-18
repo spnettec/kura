@@ -590,10 +590,6 @@ public class S7Client {
             System.arraycopy(S7_RW, 0, this.PDU, 0, Size_RD);
             // Set DB Number
             this.PDU[27] = (byte) Area;
-            if (Area == S7.S7AreaV) {
-                this.PDU[26] = (byte) 0x01;
-                this.PDU[27] = (byte) 0x84;
-            }
             // Set Area
             if (Area == S7.S7AreaDB) {
                 S7.SetWordAt(this.PDU, 25, DBNumber);
@@ -687,10 +683,6 @@ public class S7Client {
             this.PDU[17] = (byte) 0x05;
             // Set DB Number
             this.PDU[27] = (byte) Area;
-            if (Area == S7.S7AreaV) {
-                this.PDU[26] = (byte) 0x01;
-                this.PDU[27] = (byte) 0x84;
-            }
             if (Area == S7.S7AreaDB) {
                 S7.SetWordAt(this.PDU, 25, DBNumber);
             }

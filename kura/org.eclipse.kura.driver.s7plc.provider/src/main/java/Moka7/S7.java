@@ -37,7 +37,6 @@ public class S7 {
     public static final int S7AreaPA = 0x82;  // Q
     public static final int S7AreaMK = 0x83;  // M
     public static final int S7AreaDB = 0x84;  // D
-    public static final int S7AreaV = 0x87;  // V
     public static final int S7AreaCT = 0x1C;  // C
     public static final int S7AreaTM = 0x1D;  // T
     // Connection types
