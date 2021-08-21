@@ -15,7 +15,6 @@ package org.eclipse.kura.web.server.servlet;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,6 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AuditServlet extends LocaleServlet {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
