@@ -179,29 +179,17 @@ public final class WiresRPC {
 
             @Override
             public void onSuccess(GwtXSRFToken result) {
-                gwtAssetService.createDriverOrAssetConfiguration(result, factoryPid, pid, new AsyncCallback<Void>() {
-
-                    @Override
-                    public void onFailure(Throwable ex) {
-                        EntryClassUi.hideWaitModal();
-                        FailureHandler.handle(ex);
-                    }
-
-                    @Override
-                    public void onSuccess(Void result) {
-                        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
+                gwtAssetService.createDriverOrAssetConfiguration(result, factoryPid, pid, name, desc,
+                        new AsyncCallback<Void>() {
 
                             @Override
                             public void onFailure(Throwable ex) {
                                 EntryClassUi.hideWaitModal();
-                                if (errorCallback != null) {
-                                    errorCallback.onError(ex);
-                                }
                                 FailureHandler.handle(ex);
                             }
 
                             @Override
-                            public void onSuccess(GwtXSRFToken result) {
+                            public void onSuccess(Void result) {
                                 gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
                                     @Override
@@ -215,30 +203,43 @@ public final class WiresRPC {
 
                                     @Override
                                     public void onSuccess(GwtXSRFToken result) {
-                                        gwtWireGraphService.getGwtChannelDescriptor(result, pid,
-                                                new AsyncCallback<GwtConfigComponent>() {
+                                        gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
-                                                    @Override
-                                                    public void onFailure(Throwable ex) {
-                                                        EntryClassUi.hideWaitModal();
-                                                        if (errorCallback != null) {
-                                                            errorCallback.onError(ex);
-                                                        }
-                                                        FailureHandler.handle(ex);
-                                                    }
+                                            @Override
+                                            public void onFailure(Throwable ex) {
+                                                EntryClassUi.hideWaitModal();
+                                                if (errorCallback != null) {
+                                                    errorCallback.onError(ex);
+                                                }
+                                                FailureHandler.handle(ex);
+                                            }
 
-                                                    @Override
-                                                    public void onSuccess(GwtConfigComponent result) {
-                                                        EntryClassUi.hideWaitModal();
-                                                        callback.onSuccess(result);
-                                                    }
-                                                });
+                                            @Override
+                                            public void onSuccess(GwtXSRFToken result) {
+                                                gwtWireGraphService.getGwtChannelDescriptor(result, pid,
+                                                        new AsyncCallback<GwtConfigComponent>() {
+
+                                                            @Override
+                                                            public void onFailure(Throwable ex) {
+                                                                EntryClassUi.hideWaitModal();
+                                                                if (errorCallback != null) {
+                                                                    errorCallback.onError(ex);
+                                                                }
+                                                                FailureHandler.handle(ex);
+                                                            }
+
+                                                            @Override
+                                                            public void onSuccess(GwtConfigComponent result) {
+                                                                EntryClassUi.hideWaitModal();
+                                                                callback.onSuccess(result);
+                                                            }
+                                                        });
+                                            }
+                                        });
                                     }
                                 });
                             }
                         });
-                    }
-                });
             }
         });
     }

@@ -39,6 +39,7 @@ import org.eclipse.kura.asset.Asset;
 import org.eclipse.kura.channel.ChannelFlag;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.ChannelStatus;
+import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.driver.Driver;
 import org.eclipse.kura.internal.wire.asset.WireAssetChannelDescriptor;
@@ -342,13 +343,16 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
     }
 
     @Override
-    public void createDriverOrAssetConfiguration(GwtXSRFToken token, String factoryPid, String pid)
-            throws GwtKuraException {
+    public void createDriverOrAssetConfiguration(GwtXSRFToken token, String factoryPid, String pid, String name,
+            String componentDescription) throws GwtKuraException {
         checkXSRFToken(token);
 
         requireIsDriverOrAssetFactory(factoryPid);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ConfigurationService.KURA_SERVICE_NAME, name);
+        properties.put(ConfigurationService.KURA_SERVICE_DESC, componentDescription);
 
-        GwtComponentServiceInternal.createFactoryComponent(factoryPid, pid);
+        GwtComponentServiceInternal.createFactoryComponent(factoryPid, pid, properties);
     }
 
     @Override

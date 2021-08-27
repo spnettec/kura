@@ -50,8 +50,8 @@ public interface GwtDriverAndAssetService extends RemoteService {
             throws GwtKuraException, IOException;
 
     @Audit(componentName = "UI Asset", description = "Create driver or asset configuration")
-    public void createDriverOrAssetConfiguration(GwtXSRFToken token, String factoryPid, String pid)
-            throws GwtKuraException;
+    public void createDriverOrAssetConfiguration(GwtXSRFToken token, String factoryPid, String pid, String name,
+            String componentDescription) throws GwtKuraException;
 
     @Audit(componentName = "UI Asset", description = "Create driver or asset configuration")
     public void createDriverOrAssetConfiguration(GwtXSRFToken token, String factoryPid, String pid,
