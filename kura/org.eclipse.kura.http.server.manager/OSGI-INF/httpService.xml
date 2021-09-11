@@ -28,6 +28,7 @@
    <reference name="KeystoreService"
            policy="dynamic"
            bind="setKeystoreService"
+           unbind="unsetKeystoreService"
            cardinality="0..1"
            interface="org.eclipse.kura.security.keystore.KeystoreService"/>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>

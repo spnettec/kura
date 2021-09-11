@@ -31,13 +31,17 @@ import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
+import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.http.server.manager.HttpServiceOptions.RevocationCheckMode;
+import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
 import org.eclipse.kura.system.SystemService;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HttpService implements ConfigurableComponent {
+public class HttpService implements ConfigurableComponent, EventHandler {
 
     private static final String KURA_JETTY_PID = "kura.default";
 
@@ -49,17 +53,25 @@ public class HttpService implements ConfigurableComponent {
 
     private KeystoreService keystoreService;
 
+    private String keystoreServicePid;
+
     public void setSystemService(SystemService systemService) {
         this.systemService = systemService;
     }
 
-    public void setKeystoreService(KeystoreService keystoreService) {
+    public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
         if (this.keystoreService != keystoreService) {
             this.keystoreService = keystoreService;
+            this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
             if (this.options != null) {
+                logger.info("keystoreService changed! restart httpservice");
                 restartHttpService();
             }
         }
+    }
+
+    public void unsetKeystoreService(KeystoreService keystoreService) {
+        this.keystoreService = null;
     }
 
     public void activate(Map<String, Object> properties) {
@@ -214,4 +226,18 @@ public class HttpService implements ConfigurableComponent {
             logger.error("Could not stop Jetty Web server", e);
         }
     }
+
+    @Override
+    public void handleEvent(final Event event) {
+        if (!(event instanceof KeystoreChangedEvent)) {
+            return;
+        }
+
+        final KeystoreChangedEvent keystoreChangedEvent = (KeystoreChangedEvent) event;
+
+        if (keystoreChangedEvent.getSenderPid().equals(keystoreServicePid)) {
+            restartHttpService();
+        }
+    }
+
 }
