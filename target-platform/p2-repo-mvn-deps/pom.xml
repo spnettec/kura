@@ -35,31 +35,7 @@
       <plugin>
         <groupId>org.reficio</groupId>
         <artifactId>p2-maven-plugin</artifactId>
-        <version>1.5.0</version>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>5.1.2</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.osgi</groupId>
-                        <artifactId>org.osgi.core</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-all</artifactId>
-                <version>3.0.7</version>
-                <type>pom</type>
-            </dependency>            
-            <dependency>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>biz.aQute.bnd</artifactId>
-                <version>4.0.0</version>
-            </dependency>
-        </dependencies>
+        <version>1.7.0</version>
         <executions>
           <execution>
             <id>generate-p2-site</id>
@@ -942,6 +918,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>*</Export-Package>
+                      <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+                      <_removeheaders>Bnd-LastModified</_removeheaders>
+                      <_reproducible>true</_reproducible>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -952,27 +933,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
-                      <Import-Package>jdk.vm.ci.services;resolution:=optional,org.graalvm.co
-                         llections;resolution:=optional,org.graalvm.home;resolution:=optional,
-                         org.graalvm.home.impl;resolution:=optional,org.graalvm.nativeimage;re
-                         solution:=optional,org.graalvm.nativeimage.c.function;resolution:=opt
-                         ional,org.graalvm.nativeimage.c.struct;resolution:=optional,org.graal
-                         vm.nativeimage.c.type;resolution:=optional,org.graalvm.nativeimage.ho
-                         sted;resolution:=optional,org.graalvm.nativeimage.impl;resolution:=op
-                         tional,org.graalvm.options;resolution:=optional,org.graalvm.polyglot;
-                         resolution:=optional,org.graalvm.polyglot.impl;resolution:=optional,o
-                         rg.graalvm.polyglot.io;resolution:=optional,org.graalvm.polyglot.mana
-                         gement;resolution:=optional,org.graalvm.polyglot.proxy;resolution:=op
-                         tional,org.graalvm.word;resolution:=optional,org.graalvm.word.impl;re
-                         solution:=optional,com.oracle.truffle.polyglot,com.oracle.truffle.api
-                         ,com.oracle.truffle.api.exception,com.oracle.truffle.api.instrumentat
-                         ion,com.oracle.truffle.api.nodes,com.oracle.truffle.api.frame,com.ora
-                         cle.truffle.api.object,com.oracle.truffle.api.interop,com.oracle.truf
-                         fle.api.dsl,com.oracle.truffle.api.library,com.oracle.truffle.api.uti
-                         lities,com.oracle.truffle.api.source,com.oracle.truffle.api.profiles,
-                         com.ibm.icu.lang,com.ibm.icu.math,com.ibm.icu.number,com.ibm.icu.text
-                         ,com.ibm.icu.util
-                      </Import-Package>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>*</Export-Package>
+                      <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+                      <_removeheaders>Bnd-LastModified</_removeheaders>
+                      <_reproducible>true</_reproducible>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -983,11 +948,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
-                       <Import-Package>javax.script;resolution:=optional,org.graalvm.collecti
-                         ons;resolution:=optional,org.graalvm.polyglot;resolution:=optional,or
-                         g.graalvm.polyglot.proxy;resolution:=optional,com.oracle.truffle.poly
-                         glot,com.oracle.truffle.api,com.oracle.truffle.api.exception
-                      </Import-Package>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>*</Export-Package>
+                      <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+                      <_removeheaders>Bnd-LastModified</_removeheaders>
+                      <_reproducible>true</_reproducible>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -998,6 +963,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>*</Export-Package>
+                      <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+                      <_removeheaders>Bnd-LastModified</_removeheaders>
+                      <_reproducible>true</_reproducible>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -1008,6 +978,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>*</Export-Package>
+                      <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+                      <_removeheaders>Bnd-LastModified</_removeheaders>
+                      <_reproducible>true</_reproducible>
                       <Multi-Release>true</Multi-Release>
                       <SPI-Consumer>*</SPI-Consumer>
                       <SPI-Provider>*</SPI-Provider>
@@ -1436,12 +1411,6 @@
        </plugin>
     </plugins>
   </build>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>reficio</id>
-      <url>http://repo.reficio.org/maven/</url>
-    </pluginRepository>
-  </pluginRepositories>
   <repositories>
     <repository>
       <id>mvnrepository</id>
