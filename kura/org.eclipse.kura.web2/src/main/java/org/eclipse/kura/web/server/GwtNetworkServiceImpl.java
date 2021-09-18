@@ -1666,8 +1666,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
     @Override
     public List<GwtWifiHotspotEntry> findFrequencies(GwtXSRFToken xsrfToken, String interfaceName)
             throws GwtKuraException {
-        logger.info("Find Frequency Network Service impl");
-        List<GwtNetInterfaceConfig> result = privateFindNetInterfaceConfigurations();
+        logger.debug("Find Frequency Network Service impl");
         List<GwtWifiHotspotEntry> channels = new ArrayList<GwtWifiHotspotEntry>();
 
         NetworkAdminService nas = ServiceLocator.getInstance().getService(NetworkAdminService.class);
