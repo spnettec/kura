@@ -71,11 +71,8 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -372,8 +369,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
@@ -415,8 +410,6 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
