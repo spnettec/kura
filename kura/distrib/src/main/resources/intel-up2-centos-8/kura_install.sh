@@ -90,6 +90,10 @@ cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/dhcpd
 cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/user/kuranet.conf
 cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/.data/kuranet.conf
 
+#assigning kuranet.conf files ownership to kurad
+chown kurad:kurad ${INSTALL_DIR}/kura/user/kuranet.conf
+chown kurad:kurad ${INSTALL_DIR}/kura/.data/kuranet.conf
+
 OLD_PATH=$(pwd)
 cd ${INSTALL_DIR}/kura/install/
 semodule -i selinuxKura.pp
@@ -113,6 +117,10 @@ if [ ! -d /etc/logrotate.d/ ]; then
     mkdir -p /etc/logrotate.d/
 fi
 cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate.d/kura
+
+# disable dhcpcd service - kura is the network manager
+systemctl stop dhcpcd
+systemctl disable dhcpcd
 
 #assigning possible .conf files ownership to kurad
 PATTERN="/etc/dhcpd*.conf* /etc/resolv.conf* /etc/wpa_supplicant*.conf* /etc/hostapd*.conf*"
