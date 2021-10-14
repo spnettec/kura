@@ -699,9 +699,6 @@
             <esf:property array="true" encrypted="false" name="https.client.auth.ports" type="Integer">
                 <esf:value>4443</esf:value>
             </esf:property>
-            <esf:property array="true" encrypted="false" name="http.ports" type="Integer">
-                <esf:value>80</esf:value>
-            </esf:property>
             <esf:property array="false" encrypted="false" name="KeystoreService.target" type="String">
                 <esf:value>(kura.service.pid=HttpsKeystore)</esf:value>
             </esf:property>
@@ -719,7 +716,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
+                <esf:value>Y2hhbmdlaXQ=</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
@@ -738,7 +735,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/cacerts.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
+                <esf:value>Y2hhbmdlaXQ=</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
