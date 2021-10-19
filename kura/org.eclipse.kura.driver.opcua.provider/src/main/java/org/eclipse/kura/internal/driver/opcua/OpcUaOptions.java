@@ -216,7 +216,8 @@ final class OpcUaOptions {
         IdentityProvider identityProvider;
         final String username = getUsername();
         final String password = getPassword();
-        if (StringUtil.isNullOrEmpty(username) && StringUtil.isNullOrEmpty(password)) {
+        if (this.getSecurityPolicy() == None
+                || (StringUtil.isNullOrEmpty(username) && StringUtil.isNullOrEmpty(password))) {
             identityProvider = new AnonymousProvider();
         } else {
             identityProvider = new UsernameProvider(username, password);
