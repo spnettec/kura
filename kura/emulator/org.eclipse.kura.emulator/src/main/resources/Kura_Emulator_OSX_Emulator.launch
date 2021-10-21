@@ -182,7 +182,6 @@
         <setEntry value="com.google.gwt.user@default:default"/>
         <setEntry value="com.google.protobuf@default:default"/>
         <setEntry value="com.h2database@default:default"/>
-        <setEntry value="com.ibm.icu@default:default"/>
         <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
@@ -354,6 +353,11 @@
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm.macosx@default:false"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
+        <setEntry value="org.graalvm.js.scriptengine@default:default"/>
+        <setEntry value="org.graalvm.js@default:default"/>
+        <setEntry value="org.graalvm.regex@default:default"/>
+        <setEntry value="org.graalvm.sdk.graal-sdk@default:default"/>
+        <setEntry value="org.graalvm.truffle.api@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>

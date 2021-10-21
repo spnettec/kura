@@ -938,7 +938,7 @@
               </artifact>
               
               <artifact>
-                  <id>org.graalvm.sdk:graal-sdk:jar:21.2.0</id>
+                  <id>org.graalvm.sdk:graal-sdk:jar:21.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -953,7 +953,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js:jar:21.2.0</id>
+                  <id>org.graalvm.js:js:jar:21.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -968,7 +968,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.js:js-scriptengine:jar:21.2.0</id>
+                  <id>org.graalvm.js:js-scriptengine:jar:21.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -983,7 +983,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.truffle:truffle-api:jar:21.2.0</id>
+                  <id>org.graalvm.truffle:truffle-api:jar:21.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -998,7 +998,7 @@
                   </instructions>
               </artifact>
               <artifact>
-                  <id>org.graalvm.regex:regex:jar:21.2.0</id>
+                  <id>org.graalvm.regex:regex:jar:21.3.0</id>
                   <source>true</source>
                   <transitive>false</transitive>
                   <instructions>
@@ -1013,7 +1013,7 @@
                   </instructions>
               </artifact>
                <artifact>
-                  <id>com.ibm.icu:icu4j:jar:68.2</id>
+                  <id>com.ibm.icu:icu4j:jar:69.1</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
