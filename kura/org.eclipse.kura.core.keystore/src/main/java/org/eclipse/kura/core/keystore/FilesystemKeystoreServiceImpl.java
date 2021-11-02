@@ -101,7 +101,6 @@ import org.slf4j.LoggerFactory;
 
 public class FilesystemKeystoreServiceImpl implements KeystoreService, ConfigurableComponent {
 
-    private static final String KURA_SERVICE_PID = "kura.service.pid";
     private static final String PEM_CERTIFICATE_REQUEST_TYPE = "CERTIFICATE REQUEST";
 
     private static final Logger logger = LoggerFactory.getLogger(FilesystemKeystoreServiceImpl.class);
@@ -147,7 +146,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
     // ----------------------------------------------------------------
 
     public void activate(ComponentContext context, Map<String, Object> properties) {
-        logger.info("Bundle {} is starting!", properties.get(KURA_SERVICE_PID));
+        logger.info("Bundle {} is starting!", properties.get(ConfigurationService.KURA_SERVICE_PID));
         this.componentContext = context;
 
         this.ownPid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
@@ -163,11 +162,11 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
 
         updateCRLManager(this.crlManagerOptions);
 
-        logger.info("Bundle {} has started!", properties.get(KURA_SERVICE_PID));
+        logger.info("Bundle {} has started!", properties.get(ConfigurationService.KURA_SERVICE_PID));
     }
 
     public void updated(Map<String, Object> properties) {
-        logger.info("Bundle {} is updating!", properties.get(KURA_SERVICE_PID));
+        logger.info("Bundle {} is updating!", properties.get(ConfigurationService.KURA_SERVICE_PID));
         KeystoreServiceOptions newOptions = new KeystoreServiceOptions(properties, this.cryptoService);
 
         if (!this.keystoreServiceOptions.equals(newOptions)) {
@@ -192,11 +191,12 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             updateCRLManager(newCRLManagerOptions);
         }
 
-        logger.info("Bundle {} has updated!", properties.get(KURA_SERVICE_PID));
+        logger.info("Bundle {} has updated!", properties.get(ConfigurationService.KURA_SERVICE_PID));
     }
 
     public void deactivate() {
-        logger.info("Bundle {} is deactivating!", this.keystoreServiceOptions.getProperties().get(KURA_SERVICE_PID));
+        logger.info("Bundle {} is deactivating!",
+                this.keystoreServiceOptions.getProperties().get(ConfigurationService.KURA_SERVICE_PID));
 
         if (this.selfUpdaterFuture != null && !this.selfUpdaterFuture.isDone()) {
 
