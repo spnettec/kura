@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -14,16 +14,27 @@ package org.eclipse.kura.web.shared.model;
 
 public enum GwtWifiRadioMode {
 
-    netWifiRadioModeBGN,
-    netWifiRadioModeBG,
-    netWifiRadioModeB,
-    netWifiRadioModeA;
+    netWifiRadioModeANAC("ac", false, true),
+    netWifiRadioModeBGN("n", true, false),
+    netWifiRadioModeBG("g", true, false),
+    netWifiRadioModeB("b", true, false),
+    netWifiRadioModeA("a", true, true);
+
+    private final String radioMode;
+    private final boolean twoDotFourGhz;
+    private final boolean fiveGhz;
+
+    private GwtWifiRadioMode(String radioMode, boolean twoDotFourGhz, boolean fiveGhz) {
+        this.radioMode = radioMode;
+        this.twoDotFourGhz = twoDotFourGhz;
+        this.fiveGhz = fiveGhz;
+    }
 
     /**
      * Return mode based on given string
      *
      * @param mode
-     *                 - "a", "b", "g", or "n"
+     *            - "a", "b", "g", or "n"
      * @return
      */
     public static GwtWifiRadioMode getRadioMode(String mode) {
@@ -36,8 +47,22 @@ public enum GwtWifiRadioMode {
             return GwtWifiRadioMode.netWifiRadioModeBG;
         } else if ("n".equals(mode)) {
             return GwtWifiRadioMode.netWifiRadioModeBGN;
+        } else if ("ac".equals(mode)) {
+            return GwtWifiRadioMode.netWifiRadioModeANAC;
         }
 
         return null;
+    }
+
+    public String getRadioMode() {
+        return radioMode;
+    }
+
+    public boolean isTwoDotFourGhz() {
+        return twoDotFourGhz;
+    }
+
+    public boolean isFiveGhz() {
+        return fiveGhz;
     }
 }
