@@ -291,7 +291,6 @@
         <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
-        <setEntry value="org.apache.logging.log4j.jcl@default:default"/>
         <setEntry value="org.apache.logging.log4j.slf4j-impl@default:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
         <setEntry value="org.apache.qpid.proton-j@default:default"/>
