@@ -116,6 +116,7 @@
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat"/>
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat.example"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider.test"/>
+        <setEntry value="org.eclipse.kura.rest.configuration.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
         <setEntry value="org.eclipse.kura.stress.test"/>
         <setEntry value="org.eclipse.kura.test"/>
@@ -372,8 +373,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
@@ -421,7 +420,9 @@
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
+        <setEntry value="org.eclipse.kura.request.handler.jaxrs@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.configuration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
