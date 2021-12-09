@@ -282,6 +282,12 @@ public class ConfigurationUtil {
                 public Map<String, Object> getConfigurationProperties() {
                     return configurationProperties;
                 }
+
+                @Override
+                public OCD getLocalizedDefinition(String locale) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
             };
         }
     }

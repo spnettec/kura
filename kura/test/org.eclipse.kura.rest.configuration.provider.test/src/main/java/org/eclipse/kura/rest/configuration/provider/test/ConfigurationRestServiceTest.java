@@ -1064,11 +1064,11 @@ public class ConfigurationRestServiceTest {
         this.cryptoService = WireTestUtil.trackService(CryptoService.class, Optional.empty()).get(30, TimeUnit.SECONDS);
         Mockito.reset(configurationService);
         Mockito.doAnswer(i -> {
-            Optional.of(i.getArgumentAt(0, List.class));
+            Optional.of(i.getArgument(0, List.class));
             return (Void) null;
         }).when(configurationService).updateConfigurations(Mockito.any());
         final Answer<?> configurationUpdateAnswer = i -> {
-            receivedConfigsByPid.put(i.getArgumentAt(0, String.class), i.getArgumentAt(1, Map.class));
+            receivedConfigsByPid.put(i.getArgument(0, String.class), i.getArgument(1, Map.class));
             return (Void) null;
         };
         Mockito.doAnswer(configurationUpdateAnswer).when(configurationService).updateConfiguration(Mockito.any(),
@@ -1206,13 +1206,19 @@ public class ConfigurationRestServiceTest {
                 public Map<String, Object> getConfigurationProperties() {
                     return null;
                 }
+
+                @Override
+                public OCD getLocalizedDefinition(String locale) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
             });
         }
         when(configurationService.getComponentConfigurations()).thenReturn(configs);
     }
 
     private void givenMockGetDefaultComponentConfigurationReturnException() throws KuraException {
-        when(configurationService.getDefaultComponentConfiguration(Mockito.anyObject()))
+        when(configurationService.getDefaultComponentConfiguration(Mockito.any()))
                 .thenThrow(new KuraException(KuraErrorCode.BAD_REQUEST));
     }
 
@@ -1259,9 +1265,15 @@ public class ConfigurationRestServiceTest {
             public Map<String, Object> getConfigurationProperties() {
                 return null;
             }
+
+            @Override
+            public OCD getLocalizedDefinition(String locale) {
+                // TODO Auto-generated method stub
+                return null;
+            }
         };
 
-        when(configurationService.getDefaultComponentConfiguration(Mockito.anyObject())).thenReturn(config);
+        when(configurationService.getDefaultComponentConfiguration(Mockito.any())).thenReturn(config);
     }
 
     private void givenMockGetSnapshotReturnException() throws KuraException {
@@ -1286,6 +1298,12 @@ public class ConfigurationRestServiceTest {
 
                 @Override
                 public Map<String, Object> getConfigurationProperties() {
+                    return null;
+                }
+
+                @Override
+                public OCD getLocalizedDefinition(String locale) {
+                    // TODO Auto-generated method stub
                     return null;
                 }
             });
@@ -1325,7 +1343,7 @@ public class ConfigurationRestServiceTest {
                 .thenReturn(byPid.values().stream().collect(Collectors.toList()));
 
         Mockito.when(configurationService.getComponentConfiguration(Mockito.any())).thenAnswer(i -> {
-            final String pid = i.getArgumentAt(0, String.class);
+            final String pid = i.getArgument(0, String.class);
             return byPid.get(pid);
         });
     }
