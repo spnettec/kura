@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
@@ -49,6 +49,12 @@ public class Channel {
      */
     private DataType valueType;
 
+    private double valueScale;
+
+    private double valueOffset;
+
+    private String unit;
+
     /**
      * Determines if this channel is enabled or not
      */
@@ -79,6 +85,9 @@ public class Channel {
         this.name = name;
         this.type = type;
         this.valueType = valueType;
+        this.valueScale = 1.0d;
+        this.valueOffset = 0d;
+        this.unit = "";
     }
 
     /**
@@ -126,6 +135,35 @@ public class Channel {
 
     public boolean isEnabled() {
         return this.isEnabled;
+    }
+
+    /**
+     * Returns a double that represents the scale factor to be applied to the read value
+     *
+     * @return a double that represents the scale factor to be applied to the read value
+     *
+     * @since 2.3
+     */
+    public double getValueScale() {
+        return this.valueScale;
+    }
+
+    /**
+     * Returns a double that represents the offset to be applied to the read value
+     *
+     * @return a double that represents the offset to be applied to the read value
+     *
+     * @since 2.3
+     */
+    public double getValueOffset() {
+        return this.valueOffset;
+    }
+
+    /**
+     * @since 2.3
+     */
+    public String getUnit() {
+        return this.unit;
     }
 
     /**
@@ -178,11 +216,41 @@ public class Channel {
         this.isEnabled = isEnabled;
     }
 
+    /**
+     * Specifies the scale to be applied to the channel value
+     *
+     * @param scale
+     *            a double value that specifies the scale to be applied to the channel value
+     * @since 2.3
+     */
+    public void setScale(double scale) {
+        this.valueScale = scale;
+    }
+
+    /**
+     * Specifies the offset to be applied to the channel value
+     *
+     * @param offset
+     *            a double value that specifies the offset to be applied to the channel value
+     * @since 2.3
+     */
+    public void setOffset(double offset) {
+        this.valueOffset = offset;
+    }
+
+    /**
+     * @since 2.3
+     */
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
     /** {@inheritDoc} */
     @Override
     public String toString() {
         return "Channel [configuration=" + this.configuration + ", name=" + this.name + ", type=" + this.type
-                + ", valueType=" + this.valueType + "]";
+                + ", valueType=" + this.valueType + ", valueScale=" + this.valueScale + ", valueOffset="
+                + this.valueOffset + ", valueType=" + this.valueType + ", unit=" + this.unit + "]";
     }
 
     /**
@@ -193,7 +261,7 @@ public class Channel {
      *         the {@link ChannelRecord}
      */
     public ChannelRecord createReadRecord() {
-        ChannelRecord result = ChannelRecord.createReadRecord(this.name, this.valueType);
+        ChannelRecord result = ChannelRecord.createReadRecord(this.name, this.valueType, this.unit);
         result.setChannelConfig(this.configuration);
 
         return result;
@@ -228,9 +296,15 @@ public class Channel {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (this.configuration == null ? 0 : this.configuration.hashCode());
+        result = prime * result + (this.isEnabled ? 1231 : 1237);
         result = prime * result + (this.name == null ? 0 : this.name.hashCode());
         result = prime * result + (this.type == null ? 0 : this.type.hashCode());
+        result = prime * result + (this.unit == null ? 0 : this.unit.hashCode());
+        long temp;
+        temp = Double.doubleToLongBits(this.valueOffset);
+        result = prime * result + (int) (temp ^ temp >>> 32);
+        temp = Double.doubleToLongBits(this.valueScale);
+        result = prime * result + (int) (temp ^ temp >>> 32);
         result = prime * result + (this.valueType == null ? 0 : this.valueType.hashCode());
         return result;
     }
@@ -240,18 +314,11 @@ public class Channel {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if ((obj == null) || (getClass() != obj.getClass())) {
             return false;
         }
         Channel other = (Channel) obj;
-        if (this.configuration == null) {
-            if (other.configuration != null) {
-                return false;
-            }
-        } else if (!this.configuration.equals(other.configuration)) {
+        if (this.isEnabled != other.isEnabled) {
             return false;
         }
         if (this.name == null) {
@@ -264,9 +331,23 @@ public class Channel {
         if (this.type != other.type) {
             return false;
         }
+        if (this.unit == null) {
+            if (other.unit != null) {
+                return false;
+            }
+        } else if (!this.unit.equals(other.unit)) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.valueOffset) != Double.doubleToLongBits(other.valueOffset)) {
+            return false;
+        }
+        if (Double.doubleToLongBits(this.valueScale) != Double.doubleToLongBits(other.valueScale)) {
+            return false;
+        }
         if (this.valueType != other.valueType) {
             return false;
         }
         return true;
     }
+
 }

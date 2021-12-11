@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2016, 2021 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
@@ -17,7 +17,10 @@ package org.eclipse.kura.asset.provider;
 import static org.eclipse.kura.asset.provider.AssetConstants.NAME;
 import static org.eclipse.kura.asset.provider.AssetConstants.NAMEDESC;
 import static org.eclipse.kura.asset.provider.AssetConstants.TYPE;
+import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_OFFSET;
+import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_SCALE;
 import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_TYPE;
+import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_UNIT;
 
 import java.util.List;
 
@@ -141,6 +144,34 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         addOptions(valueType, DataType.values());
 
         this.defaultElements.add(valueType);
+
+        final Tad valueScale = new Tad();
+        valueScale.setName(VALUE_SCALE.value().substring(1));
+        valueScale.setId(VALUE_SCALE.value());
+        valueScale.setDescription("Scale to be applied to the numeric value of the channel");
+        valueScale.setType(Tscalar.DOUBLE);
+        valueScale.setRequired(false);
+
+        this.defaultElements.add(valueScale);
+
+        final Tad valueOffset = new Tad();
+        valueOffset.setName(VALUE_OFFSET.value().substring(1));
+        valueOffset.setId(VALUE_OFFSET.value());
+        valueOffset.setDescription("Offset to be applied to the numeric value of the channel");
+        valueOffset.setType(Tscalar.DOUBLE);
+        valueOffset.setRequired(false);
+
+        this.defaultElements.add(valueOffset);
+
+        final Tad valueUnit = new Tad();
+        valueUnit.setName(VALUE_UNIT.value().substring(1));
+        valueUnit.setId(VALUE_UNIT.value());
+        valueUnit.setDescription("Unit associated to the value of the channel");
+        valueUnit.setType(Tscalar.STRING);
+        valueUnit.setRequired(false);
+        valueUnit.setDefault("");
+
+        this.defaultElements.add(valueUnit);
     }
 
     /** {@inheritDoc} */

@@ -52,7 +52,7 @@
     <esf:configuration pid="org.eclipse.kura.clock.ClockService">
         <esf:properties>
             <esf:property name="enabled" array="false" encrypted="false" type="Boolean">
-                <esf:value>false</esf:value>
+                <esf:value>true</esf:value>
             </esf:property>
             <esf:property name="clock.ntp.port" array="false" encrypted="false" type="Integer">
                 <esf:value>123</esf:value>
@@ -285,9 +285,6 @@
             <esf:property array="true" encrypted="false" name="https.client.auth.ports" type="Integer">
                 <esf:value>4443</esf:value>
             </esf:property>
-            <esf:property array="true" encrypted="false" name="http.ports" type="Integer">
-                <esf:value>80</esf:value>
-            </esf:property>
             <esf:property array="false" encrypted="false" name="KeystoreService.target" type="String">
                 <esf:value>(kura.service.pid=HttpsKeystore)</esf:value>
             </esf:property>
@@ -305,7 +302,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
+                <esf:value>Y2hhbmdlaXQ=</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
@@ -324,7 +321,7 @@
                 <esf:value>/opt/eclipse/kura/user/security/cacerts.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
+                <esf:value>Y2hhbmdlaXQ=</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
@@ -344,6 +341,38 @@
             </esf:property>
             <esf:property array="false" encrypted="false" name="groups.config" type="String">
                 <esf:value>[{"name":"kura.permission.kura.wires.admin","basicMembers":["kura.user.appadmin"]},{"name":"kura.permission.kura.admin","basicMembers":["kura.user.admin"]},{"name":"kura.permission.kura.cloud.connection.admin","basicMembers":["kura.user.appadmin"]},{"name":"kura.permission.kura.packages.admin","basicMembers":["kura.user.appadmin"]}]</esf:value>
+            </esf:property>
+        </esf:properties>
+    </esf:configuration>
+    <esf:configuration pid="filesystem-kura-log">
+        <esf:properties>
+            <esf:property array="false" encrypted="false" name="logFilePath" type="String">
+                <esf:value>/var/log/kura.log</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
+                <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="kura.service.pid" type="String">
+                <esf:value>filesystem-kura-log</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="service.pid" type="String">
+                <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider-1636726365743-7</esf:value>
+            </esf:property>
+        </esf:properties>
+    </esf:configuration>
+    <esf:configuration pid="filesystem-kura-audit-log">
+        <esf:properties>
+            <esf:property array="false" encrypted="false" name="logFilePath" type="String">
+                <esf:value>/var/log/kura-audit.log</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
+                <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="kura.service.pid" type="String">
+                <esf:value>filesystem-kura-audit-log</esf:value>
+            </esf:property>
+            <esf:property array="false" encrypted="false" name="service.pid" type="String">
+                <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider-1636726365743-8</esf:value>
             </esf:property>
         </esf:properties>
     </esf:configuration>

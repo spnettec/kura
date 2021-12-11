@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -55,9 +56,12 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.command.PasswordCommandService;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
+import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.deployment.agent.DeploymentAgentService;
 import org.eclipse.kura.marshalling.Unmarshaller;
+import org.eclipse.kura.rest.configuration.api.ComponentConfigurationList;
+import org.eclipse.kura.rest.configuration.api.DTOUtil;
 import org.eclipse.kura.system.SystemService;
 import org.eclipse.kura.util.service.ServiceUtil;
 import org.eclipse.kura.web.server.KuraRemoteServiceServlet;
@@ -76,6 +80,8 @@ import org.osgi.service.metatype.MetaTypeInformation;
 import org.osgi.service.metatype.MetaTypeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
 
 public class FileServlet extends AuditServlet {
 
@@ -509,20 +515,28 @@ public class FileServlet extends AuditServlet {
         }
 
         FileItem fileItem = fileItems.get(0);
+
+        String fileName = fileItem.getName();
+
+        if (fileName != null) {
+            fileName = fileName.toLowerCase();
+        } else {
+            fileName = "";
+        }
+        final List<ComponentConfiguration> configImpls;
         InputStream data = fileItem.getInputStream();
-        XmlComponentConfigurations xmlConfigs;
-        try {
-            xmlConfigs = unmarshal(data, XmlComponentConfigurations.class);
-        } catch (Exception e) {
-            logger.error("Error unmarshaling device configuration");
-            throw new ServletException("Error unmarshaling device configuration");
+        if (fileName.endsWith("xml")) {
+            configImpls = parseXmlSnapshot(data);
+        } else if (fileName.endsWith("json")) {
+            configImpls = parseJsonSnapshot(data);
+        } else {
+            throw new ServletException("Unsupported content type");
         }
 
         ServiceLocator locator = ServiceLocator.getInstance();
         try {
 
             ConfigurationService cs = locator.getService(ConfigurationService.class);
-            List<ComponentConfiguration> configImpls = xmlConfigs.getConfigurations();
 
             List<ComponentConfiguration> configs = new ArrayList<>();
             configs.addAll(configImpls);
@@ -555,6 +569,28 @@ public class FileServlet extends AuditServlet {
                 }
             }
         }
+    }
+
+    private List<ComponentConfiguration> parseXmlSnapshot(InputStream xmlStream) throws ServletException {
+        XmlComponentConfigurations xmlConfigs;
+        try {
+            xmlConfigs = unmarshal(xmlStream, XmlComponentConfigurations.class);
+        } catch (Exception e) {
+            throw new ServletException("Error unmarshaling device configuration");
+        }
+        return xmlConfigs.getConfigurations();
+    }
+
+    private List<ComponentConfiguration> parseJsonSnapshot(InputStream jsonStrem) throws ServletException {
+        final ComponentConfigurationList configs;
+        try {
+            String fileItemString = IOUtils.toString(jsonStrem, StandardCharsets.UTF_8.name());
+            configs = new Gson().fromJson(fileItemString, ComponentConfigurationList.class);
+        } catch (Exception e) {
+            throw new ServletException("Error unmarshaling device configuration");
+        }
+        return configs.getConfigs().stream().map(c -> new ComponentConfigurationImpl(c.getPid(), null,
+                DTOUtil.dtosToConfigurationProperties(c.getProperties()))).collect(Collectors.toList());
     }
 
     private void doPostDeployUpload(HttpServletRequest req, HttpSession session) throws ServletException, IOException {

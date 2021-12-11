@@ -13,6 +13,7 @@
 package org.eclipse.kura.web.shared.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.kura.web.server.RequiredPermissions;
 import org.eclipse.kura.web.shared.GwtKuraException;
@@ -27,8 +28,8 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RequiredPermissions(KuraPermission.DEVICE)
 public interface GwtLogService extends RemoteService {
 
-    public List<String> initLogReaders(GwtXSRFToken xsrfToken) throws GwtKuraException;
+    public Map<String, String> initLogProviders(GwtXSRFToken xsrfToken) throws GwtKuraException;
 
-    public List<GwtLogEntry> readLogs() throws GwtKuraException;
+    public List<GwtLogEntry> readLogs(int fromId) throws GwtKuraException;
 
 }

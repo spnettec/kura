@@ -38,8 +38,8 @@
 	        <b:Panel b:id="deviceLogsPanel" ui:field="deviceLogsPanel">
 	        	<b:Row b:id="controlsRow" ui:field="controlsRow">
 	        		<b:ListBox b:id="logProviderListBox" ui:field="logProviderListBox"/>
-	        		<b:CheckBox b:id="showStackTraceCheckbox" ui:field="showStackTraceCheckbox">Show errors stacktrace</b:CheckBox>
-	        		<b:CheckBox b:id="showMoreInfoCheckbox" ui:field="showMoreInfoCheckbox">Show additional info</b:CheckBox>
+	        		<b:CheckBox b:id="showStackTraceCheckbox" ui:field="showStackTraceCheckbox" text="{msgs.deviceLogError}"/>
+	        		<b:CheckBox b:id="showMoreInfoCheckbox" ui:field="showMoreInfoCheckbox" text="{msgs.deviceLogInfo}"/>
 	        	</b:Row>
 	        	<b:Row>
 	          		<g:TextArea ui:field="logTextArea" addStyleNames="{style.log-area}"/>

@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2016, 2021 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -40,7 +40,6 @@ import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelFlag;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.ChannelType;
-import org.eclipse.kura.channel.listener.ChannelEvent;
 import org.eclipse.kura.channel.listener.ChannelListener;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
@@ -131,6 +130,8 @@ public final class AssetTest {
         channels.put("1.CH#+name", "1.CH");
         channels.put("1.CH#+type", "READ");
         channels.put("1.CH#+value.type", "INTEGER");
+        channels.put("1.CH#+scale", "1.0");
+        channels.put("1.CH#+offset", "0.0");
         channels.put("1.CH#DRIVER.modbus.register", "sample.channel1.modbus.register");
         channels.put("1.CH#DRIVER.modbus.FC", "sample.channel1.modbus.FC");
         channels.put("2.CH#+name", "2.CH");
@@ -193,6 +194,8 @@ public final class AssetTest {
         assertEquals("1.CH", channel1.getName());
         assertEquals(ChannelType.READ, channel1.getType());
         assertEquals(DataType.INTEGER, channel1.getValueType());
+        assertEquals(1.0d, channel1.getValueScale(), 0.0);
+        assertEquals(0.0d, channel1.getValueOffset(), 0.0);
         assertEquals("sample.channel1.modbus.register", channel1.getConfiguration().get("DRIVER.modbus.register"));
         assertEquals("sample.channel1.modbus.FC", channel1.getConfiguration().get("DRIVER.modbus.FC"));
 
@@ -214,14 +217,10 @@ public final class AssetTest {
 
         AtomicBoolean invoked = new AtomicBoolean(false);
 
-        final ChannelListener listener = new ChannelListener() {
+        final ChannelListener listener = event -> {
+            assertEquals(1, event.getChannelRecord().getValue().getValue());
 
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                assertEquals(1, event.getChannelRecord().getValue().getValue());
-
-                invoked.set(true);
-            }
+            invoked.set(true);
         };
 
         asset.registerChannelListener("1.CH", listener);
@@ -240,15 +239,11 @@ public final class AssetTest {
 
         final ArrayList<Boolean> attachSequence = new ArrayList<>();
 
-        final ChannelListener listener = new ChannelListener() {
-
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if ("unregister".equals(event.getChannelRecord().getChannelName())) {
-                    attachSequence.add(false);
-                } else {
-                    attachSequence.add(true);
-                }
+        final ChannelListener listener = event -> {
+            if ("unregister".equals(event.getChannelRecord().getChannelName())) {
+                attachSequence.add(false);
+            } else {
+                attachSequence.add(true);
             }
         };
 
@@ -276,15 +271,11 @@ public final class AssetTest {
 
         final ArrayList<Boolean> attachSequence = new ArrayList<>();
 
-        final ChannelListener listener = new ChannelListener() {
-
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if ("unregister".equals(event.getChannelRecord().getChannelName())) {
-                    attachSequence.add(false);
-                } else {
-                    attachSequence.add(true);
-                }
+        final ChannelListener listener = event -> {
+            if ("unregister".equals(event.getChannelRecord().getChannelName())) {
+                attachSequence.add(false);
+            } else {
+                attachSequence.add(true);
             }
         };
 
@@ -313,15 +304,11 @@ public final class AssetTest {
 
         final ArrayList<Boolean> attachSequence = new ArrayList<>();
 
-        final ChannelListener listener = new ChannelListener() {
-
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if ("unregister".equals(event.getChannelRecord().getChannelName())) {
-                    attachSequence.add(false);
-                } else {
-                    attachSequence.add(true);
-                }
+        final ChannelListener listener = event -> {
+            if ("unregister".equals(event.getChannelRecord().getChannelName())) {
+                attachSequence.add(false);
+            } else {
+                attachSequence.add(true);
             }
         };
 
@@ -350,20 +337,16 @@ public final class AssetTest {
     public void testUnlisten() throws KuraException {
         AtomicInteger invoked = new AtomicInteger(0);
 
-        final ChannelListener listener = new ChannelListener() {
+        final ChannelListener listener = event -> {
+            int cnt = invoked.getAndIncrement();
 
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                int cnt = invoked.getAndIncrement();
-
-                if (cnt == 0) {
-                    assertEquals(1, event.getChannelRecord().getValue().getValue());
-                } else if (cnt == 1) {
-                    assertEquals("unregister", event.getChannelRecord().getChannelName());
-                    assertEquals(DataType.BOOLEAN, event.getChannelRecord().getValueType());
-                } else {
-                    fail("Unexpected invocation.");
-                }
+            if (cnt == 0) {
+                assertEquals(1, event.getChannelRecord().getValue().getValue());
+            } else if (cnt == 1) {
+                assertEquals("unregister", event.getChannelRecord().getChannelName());
+                assertEquals(DataType.BOOLEAN, event.getChannelRecord().getValueType());
+            } else {
+                fail("Unexpected invocation.");
             }
         };
 
@@ -387,23 +370,19 @@ public final class AssetTest {
         AtomicInteger invoked = new AtomicInteger(0);
         AtomicBoolean disableListener = new AtomicBoolean(false);
 
-        final ChannelListener listener = new ChannelListener() {
+        final ChannelListener listener = event -> {
+            if (disableListener.get()) {
+                return;
+            }
 
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if (disableListener.get()) {
-                    return;
-                }
+            int cnt = invoked.getAndIncrement();
 
-                int cnt = invoked.getAndIncrement();
-
-                if (cnt == 0) {
-                    assertEquals(1, event.getChannelRecord().getValue().getValue());
-                } else if (cnt == 1) {
-                    throw new IllegalArgumentException("test");
-                } else {
-                    fail("Unexpected invocation.");
-                }
+            if (cnt == 0) {
+                assertEquals(1, event.getChannelRecord().getValue().getValue());
+            } else if (cnt == 1) {
+                throw new IllegalArgumentException("test");
+            } else {
+                fail("Unexpected invocation.");
             }
         };
 
@@ -507,12 +486,13 @@ public final class AssetTest {
 
         List<AD> ads = ocd.getAD();
         assertNotNull(ads);
-        assertEquals(22, ads.size()); // description, driver, 20 from BaseChannelDescriptor and StubChannelDescriptor
+        assertEquals(34, ads.size()); // description, driver, 32 from BaseChannelDescriptor and StubChannelDescriptor
 
         assertEquals("asset.desc", ads.get(0).getId());
         assertEquals("driver.pid", ads.get(1).getId());
 
-        String[] expectedValues = { "#+enabled", "#+name", "#+type", "#+value.type", "#unit.id" };
+        String[] expectedValues = { "#+enabled", "#+name", "#+type", "#+value.type", "#+scale", "#+offset",
+                "#unit.id" };
 
         final int expectedChannelCount = 4;
         for (String expectedValue : expectedValues) {
@@ -561,15 +541,11 @@ public final class AssetTest {
     public void testListenerAttachOnDisabledChannel() throws KuraException {
         final ArrayList<Boolean> attachSequence = new ArrayList<>();
 
-        final ChannelListener listener = new ChannelListener() {
-
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if ("unregister".equals(event.getChannelRecord().getChannelName())) {
-                    attachSequence.add(false);
-                } else {
-                    attachSequence.add(true);
-                }
+        final ChannelListener listener = event -> {
+            if ("unregister".equals(event.getChannelRecord().getChannelName())) {
+                attachSequence.add(false);
+            } else {
+                attachSequence.add(true);
             }
         };
 
@@ -601,15 +577,11 @@ public final class AssetTest {
         ((BaseAsset) asset).updated(channels);
         sync(asset);
 
-        final ChannelListener listener = new ChannelListener() {
-
-            @Override
-            public void onChannelEvent(ChannelEvent event) {
-                if ("unregister".equals(event.getChannelRecord().getChannelName())) {
-                    attachSequence.add(false);
-                } else {
-                    attachSequence.add(true);
-                }
+        final ChannelListener listener = event -> {
+            if ("unregister".equals(event.getChannelRecord().getChannelName())) {
+                attachSequence.add(false);
+            } else {
+                attachSequence.add(true);
             }
         };
 
