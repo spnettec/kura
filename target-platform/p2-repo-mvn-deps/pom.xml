@@ -298,6 +298,24 @@
                   <id>org.apache.camel:camel-http-common:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <override>true</override>
+                  <instructions>
+                      <Import-Package>org.apache.camel;version="[3.13,3.14)",org.apache.came
+									 l.attachment;version="[3.13,3.14)",org.apache.camel.cloud;version="[3
+									 .13,3.14)",org.apache.camel.converter.stream;version="[3.13,3.14)",or
+									 g.apache.camel.http.base;version="[3.13,3.14)",org.apache.camel.http.
+									 base.cookie;version="[3.13,3.14)",org.apache.camel.spi;version="[3.13
+									 ,3.14)",org.apache.camel.support;version="[3.13,3.14)",org.apache.cam
+									 el.util;version="[3.13,3.14)",javax.activation;version="[0,2)",javax.
+									 servlet;version="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;
+									 version="[1.7,2)"
+                      </Import-Package>
+                      <Export-Package>org.apache.camel.http.common;version="3.13.0";uses:="j
+									 avax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.clo
+									 ud,org.apache.camel.http.base,org.apache.camel.http.base.cookie,org.a
+									 pache.camel.spi,org.apache.camel.support,org.slf4j"
+                     </Export-Package>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-jms:${org.apache.camel.version}</id>
@@ -333,6 +351,23 @@
                   <id>org.apache.camel:camel-servlet:${org.apache.camel.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
+                  <override>true</override>
+                   <instructions>
+                      <Import-Package>org.apache.camel;version="[3.13,3.14)",org.apache.came
+									 l.attachment;version="[3.13,3.14)",org.apache.camel.http.common;versi
+									 on="[3.13,3.14)",org.apache.camel.spi;version="[3.13,3.14)",org.apach
+									 e.camel.spi.annotations;version="[3.13,3.14)",org.apache.camel.suppor
+									 t;version="[3.13,3.14)",org.apache.camel.support.component;version="[
+									 3.13,3.14)",org.apache.camel.util;version="[3.13,3.14)",javax.activat
+									 ion;version="[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;
+									 version="[3,5)",org.slf4j;version="[1.7,2)"
+                      </Import-Package>
+                      <Export-Package>org.apache.camel.component.servlet;version="3.13.0";us
+									 es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
+									 el,org.apache.camel.http.common,org.apache.camel.spi,org.apache.camel
+									 .spi.annotations,org.apache.camel.support.component"
+                      </Export-Package>
+                  </instructions>
               </artifact>
               <artifact>
                   <id>org.apache.camel:camel-gson:${org.apache.camel.version}</id>
