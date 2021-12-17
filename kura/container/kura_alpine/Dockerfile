@@ -16,7 +16,7 @@ ENV \
   JAVA_HOME=/usr/lib/jvm/default-jvm \
   MAVEN_PROPS=-DskipTests \
   KURA_DIR=/opt/eclipse/kura \
-  LAUNCHER_VERSION="1.5.800.v20200727-1323"
+  LAUNCHER_VERSION="1.6.400.v20210924-0641"
 
 COPY . /context
 

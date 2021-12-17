@@ -16,7 +16,7 @@ ENV \
   GIT_REPO=${GIT_REPO:-https://github.com/eclipse/kura.git} \
   GIT_BRANCH=${GIT_BRANCH:-develop} \
   JAVA_HOME=/usr/lib/jvm/jre-11 \
-  LAUNCHER_VERSION="1.5.800.v20200727-1323"
+  LAUNCHER_VERSION="1.6.400.v20210924-0641"
 
 RUN echo "$GIT_REPO / $GIT_BRANCH / $KURA_COMMIT"
 

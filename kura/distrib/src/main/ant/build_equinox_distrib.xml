@@ -903,6 +903,18 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.servlet-api_${jakarta.servlet-api.version}.jar@5:start" />
 			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.enterprise.cdi-api_${jakarta.cdi-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/javax.el-api_${jakarta.el-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.inject.jakarta.inject-api_${jakarta.inject-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.interceptor-api_${jakarta.interceptor-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.json-api_${jakarta.json-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.transaction-api_${jakarta.transaction-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.io_${org.apache.commons.io.version}.jar@3:start" />
@@ -1657,15 +1669,17 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver-dns_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport_${io.netty.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.netty-tcnative-classes_${io.netty.tnative.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-epoll_${io.netty.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.netty-transport-classes-epoll_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-kqueue_${io.netty.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.netty-transport-classes-kqueue_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-unix-common_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-server-osgi_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-quorum-api_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-mqtt-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
