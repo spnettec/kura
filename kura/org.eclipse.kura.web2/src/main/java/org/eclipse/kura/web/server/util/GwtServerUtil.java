@@ -266,7 +266,7 @@ public final class GwtServerUtil {
      * Strip PID prefix.
      *
      * @param pid
-     *            the PID
+     *                the PID
      * @return the string
      */
     public static String stripPidPrefix(final String pid) {
@@ -806,6 +806,7 @@ public final class GwtServerUtil {
             final List<ComponentConfiguration> configs, final String filename) throws ServletException {
 
         String format = request.getParameter("format");
+        response.setCharacterEncoding("UTF-8");
 
         if (format == null || format.isEmpty()) {
             format = XML_FORMAT;

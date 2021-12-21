@@ -69,7 +69,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         requireNonNull(wireComponent, "Wire component cannot be null");
         requireNonNull(servicePid, "service pid cannot be null");
         requireNonNull(kuraServicePid, "kura service pid cannot be null");
-        receiverExecutor = new ThreadPoolExecutor(2, 10, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+        receiverExecutor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
                 new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
         this.servicePid = servicePid;
         this.wireComponent = wireComponent;
