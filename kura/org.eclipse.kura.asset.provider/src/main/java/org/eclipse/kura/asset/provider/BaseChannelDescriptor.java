@@ -146,27 +146,27 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         this.defaultElements.add(valueType);
 
         final Tad valueScale = new Tad();
-        valueScale.setName(VALUE_SCALE.value().substring(1));
+        valueScale.setName("%channel" + VALUE_SCALE.value().substring(1));
         valueScale.setId(VALUE_SCALE.value());
-        valueScale.setDescription("Scale to be applied to the numeric value of the channel");
+        valueScale.setDescription("%channelscaleDesc");
         valueScale.setType(Tscalar.DOUBLE);
         valueScale.setRequired(false);
 
         this.defaultElements.add(valueScale);
 
         final Tad valueOffset = new Tad();
-        valueOffset.setName(VALUE_OFFSET.value().substring(1));
+        valueOffset.setName("%channel" + VALUE_OFFSET.value().substring(1));
         valueOffset.setId(VALUE_OFFSET.value());
-        valueOffset.setDescription("Offset to be applied to the numeric value of the channel");
+        valueOffset.setDescription("%channeloffsetDesc");
         valueOffset.setType(Tscalar.DOUBLE);
         valueOffset.setRequired(false);
 
         this.defaultElements.add(valueOffset);
 
         final Tad valueUnit = new Tad();
-        valueUnit.setName(VALUE_UNIT.value().substring(1));
+        valueUnit.setName("%channel" + VALUE_UNIT.value().substring(1));
         valueUnit.setId(VALUE_UNIT.value());
-        valueUnit.setDescription("Unit associated to the value of the channel");
+        valueUnit.setDescription("%channelunitDesc");
         valueUnit.setType(Tscalar.STRING);
         valueUnit.setRequired(false);
         valueUnit.setDefault("");
