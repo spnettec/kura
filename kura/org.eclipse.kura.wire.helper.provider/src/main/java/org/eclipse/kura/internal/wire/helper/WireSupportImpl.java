@@ -182,7 +182,13 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         }
         final WireEnvelope envelope = (WireEnvelope) value;
         if (wireComponent instanceof WireReceiver) {
-            receiverExecutor.execute(() -> ((WireReceiver) WireSupportImpl.this.wireComponent).onWireReceive(envelope));
+            receiverExecutor.execute(() -> {
+                try {
+                    ((WireReceiver) WireSupportImpl.this.wireComponent).onWireReceive(envelope);
+                } catch (Exception e) {
+                    logger.error("Excute receive massage error", e);
+                }
+            });
         } else {
             receiverExecutor.execute(() -> {
                 final ReceiverPortImpl receiverPort = WireSupportImpl.this.receiverPortByWire.get(wire);
