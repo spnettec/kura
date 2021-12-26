@@ -110,6 +110,7 @@
         <setEntry value="org.eclipse.kura.linux.watchdog.test"/>
         <setEntry value="org.eclipse.kura.localization"/>
         <setEntry value="org.eclipse.kura.localization.resources"/>
+        <setEntry value="org.eclipse.kura.log.filesystem.provider.test"/>
         <setEntry value="org.eclipse.kura.net.admin"/>
         <setEntry value="org.eclipse.kura.net.admin.test"/>
         <setEntry value="org.eclipse.kura.network.threat.manager"/>
@@ -433,6 +434,7 @@
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.log.filesystem.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.request.handler.jaxrs@default:default"/>

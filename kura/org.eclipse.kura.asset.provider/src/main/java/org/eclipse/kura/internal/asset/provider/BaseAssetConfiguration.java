@@ -69,7 +69,7 @@ public final class BaseAssetConfiguration {
     public BaseAssetConfiguration(final Tocd baseOcd, final ComponentContext context,
             final Map<String, Object> properties) {
         this.properties = fillOcdDefaults(properties, baseOcd, context);
-        if (this.properties.get("request.timeout") != null) {
+        if (this.properties.get("request.timeout") == null) {
             this.requestTimeOut = 10;
         } else {
             this.requestTimeOut = Integer.valueOf(this.getProperties().get("request.timeout").toString());
