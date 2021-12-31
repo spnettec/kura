@@ -90,6 +90,7 @@ public class DbDataStore implements DataStore {
     private final String sqlDropPrimaryKey;
     private final String sqlDeleteDuplicates;
     private final String sqlCreatePrimaryKey;
+    private final String sqlGetGreatestId;
 
     // package level constructor to be invoked only by the factory
     public DbDataStore(String table) {
@@ -100,9 +101,9 @@ public class DbDataStore implements DataStore {
         this.sanitizedTableName = sanitizeSql(table);
 
         this.sqlCreateTable = "CREATE TABLE IF NOT EXISTS " + this.sanitizedTableName
-                + " (id INTEGER IDENTITY PRIMARY KEY, topic VARCHAR(32767 CHAR), qos INTEGER, retain BOOLEAN, "
+                + " (id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, topic VARCHAR(32767 CHARACTERS), qos INTEGER, retain BOOLEAN, "
                 + "createdOn TIMESTAMP, publishedOn TIMESTAMP, publishedMessageId INTEGER, confirmedOn TIMESTAMP, "
-                + "payload VARBINARY(16777216), priority INTEGER, sessionId VARCHAR(32767 CHAR), droppedOn TIMESTAMP);";
+                + "payload VARBINARY(1048576), priority INTEGER, sessionId VARCHAR(32767 CHARACTERS), droppedOn TIMESTAMP);";
         this.sqlCreateIndex = "CREATE INDEX IF NOT EXISTS " + sanitizeSql(this.tableName + "_nextMsg") + " ON "
                 + this.sanitizedTableName + " (publishedOn ASC NULLS FIRST, priority ASC, createdOn ASC, qos);";
         this.sqlMessageCount = "SELECT COUNT(*) FROM " + this.sanitizedTableName + ";";
@@ -144,6 +145,7 @@ public class DbDataStore implements DataStore {
         this.sqlDeleteDuplicates = DELETE_FROM + this.sanitizedTableName + " WHERE id IN (SELECT id FROM "
                 + this.sanitizedTableName + " GROUP BY id HAVING COUNT(*) > 1);";
         this.sqlCreatePrimaryKey = ALTER_TABLE + this.sanitizedTableName + " ADD PRIMARY KEY (id);";
+        this.sqlGetGreatestId = "SELECT MAX(ID) FROM " + this.sanitizedTableName + ";";
     }
 
     private String sanitizeSql(final String string) {
@@ -325,7 +327,7 @@ public class DbDataStore implements DataStore {
             }
 
             // retrieve message id
-            try (PreparedStatement cstmt = c.prepareStatement("CALL IDENTITY();");
+            try (PreparedStatement cstmt = c.prepareStatement(this.sqlGetGreatestId);
                     ResultSet rs = cstmt.executeQuery()) {
                 if (rs != null && rs.next()) {
                     result = rs.getInt(1);
@@ -544,10 +546,16 @@ public class DbDataStore implements DataStore {
 
     private synchronized void executeDeleteMessagesQuery(String sql, Timestamp timestamp, int purgeAge)
             throws KuraStoreException {
+        /*
+         * H2 v2.0.202 does not more support ? parameter in dateAndTime fields
+         * so the timestamp is directly copied into the sql string
+         */
+        final String sqlWithTimestamp = sql.replace("DATEADD('ss', -?, ?)",
+                "DATEADD('ss', -?, TIMESTAMP '" + timestamp.toString() + "')");
+
         withConnection(c -> {
-            try (final PreparedStatement stmt = c.prepareStatement(sql)) {
+            try (final PreparedStatement stmt = c.prepareStatement(sqlWithTimestamp)) {
                 stmt.setInt(1, purgeAge);
-                stmt.setTimestamp(2, timestamp, this.utcCalendar);
 
                 stmt.execute();
                 c.commit();
