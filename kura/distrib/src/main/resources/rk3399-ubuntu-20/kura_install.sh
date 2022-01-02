@@ -83,15 +83,15 @@ systemctl stop chrony
 systemctl disable chrony
 
 #set up networking configuration
-mac_addr=$(head -1 /sys/class/net/eth0/address | tr '[:lower:]' '[:upper:]')
-sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlan0.conf
-cp /etc/hostapd-wlan0.conf ${INSTALL_DIR}/kura/.data/hostapd-wlan0.conf
+# mac_addr=$(head -1 /sys/class/net/eth0/address | tr '[:lower:]' '[:upper:]')
+# sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlan0.conf
+# cp /etc/hostapd-wlan0.conf ${INSTALL_DIR}/kura/.data/hostapd-wlan0.conf
 
-cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf /etc/dhcpd-eth0.conf
-cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf ${INSTALL_DIR}/kura/.data/dhcpd-eth0.conf
+# cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf /etc/dhcpd-eth0.conf
+# cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf ${INSTALL_DIR}/kura/.data/dhcpd-eth0.conf
 
-cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf /etc/dhcpd-wlan0.conf
-cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
+# cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf /etc/dhcpd-wlan0.conf
+# cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
 
 #set up kuranet.conf
 cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/user/kuranet.conf
@@ -126,9 +126,32 @@ systemctl disable dhcpcd
 systemctl stop isc-dhcp-server
 systemctl disable isc-dhcp-server
 
+#disable netplan
+systemctl disable systemd-networkd.socket 
+systemctl disable systemd-networkd
+systemctl disable networkd-dispatcher
+systemctl disable systemd-networkd-wait-online
+systemctl mask systemd-networkd.socket 
+systemctl mask systemd-networkd
+systemctl mask networkd-dispatcher
+systemctl mask systemd-networkd-wait-online
+
+
 #disable wpa_supplicant
 systemctl stop wpa_supplicant
 systemctl disable wpa_supplicant
+
+#disable dhclient apparmor profile
+ln -s /etc/apparmor.d/sbin.dhclient /etc/apparmor.d/disable/
+apparmor_parser -R /etc/apparmor.d/sbin.dhclient
+
+#disable dhcpd apparmor profile
+ln -s /etc/apparmor.d/usr.sbin.dhcpd /etc/apparmor.d/disable/
+apparmor_parser -R /etc/apparmor.d/usr.sbin.dhcpd
+
+#disable dhcpd named profile
+ln -s /etc/apparmor.d/usr.sbin.named /etc/apparmor.d/disable/
+apparmor_parser -R /etc/apparmor.d/usr.sbin.named
 
 #assigning possible .conf files ownership to kurad
 PATTERN="/etc/dhcpd*.conf* /etc/resolv.conf* /etc/wpa_supplicant*.conf* /etc/hostapd*.conf*"
