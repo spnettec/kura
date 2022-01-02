@@ -69,6 +69,19 @@ systemctl enable firewall
 #copy snapshot_0.xml
 cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/snapshot_0.xml
 
+#disable NTP service
+if command -v timedatectl > /dev/null ;
+  then
+    timedatectl set-ntp false
+fi
+
+# Prevent time sync services from starting
+systemctl stop systemd-timesyncd
+systemctl disable systemd-timesyncd
+# Prevent time sync with chrony from starting.
+systemctl stop chrony
+systemctl disable chrony
+
 #set up networking configuration
 mac_addr=$(head -1 /sys/class/net/eth0/address | tr '[:lower:]' '[:upper:]')
 sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlan0.conf
@@ -108,6 +121,14 @@ cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate.d/kura
 # disable dhcpcd service - kura is the network manager
 systemctl stop dhcpcd
 systemctl disable dhcpcd
+
+# disable isc-dhcp-server service - kura is the network manager
+systemctl stop isc-dhcp-server
+systemctl disable isc-dhcp-server
+
+#disable wpa_supplicant
+systemctl stop wpa_supplicant
+systemctl disable wpa_supplicant
 
 #assigning possible .conf files ownership to kurad
 PATTERN="/etc/dhcpd*.conf* /etc/resolv.conf* /etc/wpa_supplicant*.conf* /etc/hostapd*.conf*"
