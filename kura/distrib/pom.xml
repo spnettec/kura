@@ -1929,10 +1929,11 @@
         </profile>
         
         <profile>
-            <id>firefly-rk3399-ubuntu-18</id>
+            <id>rk3399-ubuntu-20</id>
             <properties>
-                <project.raspbian.dependencies>hostapd, isc-dhcp-server, iw, dos2unix, bind9, unzip, ethtool, telnet, bluez-hcidump,
-                    wireless-tools, chrony, java8-runtime-headless | java8-runtime | java11-runtime-headless | java11-runtime | java13-runtime-headless | java13-runtime</project.raspbian.dependencies>
+                <project.raspbian.dependencies>hostapd, isc-dhcp-server, iw, dos2unix, bind9, unzip, ethtool, telnet, bluez-hcidump, bluez,
+                    wireless-tools, net-tools, iptables, chrony, ntpdate, ifupdown, pi-bluetooth, rpi.gpio-common,
+                    java8-runtime-headless | java8-runtime | java11-jre-headless | java11-runtime | java17-jre-headless | java17-runtime</project.raspbian.dependencies>   
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -1964,7 +1965,7 @@
                         <version>1.7</version>
                         <executions>
                             <execution>
-                                <id>firefly-rk3399-ubuntu-18-jars</id>
+                                <id>rk3399-ubuntu-20-jars</id>
                                 <phase>prepare-package</phase>
                                 <goals>
                                     <goal>run</goal>
@@ -1975,11 +1976,11 @@
                                         <property name="project.version" value="${project.version}" />
                                         <property name="project.build.profile" value="${project.build.profile}" />
                                         <property name="project.build.directory" value="${project.build.directory}" />
-                                        <property name="build.name" value="firefly-rk3399-ubuntu-18" />
-                                        <property name="target.device" value="firefly-rk3399-ubuntu-18" />
+                                        <property name="build.name" value="rk3399-ubuntu-20" />
+                                        <property name="target.device" value="rk3399-ubuntu-20" />
                                         <property name="native.tag" value="aarch64" />
                                         <property name="kura.os.version" value="ubuntu" />
-                                        <property name="kura.arch" value="firefly-rk3399-ubuntu-18" />
+                                        <property name="kura.arch" value="rk3399-ubuntu-20" />
                                         <property name="service.manager" value="sysv" />
                                         <property name="os.base" value="debian" />
                                         <property name="kura.mem.size" value="1024m" />
@@ -1997,7 +1998,7 @@
                         <version>1.8</version>
                         <executions>
                             <execution>
-                                <id>firefly-rk3399-ubuntu-18-deb</id>
+                                <id>rk3399-ubuntu-20-deb</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>jdeb</goal>
@@ -2005,11 +2006,11 @@
                                 <configuration>
                                     <verbose>true</verbose>
                                     <skipPOMs>false</skipPOMs>
-                                    <deb>${basedir}/target/kura_${project.version}_firefly-rk3399-ubuntu-18_installer.deb</deb>
+                                    <deb>${basedir}/target/kura_${project.version}_rk3399-ubuntu-20_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/deb/control</controlDir>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_firefly-rk3399-ubuntu-18.zip</src>
+                                            <src>${basedir}/target/kura_${project.version}_rk3399-ubuntu-20.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
