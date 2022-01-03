@@ -17,7 +17,7 @@
     <esf:configuration pid="org.eclipse.kura.net.admin.FirewallConfigurationService">
 	<esf:properties>
 	    <esf:property array="false" encrypted="false" name="firewall.open.ports" type="String">
-                <esf:value>22,tcp,,,,,,#;443,tcp,,eth0,,,,#;443,tcp,,wlan0,,,,#;4443,tcp,,eth0,,,,#;4443,tcp,,wlan0,,,,#;1450,tcp,,eth0,,,,#;1450,tcp,,wlan0,,,,#;5002,tcp,127.0.0.1/32,,,,,#;53,udp,,eth0,,,,#;53,udp,,wlan0,,,,#;67,udp,,eth0,,,,#;67,udp,,wlan0,,,,#;8000,tcp,,eth0,,,,#;8000,tcp,,wlan0,,,,#</esf:value>
+                <esf:value>22,tcp,,,,,,#;443,tcp,,eth0,,,,#;443,tcp,,wlan0,,,,#;80,tcp,,eth0,,,,#;80,tcp,,wlan0,,,,#;4443,tcp,,eth0,,,,#;4443,tcp,,wlan0,,,,#;1450,tcp,,eth0,,,,#;1450,tcp,,wlan0,,,,#;5002,tcp,127.0.0.1/32,,,,,#;53,udp,,eth0,,,,#;53,udp,,wlan0,,,,#;67,udp,,eth0,,,,#;67,udp,,wlan0,,,,#;8000,tcp,,eth0,,,,#;8000,tcp,,wlan0,,,,#</esf:value>
             </esf:property>
 	    <esf:property array="false" encrypted="false" name="firewall.port.forwarding" type="String">
                 <esf:value></esf:value>
@@ -370,7 +370,7 @@
     <esf:configuration pid="org.eclipse.kura.clock.ClockService">
         <esf:properties>
             <esf:property name="enabled" array="false" encrypted="false" type="Boolean">
-                <esf:value>true</esf:value>
+                <esf:value>false</esf:value>
             </esf:property>
             <esf:property name="clock.ntp.port" array="false" encrypted="false" type="Integer">
                 <esf:value>123</esf:value>
@@ -382,7 +382,7 @@
                 <esf:value>java-ntp</esf:value>
             </esf:property>
             <esf:property name="clock.set.hwclock" array="false" encrypted="false" type="Boolean">
-                <esf:value>false</esf:value>
+                <esf:value>true</esf:value>
             </esf:property>
             <esf:property name="clock.ntp.timeout" array="false" encrypted="false" type="Integer">
                 <esf:value>10000</esf:value>
@@ -625,6 +625,9 @@
             <esf:property array="true" encrypted="false" name="https.client.auth.ports" type="Integer">
                 <esf:value>4443</esf:value>
             </esf:property>
+            <esf:property array="true" encrypted="false" name="http.ports" type="Integer">
+                <esf:value>80</esf:value>
+            </esf:property>
             <esf:property array="false" encrypted="false" name="KeystoreService.target" type="String">
                 <esf:value>(kura.service.pid=HttpsKeystore)</esf:value>
             </esf:property>
@@ -652,10 +655,10 @@
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
+                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
-                <esf:value>true</esf:value>
+                <esf:value>false</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.core.keystore.FilesystemKeystoreServiceImpl</esf:value>
@@ -671,10 +674,10 @@
                 <esf:value>/opt/eclipse/kura/user/security/cacerts.ks</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
+                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
-                <esf:value>true</esf:value>
+                <esf:value>false</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.core.keystore.FilesystemKeystoreServiceImpl</esf:value>
@@ -688,6 +691,9 @@
         <esf:properties>
             <esf:property array="false" encrypted="false" name="logFilePath" type="String">
                 <esf:value>/var/log/kura.log</esf:value>
+            </esf:property>
+            <esf:property name="kura.service.name" type="String">
+                <esf:value>kuraLog</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>
@@ -704,6 +710,9 @@
         <esf:properties>
             <esf:property array="false" encrypted="false" name="logFilePath" type="String">
                 <esf:value>/var/log/kura-audit.log</esf:value>
+            </esf:property>
+            <esf:property name="kura.service.name" type="String">
+                <esf:value>kuraAudit</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>

@@ -48,11 +48,13 @@ function create_users {
     }
     if [ $(os) == "\"centos\"" ]; then
        POLKIT=`yum list --installed | grep polkit`
+       IFS=" " POLKIT_ARRAY=($POLKIT)
+	   POLKIT_VERSION=${POLKIT_ARRAY[1]}
     else
        POLKIT=`dpkg --list | grep libpolkit`
+       IFS=" " POLKIT_ARRAY=($POLKIT)
+	   POLKIT_VERSION=${POLKIT_ARRAY[2]}
     fi
-	IFS=" " POLKIT_ARRAY=($POLKIT)
-	POLKIT_VERSION=${POLKIT_ARRAY[1]}
 	
     # add polkit policy
 	if [[ ${POLKIT_VERSION} < 0.106 ]]; then
