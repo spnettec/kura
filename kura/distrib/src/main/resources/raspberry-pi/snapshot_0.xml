@@ -41,8 +41,8 @@
             <esf:property name="net.interface.eth0.config.dhcpServer4.passDns" array="false" encrypted="false" type="Boolean">
                 <esf:value>false</esf:value>
             </esf:property>
-            <esf:property name="net.interface.wlan0.config.wifi.master.passphrase" array="false" encrypted="false" type="Password">
-                <esf:value>testKEYS</esf:value>
+            <esf:property name="net.interface.wlan0.config.wifi.master.passphrase" array="false" encrypted="true" type="Password">
+                <esf:value>MTIzNDU2Nzg=</esf:value>
             </esf:property>
             <esf:property name="net.interface.eth0.driver" array="false" encrypted="false" type="String">
                 <esf:value>unknown</esf:value>
@@ -238,7 +238,7 @@
             </esf:property>
             <esf:property name="net.interface.eth0.config.dhcpServer4.defaultLeaseTime" array="false" encrypted="false" type="Integer">
                 <esf:value>7200</esf:value>
-            </esf:property>
+            </esf:property>x
             <esf:property name="net.interface.lo.driver" array="false" encrypted="false" type="String">
                 <esf:value>unknown</esf:value>
             </esf:property>
@@ -320,7 +320,7 @@
                 <esf:value>24</esf:value>
             </esf:property>
             <esf:property name="net.interface.wlan0.config.wifi.infra.passphrase" array="false" encrypted="false" type="Password">
-                <esf:value>wepKeyInfraWlan0</esf:value>
+                <esf:value></esf:value>
             </esf:property>
             <esf:property name="net.interface.wlan0.config.ip4.dnsServers" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
