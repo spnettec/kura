@@ -12,31 +12,31 @@
 
 zone "localhost.localdomain" IN {
         type master;
-        file "named.localhost";
+        file "/etc/bind/db.local";
         allow-update { none; };
 };
 
 zone "localhost" IN {
         type master;
-        file "named.localhost";
+        file "/etc/bind/db.local";
         allow-update { none; };
 };
 
 zone "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa" IN {
         type master;
-        file "named.loopback";
+        file "/etc/bind/db.127";
         allow-update { none; };
 };
 
 zone "1.0.0.127.in-addr.arpa" IN {
         type master;
-        file "named.loopback";
+        file "/etc/bind/db.127";
         allow-update { none; };
 };
 
 zone "0.in-addr.arpa" IN {
         type master;
-        file "named.empty";
+        file "/etc/bind/db.empty";
         allow-update { none; };
 };
 

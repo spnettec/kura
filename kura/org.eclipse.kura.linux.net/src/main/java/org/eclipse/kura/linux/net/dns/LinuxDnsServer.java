@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -245,30 +247,30 @@ public abstract class LinuxDnsServer {
     }
 
     private void writeConfig() throws IOException {
-        String persistentConfigFileName = getDnsConfigFileName();
-        File file = new File(persistentConfigFileName);
-        if (!file.exists()) {
-            persistentConfigFileName = getDnsConfigFileNameShort();
-            file = new File(persistentConfigFileName);
-        }
-        if (!file.exists()) {
-            file.createNewFile();
-        }
-        try (FileOutputStream fos = new FileOutputStream(persistentConfigFileName);
-                PrintWriter pw = new PrintWriter(fos);) {
+
+        final File tempFile = new File(getDnsConfigFileName() + ".tmp");
+        final File persistentConfigFile = new File(getDnsConfigFileName());
+
+        try (FileOutputStream fos = new FileOutputStream(tempFile); PrintWriter pw = new PrintWriter(fos);) {
             // build up the file
             if (isConfigured()) {
-                logger.debug("writing custom named.conf to {} with: {}", persistentConfigFileName,
+                logger.debug("writing custom named.conf to {} with: {}", persistentConfigFile.getAbsolutePath(),
                         this.dnsServerConfigIP4);
                 pw.print(getForwardingNamedFile());
             } else {
-                logger.debug("writing default named.conf to {} with: {}", persistentConfigFileName,
+                logger.debug("writing default named.conf to {} with: {}", persistentConfigFile.getAbsolutePath(),
                         this.dnsServerConfigIP4);
                 pw.print(getDefaultNamedFile());
             }
             pw.flush();
             fos.getFD().sync();
         }
+
+        if (!tempFile.setReadable(true, false)) {
+            logger.warn("failed to set permissions to {}", tempFile.getAbsolutePath());
+        }
+
+        Files.move(tempFile.toPath(), persistentConfigFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private String getForwardingNamedFile() {
@@ -369,14 +371,14 @@ public abstract class LinuxDnsServer {
     }
 
     public String[] getDnsStartCommand() {
-        return new String[] { "sudo", SYSTEMCTL_COMMAND, "start", NAMED };
+        return new String[] { SYSTEMCTL_COMMAND, "start", NAMED };
     }
 
     public String[] getDnsRestartCommand() {
-        return new String[] { "sudo", SYSTEMCTL_COMMAND, "restart", NAMED };
+        return new String[] { SYSTEMCTL_COMMAND, "restart", NAMED };
     }
 
     public String[] getDnsStopCommand() {
-        return new String[] { "sudo", SYSTEMCTL_COMMAND, "stop", NAMED };
+        return new String[] { SYSTEMCTL_COMMAND, "stop", NAMED };
     }
 }

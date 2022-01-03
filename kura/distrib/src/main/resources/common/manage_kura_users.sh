@@ -49,7 +49,7 @@ function create_users {
     if [ $(os) == "\"centos\"" ]; then
        POLKIT=`yum list --installed | grep polkit`
     else
-       POLKIT=`apt list --installed | grep polkit`
+       POLKIT=`dpkg --list | grep libpolkit`
     fi
 	IFS=" " POLKIT_ARRAY=($POLKIT)
 	POLKIT_VERSION=${POLKIT_ARRAY[1]}
