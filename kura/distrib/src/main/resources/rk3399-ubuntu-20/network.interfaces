@@ -1,13 +1,8 @@
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
-
-source /etc/network/interfaces.d/*
-
-# The loopback network interface
+# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)
+ 
+# The loopback interface
 auto lo
-iface lo inet static
-	address 127.0.0.1
-	netmask 255.0.0.0
+iface lo inet loopback
 
 # The primary network interface
 auto eth0
@@ -20,6 +15,6 @@ iface enp1s0 inet static
 
 auto wlan0
 allow-hotplug wlan0
-iface wlp4s0 inet static
+iface wlan0 inet static
     address 172.16.1.1
     netmask 255.255.255.0
