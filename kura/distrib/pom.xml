@@ -1779,7 +1779,6 @@
                                 </goals>
                                 <configuration>
                                     <verbose>true</verbose>
-                                    <skipPOMs>false</skipPOMs>
                                     <deb>${basedir}/target/kura_${project.version}_rock960-ubuntu-16-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/rock960-ubuntu-16-nn/deb/control</controlDir>
                                     <dataSet>
@@ -1802,11 +1801,6 @@
         
         <profile>
             <id>rk3399-ubuntu-20</id>
-            <properties>
-                <project.raspbian.dependencies>hostapd, isc-dhcp-server, iw, dos2unix, bind9, unzip, ethtool, telnet, bluez-hcidump, bluez,
-                    wireless-tools, net-tools, iptables, chrony, ntpdate, ifupdown, policykit-1,
-                    java8-runtime-headless | java8-runtime | java11-jre-headless | java11-runtime | java17-jre-headless | java17-runtime</project.raspbian.dependencies>   
-            </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -1877,7 +1871,6 @@
                                 </goals>
                                 <configuration>
                                     <verbose>true</verbose>
-                                    <skipPOMs>false</skipPOMs>
                                     <deb>${basedir}/target/kura_${project.version}_rk3399-ubuntu-20_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/rk3399-ubuntu-20/deb/control</controlDir>
                                     <dataSet>
