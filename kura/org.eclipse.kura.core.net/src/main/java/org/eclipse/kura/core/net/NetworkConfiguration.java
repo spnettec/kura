@@ -931,7 +931,9 @@ public class NetworkConfiguration {
         String passphrase = null;
         if (psswdObj instanceof Password) {
             Password psswd = (Password) psswdObj;
-            passphrase = new String(psswd.getPassword());
+            if (psswd.getPassword() != null) {
+                passphrase = new String(psswd.getPassword());
+            }
         } else if (psswdObj instanceof String) {
             passphrase = (String) psswdObj;
         }

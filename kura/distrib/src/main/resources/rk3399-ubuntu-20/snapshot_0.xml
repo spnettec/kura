@@ -152,8 +152,8 @@
             <esf:property name="net.interface.eth0.driver" type="String">
                 <esf:value>unknown</esf:value>
             </esf:property>
-            <esf:property encrypted="true" name="net.interface.wlan0.config.wifi.infra.passphrase" type="Password">
-                <esf:value></esf:value>
+            <esf:property name="net.interface.wlan0.config.wifi.infra.passphrase" array="false" encrypted="false" type="Password">
+                <esf:value>wepKeyInfraWlan0</esf:value>
             </esf:property>
             <esf:property name="net.interface.wlan0.config.ip4.prefix" type="Short">
                 <esf:value>24</esf:value>

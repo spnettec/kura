@@ -6,7 +6,7 @@ Depends: hostapd, isc-dhcp-server, iw,
  dos2unix, bind9, unzip, 
  ethtool, telnet, bluez-hcidump, 
  wireless-tools, iptables, chrony, 
- dmidecode, ntpdate, openjdk-8-jre-headless | openjdk-11-jre-headless | openjdk-17-jre-headless
+ dmidecode, ntpdate, openjdk-11-jre-headless | openjdk-8-jre-headless | openjdk-17-jre-headless
 Architecture: all
 Maintainer: support@eurotech.com
 Description: Kura is an inclusive software framework that puts a layer
