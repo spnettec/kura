@@ -92,14 +92,6 @@ cp ${INSTALL_DIR}/kura/install/dhcpd-enp2s0.conf ${INSTALL_DIR}/kura/.data/dhcpd
 cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf /etc/dhcpd-wlan0.conf
 cp ${INSTALL_DIR}/kura/install/dhcpd-wlp4s0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
 
-#set up kuranet.conf
-cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/user/kuranet.conf
-cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/.data/kuranet.conf
-
-#assigning kuranet.conf files ownership to kurad
-chown kurad:kurad ${INSTALL_DIR}/kura/user/kuranet.conf
-chown kurad:kurad ${INSTALL_DIR}/kura/.data/kuranet.conf
-
 OLD_PATH=$(pwd)
 cd ${INSTALL_DIR}/kura/install/
 semodule -i selinuxKura.pp

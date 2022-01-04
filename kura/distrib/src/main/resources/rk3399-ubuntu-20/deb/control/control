@@ -2,9 +2,12 @@ Package: kura
 Version: [[project.version]]
 Section: misc
 Priority: low
-Depends: dos2unix, unzip, telnet, 
- bluez-hcidump, bluez, chrony, policykit-1,
- ntpdate, pi-bluetooth, rpi.gpio-common, 
+Depends: hostapd, isc-dhcp-server, iw, 
+ dos2unix, bind9, unzip, 
+ ethtool, telnet, bluez-hcidump, 
+ bluez, wireless-tools, net-tools, 
+ iptables, chrony, ntpdate, 
+ ifupdown, bluetooth, policykit-1,
  openjdk-8-jre-headless | openjdk-11-jre-headless | openjdk-17-jre-headless
 Architecture: all
 Maintainer: support@eurotech.com
