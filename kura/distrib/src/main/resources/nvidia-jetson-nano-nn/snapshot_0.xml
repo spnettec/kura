@@ -374,6 +374,9 @@
             <esf:property array="false" encrypted="false" name="logFilePath" type="String">
                 <esf:value>/var/log/kura.log</esf:value>
             </esf:property>
+            <esf:property name="kura.service.name" type="String">
+                <esf:value>kuraLog</esf:value>
+            </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>
             </esf:property>
@@ -389,6 +392,9 @@
         <esf:properties>
             <esf:property array="false" encrypted="false" name="logFilePath" type="String">
                 <esf:value>/var/log/kura-audit.log</esf:value>
+            </esf:property>
+            <esf:property name="kura.service.name" type="String">
+                <esf:value>kuraAudit</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
                 <esf:value>org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider</esf:value>

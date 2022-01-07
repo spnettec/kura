@@ -1545,12 +1545,12 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             Boolean isEncrypt = Boolean
                     .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
                             : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
-            if (e instanceof KuraException && ((KuraException) e).getCode() == KuraErrorCode.DECODER_ERROR) {
-                logger.error("error snapshot config file, id:{}. delete it", lastestID);
-                deleteSnapshotId(lastestID);
-                return loadLatestSnapshotConfigurations();
-            }
             if (isEncrypt != null && !isEncrypt) {
+                if (e instanceof KuraException && ((KuraException) e).getCode() == KuraErrorCode.DECODER_ERROR) {
+                    logger.error("error snapshot config file, id:{}. delete it", lastestID, e);
+                    deleteSnapshotId(lastestID);
+                    return loadLatestSnapshotConfigurations();
+                }
                 throw KuraException.internalError(e);
             }
 
@@ -1562,7 +1562,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 }
             } catch (Exception ex) {
                 if (ex instanceof KuraException && ((KuraException) ex).getCode() == KuraErrorCode.DECODER_ERROR) {
-                    logger.error("error encrypt snapshot config file, id:{}. delete it", lastestID);
+                    logger.error("error encrypt snapshot config file, id:{}. delete it", lastestID, e);
                     deleteSnapshotId(lastestID);
                     return loadLatestSnapshotConfigurations();
                 }
@@ -1972,7 +1972,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *            the input value
+     *                  the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
