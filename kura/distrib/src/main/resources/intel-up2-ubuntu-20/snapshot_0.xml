@@ -154,7 +154,7 @@
                 <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="true" name="net.interface.wlp4s0.config.wifi.infra.passphrase" type="Password">
-                <esf:value/>
+                <esf:value>wepKeyInfraWlan0</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="net.interface.enp2s0.mac" type="String">
                 <esf:value>00:07:32:49:AC:A2</esf:value>

@@ -40,6 +40,6 @@ public class Password {
 
     @Override
     public String toString() {
-        return new String(this.passwordVal);
+        return passwordVal == null ? null : new String(this.passwordVal);
     }
 }
