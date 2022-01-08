@@ -1210,6 +1210,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                	<skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_raspberry-pi_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/raspberry-pi/deb/control</controlDir>
@@ -1301,6 +1302,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_raspberry-pi-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/raspberry-pi-nn/deb/control</controlDir>
@@ -1391,6 +1393,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_intel-up2-ubuntu-20_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/intel-up2-ubuntu-20/deb/control</controlDir>
@@ -1778,6 +1781,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_rock960-ubuntu-16-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/rock960-ubuntu-16-nn/deb/control</controlDir>
@@ -1870,6 +1874,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_rk3399-ubuntu-20_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/rk3399-ubuntu-20/deb/control</controlDir>
