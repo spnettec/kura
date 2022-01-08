@@ -99,7 +99,7 @@ public class DhcpConfigWriter implements NetworkConfigurationVisitor {
                     File tmpDhcpConfigFile = new File(tmpDhcpConfigFileName);
                     File dhcpConfigFile = new File(dhcpConfigFileName);
                     try {
-                        if (!FileUtils.contentEquals(tmpDhcpConfigFile, dhcpConfigFile)) {
+                        if (!dhcpConfigFile.exists() || !FileUtils.contentEquals(tmpDhcpConfigFile, dhcpConfigFile)) {
                             if (tmpDhcpConfigFile.renameTo(dhcpConfigFile)) {
                                 logger.trace("Successfully wrote DHCP config file");
                             } else {
