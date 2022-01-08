@@ -5,7 +5,7 @@ Priority: low
 Depends: hostapd, isc-dhcp-server, iw, 
  dos2unix, bind9, unzip, 
  ethtool, telnet, bluez-hcidump, 
- bluez, wireless-tools, net-tools, 
+ bluez, wireless-tools, net-tools, rfkill, wpasupplicant,
  iptables, chrony, ntpdate, 
  ifupdown, openjdk-11-jre-headless | openjdk-8-jre-headless | openjdk-17-jre-headless
 Architecture: all

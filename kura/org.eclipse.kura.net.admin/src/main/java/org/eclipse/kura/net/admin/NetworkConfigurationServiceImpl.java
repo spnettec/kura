@@ -272,7 +272,7 @@ public class NetworkConfigurationServiceImpl implements NetworkConfigurationServ
     }
 
     private String decryptPassword(String password) throws KuraException {
-        if (password.isEmpty()) {
+        if (password == null || password.isEmpty()) {
             return "";
         }
 

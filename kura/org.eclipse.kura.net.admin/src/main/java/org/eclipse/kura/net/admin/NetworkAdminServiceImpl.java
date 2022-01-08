@@ -489,7 +489,11 @@ public class NetworkAdminServiceImpl implements NetworkAdminService, EventHandle
                         }
 
                         // replace with new list
-                        ((NetInterfaceAddressConfigImpl) netInterfaceAddressConfig).setNetConfigs(newNetConfigs);
+                        if (netInterfaceAddressConfig instanceof WifiInterfaceAddressConfigImpl) {
+                            ((WifiInterfaceAddressConfigImpl) netInterfaceAddressConfig).setNetConfigs(newNetConfigs);
+                        } else {
+                            ((NetInterfaceAddressConfigImpl) netInterfaceAddressConfig).setNetConfigs(newNetConfigs);
+                        }
                     }
                 }
             }
