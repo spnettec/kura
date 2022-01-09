@@ -832,7 +832,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
                 }
             }
 
-            if (config.getHwTypeEnum() == GwtNetIfType.WIFI) {
+            if (config.getHwTypeEnum() == GwtNetIfType.WIFI || config.getHwTypeEnum() == GwtNetIfType.ETHERNET) {
 
                 if (config instanceof GwtWifiNetInterfaceConfig) {
                     GwtWifiConfig gwtWifiConfig = ((GwtWifiNetInterfaceConfig) config).getActiveWifiConfig();

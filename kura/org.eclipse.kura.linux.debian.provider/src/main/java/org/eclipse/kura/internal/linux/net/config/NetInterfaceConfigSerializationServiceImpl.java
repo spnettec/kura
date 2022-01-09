@@ -464,7 +464,7 @@ public class NetInterfaceConfigSerializationServiceImpl implements NetInterfaceC
 
     private void copyConfigFile(File srcFile, File dstFile) throws KuraException {
         try {
-            if (!dstFile.exists() && !FileUtils.contentEquals(srcFile, dstFile)) {
+            if (!dstFile.exists() || !FileUtils.contentEquals(srcFile, dstFile)) {
                 // File.renameTo performs rather badly on Windows, if the file already exists
                 Files.move(Paths.get(srcFile.getAbsolutePath()), Paths.get(dstFile.getAbsolutePath()),
                         StandardCopyOption.REPLACE_EXISTING);

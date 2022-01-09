@@ -312,7 +312,9 @@ public class WifiMonitorServiceImpl implements WifiClientMonitorService, EventHa
     @SuppressWarnings("checkstyle:methodLength")
     private void monitorEnabledInterfaces(List<String> interfacesToReconfigure, Map<String, InterfaceState> oldStatuses)
             throws Exception {
-        for (String interfaceName : this.enabledInterfaces) {
+        Iterator<String> iter = this.enabledInterfaces.iterator();
+        while (iter.hasNext()) {
+            String interfaceName = iter.next();
             // Get current configuration
             WifiInterfaceConfigImpl wifiInterfaceConfig = (WifiInterfaceConfigImpl) this.currentNetworkConfiguration
                     .getNetInterfaceConfig(interfaceName);
@@ -403,8 +405,12 @@ public class WifiMonitorServiceImpl implements WifiClientMonitorService, EventHa
                         }
                     }
                 } catch (KuraException e) {
-                    logger.error("monitor() :: Error enabling {} interface, will try to reset wifi", interfaceName, e);
+                    logger.error(
+                            "monitor() :: Error enabling {} interface, will try to reset wifi and remove from enabledInterfaces",
+                            interfaceName, e);
                     resetWifiDevice(interfaceName);
+                    iter.remove();
+                    disableInterface(interfaceName);
                 }
             } else {
                 // Infrastructure (Station) mode:
