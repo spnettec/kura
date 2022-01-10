@@ -36,7 +36,7 @@ zone "1.0.0.127.in-addr.arpa" IN {
 
 zone "0.in-addr.arpa" IN {
         type master;
-        file "/etc/bind/db.empty";
+        file "/etc/bind/db.0";
         allow-update { none; };
 };
 
