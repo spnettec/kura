@@ -1393,6 +1393,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
+              <artifact>
+                  <id>com.eclipsesource.jaxrs:provider-multipart:jar:${com.eclipsesource.jaxrs.provider.multipart-mvn.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
 	       </artifacts>
             </configuration>
           </execution>
