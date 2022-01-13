@@ -149,8 +149,6 @@
         <setEntry value="io.netty.handler@default:default"/>
         <setEntry value="io.netty.resolver-dns@default:default"/>
         <setEntry value="io.netty.resolver@default:default"/>
-        <setEntry value="io.netty.transport-native-epoll@default:default"/>
-        <setEntry value="io.netty.transport-native-kqueue@default:default"/>
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
@@ -238,6 +236,8 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
@@ -282,6 +282,11 @@
         <setEntry value="org.eclipse.kura.driver.s7plc.provider@default:default"/>
         <setEntry value="org.eclipse.kura.example.gpio.led@default:default"/>
         <setEntry value="org.eclipse.kura.example.web.extension@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test@default:false"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
