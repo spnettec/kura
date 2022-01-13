@@ -13,10 +13,10 @@
 package org.eclipse.kura.web.server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.log.LogEntry;
@@ -37,7 +37,7 @@ public class GwtLogServiceImpl extends OsgiRemoteServiceServlet implements GwtLo
     private static final Logger logger = LoggerFactory.getLogger(GwtLogServiceImpl.class);
 
     private static final LogEntriesCache cache = new LogEntriesCache();
-    private static final Map<String, String> registeredLogProviders = new HashMap<>();
+    private static final Map<String, String> registeredLogProviders = new ConcurrentHashMap<>();
 
     @Override
     public Map<String, String> initLogProviders(GwtXSRFToken xsrfToken) throws GwtKuraException {
