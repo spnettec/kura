@@ -13,6 +13,7 @@
 package org.eclipse.kura.web.server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class GwtLogServiceImpl extends OsgiRemoteServiceServlet implements GwtLo
 
         loadLogProviders();
 
-        return registeredLogProviders;
+        return new HashMap<>(registeredLogProviders);
     }
 
     @Override
