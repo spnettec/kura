@@ -1053,7 +1053,7 @@
                   </instructions>
               </artifact>
                <artifact>
-                  <id>com.ibm.icu:icu4j:jar:69.1</id>
+                  <id>com.ibm.icu:icu4j:jar:70.1</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
