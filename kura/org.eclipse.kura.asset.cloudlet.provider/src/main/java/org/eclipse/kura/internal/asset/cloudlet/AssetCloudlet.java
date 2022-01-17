@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.asset.Asset;
-import org.eclipse.kura.asset.AssetService;
 import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.ChannelType;
@@ -62,23 +61,9 @@ public final class AssetCloudlet implements RequestHandler {
 
     private Map<String, Asset> assets;
 
-    private volatile AssetService assetService;
-
     private AssetTrackerCustomizer assetTrackerCustomizer;
 
     private ServiceTracker<Asset, Asset> assetServiceTracker;
-
-    protected synchronized void bindAssetService(final AssetService assetService) {
-        if (this.assetService == null) {
-            this.assetService = assetService;
-        }
-    }
-
-    protected synchronized void unbindAssetService(final AssetService assetService) {
-        if (this.assetService == assetService) {
-            this.assetService = null;
-        }
-    }
 
     public void setRequestHandlerRegistry(RequestHandlerRegistry requestHandlerRegistry) {
         try {
@@ -99,8 +84,7 @@ public final class AssetCloudlet implements RequestHandler {
     protected synchronized void activate(final ComponentContext componentContext) {
         logger.debug("Activating Asset Cloudlet...");
 
-        this.assetTrackerCustomizer = new AssetTrackerCustomizer(componentContext.getBundleContext(),
-                this.assetService);
+        this.assetTrackerCustomizer = new AssetTrackerCustomizer(componentContext.getBundleContext());
         this.assetServiceTracker = new ServiceTracker<>(componentContext.getBundleContext(), Asset.class.getName(),
                 this.assetTrackerCustomizer);
         this.assetServiceTracker.open();

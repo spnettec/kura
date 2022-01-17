@@ -13,7 +13,6 @@
 package org.eclipse.kura.internal.asset.cloudlet;
 
 import static org.eclipse.kura.cloudconnection.request.RequestHandlerMessageConstants.ARGS_KEY;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -71,8 +70,8 @@ public class AssetCloudletTest {
         ComponentContext ccMock = mock(ComponentContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // AssetService asMock = mock(AssetService.class);
+        // svc.bindAssetService(asMock);
 
         svc.activate(ccMock);
 
@@ -98,8 +97,8 @@ public class AssetCloudletTest {
         ComponentContext ccMock = mock(ComponentContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // AssetService asMock = mock(AssetService.class);
+        // svc.bindAssetService(asMock);
 
         svc.activate(ccMock);
 
@@ -137,7 +136,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -181,7 +180,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -224,7 +223,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -310,7 +309,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -354,7 +353,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -403,7 +402,7 @@ public class AssetCloudletTest {
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
         when(asMock.getAssetPid(assetMock)).thenReturn("asset2");
 
@@ -439,9 +438,9 @@ public class AssetCloudletTest {
         BundleContext bcMock = mock(BundleContext.class);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
-        AssetTrackerCustomizer atc = new AssetTrackerCustomizer(bcMock, asMock);
+        AssetTrackerCustomizer atc = new AssetTrackerCustomizer(bcMock);
         TestUtil.setFieldValue(svc, "assetTrackerCustomizer", atc);
 
         Asset assetMock = mock(Asset.class);
@@ -472,9 +471,9 @@ public class AssetCloudletTest {
         BundleContext bcMock = mock(BundleContext.class);
 
         AssetService asMock = mock(AssetService.class);
-        svc.bindAssetService(asMock);
+        // svc.bindAssetService(asMock);
 
-        AssetTrackerCustomizer atc = new AssetTrackerCustomizer(bcMock, asMock);
+        AssetTrackerCustomizer atc = new AssetTrackerCustomizer(bcMock);
         TestUtil.setFieldValue(svc, "assetTrackerCustomizer", atc);
 
         Asset assetMock = mock(Asset.class);
