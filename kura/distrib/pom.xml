@@ -1854,7 +1854,7 @@
                                         <property name="native.tag" value="aarch64" />
                                         <property name="kura.os.version" value="ubuntu" />
                                         <property name="kura.arch" value="rk3399-ubuntu-20" />
-                                        <property name="service.manager" value="sysv" />
+                                        <property name="service.manager" value="systemd" />
                                         <property name="os.base" value="debian" />
                                         <property name="kura.mem.size" value="1024m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
