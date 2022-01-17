@@ -44,9 +44,6 @@
             <esf:property name="net.interface.lo.type" array="false" encrypted="false" type="String">
                 <esf:value>LOOPBACK</esf:value>
             </esf:property>
-            <esf:property name="net.interface.enp3s0.config.mtu" array="false" encrypted="false" type="Integer">
-                <esf:value>1492</esf:value>
-            </esf:property>
             <esf:property name="net.interface.enp3s0.config.state" array="false" encrypted="false" type="String">
                 <esf:value>ACTIVATED</esf:value>
             </esf:property>
@@ -55,9 +52,6 @@
             </esf:property>
             <esf:property name="net.interface.lo.config.ip4.prefix" array="false" encrypted="false" type="Short">
                 <esf:value>8</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.lo.config.mtu" array="false" encrypted="false" type="Integer">
-                <esf:value>16436</esf:value>
             </esf:property>
             <esf:property name="net.interface.lo.ip4.broadcast" array="false" encrypted="false" type="String">
                 <esf:value>127.0.0.1</esf:value>
@@ -128,12 +122,6 @@
             <esf:property name="net.interface.enp3s0.config.dhcpClient4.enabled" array="false" encrypted="false" type="Boolean">
                 <esf:value>true</esf:value>
             </esf:property>
-            <esf:property name="net.interface.enp3s0.usb.product.name" array="false" encrypted="false" type="String">
-                <esf:value>LAN7500</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.lo.driver" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
-            </esf:property>
             <esf:property name="net.interface.enp2s0.config.state" array="false" encrypted="false" type="String">
                 <esf:value>ACTIVATED</esf:value>
             </esf:property>
@@ -164,26 +152,14 @@
             <esf:property name="net.interface.enp3s0.virtual" array="false" encrypted="false" type="Boolean">
                 <esf:value>false</esf:value>
             </esf:property>
-            <esf:property name="net.interface.enp2s0.firmware.version" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
-            </esf:property>
             <esf:property name="net.interface.enp2s0.up" array="false" encrypted="false" type="Boolean">
                 <esf:value>true</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp3s0.driver" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.ip4.dnsServers" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.ip4.dnsServers" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp2s0.driver" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp2s0.driver.version" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.virtual" array="false" encrypted="false" type="Boolean">
                 <esf:value>false</esf:value>
@@ -206,23 +182,14 @@
             <esf:property name="net.interface.lo.config.winsServers" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
             </esf:property>
-            <esf:property name="net.interface.enp3s0.usb.devicePath" array="false" encrypted="false" type="String">
-                <esf:value>2</esf:value>
-            </esf:property>
             <esf:property name="net.interface.enp2s0.config.ip4.status" array="false" encrypted="false" type="String">
                 <esf:value>netIPv4StatusEnabledLAN</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp3s0.usb.busNumber" array="false" encrypted="false" type="String">
-                <esf:value>2</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.dhcpServer4.prefix" array="false" encrypted="false" type="Short">
                 <esf:value>24</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.mtu" array="false" encrypted="false" type="Integer">
                 <esf:value>1500</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp3s0.usb.vendor.id" array="false" encrypted="false" type="String">
-                <esf:value>0424</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.ip4.prefix" array="false" encrypted="false" type="Short">
                 <esf:value>24</esf:value>
@@ -242,9 +209,6 @@
             <esf:property name="net.interface.enp3s0.ip4.broadcast" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
             </esf:property>
-            <esf:property name="net.interface.lo.mac" array="false" encrypted="false" type="String">
-                <esf:value>00:00:00:00:00:00</esf:value>
-            </esf:property>
             <esf:property name="net.interface.enp2s0.config.dhcpServer4.rangeStart" array="false" encrypted="false" type="String">
                 <esf:value>172.16.0.100</esf:value>
             </esf:property>
@@ -259,9 +223,6 @@
             </esf:property>
             <esf:property name="net.interface.lo.config.state" array="false" encrypted="false" type="String">
                 <esf:value>ACTIVATED</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.lo.driver.version" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.dhcpServer4.defaultLeaseTime" array="false" encrypted="false" type="Integer">
                 <esf:value>7200</esf:value>
@@ -280,9 +241,6 @@
             </esf:property>
             <esf:property name="net.interface.enp2s0.config.dhcpServer4.rangeEnd" array="false" encrypted="false" type="String">
                 <esf:value>172.16.0.110</esf:value>
-            </esf:property>
-            <esf:property name="net.interface.enp3s0.driver.version" array="false" encrypted="false" type="String">
-                <esf:value>unknown</esf:value>
             </esf:property>
             <esf:property name="net.interface.enp3s0.ip4.gateway" array="false" encrypted="false" type="String">
                 <esf:value></esf:value>
