@@ -178,11 +178,17 @@ public abstract class LinuxDnsServer {
             stop();
         }
         // Start named
-        CommandStatus status = this.executorService.execute(new Command(getDnsStartCommand()));
+        Command command = new Command(getDnsStartCommand());
+        command.setTimeout(60);
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setErrorStream(new ByteArrayOutputStream());
+        CommandStatus status = this.executorService.execute(command);
         if (status.getExitStatus().isSuccessful()) {
             logger.debug("DNS server started.");
             logger.trace("{}", this.dnsServerConfigIP4);
         } else {
+            logger.error("command:{},error msg:{}", command.getCommandLine(), new String(
+                    ((ByteArrayOutputStream) status.getErrorStream()).toByteArray(), StandardCharsets.UTF_8));
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Failed to start named",
                     status.getExitStatus().getExitCode());
         }
@@ -306,7 +312,7 @@ public abstract class LinuxDnsServer {
         sb.append("};\n") //
                 .append("zone \".\" IN {\n") //
                 .append("\ttype hint;\n") //
-                .append("\tfile \"/var/named.ca\";\n") //
+                .append("\tfile \"named.ca\";\n") //
                 .append("};\n") //
                 .append("include \"") //
                 .append(getDnsRfcZonesFileName()) //
