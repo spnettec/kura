@@ -312,7 +312,7 @@ public abstract class LinuxDnsServer {
         sb.append("};\n") //
                 .append("zone \".\" IN {\n") //
                 .append("\ttype hint;\n") //
-                .append("\tfile \"named.ca\";\n") //
+                .append("\tfile \"/var/named/named.ca\";\n") //
                 .append("};\n") //
                 .append("include \"") //
                 .append(getDnsRfcZonesFileName()) //
@@ -353,7 +353,7 @@ public abstract class LinuxDnsServer {
                 .append("\n") //
                 .append("zone \".\" IN {\n") //
                 .append("\ttype hint;\n") //
-                .append("\tfile \"named.ca\";\n") //
+                .append("\tfile \"/var/named/named.ca\";\n") //
                 .append("};\n") //
                 .append("\n") //
                 .append("include \"") //
