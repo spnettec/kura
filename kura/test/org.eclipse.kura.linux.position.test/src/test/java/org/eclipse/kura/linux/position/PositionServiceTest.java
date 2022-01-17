@@ -18,10 +18,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -80,7 +80,7 @@ public class PositionServiceTest {
 
     private static GpsDeviceTracker getMockGpsDeviceTracker() {
         final GpsDeviceTracker tracker = mock(GpsDeviceTracker.class);
-        when(tracker.track(anyObject())).thenAnswer(invocation -> invocation.getArgumentAt(0, CommURI.class));
+        when(tracker.track(any())).thenAnswer(invocation -> invocation.getArgument(0, CommURI.class));
         return tracker;
     }
 
@@ -109,7 +109,7 @@ public class PositionServiceTest {
         return properties;
     }
 
-    private static final class UriMatcher extends ArgumentMatcher<String> {
+    private static final class UriMatcher implements ArgumentMatcher<String> {
 
         private final CommURI uri;
 
@@ -117,9 +117,8 @@ public class PositionServiceTest {
             this.uri = uri;
         }
 
-        @Override
-        public boolean matches(Object argument) {
-            final String port = (String) argument;
+        public boolean matches(String argument) {
+            final String port = argument;
 
             try {
                 final CommURI argUri = CommURI.parseString(port);
@@ -150,7 +149,7 @@ public class PositionServiceTest {
     private static final ArgumentMatcher<Event> isPositionLockedEvent = new ArgumentMatcher<Event>() {
 
         @Override
-        public boolean matches(Object argument) {
+        public boolean matches(Event argument) {
             return argument instanceof PositionLockedEvent;
         }
     };
@@ -158,7 +157,7 @@ public class PositionServiceTest {
     private static final ArgumentMatcher<Event> isPositionLostEvent = new ArgumentMatcher<Event>() {
 
         @Override
-        public boolean matches(Object argument) {
+        public boolean matches(Event argument) {
             return argument instanceof PositionLostEvent;
         }
     };
@@ -176,7 +175,7 @@ public class PositionServiceTest {
 
         fixture.ps.activate(properties);
 
-        verify(fixture.eventAdmin, times(0)).postEvent((PositionLockedEvent) anyObject());
+        verify(fixture.eventAdmin, times(0)).postEvent((PositionLockedEvent) any());
         assertFalse(fixture.ps.isLocked());
 
         fixture.ps.deactivate();
@@ -195,7 +194,7 @@ public class PositionServiceTest {
 
         fixture.ps.activate(properties);
 
-        verify(fixture.eventAdmin, times(1)).postEvent((PositionLockedEvent) anyObject());
+        verify(fixture.eventAdmin, times(1)).postEvent((PositionLockedEvent) any());
         assertTrue(fixture.ps.isLocked());
 
         final Position position = fixture.ps.getPosition();
@@ -354,7 +353,7 @@ public class PositionServiceTest {
 
         assertNotNull(gps);
 
-        when(fixture.gpsDeviceTracker.track(anyObject())).thenReturn(null);
+        when(fixture.gpsDeviceTracker.track(any())).thenReturn(null);
         fixture.ps.onGpsDeviceAvailabilityChanged();
 
         assertNull(fixture.ps.getGpsDevice());
@@ -454,7 +453,7 @@ public class PositionServiceTest {
 
         fixture.ps.deactivate();
 
-        verify(listener, times(7)).newNmeaSentence(anyObject());
+        verify(listener, times(7)).newNmeaSentence(any());
         verify(fixture.eventAdmin, times(1)).postEvent(argThat(isPositionLockedEvent));
         verify(fixture.eventAdmin, times(1)).postEvent(argThat(isPositionLostEvent));
     }
@@ -474,7 +473,7 @@ public class PositionServiceTest {
 
         Thread.sleep(5000);
 
-        verify(listener, times(4)).newNmeaSentence(anyObject());
+        verify(listener, times(4)).newNmeaSentence(any());
         verify(fixture.eventAdmin, times(1)).postEvent(argThat(isPositionLockedEvent));
         verify(fixture.eventAdmin, times(0)).postEvent(argThat(isPositionLostEvent));
 

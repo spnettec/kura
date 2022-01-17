@@ -14,8 +14,8 @@ package org.eclipse.kura.camel.cloud;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,7 +76,7 @@ public class KuraCloudProducerTest {
         String deviceId = "id";
         when(msgMock.getHeader(KuraCloudClientConstants.CAMEL_KURA_CLOUD_DEVICEID, String.class)).thenReturn(deviceId);
 
-        when(clientMock.publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio)))
+        when(clientMock.publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArguments();
                     KuraPayload payload = (KuraPayload) args[1];
@@ -86,7 +86,7 @@ public class KuraCloudProducerTest {
 
         kcp.process(exchangeMock);
 
-        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio));
+        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class KuraCloudProducerTest {
         String deviceId = null;
         when(msgMock.getHeader(KuraCloudClientConstants.CAMEL_KURA_CLOUD_DEVICEID, String.class)).thenReturn(deviceId);
 
-        when(clientMock.controlPublish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio)))
+        when(clientMock.controlPublish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArguments();
                     KuraPayload payload = (KuraPayload) args[1];
@@ -127,8 +127,7 @@ public class KuraCloudProducerTest {
 
         kcp.process(exchangeMock);
 
-        verify(clientMock, times(1)).controlPublish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain),
-                eq(prio));
+        verify(clientMock, times(1)).controlPublish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio));
     }
 
     @Test
@@ -161,7 +160,7 @@ public class KuraCloudProducerTest {
         String deviceId = "id";
         when(msgMock.getHeader(KuraCloudClientConstants.CAMEL_KURA_CLOUD_DEVICEID, String.class)).thenReturn(deviceId);
 
-        when(clientMock.publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio)))
+        when(clientMock.publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArguments();
                     KuraPayload payload = (KuraPayload) args[1];
@@ -171,7 +170,7 @@ public class KuraCloudProducerTest {
 
         kcp.process(exchangeMock);
 
-        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio));
+        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio));
     }
 
     @Test
@@ -206,7 +205,7 @@ public class KuraCloudProducerTest {
         String deviceId = "id";
         when(msgMock.getHeader(KuraCloudClientConstants.CAMEL_KURA_CLOUD_DEVICEID, String.class)).thenReturn(deviceId);
 
-        when(clientMock.publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio)))
+        when(clientMock.publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio)))
                 .thenAnswer(invocation -> {
                     Object[] args = invocation.getArguments();
                     KuraPayload payload = (KuraPayload) args[1];
@@ -216,7 +215,7 @@ public class KuraCloudProducerTest {
 
         kcp.process(exchangeMock);
 
-        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain), eq(prio));
+        verify(clientMock, times(1)).publish(eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio));
     }
 
     @Test
@@ -247,8 +246,8 @@ public class KuraCloudProducerTest {
         String deviceId = "id";
         when(msgMock.getHeader(KuraCloudClientConstants.CAMEL_KURA_CLOUD_DEVICEID, String.class)).thenReturn(deviceId);
 
-        when(clientMock.controlPublish(eq(deviceId), eq(topic), (KuraPayload) anyObject(), eq(qos), eq(retain),
-                eq(prio))).thenAnswer(invocation -> {
+        when(clientMock.controlPublish(eq(deviceId), eq(topic), (KuraPayload) any(), eq(qos), eq(retain), eq(prio)))
+                .thenAnswer(invocation -> {
                     Object[] args = invocation.getArguments();
                     KuraPayload payload = (KuraPayload) args[2];
                     assertEquals(body, payload.getBody());
@@ -257,7 +256,7 @@ public class KuraCloudProducerTest {
 
         kcp.process(exchangeMock);
 
-        verify(clientMock, times(1)).controlPublish(eq(deviceId), eq(topic), (KuraPayload) anyObject(), eq(qos),
-                eq(retain), eq(prio));
+        verify(clientMock, times(1)).controlPublish(eq(deviceId), eq(topic), (KuraPayload) any(), eq(qos), eq(retain),
+                eq(prio));
     }
 }

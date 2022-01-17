@@ -15,7 +15,7 @@ package org.eclipse.kura.wire.script.filter.provider;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -52,7 +52,7 @@ public class ScriptFilterTest {
         when(whsMock.newWireSupport(svc, null)).thenReturn(wsMock);
 
         doAnswer(invocation -> {
-            List<WireRecord> records = invocation.getArgumentAt(0, List.class);
+            List<WireRecord> records = invocation.getArgument(0, List.class);
 
             assertEquals(2, records.size());
 
@@ -60,13 +60,19 @@ public class ScriptFilterTest {
             assertEquals(5, records.get(1).getProperties().get("five").getValue());
 
             return null;
-        }).when(wsMock).emit(anyObject());
+        }).when(wsMock).emit(any());
 
         Map<String, Object> properties = new HashMap<>();
         String script = "logger.info('testing');\n logger.info(input.emitterPid);\n" // some logging
                 + "logger.info(input.records.length);\n" // some more logging
-                + "var one = input.records[0];\n logger.info(one.topic);\n"
-                + "// one.prop3 = newBooleanValue(true);\n" // modification of the input objects is not supported!
+                + "var one = input.records[0];\n logger.info(one.topic);\n" + "// one.prop3 = newBooleanValue(true);\n" // modification
+                                                                                                                        // of
+                                                                                                                        // the
+                                                                                                                        // input
+                                                                                                                        // objects
+                                                                                                                        // is
+                                                                                                                        // not
+                                                                                                                        // supported!
                 + "output.add(one);\n" // add the first input record to output
                 + "var five = newIntegerValue(5);\n logger.info(five);\n" // prepare and add a new wire record
                 + "var rec = newWireRecord();\n rec.five = five;\n output.add(rec);";
@@ -99,7 +105,7 @@ public class ScriptFilterTest {
 
         svc.onWireReceive(wireEnvelope);
 
-        verify(wsMock, times(1)).emit(anyObject());
+        verify(wsMock, times(1)).emit(any());
 
         svc.deactivate();
     }

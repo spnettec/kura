@@ -12,8 +12,8 @@
  ******************************************************************************/
 package org.eclipse.kura.internal.driver.s7plc.task;
 
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,15 +45,15 @@ public class S7PlcToplevelBlockTaskTest {
         int db = 3;
         int start = 0;
 
-        when(s7Mock.ReadArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), anyObject())).thenReturn(0);
+        when(s7Mock.ReadArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), any())).thenReturn(0);
 
         Mode mode = Mode.READ;
         int end = 5;
-        S7PlcToplevelBlockTask task = new S7PlcToplevelBlockTask(driver, mode, db, start, end);
+        S7PlcToplevelBlockTask task = new S7PlcToplevelBlockTask(driver, mode, S7.S7AreaDB, db, start, end);
 
         task.processBuffer();
 
-        verify(s7Mock, times(1)).ReadArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), anyObject());
+        verify(s7Mock, times(1)).ReadArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), any());
     }
 
     @Test
@@ -68,14 +68,14 @@ public class S7PlcToplevelBlockTaskTest {
         int db = 3;
         int start = 0;
 
-        when(s7Mock.WriteArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), anyObject())).thenReturn(0);
+        when(s7Mock.WriteArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), any())).thenReturn(0);
 
         Mode mode = Mode.UPDATE;
         int end = 5;
-        S7PlcToplevelBlockTask task = new S7PlcToplevelBlockTask(driver, mode, db, start, end);
+        S7PlcToplevelBlockTask task = new S7PlcToplevelBlockTask(driver, mode, S7.S7AreaDB, db, start, end);
 
         task.processBuffer();
 
-        verify(s7Mock, times(1)).WriteArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), anyObject());
+        verify(s7Mock, times(1)).WriteArea(eq(S7.S7AreaDB), eq(db), eq(start), eq(5), any());
     }
 }

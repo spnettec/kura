@@ -13,10 +13,11 @@
 package org.eclipse.kura.log.filesystem.provider;
 
 import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,9 +29,7 @@ import java.util.Map;
 
 import org.eclipse.kura.log.LogEntry;
 import org.eclipse.kura.log.listener.LogListener;
-
 import org.junit.Test;
-import org.mockito.Matchers;
 
 public class FilesystemLogProviderTest {
 
@@ -242,8 +241,7 @@ public class FilesystemLogProviderTest {
 
     private void whenUnregisteringLogListeners() {
         for (LogListener listener : this.listeners) {
-            verify(listener, timeout(LISTENER_CALL_TIMEOUT).times(this.nLogLines))
-                    .newLogEntry(Matchers.any(LogEntry.class));
+            verify(listener, timeout(LISTENER_CALL_TIMEOUT).times(this.nLogLines)).newLogEntry(any(LogEntry.class));
         }
 
         for (LogListener listener : this.listeners) {
@@ -261,7 +259,7 @@ public class FilesystemLogProviderTest {
 
     private void thenListenersAreNotCalled() {
         for (LogListener listener : this.listeners) {
-            verifyZeroInteractions(listener);
+            verifyNoInteractions(listener);
         }
     }
 
@@ -275,7 +273,7 @@ public class FilesystemLogProviderTest {
 
     private void waitUntilListenersAreNotified(int times) {
         for (LogListener listener : this.listeners) {
-            verify(listener, timeout(LISTENER_CALL_TIMEOUT).times(times)).newLogEntry(Matchers.any(LogEntry.class));
+            verify(listener, timeout(LISTENER_CALL_TIMEOUT).times(times)).newLogEntry(any(LogEntry.class));
         }
     }
 }

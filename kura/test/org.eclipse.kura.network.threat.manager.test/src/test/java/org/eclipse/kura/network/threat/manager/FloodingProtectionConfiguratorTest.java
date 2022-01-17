@@ -16,10 +16,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Matchers.anyObject;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,7 +29,6 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.internal.floodingprotection.FloodingProtectionConfigurator;
 import org.eclipse.kura.net.admin.FirewallConfigurationService;
-import org.eclipse.kura.security.FloodingProtectionConfigurationChangeEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.component.ComponentContext;
@@ -99,25 +98,25 @@ public class FloodingProtectionConfiguratorTest {
         assertTrue(this.floodingProtectionConfigurator.getFloodingProtectionMangleRules()
                 .containsAll(Arrays.asList(FLOODING_PROTECTION_MANGLE_RULES)));
     }
-    
+
     @Test(expected = NullPointerException.class)
     public void addFloodingRulesTest() {
         this.floodingProtectionConfigurator = new FloodingProtectionConfigurator();
         this.floodingProtectionConfigurator.setFirewallConfigurationService(mockFirewallService);
-        
+
         ComponentContext mockContext = mock(ComponentContext.class);
         this.properties.put("flooding.protection.enabled", false);
         this.floodingProtectionConfigurator.activate(mockContext, this.properties);
-        
+
         this.properties.put("flooding.protection.enabled", true);
         this.floodingProtectionConfigurator.updated(this.properties);
-        
-        verify(this.mockFirewallService, times(2)).addFloodingProtectionRules(anyObject());
-        
+
+        verify(this.mockFirewallService, times(2)).addFloodingProtectionRules(any());
+
         this.floodingProtectionConfigurator.deactivate(mockContext);
-        
+
         this.floodingProtectionConfigurator.unsetFirewallConfigurationService(mockFirewallService);
-        
+
         this.floodingProtectionConfigurator.updated(this.properties);
     }
 }

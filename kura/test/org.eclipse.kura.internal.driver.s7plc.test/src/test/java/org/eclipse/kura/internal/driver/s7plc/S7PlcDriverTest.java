@@ -236,7 +236,7 @@ public class S7PlcDriverTest {
     public void testGetTaskFactoryForDomain() {
         S7PlcDriver svc = new S7PlcDriver();
 
-        S7PlcDomain domain = new S7PlcDomain(3);
+        S7PlcDomain domain = new S7PlcDomain(3, 1);
         Mode mode = Mode.READ;
         BlockFactory<ToplevelBlockTask> factory = svc.getTaskFactoryForDomain(domain, mode);
 
@@ -303,7 +303,7 @@ public class S7PlcDriverTest {
 
         BlockTask task = mock(BlockTask.class);
         doAnswer(invocation -> {
-            svc.read(db, offset, data);
+            svc.read(S7.S7AreaDB, db, offset, data);
             return null;
         }).when(task).run();
 
@@ -331,7 +331,7 @@ public class S7PlcDriverTest {
 
         svc.connect();
 
-        svc.write(db, offset, data);
+        svc.write(S7.S7AreaDB, db, offset, data);
 
         verify(s7Mock, times(1)).WriteArea(S7.S7AreaDB, db, offset, data.length, data);
     }

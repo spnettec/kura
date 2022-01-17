@@ -14,7 +14,10 @@ package org.eclipse.kura.internal.wire;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,7 +40,6 @@ import org.eclipse.kura.wire.graph.WireComponentConfiguration;
 import org.eclipse.kura.wire.graph.WireGraphConfiguration;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.wireadmin.Wire;
@@ -147,10 +149,10 @@ public class WireGraphServiceImplTest {
 
         assertEquals(1, arguments.size());
 
-        verify(configurationService, times(0)).deleteFactoryConfiguration(Matchers.anyString(), eq(false));
-        verify(configurationService, times(2)).createFactoryConfiguration(Matchers.anyString(), Matchers.anyString(),
-                Matchers.anyMap(), eq(false));
-        verify(configurationService, times(1)).updateConfigurations(Matchers.anyList(), eq(true));
+        verify(configurationService, times(0)).deleteFactoryConfiguration(anyString(), eq(false));
+        verify(configurationService, times(2)).createFactoryConfiguration(anyString(), anyString(), anyMap(),
+                eq(false));
+        verify(configurationService, times(1)).updateConfigurations(anyList(), eq(true));
 
         for (ComponentConfiguration componentConfiguration : arguments) {
             if (componentConfiguration.getPid().equals(WIRE_SERVICE_PID)) {

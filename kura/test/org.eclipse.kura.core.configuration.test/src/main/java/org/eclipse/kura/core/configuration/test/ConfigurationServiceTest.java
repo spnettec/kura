@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -55,7 +55,6 @@ import org.eclipse.kura.system.SystemService;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.osgi.framework.BundleContext;
@@ -183,7 +182,7 @@ public class ConfigurationServiceTest {
     private static void resetMocks(final CSValidator validator) throws KuraException {
         reset(csMock);
 
-        when(csMock.encryptAes((char[]) Matchers.anyObject())).thenAnswer(new Answer<char[]>() {
+        when(csMock.encryptAes((char[]) any())).thenAnswer(new Answer<char[]>() {
 
             @Override
             public char[] answer(InvocationOnMock invocation) throws Throwable {
@@ -193,7 +192,7 @@ public class ConfigurationServiceTest {
             }
 
         });
-        when(csMock.decryptAes((char[]) Matchers.anyObject())).thenAnswer(new Answer<char[]>() {
+        when(csMock.decryptAes((char[]) any())).thenAnswer(new Answer<char[]>() {
 
             @Override
             public char[] answer(InvocationOnMock invocation) throws Throwable {
@@ -969,7 +968,7 @@ public class ConfigurationServiceTest {
         CryptoService cryptoServiceMock = mock(CryptoService.class);
         cs.setCryptoService(cryptoServiceMock);
 
-        when(cryptoServiceMock.decryptAes((char[]) anyObject())).thenReturn("dec".toCharArray());
+        when(cryptoServiceMock.decryptAes((char[]) any())).thenReturn("dec".toCharArray());
 
         // make updateConfigurationsInternal fail with NPE
         TestUtil.setFieldValue(cs, "allActivatedPids", null);
@@ -981,7 +980,7 @@ public class ConfigurationServiceTest {
             // OK
         }
 
-        verify(cryptoServiceMock, times(1)).decryptAes((char[]) anyObject());
+        verify(cryptoServiceMock, times(1)).decryptAes((char[]) any());
     }
 }
 

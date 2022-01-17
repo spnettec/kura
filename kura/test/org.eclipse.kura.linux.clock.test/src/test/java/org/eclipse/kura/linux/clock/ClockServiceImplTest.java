@@ -13,14 +13,12 @@
 package org.eclipse.kura.linux.clock;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eclipse.kura.KuraErrorCode;
-import org.eclipse.kura.KuraException;
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.core.linux.executor.LinuxExitStatus;
 import org.eclipse.kura.core.testutil.TestUtil;
@@ -83,7 +79,7 @@ public class ClockServiceImplTest {
     public void testActivateDeactivateChronyProvider() throws NoSuchFieldException {
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(anyObject())).thenReturn(status);
+        when(serviceMock.execute(any())).thenReturn(status);
 
         ClockServiceImpl clockService = new ClockServiceImpl();
         clockService.setExecutorService(serviceMock);
@@ -109,7 +105,7 @@ public class ClockServiceImplTest {
     public void testActivateDeactivateChronyProviderWithConfiguration() throws NoSuchFieldException, IOException {
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(anyObject())).thenReturn(status);
+        when(serviceMock.execute(any())).thenReturn(status);
 
         ClockServiceImpl clockService = new ClockServiceImpl();
         clockService.setExecutorService(serviceMock);
@@ -225,7 +221,7 @@ public class ClockServiceImplTest {
 
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(anyObject())).thenReturn(status);
+        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
 
@@ -248,7 +244,7 @@ public class ClockServiceImplTest {
 
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(1));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(anyObject())).thenReturn(status);
+        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
 
@@ -271,7 +267,7 @@ public class ClockServiceImplTest {
 
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(anyObject())).thenReturn(status);
+        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
 

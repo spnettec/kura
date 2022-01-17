@@ -17,8 +17,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -964,6 +964,7 @@ public class TiSensorTagTest {
         return testRead(cc2650, v14, id, null, rawValue, expected, method, assertion);
     }
 
+    @SuppressWarnings(value = { "checkstyle:ParameterNumber" })
     public <T> TiSensorTagBuilder testRead(boolean cc2650, boolean v14, String id, UUID uuid, String rawValue,
             T expected, String method, Assertion<T> assertion) throws Throwable {
 

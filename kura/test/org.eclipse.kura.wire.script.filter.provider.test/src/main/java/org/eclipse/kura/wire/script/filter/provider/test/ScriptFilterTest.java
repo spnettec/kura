@@ -14,7 +14,7 @@ package org.eclipse.kura.wire.script.filter.provider.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -106,7 +106,7 @@ public class ScriptFilterTest {
             assertEquals(2, envelope.getRecords().size());
 
             return null;
-        }).when(wire).update(anyObject());
+        }).when(wire).update(any());
 
         final Dictionary<String, Object> wireProperties = new Hashtable<>();
         wireProperties.put("emitter.port", 0);
@@ -138,7 +138,7 @@ public class ScriptFilterTest {
 
         filter.onWireReceive(wireEnvelope);
 
-        verify(wire, times(1)).update(anyObject());
+        verify(wire, times(1)).update(any());
     }
 
     protected void bindFilter(WireComponent filter) {

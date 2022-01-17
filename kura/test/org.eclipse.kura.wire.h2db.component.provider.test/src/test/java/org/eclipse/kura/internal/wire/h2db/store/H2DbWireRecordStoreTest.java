@@ -14,7 +14,7 @@ package org.eclipse.kura.internal.wire.h2db.store;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,11 +27,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.db.H2DbService;
-import org.eclipse.kura.internal.wire.h2db.common.H2DbServiceHelper;
 import org.eclipse.kura.type.BooleanValue;
 import org.eclipse.kura.type.ByteArrayValue;
 import org.eclipse.kura.type.DoubleValue;
@@ -66,8 +63,8 @@ public class H2DbWireRecordStoreTest {
 
     private H2DbService createMockH2DbService(final Connection connection) throws SQLException {
         final H2DbService dbServiceMock = mock(H2DbService.class);
-        when(dbServiceMock.withConnection(anyObject())).thenAnswer(invocation -> {
-            return invocation.getArgumentAt(0, H2DbService.ConnectionCallable.class).call(connection);
+        when(dbServiceMock.withConnection(any())).thenAnswer(invocation -> {
+            return invocation.getArgument(0, H2DbService.ConnectionCallable.class).call(connection);
         });
         when(dbServiceMock.getConnection()).thenReturn(connection);
         return dbServiceMock;
@@ -83,7 +80,7 @@ public class H2DbWireRecordStoreTest {
         H2DbService dbServiceMock = createMockH2DbService(connection);
 
         H2DbWireRecordStore store = new H2DbWireRecordStore();
-        
+
         WireHelperService whsMock = mock(WireHelperService.class);
         WireSupport wireSupportMock = mock(WireSupport.class);
         when(whsMock.newWireSupport(store, null)).thenReturn(wireSupportMock);
@@ -183,7 +180,7 @@ public class H2DbWireRecordStoreTest {
 
         // update the configuration
         store.updated(props);
-        
+
         // deinit
         store.deactivate(null);
         connection.prepareStatement("SHUTDOWN").execute();

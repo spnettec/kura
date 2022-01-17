@@ -14,7 +14,7 @@ package org.eclipse.kura.internal.driver.opcua;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,8 +38,9 @@ import org.eclipse.kura.driver.Driver.ConnectionException;
 import org.eclipse.kura.driver.PreparedRead;
 import org.eclipse.kura.type.DataType;
 import org.eclipse.kura.type.TypedValue;
+import org.eclipse.milo.opcua.sdk.client.AddressSpace;
 import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
-import org.eclipse.milo.opcua.sdk.client.api.AddressSpace;
+import org.eclipse.milo.opcua.stack.core.UaException;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
@@ -162,15 +163,20 @@ public class OpcUaDriverTest {
         AddressSpace asMock = mock(AddressSpace.class);
         when(clientMock.getAddressSpace()).thenReturn(asMock);
 
-        doAnswer(invocation -> {
-            NodeId nodeId = invocation.getArgumentAt(0, NodeId.class);
+        try {
+            doAnswer(invocation -> {
+                NodeId nodeId = invocation.getArgument(0, NodeId.class);
 
-            assertEquals(1, ((UInteger) nodeId.getIdentifier()).intValue());
-            assertEquals(1, nodeId.getNamespaceIndex().intValue());
-            assertEquals(IdType.Numeric, nodeId.getType());
+                assertEquals(1, ((UInteger) nodeId.getIdentifier()).intValue());
+                assertEquals(1, nodeId.getNamespaceIndex().intValue());
+                assertEquals(IdType.Numeric, nodeId.getType());
 
-            return null; // cause exception later on
-        }).when(asMock).createVariableNode(anyObject());
+                return null; // cause exception later on
+            }).when(asMock).getVariableNode(any());
+        } catch (UaException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         List<ChannelRecord> records = new ArrayList<>();
         ChannelRecord record = ChannelRecord.createReadRecord("ch1", DataType.BOOLEAN);
@@ -264,8 +270,7 @@ public class OpcUaDriverTest {
         CompletableFuture<ReadResponse> futureValue = mock(CompletableFuture.class);
         when(futureValue.get(1000, TimeUnit.MILLISECONDS)).thenReturn(response);
 
-        when(clientMock.read(Mockito.eq(0.0), Mockito.eq(TimestampsToReturn.Both), anyObject()))
-                .thenReturn(futureValue);
+        when(clientMock.read(Mockito.eq(0.0), Mockito.eq(TimestampsToReturn.Both), any())).thenReturn(futureValue);
     }
 
     @Test

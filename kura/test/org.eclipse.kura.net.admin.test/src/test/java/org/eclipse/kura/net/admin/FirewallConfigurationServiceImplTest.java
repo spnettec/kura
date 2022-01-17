@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
@@ -44,7 +43,6 @@ import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IPAddress;
 import org.eclipse.kura.net.NetProtocol;
 import org.eclipse.kura.net.NetworkPair;
-import org.eclipse.kura.net.admin.event.FirewallConfigurationChangeEvent;
 import org.eclipse.kura.net.firewall.FirewallAutoNatConfig;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP;
@@ -370,7 +368,7 @@ public class FirewallConfigurationServiceImplTest {
 
         svc.updated(properties);
 
-        verify(eventAdminMock, times(1)).postEvent(anyObject());
+        verify(eventAdminMock, times(1)).postEvent(any());
 
         for (int i = 0; i < called.length; i++) {
             assertTrue("Expected call " + i, called[i]);
@@ -477,7 +475,7 @@ public class FirewallConfigurationServiceImplTest {
 
         svc.updated(properties);
 
-        verify(eventAdminMock, times(1)).postEvent(anyObject());
+        verify(eventAdminMock, times(1)).postEvent(any());
 
         for (int i = 0; i < called.length; i++) {
             assertTrue("Expected call " + i, called[i]);
@@ -511,18 +509,18 @@ public class FirewallConfigurationServiceImplTest {
         svc.setFirewallOpenPortConfiguration(firewallConfiguration);
 
     }
-    
+
     @Test
     public void addFloodingProtectionRulesTest() {
         final LinuxFirewall mockFirewall = mock(LinuxFirewall.class);
-        
+
         FirewallConfigurationServiceImpl svc = new FirewallConfigurationServiceImpl() {
-            
+
             @Override
             protected LinuxFirewall getLinuxFirewall() {
                 return mockFirewall;
             }
-            
+
             @Override
             public synchronized void updated(Map<String, Object> properties) {
                 // don't care about the properties in this test
@@ -530,12 +528,11 @@ public class FirewallConfigurationServiceImplTest {
                 // it is called just during activate
             }
         };
-        
+
         ComponentContext mockContext = mock(ComponentContext.class);
         svc.activate(mockContext, new HashMap<String, Object>());
-        
-        String[] floodingRules = {
-                "-A prerouting-kura -m conntrack --ctstate INVALID -j DROP",
+
+        String[] floodingRules = { "-A prerouting-kura -m conntrack --ctstate INVALID -j DROP",
                 "-A prerouting-kura -p tcp ! --syn -m conntrack --ctstate NEW -j DROP",
                 "-A prerouting-kura -p tcp -m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 -j DROP",
                 "-A prerouting-kura -p tcp --tcp-flags FIN,SYN FIN,SYN -j DROP",
@@ -551,13 +548,13 @@ public class FirewallConfigurationServiceImplTest {
                 "-A prerouting-kura -p tcp --tcp-flags ALL SYN,FIN,PSH,URG -j DROP",
                 "-A prerouting-kura -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP",
                 "-A prerouting-kura -p icmp -j DROP", "-A prerouting-kura -f -j DROP" };
-        
+
         svc.addFloodingProtectionRules(new HashSet<>(Arrays.asList(floodingRules)));
-        
+
         try {
-            verify(mockFirewall, times(1)).setAdditionalRules(anyObject(), anyObject(), anyObject());
-        } catch(KuraException e) {
-            assert(false);
+            verify(mockFirewall, times(1)).setAdditionalRules(any(), any(), any());
+        } catch (KuraException e) {
+            assert (false);
         }
     }
 
