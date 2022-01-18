@@ -94,7 +94,7 @@
                 <esf:value>false</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="net.interface.enp2s0.config.nat.enabled" type="Boolean">
-                <esf:value>true</esf:value>
+                <esf:value>false</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="net.interface.enp2s0.config.dhcpServer4.defaultLeaseTime" type="Integer">
                 <esf:value>7200</esf:value>
@@ -169,7 +169,7 @@
                 <esf:value>8</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="net.interface.enp3s0.config.dhcpClient4.enabled" type="Boolean">
-                <esf:value>false</esf:value>
+                <esf:value>true</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="net.interface.lo.loopback" type="Boolean">
                 <esf:value>true</esf:value>
