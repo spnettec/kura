@@ -19,5 +19,6 @@
    <service>
       <provide interface="org.eclipse.kura.cloudconnection.factory.CloudConnectionFactory"/>
    </service>
+   <property name="kura.ui.csf.pid.default" type="String" value="org.eclipse.kura.cloudconnection.raw.mqtt.CloudEndpoint"/>
    <property name="service.pid" type="String" value="org.eclipse.kura.cloudconnection.raw.mqtt.factory.RawMqttCloudConnectionFactory"/>
 </scr:component>
