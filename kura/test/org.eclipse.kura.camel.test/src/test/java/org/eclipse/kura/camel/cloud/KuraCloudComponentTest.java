@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,20 +42,22 @@ public class KuraCloudComponentTest {
     public void testDoStartNoRegistry() {
         final CamelContext ctxMock = mock(CamelContext.class);
 
-        KuraCloudComponent kcc = new KuraCloudComponent() {
+        try (KuraCloudComponent kcc = new KuraCloudComponent() {
 
             @Override
             public CamelContext getCamelContext() {
                 return ctxMock;
             }
-        };
-
-        try {
-            kcc.doStart();
-            fail("Exception was expected.");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Registry cannot be null.", e.getMessage());
-        } catch (Exception e) {
+        }) {
+            try {
+                kcc.doStart();
+                fail("Exception was expected.");
+            } catch (IllegalArgumentException e) {
+                assertEquals("Registry cannot be null.", e.getMessage());
+            } catch (Exception e) {
+                fail("This exception was not expected.");
+            }
+        } catch (IOException e1) {
             fail("This exception was not expected.");
         }
     }
@@ -128,34 +131,35 @@ public class KuraCloudComponentTest {
 
     @Test
     public void testCreateEndpointWrongRem() throws Exception {
-        KuraCloudComponent kcc = new KuraCloudComponent();
+        try (KuraCloudComponent kcc = new KuraCloudComponent()) {
+            String uri = "uri";
+            String remain = "remain";
+            Map<String, Object> parameters = new HashMap<String, Object>();
 
-        String uri = "uri";
-        String remain = "remain";
-        Map<String, Object> parameters = new HashMap<String, Object>();
-
-        try {
-            kcc.createEndpoint(uri, remain, parameters);
-            fail("Exception was expected.");
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().startsWith("Wrong kura-cloud URI format"));
+            try {
+                kcc.createEndpoint(uri, remain, parameters);
+                fail("Exception was expected.");
+            } catch (IllegalArgumentException e) {
+                assertTrue(e.getMessage().startsWith("Wrong kura-cloud URI format"));
+            }
         }
     }
 
     @Test
     public void testCreateEndpoint() throws Exception {
-        KuraCloudComponent kcc = new KuraCloudComponent();
-        final CamelContext ctxMock = mock(CamelContext.class);
-        kcc.setCamelContext(ctxMock);
+        try (KuraCloudComponent kcc = new KuraCloudComponent()) {
+            final CamelContext ctxMock = mock(CamelContext.class);
+            kcc.setCamelContext(ctxMock);
 
-        String uri = "uri";
-        String remain = "app/topic";
-        Map<String, Object> parameters = new HashMap<String, Object>();
+            String uri = "uri";
+            String remain = "app/topic";
+            Map<String, Object> parameters = new HashMap<String, Object>();
 
-        Endpoint endpoint = kcc.createEndpoint(uri, remain, parameters);
+            Endpoint endpoint = kcc.createEndpoint(uri, remain, parameters);
 
-        assertNotNull(endpoint);
-        assertEquals(uri, endpoint.getEndpointUri());
+            assertNotNull(endpoint);
+            assertEquals(uri, endpoint.getEndpointUri());
+        }
     }
 
 }
