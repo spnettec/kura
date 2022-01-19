@@ -58,14 +58,14 @@
 	        </b:Row>
 	        
 	        <b:Row addStyleNames="panel-footer">
-	            <gwt:FormPanel ui:field="logForm">
+	            <b:Form ui:field="logForm">
 	                <b:FieldSet>
 	                    <b:ButtonGroup pull="LEFT">
 	                    	<b:Button ui:field="execute" addStyleNames="fa fa-download" text="{msgs.download}"/>
 	                    	<b:FormLabel ui:field="logLabel" addStyleNames="{style.download-label-text}" />
 	                    </b:ButtonGroup>
 	                </b:FieldSet>
-	            </gwt:FormPanel>
+	            </b:Form>
 	        </b:Row>
         
         </b:Column>
