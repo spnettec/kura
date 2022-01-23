@@ -376,14 +376,13 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void initSystemPanel(GwtSession gwtSession) {
-        final EntryClassUi instanceReference = this;
         if (!gwtSession.isNetAdminAvailable()
                 || !this.userData.checkPermissions(Collections.singleton(KuraPermission.NETWORK_ADMIN))) {
             this.network.setVisible(false);
             this.firewall.setVisible(false);
         }
 
-        initStatusPanel(instanceReference);
+        initStatusPanel();
 
         initDevicePanel();
 
@@ -622,7 +621,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         });
     }
 
-    private void initStatusPanel(final EntryClassUi instanceReference) {
+    private void initStatusPanel() {
         if (!this.userData.checkPermission(KuraPermission.DEVICE)) {
             this.status.setVisible(false);
             return;
@@ -857,13 +856,14 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void confirmIfUiDirty(final Runnable action) {
-        this.wiresBinder.unload();
         if (isUiDirty()) {
             this.alertDialog.show(MSGS.deviceConfigDirty(), () -> {
                 forceTabsCleaning();
+                EntryClassUi.this.wiresBinder.unload();
                 action.run();
             });
         } else {
+            this.wiresBinder.unload();
             action.run();
         }
     }
@@ -997,7 +997,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         }
         if (this.wires.isVisible()) {
             this.wiresBinder.clearDirtyState();
-            this.wiresBinder.unload();
         }
         if (this.users.isVisible()) {
             this.usersBinder.setDirty(false);
