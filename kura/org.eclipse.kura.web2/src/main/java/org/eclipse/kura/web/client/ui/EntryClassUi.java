@@ -418,7 +418,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.driversAndAssetsServices);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.driversAndAssetsServices(), null);
@@ -440,7 +439,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.wires);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.wires(), null);
@@ -462,7 +460,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.cloudServices);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.cloudServices(), null);
@@ -485,7 +482,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.settings);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.settings(), null);
@@ -512,7 +508,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.security);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.security(), null);
@@ -535,7 +530,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.users);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.users(), null);
@@ -557,7 +551,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.packages);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.packages(), null);
@@ -577,7 +570,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                     return;
                 }
                 confirmIfUiDirty(() -> {
-                    this.wiresBinder.unload();
                     EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.firewall);
                     EntryClassUi.this.contentPanel.setVisible(true);
                     setHeader(MSGS.firewall(), null);
@@ -596,7 +588,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                     return;
                 }
                 confirmIfUiDirty(() -> {
-                    this.wiresBinder.unload();
                     EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.network);
                     EntryClassUi.this.contentPanel.setVisible(true);
                     setHeader(MSGS.network(), null);
@@ -620,7 +611,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.device);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.device(), null);
@@ -643,7 +633,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 return;
             }
             confirmIfUiDirty(() -> {
-                this.wiresBinder.unload();
                 EntryClassUi.this.setSelectedAnchorListItem(EntryClassUi.this.status);
                 EntryClassUi.this.contentPanel.setVisible(true);
                 setHeader(MSGS.status(), null);
@@ -868,6 +857,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     public void confirmIfUiDirty(final Runnable action) {
+        this.wiresBinder.unload();
         if (isUiDirty()) {
             this.alertDialog.show(MSGS.deviceConfigDirty(), () -> {
                 forceTabsCleaning();
@@ -1092,7 +1082,6 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         }
 
         item.addClickHandler(evt -> confirmIfUiDirty(() -> {
-            this.wiresBinder.unload();
             EntryClassUi.this.contentPanelBody.clear();
 
             forceTabsCleaning();
