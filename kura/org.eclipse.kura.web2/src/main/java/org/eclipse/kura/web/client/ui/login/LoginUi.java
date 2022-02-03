@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2022 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -22,12 +22,19 @@ import java.util.function.Consumer;
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.ui.AlertDialog;
 import org.eclipse.kura.web.client.ui.AlertDialog.ConfirmListener;
+import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
+import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
 import org.eclipse.kura.web.shared.model.GwtLoginInfo;
+import org.eclipse.kura.web.shared.model.GwtPasswordAuthenticationResult;
 import org.eclipse.kura.web.shared.service.GwtLoginInfoService;
 import org.eclipse.kura.web.shared.service.GwtLoginInfoServiceAsync;
 import org.eclipse.kura.web.shared.service.GwtPasswordAuthenticationService;
 import org.eclipse.kura.web.shared.service.GwtPasswordAuthenticationServiceAsync;
+import org.eclipse.kura.web.shared.service.GwtSecurityTokenService;
+import org.eclipse.kura.web.shared.service.GwtSecurityTokenServiceAsync;
+import org.eclipse.kura.web.shared.service.GwtSessionService;
+import org.eclipse.kura.web.shared.service.GwtSessionServiceAsync;
 import org.eclipse.kura.web2.ext.AlertSeverity;
 import org.eclipse.kura.web2.ext.AuthenticationHandler;
 import org.eclipse.kura.web2.ext.Context;
@@ -62,6 +69,7 @@ import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class LoginUi extends Composite implements Context {
@@ -72,6 +80,8 @@ public class LoginUi extends Composite implements Context {
     private static final Messages MSGS = GWT.create(Messages.class);
 
     private final GwtLoginInfoServiceAsync gwtLoginInfoService = GWT.create(GwtLoginInfoService.class);
+    private final GwtSessionServiceAsync gwtSessionService = GWT.create(GwtSessionService.class);
+    private final GwtSecurityTokenServiceAsync gwtXsrfService = GWT.create(GwtSecurityTokenService.class);
 
     interface LoginUiBinder extends UiBinder<Widget, LoginUi> {
     }
@@ -310,7 +320,9 @@ public class LoginUi extends Composite implements Context {
             @Override
             public void onFailure(String reason) {
                 LoginUi.this.waitModal.hide();
-                LoginUi.this.alertDialog.show(reason, AlertDialog.Severity.ALERT, (ConfirmListener) null);
+                if (reason != null) {
+                    LoginUi.this.alertDialog.show(reason, AlertDialog.Severity.ALERT, (ConfirmListener) null);
+                }
             }
 
             @Override
@@ -337,11 +349,13 @@ public class LoginUi extends Composite implements Context {
         private final InputGroup passwordGroup = new InputGroup();
         private final Input passwordInput = new Input();
 
+        private final PasswordChangeModal passwordChangeModal = new PasswordChangeModal();
+
         public PasswordAuthenticationHandler() {
 
             this.usernameGroup.addStyleName("login-input");
 
-            this.usernameInput.setPlaceholder(MSGS.usernameInput());
+            this.usernameInput.setPlaceholder(MSGS.loginUsernameFieldLabel());
             this.usernameInput.setType(InputType.TEXT);
             this.usernameInput.setAutoComplete(false);
             this.usernameInput.setId("login-user");
@@ -356,7 +370,7 @@ public class LoginUi extends Composite implements Context {
 
             this.passwordGroup.addStyleName("login-input");
 
-            this.passwordInput.setPlaceholder(MSGS.passwordInput());
+            this.passwordInput.setPlaceholder(MSGS.loginPasswordFieldLabel());
             this.passwordInput.setType(InputType.PASSWORD);
             this.passwordInput.setAutoComplete(false);
             this.passwordInput.setId("login-password");
@@ -371,6 +385,8 @@ public class LoginUi extends Composite implements Context {
 
             this.group.add(usernameGroup);
             this.group.add(passwordGroup);
+
+            RootPanel.get().add(passwordChangeModal);
         }
 
         @Override
@@ -389,20 +405,35 @@ public class LoginUi extends Composite implements Context {
         @Override
         public void authenticate(final Callback<String, String> callback) {
             LoginUi.this.pwdAutenticationService.authenticate(this.usernameInput.getValue(),
-                    this.passwordInput.getValue(), new AsyncCallback<String>() {
+                    this.passwordInput.getValue(), new AsyncCallback<GwtPasswordAuthenticationResult>() {
 
                         @Override
-                        public void onSuccess(final String redirectPath) {
-                            callback.onSuccess(redirectPath);
+                        public void onSuccess(final GwtPasswordAuthenticationResult result) {
+                            if (!result.isPasswordUpdateRequired()) {
+                                callback.onSuccess(result.redirectPath());
+                            }
+
+                            changePassword(ok -> callback.onSuccess(result.redirectPath()), e -> {
+                                final String message;
+
+                                if ((e instanceof GwtKuraException) && ((GwtKuraException) e)
+                                        .getCode() == GwtKuraErrorCode.PASSWORD_CHANGE_SAME_PASSWORD) {
+                                    message = MSGS.loginPasswordChangeSame();
+                                } else {
+                                    message = MSGS.loginInternalError();
+                                }
+
+                                callback.onFailure(message);
+                            });
                         }
 
                         @Override
                         public void onFailure(final Throwable caught) {
 
                             if (caught instanceof GwtKuraException) {
-                                callback.onFailure(MSGS.loginfailureauth());
+                                callback.onFailure(MSGS.loginWrongCredentials());
                             } else {
-                                callback.onFailure(MSGS.loginfailuredevice());
+                                callback.onFailure(MSGS.loginDeviceUnreachable());
                             }
                         }
                     });
@@ -411,9 +442,49 @@ public class LoginUi extends Composite implements Context {
 
         @Override
         public String getLabel() {
-            return MSGS.authPassword();
+            return MSGS.loginPasswordAuthMethod();
         }
 
+        private void getGwtConsoleUserOptions(final Consumer<GwtConsoleUserOptions> onSuccess,
+                final Consumer<Throwable> onFailure) {
+            gwtXsrfService.generateSecurityToken(asyncCallback(
+                    token -> gwtSessionService.getUserOptions(token, asyncCallback(onSuccess, onFailure)), onFailure));
+        }
+
+        private void setNewPassword(final String newPassword, final Consumer<Void> onSuccess,
+                final Consumer<Throwable> onFailure) {
+            gwtXsrfService.generateSecurityToken(asyncCallback(
+                    token -> gwtSessionService.updatePassword(newPassword, asyncCallback(onSuccess, onFailure)),
+                    onFailure));
+
+        }
+
+        private void changePassword(final Consumer<Void> onSuccess, final Consumer<Throwable> onFailure) {
+
+            getGwtConsoleUserOptions(options -> this.passwordChangeModal.pickPassword(options,
+                    p -> setNewPassword(p, onSuccess, onFailure)), onFailure);
+        }
+
+        private <T> AsyncCallback<T> asyncCallback(final Consumer<T> onSuccess, final Consumer<Throwable> onFailure) {
+
+            final Callback<Void, String> longRunningOpCallback = startLongRunningOperation();
+
+            return new AsyncCallback<T>() {
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    longRunningOpCallback.onFailure(null);
+                    onFailure.accept(caught);
+                }
+
+                @Override
+                public void onSuccess(T result) {
+                    longRunningOpCallback.onSuccess(null);
+                    onSuccess.accept(result);
+                }
+            };
+
+        }
     }
 
     private class CertificateAuthenticationHandler implements AuthenticationHandler {
@@ -433,7 +504,7 @@ public class LoginUi extends Composite implements Context {
         public WidgetFactory getLoginDialogElement() {
             return () -> {
                 final Paragraph paragraph = new Paragraph();
-                paragraph.setText(MSGS.authCertificateTip());
+                paragraph.setText(MSGS.loginCertificateDescription());
                 return paragraph;
             };
         }
@@ -446,7 +517,7 @@ public class LoginUi extends Composite implements Context {
 
         @Override
         public String getLabel() {
-            return MSGS.authCertificate();
+            return MSGS.loginCertificateAuthMethod();
         }
 
     }
