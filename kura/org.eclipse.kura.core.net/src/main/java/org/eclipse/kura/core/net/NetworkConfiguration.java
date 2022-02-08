@@ -840,8 +840,8 @@ public class NetworkConfiguration {
             ModemInterfaceAddressConfig modemInterfaceAddressConfig = new ModemInterfaceAddressConfigImpl();
             List<NetConfig> modemNetConfigs = IpConfigurationInterpreter.populateConfiguration(props, interfaceName,
                     modemInterfaceAddressConfig.getAddress(), interfaceConfig.isVirtual());
-            modemNetConfigs.addAll(ModemConfigurationInterpreter.populateConfiguration(modemInterfaceAddressConfig,
-                    props, interfaceName, ((ModemInterfaceConfigImpl) interfaceConfig).getPppNum()));
+            modemNetConfigs.addAll(ModemConfigurationInterpreter.populateConfiguration(
+                    modemInterfaceAddressConfig, props, interfaceName, ((ModemInterfaceConfigImpl) interfaceConfig).getPppNum()));
             ((ModemInterfaceAddressConfigImpl) modemInterfaceAddressConfig).setNetConfigs(modemNetConfigs);
 
             List<ModemInterfaceAddressConfig> modemInterfaceAddressConfigs = new ArrayList<>();
