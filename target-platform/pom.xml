@@ -62,6 +62,15 @@
             <name>Kura Repository - Snapshots</name>
             <url>https://repo.eclipse.org/content/repositories/kura-snapshots/</url>
         </repository>
+        <repository>
+            <id>kura_addons</id>
+            <name>Kura Addons Maven Repository</name>
+            <url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
     </repositories>
 
     <distributionManagement>

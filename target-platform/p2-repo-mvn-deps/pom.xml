@@ -140,6 +140,11 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
+              <artifact>
+                  <id>com.eurotech:gpsd4java:${com.eurotech.gpsd4java.version}</id>
+                  <source>true</source>
+                  <transitive>false</transitive>
+              </artifact>
                                 
                 <!-- <artifact><source>true</source><id>jakarta.jws:jakarta.jws-api:jar:${jakarta.jws-api.version}</id></artifact>-->
                 
