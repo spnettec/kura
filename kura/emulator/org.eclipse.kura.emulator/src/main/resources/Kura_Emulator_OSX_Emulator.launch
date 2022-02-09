@@ -129,6 +129,7 @@
         <setEntry value="org.eclipse.kura.test"/>
         <setEntry value="org.eclipse.kura.useradmin.store.test"/>
         <setEntry value="org.eclipse.kura.util.test"/>
+        <setEntry value="org.eclipse.kura.util.test.driver"/>
         <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
