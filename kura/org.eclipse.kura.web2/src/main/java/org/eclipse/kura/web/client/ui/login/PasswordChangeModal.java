@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.ui.validator.GwtValidators;
 import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
 import org.gwtbootstrap3.client.ui.Button;
@@ -41,6 +42,7 @@ public class PasswordChangeModal extends Composite {
     }
 
     private static final PasswordChangeModalUiBinder uiBinder = GWT.create(PasswordChangeModalUiBinder.class);
+    private static final Messages MSGS = GWT.create(Messages.class);
 
     @UiField
     Modal passwordChangeModal;
@@ -68,7 +70,7 @@ public class PasswordChangeModal extends Composite {
             @Override
             public List<EditorError> validate(final Editor<String> editor, final String value) {
                 if (!Objects.equals(value, newPassword.getValue())) {
-                    return Collections.singletonList(new BasicEditorError(editor, value, "passwords do not match"));
+                    return Collections.singletonList(new BasicEditorError(editor, value, MSGS.usersPasswordMismatch()));
                 }
                 return Collections.emptyList();
             }

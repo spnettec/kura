@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
-#  Copyright (c) 2016, 2020 Red Hat Inc and others
+#  Copyright (c) 2011, 2022 Eurotech and/or its affiliates and others
 #
 #  This program and the accompanying materials are made
 #  available under the terms of the Eclipse Public License 2.0
@@ -9,10 +9,8 @@
 #  SPDX-License-Identifier: EPL-2.0
 #
 #  Contributors:
-#   Red Hat Inc
+#   Eurotech
 #
-
-set -e
 
 INSTALL_DIR=/opt/eclipse
 
