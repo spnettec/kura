@@ -60,6 +60,8 @@ import org.eclipse.kura.net.admin.event.NetworkConfigurationChangeEvent;
 import org.eclipse.kura.net.admin.monitor.InterfaceStateBuilder;
 import org.eclipse.kura.net.admin.monitor.WifiInterfaceState;
 import org.eclipse.kura.net.admin.visitor.linux.WpaSupplicantConfigWriter;
+import org.eclipse.kura.linux.net.util.DhcpLeaseTool;
+import org.eclipse.kura.net.dhcp.DhcpLease;
 import org.eclipse.kura.net.dhcp.DhcpServerConfigIP4;
 import org.eclipse.kura.net.firewall.FirewallAutoNatConfig;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
@@ -1570,5 +1572,9 @@ public class NetworkAdminServiceImpl implements NetworkAdminService, EventHandle
     @Override
     public boolean isWifiIEEE80211AC(String ifaceName) throws KuraException {
         return IwCapabilityTool.probeCapabilities(ifaceName, executorService).contains(Capability.VHT);
+    }
+
+    public List<DhcpLease> getDhcpLeases() throws KuraException {
+        return DhcpLeaseTool.probeLeases(this.executorService);
     }
 }
