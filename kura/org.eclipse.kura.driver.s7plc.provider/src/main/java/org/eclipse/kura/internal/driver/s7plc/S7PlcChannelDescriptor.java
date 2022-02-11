@@ -39,7 +39,7 @@ public final class S7PlcChannelDescriptor implements ChannelDescriptor {
     public static final String S7_ELEMENT_TYPE_ID = "s7.data.type";
     public static final String DATA_BLOCK_NO_ID = "data.block.no";
     public static final String BYTE_COUNT_ID = "byte.count";
-    public static final String OFFSET_ID = "offset";
+    public static final String OFFSET_ID = "byte.offset";
     public static final String BIT_INDEX_ID = "bit.index";
 
     private Toption generateOption(S7PlcDataType type) {
