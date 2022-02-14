@@ -63,8 +63,6 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private Optional<ScheduledFuture<?>> storeTask = Optional.empty();
 
-    private Object roleLock = new Object();
-
     public void setConfigurationService(final ConfigurationService configurationService) {
         this.configurationService = configurationService;
     }
@@ -152,10 +150,8 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
     }
 
     @Override
-    public Role getRoleByName(final String name) throws Exception {
-        synchronized (this.roleLock) {
-            return this.roles.get(name);
-        }
+    public synchronized Role getRoleByName(final String name) throws Exception {
+        return this.roles.get(name);
     }
 
     @Override
