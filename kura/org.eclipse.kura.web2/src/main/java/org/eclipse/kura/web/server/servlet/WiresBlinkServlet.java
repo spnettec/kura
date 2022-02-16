@@ -274,7 +274,9 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
             try {
                 this.outputStream.close();
             } catch (Exception e) {
-                logger.warn("failed to close stream", e);
+                if (!(e instanceof IOException)) {
+                    logger.warn("failed to close stream", e);
+                }
             }
 
             removeContext(this.requestId);
