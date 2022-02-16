@@ -28,6 +28,10 @@ import org.eclipse.kura.web.shared.service.GwtRestrictedComponentService;
 public class BaseGwtRestrictedComponentService extends OsgiRemoteServiceServlet
         implements GwtRestrictedComponentService {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 5238893603131998151L;
     private final Predicate<Set<String>> providedInterfacesFilter;
 
     public BaseGwtRestrictedComponentService(final Predicate<Set<String>> providedInterfacesFilter) {

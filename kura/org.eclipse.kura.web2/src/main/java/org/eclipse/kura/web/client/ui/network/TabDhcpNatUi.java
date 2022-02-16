@@ -22,15 +22,14 @@ import org.eclipse.kura.web.client.ui.AlertDialog.Severity;
 import org.eclipse.kura.web.client.util.FailureHandler;
 import org.eclipse.kura.web.client.util.HelpButton;
 import org.eclipse.kura.web.client.util.MessageUtils;
-import org.eclipse.kura.web.client.util.TextFieldValidator.FieldType;
 import org.eclipse.kura.web.shared.model.GwtConfigParameter;
+import org.eclipse.kura.web.shared.model.GwtConfigParameter.GwtConfigParameterType;
 import org.eclipse.kura.web.shared.model.GwtNetIfType;
 import org.eclipse.kura.web.shared.model.GwtNetInterfaceConfig;
 import org.eclipse.kura.web.shared.model.GwtNetRouterMode;
 import org.eclipse.kura.web.shared.model.GwtSession;
 import org.eclipse.kura.web.shared.model.GwtWifiConfig;
 import org.eclipse.kura.web.shared.model.GwtWifiWirelessMode;
-import org.eclipse.kura.web.shared.model.GwtConfigParameter.GwtConfigParameterType;
 import org.eclipse.kura.web.shared.model.GwtXSRFToken;
 import org.eclipse.kura.web.shared.service.GwtNetworkService;
 import org.eclipse.kura.web.shared.service.GwtNetworkServiceAsync;
@@ -50,11 +49,9 @@ import org.gwtbootstrap3.client.ui.constants.ValidationState;
 import org.gwtbootstrap3.client.ui.html.Span;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.editor.client.EditorError;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -535,17 +532,6 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.helpText.add(new Span(MSGS.netHelpDefaultHint()));
     }
 
-    private boolean isPositiveInteger(String value) {
-        try {
-            if (Integer.parseInt(value) > 0) {
-                return true;
-            }
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return false;
-    }
-
     private void checkDhcpRangeValidity() {
         if (!isDhcpRangeValid()) {
             TabDhcpNatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
@@ -666,21 +652,21 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
 
                 @Override
                 public void onSuccess(GwtXSRFToken token) {
-                    TabDhcpNatUi.this.gwtNetworkService.getDhcpLeases(token,
-                            new AsyncCallback<List<String>>() {
+                    TabDhcpNatUi.this.gwtNetworkService.getDhcpLeases(token, new AsyncCallback<List<String>>() {
 
-                                @Override
-                                public void onFailure(Throwable caught) {
-                                    System.out.println("DhcpLease Failure");
-                                }
-                                @Override
-                                public void onSuccess(List<String> leases) {
-                                    String values = "";
-                                    for (String dl : leases) {
-                                        values += dl.toString() + '\n';
-                                    }
-                                    TabDhcpNatUi.this.dhcpLease.setValue(values);
-                                }
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            System.out.println("DhcpLease Failure");
+                        }
+
+                        @Override
+                        public void onSuccess(List<String> leases) {
+                            String values = "";
+                            for (String dl : leases) {
+                                values += dl.toString() + '\n';
+                            }
+                            TabDhcpNatUi.this.dhcpLease.setValue(values);
+                        }
                     });
                 }
             });
