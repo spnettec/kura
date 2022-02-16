@@ -436,7 +436,7 @@
                   <transitive>false</transitive>
               </artifact>   
               <artifact>
-                  <id>commons-io:commons-io:${org.apache.commons.io-mvn.version}</id>
+                  <id>commons-io:commons-io:${org.apache.commons.commons-io.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>    
@@ -957,7 +957,7 @@
                   <transitive>false</transitive>
               </artifact> 
               <artifact>
-                  <id>commons-net:commons-net:${org.apache.commons.net.version}</id>
+                  <id>commons-net:commons-net:${org.apache.commons.commons-net.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>  

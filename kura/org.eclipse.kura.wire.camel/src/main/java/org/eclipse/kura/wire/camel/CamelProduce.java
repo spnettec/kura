@@ -9,6 +9,7 @@
  * 
  * Contributors:
  *  Red Hat Inc
+ *  heyoulin <heyoulin@gmail.com>
  *******************************************************************************/
 package org.eclipse.kura.wire.camel;
 
@@ -68,6 +69,7 @@ public class CamelProduce extends AbstractReceiverWireComponent {
 
     private void createTemplate(final CamelContext context) {
         final Lock wlock = this.rwLock.writeLock();
+        wlock.lock();
         try {
             closeTemplate();
             template = on(context);
