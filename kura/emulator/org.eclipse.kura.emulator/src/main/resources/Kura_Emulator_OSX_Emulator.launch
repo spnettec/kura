@@ -19,6 +19,7 @@
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
+        <setEntry value="org.eclipse.kura.container.orchestration.provider.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory.test"/>
         <setEntry value="org.eclipse.kura.core.cloud.test"/>
@@ -284,11 +285,11 @@
         <setEntry value="org.apache.commons.commons-configuration2@default:default"/>
         <setEntry value="org.apache.commons.commons-csv@default:default"/>
         <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
+        <setEntry value="org.apache.commons.commons-io@default:default"/>
         <setEntry value="org.apache.commons.commons-net@default:default"/>
         <setEntry value="org.apache.commons.commons-pool2@default:default"/>
         <setEntry value="org.apache.commons.commons-text@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
-        <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.commons.pool@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
@@ -407,6 +408,7 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud@default:default"/>
