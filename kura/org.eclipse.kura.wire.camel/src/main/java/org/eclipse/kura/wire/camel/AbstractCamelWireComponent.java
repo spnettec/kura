@@ -92,12 +92,16 @@ public abstract class AbstractCamelWireComponent extends AbstractWireComponent {
     }
 
     protected void withContext(final Consumer<CamelContext> consumer) {
-        final CamelContext camelContext = this.tracker.getService();
-
-        if (camelContext != null) {
-            consumer.accept(camelContext);
+        if (this.tracker == null) {
+            logger.info("Camel tracker for context: {} is closed. skip processReceive massage", this.contextId);
         } else {
-            logger.warn("Missing Camel context: {}", this.contextId);
+            final CamelContext camelContext = this.tracker.getService();
+
+            if (camelContext != null) {
+                consumer.accept(camelContext);
+            } else {
+                logger.warn("Missing Camel context: {}", this.contextId);
+            }
         }
     }
 }

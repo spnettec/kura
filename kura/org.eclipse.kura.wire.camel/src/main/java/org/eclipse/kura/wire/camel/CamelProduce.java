@@ -50,6 +50,7 @@ public class CamelProduce extends AbstractReceiverWireComponent {
     protected void deactivate() {
         super.deactivate();
         final Lock wlock = this.rwLock.writeLock();
+        wlock.lock();
         try {
             closeTemplate();
         } finally {
