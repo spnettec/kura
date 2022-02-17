@@ -83,7 +83,7 @@ public class CamelProduce extends AbstractReceiverWireComponent {
         if (template != null) {
             try {
                 template.close();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             } finally {
                 template = null;
             }
