@@ -1501,6 +1501,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                	<skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_intel-up2-ubuntu-20-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/intel-up2-ubuntu-20-nn/deb/control</controlDir>
