@@ -15,68 +15,52 @@ package org.eclipse.kura.wire.camel;
 
 import static org.apache.camel.impl.engine.DefaultFluentProducerTemplate.on;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.apache.camel.CamelContext;
 import org.apache.camel.FluentProducerTemplate;
 import org.eclipse.kura.wire.WireEnvelope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CamelProduce extends AbstractReceiverWireComponent {
 
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock(true);
+    private static final Logger logger = LoggerFactory.getLogger(CamelProduce.class);
 
     private FluentProducerTemplate template = null;
 
-    private volatile boolean templateAvailable = false;
+    @Override
+    protected void bindContext(final CamelContext context) {
+
+        try {
+            closeTemplate();
+            if (context != null) {
+                this.template = on(context);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to bind Camel context", e);
+        }
+
+    }
 
     @Override
     protected void processReceive(final CamelContext context, final String endpointUri, final WireEnvelope envelope)
             throws Exception {
-
-        checkTemplate(context);
-
-        if (!templateAvailable) {
-            createTemplate(context);
+        if (template != null && context != null) {
+            try {
+                template //
+                        .withBody(envelope) //
+                        .to(endpointUri) //
+                        .asyncSend();
+            } catch (Exception e) {
+                logger.error("asyncSend error", e);
+            }
+        } else {
+            logger.debug("FluentProducerTemplate is changing. Skip send massage and wait next massage");
         }
-        template //
-                .withBody(envelope) //
-                .to(endpointUri) //
-                .asyncSend();
     }
 
     @Override
     protected void deactivate() {
-        super.deactivate();
-        final Lock wlock = this.rwLock.writeLock();
-        wlock.lock();
-        try {
-            closeTemplate();
-        } finally {
-            wlock.unlock();
-        }
-    }
-
-    private void checkTemplate(final CamelContext context) {
-        final Lock rlock = this.rwLock.readLock();
-        rlock.lock();
-        try {
-            templateAvailable = template != null && template.getCamelContext() == context;
-        } finally {
-            rlock.unlock();
-        }
-    }
-
-    private void createTemplate(final CamelContext context) {
-        final Lock wlock = this.rwLock.writeLock();
-        wlock.lock();
-        try {
-            closeTemplate();
-            template = on(context);
-        } finally {
-            wlock.unlock();
-        }
+        closeTemplate();
     }
 
     private void closeTemplate() {
@@ -89,5 +73,4 @@ public class CamelProduce extends AbstractReceiverWireComponent {
             }
         }
     }
-
 }
