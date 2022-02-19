@@ -245,6 +245,8 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             this.keystoreServiceOptions = new KeystoreServiceOptions(props, this.cryptoService);
 
             updatePasswordInConfigService(newPassword);
+            this.cryptoService.setKeyStorePassword(this.keystoreServiceOptions.getKeystorePath(),
+                    this.keystoreServiceOptions.getKeystorePassword(this.cryptoService));
         } catch (Exception e) {
             logger.warn("Keystore password change failed", e);
         }
