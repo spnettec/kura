@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2022 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -11,6 +11,7 @@
  *  Eurotech
  *  Amit Kumar Mondal
  *  Red Hat Inc
+ *  heyoulin <heyoulin@gmail.com>
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui;
 
@@ -858,8 +859,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     public void confirmIfUiDirty(final Runnable action) {
         if (isUiDirty()) {
             this.alertDialog.show(MSGS.deviceConfigDirty(), () -> {
-                forceTabsCleaning();
                 EntryClassUi.this.wiresBinder.unload();
+                forceTabsCleaning();
                 action.run();
             });
         } else {
