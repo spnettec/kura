@@ -46,12 +46,12 @@
         </AD>
         
         <AD id="postprocessor.model.name"
-        	name="postprocessor.model.name"
+        	name="%postProcessModelName"
         	type="String"
         	cardinality="0"
         	required="false"
         	default=""
-        	description="Specify the model name to be used as a postprocessing step. Leave empty to bypass this step.">
+        	description="%postProcessModelNameDesc">
         </AD>
         
     </OCD>
