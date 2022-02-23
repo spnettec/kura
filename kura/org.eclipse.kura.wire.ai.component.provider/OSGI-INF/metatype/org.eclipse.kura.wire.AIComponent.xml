@@ -13,36 +13,36 @@
      Eurotech
      
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/AIComponent">
     <OCD id="org.eclipse.kura.wire.AIComponent"
-         name="AI" 
-         description="A wire component that allows to interact with Inference Engines to perform machine learning.">
+         name="%name" 
+         description="%description">
          
         <AD id="InferenceEngineService.target"
-            name="InferenceEngineService Target Filter"
+            name="%interfaceEngName"
             type="String"
             cardinality="0"
             required="true"
             default="(kura.service.pid=changeme)"
-            description="Specifies, as an OSGi target filter, the pid of the of the AI Inference Engine instance to be used.">
+            description="%interfaceEngNameDesc">
         </AD>
         
         <AD id="preprocessor.model.name"
-        	name="preprocessor.model.name"
+        	name="%preProcessModelName"
         	type="String"
         	cardinality="0"
         	required="false"
         	default=""
-        	description="Specify the model name to be used as a preprocessing step. Leave empty to bypass this step.">
+        	description="%preProcessModelNameDesc">
         </AD>
         
         <AD id="inference.model.name"
-        	name="inference.model.name"
+        	name="%interfaceModelName"
         	type="String"
         	cardinality="0"
         	required="true"
         	default="model_name"
-        	description="Specify the model name to be used for the inference step.">
+        	description="%interfaceModelNameDesc">
         </AD>
         
         <AD id="postprocessor.model.name"
