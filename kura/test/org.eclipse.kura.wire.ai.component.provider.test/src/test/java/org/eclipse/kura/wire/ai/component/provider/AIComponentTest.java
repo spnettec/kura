@@ -12,12 +12,12 @@
  *******************************************************************************/
 package org.eclipse.kura.wire.ai.component.provider;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.any;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -178,6 +178,7 @@ public class AIComponentTest {
     private void givenInputEnvelope() {
         List<WireRecord> records = new ArrayList<>();
         Map<String, TypedValue<?>> recordProps = new HashMap<String, TypedValue<?>>() {
+
             private static final long serialVersionUID = 1L;
             {
                 put("IN_INT", TypedValues.newIntegerValue(10));
