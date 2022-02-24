@@ -305,17 +305,17 @@
                   <transitive>false</transitive>
                   <override>true</override>
                   <instructions>
-                      <Import-Package>org.apache.camel;version="[3.14,3.15)",org.apache.came
-									 l.attachment;version="[3.14,3.15)",org.apache.camel.cloud;version="[3
-									 .14,3.15)",org.apache.camel.converter.stream;version="[3.14,3.15)",or
-									 g.apache.camel.http.base;version="[3.14,3.15)",org.apache.camel.http.
-									 base.cookie;version="[3.14,3.15)",org.apache.camel.spi;version="[3.14
-									 ,3.15)",org.apache.camel.support;version="[3.14,3.15)",org.apache.cam
-									 el.util;version="[3.14,3.15)",javax.activation;version="[0,2)",javax.
+                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.came
+									 l.attachment;version="[3.14,3.16)",org.apache.camel.cloud;version="[3
+									 .14,3.16)",org.apache.camel.converter.stream;version="[3.14,3.16)",or
+									 g.apache.camel.http.base;version="[3.14,3.16)",org.apache.camel.http.
+									 base.cookie;version="[3.14,3.16)",org.apache.camel.spi;version="[3.14
+									 ,3.16)",org.apache.camel.support;version="[3.14,3.16)",org.apache.cam
+									 el.util;version="[3.14,3.16)",javax.activation;version="[0,2)",javax.
 									 servlet;version="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;
 									 version="[1.7,2)"
                       </Import-Package>
-                      <Export-Package>org.apache.camel.http.common;version="3.14.0";uses:="j
+                      <Export-Package>org.apache.camel.http.common;version="3.15.0";uses:="j
 									 avax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.clo
 									 ud,org.apache.camel.http.base,org.apache.camel.http.base.cookie,org.a
 									 pache.camel.spi,org.apache.camel.support,org.slf4j"
@@ -340,6 +340,186 @@
               <artifact>
                   <id>org.apache.camel:camel-endpointdsl:${org.apache.camel.version}</id>
                   <source>true</source>
+                  <override>true</override>
+                  <transitive>false</transitive>
+                  <instructions>
+                      <Import-Package>*;resolution:=optional</Import-Package>
+                      <Export-Package>org.apache.camel.builder.endpoint;version="3.15.0";uses:
+							 ="org.apache.camel,org.apache.camel.builder,org.apache.camel.builder.en
+							 dpoint.dsl,org.apache.camel.model,org.apache.camel.spi,org.apache.camel
+							 .support,org.apache.camel.util.function",org.apache.camel.builder.endpo
+							 int.dsl;version="3.15.0";uses:="ca.uhn.fhir.context,ca.uhn.fhir.rest.cl
+							 ient.api,com.azure.core.amqp,com.azure.core.util,com.azure.cosmos,com.a
+							 zure.cosmos.models,com.azure.identity,com.azure.messaging.eventhubs,com
+							 .azure.messaging.eventhubs.models,com.azure.messaging.servicebus,com.az
+							 ure.messaging.servicebus.models,com.azure.storage.blob,com.azure.storag
+							 e.blob.models,com.azure.storage.common,com.azure.storage.file.datalake,
+							 com.azure.storage.queue,com.box.sdk,com.datastax.oss.driver.api.core,co
+							 m.dropbox.core.v2,com.fasterxml.jackson.databind,com.github.benmanes.ca
+							 ffeine.cache,com.github.benmanes.caffeine.cache.stats,com.github.brainl
+							 ag.nsq.lookup,com.google.cloud.functions.v1,com.google.cloud.storage,co
+							 m.google.common.base,com.googlecode.jsendnsca.encryption,com.hazelcast.
+							 core,com.jcraft.jsch,com.mongodb,com.mongodb.client,com.myjeeva.digital
+							 ocean.impl,com.opengamma.elsql,com.orbitz.consul,com.orbitz.consul.opti
+							 on,com.pubnub.api,com.rabbitmq.client,com.slack.api.model,com.splunk,co
+							 m.sun.mail.imap,facebook4j,freemarker.template,info.ganglia.gmetric4j.g
+							 metric,io.atomix,io.atomix.resource,io.fabric8.kubernetes.client,io.grp
+							 c.netty,io.iron.ironmq,io.methvin.watcher.hashing,io.minio,io.nats.clie
+							 nt,io.netty.channel,io.netty.channel.group,io.netty.handler.ssl,io.unde
+							 rtow.server.handlers.accesslog,io.vertx.core.http,io.vertx.core.net,io.
+							 vertx.ext.web,io.vertx.ext.web.client,io.vertx.ext.web.client.spi,javax
+							 .cache,javax.cache.configuration,javax.cache.event,javax.cache.expiry,j
+							 avax.cache.integration,javax.jms,javax.mail,javax.management,javax.net,
+							 javax.net.ssl,javax.persistence,javax.print,javax.servlet,javax.sip,jav
+							 ax.sip.address,javax.sip.header,javax.sip.message,javax.sql,javax.valid
+							 ation,javax.xml.crypto,javax.xml.crypto.dsig.spec,javax.xml.transform,j
+							 avax.xml.validation,net.corda.core.contracts,net.corda.core.flows,net.c
+							 orda.core.node.services.vault,net.sf.saxon,net.sf.saxon.lib,net.sf.saxo
+							 n.query,okhttp3,org.apache.avro,org.apache.camel,org.apache.camel.build
+							 er,org.apache.camel.component.ahc,org.apache.camel.component.arangodb,o
+							 rg.apache.camel.component.as2.api,org.apache.camel.component.asterisk,o
+							 rg.apache.camel.component.atlasmap,org.apache.camel.component.atomix.cl
+							 ient.map,org.apache.camel.component.atomix.client.messaging,org.apache.
+							 camel.component.atomix.client.multimap,org.apache.camel.component.atomi
+							 x.client.queue,org.apache.camel.component.atomix.client.set,org.apache.
+							 camel.component.atomix.client.value,org.apache.camel.component.aws.secr
+							 etsmanager,org.apache.camel.component.aws2.athena,org.apache.camel.comp
+							 onent.aws2.ddb,org.apache.camel.component.aws2.ddbstream,org.apache.cam
+							 el.component.aws2.ec2,org.apache.camel.component.aws2.ecs,org.apache.ca
+							 mel.component.aws2.eks,org.apache.camel.component.aws2.eventbridge,org.
+							 apache.camel.component.aws2.firehose,org.apache.camel.component.aws2.ia
+							 m,org.apache.camel.component.aws2.kinesis,org.apache.camel.component.aw
+							 s2.kinesis.consumer,org.apache.camel.component.aws2.kms,org.apache.came
+							 l.component.aws2.lambda,org.apache.camel.component.aws2.mq,org.apache.c
+							 amel.component.aws2.msk,org.apache.camel.component.aws2.s3,org.apache.c
+							 amel.component.aws2.s3.stream,org.apache.camel.component.aws2.sqs,org.a
+							 pache.camel.component.aws2.sts,org.apache.camel.component.aws2.translat
+							 e,org.apache.camel.component.azure.cosmosdb,org.apache.camel.component.
+							 azure.servicebus,org.apache.camel.component.azure.storage.blob,org.apac
+							 he.camel.component.azure.storage.datalake,org.apache.camel.component.az
+							 ure.storage.queue,org.apache.camel.component.beanstalk,org.apache.camel
+							 .component.caffeine,org.apache.camel.component.cassandra,org.apache.cam
+							 el.component.cmis,org.apache.camel.component.couchdb.consumer,org.apach
+							 e.camel.component.cxf,org.apache.camel.component.cxf.jaxrs,org.apache.c
+							 amel.component.digitalocean.constants,org.apache.camel.component.disrup
+							 tor,org.apache.camel.component.drill,org.apache.camel.component.dropbox
+							 .util,org.apache.camel.component.elasticsearch,org.apache.camel.compone
+							 nt.elsql,org.apache.camel.component.exec,org.apache.camel.component.fil
+							 e,org.apache.camel.component.file.consumer,org.apache.camel.component.f
+							 ile.remote,org.apache.camel.component.file.strategy,org.apache.camel.co
+							 mponent.file.watch.constants,org.apache.camel.component.flink,org.apach
+							 e.camel.component.geocoder,org.apache.camel.component.git.consumer,org.
+							 apache.camel.component.github.event,org.apache.camel.component.google.b
+							 igquery,org.apache.camel.component.google.drive,org.apache.camel.compon
+							 ent.google.functions,org.apache.camel.component.google.pubsub,org.apach
+							 e.camel.component.google.pubsub.serializer,org.apache.camel.component.g
+							 oogle.storage,org.apache.camel.component.grpc,org.apache.camel.componen
+							 t.grpc.auth.jwt,org.apache.camel.component.hazelcast,org.apache.camel.c
+							 omponent.hazelcast.queue,org.apache.camel.component.hbase,org.apache.ca
+							 mel.component.hbase.mapping,org.apache.camel.component.hbase.model,org.
+							 apache.camel.component.hdfs,org.apache.camel.component.http,org.apache.
+							 camel.component.huaweicloud.common.models,org.apache.camel.component.ig
+							 nite,org.apache.camel.component.ignite.cache,org.apache.camel.component
+							 .ignite.compute,org.apache.camel.component.ignite.idgen,org.apache.came
+							 l.component.ignite.messaging,org.apache.camel.component.ignite.queue,or
+							 g.apache.camel.component.ignite.set,org.apache.camel.component.infinisp
+							 an,org.apache.camel.component.infinispan.embedded,org.apache.camel.comp
+							 onent.infinispan.remote,org.apache.camel.component.jdbc,org.apache.came
+							 l.component.jms,org.apache.camel.component.jolt,org.apache.camel.compon
+							 ent.jooq,org.apache.camel.component.jpa,org.apache.camel.component.json
+							 ata,org.apache.camel.component.jsonvalidator,org.apache.camel.component
+							 .jt400,org.apache.camel.component.kafka,org.apache.camel.component.kafk
+							 a.consumer,org.apache.camel.component.kafka.consumer.support,org.apache
+							 .camel.component.kafka.serde,org.apache.camel.component.knative.spi,org
+							 .apache.camel.component.kudu,org.apache.camel.component.mail,org.apache
+							 .camel.component.metrics,org.apache.camel.component.milo.client,org.apa
+							 che.camel.component.mina,org.apache.camel.component.minio,org.apache.ca
+							 mel.component.mllp,org.apache.camel.component.mongodb,org.apache.camel.
+							 component.mongodb.gridfs,org.apache.camel.component.mybatis,org.apache.
+							 camel.component.netty,org.apache.camel.component.netty.http,org.apache.
+							 camel.component.paho,org.apache.camel.component.paho.mqtt5,org.apache.c
+							 amel.component.pdf,org.apache.camel.component.platform.http.spi,org.apa
+							 che.camel.component.pulsar.utils.consumers,org.apache.camel.component.r
+							 eactive.streams,org.apache.camel.component.redis,org.apache.camel.compo
+							 nent.salesforce,org.apache.camel.component.salesforce.api.dto.analytics
+							 .reports,org.apache.camel.component.salesforce.api.dto.bulk,org.apache.
+							 camel.component.salesforce.internal,org.apache.camel.component.salesfor
+							 ce.internal.dto,org.apache.camel.component.servicenow,org.apache.camel.
+							 component.sjms,org.apache.camel.component.sjms.jms,org.apache.camel.com
+							 ponent.smpp,org.apache.camel.component.snmp,org.apache.camel.component.
+							 spark,org.apache.camel.component.spring.ws.bean,org.apache.camel.compon
+							 ent.spring.ws.filter,org.apache.camel.component.springldap,org.apache.c
+							 amel.component.springrabbit,org.apache.camel.component.sql,org.apache.c
+							 amel.component.stitch.client,org.apache.camel.component.stitch.client.m
+							 odels,org.apache.camel.component.stream,org.apache.camel.component.tele
+							 gram,org.apache.camel.component.thrift,org.apache.camel.component.tika,
+							 org.apache.camel.component.twitter.data,org.apache.camel.component.unde
+							 rtow,org.apache.camel.component.undertow.spi,org.apache.camel.component
+							 .validator,org.apache.camel.component.vertx.http,org.apache.camel.compo
+							 nent.weather,org.apache.camel.component.weather.geolocation,org.apache.
+							 camel.component.wordpress.api.model,org.apache.camel.component.xchange,
+							 org.apache.camel.component.xj,org.apache.camel.component.xmlsecurity.ap
+							 i,org.apache.camel.component.xquery,org.apache.camel.component.xslt,org
+							 .apache.camel.component.yammer,org.apache.camel.converter.dozer,org.apa
+							 che.camel.http.base.cookie,org.apache.camel.http.common,org.apache.came
+							 l.spi,org.apache.camel.support.jsse,org.apache.camel.support.processor,
+							 org.apache.camel.support.processor.validation,org.apache.camel.util.jso
+							 n,org.apache.commons.net.ftp,org.apache.cxf,org.apache.cxf.configuratio
+							 n.security,org.apache.cxf.feature,org.apache.cxf.transports.http.config
+							 uration,org.apache.flink.api.java,org.apache.flink.streaming.api.datast
+							 ream,org.apache.fop.apps,org.apache.hadoop.conf,org.apache.hadoop.hbase
+							 .filter,org.apache.hadoop.io,org.apache.hadoop.security,org.apache.http
+							 ,org.apache.http.client,org.apache.http.conn,org.apache.http.entity,org
+							 .apache.http.impl.client,org.apache.http.impl.conn,org.apache.http.impl
+							 .nio.client,org.apache.http.protocol,org.apache.ibatis.session,org.apac
+							 he.ignite.cache,org.apache.ignite.cache.query,org.apache.ignite.configu
+							 ration,org.apache.lucene.analysis,org.apache.mina.core.filterchain,org.
+							 apache.mina.filter.codec,org.apache.olingo.odata2.api.ep,org.apache.pul
+							 sar.client.api,org.apache.solr.client.solrj,org.apache.spark.api.java,o
+							 rg.apache.spark.sql,org.apache.sshd.common.keyprovider,org.apache.tika.
+							 config,org.asynchttpclient,org.eclipse.californium.scandium.dtls.psksto
+							 re,org.eclipse.californium.scandium.dtls.rpkstore,org.eclipse.jetty.ser
+							 ver,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.eclips
+							 e.milo.opcua.stack.core.types.enumerated,org.eclipse.neoscada.protocol.
+							 iec60870,org.eclipse.neoscada.protocol.iec60870.client.data,org.eclipse
+							 .paho.client.mqttv3,org.eclipse.paho.mqttv5.client,org.eclipse.paho.mqt
+							 tv5.common.packet,org.ehcache,org.ehcache.config,org.ehcache.event,org.
+							 infinispan.client.hotrod,org.infinispan.client.hotrod.configuration,org
+							 .infinispan.configuration.cache,org.infinispan.manager,org.jivesoftware
+							 .smack,org.jooq,org.jsmpp.session,org.kie.api.task.model,org.knowm.xcha
+							 nge.currency,org.openstack4j.core.transport,org.quartz,org.schwering.ir
+							 c.lib.ssl,org.springframework.amqp.core,org.springframework.amqp.rabbit
+							 .connection,org.springframework.amqp.support.converter,org.springframew
+							 ork.batch.core.configuration,org.springframework.batch.core.launch,org.
+							 springframework.core.task,org.springframework.data.redis.connection,org
+							 .springframework.data.redis.core,org.springframework.data.redis.listene
+							 r,org.springframework.data.redis.serializer,org.springframework.jms.sup
+							 port.converter,org.springframework.jms.support.destination,org.springfr
+							 amework.retry.interceptor,org.springframework.transaction,org.springfra
+							 mework.util,org.springframework.ws,org.springframework.ws.client.core,o
+							 rg.springframework.ws.soap.addressing.messageid,org.springframework.ws.
+							 transport,org.w3c.dom.ls,org.web3j.protocol,org.xml.sax,reactor.netty.h
+							 ttp.client,reactor.netty.resources,software.amazon.awssdk.core,software
+							 .amazon.awssdk.services.athena,software.amazon.awssdk.services.athena.m
+							 odel,software.amazon.awssdk.services.cloudwatch,software.amazon.awssdk.
+							 services.dynamodb,software.amazon.awssdk.services.dynamodb.streams,soft
+							 ware.amazon.awssdk.services.ec2,software.amazon.awssdk.services.ecs,sof
+							 tware.amazon.awssdk.services.eks,software.amazon.awssdk.services.eventb
+							 ridge,software.amazon.awssdk.services.firehose,software.amazon.awssdk.s
+							 ervices.iam,software.amazon.awssdk.services.kafka,software.amazon.awssd
+							 k.services.kinesis,software.amazon.awssdk.services.kinesis.model,softwa
+							 re.amazon.awssdk.services.kms,software.amazon.awssdk.services.lambda,so
+							 ftware.amazon.awssdk.services.mq,software.amazon.awssdk.services.s3,sof
+							 tware.amazon.awssdk.services.s3.presigner,software.amazon.awssdk.servic
+							 es.secretsmanager,software.amazon.awssdk.services.ses,software.amazon.a
+							 wssdk.services.sns,software.amazon.awssdk.services.sqs,software.amazon.
+							 awssdk.services.sts,software.amazon.awssdk.services.translate"
+ 						</Export-Package>
+                  </instructions>
+              </artifact>
+              <artifact>
+                  <id>org.apache.camel:camel-endpointdsl-support:${org.apache.camel.version}</id>
+                  <source>true</source>
                   <transitive>false</transitive>
               </artifact>
               <artifact>
@@ -358,16 +538,16 @@
                   <transitive>false</transitive>
                   <override>true</override>
                    <instructions>
-                      <Import-Package>org.apache.camel;version="[3.14,3.15)",org.apache.came
-									 l.attachment;version="[3.14,3.15)",org.apache.camel.http.common;versi
-									 on="[3.14,3.15)",org.apache.camel.spi;version="[3.14,3.15)",org.apach
-									 e.camel.spi.annotations;version="[3.14,3.15)",org.apache.camel.suppor
-									 t;version="[3.14,3.15)",org.apache.camel.support.component;version="[
-									 3.14,3.15)",org.apache.camel.util;version="[3.14,3.15)",javax.activat
+                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.came
+									 l.attachment;version="[3.14,3.16)",org.apache.camel.http.common;versi
+									 on="[3.14,3.16)",org.apache.camel.spi;version="[3.14,3.16)",org.apach
+									 e.camel.spi.annotations;version="[3.14,3.16)",org.apache.camel.suppor
+									 t;version="[3.14,3.16)",org.apache.camel.support.component;version="[
+									 3.14,3.16)",org.apache.camel.util;version="[3.14,3.16)",javax.activat
 									 ion;version="[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;
 									 version="[3,5)",org.slf4j;version="[1.7,2)"
                       </Import-Package>
-                      <Export-Package>org.apache.camel.component.servlet;version="3.14.0";us
+                      <Export-Package>org.apache.camel.component.servlet;version="3.15.0";us
 									 es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
 									 el,org.apache.camel.http.common,org.apache.camel.spi,org.apache.camel
 									 .spi.annotations,org.apache.camel.support.component"
