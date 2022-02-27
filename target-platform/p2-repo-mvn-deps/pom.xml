@@ -106,7 +106,7 @@
                     <transitive>false</transitive>
                 </artifact>
                 <artifact>
-                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator-mvn.version}</id>
+                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator.version}</id>
                     <source>true</source>
                     <transitive>false</transitive>
                 </artifact>
@@ -1566,6 +1566,14 @@
                                      ,org.osgi.service.cm;version="[1.2.0,2.0.0)",org.osgi.service.http;ve
                                      rsion="[1.2.0,2.0.0)",org.osgi.util.tracker;version="[1.4.0,2.0.0)"
                       </Import-Package>
+                      <Export-Package>
+                      		com.eclipsesource.jaxrs.publisher;version="5.3.1"
+                      </Export-Package>
+                      
+                      <Bundle-Activator>
+                      	    com.eclipsesource.jaxrs.publisher.internal.Activator
+                      </Bundle-Activator>
+                      
                   </instructions>
               </artifact>
               <artifact>
