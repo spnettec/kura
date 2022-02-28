@@ -176,37 +176,37 @@
                     <transitive>false</transitive>
                 </artifact>
                 <artifactItem>
-                	<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfish.jersey.version}</id>
+                	<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
 			  	<artifactItem>
-                  	<id>org.glassfish.jersey.media:jersey-media-sse:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.media:jersey-media-sse:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
 			  	<artifactItem>
-                  	<id>org.glassfish.jersey.media:jersey-media-multipart:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.media:jersey-media-multipart:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
               	<artifactItem>
-                  	<id>org.glassfish.jersey.core:jersey-server:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.core:jersey-server:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
               	<artifactItem>
-                  	<id>org.glassfish.jersey.core:jersey-common:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.core:jersey-common:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
               	<artifactItem>
-                  	<id>org.glassfish.jersey.core:jersey-client:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.core:jersey-client:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
               	<artifactItem>
-                  	<id>org.glassfish.jersey.inject:jersey-hk2:${glassfish.jersey.version}</id>
+                  	<id>org.glassfish.jersey.inject:jersey-hk2:${glassfish.jersey-mvn.version}</id>
                   	<source>true</source>
                   	<transitive>false</transitive>
               	</artifactItem>
