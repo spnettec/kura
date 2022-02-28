@@ -81,6 +81,11 @@
                     <transitive>false</transitive>
                 </artifact>
                 <artifact>                    
+                    <id>jakarta.validation:jakarta.validation-api:${jakarta.validation-api.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>                    
                     <id>jakarta.annotation:jakarta.annotation-api:${jakarta.annotation-api.version}</id>
                     <source>true</source>
                     <transitive>false</transitive>
@@ -106,7 +111,7 @@
                     <transitive>false</transitive>
                 </artifact>
                 <artifact>
-                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator.version}</id>
+                    <id>jakarta.ws.rs:jakarta.ws.rs-api:${jakarta.ws.rs-api.version}</id>
                     <source>true</source>
                     <transitive>false</transitive>
                 </artifact>
@@ -134,12 +139,77 @@
                   <id>jakarta.json:jakarta.json-api:${jakarta.json-api.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>
-              <artifact>
-                  <id>jakarta.transaction:jakarta.transaction-api:${jakarta.transaction-api.version}</id>
-                  <source>true</source>
-                  <transitive>false</transitive>
-              </artifact>
+	            </artifact>
+	            <artifact>
+	                <id>jakarta.transaction:jakarta.transaction-api:${jakarta.transaction-api.version}</id>
+	                <source>true</source>
+	                <transitive>false</transitive>
+	            </artifact>
+                <artifact>
+                    <id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>
+                    <id>org.glassfish.hk2:hk2-locator:${org.glassfish.hk2.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>
+                    <id>org.glassfish.hk2.external:aopalliance-repackaged:${org.glassfish.hk2.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>
+                    <id>org.glassfish.hk2:hk2-api:${org.glassfish.hk2.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>
+                    <id>org.glassfish.hk2:hk2-utils:${org.glassfish.hk2.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifact>
+                    <id>org.jvnet.mimepull:mimepull:${jvnet.mimepull.version}</id>
+                    <source>true</source>
+                    <transitive>false</transitive>
+                </artifact>
+                <artifactItem>
+                	<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+			  	<artifactItem>
+                  	<id>org.glassfish.jersey.media:jersey-media-sse:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+			  	<artifactItem>
+                  	<id>org.glassfish.jersey.media:jersey-media-multipart:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+              	<artifactItem>
+                  	<id>org.glassfish.jersey.core:jersey-server:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+              	<artifactItem>
+                  	<id>org.glassfish.jersey.core:jersey-common:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+              	<artifactItem>
+                  	<id>org.glassfish.jersey.core:jersey-client:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
+              	<artifactItem>
+                  	<id>org.glassfish.jersey.inject:jersey-hk2:${glassfish.jersey.version}</id>
+                  	<source>true</source>
+                  	<transitive>false</transitive>
+              	</artifactItem>
               <artifact>
                   <id>com.eurotech:gpsd4java:${com.eurotech.gpsd4java.version}</id>
                   <source>true</source>
