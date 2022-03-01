@@ -1616,11 +1616,12 @@
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
+              <!--
               <artifact>
                   <id>com.eclipsesource.jaxrs:jersey-min:jar:${com.eclipsesource.jaxrs.jersey-min.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact>
+              </artifact-->
               <artifact>
                   <id>com.eclipsesource.jaxrs:publisher:jar:${com.eclipsesource.jaxrs.publisher-mvn.version}</id>
                   <source>true</source>

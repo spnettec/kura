@@ -72,8 +72,13 @@
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
         <setEntry value="org.eclipse.kura.example.web.extension"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.singleport.provider.test"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig"/>
+        <setEntry value="org.eclipse.kura.example.wire.math.trig.test"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test"/>
         <setEntry value="org.eclipse.kura.internal.asset.cloudlet.test"/>
         <setEntry value="org.eclipse.kura.internal.ble.eddystone.test"/>
@@ -128,7 +133,6 @@
         <setEntry value="org.eclipse.kura.util.test.driver"/>
         <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
-        <setEntry value="org.eclipse.kura.wire.ai.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.provider.test"/>
@@ -165,7 +169,6 @@
         <setEntry value="com.alibaba.fastjson@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.jersey-min@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.publisher@default:default"/>
@@ -219,6 +222,8 @@
         <setEntry value="jakarta.json-api@default:default"/>
         <setEntry value="jakarta.servlet-api@default:default"/>
         <setEntry value="jakarta.transaction-api@default:default"/>
+        <setEntry value="jakarta.validation.jakarta.validation-api@default:default"/>
+        <setEntry value="jakarta.ws.rs-api@default:default"/>
         <setEntry value="jakarta.xml.bind-api@default:default"/>
         <setEntry value="jakarta.xml.soap-api@default:default"/>
         <setEntry value="jakarta.xml.ws-api@default:default"/>
@@ -362,6 +367,18 @@
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm.macosx@default:false"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
+        <setEntry value="org.glassfish.hk2.api@default:default"/>
+        <setEntry value="org.glassfish.hk2.external.aopalliance-repackaged@default:default"/>
+        <setEntry value="org.glassfish.hk2.locator@default:default"/>
+        <setEntry value="org.glassfish.hk2.osgi-resource-locator@default:default"/>
+        <setEntry value="org.glassfish.hk2.utils@default:default"/>
+        <setEntry value="org.glassfish.jersey.containers.jersey-container-servlet-core@default:default"/>
+        <setEntry value="org.glassfish.jersey.core.jersey-client@default:default"/>
+        <setEntry value="org.glassfish.jersey.core.jersey-common@default:default"/>
+        <setEntry value="org.glassfish.jersey.core.jersey-server@default:default"/>
+        <setEntry value="org.glassfish.jersey.inject.jersey-hk2@default:default"/>
+        <setEntry value="org.glassfish.jersey.media.jersey-media-multipart@default:default"/>
+        <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
         <setEntry value="org.graalvm.js.scriptengine@default:default"/>
         <setEntry value="org.graalvm.js@default:default"/>
         <setEntry value="org.graalvm.regex@default:default"/>
@@ -371,6 +388,7 @@
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
         <setEntry value="org.jgroups@default:default"/>
+        <setEntry value="org.jvnet.mimepull@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
         <setEntry value="org.objectweb.asm.tree.analysis@default:default"/>
         <setEntry value="org.objectweb.asm.tree@default:default"/>
@@ -387,6 +405,8 @@
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-abplc@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-comp@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
@@ -445,7 +465,6 @@
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.camel@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>

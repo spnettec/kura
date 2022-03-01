@@ -415,7 +415,62 @@
                                 <autoStart>true</autoStart>
                             </bundle>
                             <bundle>
+                                <id>jakarta.validation.jakarta.validation-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>jakarta.ws.rs-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>jakarta.servlet-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>jakarta.enterprise.cdi-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>javax.el-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>jakarta.inject.jakarta.inject-api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
                                 <id>org.glassfish.hk2.osgi-resource-locator</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.hk2.api</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.hk2.locator</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.hk2.utils</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.hk2.external.aopalliance-repackaged</id>
+                                <level>1</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.jvnet.mimepull</id>
                                 <level>1</level>
                                 <autoStart>true</autoStart>
                             </bundle>
@@ -520,7 +575,32 @@
                                 <autoStart>true</autoStart>
                             </bundle>
                             <bundle>
-                                <id>com.eclipsesource.jaxrs.jersey-min</id>
+                                <id>org.glassfish.jersey.containers.jersey-container-servlet-core</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.jersey.media.jersey-media-sse</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.jersey.media.jersey-media-multipart</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.jersey.core.jersey-server</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.jersey.core.jersey-common</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.glassfish.jersey.core.jersey-client</id>
                                 <level>4</level>
                                 <autoStart>true</autoStart>
                             </bundle>
@@ -628,7 +708,72 @@
                                 </requirement>
                                 <requirement>
                                     <type>p2-installable-unit</type>
+                                    <id>jakarta.validation.jakarta.validation-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.ws.rs-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.servlet-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.enterprise.cdi-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.inject.jakarta.inject-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.interceptor-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.json-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>jakarta.transaction-api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
                                     <id>org.glassfish.hk2.osgi-resource-locator</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>org.glassfish.hk2.api</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>org.glassfish.hk2.locator</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>org.glassfish.hk2.utils</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>org.glassfish.hk2.external.aopalliance-repackaged</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>p2-installable-unit</type>
+                                    <id>org.jvnet.mimepull</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>
@@ -758,7 +903,32 @@
                                 </requirement>
                                 <requirement>
                                     <type>eclipse-plugin</type>
-                                    <id>com.eclipsesource.jaxrs.jersey-min</id>
+                                    <id>org.glassfish.jersey.containers.jersey-container-servlet-core</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.glassfish.jersey.media.jersey-media-sse</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.glassfish.jersey.media.jersey-media-multipart</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.glassfish.jersey.core.jersey-server</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.glassfish.jersey.core.jersey-common</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.glassfish.jersey.core.jersey-client</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>

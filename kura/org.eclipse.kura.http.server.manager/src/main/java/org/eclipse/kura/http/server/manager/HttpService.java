@@ -139,7 +139,18 @@ public class HttpService implements ConfigurableComponent, EventHandler {
 
         final KeystoreService currentKeystoreService = this.keystoreService;
 
+        boolean keyStoreAvailable = true;
+
         if (currentKeystoreService == null) {
+            keyStoreAvailable = false;
+        } else {
+            try {
+                currentKeystoreService.getKeyStore();
+            } catch (KuraException ex) {
+                keyStoreAvailable = false;
+            }
+        }
+        if (!keyStoreAvailable) {
             logger.warn("HTTPS is enabled but keystore service is not configured properly, disabling HTTPS");
             jettyConfig.put(JettyConstants.HTTPS_ENABLED, false);
             jettyConfig.put("kura.https.client.auth.enabled", false);
