@@ -88,7 +88,10 @@ public class HttpService implements ConfigurableComponent, EventHandler {
             logger.debug("Updating, new props");
             this.options = updatedOptions;
 
-            restartHttpService();
+            deactivateHttpService();
+            if (this.keystoreService == null) {
+                startKeystoreServicenMonitorTask();
+            }
         }
 
         logger.info("Updating... Done.");
