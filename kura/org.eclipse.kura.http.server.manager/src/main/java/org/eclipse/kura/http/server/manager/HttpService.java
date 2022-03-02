@@ -22,6 +22,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
@@ -31,7 +33,6 @@ import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
-import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.http.server.manager.HttpServiceOptions.RevocationCheckMode;
 import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
@@ -60,14 +61,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     }
 
     public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
-        if (this.keystoreService != keystoreService) {
-            this.keystoreService = keystoreService;
-            this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
-            if (this.options != null) {
-                logger.info("keystoreService changed! restart httpservice");
-                restartHttpService();
-            }
-        }
+        this.keystoreService = keystoreService;
     }
 
     public void unsetKeystoreService(KeystoreService keystoreService) {
@@ -78,8 +72,9 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         logger.info("Activating {}", this.getClass().getSimpleName());
 
         this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
-
-        activateHttpService();
+        if (this.keystoreService == null) {
+            startKeystoreServicenMonitorTask();
+        }
 
         logger.info("Activating... Done.");
     }
@@ -251,4 +246,32 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         }
     }
 
+    private void startKeystoreServicenMonitorTask() {
+
+        new Timer("KeystoreServiceMonitor").schedule(new TimerTask() {
+
+            int autoWaitKeystoreServiceAttempt = 0;
+
+            @Override
+            public void run() {
+                if (HttpService.this.keystoreService != null) {
+                    logger.info(
+                            "KeystoreService injected. KeystoreServiceMonitor task will be terminated. try {} times",
+                            autoWaitKeystoreServiceAttempt);
+                    activateHttpService();
+                    this.cancel();
+                } else {
+                    autoWaitKeystoreServiceAttempt++;
+                    if (autoWaitKeystoreServiceAttempt > 10) {
+                        activateHttpService();
+
+                        logger.info(
+                                "KeystoreServiceMonitor retry 10 times. KeystoreServiceMonitor task will be terminated.");
+                        this.cancel();
+                    }
+                }
+            }
+
+        }, 100, 100);
+    }
 }

@@ -151,6 +151,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         logger.info("Deactivating OPC-UA Driver...");
         try {
             disconnect();
+            this.connectionMonitorExecutor.shutdownNow();
         } catch (final ConnectionException e) {
             logger.error("Error while disconnecting....", e);
         }
@@ -235,7 +236,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
      * OSGi service component callback while updating.
      *
      * @param properties
-     *            the properties
+     *                       the properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.info("Updating OPC-UA Driver...");
@@ -282,34 +283,30 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         if (this.connectionMonitorFuture != null && !this.connectionMonitorFuture.isDone()) {
             return;
         }
-        this.connectionMonitorFuture = this.connectionMonitorExecutor.scheduleAtFixedRate(new Runnable() {
+        this.connectionMonitorFuture = this.connectionMonitorExecutor.scheduleAtFixedRate(() -> {
 
-            @Override
-            public void run() {
-                String originalName = Thread.currentThread().getName();
-                Thread.currentThread().setName("OpcUaDriver:ReconnectTask");
-                try {
-                    if (!OpcUaDriver.this.connectionManager.isPresent()) {
-                        connectAsync();
-                        OpcUaDriver.this.autoConnectAttempt++;
-                    }
-                } catch (Exception e) {
-                    logger.warn("Connect failed", e);
-                } finally {
-                    Thread.currentThread().setName(originalName);
-                    if (OpcUaDriver.this.connectionManager.isPresent()) {
-                        OpcUaDriver.this.autoConnectAttempt = 0;
-                        logger.info("Connected. Reconnect task will be terminated.");
-                        throw new RuntimeException("OpcUaDriver Connected. Reconnect task will be terminated.");
-                    } else {
-                        if (OpcUaDriver.this.autoConnectAttempt > OpcUaDriver.this.options.getMaxConnectRetry()) {
-                            logger.error("Auto connect retry {} times. Reconnect task will be terminated.",
-                                    OpcUaDriver.this.autoConnectAttempt);
-                            throw new RuntimeException("Auto connect retry. Reconnect task will be terminated.");
-                        }
+            String originalName = Thread.currentThread().getName();
+            Thread.currentThread().setName("OpcUaDriver:ReconnectTask");
+            try {
+                if (!OpcUaDriver.this.connectionManager.isPresent()) {
+                    connectAsync();
+                    OpcUaDriver.this.autoConnectAttempt++;
+                }
+            } catch (Exception e) {
+                logger.warn("Connect failed", e);
+            } finally {
+                Thread.currentThread().setName(originalName);
+                if (OpcUaDriver.this.connectionManager.isPresent()) {
+                    OpcUaDriver.this.autoConnectAttempt = 0;
+                    logger.info("Connected. Reconnect task will be terminated.");
+                    throw new RuntimeException("OpcUaDriver Connected. Reconnect task will be terminated.");
+                } else {
+                    if (OpcUaDriver.this.autoConnectAttempt > OpcUaDriver.this.options.getMaxConnectRetry()) {
+                        logger.error("Auto connect retry {} times. Reconnect task will be terminated.",
+                                OpcUaDriver.this.autoConnectAttempt);
+                        throw new RuntimeException("Auto connect retry. Reconnect task will be terminated.");
                     }
                 }
-
             }
 
         }, 10, 10, TimeUnit.SECONDS);
