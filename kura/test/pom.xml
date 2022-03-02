@@ -615,11 +615,6 @@
                                 <autoStart>true</autoStart>
                             </bundle>
                             <bundle>
-                                <id>com.eclipsesource.jaxrs.publisher</id>
-                                <level>4</level>
-                                <autoStart>true</autoStart>
-                            </bundle>
-                            <bundle>
                                 <id>org.apache.felix.useradmin</id>
                                 <level>4</level>
                                 <autoStart>true</autoStart>
@@ -939,11 +934,6 @@
                                 <requirement>
                                     <type>eclipse-plugin</type>
                                     <id>com.eclipsesource.jaxrs.provider.security</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>eclipse-plugin</type>
-                                    <id>com.eclipsesource.jaxrs.publisher</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>

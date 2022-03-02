@@ -375,20 +375,20 @@
                   <transitive>false</transitive>
                   <override>true</override>
                   <instructions>
-                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.came
-									 l.attachment;version="[3.14,3.16)",org.apache.camel.cloud;version="[3
-									 .14,3.16)",org.apache.camel.converter.stream;version="[3.14,3.16)",or
-									 g.apache.camel.http.base;version="[3.14,3.16)",org.apache.camel.http.
-									 base.cookie;version="[3.14,3.16)",org.apache.camel.spi;version="[3.14
-									 ,3.16)",org.apache.camel.support;version="[3.14,3.16)",org.apache.cam
-									 el.util;version="[3.14,3.16)",javax.activation;version="[0,2)",javax.
-									 servlet;version="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;
-									 version="[1.7,2)"
+                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.camel.
+									 attachment;version="[3.14,3.16)",org.apache.camel.cloud;version="[3.14,
+									 3.16)",org.apache.camel.converter.stream;version="[3.14,3.16)",org.apac
+									 he.camel.http.base;version="[3.14,3.16)",org.apache.camel.http.base.coo
+									 kie;version="[3.14,3.16)",org.apache.camel.spi;version="[3.15,3.16)",or
+									 g.apache.camel.support;version="[3.14,3.16)",org.apache.camel.util;vers
+									 ion="[3.14,3.16)",javax.activation;version="[0,2)",javax.servlet;versio
+									 n="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;version="[1.7,2)
+									 "
                       </Import-Package>
-                      <Export-Package>org.apache.camel.http.common;version="3.15.0";uses:="j
-									 avax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.clo
-									 ud,org.apache.camel.http.base,org.apache.camel.http.base.cookie,org.a
-									 pache.camel.spi,org.apache.camel.support,org.slf4j"
+                      <Export-Package>org.apache.camel.http.common;version="3.15.0";uses:="jav
+									 ax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.cloud,o
+									 rg.apache.camel.http.base,org.apache.camel.http.base.cookie,org.apache.
+									 camel.spi,org.apache.camel.support,org.slf4j"
                      </Export-Package>
                   </instructions>
               </artifact>
@@ -608,19 +608,19 @@
                   <transitive>false</transitive>
                   <override>true</override>
                    <instructions>
-                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.came
-									 l.attachment;version="[3.14,3.16)",org.apache.camel.http.common;versi
-									 on="[3.14,3.16)",org.apache.camel.spi;version="[3.14,3.16)",org.apach
-									 e.camel.spi.annotations;version="[3.14,3.16)",org.apache.camel.suppor
-									 t;version="[3.14,3.16)",org.apache.camel.support.component;version="[
-									 3.14,3.16)",org.apache.camel.util;version="[3.14,3.16)",javax.activat
-									 ion;version="[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;
-									 version="[3,5)",org.slf4j;version="[1.7,2)"
+                      <Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.camel.
+									 attachment;version="[3.14,3.16)",org.apache.camel.http.common;version="
+									 [3.14,3.16)",org.apache.camel.spi;version="[3.14,3.16)",org.apache.came
+									 l.spi.annotations;version="[3.14,3.16)",org.apache.camel.support;versio
+									 n="[3.14,3.16)",org.apache.camel.support.component;version="[3.14,3.16)
+									 ",org.apache.camel.util;version="[3.14,3.16)",javax.activation;version=
+									 "[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3,5)
+									 ",org.slf4j;version="[1.7,2)"
                       </Import-Package>
-                      <Export-Package>org.apache.camel.component.servlet;version="3.15.0";us
-									 es:="javax.activation,javax.servlet,javax.servlet.http,org.apache.cam
-									 el,org.apache.camel.http.common,org.apache.camel.spi,org.apache.camel
-									 .spi.annotations,org.apache.camel.support.component"
+                      <Export-Package>org.apache.camel.component.servlet;version="3.15.0";uses
+									 :="javax.activation,javax.servlet,javax.servlet.http,org.apache.camel,o
+									 rg.apache.camel.http.common,org.apache.camel.spi,org.apache.camel.spi.a
+									 nnotations,org.apache.camel.support.component"
                       </Export-Package>
                   </instructions>
               </artifact>
@@ -1621,7 +1621,7 @@
                   <id>com.eclipsesource.jaxrs:jersey-min:jar:${com.eclipsesource.jaxrs.jersey-min.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
-              </artifact-->
+              </artifact
               <artifact>
                   <id>com.eclipsesource.jaxrs:publisher:jar:${com.eclipsesource.jaxrs.publisher-mvn.version}</id>
                   <source>true</source>
@@ -1647,6 +1647,7 @@
                       
                   </instructions>
               </artifact>
+              -->
               <artifact>
                   <id>com.eclipsesource.jaxrs:provider-gson:jar:${com.eclipsesource.jaxrs.provider.gson-mvn.version}</id>
                   <source>true</source>
