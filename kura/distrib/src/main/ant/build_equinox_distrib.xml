@@ -1676,16 +1676,16 @@ fi]]>
 	<!-- Artemis config targets -->
 	<target name="artemis-config">
 		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
-			prefix="com.google.guava_2" property="guava2.distrib.version" />
+			prefix="com.google.guava_30" property="guava30.distrib.version" />
 		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
-			prefix="com.google.guava_3" property="guava3.distrib.version" />
+			prefix="com.google.guava_31" property="guava31.distrib.version" />
 
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_2${guava2.distrib.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_2${guava30.distrib.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_3${guava3.distrib.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_3${guava31.distrib.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava.failureaccess_${guava.failureaccess.version}.jar@3" />
 
@@ -1792,7 +1792,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.milo.stack-server_${org.eclipse.milo.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcmail_${org.bouncycastle.version}.jar@4:start"/>
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcutil_${org.bouncycastle.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.fazecast.jSerialComm_${jSerialComm.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"

@@ -831,7 +831,7 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>com.google.guava:guava:${guava30.version}</id>
+                  <id>com.google.guava:guava:${guava31.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact> 
@@ -1572,7 +1572,7 @@
                   <transitive>false</transitive>
               </artifact>
               <artifact>
-                  <id>org.bouncycastle:bcmail-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
+                  <id>org.bouncycastle:bcutil-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
                   <source>true</source>
                   <transitive>false</transitive>
               </artifact>
