@@ -33,6 +33,7 @@ import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
+import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.http.server.manager.HttpServiceOptions.RevocationCheckMode;
 import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
@@ -62,6 +63,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
 
     public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
         this.keystoreService = keystoreService;
+        this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
     }
 
     public void unsetKeystoreService(KeystoreService keystoreService) {
@@ -74,9 +76,11 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
         if (this.keystoreService == null) {
             startKeystoreServicenMonitorTask();
+            logger.info("Activating... Done. Wait keystoreService");
+        } else {
+            activateHttpService();
+            logger.info("Activating... Done.");
         }
-
-        logger.info("Activating... Done.");
     }
 
     public void updated(Map<String, Object> properties) {
@@ -91,10 +95,13 @@ public class HttpService implements ConfigurableComponent, EventHandler {
             deactivateHttpService();
             if (this.keystoreService == null) {
                 startKeystoreServicenMonitorTask();
+                logger.info("Updating... Done. Wait keystoreService");
+            } else {
+                activateHttpService();
+                logger.info("Updating... Done.");
             }
         }
 
-        logger.info("Updating... Done.");
     }
 
     public void deactivate() {
