@@ -109,7 +109,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -121,7 +121,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -133,9 +133,9 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * OSGi service component activation callback.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the service properties
+     *            the service properties
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -151,7 +151,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * OSGi service component update callback.
      *
      * @param properties
-     *                       the service properties
+     *            the service properties
      */
     @Override
     public void updated(final Map<String, Object> properties) {
@@ -165,7 +165,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * OSGi service component deactivate callback.
      *
      * @param context
-     *                    the context
+     *            the context
      */
     @Override
     protected void deactivate(final ComponentContext context) {
@@ -201,9 +201,9 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * receives {@code Non Null} {@link WireEnvelop} from its upstream Wire Component(s).
      *
      * @param wireEnvelope
-     *                         the received {@link WireEnvelope}
+     *            the received {@link WireEnvelope}
      * @throws NullPointerException
-     *                                  if {@link WireEnvelope} is null
+     *             if {@link WireEnvelope} is null
      */
     @Override
     public void onWireReceive(final WireEnvelope wireEnvelope) {
@@ -242,10 +242,10 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Determine the channels to write
      *
      * @param records
-     *                    the list of {@link WireRecord}s to parse
+     *            the list of {@link WireRecord}s to parse
      * @return list of Channel Records containing the values to be written
      * @throws NullPointerException
-     *                                  if argument is null
+     *             if argument is null
      */
     private List<ChannelRecord> determineWritingChannels(final WireRecord record) {
         requireNonNull(record, "Wire Record cannot be null");
@@ -278,12 +278,12 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Emit the provided list of channel records to the associated wires.
      *
      * @param channelRecords
-     *                           the list of channel records conforming to the aforementioned
-     *                           specification
+     *            the list of channel records conforming to the aforementioned
+     *            specification
      * @throws NullPointerException
-     *                                      if provided records list is null
+     *             if provided records list is null
      * @throws IllegalArgumentException
-     *                                      if provided records list is empty
+     *             if provided records list is empty
      */
     private void emitChannelRecords(final List<ChannelRecord> channelRecords) {
         requireNonNull(channelRecords, "List of Channel Records cannot be null");
@@ -313,9 +313,9 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Perform Channel Write operation
      *
      * @param channelRecordsToWrite
-     *                                  the list of {@link ChannelRecord}s
+     *            the list of {@link ChannelRecord}s
      * @throws NullPointerException
-     *                                  if the provided list is null
+     *             if the provided list is null
      */
     private void writeChannels(final List<ChannelRecord> channelRecordsToWrite) {
         requireNonNull(channelRecordsToWrite, "List of Channel Records cannot be null");
