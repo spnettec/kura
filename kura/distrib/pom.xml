@@ -792,7 +792,23 @@
                                     <arg value="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
                                 </exec>
                                 <move file="RELEASE_INFO/${project.version}/p2-repo-common/pom_.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
- 
+
+                                <!-- Copy target-platform/p2-repo-equinox_3.16.0/pom.xml in distrib/RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom.xml -->
+                                <copy file="${kura.basedir}/../../target-platform/p2-repo-equinox_3.16.0/pom.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom.xml" overwrite="true" />
+                                <!-- replace artifactId -->
+                                <replace token="&lt;artifactId&gt;target-platform&lt;/artifactId&gt;" value="&lt;artifactId&gt;target-platform-previous&lt;/artifactId&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0">
+                                    <include name="pom.xml" />
+                                </replace>
+                                <!-- Add strip version -->
+                                <replace token="&lt;/artifactItems&gt;" value="&lt;/artifactItems&gt;&lt;stripVersion&gt;true&lt;/stripVersion&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0">
+                                    <include name="pom.xml" />
+                                </replace>
+                                <!-- execute script to add artifacts to pom file - need to have different input/output files (Win) -->
+                                <exec executable="bash" output="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom_.xml">
+                                    <arg value="src/main/sh/generate_p2_repo_pom.sh" />
+                                    <arg value="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom.xml" />
+                                </exec>
+                                <move file="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom_.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-equinox_3.16.0/pom.xml" />
                             </target>
                         </configuration>
                     </execution>

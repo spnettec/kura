@@ -184,6 +184,13 @@
                     <name>!kura.osgi</name>
                 </property>
             </activation>
+            <repositories>
+                <repository>
+                    <id>p2-repo-equinox_3.16.0</id>
+                    <layout>p2</layout>
+                    <url>file:///${kura.basedir}/target-definition/equinox_3.16.0/repository/</url>
+                </repository>
+            </repositories>
         </profile>
         <profile>
             <id>equinox</id>
@@ -193,6 +200,13 @@
                     <value>equinox</value>
                 </property>
             </activation>
+            <repositories>
+                <repository>
+                    <id>p2-repo-equinox_3.16.0</id>
+                    <layout>p2</layout>
+                    <url>file:///${kura.basedir}/target-definition/equinox_3.16.0/repository/</url>
+                </repository>
+            </repositories>
         </profile>
         <profile>
             <id>can</id>
@@ -283,11 +297,6 @@
             <id>p2-repo-common</id>
             <layout>p2</layout>
             <url>file:///${kura.basedir}/target-definition/common/repository/</url>
-        </repository>
-        <repository>
-            <id>p2-repo-maven</id>
-            <layout>p2</layout>
-            <url>file:///${kura.basedir}/target-definition/mvn-deps/repository/</url>
         </repository>
         <repository>
             <id>p2-repo-test-deps</id>

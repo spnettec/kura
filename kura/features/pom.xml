@@ -33,14 +33,14 @@
 
     <repositories>
         <repository>
+            <id>p2-repo-equinox_3.16.0</id>
+            <layout>p2</layout>
+            <url>file:///${basedir}/../../../target-platform/p2-repo-equinox_3.16.0/target/repository/</url>
+        </repository>
+        <repository>
             <id>p2-repo-common</id>
             <layout>p2</layout>
             <url>file:///${basedir}/../../../target-platform/p2-repo-common/target/repository/</url>
-        </repository>
-        <repository>
-            <id>p2-repo-maven</id>
-            <layout>p2</layout>
-            <url>file:///${basedir}/../../../target-platform/p2-repo-mvn-deps/target/repository/</url>
         </repository>
         <repository>
             <id>p2-repo-test-deps</id>

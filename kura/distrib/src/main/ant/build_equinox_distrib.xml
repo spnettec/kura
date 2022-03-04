@@ -625,7 +625,7 @@ fi]]>
 				<exclude name="*.SNAPSHOT.jar" />
 
 			</zipfileset>
-			<zipfileset dir="../target-definition/mvn-deps/repository/plugins"
+			<zipfileset dir="../target-definition/equinox_3.16.0/repository/plugins"
 				prefix="${build.output.name}/${plugins.folder}">
 
 				<!-- exclude source bundles -->
@@ -1675,9 +1675,9 @@ fi]]>
 
 	<!-- Artemis config targets -->
 	<target name="artemis-config">
-		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
+		<find-jar-version2 dir="../target-definition/equinox_3.16.0/repository/plugins"
 			prefix="com.google.guava_30" property="guava30.distrib.version" />
-		<find-jar-version2 dir="../target-definition/mvn-deps/repository/plugins"
+		<find-jar-version2 dir="../target-definition/equinox_3.16.0/repository/plugins"
 			prefix="com.google.guava_31" property="guava31.distrib.version" />
 
 		<propertyfile

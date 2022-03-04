@@ -34,7 +34,7 @@
         <module>org.eclipse.kura.jetty.customizer</module>
 		<module>p2-repo-common</module>
         <module>p2-repo-test-deps</module>
-        <module>p2-repo-mvn-deps</module>
+        <module>p2-repo-equinox_3.16.0</module>
     </modules>
 
     <repositories>
@@ -300,6 +300,35 @@
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
+                </plugin>
+                <plugin>
+					<groupId>org.reficio</groupId>
+					<artifactId>p2-maven-plugin</artifactId>
+					<version>1.5.0</version>
+					<dependencies>
+						<dependency>
+							<groupId>org.apache.felix</groupId>
+							<artifactId>maven-bundle-plugin</artifactId>
+							<version>5.1.2</version>
+							<exclusions>
+								<exclusion>
+									<groupId>org.osgi</groupId>
+									<artifactId>org.osgi.core</artifactId>
+								</exclusion>
+							</exclusions>
+						</dependency>
+						<dependency>
+							<groupId>org.codehaus.groovy</groupId>
+							<artifactId>groovy-all</artifactId>
+							<version>3.0.9</version>
+							<type>pom</type>
+						</dependency>
+						<dependency>
+							<groupId>biz.aQute.bnd</groupId>
+							<artifactId>biz.aQute.bnd</artifactId>
+							<version>4.0.0</version>
+						</dependency>
+					</dependencies>
                 </plugin>
             </plugins>
         </pluginManagement>
