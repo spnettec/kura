@@ -380,16 +380,16 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 validateChannel(channel, EnumSet.of(READ, READ_WRITE),
                         "Channel type not within expected types (READ or READ_WRITE)");
             } catch (Exception e) {
-                final ChannelRecord record = ChannelRecord.createStatusRecord(name,
+                final ChannelRecord statusRecord = ChannelRecord.createStatusRecord(name,
                         new ChannelStatus(FAILURE, e.getMessage(), e));
-                record.setTimestamp(System.currentTimeMillis());
-                channelRecords.add(record);
+                statusRecord.setTimestamp(System.currentTimeMillis());
+                channelRecords.add(statusRecord);
                 continue;
             }
 
-            final ChannelRecord record = channel.createReadRecord();
-            validRecords.add(record);
-            channelRecords.add(record);
+            final ChannelRecord readRecord = channel.createReadRecord();
+            validRecords.add(readRecord);
+            channelRecords.add(readRecord);
         }
 
         if (!validRecords.isEmpty()) {
@@ -650,10 +650,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             } else if (!this.channelName.equals(other.channelName)) {
                 return false;
             }
-            if (this.listener == null) {
-                if (other.listener != null) {
-                    return false;
-                }
+            if (this.listener == null && other.listener != null) {
+                return false;
             }
             return this.listener == other.listener;
         }

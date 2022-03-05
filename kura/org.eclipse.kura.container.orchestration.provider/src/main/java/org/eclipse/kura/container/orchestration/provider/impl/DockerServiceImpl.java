@@ -401,9 +401,11 @@ public class DockerServiceImpl implements ConfigurableComponent, DockerService {
 
         String containerImageFullString = String.format("%s:%s", containerDescription.getContainerImage(),
                 containerDescription.getContainerImageTag());
-
-        try (CreateContainerCmd containerBase = this.dockerClient.createContainerCmd(containerImageFullString)) {
-            CreateContainerCmd commandBuilder = containerBase;
+        CreateContainerCmd containerBase = null;
+        CreateContainerCmd commandBuilder = null;
+        try {
+            containerBase = this.dockerClient.createContainerCmd(containerImageFullString);
+            commandBuilder = containerBase;
 
             if (containerDescription.getContainerName() != null) {
                 commandBuilder = commandBuilder.withName(containerDescription.getContainerName());
@@ -427,12 +429,18 @@ public class DockerServiceImpl implements ConfigurableComponent, DockerService {
 
             finalContainerID = commandBuilder.withHostConfig(configuration).exec().getId();
 
-            commandBuilder.close();
             containerDescription.setContainerState(ContainerStates.ACTIVE);
 
         } catch (Exception e) {
             logger.error("failed to create container: {}", e.toString());
             containerDescription.setContainerState(ContainerStates.FAILED);
+        } finally {
+            if (commandBuilder != null) {
+                commandBuilder.close();
+            }
+            if (containerBase != null) {
+                containerBase.close();
+            }
         }
 
         return finalContainerID;

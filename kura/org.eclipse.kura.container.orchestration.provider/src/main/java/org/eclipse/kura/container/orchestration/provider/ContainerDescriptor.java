@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -126,8 +127,8 @@ public class ContainerDescriptor {
         resultBuilder = obj1.containerName.equals(obj2.containerName);
         resultBuilder = resultBuilder && obj1.containerImage.equals(obj2.containerImage);
         resultBuilder = resultBuilder && obj1.containerImageTag.equals(obj2.containerImageTag);
-        resultBuilder = resultBuilder && ArrayUtils.isEquals(obj1.containerPortsExternal, obj2.containerPortsExternal);
-        resultBuilder = resultBuilder && ArrayUtils.isEquals(obj1.containerPortsInternal, obj2.containerPortsInternal);
+        resultBuilder = resultBuilder && Objects.deepEquals(obj1.containerPortsExternal, obj2.containerPortsExternal);
+        resultBuilder = resultBuilder && Objects.deepEquals(obj1.containerPortsInternal, obj2.containerPortsInternal);
         resultBuilder = resultBuilder && obj1.containerEnvVars.equals(obj2.containerEnvVars);
         resultBuilder = resultBuilder && obj1.containerDevices.equals(obj2.containerDevices);
         resultBuilder = resultBuilder && obj1.containerVolumes.equals(obj2.containerVolumes);

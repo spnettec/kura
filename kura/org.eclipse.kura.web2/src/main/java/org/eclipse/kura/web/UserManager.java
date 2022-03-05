@@ -137,7 +137,6 @@ public class UserManager {
         this.userAdmin.removeRole(user.get().getName());
     }
 
-    @SuppressWarnings("unchecked")
     public boolean setUserPassword(final String userName, final String userPassword) throws KuraException {
         final User user = getUser(userName).orElseThrow(() -> new KuraException(KuraErrorCode.NOT_FOUND));
 

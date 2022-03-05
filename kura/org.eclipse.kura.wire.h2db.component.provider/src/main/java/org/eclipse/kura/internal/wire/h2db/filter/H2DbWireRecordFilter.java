@@ -89,7 +89,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -101,7 +101,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -113,10 +113,11 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for deactivation
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the properties
+     *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating DB Wire Record Filter...");
         this.options = new H2DbWireRecordFilterOptions(properties);
@@ -137,7 +138,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for updating
      *
      * @param properties
-     *                       the updated properties
+     *            the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating DB Wire Record Filter... {}", properties);
@@ -165,7 +166,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * OSGi service component callback for deactivation
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Dectivating DB Wire Record Filter...");

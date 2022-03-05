@@ -131,10 +131,11 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * OSGi Service Component callback for activation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the properties
+     *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating DB Wire Record Store...");
         this.wireRecordStoreOptions = new H2DbWireRecordStoreOptions(properties);
@@ -153,7 +154,7 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * OSGi Service Component callback for updating.
      *
      * @param properties
-     *                       the updated service component properties
+     *            the updated service component properties
      */
     public synchronized void updated(final Map<String, Object> properties) {
         logger.debug("Updating DB Wire Record Store...");
@@ -169,7 +170,7 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * OSGi Service Component callback for deactivation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Deactivating DB Wire Record Store...");
@@ -192,7 +193,7 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Truncates the records in the table
      *
      * @param noOfRecordsToKeep
-     *                              the no of records to keep in the table
+     *            the no of records to keep in the table
      */
     private void truncate(final int noOfRecordsToKeep) {
         final String tableName = this.wireRecordStoreOptions.getTableName();
@@ -273,9 +274,9 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Stores the provided {@link WireRecord} in the database
      *
      * @param wireRecord
-     *                       the {@link WireRecord} to be stored
+     *            the {@link WireRecord} to be stored
      * @throws NullPointerException
-     *                                  if the provided argument is null
+     *             if the provided argument is null
      */
     private void store(final WireRecord wireRecord) {
         requireNonNull(wireRecord, "Wire Record cannot be null");
@@ -297,9 +298,9 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Tries to reconcile the database.
      *
      * @param wireRecord
-     *                       against which the database columns have to be reconciled.
+     *            against which the database columns have to be reconciled.
      * @param tableName
-     *                       the table name in the database that needs to be reconciled.
+     *            the table name in the database that needs to be reconciled.
      */
     private void reconcileDB(final WireRecord wireRecord, final String tableName) {
         try {
@@ -316,7 +317,7 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Tries to reconcile the database.
      *
      * @param tableName
-     *                      the table name in the database that needs to be reconciled.
+     *            the table name in the database that needs to be reconciled.
      */
     private synchronized void reconcileDB(final String tableName) {
         try {
@@ -332,11 +333,11 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Reconcile table.
      *
      * @param tableName
-     *                      the table name
+     *            the table name
      * @throws SQLException
-     *                                  the SQL exception
+     *             the SQL exception
      * @throws NullPointerException
-     *                                  if the provided argument is null
+     *             if the provided argument is null
      */
     private void reconcileTable(final String tableName) throws SQLException {
         requireNonNull(tableName, "Table name cannot be null");
@@ -372,13 +373,13 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Reconcile columns.
      *
      * @param tableName
-     *                       the table name
+     *            the table name
      * @param wireRecord
-     *                       the data record
+     *            the data record
      * @throws SQLException
-     *                                  the SQL exception
+     *             the SQL exception
      * @throws NullPointerException
-     *                                  if any of the provided arguments is null
+     *             if any of the provided arguments is null
      */
     private void reconcileColumns(final String tableName, final WireRecord wireRecord) throws SQLException {
         requireNonNull(tableName, "Table name cannot be null");
@@ -424,13 +425,13 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
      * Insert the provided {@link WireRecord} to the specified table
      *
      * @param tableName
-     *                       the table name
+     *            the table name
      * @param wireRecord
-     *                       the {@link WireRecord}
+     *            the {@link WireRecord}
      * @throws SQLException
-     *                                  the SQL exception
+     *             the SQL exception
      * @throws NullPointerException
-     *                                  if any of the provided arguments is null
+     *             if any of the provided arguments is null
      */
     private void insertDataRecord(final String tableName, final WireRecord wireRecord) throws SQLException {
         requireNonNull(tableName, "Table name cannot be null");
