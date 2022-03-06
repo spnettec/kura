@@ -211,6 +211,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void registerChannelListeners(final Map<ChannelListener, Map<String, Object>> listenerChannelConfigs)
             throws ConnectionException {
@@ -232,6 +233,7 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
         startConnectionMonitorTask();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void unregisterChannelListeners(final Collection<ChannelListener> listeners) throws ConnectionException {
         this.nodeListeneresRegistrations.unregisterListeners(listeners);
