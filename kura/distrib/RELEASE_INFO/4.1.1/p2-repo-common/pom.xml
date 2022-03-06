@@ -321,11 +321,7 @@
                                     <artifactId>org.apache.servicemix.bundles.spring-tx</artifactId>
                                     <version>${spring.version}</version>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.moka7</artifactId>
-                                    <version>${org.moka7.version}</version>
-                                </artifactItem>
+                                
                                 <artifactItem>
                                     <groupId>org.osgi</groupId>
                                     <artifactId>osgi.annotation</artifactId>
