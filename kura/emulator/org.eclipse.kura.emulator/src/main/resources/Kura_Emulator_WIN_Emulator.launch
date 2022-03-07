@@ -142,17 +142,14 @@
         <setEntry value="com.alibaba.fastjson@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.jersey-min@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.publisher@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-databind@default:default"/>
         <setEntry value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml@default:default"/>
         <setEntry value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations@default:default"/>
         <setEntry value="com.google.gson@default:default"/>
-        <setEntry value="com.google.guava*26.0.0.jre@default:default"/>
         <setEntry value="com.google.guava*30.1.1.jre@default:default"/>
         <setEntry value="com.google.gwt.user@default:default"/>
         <setEntry value="com.google.protobuf@default:default"/>
@@ -209,7 +206,6 @@
         <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
         <setEntry value="org.apache.commons.commons-text@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
-        <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.commons.pool@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
@@ -312,6 +308,8 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.container.orchestration.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory.test@default:false"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory@default:default"/>
@@ -366,9 +364,12 @@
         <setEntry value="org.eclipse.kura.rest.configuration.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.wire.provider.test@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.stress@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store.test@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
+        <setEntry value="org.eclipse.kura.util.test.driver@default:default"/>
         <setEntry value="org.eclipse.kura.util.wire.test@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
