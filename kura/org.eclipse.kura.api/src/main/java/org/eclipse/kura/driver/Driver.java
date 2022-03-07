@@ -195,10 +195,7 @@ public interface Driver {
      */
     public default void registerChannelListeners(final Map<ChannelListener, Map<String, Object>> listenerChannelConfigs)
             throws ConnectionException {
-
-        for (Map.Entry<ChannelListener, Map<String, Object>> entry : listenerChannelConfigs.entrySet()) {
-            registerChannelListener(entry.getValue(), entry.getKey());
-        }
+        throw new KuraRuntimeException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
     }
 
     /**
@@ -237,10 +234,7 @@ public interface Driver {
      */
     public default void unregisterChannelListeners(final Collection<ChannelListener> listeners)
             throws ConnectionException {
-        for (ChannelListener listener : listeners) {
-            unregisterChannelListener(listener);
-        }
-
+        throw new KuraRuntimeException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
     }
 
     /**
