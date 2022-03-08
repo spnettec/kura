@@ -68,10 +68,6 @@ public class DockerServiceImpl implements ConfigurableComponent, DockerService {
     private AuthConfig dockerAuthConfig;
     private CryptoService cryptoService;
 
-    public void setDockerClient(DockerClient dockerClient) {
-        this.dockerClient = dockerClient;
-    }
-
     public void setCryptoService(CryptoService cryptoService) {
         this.cryptoService = cryptoService;
     }
@@ -766,6 +762,9 @@ public class DockerServiceImpl implements ConfigurableComponent, DockerService {
     }
 
     private boolean testConnection() {
+        if (this.dockerClient == null) {
+            return false;
+        }
         boolean canConnect = false;
         try {
             this.dockerClient.pingCmd().exec();
