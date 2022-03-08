@@ -18,8 +18,8 @@
           name="%name" 
           description="%description">
         
-        <AD id="dockerService.enabled" name="%ebabled" type="Boolean" cardinality="0" required="true" default="false"
-            description="%ebabledDesc">
+        <AD id="dockerService.enabled" name="%enabled" type="Boolean" cardinality="0" required="true" default="false"
+            description="%enabledDesc">
         </AD>
 
         <AD id="dockerService.dockerHost" name="%hostUrl"

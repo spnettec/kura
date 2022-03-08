@@ -68,6 +68,10 @@ public class DockerServiceImpl implements ConfigurableComponent, DockerService {
     private AuthConfig dockerAuthConfig;
     private CryptoService cryptoService;
 
+    public void setDockerClient(DockerClient dockerClient) {
+        this.dockerClient = dockerClient;
+    }
+
     public void setCryptoService(CryptoService cryptoService) {
         this.cryptoService = cryptoService;
     }
