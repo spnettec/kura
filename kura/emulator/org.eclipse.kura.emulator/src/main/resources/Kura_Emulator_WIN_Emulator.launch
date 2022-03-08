@@ -310,6 +310,8 @@
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.container.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.container.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory.test@default:false"/>
         <setEntry value="org.eclipse.kura.core.cloud.factory@default:default"/>
@@ -374,6 +376,8 @@
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
+        <setEntry value="org.eclipse.kura.wire.ai.component.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.camel@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>

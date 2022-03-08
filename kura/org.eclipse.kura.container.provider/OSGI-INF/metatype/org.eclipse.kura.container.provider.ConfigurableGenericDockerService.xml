@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     Copyright (c) 2022 Eurotech and/or its affiliates and others
+   
+     This program and the accompanying materials are made
+     available under the terms of the Eclipse Public License 2.0
+     which is available at https://www.eclipse.org/legal/epl-2.0/
+  
+ 	SPDX-License-Identifier: EPL-2.0
+ 	
+ 	Contributors:
+ 	 Eurotech
+ -->
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/ConfigurableGenericDockerService">
+    <OCD id="org.eclipse.kura.container.provider.ConfigurableGenericDockerService" name="%name"
+        description="%description">
+
+        <AD id="container.enabled" name="%containerEnabled" type="Boolean" cardinality="1" required="true" default="false"
+            description="%containerEnabledDesc">
+        </AD>
+
+        <AD id="container.image" name="%containerImage" description="%containerImageDesc"
+            type="String" cardinality="1" required="true" default="nginx" />
+
+        <AD id="container.image.tag" name="%containerImageTag"
+            description="%containerImageTag" type="String"
+            cardinality="1" required="true" default="latest" />
+
+        <AD id="container.ports.internal" name="%containerPortsInternal"
+            description="%containerPortsInternalDesc" type="String" cardinality="1" required="true"
+            default="80" />
+
+        <AD id="container.ports.external" name="%containerPortsExternal"
+            description="%containerPortsExternalDesc" type="String" cardinality="1" required="true"
+            default="8080" />
+
+        <AD id="container.privileged" name="%containerPrivileged" type="Boolean" cardinality="1" required="true" default="false"
+            description="%containerPrivilegedDesc">
+        </AD>
+        
+        <AD id="container.env" name="%containerEnv"
+            description="%containerEnvDesc" type="String" cardinality="1"
+            required="false" default="" />
+            
+        <AD id="container.volume" name="%containerVolume"
+            description="%containerVolumeDesc" type="String" cardinality="1"
+            required="false" default="" />
+            
+        <AD id="container.device" name="%containerDevice"
+            description="%containerDeviceDesc" type="String" cardinality="1"
+            required="false" default="" />
+            
+
+    </OCD>
+    <Designate pid="org.eclipse.kura.container.provider.ConfigurableGenericDockerService"
+        factoryPid="org.eclipse.kura.container.provider.ConfigurableGenericDockerService">
+        <Object ocdref="org.eclipse.kura.container.provider.ConfigurableGenericDockerService" />
+    </Designate>
+</MetaData>
