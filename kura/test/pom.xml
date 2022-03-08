@@ -98,7 +98,7 @@
                         -DbuildingWithTycho=true -Dosgi.locking=none
                         -Dds.showtrace=true
                         -Djava.io.tmpdir=/tmp
-                        -Dorg.osgi.framework.storage=/tmp/osgi/framework_storage
+                        -Dosgi.configuration.area=/tmp/osgi/framework_storage
                         -Dosgi.clean=true
                         -Dkura.home=${project.basedir}/target/kura
                         -Dkura.plugins=${project.basedir}/target/kura/plugins
@@ -116,12 +116,9 @@
                         <dependencies>
                             <dependency>
 	                            <type>p2-installable-unit</type>
-	                            <artifactId>moquette-broker</artifactId>
+	                            <artifactId>io.moquette.broker</artifactId>
 	                        </dependency>
-                            <dependency>
-                                <type>p2-installable-unit</type>
-                                <artifactId>org.eclipse.equinox.ds</artifactId>
-                            </dependency>
+                            
                             <dependency>
                                 <type>p2-installable-unit</type>
                                 <artifactId>org.apache.felix.scr</artifactId>
@@ -238,22 +235,15 @@
 	                            <type>p2-installable-unit</type>
 	                            <artifactId>org.apache.felix.deploymentadmin</artifactId>
 	                        </dependency>
-                            <dependency>
-                              <type>p2-installable-unit</type>
-                              <artifactId>org.eclipse.kura.emulator.position</artifactId>
-                          </dependency>
+                            
                         </dependencies>
                         <bundleStartLevel>
 	                        <bundle>
-	                            <id>moquette-broker</id>
+	                            <id>io.moquette.broker</id>
 	                            <level>3</level>
 	                            <autoStart>true</autoStart>
 	                        </bundle>
-                            <bundle>
-                                <id>org.eclipse.equinox.ds</id>
-                                <level>4</level>
-                                <autoStart>true</autoStart>
-                            </bundle>
+                            
                             <bundle>
                                 <id>org.apache.felix.scr</id>
                                 <level>4</level>
@@ -639,11 +629,7 @@
 	                            <level>4</level>
 	                            <autoStart>true</autoStart>
 	                        </bundle>
-                          <bundle>
-	                            <id>org.eclipse.kura.emulator.position</id>
-	                            <level>4</level>
-	                            <autoStart>true</autoStart>
-	                        </bundle>
+                          
                         </bundleStartLevel>
                     </configuration>
                 </plugin>
@@ -966,11 +952,7 @@
                                     <id>org.eclipse.kura.core.keystore</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
-                                <requirement>
-                                    <type>eclipse-plugin</type>
-                                    <id>org.eclipse.kura.emulator.position</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
+                                
                             </extraRequirements>
                         </dependency-resolution>
                     </configuration>
