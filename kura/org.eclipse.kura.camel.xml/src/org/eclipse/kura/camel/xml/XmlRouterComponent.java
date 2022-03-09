@@ -148,6 +148,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         final boolean disableJmxTemp = asBoolean(properties, DISABLE_JMX, false);
 
         final Set<String> newRequiredComponents = parseRequirements(asString(properties, COMPONENT_PREREQS));
+        final Set<String> newRequiredLanguages = parseRequirements(asString(properties, LANGUAGE_PREREQS));
 
         final Map<String, String> cloudServiceRequirementsTemp = parseCloudServiceRequirements(
                 asString(properties, CLOUD_SERVICE_PREREQS));
@@ -164,7 +165,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             return true;
         }
 
-        if (!this.requiredLanguages.equals(newRequiredComponents)) {
+        if (!this.requiredLanguages.equals(newRequiredLanguages)) {
             logger.debug("Require restart due to '{}' change", LANGUAGE_PREREQS);
             return true;
         }

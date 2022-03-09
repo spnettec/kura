@@ -264,20 +264,25 @@ public class HttpService implements ConfigurableComponent, EventHandler {
 
             @Override
             public void run() {
-                if (HttpService.this.keystoreService != null) {
-                    logger.info(
-                            "KeystoreService injected. KeystoreServiceMonitor task will be terminated. try {} times",
-                            autoWaitKeystoreServiceAttempt);
-                    activateHttpService();
-                    this.cancel();
-                } else {
-                    autoWaitKeystoreServiceAttempt++;
-                    if (autoWaitKeystoreServiceAttempt > 10) {
-                        activateHttpService();
 
+                if (HttpService.this.keystoreService != null || autoWaitKeystoreServiceAttempt > 10) {
+                    String originalName = Thread.currentThread().getName();
+                    Thread.currentThread().setName("HttpService:KeystoreServicenMonitorTask");
+                    if (HttpService.this.keystoreService != null) {
+                        logger.info(
+                                "KeystoreService injected. KeystoreServiceMonitor task will be terminated. try {} times",
+                                autoWaitKeystoreServiceAttempt);
+                    } else {
                         logger.info(
                                 "KeystoreServiceMonitor retry 10 times. KeystoreServiceMonitor task will be terminated.");
+                    }
+                    try {
+                        activateHttpService();
+                    } catch (Exception e) {
+                        logger.warn("activateHttpService error");
+                    } finally {
                         this.cancel();
+                        Thread.currentThread().setName(originalName);
                     }
                 }
             }
