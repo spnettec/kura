@@ -12,20 +12,15 @@
  ******************************************************************************/
 package com.eclipsesource.jaxrs.publisher.internal;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-
 import javax.ws.rs.Path;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.cm.ManagedService;
 
 import com.eclipsesource.jaxrs.publisher.ResourceFilter;
 
@@ -37,7 +32,6 @@ public class Activator implements BundleActivator {
     private ResourceTracker allTracker;
     private ServletConfigurationTracker servletConfigurationTracker;
     private ApplicationConfigurationTracker applicationConfigurationTracker;
-    private ServiceRegistration<?> configRegistration;
 
     @Override
     public void start(BundleContext context) throws Exception {
@@ -45,19 +39,11 @@ public class Activator implements BundleActivator {
                 "org.glassfish.jersey.server.internal.RuntimeDelegateImpl");
         startJerseyServer();
         this.jaxRsConnector = new JAXRSConnector(context);
-        registerConfiguration(context);
         this.connectorRegistration = context.registerService(JAXRSConnector.class.getName(), this.jaxRsConnector, null);
         openHttpServiceTracker(context);
         openServletConfigurationTracker(context);
         openApplicationConfigurationTracker(context);
         openAllServiceTracker(context);
-    }
-
-    private void registerConfiguration(BundleContext context) {
-        Dictionary<String, String> properties = new Hashtable<>();
-        properties.put(Constants.SERVICE_PID, Configuration.CONFIG_SERVICE_PID);
-        this.configRegistration = context.registerService(ManagedService.class.getName(),
-                new Configuration(this.jaxRsConnector), properties);
     }
 
     private void startJerseyServer() throws BundleException {
@@ -103,7 +89,6 @@ public class Activator implements BundleActivator {
         this.applicationConfigurationTracker.close();
         this.allTracker.close();
         this.connectorRegistration.unregister();
-        this.configRegistration.unregister();
     }
 
     // For testing purpose

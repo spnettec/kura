@@ -41,7 +41,7 @@ public class ResourcePublisher {
 
             @Override
             public Thread newThread(Runnable runnable) {
-                Thread thread = new Thread(runnable, "ResourcePublisher");
+                Thread thread = new Thread(runnable, "com.eclipsesource.jaxrs.publisher.internal.ResourcePublisher");
                 thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
                     @Override
@@ -58,12 +58,12 @@ public class ResourcePublisher {
         this.publishDelay = publishDelay;
     }
 
-    public void schedulePublishing() {
-        if (this.scheduledFuture != null) {
-            this.scheduledFuture.cancel(false);
+    public synchronized void schedulePublishing() {
+        if (this.scheduledFuture == null || scheduledFuture.isDone()) {
+
+            this.scheduledFuture = this.executor.schedule(this.servletContainerBridge, this.publishDelay,
+                    TimeUnit.MILLISECONDS);
         }
-        this.scheduledFuture = this.executor.schedule(this.servletContainerBridge, this.publishDelay,
-                TimeUnit.MILLISECONDS);
     }
 
     public void shutdown() {

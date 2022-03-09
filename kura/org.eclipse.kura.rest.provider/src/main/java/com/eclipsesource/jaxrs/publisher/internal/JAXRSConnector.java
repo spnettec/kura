@@ -43,7 +43,7 @@ public class JAXRSConnector {
 
     JAXRSConnector(BundleContext bundleContext) {
         this.bundleContext = bundleContext;
-        this.configuration = new Configuration(this);
+        this.configuration = new Configuration();
         this.httpServices = new ServiceContainer(bundleContext);
         this.resources = new ServiceContainer(bundleContext);
         this.contextMap = new HashMap<>();

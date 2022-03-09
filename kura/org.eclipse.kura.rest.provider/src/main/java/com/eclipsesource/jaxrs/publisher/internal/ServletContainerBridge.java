@@ -44,16 +44,16 @@ public class ServletContainerBridge extends HttpServlet implements Runnable {
             ClassLoader original = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(Request.class.getClassLoader());
-                synchronized (this) {
+                synchronized (ServletContainerBridge.this) {
                     if (!isJerseyReady()) {
                         // if jersey has not been initialized - use the init method
                         getServletContainer().init(this.servletConfig);
+                        ServletContainerBridge.this.isJerseyReady = true;
                     } else {
                         // otherwise reload
-                        this.isJerseyReady = false;
+                        ServletContainerBridge.this.isJerseyReady = false;
                         getServletContainer().reload(ResourceConfig.forApplication(this.application));
                     }
-                    this.isJerseyReady = true;
                 }
             } catch (ServletException e) {
                 throw new RuntimeException(e);
