@@ -159,7 +159,10 @@
 		</condition>
 		
         <condition property="is.nvidia.jetson.nano">
-            <contains string="${build.name}" substring="nvidia-jetson-nano" />
+        	<or>
+        		<contains string="${build.name}" substring="nvidia-jetson-nano" />
+        		<contains string="${build.name}" substring="intel-up2-ubuntu-20-nn" />
+        	</or>
         </condition>
 
 		<condition property="is.nvidia.jetson.nano">
