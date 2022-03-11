@@ -224,12 +224,16 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     }
 
     private synchronized void activateHttpService() {
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             logger.info("starting Jetty instance...");
+            Thread.currentThread().setContextClassLoader(HttpService.class.getClassLoader());
             JettyConfigurator.startServer(KURA_JETTY_PID, getJettyConfig());
             logger.info("starting Jetty instance...done");
         } catch (final Exception e) {
             logger.error("Could not start Jetty Web server", e);
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
     }
 
@@ -285,6 +289,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
                         Thread.currentThread().setName(originalName);
                     }
                 }
+                autoWaitKeystoreServiceAttempt++;
             }
 
         }, 100, 100);
