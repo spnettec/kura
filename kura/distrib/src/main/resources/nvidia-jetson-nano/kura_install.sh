@@ -82,6 +82,9 @@ if [ -f "/etc/network/if-up.d/ntpdate" ] ; then
     chmod -x /etc/network/if-up.d/ntpdate
 fi
 
+#disable asking NTP servers to the DHCP server
+sed -i "s/, ntp-servers//g" /etc/dhcp/dhclient.conf
+
 #prevent time sync services from starting
 systemctl stop systemd-timedated
 systemctl disable systemd-timedated
@@ -111,6 +114,9 @@ chmod 600 /etc/bind/rndc.key
 #set up logrotate - no need to restart as it is a cronjob
 cp ${INSTALL_DIR}/kura/install/logrotate.conf /etc/logrotate.conf
 cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate.d/kura
+
+#set up systemd-tmpfiles
+cp ${INSTALL_DIR}/kura/install/kura-tmpfiles.conf /etc/tmpfiles.d/kura.conf
 
 # disable dhcpcd service - kura is the network manager
 systemctl stop dhcpcd
@@ -159,6 +165,13 @@ for FILE in $(ls $PATTERN 2>/dev/null)
 do
   chown kurad:kurad $FILE
 done
+
+# set up kura files permissions
+chmod 700 ${INSTALL_DIR}/kura/bin/*.sh
+chown -R kurad:kurad /opt/eclipse
+chmod -R go-rwx /opt/eclipse
+chmod a+rx /opt/eclipse    
+find /opt/eclipse/kura -type d -exec chmod u+x "{}" \;
 
 # execute patch_sysctl.sh from installer install folder
 chmod 700 ${INSTALL_DIR}/kura/install/patch_sysctl.sh
