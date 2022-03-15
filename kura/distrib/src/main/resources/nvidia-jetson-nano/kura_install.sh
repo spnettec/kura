@@ -53,10 +53,6 @@ cp ${INSTALL_DIR}/kura/install/ifdown-local /etc/network/if-down.d/ifdown-local
 chmod +x /etc/network/if-up.d/ifup-local
 chmod +x /etc/network/if-down.d/ifdown-local
 
-#set up recover default configuration script
-cp ${INSTALL_DIR}/kura/install/recover_default_config.init ${INSTALL_DIR}/kura/bin/.recoverDefaultConfig.sh
-chmod +x ${INSTALL_DIR}/kura/bin/.recoverDefaultConfig.sh
-
 #set up default firewall configuration
 cp ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/.data/iptables
 chmod 644 ${INSTALL_DIR}/kura/.data/iptables
@@ -83,7 +79,7 @@ if [ -f "/etc/network/if-up.d/ntpdate" ] ; then
 fi
 
 #disable asking NTP servers to the DHCP server
-sed -i "s/, ntp-servers//g" /etc/dhcp/dhclient.conf
+sed -i "s/\(, \?ntp-servers\)/; #\1/g" /etc/dhcp/dhclient.conf
 
 #prevent time sync services from starting
 systemctl stop systemd-timedated

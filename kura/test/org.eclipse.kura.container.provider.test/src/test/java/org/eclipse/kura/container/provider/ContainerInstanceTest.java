@@ -1,32 +1,36 @@
 /*******************************************************************************
   * Copyright (c) 2022 Eurotech and/or its affiliates and others
-  * 
+  *
   * This program and the accompanying materials are made
   * available under the terms of the Eclipse Public License 2.0
   * which is available at https://www.eclipse.org/legal/epl-2.0/
-  * 
+  *
   * SPDX-License-Identifier: EPL-2.0
-  * 
+  *
   * Contributors:
   *  Eurotech
   *******************************************************************************/
 
 package org.eclipse.kura.container.provider;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.container.orchestration.provider.ContainerDescriptor;
-import org.eclipse.kura.container.orchestration.provider.DockerService;
+import org.eclipse.kura.container.orchestration.ContainerConfiguration;
+import org.eclipse.kura.container.orchestration.ContainerOrchestrationService;
 import org.junit.Test;
 
-public class ConfigurableDockerGenericDockerServiceTest {
+public class ContainerInstanceTest {
 
     private static final String CONTAINER_PATH_FILE_PATH = "container.path.filePath";
     private static final String CONTAINER_PATH_DESTINATION = "container.path.destination";
@@ -39,13 +43,16 @@ public class ConfigurableDockerGenericDockerServiceTest {
     private static final String CONTAINER_IMAGE = "container.image";
     private static final String CONTAINER_ENABLED = "container.enabled";
     private static final String CONTAINER_DEVICE = "container.Device";
+    private static final String CONTAINER_LOGGER_PARAMETERS = "container.loggerParameters";
+    private static final String CONTAINER_LOGGING_TYPE = "container.loggingType";
 
-    private DockerService dockerService;
+    private ContainerOrchestrationService dockerService;
     private Map<String, Object> properties;
-    private ConfigurableGenericDockerService configurableGenericDockerService;
+    private ContainerInstance configurableGenericDockerService;
+    private final CompletableFuture<Void> containerStarted = new CompletableFuture<>();
 
     @Test(expected = IllegalArgumentException.class)
-    public void testServiceActivateNullProperties() throws KuraException {
+    public void testServiceActivateNullProperties() {
         givenNullProperties();
         givenConfigurableGenericDockerService();
         givenDockerService();
@@ -54,27 +61,13 @@ public class ConfigurableDockerGenericDockerServiceTest {
     }
 
     @Test
-    public void testServiceActivateEmptyProperties() throws KuraException {
-        givenEmptyProperties();
-        givenConfigurableGenericDockerService();
-        givenDockerService();
-
-        whenActivateInstance();
-
-        thenNotStoppedMicroservice();
-        thenNotStartedMicroservice();
-
-    }
-
-    @Test
-    public void testServiceActivateWithPropertiesDisabled() throws KuraException {
+    public void testServiceActivateWithPropertiesDisabled() throws KuraException, InterruptedException {
         givenFullProperties(false);
         givenConfigurableGenericDockerService();
         givenDockerService();
 
         whenActivateInstance();
 
-        thenNotStoppedMicroservice();
         thenNotStartedMicroservice();
 
     }
@@ -102,12 +95,11 @@ public class ConfigurableDockerGenericDockerServiceTest {
         whenUpdateInstance();
 
         thenNotStoppedMicroservice();
-        thenNotStartedMicroservice();
 
     }
 
     @Test
-    public void testServiceUpdateEnable() throws KuraException {
+    public void testServiceUpdateEnable() {
         givenFullProperties(false);
         givenConfigurableGenericDockerService();
         givenDockerService();
@@ -116,7 +108,6 @@ public class ConfigurableDockerGenericDockerServiceTest {
 
         whenUpdateInstance();
 
-        thenNotStoppedMicroservice();
         thenStartedMicroservice();
 
     }
@@ -127,17 +118,16 @@ public class ConfigurableDockerGenericDockerServiceTest {
         givenConfigurableGenericDockerService();
         givenDockerService();
         givenActivateInstance();
-        givenDockerService();
+        givenStartedContainer();
         givenFullProperties(false);
 
         whenUpdateInstance();
 
         thenStoppedMicroservice();
-        thenNotStartedMicroservice();
     }
 
     @Test
-    public void testServiceDeactivateNoRunningContainers() throws KuraException {
+    public void testServiceDeactivateNoRunningContainers() throws KuraException, InterruptedException {
         givenFullProperties(false);
         givenConfigurableGenericDockerService();
         givenDockerService();
@@ -145,35 +135,39 @@ public class ConfigurableDockerGenericDockerServiceTest {
 
         whenDeactivateInstance();
 
-        thenNotStoppedMicroservice();
         thenNotStartedMicroservice();
     }
 
     @Test
-    public void testServiceDeactivateRunningContainers() throws KuraException {
+    public void testServiceDeactivateStopContainer() throws KuraException {
         givenFullProperties(true);
         givenConfigurableGenericDockerService();
         givenDockerService();
         givenActivateInstance();
-        givenDockerService();
+        givenStartedContainer();
 
         whenDeactivateInstance();
 
         thenStoppedMicroservice();
-        thenNotStartedMicroservice();
     }
 
     private void givenDockerService() {
-        this.dockerService = mock(DockerService.class);
-        this.configurableGenericDockerService.setDockerService(this.dockerService);
+        this.dockerService = mock(ContainerOrchestrationService.class);
+        this.configurableGenericDockerService.setContainerOrchestrationService(this.dockerService);
+        try {
+            when(this.dockerService.startContainer((ContainerConfiguration) any())).thenAnswer(i -> {
+                this.containerStarted.complete(null);
+                return "1234";
+            });
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            // no need
+        }
     }
 
     private void givenNullProperties() {
         this.properties = null;
-    }
-
-    private void givenEmptyProperties() {
-        this.properties = new HashMap<>();
     }
 
     private void givenFullProperties(boolean enabled) {
@@ -189,10 +183,23 @@ public class ConfigurableDockerGenericDockerServiceTest {
         this.properties.put(CONTAINER_PATH_DESTINATION, "");
         this.properties.put(CONTAINER_PATH_FILE_PATH, "");
         this.properties.put(CONTAINER_DEVICE, "");
+        this.properties.put(CONTAINER_LOGGER_PARAMETERS, "");
+        this.properties.put(CONTAINER_LOGGING_TYPE, "default");
     }
 
     private void givenConfigurableGenericDockerService() {
-        this.configurableGenericDockerService = new ConfigurableGenericDockerService();
+        this.configurableGenericDockerService = new ContainerInstance();
+    }
+
+    private void givenStartedContainer() {
+        try {
+            this.containerStarted.get(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            fail("interrupted while waiting container startup");
+        } catch (final Exception e) {
+            fail("container not started");
+        }
     }
 
     private void givenActivateInstance() {
@@ -212,19 +219,19 @@ public class ConfigurableDockerGenericDockerServiceTest {
     }
 
     private void thenStoppedMicroservice() throws KuraException {
-        verify(this.dockerService, times(1)).stopContainer(any(ContainerDescriptor.class));
+        verify(this.dockerService, times(1)).stopContainer(any(String.class));
     }
 
     private void thenNotStoppedMicroservice() throws KuraException {
-        verify(this.dockerService, times(0)).stopContainer(any(ContainerDescriptor.class));
+        verify(this.dockerService, times(0)).stopContainer(any(String.class));
     }
 
-    private void thenNotStartedMicroservice() throws KuraException {
-        verify(this.dockerService, times(0)).startContainer(any(ContainerDescriptor.class));
+    private void thenNotStartedMicroservice() throws KuraException, InterruptedException {
+        verify(this.dockerService, times(0)).startContainer(any(ContainerConfiguration.class));
     }
 
-    private void thenStartedMicroservice() throws KuraException {
-        verify(this.dockerService, times(1)).startContainer(any(ContainerDescriptor.class));
+    private void thenStartedMicroservice() {
+        givenStartedContainer();
     }
 
 }
