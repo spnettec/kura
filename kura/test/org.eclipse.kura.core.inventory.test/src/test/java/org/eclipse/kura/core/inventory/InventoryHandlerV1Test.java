@@ -57,7 +57,7 @@ import org.eclipse.kura.system.SystemResourceInfo;
 import org.eclipse.kura.system.SystemResourceType;
 import org.eclipse.kura.system.SystemService;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -1034,7 +1034,7 @@ public class InventoryHandlerV1Test {
                 .setContainerImage("nginx").setContainerImageTag("latest").setContainerID("1234").build();
         this.dockerContainer2 = ContainerInstanceDescriptor.builder().setContainerName("dockerContainer2")
                 .setContainerImage("nginx").setContainerID("124344").build();
-        
+
         this.dockerContainer1Config = ContainerConfiguration.builder().setContainerName("dockerContainer1")
                 .setContainerImage("nginx").setContainerImageTag("latest").build();
         this.dockerContainer2Config = ContainerConfiguration.builder().setContainerName("dockerContainer2")
@@ -1187,8 +1187,8 @@ public class InventoryHandlerV1Test {
 
         when(bundleContext.getService(ref)).thenReturn(jsonMarshaller);
         try {
-            when(bundleContext.getServiceReferences(Matchers.eq(Unmarshaller.class), Matchers.anyString()))
-                    .thenReturn(Arrays.asList(ref));
+            when(bundleContext.getServiceReferences(ArgumentMatchers.eq(Unmarshaller.class),
+                    ArgumentMatchers.anyString())).thenReturn(Arrays.asList(ref));
         } catch (InvalidSyntaxException e) {
             throw new IllegalStateException(e);
         }
