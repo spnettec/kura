@@ -22,11 +22,11 @@
             description="%enabledDesc">
         </AD>
 
-        <AD id="container.engine.host" name="Container Engine Host URL"
+        <AD id="container.engine.host" name="%hostUrl"
             description="%hostUrlDesc" type="String"
             cardinality="0" required="true" default="unix:///var/run/docker.sock" />
         
-         <AD id="repository.enabled" name="Enable Credentials" type="Boolean" cardinality="0" required="true" default="false"
+         <AD id="repository.enabled" name="%repositoryEenabled" type="Boolean" cardinality="0" required="true" default="false"
             description="%repositoryEenabledDesc">
         </AD>
         
