@@ -11,24 +11,24 @@
  	Contributors:
  	 Eurotech
  -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
-    <OCD id="org.eclipse.kura.container.provider.ContainerInstance" name="Container Instance"
-        description="Allows for the creation of containers.">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/ContainerInstance">
+    <OCD id="org.eclipse.kura.container.provider.ContainerInstance" name="%name"
+        description="%description">
 
-        <AD id="container.enabled" name="Enabled" type="Boolean" cardinality="1" required="true" default="false"
-            description="Enables this container">
+        <AD id="container.enabled" name="%containerEnabled" type="Boolean" cardinality="1" required="true" default="false"
+            description="%containerEnabledDesc">
         </AD>
 
-        <AD id="container.image" name="Image name" description="The image the container will be created with. This utility will pull images from the configured registry."
+        <AD id="container.image" name="%containerImage" description="%containerImageDesc"
             type="String" cardinality="1" required="true" default="nginx" />
 
-        <AD id="container.image.tag" name="Image tag"
-            description="Describes which image version that should be pulled from the container registry." type="String"
+        <AD id="container.image.tag" name="%containerImageTag"
+            description="%containerImageTagDesc" type="String"
             cardinality="1" required="true" default="latest" />
         
         <AD id="container.image.download.retries" 
-            name="Image Download Retries" 
-            description="The number of retries to pull the container image. Set to 0 for unlimited retries"
+            name="%containerImageDownloadRetries" 
+            description="%containerImageDownloadRetriesDesc"
             type="Integer" 
             cardinality="1" 
             min="0"
@@ -36,46 +36,46 @@
             default="5" />
             
         <AD id="container.image.download.interval" 
-            name="Image Download Retry Interval" 
-            description="The interval (in milliseconds) between retries to pull the container image"
+            name="%containerImageDownloadInterval" 
+            description="%containerImageDownloadIntervalDesc"
             type="Integer" 
             cardinality="1" 
             min="0"
             required="true" 
             default="30000" />
 
-        <AD id="container.ports.internal" name="Internal ports"
-            description="A comma seperated list of ports. Note, the number of internal ports must be equal to the number of external ports. Example: 80, 443." 
+        <AD id="container.ports.internal" name="%containerPortsInternal"
+            description="%containerPortsInternalDesc" 
             type="String" cardinality="1" required="true"
             default="80" />
 
-        <AD id="container.ports.external" name="External ports"
-            description="A comma seperated list of ports. Note, the number of external ports must be equal to the number of internal ports. Example: 8080, 443." 
+        <AD id="container.ports.external" name="%containerPortsExternal"
+            description="%containerPortsExternalDesc" 
             type="String" cardinality="1" required="true"
             default="8080" />
 
-        <AD id="container.privileged" name="Privileged Mode" type="Boolean" cardinality="1" required="true" default="false"
-            description="Give the container privileged access. (Warning: use this option at your own risk as privileged containers can be dangerous)">
+        <AD id="container.privileged" name="%containerPrivileged" type="Boolean" cardinality="1" required="true" default="false"
+            description="%containerPrivilegedDesc">
         </AD>
         
-        <AD id="container.env" name="Environment Variables"
-            description="Additional container enviroment variables. Example: example_var_1=123, example_var_2=123." 
+        <AD id="container.env" name="%containerEnv"
+            description="%containerEnvDesc" 
             type="String" cardinality="1"
             required="false" default="" />
             
-        <AD id="container.volume" name="Volume Mount"
-            description="The path on the container at which you would like to mount a file or folder. Example: /path/on/host1:/path/on/container1, /path/on/host2:/path/on/container2." 
+        <AD id="container.volume" name="%containerVolume"
+            description="%containerVolumeDesc" 
             type="String" cardinality="1"
             required="false" default="" />
             
-        <AD id="container.device" name="Peripheral Device"
-            description="Used to pass physical devices to a container. Example: /dev/gpiomem, /dev/ttyUSB0. (Generally Requires privileged mode to be enabled)" 
+        <AD id="container.device" name="%containerDevice"
+            description="%containerDeviceDesc" 
             type="String" cardinality="1"
             required="false" default="" />
             
         <AD id="container.loggingType" 
-            name="Logger Type"
-            description="Used to specify what logging driver the container will use. By default, containers will log to a JSON-FILE on the gateway." type="String" cardinality="0"
+            name="%containerLoggingType"
+            description="%containerLoggingTypeDesc" type="String" cardinality="0"
             required="true" 
             default="DEFAULT">
             <Option label="NONE" value="NONE" />
