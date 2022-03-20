@@ -163,6 +163,8 @@
         <osgi-dp-plugin-version>0.4.0</osgi-dp-plugin-version>
 
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
+
+        <kura.addons.url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</kura.addons.url>
     </properties>
 
     <distributionManagement>
@@ -305,7 +307,15 @@
             <layout>p2</layout>
             <url>file:///${kura.basedir}/target-definition/test-deps/repository/</url>
         </repository>
-        
+        <repository>
+            <id>kura_addons</id>
+            <name>Eclipse Kura Addons Maven Repository</name>
+            <url>${kura.addons.url}</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
         <!--
             See Github issue #1755
             https://github.com/bndtools/bnd/issues/1755

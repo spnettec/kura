@@ -26,31 +26,6 @@
             description="%hostUrlDesc" type="String"
             cardinality="0" required="true" default="unix:///var/run/docker.sock" />
         
-         <AD id="repository.enabled" name="%repositoryEenabled" type="Boolean" cardinality="0" required="true" default="false"
-            description="%repositoryEenabledDesc">
-        </AD>
-        
-        <AD id="repository.hostname" name="%repoHostname"
-            description="%repoHostnameDesc" type="String"
-            cardinality="0" required="false" default="" />
-            
-        <AD id="repository.username" name="%username"
-            description="%usernameDesc" type="String"
-            cardinality="0" required="false" default="" />
-            
-        <AD id="repository.password" name="%password"
-            description="%passwordDesc" type="Password"
-            cardinality="0" required="false" default="" />
-            
-        <AD id="default.download.timeout" 
-            name="%downloadTimeout"
-            description="%downloadTimeoutDesc" 
-            type="Integer"
-            cardinality="0" 
-            required="true" 
-            min="1"
-            default="120" />
-        
     </OCD>
 
     <Designate pid="org.eclipse.kura.container.orchestration.provider.ContainerOrchestrationService">

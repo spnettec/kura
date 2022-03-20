@@ -18,13 +18,32 @@
         <AD id="container.enabled" name="%containerEnabled" type="Boolean" cardinality="1" required="true" default="false"
             description="%containerEnabledDesc">
         </AD>
-
-        <AD id="container.image" name="%containerImage" description="%containerImageDesc"
+        
+        <AD id="container.image" 
+            name="%containerImage" 
+            description="%containerImageDesc"
             type="String" cardinality="1" required="true" default="nginx" />
 
         <AD id="container.image.tag" name="%containerImageTag"
             description="%containerImageTagDesc" type="String"
             cardinality="1" required="true" default="latest" />
+        
+        <AD id="registry.hostname" name="%registryHostname"
+            description="%registryHostnameDesc" 
+            type="String"
+            cardinality="0" required="false" default="" />
+            
+        <AD id="registry.username" name="%registryUsername"
+            description="%registryUsernameDesc"
+            type="String"
+            cardinality="0" 
+            required="false" 
+            default="" />
+            
+        <AD id="registry.password" name="%registryPassword"
+            description="%registryPasswordDesc" 
+            type="Password"
+            cardinality="0" required="false" default="" />
         
         <AD id="container.image.download.retries" 
             name="%containerImageDownloadRetries" 
@@ -43,6 +62,15 @@
             min="0"
             required="true" 
             default="30000" />
+        
+        <AD id="container.image.download.timeout" 
+            name="%containerImageDownloadTimeout"
+            description="%containerImageDownloadTimeoutDesc" 
+            type="Integer"
+            cardinality="0" 
+            required="true" 
+            min="1"
+            default="500" />
 
         <AD id="container.ports.internal" name="%containerPortsInternal"
             description="%containerPortsInternalDesc" 
