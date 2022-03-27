@@ -60,14 +60,27 @@ function preRemove {
         systemctl disable kura
         rm /lib/systemd/system/kura.service
     fi
+    if [ -f /etc/init.d/firewall ] ; then
+        rm /etc/init.d/firewall
+        update-rc.d firewall remove
+    fi
+    if [ -f /lib/systemd/system/firewall.service ] ; then
+        systemctl disable firewall
+        rm /lib/systemd/system/firewall.service
+    fi
     
-    rm -f  /etc/logrotate.d/kura
+    #Roll-back logrotate setup
+    rm -f  /var/log/logrotate-kura.status
+    rm -f  /etc/logrotate-kura.conf
+    rm -f  /etc/cron.d/logrotate-kura
+
     rm -f  /var/log/kura*.log
+    rm -f  /var/log/kura*.gz
     rm -rf /tmp/.kura
     rm -rf /tmp/kura
 
-    #Delete Eclipse directory if present
     if [ -d "${INSTALL_DIR}/kura" ] ; then
+      ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -u
       PARENT=`readlink -f ${INSTALL_DIR}/kura`
       rm -rf ${INSTALL_DIR}/kura
       rm -rf $PARENT
