@@ -191,7 +191,7 @@ public class ImageInstanceDescriptor {
             result.imageAuthor = this.imageAuthor;
             result.imageArch = this.imageArch;
             result.imageSize = this.imageSize;
-            result.imageLabels = requireNonNull(this.imageLabels, "ImageLabels must not be null");
+            result.imageLabels = this.imageLabels;
 
             return result;
         }
