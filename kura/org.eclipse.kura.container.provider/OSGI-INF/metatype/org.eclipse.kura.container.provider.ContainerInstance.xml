@@ -91,6 +91,11 @@
             type="String" cardinality="1"
             required="false" default="" />
             
+        <AD id="container.entrypoint" name="%entrypointOverride"
+            description="%entrypointOverrideDesc"
+            type="String" cardinality="1"
+            required="false" default="" />
+            
         <AD id="container.volume" name="%containerVolume"
             description="%containerVolumeDesc" 
             type="String" cardinality="1"
