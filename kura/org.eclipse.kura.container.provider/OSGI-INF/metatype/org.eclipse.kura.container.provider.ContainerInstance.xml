@@ -74,12 +74,12 @@
 
         <AD id="container.ports.internal" name="%containerPortsInternal"
             description="%containerPortsInternalDesc" 
-            type="String" cardinality="1" required="true"
+            type="String" cardinality="1" required="false"
             default="80" />
 
         <AD id="container.ports.external" name="%containerPortsExternal"
             description="%containerPortsExternalDesc" 
-            type="String" cardinality="1" required="true"
+            type="String" cardinality="1" required="false"
             default="8080" />
 
         <AD id="container.privileged" name="%containerPrivileged" type="Boolean" cardinality="1" required="true" default="false"
@@ -106,6 +106,13 @@
             type="String" cardinality="1"
             required="false" default="" />
             
+        <AD id="container.networkMode" 
+            name="%containerNetworkingMode"
+            description="%containerNetworkingModeDesc" type="String" cardinality="0"
+            required="false" 
+            default="">
+         </AD>
+         
         <AD id="container.loggingType" 
             name="%containerLoggingType"
             description="%containerLoggingTypeDesc" type="String" cardinality="0"

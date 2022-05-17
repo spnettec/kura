@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
+  Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
   
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -9,22 +9,16 @@
 	SPDX-License-Identifier: EPL-2.0
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/RestService">
-    <OCD id="org.eclipse.kura.internal.rest.provider.RestService" 
-         name="%name" 
-         description="%description">
-        
-        <AD id="allowed.ports"
-            name="%allowedPorts"
-            type="Integer"
-            cardinality="3"
-            required="false"
-            min="1"
-            max="65535"
-            description="%allowedPortsDesc">
-        </AD>
+    <OCD id="org.eclipse.kura.internal.rest.provider.RestService" name="%name" description="This service allows to configure settings related to Kura REST APIs">
+
+        <AD id="allowed.ports" name="%allowedPorts" type="Integer" cardinality="3" required="false" min="1" max="65535" description="%allowedPortsDesc"></AD>
+
+        <AD id="auth.password.enabled" name="%passworDauthenticationEnabled" type="Boolean" required="true" default="true" description="%passworDauthenticationEnabledDesc"></AD>
+
+        <AD id="auth.certificate.enabled" name="%certificateAuthenticationEnabled" type="Boolean" required="true" default="true" description="%certificateAuthenticationEnabledDesc"></AD>
     </OCD>
-    
+
     <Designate pid="org.eclipse.kura.internal.rest.provider.RestService">
-        <Object ocdref="org.eclipse.kura.internal.rest.provider.RestService"/>
+        <Object ocdref="org.eclipse.kura.internal.rest.provider.RestService" />
     </Designate>
 </MetaData>
