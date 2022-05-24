@@ -44,7 +44,7 @@
             <url>${kura.addons.url}</url>
             <snapshots>
                 <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
+                <updatePolicy>false</updatePolicy>
             </snapshots>
         </repository>
         <repository>

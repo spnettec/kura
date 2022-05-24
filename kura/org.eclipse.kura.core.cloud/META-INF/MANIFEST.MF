@@ -44,3 +44,4 @@ Import-Package: com.eclipsesource.json;version="0.9.5",
  org.osgi.util.tracker;version="1.5.1",
  org.slf4j;version="[1.7.0,3)",
  com.google.protobuf;version="[2.6.0,4.0.0)"
+Export-Package: org.eclipse.kura.cloud.app.command;version="1.3"
