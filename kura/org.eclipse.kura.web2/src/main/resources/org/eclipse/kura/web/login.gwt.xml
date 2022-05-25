@@ -47,10 +47,10 @@
   <!-- <set-property name="compiler.useSourceMaps" value="true" /> -->
   
   <!-- Locales: English language, independent of country -->
-  <extend-property name="locale" values="zh_CN"/>
-  <extend-property name="locale" values="en"/>
-  <extend-property name="locale" values="jp"/>
-  <set-property-fallback name="locale" value="zh_CN"/>
+  <extend-property name="locale" values="zh_CN,en,ja"/>
+  <set-property name="locale" value="zh_CN,en,ja" />
+  <set-property-fallback name="locale" value="en"/>
+  <set-configuration-property name="locale.useragent" value="Y"/>
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='org.eclipse.kura.web.client.Login' />

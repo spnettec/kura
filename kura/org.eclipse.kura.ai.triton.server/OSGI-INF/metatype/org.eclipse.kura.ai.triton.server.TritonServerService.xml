@@ -14,9 +14,18 @@
 
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/TritonServerService">
-    <OCD id="org.eclipse.kura.ai.triton.server.TritonServerService" 
+    <OCD id="org.eclipse.kura.ai.triton.server.TritonServerService"
          name="%name" 
          description="%description">
+
+         <AD id="enable.local"  
+            name="%enableLocal"
+            type="Boolean"
+            cardinality="0" 
+            required="true"
+            default="false" 
+            description="%enableLocalDesc">
+        </AD>
         
         <AD id="server.address"  
             name="%serverAddress"
@@ -38,24 +47,6 @@
             description="%serverPortsDesc">
         </AD>
 
-        <AD id="models"  
-            name="%models"
-            type="String"
-            cardinality="0" 
-            required="false"
-            default="" 
-            description="%modelsDesc">
-        </AD>
-        
-         <AD id="enable.local"  
-            name="%enableLocal"
-            type="Boolean"
-            cardinality="0" 
-            required="true"
-            default="false" 
-            description="%enableLocalDesc">
-        </AD>
-        
         <AD id="local.model.repository.path"  
             name="%localModelRepositoryPath"
             type="String"
@@ -66,13 +57,22 @@
        </AD>
        
        <AD id="local.model.repository.password"  
-            name="Local model decryption password"
+            name="%localModelPassword"
             type="Password"
             cardinality="0" 
             required="false"
             default="" 
-            description="Only for local instance, specify the password to be used for decrypting models stored in the model repository. If none is specified, models are supposed to be plaintext.">
+            description="%localModelPasswordDesc">
        </AD>
+
+        <AD id="models"  
+            name="%models"
+            type="String"
+            cardinality="0" 
+            required="false"
+            default="" 
+            description="%modelsDesc">
+        </AD>
         
         <AD id="local.backends.path"  
             name="%localBackendsPath"
