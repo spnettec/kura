@@ -348,17 +348,17 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.camel.
-													 attachment;version="[3.14,3.16)",org.apache.camel.cloud;version="[3.14,
-													 3.16)",org.apache.camel.converter.stream;version="[3.14,3.16)",org.apac
-													 he.camel.http.base;version="[3.14,3.16)",org.apache.camel.http.base.coo
-													 kie;version="[3.14,3.16)",org.apache.camel.spi;version="[3.15,3.16)",or
-													 g.apache.camel.support;version="[3.14,3.16)",org.apache.camel.util;vers
-													 ion="[3.14,3.16)",javax.activation;version="[0,2)",javax.servlet;versio
+										<Import-Package>org.apache.camel;version="[3.14,4.0)",org.apache.camel.
+													 attachment;version="[3.14,4.0)",org.apache.camel.cloud;version="[3.14,
+													 4.0)",org.apache.camel.converter.stream;version="[3.14,4.0)",org.apac
+													 he.camel.http.base;version="[3.14,4.0)",org.apache.camel.http.base.coo
+													 kie;version="[3.14,4.0)",org.apache.camel.spi;version="[3.15,4.0)",or
+													 g.apache.camel.support;version="[3.14,4.0)",org.apache.camel.util;vers
+													 ion="[3.14,4.0)",javax.activation;version="[0,2)",javax.servlet;versio
 													 n="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;version="[1.7,2)
 													 "
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.http.common;version="3.15.0";uses:="jav
+										<Export-Package>org.apache.camel.http.common;version="3.17.0";uses:="jav
 													 ax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.cloud,o
 													 rg.apache.camel.http.base,org.apache.camel.http.base.cookie,org.apache.
 													 camel.spi,org.apache.camel.support,org.slf4j"
@@ -387,11 +387,11 @@
 									<transitive>false</transitive>
 									<instructions>
 										<Import-Package>*;resolution:=optional</Import-Package>
-										<Export-Package>org.apache.camel.builder.endpoint;version="3.15.0";uses:
+										<Export-Package>org.apache.camel.builder.endpoint;version="3.17.0";uses:
 											 ="org.apache.camel,org.apache.camel.builder,org.apache.camel.builder.en
 											 dpoint.dsl,org.apache.camel.model,org.apache.camel.spi,org.apache.camel
 											 .support,org.apache.camel.util.function",org.apache.camel.builder.endpo
-											 int.dsl;version="3.15.0";uses:="ca.uhn.fhir.context,ca.uhn.fhir.rest.cl
+											 int.dsl;version="3.17.0";uses:="ca.uhn.fhir.context,ca.uhn.fhir.rest.cl
 											 ient.api,com.azure.core.amqp,com.azure.core.util,com.azure.cosmos,com.a
 											 zure.cosmos.models,com.azure.identity,com.azure.messaging.eventhubs,com
 											 .azure.messaging.eventhubs.models,com.azure.messaging.servicebus,com.az
@@ -581,16 +581,16 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>org.apache.camel;version="[3.14,3.16)",org.apache.camel.
-													 attachment;version="[3.14,3.16)",org.apache.camel.http.common;version="
-													 [3.14,3.16)",org.apache.camel.spi;version="[3.14,3.16)",org.apache.came
-													 l.spi.annotations;version="[3.14,3.16)",org.apache.camel.support;versio
-													 n="[3.14,3.16)",org.apache.camel.support.component;version="[3.14,3.16)
-													 ",org.apache.camel.util;version="[3.14,3.16)",javax.activation;version=
+										<Import-Package>org.apache.camel;version="[3.14,4.0)",org.apache.camel.
+													 attachment;version="[3.14,4.0)",org.apache.camel.http.common;version="
+													 [3.14,4.0)",org.apache.camel.spi;version="[3.14,4.0)",org.apache.came
+													 l.spi.annotations;version="[3.14,4.0)",org.apache.camel.support;versio
+													 n="[3.14,4.0)",org.apache.camel.support.component;version="[3.14,4.0)
+													 ",org.apache.camel.util;version="[3.14,4.0)",javax.activation;version=
 													 "[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3,5)
 													 ",org.slf4j;version="[1.7,2)"
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.component.servlet;version="3.15.0";uses
+										<Export-Package>org.apache.camel.component.servlet;version="3.17.0";uses
 													 :="javax.activation,javax.servlet,javax.servlet.http,org.apache.camel,o
 													 rg.apache.camel.http.common,org.apache.camel.spi,org.apache.camel.spi.a
 													 nnotations,org.apache.camel.support.component"
@@ -679,42 +679,42 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy-mvn.version}</id>
+									<id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
