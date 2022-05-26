@@ -169,7 +169,7 @@
         <setEntry value="bcpkix@default:default"/>
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bcutil@default:default"/>
-        <setEntry value="com.alibaba.fastjson@default:default"/>
+        <setEntry value="com.alibaba.fastjson2@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>

@@ -1550,7 +1550,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.alibaba:fastjson:jar:${fastjson.version}</id>
+									<id>com.alibaba.fastjson2:fastjson2:jar:${fastjson2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
