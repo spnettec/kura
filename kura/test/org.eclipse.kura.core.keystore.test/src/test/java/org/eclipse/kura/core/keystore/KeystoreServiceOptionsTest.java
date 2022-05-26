@@ -52,7 +52,7 @@ public class KeystoreServiceOptionsTest {
 
         KeystoreServiceOptions keystoreServiceOptions = new KeystoreServiceOptions(properties, cryptoService);
 
-        assertEquals("/tmp", keystoreServiceOptions.getKeystorePath());
+        assertEquals("/tmp/keystore.ks", keystoreServiceOptions.getKeystorePath());
         assertArrayEquals(CHANGEIT_PASSWORD.toCharArray(), keystoreServiceOptions.getKeystorePassword(cryptoService));
     }
 
