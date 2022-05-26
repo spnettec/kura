@@ -413,6 +413,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.ai.triton.server@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
