@@ -114,6 +114,10 @@
     <booleanAttribute key="pde.generated.config" value="true"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <setAttribute key="selected_target_bundles">
+        <setEntry value="bcpkix@default:default"/>
+        <setEntry value="bcprov@default:default"/>
+        <setEntry value="bctls@default:default"/>
+        <setEntry value="bcutil@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
@@ -231,6 +235,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-visa@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.ai.triton.server.test@default:false"/>
         <setEntry value="org.eclipse.kura.ai.triton.server@default:default"/>
@@ -313,6 +318,7 @@
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>

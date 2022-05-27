@@ -1535,17 +1535,22 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.bouncycastle:bcpkix-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
+									<id>org.bouncycastle:bcpkix-jdk18on:jar:${org.bouncycastle-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.bouncycastle:bcprov-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
+									<id>org.bouncycastle:bcprov-jdk18on:jar:${org.bouncycastle-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.bouncycastle:bcutil-jdk15on:jar:${org.bouncycastle-mvn.version}</id>
+									<id>org.bouncycastle:bctls-jdk18on:jar:${org.bouncycastle-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.bouncycastle:bcutil-jdk18on:jar:${org.bouncycastle-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
