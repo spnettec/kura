@@ -1206,7 +1206,7 @@
 								</artifact>
 
 								<artifact>
-									<id>org.graalvm.sdk:graal-sdk:jar:22.1.0</id>
+									<id>org.graalvm.sdk:graal-sdk:jar:22.1.0.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1221,7 +1221,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js:jar:22.1.0</id>
+									<id>org.graalvm.js:js:jar:22.1.0.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1236,7 +1236,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js-scriptengine:jar:22.1.0</id>
+									<id>org.graalvm.js:js-scriptengine:jar:22.1.0.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1251,7 +1251,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.truffle:truffle-api:jar:22.1.0</id>
+									<id>org.graalvm.truffle:truffle-api:jar:22.1.0.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1266,7 +1266,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.regex:regex:jar:22.1.0</id>
+									<id>org.graalvm.regex:regex:jar:22.1.0.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1281,7 +1281,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>com.ibm.icu:icu4j:jar:70.1</id>
+									<id>com.ibm.icu:icu4j:jar:71.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
