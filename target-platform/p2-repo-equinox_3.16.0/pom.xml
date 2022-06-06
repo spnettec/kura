@@ -1555,6 +1555,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.bouncycastle:bcpg-jdk18on:jar:${org.bouncycastle-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>com.alibaba.fastjson2:fastjson2:jar:${fastjson2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
