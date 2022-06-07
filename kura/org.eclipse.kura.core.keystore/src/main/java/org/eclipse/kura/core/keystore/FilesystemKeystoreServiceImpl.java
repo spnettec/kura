@@ -49,6 +49,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -92,6 +93,7 @@ import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.core.keystore.crl.CRLManager;
 import org.eclipse.kura.core.keystore.crl.CRLManager.CRLVerifier;
 import org.eclipse.kura.core.keystore.crl.CRLManagerOptions;
+import org.eclipse.kura.core.keystore.crl.StoredCRL;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
@@ -102,6 +104,8 @@ import org.slf4j.LoggerFactory;
 
 public class FilesystemKeystoreServiceImpl implements KeystoreService, ConfigurableComponent {
 
+    private static final String NULL_INPUT_PARAMS_MESSAGE = "Input parameters cannot be null!";
+    private static final String KURA_SERVICE_PID = "kura.service.pid";
     private static final String PEM_CERTIFICATE_REQUEST_TYPE = "CERTIFICATE REQUEST";
 
     private static final Logger logger = LoggerFactory.getLogger(FilesystemKeystoreServiceImpl.class);
@@ -147,7 +151,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
     // ----------------------------------------------------------------
 
     public void activate(ComponentContext context, Map<String, Object> properties) {
-        logger.info("Bundle {} is starting!", properties.get(ConfigurationService.KURA_SERVICE_PID));
+        logger.info("Bundle {} is starting!", properties.get(KURA_SERVICE_PID));
         this.componentContext = context;
 
         this.ownPid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
@@ -170,11 +174,11 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
 
         updateCRLManager(this.crlManagerOptions);
 
-        logger.info("Bundle {} has started!", properties.get(ConfigurationService.KURA_SERVICE_PID));
+        logger.info("Bundle {} has started!", properties.get(KURA_SERVICE_PID));
     }
 
     public void updated(Map<String, Object> properties) {
-        logger.info("Bundle {} is updating!", properties.get(ConfigurationService.KURA_SERVICE_PID));
+        logger.info("Bundle {} is updating!", properties.get(KURA_SERVICE_PID));
         KeystoreServiceOptions newOptions = new KeystoreServiceOptions(properties, this.cryptoService);
 
         if (!this.keystoreServiceOptions.equals(newOptions)) {
@@ -198,7 +202,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             updateCRLManager(newCRLManagerOptions);
         }
 
-        logger.info("Bundle {} has updated!", properties.get(ConfigurationService.KURA_SERVICE_PID));
+        logger.info("Bundle {} has updated!", properties.get(KURA_SERVICE_PID));
     }
 
     private void checkAndUpdateKeystorePassword(final KeystoreServiceOptions options) {
@@ -217,8 +221,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
     }
 
     public void deactivate() {
-        logger.info("Bundle {} is deactivating!",
-                this.keystoreServiceOptions.getProperties().get(ConfigurationService.KURA_SERVICE_PID));
+        logger.info("Bundle {} is deactivating!", this.keystoreServiceOptions.getProperties().get(KURA_SERVICE_PID));
 
         if (this.selfUpdaterFuture != null && !this.selfUpdaterFuture.isDone()) {
 
@@ -291,8 +294,6 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             this.keystoreServiceOptions = new KeystoreServiceOptions(props, this.cryptoService);
 
             updatePasswordInConfigService(newPassword);
-            this.cryptoService.setKeyStorePassword(this.keystoreServiceOptions.getKeystorePath(),
-                    this.keystoreServiceOptions.getKeystorePassword(this.cryptoService));
         } catch (Exception e) {
             logger.warn("Keystore password change failed", e);
         }
@@ -403,20 +404,15 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
 
     @Override
     public String getCSR(KeyPair keypair, X500Principal principal, String signerAlg) throws KuraException {
+
         if (isNull(principal) || isNull(keypair) || isNull(signerAlg) || signerAlg.trim().isEmpty()) {
-            throw new IllegalArgumentException("Input parameters cannot be null!");
+            throw new IllegalArgumentException(FilesystemKeystoreServiceImpl.NULL_INPUT_PARAMS_MESSAGE);
         }
-        PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(principal,
-                keypair.getPublic());
-        JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder(signerAlg);
-        ContentSigner signer = null;
-        try {
-            signer = csBuilder.build(keypair.getPrivate());
-        } catch (OperatorCreationException e) {
-            throw new KuraException(KuraErrorCode.BAD_REQUEST, e, "Failed to get CSR");
-        }
-        PKCS10CertificationRequest csr = p10Builder.build(signer);
+
         try (StringWriter str = new StringWriter(); JcaPEMWriter pemWriter = new JcaPEMWriter(str);) {
+            ContentSigner signer = new JcaContentSignerBuilder(signerAlg).build(keypair.getPrivate());
+            PKCS10CertificationRequest csr = getCSRAsPKCS10Builder(keypair, principal).build(signer);
+
             PemObject pemCSR = new PemObject(PEM_CERTIFICATE_REQUEST_TYPE, csr.getEncoded());
 
             pemWriter.writeObject(pemCSR);
@@ -424,6 +420,8 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             return str.toString();
         } catch (IOException e) {
             throw new KuraException(KuraErrorCode.ENCODE_ERROR, e, "Failed to get CSR");
+        } catch (OperatorCreationException e) {
+            throw new KuraException(KuraErrorCode.BAD_REQUEST, e, "Failed to get CSR");
         }
     }
 
@@ -431,7 +429,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
     public String getCSR(String alias, X500Principal principal, String signerAlg) throws KuraException {
         if (isNull(principal) || isNull(alias) || alias.trim().isEmpty() || isNull(signerAlg)
                 || signerAlg.trim().isEmpty()) {
-            throw new IllegalArgumentException("Input parameters cannot be null!");
+            throw new IllegalArgumentException(FilesystemKeystoreServiceImpl.NULL_INPUT_PARAMS_MESSAGE);
         }
 
         Entry entry = getEntry(alias);
@@ -445,6 +443,36 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
         PublicKey publicKey = ((PrivateKeyEntry) entry).getCertificate().getPublicKey();
         KeyPair keyPair = new KeyPair(publicKey, privateKey);
         return getCSR(keyPair, principal, signerAlg);
+    }
+
+    @Override
+    public PKCS10CertificationRequestBuilder getCSRAsPKCS10Builder(KeyPair keyPair, X500Principal principal)
+            throws KuraException {
+        if (isNull(principal) || isNull(keyPair)) {
+            throw new IllegalArgumentException(FilesystemKeystoreServiceImpl.NULL_INPUT_PARAMS_MESSAGE);
+        }
+        return new JcaPKCS10CertificationRequestBuilder(principal, keyPair.getPublic());
+
+    }
+
+    @Override
+    public PKCS10CertificationRequestBuilder getCSRAsPKCS10Builder(String alias, X500Principal principal)
+            throws KuraException {
+        if (isNull(principal) || isNull(alias) || alias.trim().isEmpty()) {
+            throw new IllegalArgumentException(FilesystemKeystoreServiceImpl.NULL_INPUT_PARAMS_MESSAGE);
+        }
+
+        Entry entry = getEntry(alias);
+        if (entry == null) {
+            throw new KuraException(KuraErrorCode.NOT_FOUND);
+        }
+        if (!(entry instanceof PrivateKeyEntry)) {
+            throw new KuraException(KuraErrorCode.BAD_REQUEST);
+        }
+        PrivateKey privateKey = ((PrivateKeyEntry) entry).getPrivateKey();
+        PublicKey publicKey = ((PrivateKeyEntry) entry).getCertificate().getPublicKey();
+        KeyPair keyPair = new KeyPair(publicKey, privateKey);
+        return getCSRAsPKCS10Builder(keyPair, principal);
     }
 
     @Override
@@ -547,7 +575,7 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
         }
         KeyPair keyPair;
         try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm, "BC");
             keyGen.initialize(keySize, secureRandom);
             keyPair = keyGen.generateKeyPair();
             setEntry(alias, new PrivateKeyEntry(keyPair.getPrivate(),
@@ -555,6 +583,35 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
         } catch (GeneralSecurityException | OperatorCreationException e) {
             throw new KuraException(KuraErrorCode.BAD_REQUEST);
         }
+    }
+
+    @Override
+    public void createKeyPair(String alias, String algorithm, AlgorithmParameterSpec algorithmParameter,
+            String signatureAlgorithm, String attributes, SecureRandom secureRandom) throws KuraException {
+
+        if (isNull(algorithm) || algorithm.trim().isEmpty() || isNull(secureRandom) || isNull(alias)
+                || isNull(attributes) || attributes.trim().isEmpty() || isNull(signatureAlgorithm)
+                || signatureAlgorithm.trim().isEmpty() || isNull(algorithmParameter)) {
+            throw new IllegalArgumentException("Parameters cannot be null or empty!");
+        }
+        KeyPair keyPair;
+        try {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm, "BC");
+            keyGen.initialize(algorithmParameter, secureRandom);
+            keyPair = keyGen.generateKeyPair();
+            setEntry(alias, new PrivateKeyEntry(keyPair.getPrivate(),
+                    generateCertificateChain(keyPair, signatureAlgorithm, attributes)));
+        } catch (GeneralSecurityException | OperatorCreationException e) {
+            throw new KuraException(KuraErrorCode.BAD_REQUEST);
+        }
+
+    }
+
+    @Override
+    public void createKeyPair(String alias, String algorithm, AlgorithmParameterSpec algorithmParameter,
+            String signatureAlgorithm, String attributes) throws KuraException {
+        createKeyPair(alias, algorithm, algorithmParameter, signatureAlgorithm, attributes, new SecureRandom());
+
     }
 
     public X509Certificate[] generateCertificateChain(KeyPair keyPair, String signatureAlgorithm, String attributes)
@@ -810,6 +867,14 @@ public class FilesystemKeystoreServiceImpl implements KeystoreService, Configura
             this.path = path;
         }
 
+    }
+
+    @Override
+    public void addCRL(X509CRL crl) throws KuraException {
+        this.crlManager.ifPresent(manager -> {
+            StoredCRL storedCRL = new StoredCRL(Collections.emptySet(), crl);
+            manager.getCRLStore().storeCRL(storedCRL);
+        });
     }
 
 }
