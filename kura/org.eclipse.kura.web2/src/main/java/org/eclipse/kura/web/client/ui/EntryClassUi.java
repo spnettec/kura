@@ -657,7 +657,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 EntryClassUi.this.contentPanelBody.clear();
                 EntryClassUi.this.contentPanelBody.add(EntryClassUi.this.statusBinder);
                 EntryClassUi.this.statusBinder.setSession(EntryClassUi.this.currentSession);
-                EntryClassUi.this.statusBinder.loadStatusData();
+                EntryClassUi.this.statusBinder.loadStatusData(false);
             });
         });
     }
@@ -771,7 +771,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                 EntryClassUi.this.dropdownContainerHeader.addStyleName(DROPDOWN_MENU_HIDDEN_STYLE_NAME);
             }
         });
-        
+
         RequestQueue.submit(c -> gwtXSRFService.generateSecurityToken(
                 c.callback(token -> gwtSessionService.getUserConfig(token, new AsyncCallback<GwtUserConfig>() {
 
@@ -791,8 +791,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                             EntryClassUi.this.headerChangePassword.setVisible(false);
                         }
                     }
-                })))
-        );
+                }))));
     }
 
     private void logout() {
@@ -801,18 +800,18 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     }
 
     private void setNewPassword(final String oldPassword, final String newPassword) {
-    
+
         RequestQueue.submit(c -> {
             gwtXSRFService.generateSecurityToken(c.callback(token -> {
                 gwtSessionService.updatePassword(token, oldPassword, newPassword, c.callback(new AsyncCallback<Void>() {
 
                     @Override
                     public void onFailure(Throwable e) {
-   
+
                         if (e instanceof GwtKuraException) {
                             GwtKuraErrorCode errorCode = ((GwtKuraException) e).getCode();
                             final String message;
-                            
+
                             switch (errorCode) {
                             case PASSWORD_CHANGE_SAME_PASSWORD: {
                                 message = MSGS.loginPasswordChangeSame();
@@ -837,7 +836,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
                             FailureHandler.handle(e);
                         }
                     }
-                
+
                     @Override
                     public void onSuccess(Void result) {
                         logout();
@@ -1181,7 +1180,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         this.contentPanelBody.clear();
         this.contentPanelBody.add(EntryClassUi.this.statusBinder);
         this.statusBinder.setSession(EntryClassUi.this.currentSession);
-        this.statusBinder.loadStatusData();
+        this.statusBinder.loadStatusData(false);
     }
 
     @Override

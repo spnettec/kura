@@ -280,7 +280,7 @@ public class TabModemUi extends Composite implements NetworkTab {
     public void setDirty(boolean flag) {
         this.dirty = flag;
         if (this.tabs.getButtons() != null) {
-            this.tabs.getButtons().setApplyButtonDirty(flag);
+            this.tabs.getButtons().setButtonsDirty(flag);
         }
     }
 
