@@ -7,14 +7,14 @@ Bundle-Vendor: Eclipse Kura
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Service-Component: OSGI-INF/*.xml
 Bundle-ClassPath: .,
- lib/grpc-netty-shaded-1.44.1.jar,
- lib/grpc-protobuf-1.44.1.jar,
- lib/grpc-stub-1.44.1.jar,
- lib/grpc-context-1.44.1.jar,
- lib/grpc-core-1.44.1.jar,
- lib/grpc-protobuf-lite-1.44.1.jar,
+ lib/grpc-netty-shaded-1.47.0.jar,
+ lib/grpc-protobuf-1.47.0.jar,
+ lib/grpc-stub-1.47.0.jar,
+ lib/grpc-context-1.47.0.jar,
+ lib/grpc-core-1.47.0.jar,
+ lib/grpc-protobuf-lite-1.47.0.jar,
  lib/perfmark-api-0.25.0.jar,
- lib/grpc-api-1.44.1.jar
+ lib/grpc-api-1.47.0.jar
 Bundle-ActivationPolicy: lazy
 Import-Package: com.google.common.base;version="25.0.0",
  com.google.common.io;version="25.0.0",
