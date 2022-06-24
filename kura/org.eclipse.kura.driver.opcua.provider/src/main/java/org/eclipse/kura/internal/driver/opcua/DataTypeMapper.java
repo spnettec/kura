@@ -107,6 +107,9 @@ public final class DataTypeMapper {
                 return new Variant(Float.parseFloat(stringValue));
             } else if (targetType == VariableType.DOUBLE) {
                 return new Variant(Double.parseDouble(stringValue));
+            } else if (targetType == VariableType.BYTE_ARRAY || targetType == VariableType.SBYTE_ARRAY
+                    || targetType == VariableType.BYTE_STRING) {
+                return mapByteArray(stringToByteArray(stringValue), targetType);
             } else if (targetType == VariableType.STRING) {
                 return new Variant(stringValue);
             }
@@ -166,5 +169,16 @@ public final class DataTypeMapper {
         default:
             throw new IllegalArgumentException();
         }
+    }
+
+    private static byte[] stringToByteArray(String stringBytes) {
+        String[] byteValues = stringBytes.substring(1, stringBytes.length() - 1).split(",");
+        byte[] bytes = new byte[byteValues.length];
+
+        for (int i = 0, len = bytes.length; i < len; i++) {
+            int intvalue = Integer.parseInt(byteValues[i].trim());
+            bytes[i] = (byte) (intvalue & 0xff);
+        }
+        return bytes;
     }
 }
