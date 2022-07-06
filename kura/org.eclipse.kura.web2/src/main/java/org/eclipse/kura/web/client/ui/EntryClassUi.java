@@ -1114,6 +1114,9 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
         if (this.users.isVisible()) {
             this.usersBinder.setDirty(false);
         }
+        if (this.driversAndTwinsBinder.isVisible()) {
+            this.driversAndTwinsBinder.clearDirtyState();
+        }
     }
 
     GwtConfigComponent getSelected() {

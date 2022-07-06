@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -80,7 +80,7 @@ public class PasswordChangeModal extends Composite {
             public List<EditorError> validate(Editor<String> editor, String value) {
                 if (value == null || value.length() <= 0) {
                     return Collections
-                            .singletonList(new BasicEditorError(editor, value, "enter the current user password"));
+                            .singletonList(new BasicEditorError(editor, value, MSGS.loginEnterCurrentPassword()));
                 }
                 return Collections.emptyList();
             }
@@ -91,8 +91,9 @@ public class PasswordChangeModal extends Composite {
 
             @Override
             public List<EditorError> validate(final Editor<String> editor, final String value) {
-                if (!Objects.equals(value, newPassword.getValue())) {
-                    return Collections.singletonList(new BasicEditorError(editor, value, MSGS.usersPasswordMismatch()));
+                if (!Objects.equals(value, PasswordChangeModal.this.newPassword.getValue())) {
+                    return Collections
+                            .singletonList(new BasicEditorError(editor, value, MSGS.loginNotMatchingPasswords()));
                 }
                 return Collections.emptyList();
             }
@@ -115,18 +116,18 @@ public class PasswordChangeModal extends Composite {
     }
 
     private void trySubmit() {
-        if (!oldPassword.validate() || !newPassword.validate() || !confirmNewPassword.validate()) {
+        if (!this.oldPassword.validate() || !this.newPassword.validate() || !this.confirmNewPassword.validate()) {
             return;
         }
 
-        passwordChangeModal.hide();
-        callback.ifPresent(c -> c.onPasswordChanged(oldPassword.getValue(), newPassword.getValue()));
+        this.passwordChangeModal.hide();
+        this.callback.ifPresent(c -> c.onPasswordChanged(this.oldPassword.getValue(), this.newPassword.getValue()));
     }
 
     private void validate() {
-        oldPassword.validate();
-        newPassword.validate();
-        confirmNewPassword.validate();
+        this.oldPassword.validate();
+        this.newPassword.validate();
+        this.confirmNewPassword.validate();
     }
 
     @SuppressWarnings("unchecked")
