@@ -160,7 +160,7 @@
 
         <kura.skip.can>true</kura.skip.can>
 
-        <osgi-dp-plugin-version>0.4.0</osgi-dp-plugin-version>
+        <osgi-dp-plugin-version>0.4.1</osgi-dp-plugin-version>
 
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
 
