@@ -1410,7 +1410,21 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								
+								<artifact>
+									<id>org.osgi:org.osgi.service.coordinator:jar:${org.osgi.service.coordinator-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.osgi:org.osgi.service.log.stream:jar:${org.osgi.service.log.stream-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.osgi:org.osgi.service.prefs:jar:${org.osgi.service.prefs-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
 								
 								<artifact>
 									<id>org.osgi:org.osgi.util.function:jar:${org.osgi.util.function-mvn.version}</id>
