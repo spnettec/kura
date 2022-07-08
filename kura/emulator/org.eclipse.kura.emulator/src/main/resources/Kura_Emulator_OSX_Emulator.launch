@@ -393,6 +393,15 @@
         <setEntry value="org.objectweb.asm.tree@default:default"/>
         <setEntry value="org.objectweb.asm.util@default:default"/>
         <setEntry value="org.objectweb.asm@default:default"/>
+        <setEntry value="org.osgi.service.coordinator@default:default"/>
+        <setEntry value="org.osgi.service.log.stream@default:default"/>
+        <setEntry value="org.osgi.service.prefs@default:default"/>
+        <setEntry value="org.osgi.util.function@default:default"/>
+        <setEntry value="org.osgi.util.measurement@default:default"/>
+        <setEntry value="org.osgi.util.position@default:default"/>
+        <setEntry value="org.osgi.util.promise@default:default"/>
+        <setEntry value="org.osgi.util.pushstream@default:default"/>
+        <setEntry value="org.osgi.util.xml@default:default"/>
         <setEntry value="org.pcap4j.core@default:default"/>
         <setEntry value="org.quartz-scheduler.quartz@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
@@ -453,6 +462,9 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
+        <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus.test@default:false"/>
+        <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus@default:default"/>
+        <setEntry value="org.eclipse.kura.example.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
         <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
