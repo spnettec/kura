@@ -464,6 +464,7 @@
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus.test@default:false"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus@default:default"/>
+        <setEntry value="org.eclipse.kura.example.rest.authentication.provider@default:default"/>
         <setEntry value="org.eclipse.kura.example.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider@default:default"/>
         <setEntry value="org.eclipse.kura.example.wire.math.trig@default:default"/>

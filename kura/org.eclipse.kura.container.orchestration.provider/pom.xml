@@ -152,9 +152,9 @@
 			</plugin>
            
             <plugin>
-                <groupId>de.dentrassi.maven</groupId>
+                <groupId>com.github.heyoulin</groupId>
                 <artifactId>osgi-dp</artifactId>
-                <version>0.4.1</version>
+                <version>${osgi-dp-plugin-version}</version>
                 <executions>
                     <execution>
                         <goals>

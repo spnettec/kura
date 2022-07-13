@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <tycho-version>2.1.0</tycho-version>
+        <tycho-version>2.5.0</tycho-version>
 
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
@@ -37,7 +37,7 @@
 
         <skip.can.example>true</skip.can.example>
 
-        <osgi-dp-plugin-version>0.4.0</osgi-dp-plugin-version>
+        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
     </properties>
 
@@ -161,7 +161,18 @@
             <url>file:///${kura.basedir}/target-definition/common/repository/</url>
         </repository>
     </repositories>
-
+	<pluginRepositories>
+        <pluginRepository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
     <build>
         <extensions>
             <extension>
@@ -561,7 +572,7 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>de.dentrassi.maven</groupId>
+                <groupId>com.github.heyoulin</groupId>
                 <artifactId>osgi-dp</artifactId>
                 <version>${osgi-dp-plugin-version}</version>
                 <executions>

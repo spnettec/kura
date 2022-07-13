@@ -75,7 +75,7 @@
                 <extensions>true</extensions>
             </plugin>
             <plugin>
-                <groupId>de.dentrassi.maven</groupId>
+                <groupId>com.github.heyoulin</groupId>
                 <artifactId>osgi-dp</artifactId>
                 <executions>
                     <execution>
@@ -115,9 +115,9 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>de.dentrassi.maven</groupId>
+                    <groupId>com.github.heyoulin</groupId>
                     <artifactId>osgi-dp</artifactId>
-                    <version>0.3.0</version>
+                    <version>0.5.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>

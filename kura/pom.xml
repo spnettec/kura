@@ -140,7 +140,7 @@
     </modules>
 
     <properties>
-        <tycho-version>2.1.0</tycho-version>
+        <tycho-version>2.7.4</tycho-version>
 
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
@@ -160,7 +160,7 @@
 
         <kura.skip.can>true</kura.skip.can>
 
-        <osgi-dp-plugin-version>0.4.1</osgi-dp-plugin-version>
+        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
 
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
 
@@ -316,6 +316,11 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
+        <repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+       
         <!--
             See Github issue #1755
             https://github.com/bndtools/bnd/issues/1755
@@ -326,6 +331,18 @@
             <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
         </repository>
     </repositories>
+     <pluginRepositories>
+        <pluginRepository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <extensions>
