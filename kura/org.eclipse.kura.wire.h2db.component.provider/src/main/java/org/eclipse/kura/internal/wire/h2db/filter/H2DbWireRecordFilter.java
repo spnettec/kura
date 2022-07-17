@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.db.H2DbService;
+import org.eclipse.kura.internal.wire.db.filter.DbWireRecordFilterOptions;
 import org.eclipse.kura.internal.wire.h2db.common.H2DbServiceHelper;
 import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.type.TypedValues;
@@ -48,10 +49,14 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.wireadmin.Wire;
 
 /**
- * The Class DbWireRecordFilter is responsible for representing a wire component
+ * The Class H2DbWireRecordFilter is responsible for representing a wire component
  * which is focused on performing an user defined SQL query in a database table and emitting the result as a Wire
  * Envelope.
+ * 
+ * @deprecated this class is deprecated since 2.2. Use
+ *             {@link org.eclipse.kura.internal.wire.db.store.DbWireRecordFilter}
  */
+@Deprecated
 public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, ConfigurableComponent {
 
     private static final Logger logger = LogManager.getLogger(H2DbWireRecordFilter.class);
@@ -62,7 +67,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
 
     private H2DbService dbService;
 
-    private H2DbWireRecordFilterOptions options;
+    private DbWireRecordFilterOptions options;
 
     private volatile WireHelperService wireHelperService;
 
@@ -120,7 +125,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
     @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating DB Wire Record Filter...");
-        this.options = new H2DbWireRecordFilterOptions(properties);
+        this.options = new DbWireRecordFilterOptions(properties);
 
         this.wireSupport = this.wireHelperService.newWireSupport(this,
                 (ServiceReference<WireComponent>) componentContext.getServiceReference());
@@ -145,7 +150,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
 
         final String oldSqlView = this.options.getSqlView();
 
-        this.options = new H2DbWireRecordFilterOptions(properties);
+        this.options = new DbWireRecordFilterOptions(properties);
 
         this.cacheExpirationInterval = this.options.getCacheExpirationInterval();
 
