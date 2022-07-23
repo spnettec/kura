@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2021, 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  ******************************************************************************/
@@ -21,6 +21,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -268,7 +269,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
     @Test
     public void testGetPasswordProperty() throws KuraException {
         givenATestConfigurationPropertyWithAdTypeAndValue(Scalar.PASSWORD,
-                new Password(cryptoService.encryptAes("foobar".toCharArray())));
+                new Password(this.cryptoService.encryptAes("foobar".toCharArray())));
 
         whenRequestIsPerformed(new MethodSpec("GET"), "/configurableComponents/configurations");
 
@@ -389,7 +390,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
     @Test
     public void testGetPasswordArrayProperty() throws KuraException {
         givenATestConfigurationPropertyWithAdTypeAndValue(Scalar.PASSWORD,
-                new Password[] { new Password(cryptoService.encryptAes("foobar".toCharArray())) });
+                new Password[] { new Password(this.cryptoService.encryptAes("foobar".toCharArray())) });
 
         whenRequestIsPerformed(new MethodSpec("GET"), "/configurableComponents/configurations");
 
@@ -725,7 +726,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     @Test
     public void testListComponentConfigurationsByPidException() throws KuraException {
-        givenMockGetComponentConfigurationsReturnException();
+        givenMockGetComponentConfigurationPidReturnException();
 
         whenRequestIsPerformed(new MethodSpec("POST"), "/configurableComponents/configurations/byPid",
                 "{\"pids\":[\"foo\"]}");
@@ -735,7 +736,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     @Test
     public void testListComponentConfigurationsByPidEmpty() throws KuraException {
-        givenMockGetComponentConfigurationsReturnEmpty();
+        givenMockGetComponentConfigurationPidReturnEmpty();
 
         whenRequestIsPerformed(new MethodSpec("POST"), "/configurableComponents/configurations/byPid",
                 "{\"pids\":[\"foo\"]}");
@@ -746,7 +747,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     @Test
     public void testListComponentConfigurationsByPid() throws KuraException {
-        givenMockGetComponentConfigurationsReturnSome(5);
+        givenMockGetComponentConfigurationPidReturnSome(5);
 
         whenRequestIsPerformed(new MethodSpec("POST"), "/configurableComponents/configurations/byPid",
                 "{\"pids\":[\"pid1\",\"pid3\"]}");
@@ -1029,7 +1030,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
     private static ConfigurationService configurationService = Mockito.mock(ConfigurationService.class);
     private final CryptoService cryptoService;
 
-    private Map<String, Map<String, Object>> receivedConfigsByPid = new HashMap<>();
+    private final Map<String, Map<String, Object>> receivedConfigsByPid = new HashMap<>();
 
     @Parameterized.Parameters
     public static Collection<Transport> transports() {
@@ -1154,6 +1155,15 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
         when(configurationService.getComponentConfigurations()).thenReturn(Collections.emptyList());
     }
 
+    private void givenMockGetComponentConfigurationPidReturnException() throws KuraException {
+        when(configurationService.getComponentConfiguration(anyString()))
+                .thenThrow(new KuraException(KuraErrorCode.BAD_REQUEST));
+    }
+
+    private void givenMockGetComponentConfigurationPidReturnEmpty() throws KuraException {
+        when(configurationService.getComponentConfiguration(anyString())).thenReturn(null);
+    }
+
     private void givenMockGetComponentConfigurationsReturnSome(int howManyConfigurations) throws KuraException {
         List<ComponentConfiguration> configs = new ArrayList<>();
         for (int i = 0; i < howManyConfigurations; i++) {
@@ -1183,6 +1193,38 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
             });
         }
         when(configurationService.getComponentConfigurations()).thenReturn(configs);
+    }
+
+    private void givenMockGetComponentConfigurationPidReturnSome(int howManyConfigurations) throws KuraException {
+        List<ComponentConfiguration> configs = new ArrayList<>();
+        for (int i = 0; i < howManyConfigurations; i++) {
+            final String generatedPid = "pid" + i;
+            configs.add(new ComponentConfiguration() {
+
+                @Override
+                public String getPid() {
+                    return generatedPid;
+                }
+
+                @Override
+                public OCD getDefinition() {
+                    return null;
+                }
+
+                @Override
+                public Map<String, Object> getConfigurationProperties() {
+                    return null;
+                }
+
+                @Override
+                public OCD getLocalizedDefinition(String locale) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+            });
+        }
+        when(configurationService.getComponentConfiguration("pid1")).thenReturn(configs.get(1));
+        when(configurationService.getComponentConfiguration("pid3")).thenReturn(configs.get(3));
     }
 
     private void givenMockGetDefaultComponentConfigurationReturnException() throws KuraException {
@@ -1345,23 +1387,23 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     private void thenReceivedPropertiesForPidContains(final String pid, final String expectedKey,
             final Object expectedValue) {
-        assertEquals(expectedValue, receivedConfigsByPid.get(pid).get(expectedKey));
+        assertEquals(expectedValue, this.receivedConfigsByPid.get(pid).get(expectedKey));
     }
 
     private void thenReceivedPropertiesForPidContainsArray(final String pid, final String expectedKey,
             final Object[] expectedValue) {
-        assertArrayEquals(expectedValue, (Object[]) receivedConfigsByPid.get(pid).get(expectedKey));
+        assertArrayEquals(expectedValue, (Object[]) this.receivedConfigsByPid.get(pid).get(expectedKey));
     }
 
     private void thenReceivedPropertiesForPidContainsPassword(final String pid, final String expectedKey,
             final String expectedValue) {
         assertEquals(expectedValue,
-                new String(((Password) receivedConfigsByPid.get(pid).get(expectedKey)).getPassword()));
+                new String(((Password) this.receivedConfigsByPid.get(pid).get(expectedKey)).getPassword()));
     }
 
     private void thenReceivedPropertiesForPidContainsPasswords(final String pid, final String expectedKey,
             final String... expectedValues) {
-        final Password[] passwords = (Password[]) receivedConfigsByPid.get(pid).get(expectedKey);
+        final Password[] passwords = (Password[]) this.receivedConfigsByPid.get(pid).get(expectedKey);
 
         for (int i = 0; i < expectedValues.length; i++) {
             assertEquals(expectedValues[i], new String(passwords[i].getPassword()));
