@@ -22,6 +22,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
@@ -64,14 +66,21 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
     }
 
+    public void unsetKeystoreService(KeystoreService keystoreService) {
+        this.keystoreService = null;
+    }
+
     public void activate(Map<String, Object> properties) {
         logger.info("Activating {}", this.getClass().getSimpleName());
 
         this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
-
-        activateHttpService();
-
-        logger.info("Activating... Done.");
+        if (this.keystoreService == null) {
+            startKeystoreServicenMonitorTask();
+            logger.info("Activating... Done. Wait keystoreService");
+        } else {
+            activateHttpService();
+            logger.info("Activating... Done.");
+        }
     }
 
     public void updated(Map<String, Object> properties) {
@@ -83,10 +92,16 @@ public class HttpService implements ConfigurableComponent, EventHandler {
             logger.debug("Updating, new props");
             this.options = updatedOptions;
 
-            restartHttpService();
+            deactivateHttpService();
+            if (this.keystoreService == null) {
+                startKeystoreServicenMonitorTask();
+                logger.info("Updating... Done. Wait keystoreService");
+            } else {
+                activateHttpService();
+                logger.info("Updating... Done.");
+            }
         }
 
-        logger.info("Updating... Done.");
     }
 
     public void deactivate() {
@@ -209,12 +224,16 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     }
 
     private synchronized void activateHttpService() {
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             logger.info("starting Jetty instance...");
+            Thread.currentThread().setContextClassLoader(HttpService.class.getClassLoader());
             JettyConfigurator.startServer(KURA_JETTY_PID, getJettyConfig());
             logger.info("starting Jetty instance...done");
         } catch (final Exception e) {
             logger.error("Could not start Jetty Web server", e);
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
     }
 
@@ -241,4 +260,38 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         }
     }
 
+    private void startKeystoreServicenMonitorTask() {
+
+        new Timer("KeystoreServiceMonitor").schedule(new TimerTask() {
+
+            int autoWaitKeystoreServiceAttempt = 0;
+
+            @Override
+            public void run() {
+
+                if (HttpService.this.keystoreService != null || autoWaitKeystoreServiceAttempt > 10) {
+                    String originalName = Thread.currentThread().getName();
+                    Thread.currentThread().setName("HttpService:KeystoreServicenMonitorTask");
+                    if (HttpService.this.keystoreService != null) {
+                        logger.info(
+                                "KeystoreService injected. KeystoreServiceMonitor task will be terminated. try {} times",
+                                autoWaitKeystoreServiceAttempt);
+                    } else {
+                        logger.info(
+                                "KeystoreServiceMonitor retry 10 times. KeystoreServiceMonitor task will be terminated.");
+                    }
+                    try {
+                        activateHttpService();
+                    } catch (Exception e) {
+                        logger.warn("activateHttpService error");
+                    } finally {
+                        this.cancel();
+                        Thread.currentThread().setName(originalName);
+                    }
+                }
+                autoWaitKeystoreServiceAttempt++;
+            }
+
+        }, 100, 100);
+    }
 }
