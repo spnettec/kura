@@ -1154,7 +1154,7 @@
 								</artifact>
 
 								<artifact>
-									<id>org.graalvm.sdk:graal-sdk:jar:22.1.0.1</id>
+									<id>org.graalvm.sdk:graal-sdk:jar:22.2.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1169,7 +1169,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js:jar:22.1.0.1</id>
+									<id>org.graalvm.js:js:jar:22.2.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1184,7 +1184,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js-scriptengine:jar:22.1.0.1</id>
+									<id>org.graalvm.js:js-scriptengine:jar:22.2.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1199,7 +1199,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.truffle:truffle-api:jar:22.1.0.1</id>
+									<id>org.graalvm.truffle:truffle-api:jar:22.2.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1214,7 +1214,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.regex:regex:jar:22.1.0.1</id>
+									<id>org.graalvm.regex:regex:jar:22.2.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
