@@ -43,7 +43,6 @@
             required="true"
             default="(kura.service.pid=changeme)"
             description="%keystoreTargetFilterDesc">
-            description="Specifies, as an OSGi target filter, the pid of the KeystoreService used to manage the SSL key store.">
         </AD>
         
         <AD id="TruststoreKeystoreService.target"

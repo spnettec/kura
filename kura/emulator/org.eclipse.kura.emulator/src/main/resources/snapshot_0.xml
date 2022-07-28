@@ -195,8 +195,8 @@
             </esf:property>
         </esf:properties>
     </esf:configuration>    
-        <esf:configuration pid="org.eclipse.kura.http.server.manager.HttpService">
-        <esf:properties>
+    <esf:configuration pid="org.eclipse.kura.http.server.manager.HttpService">
+        	<esf:properties>
             <esf:property array="true" encrypted="false" name="https.ports" type="Integer">
                 <esf:value>443</esf:value>
             </esf:property>
