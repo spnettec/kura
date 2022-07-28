@@ -264,24 +264,5 @@
                 <esf:value>[{"name":"kura.permission.kura.wires.admin","basicMembers":["kura.user.appadmin"]},{"name":"kura.permission.kura.admin","basicMembers":["kura.user.admin"]},{"name":"kura.permission.kura.cloud.connection.admin","basicMembers":["kura.user.appadmin","kura.user.netadmin"]},{"name":"kura.permission.kura.device","basicMembers":["kura.user.netadmin"]},{"name":"kura.permission.kura.packages.admin","basicMembers":["kura.user.appadmin"]},{"name":"kura.permission.kura.network.admin","basicMembers":["kura.user.netadmin"]}]</esf:value>
             </esf:property>
         </esf:properties>
-    </esf:configuration>
-    <esf:configuration pid="SSLKeystore">
-        <esf:properties>
-            <esf:property array="false" encrypted="false" name="keystore.path" type="String">
-                <esf:value>org.eclipse.kura.emulator/src/main/resources/cacerts.ks</esf:value>
-            </esf:property>
-            <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>bWVKOUVjUUZmdVp5TXFrLy1wVk1DNEppd2ltVkhtVmNvMWc3LzNoZmZyclp5bHk1Vw==</esf:value>
-            </esf:property>
-            <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
-                <esf:value>false</esf:value>
-            </esf:property>
-            <esf:property array="false" encrypted="false" name="service.factoryPid" type="String">
-                <esf:value>org.eclipse.kura.core.keystore.FilesystemKeystoreServiceImpl</esf:value>
-            </esf:property>
-            <esf:property array="false" encrypted="false" name="kura.service.pid" type="String">
-                <esf:value>SSLKeystore</esf:value>
-            </esf:property>
-        </esf:properties>
-    </esf:configuration>    
+    </esf:configuration>  
 </esf:configurations>
