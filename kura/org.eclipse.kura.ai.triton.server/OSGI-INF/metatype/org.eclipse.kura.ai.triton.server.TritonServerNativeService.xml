@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2022 Eurotech and/or its affiliates and others
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
+
+-->
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/TritonServerNativeService">
+    <OCD id="org.eclipse.kura.ai.triton.server.TritonServerNativeService"
+         name="%name"
+         description="%description">
+
+        <AD id="server.ports"
+            name="%serverPorts"
+            type="Integer"
+            cardinality="3"
+            min="1024"
+            max="65535"
+            required="true"
+            default="4000,4001,4002"
+            description="%serverPortsDesc">
+        </AD>
+
+        <AD id="local.model.repository.path"
+            name="%localModelRepositoryPath"
+            type="String"
+            cardinality="0"
+            required="true"
+            default=""
+            description="%localModelRepositoryPathDesc">
+       </AD>
+
+       <AD id="local.model.repository.password"
+            name="%localModelRepositoryPassword"
+            type="Password"
+            cardinality="0"
+            required="false"
+            default=""
+            description="%localModelRepositoryPasswordDesc">
+       </AD>
+
+        <AD id="models"
+            name="%models"
+            type="String"
+            cardinality="0"
+            required="false"
+            default=""
+            description="%modelsDesc">
+        </AD>
+
+        <AD id="local.backends.path"
+            name="%localBackendsPath"
+            type="String"
+            cardinality="0"
+            required="true"
+            default=""
+            description="%localBackendsPathDesc">
+            </AD>
+
+        <AD id="local.backends.config"
+            name="%localBackendsConfig"
+            type="String"
+            cardinality="0"
+            required="false"
+            default=""
+            description="%localBackendsConfigDesc">
+        </AD>
+
+        <AD id="timeout"
+            name="%timeout"
+            type="Integer"
+            cardinality="0"
+            required="false"
+            min="1"
+            max="3600"
+            default="3"
+            description="%timeoutDesc">
+        </AD>
+
+        <AD id="grpc.max.size"
+            name="%grpcMaxSize"
+            type="Integer"
+            description="%grpcMaxSizeDesc"
+            cardinality="0"
+            required="true"
+            default="4194304"
+            min="1">
+        </AD>
+
+    </OCD>
+    <Designate factoryPid="org.eclipse.kura.ai.triton.server.TritonServerNativeService">
+        <Object ocdref="org.eclipse.kura.ai.triton.server.TritonServerNativeService"/>
+    </Designate>
+</MetaData>

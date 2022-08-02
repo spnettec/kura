@@ -14,43 +14,26 @@ package org.eclipse.kura.ai.triton.server;
 
 import org.eclipse.kura.executor.CommandExecutorService;
 
-/**
- * @deprecated since version 1.1 in favor of
- *             {@link org.eclipse.kura.ai.triton.server.TritonServerRemoteServiceImpl} and
- *             {@link org.eclipse.kura.ai.triton.server.TritonServerNativeServiceImpl}.
- */
-@Deprecated
-public class TritonServerServiceOrigImpl extends TritonServerServiceAbs {
+public class TritonServerServiceNativeImpl extends TritonServerServiceAbs {
 
     @Override
     TritonServerInstanceManager createInstanceManager(TritonServerServiceOptions options,
             CommandExecutorService executorService, String decryptionFolderPath) {
-        if (options.isLocalEnabled()) {
-            return new TritonServerNativeManager(options, executorService, decryptionFolderPath);
-        } else {
-            return new TritonServerRemoteManager();
-        }
+        return new TritonServerNativeManager(options, executorService, decryptionFolderPath);
     }
 
     @Override
     boolean isConfigurationValid() {
-        if (!this.options.isLocalEnabled()) {
-            return !isNullOrEmpty(this.options.getAddress());
-        }
         return !isNullOrEmpty(this.options.getBackendsPath()) && !isNullOrEmpty(this.options.getModelRepositoryPath());
     }
 
     @Override
     boolean isModelEncryptionEnabled() {
-        return this.options.isLocalEnabled() && this.options.isModelEncryptionPasswordSet();
+        return this.options.isModelEncryptionPasswordSet();
     }
 
     @Override
     String getServerAddress() {
-        if (this.options.isLocalEnabled()) {
-            return "localhost";
-        } else {
-            return this.options.getAddress();
-        }
+        return "localhost";
     }
 }
