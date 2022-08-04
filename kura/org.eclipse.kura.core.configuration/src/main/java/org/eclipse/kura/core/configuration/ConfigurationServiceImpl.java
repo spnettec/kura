@@ -90,6 +90,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigurationServiceImpl implements ConfigurationService, OCDService {
 
+    private static final String GETTING_CONFIGURATION_ERROR = "Error getting Configuration for component: {}. Ignoring it.";
+
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationServiceImpl.class);
 
     private ComponentContext ctx;
@@ -342,7 +344,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         result.addAll(this.allActivatedPids);
         result.addAll(this.waittingForActivatedPids);
 
-        return result;
+        return Collections.unmodifiableSet(result);
     }
 
     // Don't perform internal calls to this method
@@ -381,6 +383,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     }
                 }
             }
+
             return result;
         } catch (final Exception e) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
@@ -725,13 +728,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         } else // non factory instance
         {
             if (servicePid == null) {
-                // logger.error("non factory instance PID : {} have not Service PID (service.pid) ", pid);
                 return;
             } else if (pid == null) {
-                // logger.warn(
-                // "non factory instance Service PID (service.pid) is {}, Can not find PID (kura.service.pid). Maybe OCD
-                // not registed",
-                // servicePid);
                 pid = servicePid;
             }
         }
@@ -1315,8 +1313,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                                     cc = selfConfigComp.getConfiguration();
                                     if (cc.getPid() == null || !cc.getPid().equals(pid)) {
                                         logger.error(
-                                                "Invalid pid for returned Configuration of SelfConfiguringComponent with pid: {} . Ignoring it.",
-                                                pid);
+                                                "Invalid pid for returned Configuration of SelfConfiguringComponent with pid: "
+                                                        + pid + ". Ignoring it.");
                                         return null;
                                     }
 
@@ -1356,7 +1354,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
                                                         try {
                                                             logger.debug(
-                                                                    "pid: {}, property name: {}, type: {}, value: {}", pid, adId, propType, value);
+                                                                    "pid: {}, property name: {}, type: {}, value: {}",
+                                                                    pid, adId, propType, value);
                                                             Scalar propertyScalar = Scalar.fromValue(propType);
                                                             Scalar adScalar = Scalar.fromValue(adType);
                                                             if (propertyScalar != adScalar) {
@@ -1378,7 +1377,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                                         }
                                     }
                                 } catch (KuraException e) {
-                                    logger.error("Error getting Configuration for component: {}. Ignoring it.", pid, e);
+                                    logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
                                 }
                             } else {
                                 logger.error("Component {} is not a SelfConfiguringComponent. Ignoring it.", obj);
@@ -1390,7 +1389,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 }
             }
         } catch (InvalidSyntaxException e) {
-            logger.error("Error getting Configuration for component: {}. Ignoring it.", pid, e);
+            logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
         }
 
         return cc;

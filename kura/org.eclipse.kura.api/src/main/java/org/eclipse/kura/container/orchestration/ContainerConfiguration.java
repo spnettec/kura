@@ -51,6 +51,10 @@ public class ContainerConfiguration {
     private ImageConfiguration imageConfig;
     private ContainerNetworkConfiguration networkConfiguration;
     private List<String> entryPoint;
+    private Boolean containerRestartOnFailure = false;
+    private Optional<Long> memory;
+    private Optional<Float> cpus;
+    private Optional<String> gpus;
 
     private ContainerConfiguration() {
     }
@@ -206,14 +210,14 @@ public class ContainerConfiguration {
     /**
      * return the container's network configuration as a
      * {@link ContainerNetworkConfiguration}.
-     * 
+     *
      * @return
      * @since 2.4
      */
     public ContainerNetworkConfiguration getContainerNetworkConfiguration() {
         return this.networkConfiguration;
     }
-     
+
     /**
      * Returns a List<String> of container entry points. An empty list can be returned if no entrypoints are specified.
      *
@@ -222,6 +226,46 @@ public class ContainerConfiguration {
      */
     public List<String> getEntryPoint() {
         return this.entryPoint;
+    }
+
+    /**
+     * Returns boolean which determines if container will restart on failure
+     * 
+     * @return
+     * @since 2.4
+     */
+    public boolean getRestartOnFailure() {
+        return this.containerRestartOnFailure;
+    }
+
+    /**
+     * Return the memory to be assigned to the container.
+     *
+     * @return
+     * @since 2.4
+     */
+    public Optional<Long> getMemory() {
+        return this.memory;
+    }
+
+    /**
+     * Return the cpus resources to be assigned to the container.
+     *
+     * @return
+     * @since 2.4
+     */
+    public Optional<Float> getCpus() {
+        return this.cpus;
+    }
+
+    /**
+     * Return the gpus to be assigned to the container.
+     *
+     * @return
+     * @since 2.4
+     */
+    public Optional<String> getGpus() {
+        return this.gpus;
     }
 
     /**
@@ -237,8 +281,8 @@ public class ContainerConfiguration {
     public int hashCode() {
         return Objects.hash(this.containerDevices, this.containerEnvVars, this.containerLoggerParameters,
                 this.containerLoggingType, this.containerName, this.containerPortsExternal, this.containerPortsInternal,
-                this.containerPrivileged, this.containerVolumes, this.isFrameworkManaged, this.imageConfig,
-                this.entryPoint);
+                this.containerPrivileged, this.containerVolumes, this.cpus, this.entryPoint, this.gpus,
+                this.imageConfig, this.isFrameworkManaged, this.memory, this.networkConfiguration);
     }
 
     @Override
@@ -246,7 +290,7 @@ public class ContainerConfiguration {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof ContainerConfiguration)) {
+        if ((obj == null) || (getClass() != obj.getClass())) {
             return false;
         }
         ContainerConfiguration other = (ContainerConfiguration) obj;
@@ -259,9 +303,11 @@ public class ContainerConfiguration {
                 && Objects.equals(this.containerPortsInternal, other.containerPortsInternal)
                 && Objects.equals(this.containerPrivileged, other.containerPrivileged)
                 && Objects.equals(this.containerVolumes, other.containerVolumes)
+                && Objects.equals(this.cpus, other.cpus) && Objects.equals(this.entryPoint, other.entryPoint)
+                && Objects.equals(this.gpus, other.gpus) && Objects.equals(this.imageConfig, other.imageConfig)
                 && Objects.equals(this.isFrameworkManaged, other.isFrameworkManaged)
-                && Objects.equals(this.imageConfig, other.imageConfig)
-                && Objects.equals(this.entryPoint, other.entryPoint);
+                && Objects.equals(this.memory, other.memory)
+                && Objects.equals(this.networkConfiguration, other.networkConfiguration);
     }
 
     public static final class ContainerConfigurationBuilder {
@@ -276,9 +322,13 @@ public class ContainerConfiguration {
         private Boolean isFrameworkManaged = false;
         private Map<String, String> containerLoggerParameters;
         private String containerLoggingType;
-        private ImageConfigurationBuilder imageConfigBuilder = new ImageConfiguration.ImageConfigurationBuilder();
-        private ContainerNetworkConfigurationBuilder networkConfigurationBuilder = new ContainerNetworkConfigurationBuilder();
+        private final ImageConfigurationBuilder imageConfigBuilder = new ImageConfiguration.ImageConfigurationBuilder();
+        private final ContainerNetworkConfigurationBuilder networkConfigurationBuilder = new ContainerNetworkConfigurationBuilder();
         private List<String> entryPoint = new LinkedList<>();
+        private Boolean containerRestartOnFailure = false;
+        private Optional<Long> memory = Optional.empty();
+        private Optional<Float> cpus = Optional.empty();
+        private Optional<String> gpus = Optional.empty();
 
         public ContainerConfigurationBuilder setContainerName(String serviceName) {
             this.containerName = serviceName;
@@ -360,7 +410,7 @@ public class ContainerConfiguration {
 
         /**
          * Set the {@link NetworkConfiguration}
-         * 
+         *
          * @since 2.4
          */
         public ContainerConfigurationBuilder setContainerNetowrkConfiguration(
@@ -371,7 +421,7 @@ public class ContainerConfiguration {
 
         /**
          * Set the {@link ImageConfiguration}
-         * 
+         *
          * @since 2.4
          */
         public ContainerConfigurationBuilder setImageConfiguration(ImageConfiguration imageConfig) {
@@ -379,6 +429,40 @@ public class ContainerConfiguration {
             this.imageConfigBuilder.setImageTag(imageConfig.getImageTag());
             this.imageConfigBuilder.setRegistryCredentials(imageConfig.getRegistryCredentials());
             this.imageConfigBuilder.setImageDownloadTimeoutSeconds(imageConfig.getimageDownloadTimeoutSeconds());
+            return this;
+        }
+
+        /**
+         * Set if container will restart on failure
+         * 
+         * @since 2.4
+         */
+        public ContainerConfigurationBuilder setRestartOnFailure(boolean containerRestartOnFailure) {
+            this.containerRestartOnFailure = containerRestartOnFailure;
+            return this;
+        }
+
+        /**
+         * @since 2.4
+         */
+        public ContainerConfigurationBuilder setMemory(Optional<Long> memory) {
+            this.memory = memory;
+            return this;
+        }
+
+        /**
+         * @since 2.4
+         */
+        public ContainerConfigurationBuilder setCpus(Optional<Float> cpus) {
+            this.cpus = cpus;
+            return this;
+        }
+
+        /**
+         * @since 2.4
+         */
+        public ContainerConfigurationBuilder setGpus(Optional<String> gpus) {
+            this.gpus = gpus;
             return this;
         }
 
@@ -398,6 +482,10 @@ public class ContainerConfiguration {
             result.imageConfig = this.imageConfigBuilder.build();
             result.networkConfiguration = this.networkConfigurationBuilder.build();
             result.entryPoint = requireNonNull(this.entryPoint, "Container EntryPoint list must not be null");
+            result.containerRestartOnFailure = this.containerRestartOnFailure;
+            result.memory = this.memory;
+            result.cpus = this.cpus;
+            result.gpus = this.gpus;
 
             return result;
         }

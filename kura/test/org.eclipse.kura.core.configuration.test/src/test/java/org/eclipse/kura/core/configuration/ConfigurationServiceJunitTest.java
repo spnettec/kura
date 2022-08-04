@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2022 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -71,7 +70,7 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
 
-public class ConfigurationServiceTest {
+public class ConfigurationServiceJunitTest {
 
     @Test
     public void testGetFactoryComponentPids() throws NoSuchFieldException, KuraException {
@@ -275,11 +274,11 @@ public class ConfigurationServiceTest {
             assertEquals("additional key", "val2", dict.get("key2"));
 
             return null;
-        }).when(cfgMock2).update(any());
+        }).when(cfgMock2).update((Dictionary<String, Object>) any());
 
         cs.createFactoryConfiguration(factoryPid, pid, properties, takeSnapshot);
 
-        verify(cfgMock2, Mockito.times(1)).update(any());
+        verify(cfgMock2, Mockito.times(1)).update((Dictionary<String, Object>) any());
     }
 
     @Test
@@ -806,16 +805,19 @@ public class ConfigurationServiceTest {
     }
 
     @Test
-    public void testEncryptConfigsNoConfigs() throws Throwable {
+    public void testEncryptConfigsNoConfigs() {
         // empty list
-
+        boolean exceptionCaught = false;
         ConfigurationServiceImpl cs = new ConfigurationServiceImpl();
 
         List<? extends ComponentConfiguration> configs = new ArrayList<>();
 
-        TestUtil.invokePrivate(cs, "encryptConfigs", configs);
-
-        // runs without problems, but there's nothing else to check, here
+        try {
+            TestUtil.invokePrivate(cs, "encryptConfigs", configs);
+        } catch (Throwable t) {
+            exceptionCaught = true;
+        }
+        assertFalse(exceptionCaught);
     }
 
     @Test
@@ -1368,16 +1370,6 @@ public class ConfigurationServiceTest {
                 }
                 return null;
             }
-
-            @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
-            }
         };
 
         long snapshotID = 123;
@@ -1531,7 +1523,6 @@ public class ConfigurationServiceTest {
 
                 return xmlComponentConfigurations;
             }
-
         };
 
         List<ComponentConfigurationImpl> result = (List<ComponentConfigurationImpl>) TestUtil.invokePrivate(cs,
@@ -1586,7 +1577,6 @@ public class ConfigurationServiceTest {
                 calls[1]++;
                 throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR);
             }
-
         };
 
         List<ComponentConfigurationImpl> result = (List<ComponentConfigurationImpl>) TestUtil.invokePrivate(cs,
@@ -1618,7 +1608,6 @@ public class ConfigurationServiceTest {
             String getSnapshotsDirectory() {
                 return dir;
             }
-
         };
 
         try {
@@ -1672,16 +1661,6 @@ public class ConfigurationServiceTest {
             }
 
             @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
-            }
-
-            @Override
             protected String marshal(Object object) {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
                 try {
@@ -1691,7 +1670,6 @@ public class ConfigurationServiceTest {
                 }
                 return null;
             }
-
         };
 
         CryptoService cryptoServiceMock = mock(CryptoService.class);
@@ -1782,16 +1760,6 @@ public class ConfigurationServiceTest {
             }
 
             @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
-            }
-
-            @Override
             protected String marshal(Object object) {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
                 try {
@@ -1849,16 +1817,6 @@ public class ConfigurationServiceTest {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
 
                 return xmlMarshaller.unmarshal(xmlString, clazz);
-            }
-
-            @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
             }
 
             @Override
@@ -2158,16 +2116,6 @@ public class ConfigurationServiceTest {
             }
 
             @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
-            }
-
-            @Override
             protected String marshal(Object object) {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
                 try {
@@ -2246,16 +2194,6 @@ public class ConfigurationServiceTest {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
 
                 return xmlMarshaller.unmarshal(xmlString, clazz);
-            }
-
-            @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
             }
 
             @Override
@@ -2341,16 +2279,6 @@ public class ConfigurationServiceTest {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
 
                 return xmlMarshaller.unmarshal(xmlString, clazz);
-            }
-
-            @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
             }
 
             @Override
@@ -2454,16 +2382,6 @@ public class ConfigurationServiceTest {
             }
 
             @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
-            }
-
-            @Override
             protected String marshal(Object object) {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
                 try {
@@ -2473,7 +2391,6 @@ public class ConfigurationServiceTest {
                 }
                 return null;
             }
-
         };
 
         configurationService.setCryptoService(csMock);
@@ -2644,27 +2561,13 @@ public class ConfigurationServiceTest {
             assertEquals("expected configuration update PID", pid, dict.elements().nextElement());
 
             return null;
-        }).when(cfgMock).update(any());
+        }).when(cfgMock).update((Dictionary<String, ?>) any());
 
         TestUtil.invokePrivate(cs, "updateWithDefaultConfiguration", pid, ocd);
 
         assertTrue("method called", calls[0]);
 
-        verify(cfgMock, times(1)).update(any());
-    }
-
-    @Test
-    public void testRegisterComponentConfigurationAllNulls() {
-        // only null inputs
-        ConfigurationServiceImpl cs = new ConfigurationServiceImpl();
-
-        String pid = null;
-        String servicePid = null;
-        String factoryPid = null;
-
-        cs.registerComponentConfiguration(pid, servicePid, factoryPid);
-
-        // no checks really possible...
+        verify(cfgMock, times(1)).update((Dictionary<String, ?>) any());
     }
 
     @Test
@@ -3045,16 +2948,6 @@ public class ConfigurationServiceTest {
                 XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
 
                 return xmlMarshaller.unmarshal(xmlString, clazz);
-            }
-
-            @Override
-            protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
-                XmlMarshallUnmarshallImpl xmlMarshaller = new XmlMarshallUnmarshallImpl();
-                try {
-                    return xmlMarshaller.unmarshal(new FileInputStream(file), clazz);
-                } catch (final Exception e) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-                }
             }
 
             @Override
