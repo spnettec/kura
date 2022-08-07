@@ -48,6 +48,17 @@ public final class TypedValues {
     }
 
     /**
+     * Creates new boolean value array.
+     *
+     * @param value
+     *                  the boolean value array
+     * @return the boolean value represented as {@link TypedValue}
+     */
+    public static BooleanValues newBooleanValues(final Boolean[] values) {
+        return new BooleanValues(values);
+    }
+
+    /**
      * Creates new byte array value.
      *
      * @param value
@@ -72,6 +83,17 @@ public final class TypedValues {
     }
 
     /**
+     * Creates new float value array.
+     *
+     * @param value
+     *                  the float value array
+     * @return the float value represented as {@link TypedValue}
+     */
+    public static FloatValues newFloatValues(final Float[] value) {
+        return new FloatValues(value);
+    }
+
+    /**
      * Creates new double value.
      *
      * @param value
@@ -80,6 +102,17 @@ public final class TypedValues {
      */
     public static DoubleValue newDoubleValue(final double value) {
         return new DoubleValue(value);
+    }
+
+    /**
+     * Creates new double value array.
+     *
+     * @param value
+     *                  the double value
+     * @return the double value represented as {@link TypedValue}
+     */
+    public static DoubleValues newDoubleValues(final Double[] value) {
+        return new DoubleValues(value);
     }
 
     /**
@@ -94,6 +127,17 @@ public final class TypedValues {
     }
 
     /**
+     * Creates new integer value array.
+     *
+     * @param value
+     *                  the integer value array
+     * @return the integer value represented as {@link TypedValue}
+     */
+    public static IntegerValues newIntegerValues(final Integer[] value) {
+        return new IntegerValues(value);
+    }
+
+    /**
      * Creates new long value.
      *
      * @param value
@@ -104,8 +148,24 @@ public final class TypedValues {
         return new LongValue(value);
     }
 
+    /**
+     * Creates new long value array.
+     *
+     * @param value
+     *                  array
+     *                  the long value
+     * @return the long value represented as {@link TypedValue}
+     */
+    public static LongValues newLongValues(final Long[] value) {
+        return new LongValues(value);
+    }
+
     public static BigIntegerValue newBigIntegerValue(final BigInteger value) {
         return new BigIntegerValue(value);
+    }
+
+    public static BigIntegerValues newBigIntegerValues(final BigInteger[] value) {
+        return new BigIntegerValues(value);
     }
 
     /**
@@ -117,6 +177,17 @@ public final class TypedValues {
      */
     public static StringValue newStringValue(@Nullable final String value) {
         return new StringValue(value);
+    }
+
+    /**
+     * Creates new string value array.
+     *
+     * @param value
+     *                  the string value to be represented as {@link TypedValue}
+     * @return the string value represented as {@link TypedValue}
+     */
+    public static StringValues newStringValues(@Nullable final String[] value) {
+        return new StringValues(value);
     }
 
     /**
@@ -145,6 +216,18 @@ public final class TypedValues {
             return newBigIntegerValue((BigInteger) value);
         } else if (value instanceof String) {
             return newStringValue((String) value);
+        } else if (value instanceof Float[]) {
+            return newFloatValues((Float[]) value);
+        } else if (value instanceof Double[]) {
+            return newDoubleValues((Double[]) value);
+        } else if (value instanceof Integer[]) {
+            return newIntegerValues((Integer[]) value);
+        } else if (value instanceof Long[]) {
+            return newLongValues((Long[]) value);
+        } else if (value instanceof BigInteger[]) {
+            return newBigIntegerValues((BigInteger[]) value);
+        } else if (value instanceof String[]) {
+            return newStringValues((String[]) value);
         }
 
         throw new IllegalArgumentException("Cannot convert to TypedValue");

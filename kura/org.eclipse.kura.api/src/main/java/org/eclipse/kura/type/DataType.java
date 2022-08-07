@@ -23,19 +23,33 @@ public enum DataType {
 
     BOOLEAN,
 
+    BOOLEANS,
+
     BYTE_ARRAY,
 
     DOUBLE,
 
+    DOUBLES,
+
     INTEGER,
+
+    INTEGERS,
 
     LONG,
 
+    LONGS,
+
     BIGINTEGER,
+
+    BIGINTEGERS,
 
     FLOAT,
 
-    STRING;
+    FLOATS,
+
+    STRING,
+
+    STRINGS;
 
     /**
      * Converts {@code stringDataType}, if possible, to the related {@link DataType}.
@@ -50,17 +64,32 @@ public enum DataType {
         if (INTEGER.name().equalsIgnoreCase(stringDataType)) {
             return INTEGER;
         }
+        if (INTEGERS.name().equalsIgnoreCase(stringDataType)) {
+            return INTEGERS;
+        }
         if (FLOAT.name().equalsIgnoreCase(stringDataType)) {
             return FLOAT;
+        }
+        if (FLOATS.name().equalsIgnoreCase(stringDataType)) {
+            return FLOATS;
         }
         if (DOUBLE.name().equalsIgnoreCase(stringDataType)) {
             return DOUBLE;
         }
+        if (DOUBLES.name().equalsIgnoreCase(stringDataType)) {
+            return DOUBLES;
+        }
         if (LONG.name().equalsIgnoreCase(stringDataType)) {
             return LONG;
         }
+        if (LONGS.name().equalsIgnoreCase(stringDataType)) {
+            return LONGS;
+        }
         if (BIGINTEGER.name().equalsIgnoreCase(stringDataType)) {
             return BIGINTEGER;
+        }
+        if (BIGINTEGERS.name().equalsIgnoreCase(stringDataType)) {
+            return BIGINTEGERS;
         }
         if (BYTE_ARRAY.name().equalsIgnoreCase(stringDataType)) {
             return BYTE_ARRAY;
@@ -68,8 +97,14 @@ public enum DataType {
         if (BOOLEAN.name().equalsIgnoreCase(stringDataType)) {
             return BOOLEAN;
         }
+        if (BOOLEANS.name().equalsIgnoreCase(stringDataType)) {
+            return BOOLEANS;
+        }
         if (STRING.name().equalsIgnoreCase(stringDataType)) {
             return STRING;
+        }
+        if (STRINGS.name().equalsIgnoreCase(stringDataType)) {
+            return STRINGS;
         }
 
         throw new IllegalArgumentException("Cannot convert to DataType");
