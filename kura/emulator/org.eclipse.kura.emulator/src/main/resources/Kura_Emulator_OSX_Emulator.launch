@@ -71,7 +71,6 @@
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
-        <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.tamper.detection"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
@@ -357,6 +356,7 @@
         <setEntry value="org.eclipse.jetty.servlets@default:default"/>
         <setEntry value="org.eclipse.jetty.util.ajax@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer@default:default"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
@@ -435,6 +435,7 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.configuration.change.manager@default:default"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.container.provider@default:default"/>
         <setEntry value="org.eclipse.kura.core.certificates@default:default"/>
@@ -464,9 +465,9 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
+        <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.localization.resources@default:false"/>
         <setEntry value="org.eclipse.kura.localization@default:default"/>
