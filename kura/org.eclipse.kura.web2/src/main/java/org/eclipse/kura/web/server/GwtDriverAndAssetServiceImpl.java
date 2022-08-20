@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -264,6 +265,9 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
     private static String typedValueToString(TypedValue<?> typedValue) {
         if (typedValue.getType() == DataType.BYTE_ARRAY) {
             return BASE64_ENCODER.encodeToString((byte[]) typedValue.getValue());
+        }
+        if (typedValue.getValue().getClass().isArray()) {
+            return Arrays.toString((Object[]) typedValue.getValue());
         }
         return typedValue.getValue().toString();
     }
