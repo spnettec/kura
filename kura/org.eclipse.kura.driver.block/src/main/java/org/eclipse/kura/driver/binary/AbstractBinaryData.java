@@ -23,9 +23,9 @@ public abstract class AbstractBinaryData<T> implements BinaryData<T> {
      * Creates a new {@link BinaryData} instance.
      *
      * @param endianness
-     *                       the endianness of the data
+     *            the endianness of the data
      * @param size
-     *                       the size of the data
+     *            the size of the data
      */
     public AbstractBinaryData(Endianness endianness, int size) {
         requireNonNull(endianness, "Endianness cannot be null");

@@ -66,7 +66,7 @@ import java.util.stream.StreamSupport;
  * </p>
  *
  * @param <T>
- *                The type of the blocks obtained as result of the aggregation process.
+ *            The type of the blocks obtained as result of the aggregation process.
  */
 public class BlockAggregator<T extends Block> {
 
@@ -80,11 +80,10 @@ public class BlockAggregator<T extends Block> {
      * called.
      *
      * @param inputBlocks
-     *                        a mutable list of input blocks.
+     *            a mutable list of input blocks.
      * @param factory
-     *                        a {@link BlockFactory} instance that will be used to create the output blocks during the
-     *                        aggregation
-     *                        process.
+     *            a {@link BlockFactory} instance that will be used to create the output blocks during the aggregation
+     *            process.
      */
     public BlockAggregator(List<Block> inputBlocks, BlockFactory<T> factory) {
         requireNonNull(inputBlocks, "Input block list cannot be null");
@@ -125,7 +124,7 @@ public class BlockAggregator<T extends Block> {
      *
      * @param minimumGapSize
      * @throws IllegalArgumentException
-     *                                      If the provided argument is negative
+     *             If the provided argument is negative
      */
     public void setMinimumGapSize(int minimumGapSize) {
         if (minimumGapSize < 0) {
@@ -138,7 +137,7 @@ public class BlockAggregator<T extends Block> {
      * Inserts a new {@link Block} into the input blocks list.
      *
      * @param block
-     *                  the block to be inserted.
+     *            the block to be inserted.
      */
     public void addBlock(Block block) {
         requireNonNull(block, "The provided block cannot be null");

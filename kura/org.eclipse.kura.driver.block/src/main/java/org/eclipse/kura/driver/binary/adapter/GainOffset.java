@@ -34,13 +34,13 @@ public class GainOffset implements BinaryData<Double> {
 
     @Override
     public void write(final Buffer buf, final int offset, final Double value) {
-        final double d = value * this.gain + this.off;
-        this.adapter.write(buf, offset, d);
+        final double d = value * gain + off;
+        adapter.write(buf, offset, d);
     }
 
     @Override
     public Double read(Buffer buf, int offset) {
-        return this.adapter.read(buf, offset) * this.gain + this.off;
+        return adapter.read(buf, offset) * gain + off;
     }
 
     @Override
@@ -50,12 +50,12 @@ public class GainOffset implements BinaryData<Double> {
 
     @Override
     public Endianness getEndianness() {
-        return this.adapter.getWrapped().getEndianness();
+        return adapter.getWrapped().getEndianness();
     }
 
     @Override
     public int getSize() {
-        return this.adapter.getWrapped().getSize();
+        return adapter.getWrapped().getSize();
     }
 
     private static class Adapter<T extends Number> {
@@ -90,15 +90,15 @@ public class GainOffset implements BinaryData<Double> {
         }
 
         public void write(final Buffer buf, final int offset, final Double value) {
-            this.wrapped.write(buf, offset, this.fromDouble.apply(value));
+            wrapped.write(buf, offset, fromDouble.apply(value));
         }
 
         public Double read(final Buffer buf, final int offset) {
-            return this.wrapped.read(buf, offset).doubleValue();
+            return wrapped.read(buf, offset).doubleValue();
         }
 
         public BinaryData<T> getWrapped() {
-            return this.wrapped;
+            return wrapped;
         }
     }
 }

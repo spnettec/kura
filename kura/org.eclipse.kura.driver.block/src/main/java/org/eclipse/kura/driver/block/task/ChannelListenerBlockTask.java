@@ -28,7 +28,7 @@ public class ChannelListenerBlockTask extends ChannelBlockTaskWrapper {
     }
 
     public ChannelListener getListener() {
-        return this.listener;
+        return listener;
     }
 
     @Override
@@ -37,6 +37,6 @@ public class ChannelListenerBlockTask extends ChannelBlockTaskWrapper {
 
         wrapped.run();
 
-        this.listener.onChannelEvent(new ChannelEvent(wrapped.getRecord()));
+        listener.onChannelEvent(new ChannelEvent(wrapped.getRecord()));
     }
 }

@@ -90,7 +90,7 @@ public abstract class ToplevelBlockTask extends BlockTask {
      * for more information on the expected behavior of this method.
      *
      * @throws IOException
-     *                         If some I/O error occur
+     *             If some I/O error occur
      */
     public abstract void processBuffer() throws IOException;
 
@@ -114,7 +114,7 @@ public abstract class ToplevelBlockTask extends BlockTask {
      * Invokes the {@link BlockTask#run()} method on the children of this class.
      *
      * @throws IOException
-     *                         If the {@link BlockTask#run()} method of a child throw an {@link IOException}
+     *             If the {@link BlockTask#run()} method of a child throw an {@link IOException}
      */
     protected void runChildren() throws IOException {
         this.isAborted = false;
@@ -131,11 +131,10 @@ public abstract class ToplevelBlockTask extends BlockTask {
      * Adds a child to this {@link ToplevelBlockTask}
      *
      * @param child
-     *                  the child to be added.
+     *            the child to be added.
      * @throws IllegalArgumentException
-     *                                      if the interval specified by the provided {@link BlockTask} is not contained
-     *                                      by the interval
-     *                                      specified by this {@link ToplevelBlockTask}
+     *             if the interval specified by the provided {@link BlockTask} is not contained by the interval
+     *             specified by this {@link ToplevelBlockTask}
      */
     public void addChild(BlockTask child) {
         if (!this.contains(child)) {
@@ -150,7 +149,7 @@ public abstract class ToplevelBlockTask extends BlockTask {
      * called to notify the error.
      *
      * @param exception
-     *                      the reason for which the execution must be aborted.
+     *            the reason for which the execution must be aborted.
      */
     public void abort(Exception exception) {
         this.isAborted = true;

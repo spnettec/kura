@@ -52,17 +52,15 @@ public class BlockTaskAggregator extends BlockAggregator<ToplevelBlockTask> {
      * called.
      *
      * @param inputBlocks
-     *                        a mutable list of input blocks.
+     *            a mutable list of input blocks.
      * @param factory
-     *                        a {@link BlockFactory} instance that will be used to create the output blocks during the
-     *                        aggregation
-     *                        process.
+     *            a {@link BlockFactory} instance that will be used to create the output blocks during the aggregation
+     *            process.
      */
     public BlockTaskAggregator(List<Block> tasks, BlockFactory<ToplevelBlockTask> factory) {
         super(tasks, factory);
     }
 
-    @SuppressWarnings("checkstyle:innerAssignment")
     private void assignTasks(ToplevelBlockTask toplevelTask, ListIterator<Block> tasks) {
         Block next = null;
         while (tasks.hasNext() && (next = tasks.next()).getEnd() <= toplevelTask.getEnd()) {

@@ -31,7 +31,7 @@ public class ToBoolean implements BinaryData<Boolean> {
 
     @Override
     public Boolean read(final Buffer buf, int offset) {
-        return ((Number) this.wrapped.read(buf, offset)).doubleValue() != 0;
+        return ((Number) wrapped.read(buf, offset)).doubleValue() != 0;
     }
 
     @Override
@@ -41,12 +41,12 @@ public class ToBoolean implements BinaryData<Boolean> {
 
     @Override
     public Endianness getEndianness() {
-        return this.wrapped.getEndianness();
+        return wrapped.getEndianness();
     }
 
     @Override
     public int getSize() {
-        return this.wrapped.getSize();
+        return wrapped.getSize();
     }
 
 }
