@@ -140,7 +140,9 @@ public abstract class TritonServerServiceAbs implements InferenceEngineService, 
 
     protected void deactivate() {
         logger.info("Deactivate TritonServerService...");
-        stopManagedInstance();
+        if (nonNull(this.tritonServerInstanceManager)) {
+            stopManagedInstance();
+        }
         this.grpcChannel.shutdownNow();
     }
 

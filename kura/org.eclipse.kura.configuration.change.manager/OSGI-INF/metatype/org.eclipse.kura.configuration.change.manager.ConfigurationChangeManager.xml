@@ -13,41 +13,39 @@
     Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/ConfigurationChangeManager">
     <OCD id="org.eclipse.kura.configuration.change.manager.ConfigurationChangeManager"
-        name="Configuration Change Manager"
-        description="Detect changes to the configuration service and publish them to the cloud as a KuraMessage.">
+        name="%name"
+        description="%description">
 
         <Icon resource="OSGI-INF/configurationChangeManagerLogo.png" size="32" />
 
         <AD id="enabled" 
-            name="Enable" 
+            name="%enabled" 
             type="Boolean" 
             cardinality="0" 
             required="true" 
             default="false"
-            description="Set to true to enable this component.">
+            description="%enabledDesc">
         </AD>
 
         <AD id="CloudPublisher.target" 
-            name="CloudPublisher Target Filter" 
+            name="%cloudPublisherTarget" 
             type="String" 
             cardinality="0"
             required="true" 
             default="(kura.service.pid=changeme)"
-            description="Specifies, as an OSGi target filter, the pid of the Cloud Publisher used to publish messages
-            to the cloud platform.">
+            description="%cloudPublisherTargetDesc">
         </AD>
 
         <AD id="send.delay" 
-            name="Notification send delay (sec)" 
+            name="%sendDelay" 
             type="Long" 
             cardinality="0" 
             required="true"
             default="10" 
             min="0"
-            description="Delay before notifications are sent. A large delay accumulates notifications into a single message.
-			A delay of 0 will send the notifications as soon as they arrive, without accumulation.">
+            description="%sendDelayDesc">
         </AD>
 
     </OCD>
