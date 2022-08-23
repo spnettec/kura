@@ -143,7 +143,9 @@ public abstract class TritonServerServiceAbs implements InferenceEngineService, 
         if (nonNull(this.tritonServerInstanceManager)) {
             stopManagedInstance();
         }
-        this.grpcChannel.shutdownNow();
+        if (nonNull(this.grpcChannel)) {
+            this.grpcChannel.shutdownNow();
+        }
     }
 
     private void startManagedInstance() {

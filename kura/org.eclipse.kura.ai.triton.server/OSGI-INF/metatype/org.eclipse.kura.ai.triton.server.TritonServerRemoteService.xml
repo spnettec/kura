@@ -19,12 +19,12 @@
          description="%description">
 
         <AD id="server.address"
-            name="%serverSddress"
+            name="%serverAddress"
             type="String"
             cardinality="0"
             required="true"
             default="localhost"
-            description="serverSddressDesc">
+            description="%serverAddressDesc">
         </AD>
 
         <AD id="server.ports"
