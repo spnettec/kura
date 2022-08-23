@@ -71,6 +71,7 @@
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
+        <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.tamper.detection"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
@@ -466,7 +467,6 @@
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
-        <setEntry value="org.eclipse.kura.example.rest.authentication.provider@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
