@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1864,11 +1865,22 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 // validate the attribute value
                 Object objectValue = property.getValue();
                 String stringValue = StringUtil.valueToString(objectValue);
-                if (attrDef.getType() != AttributeDefinition.STRING && stringValue != null) {
-                    String result = attrDef.validate(stringValue);
-                    if (result != null && !result.isEmpty()) {
-                        throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, attrDef.getID(),
-                                stringValue, result);
+                if (stringValue != null) {
+                    boolean required = true;
+                    if ("".equals(stringValue)) {
+                        try {
+                            Method requiredMethod = attrDef.getClass().getDeclaredMethod("isRequired");
+                            requiredMethod.setAccessible(true);
+                            required = (boolean) requiredMethod.invoke(attrDef);
+                        } catch (Exception e) {
+                        }
+                    }
+                    if (!"".equals(stringValue) || required) {
+                        String result = attrDef.validate(stringValue);
+                        if (result != null && !result.isEmpty()) {
+                            throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, attrDef.getID(),
+                                    stringValue, result);
+                        }
                     }
                 }
             }
@@ -1971,7 +1983,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *                  the input value
+     *            the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
