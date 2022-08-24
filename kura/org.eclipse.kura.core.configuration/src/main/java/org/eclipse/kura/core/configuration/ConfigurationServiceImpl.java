@@ -1865,7 +1865,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 // validate the attribute value
                 Object objectValue = property.getValue();
                 String stringValue = StringUtil.valueToString(objectValue);
-                if (stringValue != null) {
+                if (attrDef.getType() != AttributeDefinition.STRING && stringValue != null) {
                     boolean required = true;
                     if ("".equals(stringValue)) {
                         try {
