@@ -26,13 +26,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>1.10.19</version>
+            <version>4.7.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -116,11 +116,7 @@
                         <dependencies>
                             <dependency>
                                 <type>p2-installable-unit</type>
-                                <artifactId>moquette-broker</artifactId>
-                            </dependency>
-                            <dependency>
-                                <type>p2-installable-unit</type>
-                                <artifactId>org.eclipse.equinox.ds</artifactId>
+                                <artifactId>io.moquette.broker</artifactId>
                             </dependency>
                             <dependency>
                                 <type>p2-installable-unit</type>
@@ -245,13 +241,8 @@
                         </dependencies>
                         <bundleStartLevel>
                             <bundle>
-                                <id>moquette-broker</id>
+                                <id>io.moquette.broker</id>
                                 <level>3</level>
-                                <autoStart>true</autoStart>
-                            </bundle>
-                            <bundle>
-                                <id>org.eclipse.equinox.ds</id>
-                                <level>4</level>
                                 <autoStart>true</autoStart>
                             </bundle>
                             <bundle>
