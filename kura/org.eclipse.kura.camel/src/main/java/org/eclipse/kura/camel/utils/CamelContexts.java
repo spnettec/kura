@@ -31,15 +31,15 @@ public final class CamelContexts {
 
     /**
      * Run an init script on a camel context
-     *
+     * 
      * @param context
-     *                        the context to work on
+     *            the context to work on
      * @param initCode
-     *                        the init code, may be {@code null} or empty
+     *            the init code, may be {@code null} or empty
      * @param classLoader
-     *                        the classloader to use for the script engine, may be {@code null}
+     *            the classloader to use for the script engine, may be {@code null}
      * @throws ScriptException
-     *                             if calling the script fails
+     *             if calling the script fails
      */
     public static void scriptInitCamelContext(final CamelContext context, final String initCode,
             final ClassLoader classLoader) throws ScriptException {

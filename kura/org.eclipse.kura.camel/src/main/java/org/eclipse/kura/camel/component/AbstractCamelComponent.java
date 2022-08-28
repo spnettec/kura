@@ -133,9 +133,9 @@ public abstract class AbstractCamelComponent {
      * The default implementation is empty
      *
      * @param builder
-     *                       the builder
+     *            the builder
      * @param properties
-     *                       the properties provided to the {@link #start(Map)} method
+     *            the properties provided to the {@link #start(Map)} method
      */
     protected void customizeBuilder(final Builder builder, final Map<String, Object> properties) {
     }
@@ -165,7 +165,7 @@ public abstract class AbstractCamelComponent {
      * Called before the context is started
      *
      * @param camelContext
-     *                         the Camel context which is being prepared for starting
+     *            the Camel context which is being prepared for starting
      */
     protected void beforeStart(final CamelContext camelContext) {
     }

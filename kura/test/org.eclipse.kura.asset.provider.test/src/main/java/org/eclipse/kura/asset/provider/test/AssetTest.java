@@ -111,7 +111,7 @@ public final class AssetTest {
         // may need to wait for asset to be registered and injected
         if (asset == null) {
             synchronized (assetLock) {
-                assetLock.wait(3000);
+                assetLock.wait(5000);
             }
 
         }
@@ -227,6 +227,7 @@ public final class AssetTest {
         sync(asset);
 
         assertTrue(invoked.get());
+        asset.unregisterChannelListener(listener);
     }
 
     /**
@@ -486,7 +487,7 @@ public final class AssetTest {
 
         List<AD> ads = ocd.getAD();
         assertNotNull(ads);
-        assertEquals(34, ads.size()); // description, driver, 32 from BaseChannelDescriptor and StubChannelDescriptor
+        assertEquals(38, ads.size()); // description, driver, 32 from BaseChannelDescriptor and StubChannelDescriptor
 
         assertEquals("asset.desc", ads.get(0).getId());
         assertEquals("driver.pid", ads.get(1).getId());

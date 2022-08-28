@@ -471,6 +471,16 @@
                                 <level>2</level>
                             </bundleStartLevel>
                             <bundleStartLevel>
+                                <id>org.apache.camel.camel-core-languages</id>
+                                <autoStart>true</autoStart>
+                                <level>2</level>
+                            </bundleStartLevel>
+                            <bundleStartLevel>
+                                <id>org.apache.camel.karaf.camel-core-osgi</id>
+                                <autoStart>true</autoStart>
+                                <level>2</level>
+                            </bundleStartLevel>
+                            <bundleStartLevel>
                                 <id>org.eclipse.kura.camel</id>
                                 <autoStart>true</autoStart>
                                 <level>3</level>
@@ -690,46 +700,6 @@
                                 <requirement>
                                     <type>p2-installable-unit</type>
                                     <id>com.sun.xml.bind.jaxb-osgi</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.validation.jakarta.validation-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.ws.rs-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.servlet-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.enterprise.cdi-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.inject.jakarta.inject-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.interceptor-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.json-api</id>
-                                    <versionRange>0.0.0</versionRange>
-                                </requirement>
-                                <requirement>
-                                    <type>p2-installable-unit</type>
-                                    <id>jakarta.transaction-api</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>
@@ -957,7 +927,11 @@
                                     <id>org.eclipse.kura.core.keystore</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
-                                
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.eclipse.kura.emulator.position</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
                             </extraRequirements>
                         </dependency-resolution>
                     </configuration>

@@ -57,11 +57,11 @@ public class CamelRunner {
     private static final Logger logger = LoggerFactory.getLogger(CamelRunner.class);
 
     /**
-     * Creates a new {@link ContextFactory} backed by {@link OsgiDefaultKuraCamelContext}
+     * Creates a new {@link ContextFactory} backed by {@link OsgiDefaultCamelContext}
      *
      * @param bundleContext
      *            the bundle context to use
-     * @return a context factory creating {@link OsgiDefaultKuraCamelContext}
+     * @return a context factory creating {@link OsgiDefaultCamelContext}s
      */
     public static ContextFactory createOsgiFactory(final BundleContext bundleContext) {
         Objects.requireNonNull(bundleContext);
