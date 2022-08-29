@@ -189,6 +189,9 @@ public class FilesystemKeystoreServiceImpl extends BaseKeystoreService {
             return;
         }
         File fKeyStore = new File(keystorePath);
+        if (!fKeyStore.getParentFile().exists()) {
+            fKeyStore.getParentFile().mkdirs();
+        }
         if (!fKeyStore.createNewFile()) {
             logger.error("Keystore file already exists at location {}", keystorePath);
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, "keystore.path", keystorePath,
