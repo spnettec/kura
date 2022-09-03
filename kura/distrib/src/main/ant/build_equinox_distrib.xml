@@ -1305,7 +1305,7 @@ fi]]>
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gwt.user_${gwt-user.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.gwtproject.gwt-user_${gwt-user.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.gwtbootstrap3_${org.gwtbootstrap3.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
@@ -1892,7 +1892,7 @@ fi]]>
 				file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
 				prefix="${build.output.name}/${plugins.folder}" />
 			<zipfileset
-				file="../target-definition/common/repository/plugins/com.gwt.user_${com.gwt.user.version}.jar"
+				file="../target-definition/common/repository/plugins/org.gwtproject.gwt-user_${gwt-user.version}.jar"
 				prefix="${build.output.name}/${plugins.folder}" />
 			<zipfileset
 				file="${project.build.directory}/plugins/org.eclipse.kura.http.server.manager_${org.eclipse.kura.http.server.manager.version}.jar"
@@ -2072,7 +2072,7 @@ fi]]>
 			file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
 			todir="${build.install.dir.kura}/kura/plugins" />
 		<copy
-			file="../target-definition/common/repository/plugins/com.gwt.user_${com.gwt.user.version}.jar"
+			file="../target-definition/common/repository/plugins/org.gwtproject.gwt-user_${gwt-user.version}.jar"
 			todir="${build.install.dir.kura}/plugins" />
 	</target>
 

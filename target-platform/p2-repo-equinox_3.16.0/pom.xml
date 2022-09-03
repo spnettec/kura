@@ -1060,7 +1060,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>com.google.gwt:gwt-user:${gwt-user.version}</id>
+									<id>org.gwtproject:gwt-user:${gwt-user.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

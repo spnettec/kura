@@ -190,7 +190,6 @@
         <setEntry value="com.google.guava*30.1.1.jre@default:default"/>
         <setEntry value="com.google.guava*31.0.1.jre@default:default"/>
         <setEntry value="com.google.guava.failureaccess@default:default"/>
-        <setEntry value="com.google.gwt.user@default:default"/>
         <setEntry value="com.google.protobuf@default:default"/>
         <setEntry value="com.h2database@default:default"/>
         <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
@@ -387,6 +386,7 @@
         <setEntry value="org.glassfish.jersey.media.jersey-media-multipart@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
+        <setEntry value="org.gwtproject.gwt-user@default:default"/>
         <setEntry value="org.jboss.logging.jboss-logging@default:default"/>
         <setEntry value="org.jctools.core@default:default"/>
         <setEntry value="org.jgroups@default:default"/>
