@@ -32,14 +32,6 @@
 		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.protocol.can.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.eurotech</groupId>
-			<artifactId>libsocket-can-java</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-	</dependencies>
-
 	<build>
 		<plugins>
             <plugin>
@@ -57,26 +49,6 @@
                 </configuration>
             </plugin>
             
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.0.0</version>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>lib</outputDirectory>
-							<excludeGroupIds>p2.eclipse-plugin,org.eclipse.kura</excludeGroupIds>
-							<excludeTransitive>true</excludeTransitive>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
 			<plugin>
 				<groupId>com.github.heyoulin</groupId>
 				<artifactId>osgi-dp</artifactId>
