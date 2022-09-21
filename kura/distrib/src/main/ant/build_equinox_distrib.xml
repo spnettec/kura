@@ -885,6 +885,25 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.prefs_${org.osgi.service.prefs.version}.jar@2:start" />
 			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.wireadmin_${org.osgi.service.wireadmin.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.cm_${org.osgi.service.cm.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.component_${org.osgi.service.component.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.device_${org.osgi.service.device.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.event_${org.osgi.service.event.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.upnp_${org.osgi.service.upnp.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.useradmin_${org.osgi.service.useradmin.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.metatype_${org.osgi.service.metatype.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.provisioning_${org.osgi.service.provisioning.version}.jar@2:start" />			
+		
+			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.osgi.util_${org.eclipse.osgi.util.version}.jar@2:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.function_${org.osgi.util.function.version}.jar@2:start" />
