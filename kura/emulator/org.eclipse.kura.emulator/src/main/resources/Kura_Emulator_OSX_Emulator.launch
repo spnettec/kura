@@ -20,6 +20,7 @@
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
+        <setEntry value="org.eclipse.kura.configuration.change.manager.test"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider.test"/>
         <setEntry value="org.eclipse.kura.container.provider.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
@@ -52,6 +53,7 @@
         <setEntry value="org.eclipse.kura.driver.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.emulator.position.test"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog.test"/>
+        <setEntry value="org.eclipse.kura.event.publisher.test"/>
         <setEntry value="org.eclipse.kura.example.beacon"/>
         <setEntry value="org.eclipse.kura.example.beacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag"/>
@@ -446,7 +448,6 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.configuration.change.manager.test@default:false"/>
         <setEntry value="org.eclipse.kura.configuration.change.manager@default:default"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.container.provider@default:default"/>
@@ -477,7 +478,6 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
-        <setEntry value="org.eclipse.kura.event.publisher.test@default:false"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
