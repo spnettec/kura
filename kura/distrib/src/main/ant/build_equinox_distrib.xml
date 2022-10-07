@@ -223,10 +223,10 @@
         <!-- Asset bundles config -->
         <antcall target="asset-config" />
 
-		<!-- Added Artemis bundles configs -->
-		<antcall target="artemis-config" />
-		
-		<!-- Added plc4j bundles configs -->
+        <!-- Added Artemis bundles configs -->
+        <antcall target="artemis-config" />
+        
+        <!-- Added plc4j bundles configs -->
 		<antcall target="common-config" />
 
         <!-- Deployment hook bundles configs -->
@@ -238,14 +238,14 @@
         <!-- Wires bundles config -->
         <antcall target="wires-config" />
 
-		<!-- Miscellaneous bundles config -->
-		<antcall target="misc-config" />
-    	
-    	<!-- Threat Management bundles config -->
-    	<antcall target="threat-management-config" />
-		
-		<!-- Keystore Management bundles config -->
-		<antcall target="keystore-management-config" />
+        <!-- Miscellaneous bundles config -->
+        <antcall target="misc-config" />
+
+        <!-- Threat Management bundles config -->
+        <antcall target="threat-management-config" />
+
+        <!-- Keystore Management bundles config -->
+        <antcall target="keystore-management-config" />
 
         <!-- Filesystem log provider bundle config -->
         <antcall target="filesystem-logprovider-config" />
@@ -276,14 +276,14 @@
         <antcall target="ai-wire-config" />
         <antcall target="nvidia-triton-server-config" />
 
-		<!-- Add mToolkit to config.ini -->
-		<!--
-		<propertyfile
-			file="${project.build.directory}/${build.output.name}/config.ini">
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.tigris.mtoolkit.iagent.rpc_3.0.0.20110411-0918.jar@5:start" />
-		</propertyfile>
-		-->
+        <!-- Add mToolkit to config.ini -->
+        <!--
+        <propertyfile
+            file="${project.build.directory}/${build.output.name}/config.ini">
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.tigris.mtoolkit.iagent.rpc_3.0.0.20110411-0918.jar@5:start" />
+        </propertyfile>
+        -->
 
         <propertyfile
             file="${project.build.directory}/${build.output.name}/dpa.properties">
@@ -322,6 +322,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -367,6 +369,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -412,6 +416,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
+		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -605,14 +611,22 @@ fi]]>
                 file="${project.build.directory}/${build.output.name}/kura.properties"
                 prefix="${build.output.name}/${framework.config.folder}/" />
 
+            <zipfileset dir="../target-definition/equinox_3.16.0/repository/plugins"
+				prefix="${build.output.name}/${plugins.folder}">
+
+				<!-- exclude source bundles -->
+				<exclude name="*.source_*.jar" />
+
+			</zipfileset>
 
             <zipfileset dir="../target-definition/common/repository/plugins"
                 prefix="${build.output.name}/${plugins.folder}">
 
-				<exclude name="org.eclipse.paho.*" />
-				<exclude name="com.gwt.user_*" />
-				<exclude name="org.junit*" />
-				<exclude name="org.moka7*" />
+                <exclude name="com.google.protobuf_2.6.0.jar" />
+                <exclude name="org.eclipse.paho.*" />
+                <exclude name="com.gwt.user_*" />
+                <exclude name="org.junit*" />
+                <exclude name="org.moka7*" />
 
                 <!-- exclude source bundles -->
                 <exclude name="*.source_*.jar" />
@@ -620,15 +634,7 @@ fi]]>
                 <!-- exclude .SNAPSHOT bundles -->
                 <exclude name="*.SNAPSHOT.jar" />
 
-			</zipfileset>
-			<zipfileset dir="../target-definition/equinox_3.16.0/repository/plugins"
-				prefix="${build.output.name}/${plugins.folder}">
-
-				<exclude name="com.google.protobuf_*.jar" />
-				<!-- exclude source bundles -->
-				<exclude name="*.source_*.jar" />
-
-			</zipfileset>
+            </zipfileset>
 
             <!-- add .SNAPSHOT as -SNAPSHOT -->
             <mappedresources>
@@ -638,97 +644,97 @@ fi]]>
                     to="${build.output.name}/${plugins.folder}/*-SNAPSHOT.jar" />
             </mappedresources>
 
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.deployment.agent_${org.eclipse.kura.deployment.agent.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.api_${org.eclipse.kura.api.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.system_${org.eclipse.kura.core.system.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.certificates_${org.eclipse.kura.core.certificates.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud_${org.eclipse.kura.core.cloud.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud.factory_${org.eclipse.kura.core.cloud.factory.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider_${org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.cloudconnection.raw.mqtt.provider_${org.eclipse.kura.cloudconnection.raw.mqtt.provider.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.comm_${org.eclipse.kura.core.comm.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.crypto_${org.eclipse.kura.core.crypto.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.deployment_${org.eclipse.kura.core.deployment.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.inventory_${org.eclipse.kura.core.inventory.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.tamper.detection_${org.eclipse.kura.core.tamper.detection.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.clock_${org.eclipse.kura.linux.clock.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.command_${org.eclipse.kura.linux.command.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.position_${org.eclipse.kura.linux.position.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.usb_${org.eclipse.kura.linux.usb.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.usb.${native.tag}_${org.eclipse.kura.linux.usb.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.ble.provider_${org.eclipse.kura.ble.provider.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.ble.ibeacon.provider_${org.eclipse.kura.ble.ibeacon.provider.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.ble.eddystone.provider_${org.eclipse.kura.ble.eddystone.provider.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.watchdog_${org.eclipse.kura.linux.watchdog.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.core.status_${org.eclipse.kura.core.status.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux.gpio_${org.eclipse.kura.linux.gpio.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.linux_${org.eclipse.kura.linux.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<zipfileset
-				file="${project.build.directory}/plugins/org.eclipse.kura.useradmin.store_${org.eclipse.kura.useradmin.store.version}.jar"
-				prefix="${build.output.name}/${plugins.folder}" />
-			<!-- additional configs -->
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.deployment.agent_${org.eclipse.kura.deployment.agent.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.api_${org.eclipse.kura.api.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.system_${org.eclipse.kura.core.system.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.certificates_${org.eclipse.kura.core.certificates.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud_${org.eclipse.kura.core.cloud.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud.factory_${org.eclipse.kura.core.cloud.factory.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider_${org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.cloudconnection.raw.mqtt.provider_${org.eclipse.kura.cloudconnection.raw.mqtt.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.comm_${org.eclipse.kura.core.comm.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.crypto_${org.eclipse.kura.core.crypto.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.deployment_${org.eclipse.kura.core.deployment.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.inventory_${org.eclipse.kura.core.inventory.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.tamper.detection_${org.eclipse.kura.core.tamper.detection.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.clock_${org.eclipse.kura.linux.clock.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.command_${org.eclipse.kura.linux.command.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.position_${org.eclipse.kura.linux.position.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.usb_${org.eclipse.kura.linux.usb.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.usb.${native.tag}_${org.eclipse.kura.linux.usb.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.ble.provider_${org.eclipse.kura.ble.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.ble.ibeacon.provider_${org.eclipse.kura.ble.ibeacon.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.ble.eddystone.provider_${org.eclipse.kura.ble.eddystone.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.watchdog_${org.eclipse.kura.linux.watchdog.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.core.status_${org.eclipse.kura.core.status.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.gpio_${org.eclipse.kura.linux.gpio.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux_${org.eclipse.kura.linux.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.useradmin.store_${org.eclipse.kura.useradmin.store.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <!-- additional configs -->
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.driver.opcua.provider_${org.eclipse.kura.driver.opcua.provider.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
@@ -738,7 +744,7 @@ fi]]>
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.protocol.modbus_${org.eclipse.kura.protocol.modbus.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
-		</zip>
+        </zip>
 
         <antcall target="camel-jar" />
 
@@ -867,8 +873,6 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.console_${org.eclipse.equinox.console.version}.jar@1" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.ds_${org.eclipse.equinox.ds.version}.jar@1:start" />
-            <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.event_${org.eclipse.equinox.event.version}.jar@1:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar@1:start" />
@@ -879,17 +883,56 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.osgi.services_${org.eclipse.osgi.services.version}.jar@2:start" />
             <entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.coordinator_${org.osgi.service.coordinator.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.log.stream_${org.osgi.service.log.stream.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.prefs_${org.osgi.service.prefs.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.wireadmin_${org.osgi.service.wireadmin.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.cm_${org.osgi.service.cm.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.component_${org.osgi.service.component.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.device_${org.osgi.service.device.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.event_${org.osgi.service.event.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.upnp_${org.osgi.service.upnp.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.useradmin_${org.osgi.service.useradmin.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.metatype_${org.osgi.service.metatype.version}.jar@2:start" />			
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.service.provisioning_${org.osgi.service.provisioning.version}.jar@2:start" />			
+            
+            <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.osgi.util_${org.eclipse.osgi.util.version}.jar@2:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.scr_${org.apache.felix.scr.version}.jar@5" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.function_${org.osgi.util.function.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.measurement_${org.osgi.util.measurement.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.position_${org.osgi.util.position.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.promise_${org.osgi.util.promise.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.pushstream_${org.osgi.util.pushstream.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.osgi.util.xml_${org.osgi.util.xml.version}.jar@2:start" />            
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.scr_${org.apache.felix.scr.version}.jar@1:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.command_${org.apache.felix.gogo.command.version}.jar@5" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.runtime_${org.apache.felix.gogo.runtime.version}.jar@5" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.gogo.shell_${org.apache.felix.gogo.shell.version}.jar@5" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar@3:start" />
+         	<!--
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar@3:start" />
+			-->
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.dependencymanager_${org.apache.felix.dependencymanager.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
@@ -902,8 +945,6 @@ fi]]>
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.jetty.customizer_${org.eclipse.kura.jetty.customizer.version}.jar" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.http.servlet_${org.eclipse.equinox.http.servlet.version}.jar@5:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.continuation_${org.eclipse.jetty.continuation.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.http_${org.eclipse.jetty.http.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
@@ -919,23 +960,21 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.util.ajax_${org.eclipse.jetty.util.ajax.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/javax.servlet_${javax.servlet.version}.jar@5:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-io_${org.apache.commons.commons-io.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/slf4j.api_${slf4j.api.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jcl.over.slf4j_${jcl.over.slf4j.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jcl.over.slf4j_${slf4j.api.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.log4j2-api-config_${org.apache.log4j2-api-config.version}.jar@3" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.api_${log4j.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.api_${logging.log4j.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.core_${log4j.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.core_${logging.log4j.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.slf4j-impl_${log4j.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.logging.log4j.slf4j-impl_${logging.log4j.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/minimal-json_${com.eclipsesource.minimal-json.version}.jar" />
             <entry key="osgi.bundles" operation="+"
@@ -963,29 +1002,42 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.exec_${org.apache.commons.exec.version}.jar" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.jersey-min_${com.eclipsesource.jaxrs.jersey-min.version}.jar@3" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.publisher_${com.eclipsesource.jaxrs.publisher.jar.version}.jar@4:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.gson_${com.eclipsesource.jaxrs.provider.gson.jar.version}.jar@4:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.security_${com.eclipsesource.jaxrs.provider.security.jar.version}.jar@4:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.multipart_${com.eclipsesource.jaxrs.provider.multipart.jar.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.containers.jersey-container-servlet-core_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.media.jersey-media-sse_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.media.jersey-media-multipart_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.core.jersey-server_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.core.jersey-common_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.core.jersey-client_${glassfish.jersey.version}.jar@3" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.inject.jersey-hk2_${glassfish.jersey.version}.jar@3" />
+			<!--
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.publisher_${com.eclipsesource.jaxrs.publisher.version}.jar@4:start" />
+			-->
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.gson_${com.eclipsesource.jaxrs.provider.gson.version}.jar@4:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.security_${com.eclipsesource.jaxrs.provider.security.version}.jar@4:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.eclipsesource.jaxrs.provider.multipart_${com.eclipsesource.jaxrs.provider.multipart.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.gson_${com.google.gson.version}.jar@3" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.protobuf_${com.google.protobuf.version}.jar@3" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.csv_${org.apache.commons.csv.version}.jar@3" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-csv_${org.apache.commons.csv.version}.jar@3" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.useradmin_${org.apache.felix.useradmin.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.useradmin.store_${org.eclipse.kura.useradmin.store.version}.jar@3:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcpkix_${org.bouncycastle.jar.version}.jar@3" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bcprov_${org.bouncycastle.jar.version}.jar@3" />
+            <!-- additional configs -->
+			<entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.fileinstall_${org.apache.felix.fileinstall.version}.jar@3:start" />
+			<entry key="osgi.bundles" operation="+"
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.driver.s7plc.provider_${org.eclipse.kura.driver.s7plc.provider.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.protocol.modbus_${org.eclipse.kura.protocol.modbus.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -1016,18 +1068,6 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.alibaba.fastjson2_${fastjson2.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/bluez-dbus-osgi_${bluez-dbus-osgi.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.activation-api_${jakarta.activation-api.version}.jar@2" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.annotation-api_${jakarta.annotation-api.version}.jar@2" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.bind-api_${jakarta.xml.bind-api.version}.jar@2" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.ws-api_${jakarta.xml.ws-api.version}.jar@2" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.soap-api_${jakarta.xml.soap-api.version}.jar@2" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.sun.xml.bind.jaxb-osgi_${jaxb-osgi.version}.jar@2:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.hk2.osgi-resource-locator_${osgi-resource-locator.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -1061,7 +1101,23 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.xml.soap-api_${jakarta.xml.soap-api.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.hk2.osgi-resource-locator_${osgi-resource-locator.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.servlet-api_${jakarta.servlet-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.enterprise.cdi-api_${jakarta.cdi-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/javax.el-api_${jakarta.el-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.inject.jakarta.inject-api_${jakarta.inject-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.validation.jakarta.validation-api_${jakarta.validation-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.ws.rs-api_${jakarta.ws.rs-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.interceptor-api_${jakarta.interceptor-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.json-api_${jakarta.json-api.version}.jar@5:start" />
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.transaction-api_${jakarta.transaction-api.version}.jar@5:start" />
 		</propertyfile>
 	</target>
     <!-- Kura config targets -->

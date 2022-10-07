@@ -285,6 +285,9 @@
             <esf:property array="true" encrypted="false" name="https.client.auth.ports" type="Integer">
                 <esf:value>4443</esf:value>
             </esf:property>
+            <esf:property array="true" encrypted="false" name="http.ports" type="Integer">
+                <esf:value>80</esf:value>
+            </esf:property>
             <esf:property array="false" encrypted="false" name="KeystoreService.target" type="String">
                 <esf:value>(kura.service.pid=HttpsKeystore)</esf:value>
             </esf:property>
