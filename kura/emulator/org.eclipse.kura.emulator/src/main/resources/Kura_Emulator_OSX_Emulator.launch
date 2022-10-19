@@ -326,6 +326,7 @@
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
         <setEntry value="org.apache.qpid.proton-j@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.aopalliance@default:default"/>
+        <setEntry value="org.apache.servicemix.bundles.c3p0@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.reflections@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-aop@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-beans@default:default"/>

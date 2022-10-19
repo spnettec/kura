@@ -1707,6 +1707,12 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<artifact>
+									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.c3p0:jar:${org.apache.servicemix.bundles.c3p0.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								
 							</artifacts>
 						</configuration>
 					</execution>
