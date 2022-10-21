@@ -53,7 +53,6 @@
         <setEntry value="org.eclipse.kura.driver.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.emulator.position.test"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog.test"/>
-        <setEntry value="org.eclipse.kura.event.publisher.test"/>
         <setEntry value="org.eclipse.kura.example.beacon"/>
         <setEntry value="org.eclipse.kura.example.beacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag"/>
