@@ -1072,7 +1072,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.quartz-scheduler:quartz:${org.quartz-scheduler.quartz.version}</id>
+									<id>org.quartz-scheduler:quartz:${quartz.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<override>true</override>
@@ -1080,6 +1080,11 @@
 										<Import-Package>*;resolution:=optional</Import-Package>
 										<Export-Package>*</Export-Package>
 									</instructions>
+								</artifact>
+								<artifact>
+									<id>com.zaxxer:HikariCP:${hikaricp.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
 								</artifact>
 								<artifact>
 									<id>org.gwtproject:gwt-user:${gwt-user.version}</id>
