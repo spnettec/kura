@@ -31,12 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
@@ -142,9 +140,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while activation.
      *
      * @param componentContext
-     *            the component context
+     *                             the component context
      * @param properties
-     *            the service properties
+     *                             the service properties
      */
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.info("activating...");
@@ -158,7 +156,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component update callback.
      *
      * @param properties
-     *            the service properties
+     *                       the service properties
      */
     public void updated(final Map<String, Object> properties) {
 
@@ -178,7 +176,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * OSGi service component callback while deactivation.
      *
      * @param context
-     *            the component context
+     *                    the component context
      */
     protected void deactivate(final ComponentContext context) {
         logger.debug("deactivating...");
@@ -197,9 +195,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
      * PID.
      *
      * @param driverId
-     *            the identifier of the driver
+     *                     the identifier of the driver
      * @throws NullPointerException
-     *             if driver id provided is null
+     *                                  if driver id provided is null
      */
     private void reopenDriverTracker(final String driverId) {
         requireNonNull(driverId, "Driver PID cannot be null");
@@ -328,7 +326,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final BaseAssetConfiguration conf = this.config;
 
-        final List<ChannelRecord> channelRecords = unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
+        final List<ChannelRecord> channelRecords = unwrap(this.executor.runIO(() -> {
             final List<ChannelRecord> records;
             final PreparedRead preparedRead = state.getPreparedRead();
             if (preparedRead != null) {
@@ -393,7 +391,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
+            unwrap(this.executor.runIO(() -> {
                 state.getDriver().read(validRecords);
                 return null;
             }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
@@ -551,7 +549,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.config.getRequestTimeOut(), this.executor.runIO(() -> {
+            unwrap(this.executor.runIO(() -> {
                 state.getDriver().write(validRecords);
                 return null;
             }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
@@ -559,18 +557,11 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         logger.debug("Writing to channels...Done");
     }
 
-    private static <T> T unwrap(int timeOut, final CompletableFuture<T> future) throws KuraException {
+    private static <T> T unwrap(final CompletableFuture<T> future) throws KuraException {
         try {
-            return future.get(timeOut, TimeUnit.SECONDS);
-        } catch (final ExecutionException e) {
-            final Throwable cause = e.getCause();
-            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, cause, cause.getMessage());
-        } catch (TimeoutException e) {
-            future.cancel(true);
-            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, new RuntimeException("runIO TimeOut"),
-                    "Read write TimeOut");
+            return future.get();
         } catch (final Exception e) {
-            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, e, e.getMessage());
+            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e, e.getMessage());
         }
     }
 
