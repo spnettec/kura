@@ -14,6 +14,7 @@ package org.eclipse.kura.core.net;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -37,7 +38,6 @@ import org.eclipse.kura.core.net.modem.ModemInterfaceAddressConfigImpl;
 import org.eclipse.kura.core.net.modem.ModemInterfaceConfigImpl;
 import org.eclipse.kura.core.net.util.NetworkUtil;
 import org.eclipse.kura.core.testutil.TestUtil;
-import org.eclipse.kura.core.util.NetUtil;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IP6Address;
 import org.eclipse.kura.net.IPAddress;
@@ -73,7 +73,6 @@ import org.eclipse.kura.net.wifi.WifiSecurity;
 import org.eclipse.kura.system.SystemService;
 import org.eclipse.kura.usb.UsbBlockDevice;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
@@ -174,7 +173,7 @@ public class NetworkConfigurationTest {
     public void testModifiedInterfaceNames() throws NoSuchFieldException {
         NetworkConfiguration config = new NetworkConfiguration();
 
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
 
         List<String> modifiedInterfaceNames = new ArrayList<>();
         modifiedInterfaceNames.add("if1");
@@ -194,24 +193,24 @@ public class NetworkConfigurationTest {
     public void testModifiedInterfaceNamesNull() throws NoSuchFieldException {
         NetworkConfiguration config = new NetworkConfiguration();
 
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
 
         List<String> modifiedInterfaceNames = null;
         config.setModifiedInterfaceNames(modifiedInterfaceNames);
         assertNull(config.getModifiedInterfaceNames());
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
     }
 
     @Test
     public void testModifiedInterfaceNamesEmpty() throws NoSuchFieldException {
         NetworkConfiguration config = new NetworkConfiguration();
 
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
 
         List<String> modifiedInterfaceNames = new ArrayList<>();
         config.setModifiedInterfaceNames(modifiedInterfaceNames);
         assertNull(config.getModifiedInterfaceNames());
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
     }
 
     @Test
@@ -815,8 +814,8 @@ public class NetworkConfigurationTest {
     public void testGetConfigurationPropertiesNull() throws NoSuchFieldException {
         NetworkConfiguration config = new NetworkConfiguration();
 
-        assertEquals(false, TestUtil.getFieldValue(config, "recomputeProperties"));
-        assertNull(config.getConfigurationProperties());
+        assertEquals(true, TestUtil.getFieldValue(config, "recomputeProperties"));
+        assertNotNull(config.getConfigurationProperties());
     }
 
     @Test

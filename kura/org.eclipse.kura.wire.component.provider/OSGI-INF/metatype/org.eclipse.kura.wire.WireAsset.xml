@@ -62,6 +62,22 @@
             default="false"
             description="%emiterrorsdesc">
         </AD>
+        <AD id="emit.on.change"
+            name="%emitonchange"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="%emitonchangedesc">
+        </AD>
+        <AD id="emit.empty.envelopes"
+            name="%emitemptyenvelopes"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="%emitemptyenvelopesdesc">
+        </AD>
            
     </OCD>
     

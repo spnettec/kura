@@ -16,7 +16,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -36,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.KuraRuntimeException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.OCD;
@@ -75,6 +73,11 @@ public class NetworkConfigurationServiceImplTest {
         NetworkConfigurationServiceImpl svc = new NetworkConfigurationServiceImpl() {
 
             @Override
+            protected NetInterfaceType getNetworkType(String interfaceName) throws KuraException {
+                return guessNetworkType(interfaceName);
+            }
+
+            @Override
             protected void initVisitors() {
                 inited.set(true);
             }
@@ -107,6 +110,11 @@ public class NetworkConfigurationServiceImplTest {
     @Test
     public void testPostEvent() throws InterruptedException, NoSuchFieldException {
         NetworkConfigurationServiceImpl svc = new NetworkConfigurationServiceImpl() {
+
+            @Override
+            protected NetInterfaceType getNetworkType(String interfaceName) throws KuraException {
+                return guessNetworkType(interfaceName);
+            }
 
             @Override
             protected void initVisitors() {
@@ -258,6 +266,11 @@ public class NetworkConfigurationServiceImplTest {
         NetworkConfigurationServiceImpl svc = new NetworkConfigurationServiceImpl() {
 
             @Override
+            protected NetInterfaceType getNetworkType(String interfaceName) throws KuraException {
+                return guessNetworkType(interfaceName);
+            }
+
+            @Override
             protected void initVisitors() {
             }
 
@@ -339,37 +352,6 @@ public class NetworkConfigurationServiceImplTest {
     }
 
     @Test
-    public void testGetConfigurationException() throws KuraException, NoSuchFieldException {
-        NetworkConfigurationServiceImpl svc = new NetworkConfigurationServiceImpl() {
-
-            @Override
-            protected List<String> getAllInterfaceNames() throws KuraException {
-                throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, "test");
-            }
-        };
-
-        NetworkService networkServiceMock = mock(NetworkService.class);
-        svc.setNetworkService(networkServiceMock);
-
-        List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<>();
-        NetInterface<? extends NetInterfaceAddress> netInterface = new WifiInterfaceImpl("wlan1");
-        interfaces.add(netInterface);
-        when(networkServiceMock.getNetworkInterfaces()).thenReturn(interfaces);
-
-        UsbService usbServiceMock = mock(UsbService.class);
-        svc.setUsbService(usbServiceMock);
-
-        try {
-            svc.getConfiguration();
-            fail("Exception was expected.");
-        } catch (KuraRuntimeException e) {
-            assertEquals(KuraErrorCode.CONFIGURATION_ERROR, e.getCode());
-            assertTrue(e.getMessage().endsWith("retrieved"));
-        }
-
-    }
-
-    @Test
     public void testGetConfiguration() throws KuraException, NoSuchFieldException {
         NetworkConfigurationServiceImpl svc = new NetworkConfigurationServiceImpl() {
 
@@ -387,26 +369,7 @@ public class NetworkConfigurationServiceImplTest {
 
             @Override
             protected NetInterfaceType getNetworkType(String interfaceName) throws KuraException {
-                NetInterfaceType type;
-
-                switch (interfaceName) {
-                case "eth2":
-                    type = NetInterfaceType.ETHERNET;
-                    break;
-                case "lo":
-                    type = NetInterfaceType.LOOPBACK;
-                    break;
-                case "ppp1":
-                    type = NetInterfaceType.MODEM;
-                    break;
-                case "wlan1":
-                    type = NetInterfaceType.WIFI;
-                    break;
-                default:
-                    type = NetInterfaceType.UNKNOWN;
-                }
-
-                return type;
+                return guessNetworkType(interfaceName);
             }
 
             @Override
@@ -440,12 +403,12 @@ public class NetworkConfigurationServiceImplTest {
         Map<String, Object> inputProperties = new HashMap<>();
         inputProperties.put("net.interfaces", "");
 
-        svc.activate(null, inputProperties);
-
         List<UsbNetDevice> usbNetDevices = new ArrayList<>();
         usbNetDevices.add(new UsbNetDevice("vendor", "product", "manufacturer", "productName", "usbBusNumber",
                 "usbDevicePath", "wlan1"));
         when(usbServiceMock.getUsbNetDevices()).thenReturn(usbNetDevices);
+
+        svc.activate(null, inputProperties);
 
         ComponentConfiguration configuration = svc.getConfiguration();
 
@@ -454,6 +417,7 @@ public class NetworkConfigurationServiceImplTest {
         Map<String, Object> properties = configuration.getConfigurationProperties();
 
         assertNotNull(properties);
+
         assertEquals(83, properties.size());
         assertEquals("ETHERNET", properties.get("net.interface.eth2.type"));
         assertEquals("LOOPBACK", properties.get("net.interface.lo.type"));
@@ -790,6 +754,22 @@ public class NetworkConfigurationServiceImplTest {
             }
         }
         assertEquals(45, adsConfigured);
+    }
+
+    private static NetInterfaceType guessNetworkType(final String interfaceName) {
+
+        if (interfaceName.startsWith("eth")) {
+            return NetInterfaceType.ETHERNET;
+        } else if (interfaceName.equals("lo")) {
+            return NetInterfaceType.LOOPBACK;
+        } else if (interfaceName.startsWith("ppp")) {
+            return NetInterfaceType.MODEM;
+        } else if (interfaceName.startsWith("wlan")) {
+            return NetInterfaceType.WIFI;
+        } else {
+            return NetInterfaceType.UNKNOWN;
+        }
+
     }
 
 }

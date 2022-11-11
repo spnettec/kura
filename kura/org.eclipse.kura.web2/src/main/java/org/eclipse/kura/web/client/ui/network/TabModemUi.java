@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2022 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -92,6 +92,8 @@ public class TabModemUi extends Composite implements NetworkTab {
     @UiField
     FormGroup groupReset;
     @UiField
+    FormGroup groupHoldoff;
+    @UiField
     FormGroup groupMaxfail;
     @UiField
     FormGroup groupIdle;
@@ -131,6 +133,8 @@ public class TabModemUi extends Composite implements NetworkTab {
     @UiField
     FormLabel labelPersist;
     @UiField
+    FormLabel labelHoldoff;
+    @UiField
     FormLabel labelMaxfail;
     @UiField
     FormLabel labelIdle;
@@ -143,6 +147,8 @@ public class TabModemUi extends Composite implements NetworkTab {
 
     @UiField
     HelpBlock helpReset;
+    @UiField
+    HelpBlock helpHoldoff;
     @UiField
     HelpBlock helpMaxfail;
     @UiField
@@ -173,6 +179,8 @@ public class TabModemUi extends Composite implements NetworkTab {
     TextBox username;
     @UiField
     TextBox reset;
+    @UiField
+    TextBox holdoff;
     @UiField
     TextBox maxfail;
     @UiField
@@ -250,6 +258,8 @@ public class TabModemUi extends Composite implements NetworkTab {
     @UiField
     HelpButton persistHelp;
     @UiField
+    HelpButton holdoffHelp;
+    @UiField
     HelpButton maxfailHelp;
     @UiField
     HelpButton idleHelp;
@@ -302,6 +312,9 @@ public class TabModemUi extends Composite implements NetworkTab {
         if (this.maxfail.getText() == null || "".equals(this.maxfail.getText().trim())) {
             this.groupMaxfail.setValidationState(ValidationState.ERROR);
         }
+        if (this.holdoff.getText() == null || "".equals(this.holdoff.getText().trim())) {
+            this.groupHoldoff.setValidationState(ValidationState.ERROR);
+        }
         if (this.idle.getText() == null || "".equals(this.idle.getText().trim())) {
             this.groupIdle.setValidationState(ValidationState.ERROR);
         }
@@ -316,6 +329,7 @@ public class TabModemUi extends Composite implements NetworkTab {
                 || this.groupDial.getValidationState().equals(ValidationState.ERROR)
                 || this.groupApn.getValidationState().equals(ValidationState.ERROR)
                 || this.groupMaxfail.getValidationState().equals(ValidationState.ERROR)
+                || this.groupHoldoff.getValidationState().equals(ValidationState.ERROR)
                 || this.groupIdle.getValidationState().equals(ValidationState.ERROR)
                 || this.groupInterval.getValidationState().equals(ValidationState.ERROR)
                 || this.groupFailure.getValidationState().equals(ValidationState.ERROR)) {
@@ -380,6 +394,7 @@ public class TabModemUi extends Composite implements NetworkTab {
             updatedModemNetIf.setResetTimeout(Integer.parseInt(this.reset.getValue().trim()));
             updatedModemNetIf.setPersist(this.radio1.getValue());
             updatedModemNetIf.setMaxFail(Integer.parseInt(this.maxfail.getText().trim()));
+            updatedModemNetIf.setHoldoff(Integer.parseInt(this.holdoff.getText().trim()));
             updatedModemNetIf.setIdle(Integer.parseInt(this.idle.getText().trim()));
             updatedModemNetIf.setActiveFilter(this.active.getText() != "" ? this.active.getText().trim() : "");
             updatedModemNetIf.setLcpEchoInterval(Integer.parseInt(this.interval.getText().trim()));
@@ -398,6 +413,7 @@ public class TabModemUi extends Composite implements NetworkTab {
             updatedModemNetIf.setResetTimeout(this.selectedNetIfConfig.getResetTimeout());
             updatedModemNetIf.setPersist(this.selectedNetIfConfig.isPersist());
             updatedModemNetIf.setMaxFail(this.selectedNetIfConfig.getMaxFail());
+            updatedModemNetIf.setHoldoff(this.selectedNetIfConfig.getHoldoff());
             updatedModemNetIf.setIdle(this.selectedNetIfConfig.getIdle());
             updatedModemNetIf.setActiveFilter(this.selectedNetIfConfig.getActiveFilter());
             updatedModemNetIf.setLcpEchoInterval(this.selectedNetIfConfig.getLcpEchoInterval());
@@ -425,6 +441,7 @@ public class TabModemUi extends Composite implements NetworkTab {
         this.resetHelp.setHelpText(MSGS.netModemToolTipResetTimeout());
         this.persistHelp.setHelpText(MSGS.netModemToolTipPersist());
         this.maxfailHelp.setHelpText(MSGS.netModemToolTipMaxFail());
+        this.holdoffHelp.setHelpText(MSGS.netModemToolTipHoldoff());
         this.activeHelp.setHelpText(MSGS.netModemToolTipActiveFilter());
         this.idleHelp.setHelpText(MSGS.netModemToolTipIdle());
         this.intervalHelp.setHelpText(MSGS.netModemToolTipLcpEchoInterval());
@@ -653,6 +670,28 @@ public class TabModemUi extends Composite implements NetworkTab {
                 TabModemUi.this.groupMaxfail.setValidationState(ValidationState.NONE);
             }
         });
+        
+        this.labelHoldoff.setText(MSGS.netModemHoldoff() + "*");
+        this.holdoff.addMouseOverHandler(event -> {
+            if (TabModemUi.this.holdoff.isEnabled()) {
+                TabModemUi.this.helpText.clear();
+                TabModemUi.this.helpText.add(new Span(MSGS.netModemToolTipHoldoff()));
+            }
+        });
+        this.holdoff.addMouseOutHandler(event -> resetHelp());
+        this.holdoff.addValueChangeHandler(event -> {
+            setDirty(true);
+            if (TabModemUi.this.holdoff.getText().trim() != null
+                    && (!TabModemUi.this.holdoff.getText().trim().matches(REGEX_NUM)
+                            || Integer.parseInt(TabModemUi.this.holdoff.getText()) < 0)
+                    || TabModemUi.this.holdoff.getText().trim().length() <= 0) {
+                TabModemUi.this.helpHoldoff.setText(MSGS.netModemInvalidHoldoff());
+                TabModemUi.this.groupHoldoff.setValidationState(ValidationState.ERROR);
+            } else {
+                TabModemUi.this.helpHoldoff.setText("");
+                TabModemUi.this.groupHoldoff.setValidationState(ValidationState.NONE);
+            }
+        });
 
         // DISCONNET IF IDLE
         this.labelIdle.setText(MSGS.netModemIdle() + "*");
@@ -745,11 +784,13 @@ public class TabModemUi extends Composite implements NetworkTab {
         this.groupIdle.setValidationState(ValidationState.NONE);
         this.groupInterval.setValidationState(ValidationState.NONE);
         this.groupMaxfail.setValidationState(ValidationState.NONE);
+        this.groupHoldoff.setValidationState(ValidationState.NONE);
         this.groupNumber.setValidationState(ValidationState.NONE);
         this.groupReset.setValidationState(ValidationState.NONE);
 
         this.helpReset.setText("");
         this.helpMaxfail.setText("");
+        this.helpHoldoff.setText("");
         this.helpIdle.setText("");
         this.helpInterval.setText("");
         this.helpFailure.setText("");
@@ -802,6 +843,7 @@ public class TabModemUi extends Composite implements NetworkTab {
             }
 
             this.maxfail.setText(String.valueOf(this.selectedNetIfConfig.getMaxFail()));
+            this.holdoff.setText(String.valueOf(this.selectedNetIfConfig.getHoldoff()));
             this.idle.setText(String.valueOf(this.selectedNetIfConfig.getIdle()));
             this.active.setText(this.selectedNetIfConfig.getActiveFilter());
             this.interval.setText(String.valueOf(this.selectedNetIfConfig.getLcpEchoInterval()));
@@ -824,6 +866,7 @@ public class TabModemUi extends Composite implements NetworkTab {
         this.radio1.setEnabled(true);
         this.radio2.setEnabled(true);
         this.maxfail.setEnabled(true);
+        this.holdoff.setEnabled(true);
         this.idle.setEnabled(true);
         this.active.setEnabled(true);
         this.interval.setEnabled(true);
@@ -867,6 +910,7 @@ public class TabModemUi extends Composite implements NetworkTab {
         this.radio1.setValue(true);
         this.radio2.setValue(false);
         this.maxfail.setText(null);
+        this.holdoff.setText(null);
         this.idle.setText(null);
         this.active.setText(null);
         this.interval.setText(null);
