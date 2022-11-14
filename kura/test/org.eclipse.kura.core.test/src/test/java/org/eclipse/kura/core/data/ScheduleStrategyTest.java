@@ -122,8 +122,7 @@ public class ScheduleStrategyTest {
 
     private void whenScheduleStrategyIsCreated() {
         this.strategy = new ScheduleStrategy(expression, disconnectTimeoutMs,
-                this.connectionManagerState.connectionManager,
-                this.executorState.executor, () -> this.now);
+                this.connectionManagerState.connectionManager, this.executorState.executor, () -> this.now);
     }
 
     private void whenConnectionIsEstablished() {
@@ -159,6 +158,7 @@ public class ScheduleStrategyTest {
     }
 
     private class ConnectionManagerState {
+
         private ConnectionManager connectionManager = mock(ConnectionManager.class);
         private CompletableFuture<?> startConnectionTask = new CompletableFuture<>();
         private CompletableFuture<?> stopConnectionTask = new CompletableFuture<>();
@@ -185,6 +185,7 @@ public class ScheduleStrategyTest {
     }
 
     private class ExecutorState {
+
         private ScheduledExecutorService executor = mock(ScheduledExecutorService.class);
         private CompletableFuture<Runnable> task = new CompletableFuture<>();
         private CompletableFuture<Long> lastDelay = new CompletableFuture<>();
@@ -193,14 +194,14 @@ public class ScheduleStrategyTest {
             Mockito.when(executor.schedule((Runnable) Mockito.any(), Mockito.anyLong(), Mockito.any()))
                     .thenAnswer(i -> {
 
-                        this.task.complete(i.getArgumentAt(0, Runnable.class));
-                        this.lastDelay.complete(i.getArgumentAt(1, Long.class));
+                        this.task.complete(i.getArgument(0, Runnable.class));
+                        this.lastDelay.complete(i.getArgument(1, Long.class));
 
                         return Mockito.mock(ScheduledFuture.class);
                     });
 
             Mockito.doAnswer(i -> {
-                i.getArgumentAt(0, Runnable.class).run();
+                i.getArgument(0, Runnable.class).run();
 
                 return Mockito.mock(ScheduledFuture.class);
             }).when(executor).execute(Mockito.any());
