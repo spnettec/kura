@@ -192,6 +192,16 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
+        <pluginRepository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
     </pluginRepositories>
 
     <profiles>
@@ -345,18 +355,6 @@
             <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
         </repository>
     </repositories>
-     <pluginRepositories>
-        <pluginRepository>
-		    <id>jitpack.io</id>
-		    <url>https://jitpack.io</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
     <build>
         <extensions>

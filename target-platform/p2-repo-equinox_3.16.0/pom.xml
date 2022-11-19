@@ -388,6 +388,16 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-paho:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-paho-mqtt5:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-core-xml:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -1173,6 +1183,15 @@
 									<id>org.eclipse.paho:org.eclipse.paho.mqttv5.client:${org.eclipse.paho.client.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
+									<override>true</override>
+									<instructions>
+										<Import-Package>*;resolution:=optional</Import-Package>
+										<Export-Package>org.eclipse.paho.mqttv5.client;version="1.2.5",
+														org.eclipse.paho.mqttv5.client.persist;version="1.2.5",
+														org.eclipse.paho.mqttv5.common;version="1.2.5",
+														org.eclipse.paho.mqttv5.common.packet;version="1.2.5"
+										</Export-Package>
+									</instructions>
 								</artifact>
 								<artifact>
 									<id>com.h2database:h2:${com.h2database.h2.version}</id>
@@ -1181,7 +1200,7 @@
 								</artifact>
 
 								<artifact>
-									<id>org.graalvm.sdk:graal-sdk:jar:22.2.0</id>
+									<id>org.graalvm.sdk:graal-sdk:jar:22.3.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1196,7 +1215,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js:jar:22.2.0</id>
+									<id>org.graalvm.js:js:jar:22.3.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1211,7 +1230,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.js:js-scriptengine:jar:22.2.0</id>
+									<id>org.graalvm.js:js-scriptengine:jar:22.3.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1226,7 +1245,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.truffle:truffle-api:jar:22.2.0</id>
+									<id>org.graalvm.truffle:truffle-api:jar:22.3.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1241,7 +1260,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>org.graalvm.regex:regex:jar:22.2.0</id>
+									<id>org.graalvm.regex:regex:jar:22.3.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<instructions>
@@ -1256,7 +1275,7 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>com.ibm.icu:icu4j:jar:71.1</id>
+									<id>com.ibm.icu:icu4j:jar:72.1</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

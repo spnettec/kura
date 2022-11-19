@@ -274,6 +274,8 @@
         <setEntry value="org.apache.camel.camel-jms@default:default"/>
         <setEntry value="org.apache.camel.camel-log@default:default"/>
         <setEntry value="org.apache.camel.camel-management-api@default:default"/>
+        <setEntry value="org.apache.camel.camel-paho-mqtt5@default:default"/>
+        <setEntry value="org.apache.camel.camel-paho@default:default"/>
         <setEntry value="org.apache.camel.camel-seda@default:default"/>
         <setEntry value="org.apache.camel.camel-servlet@default:default"/>
         <setEntry value="org.apache.camel.camel-spring-xml@default:default"/>
