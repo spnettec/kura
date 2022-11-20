@@ -1736,6 +1736,11 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<artifact>
+									<id>com.hazelcast:hazelcast:jar:${hazelcast.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
 								
 							</artifacts>
 						</configuration>

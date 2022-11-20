@@ -23,6 +23,7 @@ import javax.script.ScriptException;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.model.RoutesDefinition;
+import org.apache.camel.spi.SupervisingRouteController;
 import org.apache.camel.support.SimpleRegistry;
 import org.apache.camel.xml.in.ModelParser;
 import org.eclipse.kura.camel.bean.PayloadFactory;
@@ -80,7 +81,11 @@ public class XmlCamelCloudService {
         if (!this.configuration.isEnableJmx()) {
             this.router.disableJMX();
         }
-
+        SupervisingRouteController src = this.router.getRouteController().supervising();
+        src.setBackOffDelay(5000);
+        src.setBackOffMaxAttempts(3);
+        src.setInitialDelay(1000);
+        src.setThreadPoolSize(2);
         // call init code
 
         callInitCode(this.router);
@@ -94,8 +99,7 @@ public class XmlCamelCloudService {
         final KuraCloudComponent cloudComponent = new KuraCloudComponent(this.router, this.service);
         this.router.addComponent("kura-cloud", cloudComponent);
 
-        ModelParser parser = new ModelParser(new ByteArrayInputStream(this.configuration.getXml().getBytes()),
-                "http://camel.apache.org/schema/spring");
+        ModelParser parser = new ModelParser(new ByteArrayInputStream(this.configuration.getXml().getBytes()));
         Optional<RoutesDefinition> value = parser.parseRoutesDefinition();
 
         if (value.isPresent()) {

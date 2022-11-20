@@ -42,7 +42,7 @@ public class XmlRoutesProvider extends AbstractRoutesProvider {
     @Override
     protected RoutesDefinition getRoutes(final CamelContext camelContext) throws Exception {
         try (final InputStream in = this.inputStreamProvider.get()) {
-            ModelParser parser = new ModelParser(in, "http://camel.apache.org/schema/spring");
+            ModelParser parser = new ModelParser(in);
             Optional<RoutesDefinition> value = parser.parseRoutesDefinition();
             return value.orElse(null);
         }

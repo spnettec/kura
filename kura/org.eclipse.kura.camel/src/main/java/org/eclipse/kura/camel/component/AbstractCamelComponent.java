@@ -17,6 +17,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.spi.SupervisingRouteController;
 import org.eclipse.kura.camel.runner.CamelRunner;
 import org.eclipse.kura.camel.runner.CamelRunner.Builder;
 import org.eclipse.kura.camel.runner.ContextFactory;
@@ -168,6 +169,11 @@ public abstract class AbstractCamelComponent {
      *            the Camel context which is being prepared for starting
      */
     protected void beforeStart(final CamelContext camelContext) {
+        SupervisingRouteController src = camelContext.getRouteController().supervising();
+        src.setBackOffDelay(5000);
+        src.setBackOffMaxAttempts(3);
+        src.setInitialDelay(1000);
+        src.setThreadPoolSize(2);
     }
 
     protected ContextFactory getContextFactory() {
