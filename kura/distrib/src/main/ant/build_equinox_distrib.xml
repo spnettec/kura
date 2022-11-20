@@ -1543,6 +1543,10 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-amqp_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-paho_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-paho-mqtt5_${org.apache.camel.version}.jar@4:start" />
+			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-api_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-attachments_${org.apache.camel.version}.jar@4:start" />
