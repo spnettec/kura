@@ -369,7 +369,7 @@ public class NetworkAdminServiceImplTest {
 
             nasi.handleEvent(event);
 
-            return 1234;
+            return 1234L;
         });
 
         NetworkConfiguration nc = new NetworkConfiguration();
@@ -608,7 +608,7 @@ public class NetworkAdminServiceImplTest {
 
             nasi.handleEvent(event);
 
-            return 1234;
+            return 1234L;
         });
 
         NetworkConfiguration nc = new NetworkConfiguration();
@@ -868,7 +868,7 @@ public class NetworkAdminServiceImplTest {
 
             nasi.handleEvent(event);
 
-            return 1234;
+            return 1234L;
         });
 
         NetworkConfiguration nc = new NetworkConfiguration();

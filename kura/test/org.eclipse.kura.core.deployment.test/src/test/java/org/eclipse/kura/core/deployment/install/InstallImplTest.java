@@ -123,7 +123,8 @@ public class InstallImplTest {
 
         ii.installDp(options, dpFile);
 
-        verify(callbackMock, times(1)).publishMessage(eq(options), Mockito.any(), eq(InstallImpl.RESOURCE_INSTALL));
+        verify(callbackMock, times(1)).publishMessage(eq(options), Mockito.any(),
+                eq(InstallImpl.RESOURCE_INSTALL));
     }
 
     @Test
@@ -175,7 +176,8 @@ public class InstallImplTest {
 
         ii.installDp(options, dpFile);
 
-        verify(callbackMock, times(1)).publishMessage(eq(options), Mockito.any(), eq(InstallImpl.RESOURCE_INSTALL));
+        verify(callbackMock, times(1)).publishMessage(eq(options), Mockito.any(),
+                eq(InstallImpl.RESOURCE_INSTALL));
 
         veriDir.delete();
         persDir.delete();
@@ -369,7 +371,8 @@ public class InstallImplTest {
 
                 return null;
             }
-        }).when(callbackMock).publishMessage(Mockito.any(), Mockito.any(), eq(InstallImpl.RESOURCE_INSTALL));
+        }).when(callbackMock).publishMessage(Mockito.any(), Mockito.any(),
+                eq(InstallImpl.RESOURCE_INSTALL));
 
         CloudNotificationPublisher notificationPublisher = mock(CloudNotificationPublisher.class);
         when(notificationPublisher.publish(any())).thenReturn("12345");
@@ -444,7 +447,8 @@ public class InstallImplTest {
 
                 return null;
             }
-        }).when(callbackMock).publishMessage(Mockito.any(), Mockito.any(), eq(InstallImpl.RESOURCE_INSTALL));
+        }).when(callbackMock).publishMessage(Mockito.any(), Mockito.any(),
+                eq(InstallImpl.RESOURCE_INSTALL));
 
         CloudNotificationPublisher notificationPublisher = mock(CloudNotificationPublisher.class);
         when(notificationPublisher.publish(any())).thenReturn("12345");

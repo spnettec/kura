@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2021, 2022 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -453,7 +453,7 @@ public class FilesystemKeystoreServiceImplCrlTest {
             Mockito.when(this.cryptoService.decryptAes((char[]) ArgumentMatchers.any()))
                     .thenAnswer(i -> i.getArgument(0, char[].class));
             Mockito.when(this.cryptoService.getKeyStorePassword(ArgumentMatchers.any(String.class)))
-                    .thenReturn(DEFAULT_KEYSTORE_PASSWORD.toCharArray());
+            .thenReturn(DEFAULT_KEYSTORE_PASSWORD.toCharArray());
             Mockito.doAnswer(i -> {
                 this.eventAdminListener.ifPresent(e -> e.accept(i.getArgument(0, Event.class)));
                 return (Void) null;

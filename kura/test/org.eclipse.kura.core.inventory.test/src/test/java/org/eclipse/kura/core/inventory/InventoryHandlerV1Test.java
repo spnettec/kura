@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2021, 2022 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -1391,8 +1391,8 @@ public class InventoryHandlerV1Test {
 
         when(bundleContext.getService(ref)).thenReturn(jsonMarshaller);
         try {
-            when(bundleContext.getServiceReferences(ArgumentMatchers.eq(Unmarshaller.class),
-                    ArgumentMatchers.anyString())).thenReturn(Arrays.asList(ref));
+            when(bundleContext.getServiceReferences(ArgumentMatchers.eq(Unmarshaller.class), ArgumentMatchers.anyString()))
+                    .thenReturn(Arrays.asList(ref));
         } catch (InvalidSyntaxException e) {
             throw new IllegalStateException(e);
         }

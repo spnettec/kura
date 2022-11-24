@@ -238,6 +238,7 @@
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.el-api@default:default"/>
         <setEntry value="jcl.over.slf4j@default:default"/>
+        <setEntry value="log4j2-api-config@default:default"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
@@ -318,7 +319,6 @@
         <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
         <setEntry value="org.apache.johnzon.core@default:default"/>
-        <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
         <setEntry value="org.apache.logging.log4j.jcl@default:default"/>

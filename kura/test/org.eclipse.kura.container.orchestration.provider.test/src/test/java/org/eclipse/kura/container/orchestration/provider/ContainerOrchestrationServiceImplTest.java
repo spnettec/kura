@@ -461,6 +461,7 @@ public class ContainerOrchestrationServiceImplTest {
         List<Image> images = new LinkedList<>();
         Image mockImage = mock(Image.class);
 
+        when(mockImage.getId()).thenReturn("ngnix");
         when(mockImage.getRepoTags()).thenReturn(new String[] { "nginx", "latest", "nginx:latest" });
 
         images.add(mockImage);

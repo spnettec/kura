@@ -54,7 +54,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>jakarta.validation:jakarta.validation-api:${jakarta.validation-api.version}</id>
+								    <id>jakarta.validation:jakarta.validation-api:${jakarta.validation-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

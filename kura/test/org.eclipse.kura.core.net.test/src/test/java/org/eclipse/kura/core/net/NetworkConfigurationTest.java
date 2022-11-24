@@ -12,17 +12,9 @@
  *******************************************************************************/
 package org.eclipse.kura.core.net;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -38,6 +30,7 @@ import org.eclipse.kura.core.net.modem.ModemInterfaceAddressConfigImpl;
 import org.eclipse.kura.core.net.modem.ModemInterfaceConfigImpl;
 import org.eclipse.kura.core.net.util.NetworkUtil;
 import org.eclipse.kura.core.testutil.TestUtil;
+import org.eclipse.kura.core.util.NetUtil;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IP6Address;
 import org.eclipse.kura.net.IPAddress;
@@ -66,16 +59,20 @@ import org.eclipse.kura.net.wifi.WifiBgscanModule;
 import org.eclipse.kura.net.wifi.WifiCiphers;
 import org.eclipse.kura.net.wifi.WifiConfig;
 import org.eclipse.kura.net.wifi.WifiInterface.Capability;
+import org.eclipse.kura.system.SystemService;
 import org.eclipse.kura.net.wifi.WifiInterfaceAddressConfig;
 import org.eclipse.kura.net.wifi.WifiMode;
 import org.eclipse.kura.net.wifi.WifiRadioMode;
 import org.eclipse.kura.net.wifi.WifiSecurity;
-import org.eclipse.kura.system.SystemService;
 import org.eclipse.kura.usb.UsbBlockDevice;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mockito;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NetworkConfigurationTest {
@@ -500,7 +497,7 @@ public class NetworkConfigurationTest {
                 + " :: State: ACTIVATED :: Type: ETHERNET :: Usb Device: UsbBlockDevice [getDeviceNode()=deviceNode,"
                 + " getVendorId()=vendorId, getProductId()=productId, getManufacturerName()=manufacturerName,"
                 + " getProductName()=productName, getUsbBusNumber()=usbBusNumber, getUsbDevicePath()=usbDevicePath,"
-                + " getUsbPort()=usbBusNumber-usbDevicePath] :: Prefix: 0\n	IPv4  :: is not configured for STATIC or DHCP";
+                + " getUsbPort()=usbBusNumber-usbDevicePath] :: Prefix: 0\n IPv4  :: is not configured for STATIC or DHCP";
 
         assertEquals(expected, config.toString());
     }
@@ -572,10 +569,10 @@ public class NetworkConfigurationTest {
         String expected = "\nname: if1 :: Loopback? false :: Point to Point? false :: Up? false :: Virtual? false"
                 + " :: Driver: null :: Driver Version: null :: Firmware Version: null :: MTU: 0 :: "
                 + "Hardware Address: 11:22:33:44:55:66 :: State: null :: Type: ETHERNET :: Usb Device: null"
-                + " :: Address: 10.0.0.1 :: Prefix: 0 :: Netmask: 255.255.255.0 :: Broadcast: 10.0.0.255\n	IPv4 "
-                + " :: is DHCP client :: key: value\n	IPv4  :: is not configured for STATIC or DHCP\n	IPv4 "
-                + " :: is not configured for STATIC or DHCP\n	IPv4  :: is STATIC client :: Address: 10.0.0.2 :: Prefix: 24"
-                + "\n	IPv4  :: is STATIC client :: Address: 10.0.0.2 :: Prefix: 24 :: Gateway: 10.0.0.1 :: DNS : 10.0.1.1"
+                + " :: Address: 10.0.0.1 :: Prefix: 0 :: Netmask: 255.255.255.0 :: Broadcast: 10.0.0.255\n  IPv4 "
+                + " :: is DHCP client :: key: value\n   IPv4  :: is not configured for STATIC or DHCP\n IPv4 "
+                + " :: is not configured for STATIC or DHCP\n   IPv4  :: is STATIC client :: Address: 10.0.0.2 :: Prefix: 24"
+                + "\n   IPv4  :: is STATIC client :: Address: 10.0.0.2 :: Prefix: 24 :: Gateway: 10.0.0.1 :: DNS : 10.0.1.1"
                 + " :: WINS Server : 10.0.1.1 :: Domains : example.com";
 
         assertEquals(expected, config.toString());
@@ -628,8 +625,8 @@ public class NetworkConfigurationTest {
 
         String expected = "\nname: if1 :: Loopback? false :: Point to Point? false :: Up? false :: Virtual? false"
                 + " :: Driver: null :: Driver Version: null :: Firmware Version: null :: MTU: 0 :: State: null"
-                + " :: Type: ETHERNET :: Usb Device: null :: Prefix: 0\n	IPv6  :: is DHCP client :: key: value\n	IPv6 "
-                + " :: is STATIC client\n	IPv6  :: is STATIC client\n	IPv6  :: is STATIC client :: Address: 0:0:0:0:0:0:0:1"
+                + " :: Type: ETHERNET :: Usb Device: null :: Prefix: 0\n    IPv6  :: is DHCP client :: key: value\n IPv6 "
+                + " :: is STATIC client\n   IPv6  :: is STATIC client\n IPv6  :: is STATIC client :: Address: 0:0:0:0:0:0:0:1"
                 + " :: DNS : 0:0:0:0:0:0:0:1 :: Domains : example.com";
 
         assertEquals(expected, config.toString());
@@ -667,7 +664,7 @@ public class NetworkConfigurationTest {
 
         String expected = "\nname: if1 :: Loopback? false :: Point to Point? false :: Up? false :: Virtual? false"
                 + " :: Driver: null :: Driver Version: null :: Firmware Version: null :: MTU: 0 :: State: null"
-                + " :: Type: MODEM :: Usb Device: null :: Prefix: 0\n	ModemConfig  :: APN: apn :: Data Compression: 0"
+                + " :: Type: MODEM :: Usb Device: null :: Prefix: 0\n   ModemConfig  :: APN: apn :: Data Compression: 0"
                 + " :: Dial String: dialString :: Header Compression: 0 :: PPP number: 0"
                 + " :: Profile ID: 0 :: Username: username :: Auth Type: AUTO :: IP Address: 10.0.0.2 :: PDP Type: PPP"
                 + " :: Gps enabled: false :: Antenna diversity enabled: false";
@@ -712,13 +709,13 @@ public class NetworkConfigurationTest {
 
         String expected = "\nname: if1 :: Loopback? false :: Point to Point? false :: Up? false :: Virtual? false"
                 + " :: Driver: null :: Driver Version: null :: Firmware Version: null :: MTU: 0 :: State: null"
-                + " :: Type: ETHERNET :: Usb Device: null :: Prefix: 0\n	DhcpServerConfig :: \n# enabled? true\n"
+                + " :: Type: ETHERNET :: Usb Device: null :: Prefix: 0\n    DhcpServerConfig :: \n# enabled? true\n"
                 + "# prefix: 24\n" + "# pass DNS? false\n" + "\n" + "subnet 192.168.1.0 netmask 255.255.255.0 {\n"
                 + "    interface eth0;\n" + "    option routers 192.168.1.1;\n" + "    ddns-update-style none;\n"
                 + "    ddns-updates off;\n" + "    default-lease-time 7200;\n" + "    max-lease-time 7200;\n"
                 + "    pool {\n" + "        range 192.168.1.100 192.168.1.254;\n" + "    }\n"
-                + "}\n\n	FirewallAutoNatConfig "
-                + "\n	NULL NETCONFIG PRESENT?!?\n	UNKNOWN CONFIG TYPE???: org.eclipse.kura.core.net.MockConfig";
+                + "}\n\n    FirewallAutoNatConfig "
+                + "\n   NULL NETCONFIG PRESENT?!?\n UNKNOWN CONFIG TYPE???: org.eclipse.kura.core.net.MockConfig";
 
         assertEquals(expected, config.toString());
     }

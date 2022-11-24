@@ -32,18 +32,18 @@
                     <value>false</value>
                 </property>
             </activation>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.eclipse.kura</groupId>
-                        <artifactId>libsocket-can-osgi</artifactId>
-                        <version>1.1.0-SNAPSHOT</version>
-                    </dependency>
-                </dependencies>
+            <dependencies>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>libsocket-can-osgi</artifactId>
+                    <version>1.1.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>${maven-dependency-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>copy-can-bundle-for-publishing</id>
@@ -68,6 +68,7 @@
                     <plugin>
                         <!--  rename bundles with version appended -->
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${maven-antrun-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>setup-can</id>
@@ -92,7 +93,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>${properties-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>initialize</phase>
@@ -115,7 +116,7 @@
 				this directory -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.9</version>
+                <version>${maven-dependency-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>copy-bundles-for-publishing</id>
@@ -177,8 +178,8 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.apache.log4j2-api-config</artifactId>
-                                    <version>${org.apache.log4j2-api-config.version}</version>
+                                    <artifactId>log4j2-api-config</artifactId>
+                                    <version>${log4j2-api-config.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
@@ -230,6 +231,7 @@
             <plugin>
                 <!--  rename bundles with version appended -->
                 <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven-antrun-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>install-commons</id>
@@ -255,7 +257,7 @@
             <plugin>
                 <groupId>org.eclipse.tycho.extras</groupId>
                 <artifactId>tycho-p2-extras-plugin</artifactId>
-                <version>2.7.5</version>
+                <version>${tycho-p2-extras-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
@@ -271,7 +273,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>${maven-deploy-plugin.version}</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>

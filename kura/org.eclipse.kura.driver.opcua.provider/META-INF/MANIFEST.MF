@@ -42,7 +42,7 @@ Import-Package: com.google.common.base,
  org.slf4j;version="[1.7.0,3)",
  org.xml.sax
 Service-Component: OSGI-INF/*.xml
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 Require-Bundle: org.eclipse.milo.sdk-client,
  org.eclipse.milo.stack-core,
  org.eclipse.milo.stack-client,
