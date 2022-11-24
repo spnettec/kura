@@ -68,17 +68,7 @@
             default="10"
             min="1"
             description="%poolMaxSizeDesc"/>
-
-        <AD id="db.max.compact.time" 
-            name="%maxCompactTime"
-            type="Integer" 
-            cardinality="0" 
-            required="true" 
-            default="120000" 
-            min="0"
-            description="%maxCompactTimeDesc" />
         </OCD>
-
     <Designate pid="org.eclipse.kura.core.db.H2DbService" factoryPid="org.eclipse.kura.core.db.H2DbService">
         <Object ocdref="org.eclipse.kura.core.db.H2DbService"/>
     </Designate>
