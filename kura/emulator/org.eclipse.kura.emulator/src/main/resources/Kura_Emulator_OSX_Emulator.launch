@@ -238,7 +238,7 @@
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.el-api@default:default"/>
         <setEntry value="jcl.over.slf4j@default:default"/>
-        <setEntry value="log4j2-api-config@default:default"/>
+        <setEntry value="log4j2-api-config@default:false"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
         <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
@@ -450,7 +450,6 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.configuration.change.manager.test@default:false"/>
         <setEntry value="org.eclipse.kura.configuration.change.manager@default:default"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.container.provider@default:default"/>
@@ -481,7 +480,6 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
-        <setEntry value="org.eclipse.kura.event.publisher.test@default:false"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
