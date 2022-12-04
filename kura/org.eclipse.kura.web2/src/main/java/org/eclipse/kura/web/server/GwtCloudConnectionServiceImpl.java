@@ -203,7 +203,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
         final List<GwtConfigComponent> configs = GwtComponentServiceInternal
                 .findComponentConfigurations(FilterUtil.getPidFilter(result.iterator()));
-        
+
         return configs;
     }
 
@@ -405,6 +405,9 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
             ConfigurationService cs = ServiceLocator.getInstance().getService(ConfigurationService.class);
             ComponentConfiguration cc = cs.getDefaultComponentConfiguration(component.name);
             OCD ocd = cc.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage());
+            if (ocd == null) {
+                return null;
+            }
             name = ocd.getName();
             desc = ocd.getDescription();
 
