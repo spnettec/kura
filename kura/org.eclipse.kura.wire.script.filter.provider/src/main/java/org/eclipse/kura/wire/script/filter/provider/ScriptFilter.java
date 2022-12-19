@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,6 @@ package org.eclipse.kura.wire.script.filter.provider;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.script.Bindings;
@@ -23,7 +22,6 @@ import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
@@ -44,6 +42,13 @@ import org.osgi.service.wireadmin.Wire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+
+/**
+ * @deprecated as of Kura 5.3.0, use
+ *             {@link org.eclipse.kura.wire.script.tools.filter.component.FilterComponent}
+ */
+@Deprecated
 public class ScriptFilter implements WireEmitter, WireReceiver, ConfigurableComponent {
 
     private static final Logger logger = LoggerFactory.getLogger(ScriptFilter.class);
@@ -71,7 +76,6 @@ public class ScriptFilter implements WireEmitter, WireReceiver, ConfigurableComp
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void activate(final ComponentContext componentContext, final Map<String, Object> properties)
             throws ComponentException {
         logger.info("Activating Script Filter...");
@@ -143,8 +147,8 @@ public class ScriptFilter implements WireEmitter, WireReceiver, ConfigurableComp
     }
 
     private ScriptEngine createEngine() {
-        ScriptEngineManager sem = new ScriptEngineManager();
-        ScriptEngine scriptEngineTemp = sem.getEngineByName("javascript");
+        NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+        ScriptEngine scriptEngineTemp = factory.getScriptEngine(className -> false);
 
         if (scriptEngineTemp == null) {
             throw new IllegalStateException("Failed to get script engine");
@@ -152,9 +156,6 @@ public class ScriptFilter implements WireEmitter, WireReceiver, ConfigurableComp
 
         final Bindings engineScopeBindings = scriptEngineTemp.getBindings(ScriptContext.ENGINE_SCOPE);
         if (engineScopeBindings != null) {
-            engineScopeBindings.put("polyglot.js.allowHostAccess", true);
-            engineScopeBindings.put("polyglot.js.allowHostClassLookup", (Predicate<String>) s -> true);
-            engineScopeBindings.put("javaObj", new Object());
             engineScopeBindings.remove("exit");
             engineScopeBindings.remove("quit");
         }

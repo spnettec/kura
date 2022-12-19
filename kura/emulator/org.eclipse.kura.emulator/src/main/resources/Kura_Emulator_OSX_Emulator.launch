@@ -20,6 +20,7 @@
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.ble.provider"/>
         <setEntry value="org.eclipse.kura.camel.test"/>
+        <setEntry value="org.eclipse.kura.configuration.change.manager.test"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider.test"/>
         <setEntry value="org.eclipse.kura.container.provider.test"/>
         <setEntry value="org.eclipse.kura.core.certificates.test"/>
@@ -52,6 +53,7 @@
         <setEntry value="org.eclipse.kura.driver.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.emulator.position.test"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog.test"/>
+        <setEntry value="org.eclipse.kura.event.publisher.test"/>
         <setEntry value="org.eclipse.kura.example.beacon"/>
         <setEntry value="org.eclipse.kura.example.beacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag"/>
@@ -434,7 +436,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.ai.triton.server@default:default"/>
@@ -510,6 +511,7 @@
         <setEntry value="org.eclipse.kura.wire.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.script.filter.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.wire.script.tools@default:default"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
