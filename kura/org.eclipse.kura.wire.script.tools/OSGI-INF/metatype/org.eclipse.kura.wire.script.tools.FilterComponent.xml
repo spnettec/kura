@@ -13,13 +13,13 @@
      Eurotech
      
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/FilterComponent">
     <OCD id="org.eclipse.kura.wire.script.tools.FilterComponent"
-        name="Filter Component"
-        description="A wire component that provides scripting functionalities in JavaScript.">
+        name="%name"
+        description="%description">
 
         <AD id="script"
-            name="script"
+            name="%script"
             type="String"
             cardinality="0"
             required="true"
@@ -99,15 +99,15 @@ outputMap['counter'] = newIntegerValue(counter)&#13;
 var counterRecord = newWireRecord(outputMap)&#13;
 output.push(counterRecord)&#13;
 "
-            description="The JavaScript code to be executed by this component when a wire envelope is received.|TextArea"></AD>
+            description="%scriptDesc"></AD>
 
         <AD id="script.context.drop"
-            name="script.context.drop"
+            name="%drop"
             type="Boolean"
             cardinality="0"
             required="true"
             default="false"
-            description="If set to true, the script context will be dropped and recreated when the component configuration is updated, resetting the values of global variables."></AD>
+            description="%dropDesc"></AD>
     </OCD>
 
     <Designate pid="org.eclipse.kura.wire.script.tools.FilterComponent" factoryPid="org.eclipse.kura.wire.script.tools.FilterComponent">
