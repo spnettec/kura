@@ -193,6 +193,7 @@ public class DriversAndAssetsUi extends Composite implements DriversAndAssetsLis
         DriversAndAssetsRPC.deleteFactoryConfiguration(pid, result -> {
             this.configurations.deleteConfiguration(pid);
             this.driverAndAssetsListUi.refresh();
+            this.refresh();
         });
     }
 
