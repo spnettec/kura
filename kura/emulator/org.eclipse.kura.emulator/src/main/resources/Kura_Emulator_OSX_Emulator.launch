@@ -139,10 +139,12 @@
         <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
         <setEntry value="org.eclipse.kura.wire.ai.component.provider.test"/>
+        <setEntry value="org.eclipse.kura.wire.component.conditional.provider"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.provider.test"/>
+        <setEntry value="org.eclipse.kura.wire.script.filter.provider"/>
         <setEntry value="org.eclipse.kura.wire.script.filter.provider.test"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
@@ -151,11 +153,12 @@
     <booleanAttribute key="includeOptional" value="true"/>
     <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
-    <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
+    <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-19"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#10;-Dkura.have.net.admin=false&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#10;-Dosgi.clean=true &#10;-Dosgi.noShutdown=true&#10;-Declipse.ignoreApp=true &#10;-Dorg.eclipse.kura.mode=macosx &#10;-Dkura.configuration=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#10;-Dlog4j.configurationFile=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#10;-Dkura.data=${workspace_loc}/kura/data  &#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots&#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#10;--add-opens java.base/jdk.internal.misc=ALL-UNNAMED&#10;-Dio.netty.tryReflectionSetAccessible=true"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.osgi.service.http.port=8080 &#10;-Dkura.have.net.admin=false&#10;-Dosgi.configuration.area=/tmp/osgi/framework_storage &#10;-Dosgi.clean=true &#10;-Dosgi.noShutdown=true&#10;-Declipse.ignoreApp=true &#10;-Dorg.eclipse.kura.mode=macosx &#10;-Dkura.configuration=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/kura.properties &#10;-Ddpa.configuration=/tmp/kura/dpa.properties &#10;-Dlog4j.configurationFile=file:${project_loc:org.eclipse.kura.emulator}/src/main/resources/log4j.xml &#10;-Dkura.data=${workspace_loc}/kura/data  &#10;-Dkura.snapshots=${workspace_loc}/kura/snapshots&#10;-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer &#10;-Dfelix.fileinstall.dir=${workspace_loc}/kura/load &#10;--add-modules=ALL-SYSTEM&#10;--add-opens java.base/jdk.internal.misc=ALL-UNNAMED&#10;-Dio.netty.tryReflectionSetAccessible=true&#10;-Dpolyglot.engine.WarnInterpreterOnly=false"/>
     <booleanAttribute key="pde.generated.config" value="true"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <setAttribute key="selected_features">
@@ -502,7 +505,6 @@
         <setEntry value="org.eclipse.kura.web2@default:default"/>
         <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.camel@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.db.component.provider@default:default"/>
@@ -510,7 +512,6 @@
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.script.filter.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.script.tools@default:default"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider@default:default"/>
     </setAttribute>

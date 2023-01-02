@@ -331,6 +331,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -378,6 +379,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
@@ -425,6 +427,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -1436,6 +1439,8 @@ fi]]>
             
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.component.join.provider_${org.eclipse.kura.wire.component.join.provider.version}.jar@5:start" />
+    		<entry key="osgi.bundles" operation="+"
+    	        value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar@5:start" />
         </propertyfile>
     </target>
 
@@ -1545,6 +1550,9 @@ fi]]>
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.wire.component.join.provider_${org.eclipse.kura.wire.component.join.provider.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
+    		<zipfileset
+    	        file="${project.build.directory}/plugins/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar"
+    	        prefix="${build.output.name}/${plugins.folder}" />
         </zip>
     </target>
     
@@ -1654,7 +1662,9 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.cloud.factory_${org.eclipse.kura.camel.cloud.factory.version}.jar@5:start" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.camel_${org.eclipse.kura.wire.camel.version}.jar@5:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.xml_${org.eclipse.kura.camel.xml.version}.jar@5:start" />
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.camel_${org.eclipse.kura.wire.camel.version}.jar@5:start" />
 
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.qpid.jms.client_${apache-qpid-jms-client.version}.jar@3:start" />

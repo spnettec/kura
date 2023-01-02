@@ -27,6 +27,7 @@
 
     <properties>
         <graalvm.version>22.3.0</graalvm.version>
+        <icu.version>72.1</icu.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.wire.script.tools.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
@@ -71,6 +72,16 @@
                                     <artifactId>truffle-api</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
+                                <artifact>
+									<groupId>org.graalvm.regex</groupId>
+									<artifactId>regex</artifactId>
+									<version>${graalvm.version}</version>
+								</artifact>
+								<artifact>
+									<groupId>com.ibm.icu</groupId>
+									<artifactId>icu4j</artifactId>
+									<version>${icu.version}</version>
+								</artifact>
                             </artifactItems>
                         </configuration>
                         <goals>

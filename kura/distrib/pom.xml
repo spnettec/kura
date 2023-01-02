@@ -616,6 +616,11 @@
                                     <artifactId>org.eclipse.kura.event.publisher</artifactId>
                                     <version>${org.eclipse.kura.event.publisher.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.kura</groupId>
+                                    <artifactId>org.eclipse.kura.wire.script.tools</artifactId>
+                                    <version>${org.eclipse.kura.wire.script.tools.version}</version>
+                                </artifactItem>
                             </artifactItems>
                             <stripVersion>true</stripVersion>
                             <outputDirectory>${project.basedir}/target/plugins</outputDirectory>
@@ -765,6 +770,7 @@
                                 <move file="target/plugins/org.eclipse.kura.ai.triton.server.jar" tofile="target/plugins/org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.configuration.change.manager.jar" tofile="target/plugins/org.eclipse.kura.configuration.change.manager_${org.eclipse.kura.configuration.change.manager.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.event.publisher.jar" tofile="target/plugins/org.eclipse.kura.event.publisher_${org.eclipse.kura.event.publisher.version}.jar" />
+                                <move file="target/plugins/org.eclipse.kura.wire.script.tools.jar" tofile="target/plugins/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar" />
                             </target>
                         </configuration>
                     </execution>
@@ -1053,7 +1059,7 @@
         <profile>
             <id>java8</id>
             <activation>
-                <jdk>1.8</jdk>
+                <jdk>[1.8,15)</jdk>
             </activation>
             <properties>
                 <skip.js.nashorn.engine.components>false</skip.js.nashorn.engine.components>
@@ -1062,7 +1068,7 @@
         <profile>
             <id>java17</id>
             <activation>
-                <jdk>17</jdk>
+                <jdk>[17,21]</jdk>
             </activation>
             <properties>
                 <skip.js.nashorn.engine.components>true</skip.js.nashorn.engine.components>
@@ -2168,6 +2174,7 @@
                                         <copy file="${project.build.directory}/plugins/org.eclipse.kura.container.provider_${org.eclipse.kura.container.provider.version}.jar" todir="${project.build.directory}/staging/target-definition/equinox_3.16.0/repository/plugins" />
                                         <copy file="${project.build.directory}/plugins/org.eclipse.kura.configuration.change.manager_${org.eclipse.kura.configuration.change.manager.version}.jar" todir="${project.build.directory}/staging/target-definition/equinox_3.16.0/repository/plugins" />
                                         <copy file="${project.build.directory}/plugins/org.eclipse.kura.event.publisher_${org.eclipse.kura.event.publisher.version}.jar" todir="${project.build.directory}/staging/target-definition/equinox_3.16.0/repository/plugins" />
+                                        <copy file="${project.build.directory}/plugins/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar" todir="${project.build.directory}/staging/target-definition/equinox_3.16.0/repository/plugins" />
                                     </target>
                                 </configuration>
                             </execution>

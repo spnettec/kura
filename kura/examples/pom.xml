@@ -107,11 +107,11 @@
         <profile>
             <id>java8</id>
             <activation>
-                <jdk>1.8</jdk>
+                <jdk>[1.8,15)</jdk>
             </activation>
             <properties>
                 <osgi-dp-plugin-version>0.3.0</osgi-dp-plugin-version>
-                <tycho-version>1.7.0</tycho-version>
+                <tycho-version>2.7.5</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -Dosgi.console=5002
@@ -129,12 +129,12 @@
         <profile>
             <id>java17</id>
             <activation>
-                <jdk>17</jdk>
+                <jdk>[17,21]</jdk>
             </activation>
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>3.0.0</tycho-version>
+                <tycho-version>3.0.1</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -Dosgi.console=5002
