@@ -1661,7 +1661,11 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								
+								<artifact>
+									<id>org.xerial:sqlite-jdbc:jar:${org.xerial.sqlite-jdbc.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
 							</artifacts>
 						</configuration>
 					</execution>
