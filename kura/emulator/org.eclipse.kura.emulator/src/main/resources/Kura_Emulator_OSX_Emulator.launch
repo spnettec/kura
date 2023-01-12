@@ -41,6 +41,7 @@
         <setEntry value="org.eclipse.kura.core.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.core.util.test"/>
+        <setEntry value="org.eclipse.kura.db.sqlite.provider.test"/>
         <setEntry value="org.eclipse.kura.demo.heater"/>
         <setEntry value="org.eclipse.kura.demo.modbus"/>
         <setEntry value="org.eclipse.kura.deployment.agent.test"/>
@@ -426,6 +427,7 @@
         <setEntry value="org.osgi.util.xml@default:default"/>
         <setEntry value="org.pcap4j.core@default:default"/>
         <setEntry value="org.quartz-scheduler.quartz@default:default"/>
+        <setEntry value="org.xerial.sqlite-jdbc@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
         <setEntry value="tel.schich.javacan@default:default"/>
@@ -471,6 +473,7 @@
         <setEntry value="org.eclipse.kura.core.system@default:default"/>
         <setEntry value="org.eclipse.kura.core.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
+        <setEntry value="org.eclipse.kura.db.sqlite.provider@default:default"/>
         <setEntry value="org.eclipse.kura.deployment.agent@default:default"/>
         <setEntry value="org.eclipse.kura.docs@default:default"/>
         <setEntry value="org.eclipse.kura.driver.ble.xdk@default:default"/>
