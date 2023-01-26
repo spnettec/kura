@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    
+    Copyright (c) 2023 Eurotech and/or its affiliates and others
+  
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+ 
+    SPDX-License-Identifier: EPL-2.0
+    
+    Contributors:
+     Eurotech
+     
+-->
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/WireRecordStore">
+    <OCD id="org.eclipse.kura.wire.WireRecordStore"
+         name="%name" 
+         description="%description">
+
+        <AD id="store.name"
+            name="%storeName"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="WR_data"
+            description="%storeNameDesc"/>
+        
+        <AD id="maximum.store.size"
+            name="%storeSize"
+            type="Integer"
+            cardinality="0"
+            required="true"
+            default="10000"
+            description="%storeSizeDesc"
+            min="1">
+        </AD>
+        
+        <AD id="cleanup.records.keep"
+            name="%recordsKeep"
+            type="Integer"
+            cardinality="0"
+            required="true"
+            default="5000"
+            description="%recordsKeepDesc"
+            min="0">
+        </AD>
+        
+        <AD id="WireRecordStoreProvider.target"
+            name="%storeProviderTarget"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="(kura.service.pid=org.eclipse.kura.db.H2DbService)"
+            description="%storeProviderTargetDesc">
+        </AD>
+    </OCD>
+    
+    <Designate pid="org.eclipse.kura.wire.WireRecordStore" factoryPid="org.eclipse.kura.wire.WireRecordStore">
+        <Object ocdref="org.eclipse.kura.wire.WireRecordStore"/>
+    </Designate>
+</MetaData>
