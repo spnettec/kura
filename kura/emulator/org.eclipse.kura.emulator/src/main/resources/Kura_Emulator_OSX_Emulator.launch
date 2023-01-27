@@ -41,7 +41,6 @@
         <setEntry value="org.eclipse.kura.core.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.core.util.test"/>
-        <setEntry value="org.eclipse.kura.db.sqlite.provider.test"/>
         <setEntry value="org.eclipse.kura.demo.heater"/>
         <setEntry value="org.eclipse.kura.demo.modbus"/>
         <setEntry value="org.eclipse.kura.deployment.agent.test"/>
@@ -179,6 +178,7 @@
         <setEntry value="bcpg@default:default"/>
         <setEntry value="bcpkix@default:default"/>
         <setEntry value="bcprov@default:default"/>
+        <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
         <setEntry value="com.alibaba.fastjson2@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
@@ -474,7 +474,6 @@
         <setEntry value="org.eclipse.kura.core.system@default:default"/>
         <setEntry value="org.eclipse.kura.core.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
-        <setEntry value="org.eclipse.kura.db.sqlite.provider@default:default"/>
         <setEntry value="org.eclipse.kura.deployment.agent@default:default"/>
         <setEntry value="org.eclipse.kura.docs@default:default"/>
         <setEntry value="org.eclipse.kura.driver.ble.xdk@default:default"/>

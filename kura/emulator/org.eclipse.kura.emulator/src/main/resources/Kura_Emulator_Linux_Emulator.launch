@@ -105,6 +105,7 @@
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
     <booleanAttribute key="includeOptional" value="true"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
@@ -171,7 +172,6 @@
         <setEntry value="org.apache.geronimo.specs.geronimo-jta_1.1_spec@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
-        <setEntry value="org.apache.log4j2-api-config@default:false"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
         <setEntry value="org.apache.logging.log4j.slf4j-impl@default:default"/>
@@ -208,7 +208,6 @@
         <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.osgi.services@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
@@ -229,7 +228,7 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-modbus@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-apps-serial@default:default"/>
+        <setEntry value="com.yofc.iot.yofc-iot-apps-ot3001@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-visa@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
@@ -248,6 +247,8 @@
         <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.configuration.change.manager.test@default:false"/>
+        <setEntry value="org.eclipse.kura.configuration.change.manager@default:default"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.container.orchestration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.container.provider.test@default:false"/>
@@ -283,9 +284,12 @@
         <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
+        <setEntry value="org.eclipse.kura.event.publisher.test@default:false"/>
+        <setEntry value="org.eclipse.kura.event.publisher@default:default"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus.test@default:false"/>
         <setEntry value="org.eclipse.kura.example.ble.tisensortag.dbus@default:default"/>
         <setEntry value="org.eclipse.kura.example.gpio.led@default:default"/>
+        <setEntry value="org.eclipse.kura.example.rest.authentication.provider@default:default"/>
         <setEntry value="org.eclipse.kura.example.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.example.web.extension@default:default"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test@default:false"/>
@@ -296,6 +300,7 @@
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager.test@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.linux.net@default:default"/>
         <setEntry value="org.eclipse.kura.linux.position@default:default"/>
@@ -332,12 +337,15 @@
         <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.wire.db.component.provider.test@default:false"/>
+        <setEntry value="org.eclipse.kura.wire.db.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.devel.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.script.filter.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.wire.script.tools@default:default"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
