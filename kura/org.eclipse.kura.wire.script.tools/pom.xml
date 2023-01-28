@@ -26,7 +26,7 @@
     <packaging>eclipse-plugin</packaging>
 
     <properties>
-        <graalvm.version>22.3.0</graalvm.version>
+        <graalvm.version>22.3.1</graalvm.version>
         <icu.version>72.1</icu.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.wire.script.tools.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
