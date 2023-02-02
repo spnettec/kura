@@ -66,6 +66,7 @@ import org.eclipse.kura.net.admin.visitor.linux.WpaSupplicantConfigWriterFactory
 import org.eclipse.kura.net.dhcp.DhcpLease;
 import org.eclipse.kura.net.dhcp.DhcpServerConfigIP4;
 import org.eclipse.kura.net.firewall.FirewallAutoNatConfig;
+import org.eclipse.kura.net.firewall.FirewallConfigurationService;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP;

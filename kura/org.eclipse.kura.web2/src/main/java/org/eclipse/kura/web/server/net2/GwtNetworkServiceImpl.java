@@ -18,7 +18,7 @@ import java.util.List;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.net.NetConfig;
-import org.eclipse.kura.net.admin.FirewallConfigurationService;
+import org.eclipse.kura.net.firewall.FirewallConfigurationService;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP4;

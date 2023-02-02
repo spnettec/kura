@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.eclipse.kura.KuraConnectException;
 import org.eclipse.kura.KuraException;
@@ -94,7 +93,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
 
     private static final String DATA_SERVICE_REFERENCE_NAME = "DataService";
 
-    private static final Logger logger = LoggerFactory.getLogger(GwtCertificatesServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(GwtCloudConnectionServiceImpl.class);
 
     @Override
     public List<GwtCloudEntry> findCloudEntries() throws GwtKuraException {
@@ -305,7 +304,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
             properties.put(ConfigurationService.KURA_SERVICE_DESC, description);
             cs.createFactoryConfiguration(factoryPid, pubSubPid, properties, true);
 
-            return (Void) null;
+            return null;
         });
     }
 
@@ -584,7 +583,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         checkXSRFToken(xsrfToken);
 
         final HttpServletRequest request = getThreadLocalRequest();
-        final HttpSession session = request.getSession(false);
+        request.getSession(false);
 
         Collection<ServiceReference<CloudService>> cloudServiceReferences = ServiceLocator.getInstance()
                 .getServiceReferences(CloudService.class, null);
@@ -657,7 +656,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         checkXSRFToken(xsrfToken);
 
         final HttpServletRequest request = getThreadLocalRequest();
-        final HttpSession session = request.getSession(false);
+        request.getSession(false);
 
         Collection<ServiceReference<CloudService>> cloudServiceReferences = ServiceLocator.getInstance()
                 .getServiceReferences(CloudService.class, null);

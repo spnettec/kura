@@ -10,7 +10,7 @@
  * Contributors:
  *  Eurotech
  ******************************************************************************/
-package org.eclipse.kura.core.net;
+package org.eclipse.kura.net.firewall;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -24,13 +24,6 @@ import org.eclipse.kura.net.IPAddress;
 import org.eclipse.kura.net.NetConfig;
 import org.eclipse.kura.net.NetProtocol;
 import org.eclipse.kura.net.NetworkPair;
-import org.eclipse.kura.net.firewall.FirewallAutoNatConfig;
-import org.eclipse.kura.net.firewall.FirewallNatConfig;
-import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP;
-import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4;
-import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP;
-import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP4;
-import org.eclipse.kura.net.firewall.RuleType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,10 +19,10 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.SelfConfiguringComponent;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
+import org.eclipse.kura.net.firewall.FirewallConfigurationService;
 import org.eclipse.kura.security.FloodingProtectionConfigurationService;
 import org.eclipse.kura.security.ThreatManagerService;
 import org.osgi.service.component.ComponentContext;
-import org.eclipse.kura.net.admin.FirewallConfigurationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

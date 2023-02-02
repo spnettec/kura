@@ -28,7 +28,7 @@ import java.util.Map;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.internal.floodingprotection.FloodingProtectionConfigurator;
-import org.eclipse.kura.net.admin.FirewallConfigurationService;
+import org.eclipse.kura.net.firewall.FirewallConfigurationService;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.component.ComponentContext;

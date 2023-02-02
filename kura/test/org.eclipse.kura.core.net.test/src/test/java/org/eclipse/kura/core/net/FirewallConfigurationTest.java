@@ -28,6 +28,7 @@ import org.eclipse.kura.net.NetConfig;
 import org.eclipse.kura.net.NetProtocol;
 import org.eclipse.kura.net.NetworkPair;
 import org.eclipse.kura.net.firewall.FirewallAutoNatConfig;
+import org.eclipse.kura.net.firewall.FirewallConfiguration;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP4;
