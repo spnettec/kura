@@ -317,22 +317,21 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
         ServiceLocator.applyToServiceOptionally(ConfigurationService.class, cs -> {
             cs.deleteFactoryConfiguration(pid, true);
 
-            return (Void) null;
+            return null;
         });
     }
 
     private static void requireIsPubSubFactory(final String factoryPid) throws GwtKuraException {
-        final boolean isPubSub = ServiceLocator.applyToServiceOptionally(ServiceComponentRuntime.class, scr -> {
-            return scr.getComponentDescriptionDTOs().stream().anyMatch(c -> {
-                final Map<String, Object> properties = c.properties;
+        final boolean isPubSub = ServiceLocator.applyToServiceOptionally(ServiceComponentRuntime.class,
+                scr -> scr.getComponentDescriptionDTOs().stream().anyMatch(c -> {
+                    final Map<String, Object> properties = c.properties;
 
-                if (properties == null) {
-                    return false;
-                }
+                    if (properties == null) {
+                        return false;
+                    }
 
-                return Objects.equals(factoryPid, properties.get("service.pid")) && pubSubToGwt(c) != null;
-            });
-        });
+                    return Objects.equals(factoryPid, properties.get("service.pid")) && pubSubToGwt(c) != null;
+                }));
 
         if (!isPubSub) {
             throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
@@ -433,7 +432,7 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     private static GwtCloudPubSubEntry pubSubRefToGwt(final ServiceReference<?> ref,
             final GwtCloudPubSubEntry.Type type) {
         final Object ccsPid = ref.getProperty(CloudConnectionConstants.CLOUD_ENDPOINT_SERVICE_PID_PROP_NAME.value());
-        Object factoryPid = ref.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID);
+        final Object factoryPid = ref.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID);
 
         if (!(ccsPid instanceof String && factoryPid instanceof String)) {
             return null;
@@ -654,9 +653,6 @@ public class GwtCloudConnectionServiceImpl extends OsgiRemoteServiceServlet impl
     @Override
     public void disconnectDataService(GwtXSRFToken xsrfToken, String connectionId) throws GwtKuraException {
         checkXSRFToken(xsrfToken);
-
-        final HttpServletRequest request = getThreadLocalRequest();
-        request.getSession(false);
 
         Collection<ServiceReference<CloudService>> cloudServiceReferences = ServiceLocator.getInstance()
                 .getServiceReferences(CloudService.class, null);
