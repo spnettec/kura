@@ -301,13 +301,13 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
         if (!additionalConfigs.isEmpty()) {
             ServiceLocator.applyToServiceOptionally(ConfigurationService.class, configurationService -> {
                 configurationService.updateConfigurations(additionalConfigs);
-                return (Void) null;
+                return null;
             });
         }
 
         ServiceLocator.applyToServiceOptionally(WireGraphService.class, wireGraphService -> {
             wireGraphService.update(new WireGraphConfiguration(wireComponentConfigurations, wireConfigurations));
-            return (Void) null;
+            return null;
         });
     }
 
@@ -356,7 +356,7 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                         resultDescriptors.add(result);
                     }
                     resultDefinitions.add(getWireAssetDefinition());
-                    return (Void) null;
+                    return null;
                 });
     }
 
@@ -403,7 +403,7 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                     resultDefinitions.add(descriptor);
                 }
             }
-            return (Void) null;
+            return null;
         });
     }
 
@@ -415,7 +415,7 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                     .map(descriptor -> GwtServerUtil.toGwtConfigComponent(descriptor,
                             LocaleContextHolder.getLocale().getLanguage()))
                     .filter(Objects::nonNull).forEach(resultDescriptors::add);
-            return (Void) null;
+            return null;
         });
     }
 
