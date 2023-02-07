@@ -351,6 +351,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         ${OPEN_MODULE_OPTIONS} \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+    	--add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
@@ -410,6 +411,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         ${OPEN_MODULE_OPTIONS} \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        --add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
@@ -469,6 +471,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         ${OPEN_MODULE_OPTIONS} \
         --add-modules=ALL-SYSTEM \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        --add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
