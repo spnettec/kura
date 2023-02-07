@@ -37,3 +37,5 @@ bin/
 *.iml
 maven.deps
 DEPENDENCIES
+.java-version
+.tycho-consumer-pom.xml

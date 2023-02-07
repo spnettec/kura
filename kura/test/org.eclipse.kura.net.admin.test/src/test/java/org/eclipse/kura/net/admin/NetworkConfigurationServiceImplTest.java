@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -86,6 +86,9 @@ public class NetworkConfigurationServiceImplTest {
         ComponentContext componentContextMock = mock(ComponentContext.class);
         BundleContext bundleCtxMock = mock(BundleContext.class);
         when(componentContextMock.getBundleContext()).thenReturn(bundleCtxMock);
+        UsbService usbService = mock(UsbService.class);
+        when(usbService.getUsbNetDevices()).thenReturn(new ArrayList<UsbNetDevice>());
+        svc.setUsbService(usbService);
 
         when(bundleCtxMock.registerService(eq(EventHandler.class.getName()), eq(svc), any())).thenAnswer(invocation -> {
             Dictionary<String, String[]> dict = invocation.getArgument(2, Dictionary.class);
@@ -130,6 +133,9 @@ public class NetworkConfigurationServiceImplTest {
         ComponentContext componentContextMock = mock(ComponentContext.class);
         BundleContext bundleCtxMock = mock(BundleContext.class);
         when(componentContextMock.getBundleContext()).thenReturn(bundleCtxMock);
+        UsbService usbService = mock(UsbService.class);
+        when(usbService.getUsbNetDevices()).thenReturn(new ArrayList<UsbNetDevice>());
+        svc.setUsbService(usbService);
 
         EventAdmin eventAdminMock = mock(EventAdmin.class);
         svc.setEventAdmin(eventAdminMock);
@@ -178,6 +184,10 @@ public class NetworkConfigurationServiceImplTest {
         EventAdmin eventAdminMock = mock(EventAdmin.class);
         svc.setEventAdmin(eventAdminMock);
 
+        UsbService usbService = mock(UsbService.class);
+        when(usbService.getUsbNetDevices()).thenReturn(new ArrayList<UsbNetDevice>());
+        svc.setUsbService(usbService);
+
         Map<String, Object> properties = new HashMap<>();
         properties.put("modified.interface.names", "testIntf");
         properties.put("net.interfaces", "eth1,ppp0");
@@ -204,6 +214,10 @@ public class NetworkConfigurationServiceImplTest {
                 return NetInterfaceType.UNKNOWN;
             }
         };
+
+        UsbService usbService = mock(UsbService.class);
+        when(usbService.getUsbNetDevices()).thenReturn(new ArrayList<UsbNetDevice>());
+        svc.setUsbService(usbService);
 
         EventAdmin eventAdminMock = mock(EventAdmin.class);
         svc.setEventAdmin(eventAdminMock);
@@ -282,6 +296,9 @@ public class NetworkConfigurationServiceImplTest {
 
         NetworkService networkServiceMock = mock(NetworkService.class);
         svc.setNetworkService(networkServiceMock);
+        UsbService usbService = mock(UsbService.class);
+        when(usbService.getUsbNetDevices()).thenReturn(new ArrayList<UsbNetDevice>());
+        svc.setUsbService(usbService);
 
         List<NetInterface<? extends NetInterfaceAddress>> interfaces = new ArrayList<>();
         NetInterface<? extends NetInterfaceAddress> netInterface = new WifiInterfaceImpl("wlan1");
