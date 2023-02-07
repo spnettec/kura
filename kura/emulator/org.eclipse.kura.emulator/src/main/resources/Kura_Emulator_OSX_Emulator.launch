@@ -119,12 +119,16 @@
         <setEntry value="org.eclipse.kura.linux.watchdog"/>
         <setEntry value="org.eclipse.kura.linux.watchdog.test"/>
         <setEntry value="org.eclipse.kura.log.filesystem.provider.test"/>
+        <setEntry value="org.eclipse.kura.message.store.provider.test"/>
         <setEntry value="org.eclipse.kura.net.admin"/>
         <setEntry value="org.eclipse.kura.net.admin.firewall"/>
         <setEntry value="org.eclipse.kura.net.admin.firewall.test"/>
         <setEntry value="org.eclipse.kura.net.admin.test"/>
+        <setEntry value="org.eclipse.kura.net.configuration.test"/>
         <setEntry value="org.eclipse.kura.network.threat.manager"/>
         <setEntry value="org.eclipse.kura.network.threat.manager.test"/>
+        <setEntry value="org.eclipse.kura.nm"/>
+        <setEntry value="org.eclipse.kura.nm.test"/>
         <setEntry value="org.eclipse.kura.protocol.can"/>
         <setEntry value="org.eclipse.kura.protocol.modbus.test"/>
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat"/>
@@ -500,6 +504,7 @@
         <setEntry value="org.eclipse.kura.localization@default:default"/>
         <setEntry value="org.eclipse.kura.log.filesystem.provider@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
+        <setEntry value="org.eclipse.kura.net.configuration@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.request.handler.jaxrs@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>

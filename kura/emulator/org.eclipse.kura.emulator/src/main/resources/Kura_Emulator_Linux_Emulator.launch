@@ -313,11 +313,16 @@
         <setEntry value="org.eclipse.kura.localization@default:default"/>
         <setEntry value="org.eclipse.kura.log.filesystem.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.log.filesystem.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.message.store.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.misc.cloudcat@default:default"/>
         <setEntry value="org.eclipse.kura.net.admin.firewall.test@default:false"/>
         <setEntry value="org.eclipse.kura.net.admin.firewall@default:default"/>
+        <setEntry value="org.eclipse.kura.net.configuration.test@default:false"/>
+        <setEntry value="org.eclipse.kura.net.configuration@default:default"/>
         <setEntry value="org.eclipse.kura.network.threat.manager.test@default:false"/>
         <setEntry value="org.eclipse.kura.network.threat.manager@default:default"/>
+        <setEntry value="org.eclipse.kura.nm.test@default:false"/>
+        <setEntry value="org.eclipse.kura.nm@default:default"/>
         <setEntry value="org.eclipse.kura.protocol.modbus@default:default"/>
         <setEntry value="org.eclipse.kura.request.handler.jaxrs@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
