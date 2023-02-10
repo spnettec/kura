@@ -1945,7 +1945,9 @@
 		<profile>
             <id>rk3399-ubuntu-20</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>buildAll</name>
+                </property>
             </activation>
             <build>
                 <resources>
