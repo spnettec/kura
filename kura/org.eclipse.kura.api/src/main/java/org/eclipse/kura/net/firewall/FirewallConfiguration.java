@@ -19,17 +19,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IPAddress;
 import org.eclipse.kura.net.NetConfig;
 import org.eclipse.kura.net.NetProtocol;
 import org.eclipse.kura.net.NetworkPair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FirewallConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(FirewallConfiguration.class);
+    private static final Logger logger = LogManager.getLogger(FirewallConfiguration.class);
 
     public static final String OPEN_PORTS_PROP_NAME = "firewall.open.ports";
     public static final String PORT_FORWARDING_PROP_NAME = "firewall.port.forwarding";
