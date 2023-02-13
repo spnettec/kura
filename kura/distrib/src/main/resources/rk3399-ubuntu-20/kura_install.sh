@@ -21,6 +21,7 @@ ln -sf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
 systemctl daemon-reload
 systemctl enable kura
+chmod +x ${INSTALL_DIR}/kura/bin/*.sh
 
 # setup snapshot_0 recovery folder
 if [ ! -d ${INSTALL_DIR}/kura/.data ]; then
@@ -52,10 +53,6 @@ cp ${INSTALL_DIR}/kura/install/ifdown-local /etc/network/if-down.d/ifdown-local
 chmod +x /etc/network/if-up.d/ifup-local
 chmod +x /etc/network/if-down.d/ifdown-local
 
-#set up recover default configuration script
-cp ${INSTALL_DIR}/kura/install/recover_default_config.init ${INSTALL_DIR}/kura/bin/.recoverDefaultConfig.sh
-chmod +x ${INSTALL_DIR}/kura/bin/.recoverDefaultConfig.sh
-
 #set up default firewall configuration
 cp ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/.data/iptables
 chmod 644 ${INSTALL_DIR}/kura/.data/iptables
@@ -78,7 +75,7 @@ if command -v timedatectl > /dev/null ;
 fi
 
 #disable asking NTP servers to the DHCP server
-sed -i "s/, ntp-servers//g" /etc/dhcp/dhclient.conf
+sed -i "s/\(, \?ntp-servers\)/; #\1/g" /etc/dhcp/dhclient.conf
 
 # Prevent time sync services from starting
 systemctl stop systemd-timesyncd
@@ -131,6 +128,10 @@ systemctl disable dhcpcd
 # disable isc-dhcp-server service - kura is the network manager
 systemctl stop isc-dhcp-server
 systemctl disable isc-dhcp-server
+
+#disable isc-dhcp-server6.service
+systemctl stop isc-dhcp-server6.service
+systemctl disable isc-dhcp-server6.service
 
 # disable NetworkManager.service - kura is the network manager
 systemctl stop NetworkManager.service
