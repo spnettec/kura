@@ -65,8 +65,7 @@ public interface CloudEndpoint {
      * @param subscriptionProperties
      *            a map representing the subscription context
      * @param cloudSubscriberListener
-     *            a {@link CloudSubscriberListener} object that will be notified when a message
-     *            is received in a context
+     *            a {@link CloudSubscriberListener} object that will be notified when a message is received in a context
      *            that matches the one identified by the subscription properties.
      */
     public void registerSubscriber(Map<String, Object> subscriptionProperties,

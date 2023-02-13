@@ -18,7 +18,6 @@ package org.eclipse.kura.cloud;
  * @since 1.2
  */
 public enum CloudPayloadEncoding {
-
     KURA_PROTOBUF("kura-protobuf"),
     SIMPLE_JSON("simple-json");
 
@@ -35,8 +34,7 @@ public enum CloudPayloadEncoding {
      *            the String that has to be mapped to the corresponding {@link CloudPayloadEncoding}
      * @return {@link CloudPayloadEncoding} if the matching between passed string and enum values succeeds
      * @throws IllegalArgumentException
-     *             if the argument cannot be matched to a corresponding
-     *             {@link CloudPayloadEncoding} object.
+     *             if the argument cannot be matched to a corresponding {@link CloudPayloadEncoding} object.
      */
     public static CloudPayloadEncoding getEncoding(String proposedEncoding) {
         for (CloudPayloadEncoding encoding : CloudPayloadEncoding.values()) {

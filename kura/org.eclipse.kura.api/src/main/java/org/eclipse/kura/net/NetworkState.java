@@ -16,7 +16,6 @@ package org.eclipse.kura.net;
  * The overall state of the networking subsystem.
  */
 public enum NetworkState {
-
     /** Networking state is unknown. */
     UNKNOWN(0),
     /** Networking is inactive and all devices are disabled. */

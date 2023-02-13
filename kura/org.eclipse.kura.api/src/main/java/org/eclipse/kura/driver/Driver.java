@@ -45,7 +45,7 @@ public interface Driver {
     /**
      * Each driver is identified by the value of this property in the Component Configuration
      */
-    public static final String DRIVER_PID_PROPERTY_NAME = "kura.service.pid";
+    public static final String DRIVER_PID_PROPERTY_NAME = "driver.pid";
 
     /**
      * The Class ConnectionException is a driver specific exception which is

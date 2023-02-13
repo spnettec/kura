@@ -191,8 +191,7 @@ public interface NetworkAdminService {
      * Sets the 'port forwarding' portion of the firewall configuration
      *
      * @param firewallConfiguration
-     *            A list of FirewallPortForwardConfigIP Objects representing the configuration to
-     *            set
+     *            A list of FirewallPortForwardConfigIP Objects representing the configuration to set
      * @throws KuraException
      * 
      * @deprecated Since 2.4

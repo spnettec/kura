@@ -16,7 +16,6 @@ package org.eclipse.kura.net.wifi;
  * Modes of operation for wifi interfaces
  */
 public enum WifiMode {
-
     /** Mode is unknown. */
     UNKNOWN(0x00),
     /** Uncoordinated network without central infrastructure. */

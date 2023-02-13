@@ -166,9 +166,9 @@ public class CommURI {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("comm:").append(this.port).append(";baudrate=").append(this.baudRate).append(";databits=")
-                .append(this.dataBits).append(";stopbits=").append(this.stopBits).append(";parity=").append(this.parity)
-                .append(";flowcontrol=").append(this.flowControl).append(";timeout=").append(this.openTimeout)
-                .append(";receivetimeout=").append(this.receiveTimeout);
+                .append(this.dataBits).append(";stopbits=").append(this.stopBits).append(";parity=")
+                .append(this.parity).append(";flowcontrol=").append(this.flowControl).append(";timeout=")
+                .append(this.openTimeout).append(";receivetimeout=").append(this.receiveTimeout);
         return sb.toString();
     }
 

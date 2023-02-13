@@ -96,8 +96,7 @@ public interface WireHelperService {
      * @param wireComponent
      *            the wire component
      * @param wireComponentRef
-     *            the {@link ServiceReference} that contains the metadata/configuration related to the
-     *            wireComponent
+     *            the {@link ServiceReference} that contains the metadata/configuration related to the wireComponent
      * @return the wire support instance
      * @throws NullPointerException
      *             if the argument is null
