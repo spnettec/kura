@@ -207,7 +207,7 @@
 										 g.apache.qpid.jms.message.facade;version="[1.7,3)",org.apache.qpid.jms.
 										 provider.amqp.message;version="[1.7,3)",org.slf4j;version="[1.7,3)"
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.component.amqp;version="3.20.0";uses:="
+										<Export-Package>org.apache.camel.component.amqp;version="3.20.2";uses:="
 										 javax.jms,org.apache.camel,org.apache.camel.component.jms,org.apache.ca
 										 mel.spi,org.apache.camel.spi.annotations,org.apache.camel.support.compo
 										 nent"
@@ -375,7 +375,7 @@
 													 n="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;version="[1.7,2)
 													 "
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.http.common;version="3.20.0";uses:="jav
+										<Export-Package>org.apache.camel.http.common;version="3.20.2";uses:="jav
 													 ax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.cloud,o
 													 rg.apache.camel.http.base,org.apache.camel.http.base.cookie,org.apache.
 													 camel.spi,org.apache.camel.support,org.slf4j"
@@ -414,11 +414,11 @@
 									<transitive>false</transitive>
 									<instructions>
 										<Import-Package>*;resolution:=optional</Import-Package>
-										<Export-Package>org.apache.camel.builder.endpoint;version="3.20.0";uses:
+										<Export-Package>org.apache.camel.builder.endpoint;version="3.20.2";uses:
 													 ="org.apache.camel,org.apache.camel.builder,org.apache.camel.builder.en
 													 dpoint.dsl,org.apache.camel.model,org.apache.camel.spi,org.apache.camel
 													 .support,org.apache.camel.util.function",org.apache.camel.builder.endpo
-													 int.dsl;version="3.20.0";uses:="ca.uhn.fhir.context,ca.uhn.fhir.rest.cl
+													 int.dsl;version="3.20.2";uses:="ca.uhn.fhir.context,ca.uhn.fhir.rest.cl
 													 ient.api,com.azure.core.amqp,com.azure.core.credential,com.azure.core.u
 													 til,com.azure.cosmos,com.azure.cosmos.models,com.azure.identity,com.azu
 													 re.messaging.eventhubs,com.azure.messaging.eventhubs.models,com.azure.m
@@ -611,7 +611,7 @@
 													 "[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3,5)
 													 ",org.slf4j;version="[1.7,2)"
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.component.servlet;version="3.20.0";uses
+										<Export-Package>org.apache.camel.component.servlet;version="3.20.2";uses
 													 :="javax.activation,javax.servlet,javax.servlet.http,org.apache.camel,o
 													 rg.apache.camel.http.common,org.apache.camel.spi,org.apache.camel.spi.a
 													 nnotations,org.apache.camel.support.component"
@@ -969,7 +969,7 @@
 										</Import-Package>
 										<Export-Package>io.netty.resolver.dns;uses:="io.netty.channel,io.netty
 														 .channel.socket,io.netty.handler.codec.dns,io.netty.handler.logging,i
-														 o.netty.resolver,io.netty.util.concurrent";version="4.1.87"
+														 o.netty.resolver,io.netty.util.concurrent";version="4.1.88"
 										</Export-Package>
 									</instructions>
 								</artifact>
