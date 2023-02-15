@@ -969,7 +969,7 @@
 										</Import-Package>
 										<Export-Package>io.netty.resolver.dns;uses:="io.netty.channel,io.netty
 														 .channel.socket,io.netty.handler.codec.dns,io.netty.handler.logging,i
-														 o.netty.resolver,io.netty.util.concurrent";version="4.1.88"
+														 o.netty.resolver,io.netty.util.concurrent";version="4.1.89"
 										</Export-Package>
 									</instructions>
 								</artifact>

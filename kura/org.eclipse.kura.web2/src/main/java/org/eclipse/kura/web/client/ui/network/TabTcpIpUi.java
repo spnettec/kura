@@ -40,6 +40,7 @@ import org.gwtbootstrap3.client.ui.FormControlStatic;
 import org.gwtbootstrap3.client.ui.FormGroup;
 import org.gwtbootstrap3.client.ui.FormLabel;
 import org.gwtbootstrap3.client.ui.HelpBlock;
+import org.gwtbootstrap3.client.ui.IntegerBox;
 import org.gwtbootstrap3.client.ui.ListBox;
 import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.PanelHeader;
@@ -93,6 +94,7 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
     boolean dirty;
     private GwtNetInterfaceConfig selectedNetIfConfig;
     private final NetworkTabsUi tabs;
+    private boolean isNet2;
 
     @UiField
     FormGroup groupIp;
@@ -105,6 +107,8 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
     @UiField
     FormLabel labelStatus;
+    @UiField
+    FormLabel labelPriority;
     @UiField
     FormLabel labelConfigure;
     @UiField
@@ -135,6 +139,8 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
     @UiField
     ListBox status;
     @UiField
+    IntegerBox priority;
+    @UiField
     ListBox configure;
 
     @UiField
@@ -164,6 +170,8 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
     @UiField
     HelpButton statusHelp;
     @UiField
+    HelpButton priorityHelp;
+    @UiField
     HelpButton configureHelp;
     @UiField
     HelpButton ipHelp;
@@ -178,6 +186,7 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
         initWidget(uiBinder.createAndBindUi(this));
         this.tabs = netTabs;
         this.helpTitle.setText(MSGS.netHelpTitle());
+        detectIfNet2();
         initForm();
         this.dnsRead.setVisible(false);
 
@@ -244,6 +253,10 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
                 updatedNetIf.setStatus(IPV4_STATUS_WAN);
             } else {
                 updatedNetIf.setStatus(IPV4_STATUS_DISABLED);
+            }
+
+            if (this.priority.isEnabled() && this.isNet2) {
+                updatedNetIf.setWanPriority(this.priority.getValue());
             }
 
             if (IPV4_MODE_DHCP_MESSAGE.equals(this.configure.getSelectedItemText())) {
@@ -348,8 +361,28 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
     // ---------------Private Methods------------
 
+    private void detectIfNet2() {
+        this.gwtNetworkService.isNet2(new AsyncCallback<Boolean>() {
+
+            @Override
+            public void onFailure(Throwable caught) {
+                TabTcpIpUi.this.isNet2 = false;
+                FailureHandler.handle(caught);
+            }
+
+            @Override
+            public void onSuccess(Boolean result) {
+                TabTcpIpUi.this.isNet2 = result;
+                TabTcpIpUi.this.labelPriority.setVisible(result);
+                TabTcpIpUi.this.priority.setVisible(result);
+                TabTcpIpUi.this.priorityHelp.setVisible(result);
+            }
+        });
+    }
+
     private void initHelpButtons() {
         this.statusHelp.setHelpText(MSGS.netIPv4ToolTipStatus());
+        this.priorityHelp.setHelpText(MSGS.netIPv4ToolTipPriority());
         this.configureHelp.setHelpText(MSGS.netIPv4ToolTipConfigure());
         this.ipHelp.setHelpText(MSGS.netIPv4ToolTipAddress());
         this.subnetHelp.setHelpText(MSGS.netIPv4ToolTipSubnetMask());
@@ -361,6 +394,7 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
         // Labels
         this.labelStatus.setText(MSGS.netIPv4Status());
+        this.labelPriority.setText(MSGS.netIPv4Priority());
         this.labelConfigure.setText(MSGS.netIPv4Configure());
         this.labelIp.setText(MSGS.netIPv4Address());
         this.labelSubnet.setText(MSGS.netIPv4SubnetMask());
@@ -373,6 +407,8 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
         initStatusField();
 
+        initPriorityField();
+
         initConfigureField();
 
         initIpAddressField();
@@ -384,6 +420,19 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
         initDnsServersField();
 
         initDHCPLeaseField();
+    }
+
+    private void initPriorityField() {
+        this.priority.setValue(0);
+
+        this.priority.addMouseOverHandler(event -> {
+            if (TabTcpIpUi.this.isNet2 && TabTcpIpUi.this.priority.isEnabled()) {
+                TabTcpIpUi.this.helpText.clear();
+                TabTcpIpUi.this.helpText.add(new Span(MSGS.netIPv4ToolTipPriority()));
+            }
+        });
+        this.priority.addMouseOutHandler(event -> resetHelp());
+        this.priority.addValueChangeHandler(valChangeEvent -> setDirty(true));
     }
 
     private void initDHCPLeaseField() {
@@ -605,19 +654,25 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
                             @Override
                             public void onSuccess(List<GwtNetInterfaceConfig> result) {
                                 EntryClassUi.hideWaitModal();
-                                for (GwtNetInterfaceConfig config : result) {
-                                    if (config.getStatusEnum().equals(GwtNetIfStatus.netIPv4StatusEnabledWAN) && !config
-                                            .getName().equals(TabTcpIpUi.this.selectedNetIfConfig.getName())) {
-                                        logger.log(Level.SEVERE, "Error: Status Invalid");
-                                        TabTcpIpUi.this.wanModal.show();
-                                        break;
-                                    }
+                                if (!TabTcpIpUi.this.isNet2) {
+                                    showMultipleWanModal(result);
                                 }
                             }
 
                         });
             }
         });
+    }
+
+    private void showMultipleWanModal(List<GwtNetInterfaceConfig> configs) {
+        for (GwtNetInterfaceConfig config : configs) {
+            if (config.getStatusEnum().equals(GwtNetIfStatus.netIPv4StatusEnabledWAN) && !config
+                    .getName().equals(TabTcpIpUi.this.selectedNetIfConfig.getName())) {
+                logger.log(Level.SEVERE, "Error: Status Invalid");
+                TabTcpIpUi.this.wanModal.show();
+                break;
+            }
+        }
     }
 
     private void resetHelp() {
@@ -641,6 +696,11 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
                     break;
                 }
             }
+
+            if (this.isNet2) {
+                this.priority.setValue(this.selectedNetIfConfig.getWanPriority());
+            }
+
             this.tabs.adjustInterfaceTabs();
             this.ip.setText(this.selectedNetIfConfig.getIpAddress());
             this.subnet.setText(this.selectedNetIfConfig.getSubnetMask());
@@ -666,6 +726,7 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
 
     private void refreshForm() {
         this.status.setEnabled(true);
+        this.priority.setEnabled(false);
         this.configure.setEnabled(true);
         this.ip.setEnabled(true);
         this.subnet.setEnabled(true);
@@ -727,6 +788,10 @@ public class TabTcpIpUi extends Composite implements NetworkTab {
                     this.renew.setEnabled(false);
                 }
             }
+        }
+
+        if (this.status.getSelectedValue().equals(VMSGS.netIPv4StatusEnabledWAN())) {
+            this.priority.setEnabled(true);
         }
 
         // Show read-only dns field when DHCP is selected and there are no
