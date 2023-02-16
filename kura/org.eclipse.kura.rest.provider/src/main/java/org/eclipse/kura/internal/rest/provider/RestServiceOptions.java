@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -38,15 +38,15 @@ public class RestServiceOptions {
     }
 
     public Set<Integer> getAllowedPorts() {
-        return allowedPorts;
+        return this.allowedPorts;
     }
 
     public boolean isPasswordAuthEnabled() {
-        return passwordAuthEnabled;
+        return this.passwordAuthEnabled;
     }
 
     public boolean isCertificateAuthEnabled() {
-        return certificateAuthEnabled;
+        return this.certificateAuthEnabled;
     }
 
     private static Set<Integer> loadIntArrayProperty(final Integer[] list) {
@@ -56,9 +56,7 @@ public class RestServiceOptions {
 
         final Set<Integer> result = new HashSet<>();
 
-        for (int i = 0; i < list.length; i++) {
-            final Integer value = list[i];
-
+        for (final Integer value : list) {
             if (value != null) {
                 result.add(value);
             }
@@ -69,7 +67,7 @@ public class RestServiceOptions {
 
     @Override
     public int hashCode() {
-        return Objects.hash(allowedPorts, certificateAuthEnabled, passwordAuthEnabled);
+        return Objects.hash(this.allowedPorts, this.certificateAuthEnabled, this.passwordAuthEnabled);
     }
 
     @Override
@@ -81,9 +79,9 @@ public class RestServiceOptions {
             return false;
         }
         RestServiceOptions other = (RestServiceOptions) obj;
-        return Objects.equals(allowedPorts, other.allowedPorts)
-                && certificateAuthEnabled == other.certificateAuthEnabled
-                && passwordAuthEnabled == other.passwordAuthEnabled;
+        return Objects.equals(this.allowedPorts, other.allowedPorts)
+                && this.certificateAuthEnabled == other.certificateAuthEnabled
+                && this.passwordAuthEnabled == other.passwordAuthEnabled;
     }
 
 }

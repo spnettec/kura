@@ -17,7 +17,7 @@ public class Configuration {
     static final String PROPERTY_ROOT = "root";
     static final String PROPERTY_PUBLISH_DELAY = "publishDelay";
     static final long DEFAULT_PUBLISH_DELAY = 150;
-    private long publishDelay;
+    private final long publishDelay;
     private String rootPath;
 
     public Configuration() {

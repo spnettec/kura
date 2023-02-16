@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -24,12 +24,12 @@ import org.osgi.annotation.versioning.ProviderType;
  * A service interface that allows to register custom authentication providers for the {@code RestService}.
  * Registered {@link AuthenticationProvider} instances will be considered along with the currently enabled
  * built in authentication methods (e.g password and certificate authentication).<br>
- * 
+ *
  * The registered authentication providers will be called in order, the first provider whose
  * {@link AuthenticationProvider#authenticate(HttpServletRequest, ContainerRequestContext)} returns a non-empty optional
  * will determine a successful authentication.
  * If all providers return an empty optional the call failing with 401 status.<br>
- * 
+ *
  * The order in which the providers are called can be configured with the {@link javax.annotation.Priority} annotation.
  * Lower {@link javax.annotation.Priority#value()} values mean higher priority.
  * The priorities of the built-in authentication providers is the following:
@@ -56,7 +56,7 @@ public interface AuthenticationProvider {
      * This method should attempt to associate the request with a {@link Principal}, the {@link Principal#getName()}
      * method must
      * return a Kura identity name.
-     * 
+     *
      * @param request
      *            The received {@link HttpServletRequest}
      * @param requestContext

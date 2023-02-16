@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -97,7 +97,7 @@ public class PasswordAuthenticationProvider implements AuthenticationProvider {
 
         auditContext.getProperties().put(AuditConstants.KEY_IDENTITY.getValue(), credentials.username);
 
-        final Role userRole = userAdmin.getRole(KURA_USER_PREFIX + credentials.username);
+        final Role userRole = this.userAdmin.getRole(KURA_USER_PREFIX + credentials.username);
 
         if (!(userRole instanceof User)) {
             auditLogger.warn(PASSWORD_AUTH_FAILED_MSG, auditContext);
@@ -118,7 +118,7 @@ public class PasswordAuthenticationProvider implements AuthenticationProvider {
         }
 
         try {
-            if (cryptoService.sha256Hash(credentials.password).equals(storedPasswordHash)) {
+            if (this.cryptoService.sha256Hash(credentials.password).equals(storedPasswordHash)) {
                 auditLogger.info("{} Rest - Success - Authentication succeeded via password provider", auditContext);
                 return Optional.of(() -> credentials.username);
             } else {
@@ -138,14 +138,14 @@ public class PasswordAuthenticationProvider implements AuthenticationProvider {
             return;
         }
 
-        this.registration = Optional.of(
-                bundleContext.registerService(ContainerResponseFilter.class, new AuthenticateResponseFilter(), null));
+        this.registration = Optional.of(this.bundleContext.registerService(ContainerResponseFilter.class,
+                new AuthenticateResponseFilter(), null));
     }
 
     @Override
     public void onDisabled() {
-        registration.ifPresent(ServiceRegistration::unregister);
-        registration = Optional.empty();
+        this.registration.ifPresent(ServiceRegistration::unregister);
+        this.registration = Optional.empty();
     }
 
     @Provider

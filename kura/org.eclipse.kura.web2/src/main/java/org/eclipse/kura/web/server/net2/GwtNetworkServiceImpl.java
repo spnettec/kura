@@ -67,6 +67,9 @@ public class GwtNetworkServiceImpl {
     public static void updateNetInterfaceConfigurations(GwtNetInterfaceConfig config) throws GwtKuraException {
         try {
             NetworkConfigurationServiceAdapter adapter = new NetworkConfigurationServiceAdapter();
+
+            logger.debug("Updating Network Configuration Service with properties:\n{}\n", config.getProperties());
+
             adapter.updateConfiguration(config);
         } catch (GwtKuraException | KuraException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);

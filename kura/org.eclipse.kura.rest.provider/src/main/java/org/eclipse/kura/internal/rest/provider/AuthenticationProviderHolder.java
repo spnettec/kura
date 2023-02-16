@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -54,7 +54,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
     public Optional<Principal> authenticate(final HttpServletRequest request,
             final ContainerRequestContext requestContext) {
         try {
-            return wrapped.authenticate(request, requestContext);
+            return this.wrapped.authenticate(request, requestContext);
         } catch (final Exception e) {
             logger.warn("Unexpected exception calling authentication provider", e);
             return Optional.empty();
@@ -86,7 +86,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
 
     @Override
     public int hashCode() {
-        return Objects.hash(priority, wrapped);
+        return Objects.hash(this.priority, this.wrapped);
     }
 
     @Override
@@ -98,7 +98,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
             return false;
         }
         AuthenticationProviderHolder other = (AuthenticationProviderHolder) obj;
-        return priority == other.priority && Objects.equals(wrapped, other.wrapped);
+        return this.priority == other.priority && Objects.equals(this.wrapped, other.wrapped);
     }
 
 }

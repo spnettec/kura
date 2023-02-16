@@ -183,7 +183,7 @@ public class JerseyContext {
         // processed by a service that is in the process of deactivating (for example some unset methods
         // were called). This way we'll send out a nice 503 until Jersey reloads which is much cleaner.
         if (isDirty) {
-            servletContainerBridge.setJerseyReady(false);
+            this.servletContainerBridge.setJerseyReady(false);
         }
         unregisterServletWhenNoResourcePresents();
         this.resourcePublisher.schedulePublishing();
@@ -226,6 +226,6 @@ public class JerseyContext {
     }
 
     ServletContainerBridge getServletContainerBridge() {
-        return servletContainerBridge;
+        return this.servletContainerBridge;
     }
 }

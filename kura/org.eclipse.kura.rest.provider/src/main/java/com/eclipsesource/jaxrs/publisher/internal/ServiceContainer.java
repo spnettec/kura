@@ -104,10 +104,8 @@ public class ServiceContainer {
     static class Finder {
 
         ServiceHolder findServiceHolder(Object service, Set<ServiceHolder> collection) {
-            Iterator<ServiceHolder> iterator = collection.iterator();
             ServiceHolder result = null;
-            while (iterator.hasNext()) {
-                ServiceHolder serviceHolder = iterator.next();
+            for (ServiceHolder serviceHolder : collection) {
                 Object found = serviceHolder.getService();
                 if (service.equals(found)) {
                     result = serviceHolder;

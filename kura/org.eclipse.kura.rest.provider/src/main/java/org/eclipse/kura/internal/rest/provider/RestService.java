@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -38,9 +38,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
-import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
-import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
-
 import org.eclipse.kura.audit.AuditConstants;
 import org.eclipse.kura.audit.AuditContext;
 import org.eclipse.kura.audit.AuditContext.Scope;
@@ -56,6 +53,9 @@ import org.osgi.service.useradmin.User;
 import org.osgi.service.useradmin.UserAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
+import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
 
 @Provider
 public class RestService
@@ -117,11 +117,12 @@ public class RestService
 
         final BundleContext bundleContext = FrameworkUtil.getBundle(RestService.class).getBundleContext();
 
-        registeredServices
+        this.registeredServices
                 .add(bundleContext.registerService(ContainerRequestFilter.class, new IncomingPortCheckFilter(), null));
 
-        this.passwordAuthProvider = new PasswordAuthenticationProvider(bundleContext, userAdmin, cryptoService);
-        this.certificateAuthProvider = new CertificateAuthenticationProvider(userAdmin);
+        this.passwordAuthProvider = new PasswordAuthenticationProvider(bundleContext, this.userAdmin,
+                this.cryptoService);
+        this.certificateAuthProvider = new CertificateAuthenticationProvider(this.userAdmin);
 
         update(properties);
 
@@ -144,7 +145,7 @@ public class RestService
     public void deactivate() {
         logger.info("deactivating...");
 
-        for (final ServiceRegistration<?> reg : registeredServices) {
+        for (final ServiceRegistration<?> reg : this.registeredServices) {
             reg.unregister();
         }
 
@@ -180,7 +181,7 @@ public class RestService
 
         synchronized (this.authenticationProviders) {
             for (final AuthenticationProviderHolder provider : this.authenticationProviders) {
-                final Optional<Principal> principal = provider.authenticate(request, requestContext);
+                final Optional<Principal> principal = provider.authenticate(this.request, requestContext);
 
                 if (principal.isPresent()) {
                     return principal.get();
@@ -325,13 +326,13 @@ public class RestService
 
             initAuditContext(request);
 
-            final Set<Integer> allowedPorts = options.getAllowedPorts();
+            final Set<Integer> allowedPorts = RestService.this.options.getAllowedPorts();
 
             if (allowedPorts.isEmpty()) {
                 return;
             }
 
-            final int port = sr.getLocalPort();
+            final int port = this.sr.getLocalPort();
 
             if (!allowedPorts.contains(port)) {
                 request.abortWith(NOT_FOUND_RESPONSE);

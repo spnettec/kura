@@ -11,11 +11,9 @@
  ******************************************************************************/
 package com.eclipsesource.jaxrs.publisher.internal;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class ResourcePublisher {
@@ -37,20 +35,12 @@ public class ResourcePublisher {
     }
 
     private static ScheduledExecutorService createExecutor() {
-        return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-
-            @Override
-            public Thread newThread(Runnable runnable) {
-                Thread thread = new Thread(runnable, "com.eclipsesource.jaxrs.publisher.internal.ResourcePublisher");
-                thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-
-                    @Override
-                    public void uncaughtException(Thread thread, Throwable exception) {
-                        throw new IllegalStateException(exception);
-                    }
-                });
-                return thread;
-            }
+        return Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "com.eclipsesource.jaxrs.publisher.internal.ResourcePublisher");
+            thread.setUncaughtExceptionHandler((thread1, exception) -> {
+                throw new IllegalStateException(exception);
+            });
+            return thread;
         });
     }
 
@@ -59,7 +49,7 @@ public class ResourcePublisher {
     }
 
     public synchronized void schedulePublishing() {
-        if (this.scheduledFuture == null || scheduledFuture.isDone()) {
+        if (this.scheduledFuture == null || this.scheduledFuture.isDone()) {
 
             this.scheduledFuture = this.executor.schedule(this.servletContainerBridge, this.publishDelay,
                     TimeUnit.MILLISECONDS);
