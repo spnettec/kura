@@ -176,7 +176,15 @@ public class JerseyContext {
     }
 
     public void removeResource(Object resource) {
-        getRootApplication().removeResource(resource);
+        boolean isDirty = getRootApplication().removeResource(resource);
+        // When removing resources that cause the application to be dirty, it makes sense to turn off
+        // request servicing until Jersey is reloaded as Jersey will hold on to the old OSGi instances
+        // of registered resources and we may see some exceptions if a request comes in that should be
+        // processed by a service that is in the process of deactivating (for example some unset methods
+        // were called). This way we'll send out a nice 503 until Jersey reloads which is much cleaner.
+        if (isDirty) {
+            servletContainerBridge.setJerseyReady(false);
+        }
         unregisterServletWhenNoResourcePresents();
         this.resourcePublisher.schedulePublishing();
     }
@@ -215,5 +223,9 @@ public class JerseyContext {
     // For testing purpose
     RootApplication getRootApplication() {
         return this.application;
+    }
+
+    ServletContainerBridge getServletContainerBridge() {
+        return servletContainerBridge;
     }
 }
