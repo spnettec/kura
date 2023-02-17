@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.net.admin.FirewallConfigurationService;
 import org.eclipse.kura.net.NetConfig;
 import org.eclipse.kura.net.firewall.FirewallConfigurationService;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
@@ -53,8 +54,6 @@ public class GwtNetworkServiceImpl {
                 GwtNetInterfaceConfig gwtConfig = configuration.getGwtNetInterfaceConfig(ifname);
                 status.fillWithStatusProperties(ifname, gwtConfig);
 
-                logger.debug("GWT Network Configuration for interface {}:\n{}\n", ifname, gwtConfig.getProperties());
-
                 result.add(gwtConfig);
             }
 
@@ -67,8 +66,6 @@ public class GwtNetworkServiceImpl {
     public static void updateNetInterfaceConfigurations(GwtNetInterfaceConfig config) throws GwtKuraException {
         try {
             NetworkConfigurationServiceAdapter adapter = new NetworkConfigurationServiceAdapter();
-
-            logger.debug("Updating Network Configuration Service with properties:\n{}\n", config.getProperties());
 
             adapter.updateConfiguration(config);
         } catch (GwtKuraException | KuraException e) {
