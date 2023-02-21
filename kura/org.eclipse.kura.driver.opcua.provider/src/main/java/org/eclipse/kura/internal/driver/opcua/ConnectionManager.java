@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2018, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -17,16 +17,22 @@ import static org.eclipse.kura.internal.driver.opcua.Utils.fillRecord;
 import static org.eclipse.kura.internal.driver.opcua.Utils.fillStatus;
 import static org.eclipse.kura.internal.driver.opcua.Utils.runSafe;
 
+import java.security.KeyPair;
+import java.security.KeyStore.PrivateKeyEntry;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.kura.channel.ChannelRecord;
-import org.eclipse.kura.internal.driver.opcua.auth.CertificateManager;
+import org.eclipse.kura.driver.Driver.ConnectionException;
+import org.eclipse.kura.internal.driver.opcua.auth.KeyStoreLoader;
 import org.eclipse.kura.internal.driver.opcua.request.ReadParams;
 import org.eclipse.kura.internal.driver.opcua.request.Request;
 import org.eclipse.kura.internal.driver.opcua.request.WriteParams;
@@ -38,7 +44,6 @@ import org.eclipse.milo.opcua.sdk.client.api.config.OpcUaClientConfigBuilder;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscription;
 import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscriptionManager;
 import org.eclipse.milo.opcua.stack.client.DiscoveryClient;
-import org.eclipse.milo.opcua.stack.core.UaException;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
@@ -70,13 +75,15 @@ public class ConnectionManager {
             final ListenerRegistrationRegistry subtreeListenerRegistrations) {
         this.options = options;
         this.client = client;
-        client.getSubscriptionManager().addSubscriptionListener(new UaSubscriptionManager.SubscriptionListener() {
+        if (client.getSubscriptionManager() != null) {
+            client.getSubscriptionManager().addSubscriptionListener(new UaSubscriptionManager.SubscriptionListener() {
 
-            @Override
-            public void onSubscriptionTransferFailed(UaSubscription subscription, StatusCode statusCode) {
-                failureHandler.accept(ConnectionManager.this, new RuntimeException("SubscriptionListener Failed"));
-            }
-        });
+                @Override
+                public void onSubscriptionTransferFailed(UaSubscription subscription, StatusCode statusCode) {
+                    failureHandler.accept(ConnectionManager.this, new RuntimeException("SubscriptionListener Failed"));
+                }
+            });
+        }
         this.queue = new AsyncTaskQueue();
         this.failureHandler = failureHandler;
         this.queue.onFailure(ex -> failureHandler.accept(this, ex));
@@ -203,7 +210,7 @@ public class ConnectionManager {
         return endPointBuilder.toString();
     }
 
-    private static void dumpEndpoints(final String message, final List<EndpointDescription> availableEndpoints) {
+    private static void dumpEndpoints(final String message, final Collection<EndpointDescription> availableEndpoints) {
         if (logger.isDebugEnabled()) {
             for (final EndpointDescription desc : availableEndpoints) {
                 logger.debug("{}: {}", message, desc.getEndpointUrl());
@@ -216,7 +223,7 @@ public class ConnectionManager {
     }
 
     private static CompletableFuture<UaClient> tryConnectToEndpoints(final OpcUaOptions options,
-            final List<EndpointDescription> availableEndpoints) {
+            final Collection<EndpointDescription> availableEndpoints) {
 
         dumpEndpoints("found endpoint", availableEndpoints);
 
@@ -225,7 +232,9 @@ public class ConnectionManager {
         dumpEndpoints("endpoint matches configuration", availableEndpoints);
 
         if (endpoints.isEmpty()) {
-            throw new RuntimeException("Unable to Connect...No desired Endpoints returned");
+            final CompletableFuture<UaClient> result = new CompletableFuture<>();
+            result.completeExceptionally(new ConnectionException("Unable to Connect...No desired Endpoints returned"));
+            return result;
         }
 
         final EndpointDescription forced = forceEndpointUrl(endpoints.get(0), getEndpointString(options));
@@ -236,22 +245,25 @@ public class ConnectionManager {
             endpoints.add(forced);
         }
 
-        final CertificateManager certificateManager = options.getCertificateManager();
+        Optional<KeyStoreLoader> keyStoreLoader;
 
         try {
-            certificateManager.load();
+            keyStoreLoader = Optional.of(new KeyStoreLoader(options.getKeyStorePath(), options.getKeystoreType(),
+                    options.getKeystorePassword(), options.getKeystoreClientAlias(),
+                    options.isServerAuthenticationEnabled()));
         } catch (final Exception e) {
             logger.warn("Failed to load certificates");
             logger.debug("Failed to load certificates", e);
+            keyStoreLoader = Optional.empty();
         }
 
-        final ConnectionAttempt connection = new ConnectionAttempt(options, certificateManager, endpoints);
+        final ConnectionAttempt connection = new ConnectionAttempt(options, keyStoreLoader, endpoints);
 
         return connection.connect();
     }
 
     private static List<EndpointDescription> filterEndpoints(final OpcUaOptions options,
-            final List<EndpointDescription> availableEndpoints) {
+            final Collection<EndpointDescription> availableEndpoints) {
 
         return availableEndpoints.stream()
                 .filter(e -> e.getSecurityPolicyUri().equals(options.getSecurityPolicy().getUri()))
@@ -267,11 +279,11 @@ public class ConnectionManager {
     private static final class ConnectionAttempt {
 
         private final Iterator<EndpointDescription> endpoints;
-        private final CertificateManager certificateManager;
+        private final Optional<KeyStoreLoader> certificateManager;
         private final CompletableFuture<UaClient> future;
         private final OpcUaOptions options;
 
-        public ConnectionAttempt(final OpcUaOptions options, final CertificateManager certificateManager,
+        public ConnectionAttempt(final OpcUaOptions options, final Optional<KeyStoreLoader> certificateManager,
                 final List<EndpointDescription> endpoints) {
             this.certificateManager = certificateManager;
             this.endpoints = endpoints.iterator();
@@ -295,29 +307,48 @@ public class ConnectionManager {
 
             logger.info("connecting to endpoint: {}", endpoint.getEndpointUrl());
 
-            final OpcUaClientConfigBuilder clientConfigBuilder = OpcUaClientConfig.builder();
-
-            clientConfigBuilder.setEndpoint(endpoint).setCertificateValidator(this.certificateManager)
+            OpcUaClientConfigBuilder clientConfigBuilder = OpcUaClientConfig.builder().setEndpoint(endpoint)
                     .setApplicationName(LocalizedText.english(this.options.getApplicationName()))
                     .setApplicationUri(this.options.getApplicationUri())
                     .setRequestTimeout(UInteger.valueOf(this.options.getRequestTimeout()))
                     .setAcknowledgeTimeout(UInteger.valueOf(this.options.getAcknowledgeTimeout()))
                     .setSessionTimeout(UInteger.valueOf(this.options.getSessionTimeout()))
-                    .setIdentityProvider(this.options.getIdentityProvider())
-                    .setKeyPair(this.certificateManager.getClientKeyPair())
-                    .setCertificate(this.certificateManager.getClientCertificate());
+                    .setIdentityProvider(this.options.getIdentityProvider());
 
-            OpcUaClient cl = null;
+            if (certificateManager.isPresent()) {
+
+                clientConfigBuilder = clientConfigBuilder
+                        .setCertificateValidator(certificateManager.get().getCertificateValidator());
+
+                final Optional<PrivateKeyEntry> privateKeyEntry = certificateManager.get().getPrivateKeyEntry();
+
+                if (privateKeyEntry.isPresent()) {
+                    final X509Certificate certificate = (X509Certificate) privateKeyEntry.get().getCertificate();
+                    final KeyPair clientKeyPair = new KeyPair(certificate.getPublicKey(),
+                            privateKeyEntry.get().getPrivateKey());
+
+                    clientConfigBuilder = clientConfigBuilder.setCertificate(certificate).setKeyPair(clientKeyPair);
+                }
+
+            }
+
+            final OpcUaClientConfig config = clientConfigBuilder.build();
+
+            final OpcUaClient cl;
+
             try {
-                cl = OpcUaClient.create(clientConfigBuilder.build());
-            } catch (UaException e) {
-                this.future.completeExceptionally(e);
+                cl = OpcUaClient.create(config);
+            } catch (final Exception e) {
+                logger.warn("failed to create client", e);
+                tryNextEndpoint();
+                return;
             }
 
             cl.connect() //
                     .whenComplete((c, err) -> {
                         if (err != null) {
                             logger.warn("failed to connect to endpoint", err);
+                            cl.disconnect();
                             tryNextEndpoint();
                             return;
                         }

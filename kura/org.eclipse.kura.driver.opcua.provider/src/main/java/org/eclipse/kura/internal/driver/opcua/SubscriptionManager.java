@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2018, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -75,6 +75,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
     private final OpcUaOptions options;
     private final ListenerRegistrationRegistry registrations;
     private final AsyncTaskQueue queue;
+    private final ExtensionObject defaultEventFilterObject;
 
     private long currentRegistrationState;
     private long targetRegistrationState;
@@ -87,7 +88,11 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
         this.options = options;
         this.client = client;
         this.registrations = registrations;
+        this.defaultEventFilterObject = ExtensionObject.encode(client.getStaticSerializationContext(),
+                DEFAULT_EVENT_FILTER);
+
         registrations.addRegistrationItemListener(this);
+
         this.state = new Unsubscribed();
     }
 
@@ -135,7 +140,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
 
         @Override
         public CompletableFuture<Void> unsubscribe() {
-            logger.debug("Unsubscribing..");
+            logger.info("Unsubscribing..");
             final OpcUaSubscriptionManager manager = SubscriptionManager.this.client.getSubscriptionManager();
             manager.removeSubscriptionListener(SubscriptionManager.this);
             for (final MonitoredItemHandler handler : this.monitoredItemHandlers.values()) {
@@ -146,7 +151,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
                 if (e != null) {
                     logger.debug("Failed to delete subscription", e);
                 }
-                logger.debug("Unsubscribing..done");
+                logger.info("Unsubscribing..done");
                 synchronized (SubscriptionManager.this) {
                     SubscriptionManager.this.state = new Unsubscribed();
                 }
@@ -178,8 +183,8 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
                 final List<MonitoredItemHandler> toBeDeleted = new ArrayList<>();
 
                 SubscriptionManager.this.registrations.computeDifferences(this.monitoredItemHandlers.keySet(),
-                        item -> toBeCreated.add(
-                                new MonitoredItemHandler(SubscriptionManager.this.registrations.getDispatcher(item))),
+                        item -> toBeCreated.add(new MonitoredItemHandler(
+                                SubscriptionManager.this.registrations.getDispatcher(item), defaultEventFilterObject)),
                         item -> toBeDeleted.add(this.monitoredItemHandlers.get(item)));
 
                 if (toBeCreated.isEmpty() && toBeDeleted.size() == this.monitoredItemHandlers.size()) {
@@ -204,7 +209,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
         protected CompletableFuture<Void> createMonitoredItems(final UaSubscription subscription,
                 final List<MonitoredItemHandler> handlers) {
             final List<MonitoredItemCreateRequest> requests = handlers.stream()
-                    .map(handler -> handler.getMonitoredItemCreateRequest(this.subscription.nextClientHandle()))
+                    .map(handler -> handler.getMonitoredItemCreateRequest(subscription.nextClientHandle()))
                     .collect(Collectors.toList());
 
             logger.debug("Creating {} monitored items", handlers.size());
@@ -311,9 +316,11 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
 
         Optional<UaMonitoredItem> monitoredItem = Optional.empty();
         final Dispatcher dispatcher;
+        final ExtensionObject eventFilter;
 
-        public MonitoredItemHandler(final Dispatcher dispatcher) {
+        public MonitoredItemHandler(final Dispatcher dispatcher, final ExtensionObject eventFilter) {
             this.dispatcher = dispatcher;
+            this.eventFilter = eventFilter;
         }
 
         public MonitoredItemCreateRequest getMonitoredItemCreateRequest(final UInteger requestHandle) {
@@ -321,10 +328,7 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
             final ReadValueId readValueId = params.getReadValueId();
             final boolean isEventNotifier = AttributeId.EventNotifier.uid().equals(readValueId.getAttributeId());
             final MonitoringParameters monitoringParams = new MonitoringParameters(requestHandle,
-                    isEventNotifier ? 0.0 : params.getSamplingInterval(),
-                    isEventNotifier ? ExtensionObject.encode(
-                            SubscriptionManager.this.client.getStaticSerializationContext(), DEFAULT_EVENT_FILTER)
-                            : null,
+                    isEventNotifier ? 0.0 : params.getSamplingInterval(), isEventNotifier ? eventFilter : null,
                     UInteger.valueOf(params.getQueueSize()), params.getDiscardOldest());
             return new MonitoredItemCreateRequest(params.getReadValueId(), MonitoringMode.Reporting, monitoringParams);
         }
@@ -357,23 +361,22 @@ public class SubscriptionManager implements SubscriptionListener, ListenerRegist
         }
 
         public void dispatchEvent(final Variant[] values) {
-            this.dispatcher.dispatch(record -> {
-                fillValue(values[1], record);
+            this.dispatcher.dispatch(r -> {
+                fillValue(values[1], r);
 
                 try {
-                    record.setTimestamp(((DateTime) values[0].getValue()).getJavaTime());
+                    r.setTimestamp(((DateTime) values[0].getValue()).getJavaTime());
                 } catch (Exception e) {
                     logger.debug("Failed to extract event Time, using locally generated timestamp");
-                    record.setTimestamp(System.currentTimeMillis());
+                    r.setTimestamp(System.currentTimeMillis());
                 }
             });
         }
 
-        /*
-         * public void dispatchValue(SerializationContext context, UaMonitoredItem item, DataValue value) {
-         * this.dispatcher.dispatch(record -> fillRecord(value, record));
-         * }
-         */
+        public void dispatchValue(final DataValue value) {
+            this.dispatcher.dispatch(r -> fillRecord(value, r));
+        }
+
         public void close() {
             this.monitoredItem.ifPresent(item -> {
                 item.setValueConsumer(nopValueConsumer);

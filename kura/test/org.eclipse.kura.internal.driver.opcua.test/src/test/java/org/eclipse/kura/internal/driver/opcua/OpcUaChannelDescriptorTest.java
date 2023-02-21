@@ -45,12 +45,12 @@ public class OpcUaChannelDescriptorTest {
         assertNotNull(description);
         assertEquals(9, description.size());
 
-        assertEquals(NODE_ID, description.get(0).getName());
-        assertEquals(NODE_NAMESPACE_INDEX, description.get(1).getName());
-        assertEquals(VARIABLE_TYPE, description.get(2).getName());
+        assertEquals("%" + NODE_ID, description.get(0).getName());
+        assertEquals("%" + NODE_NAMESPACE_INDEX, description.get(1).getName());
+        assertEquals("%" + VARIABLE_TYPE, description.get(2).getName());
         assertEquals(16, description.get(2).getOption().size());
 
-        assertEquals(NODE_ID_TYPE, description.get(3).getName());
+        assertEquals("%" + NODE_ID_TYPE, description.get(3).getName());
         assertEquals(4, description.get(3).getOption().size());
     }
 

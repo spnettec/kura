@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -21,12 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -49,28 +48,31 @@ import org.eclipse.kura.type.TypedValues;
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfigBuilder;
-import org.eclipse.milo.opcua.sdk.server.identity.UsernameIdentityValidator;
 import org.eclipse.milo.opcua.stack.core.UaException;
-import org.eclipse.milo.opcua.stack.core.security.CertificateManager;
-import org.eclipse.milo.opcua.stack.core.security.DefaultCertificateManager;
 import org.eclipse.milo.opcua.stack.core.security.DefaultTrustListManager;
+import org.eclipse.milo.opcua.stack.core.security.TrustListManager;
 import org.eclipse.milo.opcua.stack.core.transport.TransportProfile;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.server.EndpointConfiguration;
 import org.eclipse.milo.opcua.stack.server.security.DefaultServerCertificateValidator;
+import org.eclipse.milo.opcua.stack.server.security.ServerCertificateValidator;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OpcUaDriverTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(OpcUaDriverTest.class);
 
     private static CountDownLatch dependencyLatch = new CountDownLatch(1);
 
     private static ConfigurationService cfgsvc;
 
     private static Driver driver;
-    private final Object driverLock = new Object();
+    private Object driverLock = new Object();
 
     private static OpcUaServer server;
 
@@ -88,31 +90,28 @@ public class OpcUaDriverTest {
     }
 
     private static void startServer() throws UaException, IOException {
-        CertificateManager certificateManager = new DefaultCertificateManager();
-        DefaultTrustListManager trustListManager = new DefaultTrustListManager(new File("/tmp"));
-        DefaultServerCertificateValidator certificateValidator = new DefaultServerCertificateValidator(
-                trustListManager);
-        List<String> endpointAddresses = new ArrayList<>();
-        endpointAddresses.add("localhost");
-        EndpointConfiguration endpointConfiguration = EndpointConfiguration.newBuilder().setBindPort(12685)
-                .setBindAddress("localhost").setTransportProfile(TransportProfile.TCP_UASC_UABINARY).build();
-        Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
-        UsernameIdentityValidator identityValidator = new UsernameIdentityValidator(true, authChallenge -> {
-            String username = authChallenge.getUsername();
-            String password = authChallenge.getPassword();
+        TrustListManager trustListManager = new DefaultTrustListManager(new File("/tmp"));
+        ServerCertificateValidator certificateValidator = new DefaultServerCertificateValidator(trustListManager);
+        final EndpointConfiguration endpointConfiguration = EndpointConfiguration.newBuilder()
+                .setTransportProfile(TransportProfile.TCP_UASC_UABINARY)
+                .setBindAddress("localhost")
+                .setHostname("localhost")
+                .setPath("/opcsvr")
+                .setBindPort(12685)
+                .addTokenPolicy(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS)
+                .build();
 
-            boolean userOk = "user".equals(username) && "password1".equals(password);
-            boolean adminOk = "admin".equals(username) && "password2".equals(password);
+        logger.info("starting test server with endpoint {}", endpointConfiguration.getEndpointUrl());
 
-            return userOk || adminOk;
-        });
-        endpointConfigurations.add(endpointConfiguration);
         OpcUaServerConfig config = new OpcUaServerConfigBuilder().setApplicationUri("opcsvr")
-                .setEndpoints(endpointConfigurations).setApplicationName(LocalizedText.english("opcsvr"))
-                .setCertificateManager(certificateManager).setIdentityValidator(identityValidator)
-                .setCertificateValidator(certificateValidator).setProductUri("urn:eclipse:milo:hello-world")
-                .setApplicationUri("urn:eclipse:milo:hello-world").build();
+                .setApplicationName(LocalizedText.english("opcsvr")).setCertificateValidator(certificateValidator)
+                .setCertificateValidator(certificateValidator)
+                .setEndpoints(Collections.singleton(endpointConfiguration))
+                .build();
+
         server = new OpcUaServer(config);
+        final TestNamespace testNamespace = new TestNamespace(server);
+        server.getAddressSpaceManager().register(testNamespace);
         server.startup();
     }
 
@@ -126,8 +125,8 @@ public class OpcUaDriverTest {
     @Before
     public void init() throws InterruptedException {
         if (driver == null) {
-            synchronized (this.driverLock) {
-                this.driverLock.wait(3000);
+            synchronized (driverLock) {
+                driverLock.wait(3000);
             }
         }
     }
@@ -324,7 +323,7 @@ public class OpcUaDriverTest {
         final VariableType opcuaType = VariableType.UINT16;
 
         testRead(nodeId, 0, applicableTypes);
-        testReadWrite(nodeId, applicableTypes, opcuaType, 0, 10, 20, Short.MAX_VALUE * 2 + 1);
+        testReadWrite(nodeId, applicableTypes, opcuaType, 0, 10, 20, ((int) Short.MAX_VALUE) * 2 + 1);
     }
 
     @Test
@@ -334,8 +333,9 @@ public class OpcUaDriverTest {
 
         testRead(nodeId, 0, EnumSet.of(DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE));
         testReadWrite(nodeId, EnumSet.of(DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE), opcuaType,
-                0, 10, 20, Short.MAX_VALUE * 2 + 1);
-        testReadWrite(nodeId, EnumSet.of(DataType.LONG, DataType.DOUBLE), opcuaType, (long) Integer.MAX_VALUE * 2 + 1);
+                0, 10, 20, ((int) Short.MAX_VALUE) * 2 + 1);
+        testReadWrite(nodeId, EnumSet.of(DataType.LONG, DataType.DOUBLE), opcuaType,
+                ((long) Integer.MAX_VALUE) * 2 + 1);
     }
 
     @Test
@@ -345,8 +345,9 @@ public class OpcUaDriverTest {
 
         testRead(nodeId, 0, EnumSet.of(DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE));
         testReadWrite(nodeId, EnumSet.of(DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE), opcuaType,
-                0, 10, 20, Short.MAX_VALUE * 2 + 1);
-        testReadWrite(nodeId, EnumSet.of(DataType.LONG, DataType.DOUBLE), opcuaType, (long) Integer.MAX_VALUE * 2 + 1);
+                0, 10, 20, ((int) Short.MAX_VALUE) * 2 + 1);
+        testReadWrite(nodeId, EnumSet.of(DataType.LONG, DataType.DOUBLE), opcuaType,
+                ((long) Integer.MAX_VALUE) * 2 + 1);
         testReadWrite(nodeId, EnumSet.of(DataType.LONG, DataType.DOUBLE), opcuaType, Long.MAX_VALUE);
     }
 
@@ -486,8 +487,8 @@ public class OpcUaDriverTest {
     protected void bindDriver(Driver driver) {
         OpcUaDriverTest.driver = driver;
 
-        synchronized (this.driverLock) {
-            this.driverLock.notifyAll();
+        synchronized (driverLock) {
+            driverLock.notifyAll();
         }
     }
 
