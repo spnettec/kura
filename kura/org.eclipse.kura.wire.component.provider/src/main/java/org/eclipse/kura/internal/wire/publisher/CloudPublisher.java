@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -234,6 +234,12 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
         } catch (final Exception e) {
             logger.warn("failed to publish body", e);
         }
+
+        boolean isRemoveBodyPropertyFromMetrics = this.cloudPublisherOptions.getRemoveBodyPropertyFromMetrics();
+
+        if (isRemoveBodyPropertyFromMetrics) {
+            kuraPayload.removeMetric(bodyProperty);
+        }
     }
 
     private KuraPosition getPosition() {
@@ -285,6 +291,14 @@ public final class CloudPublisher implements WireReceiver, ConfigurableComponent
         for (String s : l) {
             properties.put(s, wireRecordProps.get(s).getValue());
         }
+
+        Optional<String> bodyProperty = this.cloudPublisherOptions.getBodyProperty();
+        boolean isRemoveBodyPropertyFromMetrics = this.cloudPublisherOptions.getRemoveBodyPropertyFromMetrics();
+
+        if (bodyProperty.isPresent() && isRemoveBodyPropertyFromMetrics) {
+            properties.remove(bodyProperty.get());
+        }
+
         return properties;
     }
 }
