@@ -141,7 +141,6 @@
             default="1"
             min="1"
             description="%rateLimitAverageDesc"/>
-        
         <AD id="rate.limit.time.unit"
             name="%rateLimitUnit"
             type="String"
