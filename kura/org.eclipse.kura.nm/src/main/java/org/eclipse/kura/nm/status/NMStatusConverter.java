@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -168,19 +169,11 @@ public class NMStatusConverter {
 
         builder.withCountryCode(countryCode);
 
-        if (mode == NM80211Mode.NM_802_11_MODE_AP) {
-            if (!activeAccessPoint.isPresent()) {
-                logger.warn("No access point found for interface in MASTER mode.");
-                return;
-            }
-            // Only one AP should be available in MASTER mode
-            WifiAccessPoint ap = wifiAccessPointConvert(accessPoints.get(0));
+        if (activeAccessPoint.isPresent()) {
+            // ActiveAccessPoint returns itself if in MASTER mode
+            // returns the one we're connected to in INFRA mode
+            WifiAccessPoint ap = wifiAccessPointConvert(activeAccessPoint.get());
             builder.withActiveWifiAccessPoint(Optional.of(ap));
-        } else {
-            if (activeAccessPoint.isPresent()) {
-                WifiAccessPoint ap = wifiAccessPointConvert(activeAccessPoint.get());
-                builder.withActiveWifiAccessPoint(Optional.of(ap));
-            }
         }
 
         builder.withAvailableWifiAccessPoints(wifiAccessPointConvert(accessPoints));
@@ -415,7 +408,9 @@ public class NMStatusConverter {
     private static void setIP4Gateway(Properties ip4configProperties,
             NetworkInterfaceIpAddressStatus<IP4Address> ip4AddressStatus) throws UnknownHostException {
         String gateway = ip4configProperties.Get(NM_IP4CONFIG_BUS_NAME, "Gateway");
-        ip4AddressStatus.setGateway((IP4Address) IPAddress.parseHostAddress(gateway));
+        if (Objects.nonNull(gateway) && !gateway.isEmpty()) {
+            ip4AddressStatus.setGateway((IP4Address) IPAddress.parseHostAddress(gateway));
+        }
     }
 
     private static byte[] getMacAddressBytes(String macAddress) {
