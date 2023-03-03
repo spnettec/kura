@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IPAddress;
 import org.eclipse.kura.net.status.NetworkInterfaceIpAddress;
@@ -40,7 +39,6 @@ import org.eclipse.kura.net.status.wifi.WifiCapability;
 import org.eclipse.kura.net.status.wifi.WifiInterfaceStatus;
 import org.eclipse.kura.net.status.wifi.WifiInterfaceStatus.WifiInterfaceStatusBuilder;
 import org.eclipse.kura.net.status.wifi.WifiMode;
-import org.eclipse.kura.net.status.wifi.WifiRadioMode;
 import org.eclipse.kura.net.status.wifi.WifiSecurity;
 import org.eclipse.kura.net.wifi.WifiChannel;
 import org.eclipse.kura.nm.NM80211ApSecurityFlags;
@@ -57,6 +55,8 @@ import org.slf4j.LoggerFactory;
 public class NMStatusConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(NMStatusConverter.class);
+
+    private static final byte[] DEFAULT_MAC = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
     private static final String NM_DEVICE_BUS_NAME = "org.freedesktop.NetworkManager.Device";
     private static final String NM_DEVICE_WIRELESS_BUS_NAME = "org.freedesktop.NetworkManager.Device.Wireless";
@@ -161,11 +161,10 @@ public class NMStatusConverter {
         List<NMDeviceWifiCapabilities> capabilities = NMDeviceWifiCapabilities
                 .fromUInt32(wirelessDeviceProperties.Get(NM_DEVICE_WIRELESS_BUS_NAME, "WirelessCapabilities"));
         builder.withCapabilities(wifiCapabilitiesConvert(capabilities));
-        builder.withSupportedRadioModes(wifiRadioModesConvert(capabilities));
 
-        Pair<List<Integer>, List<Long>> kuraSupportedChannels = wifiChannelsConvert(supportedChannels);
-        builder.withSupportedChannels(kuraSupportedChannels.getLeft());
-        builder.withSupportedFrequencies(kuraSupportedChannels.getRight());
+        List<org.eclipse.kura.net.status.wifi.WifiChannel> kuraSupportedChannels = wifiChannelsConvert(
+                supportedChannels);
+        builder.withWifiChannels(kuraSupportedChannels);
 
         builder.withCountryCode(countryCode);
 
@@ -179,45 +178,22 @@ public class NMStatusConverter {
         builder.withAvailableWifiAccessPoints(wifiAccessPointConvert(accessPoints));
     }
 
-    private static Pair<List<Integer>, List<Long>> wifiChannelsConvert(List<WifiChannel> supportedChannels) {
-        List<Integer> kuraChannels = new ArrayList<>();
-        List<Long> kuraFrequencies = new ArrayList<>();
+    private static List<org.eclipse.kura.net.status.wifi.WifiChannel> wifiChannelsConvert(
+            List<WifiChannel> supportedChannels) {
+        List<org.eclipse.kura.net.status.wifi.WifiChannel> kuraChannels = new ArrayList<>();
 
         for (WifiChannel channel : supportedChannels) {
-            kuraChannels.add(channel.getChannel());
-            kuraFrequencies.add(channel.getFrequency().longValue());
+            org.eclipse.kura.net.status.wifi.WifiChannel kuraChannel = new org.eclipse.kura.net.status.wifi.WifiChannel(
+                    channel.getChannel(), channel.getFrequency());
+            kuraChannel.setAttenuation(channel.getAttenuation());
+            kuraChannel.setDisabled(channel.isDisabled());
+            kuraChannel.setNoInitiatingRadiation(channel.isNoInitiatingRadiation());
+            kuraChannel.setRadarDetection(channel.isRadarDetection());
+
+            kuraChannels.add(kuraChannel);
         }
 
-        return Pair.of(kuraChannels, kuraFrequencies);
-    }
-
-    private static Set<WifiRadioMode> wifiRadioModesConvert(List<NMDeviceWifiCapabilities> capabilities) {
-        List<WifiRadioMode> kuraRadioModes = new ArrayList<>();
-
-        if (!capabilities.contains(NMDeviceWifiCapabilities.NM_WIFI_DEVICE_CAP_FREQ_VALID)) {
-            // Device doesn't report frequency capabilities
-            kuraRadioModes.add(WifiRadioMode.UNKNOWN);
-            return new HashSet<>(kuraRadioModes);
-        }
-
-        if (capabilities.contains(NMDeviceWifiCapabilities.NM_WIFI_DEVICE_CAP_FREQ_2GHZ)) {
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211B);
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211G);
-        }
-
-        if (capabilities.contains(NMDeviceWifiCapabilities.NM_WIFI_DEVICE_CAP_FREQ_5GHZ)) {
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211A);
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211_AC);
-        }
-
-        if (capabilities.contains(NMDeviceWifiCapabilities.NM_WIFI_DEVICE_CAP_FREQ_2GHZ)
-                && capabilities.contains(NMDeviceWifiCapabilities.NM_WIFI_DEVICE_CAP_FREQ_5GHZ)) {
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211NHT20);
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211NHT40_ABOVE);
-            kuraRadioModes.add(WifiRadioMode.RADIO_MODE_80211NHT40_BELOW);
-        }
-
-        return new HashSet<>(kuraRadioModes);
+        return kuraChannels;
     }
 
     private static List<WifiAccessPoint> wifiAccessPointConvert(List<Properties> nmAccessPoints) {
@@ -243,9 +219,10 @@ public class NMStatusConverter {
         String rawHwAddress = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "HwAddress");
         builder.withHardwareAddress(getMacAddressBytes(rawHwAddress));
 
-        UInt32 frequency = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "Frequency");
-        builder.withFrequency(frequency.longValue());
-        builder.withChannel(channelFrequencyConvert(frequency));
+        UInt32 uintFrequency = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "Frequency");
+        int frequency = uintFrequency.intValue();
+        int channel = channelFrequencyConvert(frequency);
+        builder.withChannel(new org.eclipse.kura.net.status.wifi.WifiChannel(channel, frequency));
 
         UInt32 maxBitrate = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "MaxBitrate");
         builder.withMaxBitrate(maxBitrate.longValue());
@@ -264,9 +241,7 @@ public class NMStatusConverter {
         return builder.build();
     }
 
-    private static int channelFrequencyConvert(UInt32 frequency) {
-        int fMHz = frequency.intValue();
-
+    private static int channelFrequencyConvert(int fMHz) {
         /* see 802.11 17.3.8.3.2 and Annex J */
         if (fMHz == 2484) {
             return 14;
@@ -396,12 +371,10 @@ public class NMStatusConverter {
 
     private static void setIP4DnsServers(Properties ip4configProperties,
             NetworkInterfaceIpAddressStatus<IP4Address> ip4AddressStatus) throws UnknownHostException {
-        List<Map<String, Variant<?>>> nameserverData = ip4configProperties.Get(NM_IP4CONFIG_BUS_NAME,
-                "NameserverData");
+        List<Map<String, Variant<?>>> nameserverData = ip4configProperties.Get(NM_IP4CONFIG_BUS_NAME, "NameserverData");
         for (Map<String, Variant<?>> dns : nameserverData) {
-            ip4AddressStatus
-                    .addDnsServerAddress(
-                            (IP4Address) IPAddress.parseHostAddress(String.class.cast(dns.get("address").getValue())));
+            ip4AddressStatus.addDnsServerAddress(
+                    (IP4Address) IPAddress.parseHostAddress(String.class.cast(dns.get("address").getValue())));
         }
     }
 
@@ -414,14 +387,24 @@ public class NMStatusConverter {
     }
 
     private static byte[] getMacAddressBytes(String macAddress) {
-        String[] macAddressParts = macAddress.split(":");
-
-        byte[] macAddressBytes = new byte[6];
-        for (int i = 0; i < 6; i++) {
-            Integer hex = Integer.parseInt(macAddressParts[i], 16);
-            macAddressBytes[i] = hex.byteValue();
+        if (Objects.isNull(macAddress) || macAddress.isEmpty()) {
+            return DEFAULT_MAC;
         }
-
+        String[] macAddressParts = macAddress.split(":");
+        byte[] macAddressBytes = new byte[6];
+        try {
+            if (macAddressParts.length == 6) {
+                for (int i = 0; i < 6; i++) {
+                    Integer hex = Integer.parseInt(macAddressParts[i], 16);
+                    macAddressBytes[i] = hex.byteValue();
+                }
+            } else {
+                return DEFAULT_MAC;
+            }
+        } catch (NumberFormatException e) {
+            logger.warn("Cannot parse Hardware address", e);
+            return DEFAULT_MAC;
+        }
         return macAddressBytes;
     }
 
