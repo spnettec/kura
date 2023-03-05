@@ -1536,7 +1536,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.10</version>
                         <executions>
                             <execution>
                                 <id>generic-arm32-deb</id>
@@ -1545,6 +1545,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_generic-arm32_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/generic-arm32/deb/control</controlDir>
@@ -1635,7 +1636,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.10</version>
                         <executions>
                             <execution>
                                 <id>generic-aarch64-deb</id>
@@ -1644,6 +1645,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_generic-aarch64_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/generic-aarch64/deb/control</controlDir>
@@ -1950,7 +1952,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.10</version>
                         <executions>
                             <execution>
                                 <id>docker-x86_64-nn-deb</id>
@@ -1959,6 +1961,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                    <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_docker-x86_64-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/docker-x86_64-nn/deb/control</controlDir>
