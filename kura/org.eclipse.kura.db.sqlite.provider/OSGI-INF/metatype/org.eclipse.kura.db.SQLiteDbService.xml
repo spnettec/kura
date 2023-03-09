@@ -92,6 +92,14 @@
             min="1"
             description="%poolMaxSizeDesc"/>
 
+        <AD id="delete.db.files.on.failure"
+            name="%deleteDbFilesOnFailure"
+            type="Boolean"
+            cardinality="0" 
+            required="true"
+            default="true"
+            description="%deleteDbFilesOnFailureDesc"/>
+
         <AD id="debug.shell.access.enabled"
             name="%debugShellAccessEnabled"
             type="Boolean"

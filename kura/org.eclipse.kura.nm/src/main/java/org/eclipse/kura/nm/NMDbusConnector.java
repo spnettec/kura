@@ -84,11 +84,13 @@ public class NMDbusConnector {
 
     private Map<String, Object> cachedConfiguration = null;
 
+    private NMConfigurationEnforcementHandler configurationEnforcementHandler = null;
+
+    private boolean configurationEnforcementHandlerIsArmed = false;
+
     private NMDbusConnector(DBusConnection dbusConnection) throws DBusException {
         this.dbusConnection = Objects.requireNonNull(dbusConnection);
         this.nm = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_BUS_PATH, NetworkManager.class);
-
-        this.dbusConnection.addSigHandler(NetworkManager.DeviceAdded.class, new NMDeviceAddedHandler());
     }
 
     public static synchronized NMDbusConnector getInstance() throws DBusException {
@@ -105,6 +107,10 @@ public class NMDbusConnector {
 
     public DBusConnection getDbusConnection() {
         return this.dbusConnection;
+    }
+
+    public boolean configurationEnforcementIsActive() {
+        return Objects.nonNull(this.configurationEnforcementHandler) && this.configurationEnforcementHandlerIsArmed;
     }
 
     public void checkPermissions() {
@@ -209,14 +215,19 @@ public class NMDbusConnector {
 
     private synchronized void doApply(Map<String, Object> networkConfiguration) throws DBusException {
         logger.info("Applying configuration using NetworkManager Dbus connector");
+        try {
+            configurationEnforcementDisable();
 
-        NetworkProperties properties = new NetworkProperties(networkConfiguration);
+            NetworkProperties properties = new NetworkProperties(networkConfiguration);
 
-        List<String> configuredInterfaces = properties.getStringList("net.interfaces");
-        manageConfiguredInterfaces(configuredInterfaces, properties);
+            List<String> configuredInterfaces = properties.getStringList("net.interfaces");
+            manageConfiguredInterfaces(configuredInterfaces, properties);
 
-        List<Device> availableInterfaces = getAllDevices();
-        manageNonConfiguredInterfaces(configuredInterfaces, availableInterfaces);
+            List<Device> availableInterfaces = getAllDevices();
+            manageNonConfiguredInterfaces(configuredInterfaces, availableInterfaces);
+        } finally {
+            configurationEnforcementEnable();
+        }
     }
 
     private synchronized void manageConfiguredInterfaces(List<String> configuredInterfaces,
@@ -258,7 +269,7 @@ public class NMDbusConnector {
             disable(device);
         } else if (interfaceStatus == KuraInterfaceStatus.UNMANAGED) {
             logger.info("Iface \"{}\" set as Kura UNMANAGED. Skipping configuration.", iface);
-        } else { // NMDeviceEnable.ENABLED
+        } else { // KuraInterfaceStatus.ENABLED
             if (Boolean.FALSE.equals(isDeviceManaged(device))) {
                 setDeviceManaged(device, true);
             }
@@ -268,6 +279,9 @@ public class NMDbusConnector {
                     connection, iface, deviceType);
 
             logger.info("New settings: {}", newConnectionSettings);
+
+            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
+                    NMDeviceState.NM_DEVICE_STATE_CONFIG);
 
             if (connection.isPresent()) {
                 logger.info("Current settings: {}", connection.get().GetSettings());
@@ -279,6 +293,8 @@ public class NMDbusConnector {
                 this.nm.AddAndActivateConnection(newConnectionSettings, new DBusPath(device.getObjectPath()),
                         new DBusPath("/"));
             }
+
+            dsLock.waitForSignal();
         }
     }
 
@@ -307,7 +323,10 @@ public class NMDbusConnector {
     private void disable(Device device) throws DBusException {
         NMDeviceState deviceState = getDeviceState(device);
         if (Boolean.TRUE.equals(NMDeviceState.isConnected(deviceState))) {
+            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
+                    NMDeviceState.NM_DEVICE_STATE_DISCONNECTED);
             device.Disconnect();
+            dsLock.waitForSignal();
         }
 
         Optional<Connection> connection = getAppliedConnection(device);
@@ -426,5 +445,20 @@ public class NMDbusConnector {
             logger.debug("Could not find applied connection for {}, caused by", dev.getObjectPath(), e);
             return Optional.empty();
         }
+    }
+
+    private void configurationEnforcementEnable() throws DBusException {
+        if (Objects.isNull(this.configurationEnforcementHandler)) {
+            this.configurationEnforcementHandler = new NMConfigurationEnforcementHandler(this);
+        }
+        this.dbusConnection.addSigHandler(Device.StateChanged.class, this.configurationEnforcementHandler);
+        this.configurationEnforcementHandlerIsArmed = true;
+    }
+
+    private void configurationEnforcementDisable() throws DBusException {
+        if (Objects.nonNull(this.configurationEnforcementHandler)) {
+            this.dbusConnection.removeSigHandler(Device.StateChanged.class, this.configurationEnforcementHandler);
+        }
+        this.configurationEnforcementHandlerIsArmed = false;
     }
 }
