@@ -72,16 +72,16 @@
                                     <artifactId>truffle-api</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
-                                <artifact>
+                                <artifactItem>
 									<groupId>org.graalvm.regex</groupId>
 									<artifactId>regex</artifactId>
 									<version>${graalvm.version}</version>
-								</artifact>
-								<artifact>
+								</artifactItem>
+								<artifactItem>
 									<groupId>com.ibm.icu</groupId>
 									<artifactId>icu4j</artifactId>
 									<version>${icu.version}</version>
-								</artifact>
+								</artifactItem>
                             </artifactItems>
                         </configuration>
                         <goals>
