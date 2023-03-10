@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2022 Eurotech and/or its affiliates and others
+# Copyright (c) 2023 Eurotech and/or its affiliates and others
 #
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
@@ -14,10 +14,15 @@
 
 INSTALL_DIR=/opt/eclipse
 
-#create known kura install location
+# NetworkManager cannot modify connection settings that are from /etc/network/interfaces
+if test -f /etc/network/interfaces; then
+    mv /etc/network/interfaces /etc/network/interfaces.old
+fi
+
+# create known kura install location
 ln -sf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 
-#set up Kura init
+# set up kura init
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
 systemctl daemon-reload
 systemctl enable kura
@@ -35,150 +40,11 @@ if [ ! -d /etc/sysconfig ]; then
     mkdir /etc/sysconfig
 fi
 
-#set up users and grant permissions to them
-cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
-chmod 700 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
-${INSTALL_DIR}/kura/.data/manage_kura_users.sh -i
-
-systemctl stop apparmor
-systemctl disable apparmor
-
-#set up default networking file
-cp ${INSTALL_DIR}/kura/install/network.interfaces /etc/network/interfaces
-cp ${INSTALL_DIR}/kura/install/network.interfaces ${INSTALL_DIR}/kura/.data/interfaces
-
-#set up network helper scripts
-cp ${INSTALL_DIR}/kura/install/ifup-local.raspbian /etc/network/if-up.d/ifup-local
-cp ${INSTALL_DIR}/kura/install/ifdown-local /etc/network/if-down.d/ifdown-local
-chmod +x /etc/network/if-up.d/ifup-local
-chmod +x /etc/network/if-down.d/ifdown-local
-
-#set up default firewall configuration
-cp ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/.data/iptables
-chmod 644 ${INSTALL_DIR}/kura/.data/iptables
-cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
-cp ${INSTALL_DIR}/kura/install/firewall.init ${INSTALL_DIR}/kura/bin/firewall
-chmod 755 ${INSTALL_DIR}/kura/bin/firewall
-cp ${INSTALL_DIR}/kura/install/firewall.service /lib/systemd/system/firewall.service
-chmod 644 /lib/systemd/system/firewall.service
-sed -i "s|/bin/sh KURA_DIR|/bin/bash ${INSTALL_DIR}/kura|" /lib/systemd/system/firewall.service
-systemctl daemon-reload
-systemctl enable firewall
-
-#copy snapshot_0.xml
-cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/snapshot_0.xml
-
-#disable NTP service
-if command -v timedatectl > /dev/null ;
-  then
-    timedatectl set-ntp false
-fi
-
-#disable asking NTP servers to the DHCP server
-sed -i "s/\(, \?ntp-servers\)/; #\1/g" /etc/dhcp/dhclient.conf
-
-# Prevent time sync services from starting
-systemctl stop systemd-timesyncd
-systemctl disable systemd-timesyncd
-systemctl stop systemd-timesyncd
-systemctl disable systemd-timesyncd
-# Prevent time sync with chrony from starting.
-systemctl stop chrony
-systemctl disable chrony
-
-#set up networking configuration
-# mac_addr=$(head -1 /sys/class/net/eth0/address | tr '[:lower:]' '[:upper:]')
-# sed "s/^ssid=kura_gateway.*/ssid=kura_gateway_${mac_addr}/" < ${INSTALL_DIR}/kura/install/hostapd.conf > /etc/hostapd-wlan0.conf
-# cp /etc/hostapd-wlan0.conf ${INSTALL_DIR}/kura/.data/hostapd-wlan0.conf
-
-cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf /etc/dhcpd-eth0.conf
-cp ${INSTALL_DIR}/kura/install/dhcpd-eth0.conf ${INSTALL_DIR}/kura/.data/dhcpd-eth0.conf
-
-# cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf /etc/dhcpd-wlan0.conf
-# cp ${INSTALL_DIR}/kura/install/dhcpd-wlan0.conf ${INSTALL_DIR}/kura/.data/dhcpd-wlan0.conf
-
-#set up bind/named
-mkdir -p /var/named
-chown -R bind /var/named
-cp ${INSTALL_DIR}/kura/install/named.ca /var/named/
-cp ${INSTALL_DIR}/kura/install/named.rfc1912.zones /etc/
-cp ${INSTALL_DIR}/kura/install/usr.sbin.named /etc/apparmor.d/
-if [ ! -f "/etc/bind/rndc.key" ] ; then
-	rndc-confgen -r /dev/urandom -a
-fi
-chown bind:bind /etc/bind/rndc.key
-chmod 600 /etc/bind/rndc.key
-
-#set up logrotate - no need to restart as it is a cronjob
-cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate-kura.conf
-
-if [ ! -f /etc/cron.d/logrotate-kura ]; then
-    test -d /etc/cron.d || mkdir -p /etc/cron.d
-    touch /etc/cron.d/logrotate-kura
-    echo "*/5 * * * * root /usr/sbin/logrotate --state /var/log/logrotate-kura.status /etc/logrotate-kura.conf" >> /etc/cron.d/logrotate-kura
-fi
-
-#set up systemd-tmpfiles
-cp ${INSTALL_DIR}/kura/install/kura-tmpfiles.conf /etc/tmpfiles.d/kura.conf
-
-# disable dhcpcd service - kura is the network manager
-systemctl stop dhcpcd
-systemctl disable dhcpcd
-
-# disable isc-dhcp-server service - kura is the network manager
-systemctl stop isc-dhcp-server
-systemctl disable isc-dhcp-server
-
-#disable isc-dhcp-server6.service
-systemctl stop isc-dhcp-server6.service
-systemctl disable isc-dhcp-server6.service
-
-# disable NetworkManager.service - kura is the network manager
-systemctl stop NetworkManager.service
-systemctl disable NetworkManager.service
-
-#disable netplan
-systemctl disable systemd-networkd.socket
-systemctl disable systemd-networkd
-systemctl disable networkd-dispatcher
-systemctl disable systemd-networkd-wait-online
-systemctl mask systemd-networkd.socket
-systemctl mask systemd-networkd
-systemctl mask networkd-dispatcher
-systemctl mask systemd-networkd-wait-online
-
-#disable DNS-related services - kura is the network manager
-systemctl stop systemd-resolved.service
-systemctl disable systemd-resolved.service
-systemctl stop resolvconf.service
-systemctl disable resolvconf.service
-
-#disable ModemManager
-systemctl stop ModemManager
-systemctl disable ModemManager
-
-#disable wpa_supplicant
-systemctl stop wpa_supplicant
-systemctl disable wpa_supplicant
-
-#assigning possible .conf files ownership to kurad
-PATTERN="/etc/dhcpd*.conf* /etc/resolv.conf* /etc/wpa_supplicant*.conf* /etc/hostapd*.conf*"
-for FILE in $(ls $PATTERN 2>/dev/null)
-do
-  chown kurad:kurad $FILE
-done
-
-# set up kura files permissions
-chmod 700 ${INSTALL_DIR}/kura/bin/*.sh
-chown -R kurad:kurad /opt/eclipse
-chmod -R go-rwx /opt/eclipse
-chmod a+rx /opt/eclipse    
-find /opt/eclipse/kura -type d -exec chmod u+x "{}" \;
-
-# execute patch_sysctl.sh from installer install folder
+# execute patch_sysctl.sh (required for disabling ipv6))
 chmod 700 ${INSTALL_DIR}/kura/install/patch_sysctl.sh
 ${INSTALL_DIR}/kura/install/patch_sysctl.sh ${INSTALL_DIR}/kura/install/sysctl.kura.conf /etc/sysctl.conf
 
+# disables IPv6 on all network interfaces in the system if the "/sys/class/net" directory exists, or applies the system-wide configuration specified in the "/etc/sysctl.conf" file using the "sysctl -p" command otherwise.
 if ! [ -d /sys/class/net ]
 then
     sysctl -p || true
@@ -191,4 +57,68 @@ else
     done
 fi
 
+# manage running services
+systemctl daemon-reload
+systemctl stop systemd-timesyncd
+systemctl disable systemd-timesyncd
+systemctl stop chrony
+systemctl disable chrony
+systemctl enable NetworkManager
+systemctl start NetworkManager
+
+# set up users and grant permissions
+cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
+chmod 700 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
+${INSTALL_DIR}/kura/.data/manage_kura_users.sh -i
+
+# replace snapshot_0 and iptables.init with correct interface names
+if python3 -V > /dev/null 2>&1
+then
+    python3 ${INSTALL_DIR}/kura/install/find-net-interfaces.py ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/framework/kura.properties
+else
+    echo "python3 not found. snapshot_0.xml, iptables.init, and kura.properties files may have wrong interface names. Default is eth0 and wlan0. Please correct them manually if they mismatch."
+fi
+
+# copy snapshot_0.xml
+cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/snapshot_0.xml
+
+# set up default firewall configuration
+cp ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/.data/iptables
+chmod 644 ${INSTALL_DIR}/kura/.data/iptables
+cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
+cp ${INSTALL_DIR}/kura/install/firewall.init ${INSTALL_DIR}/kura/bin/firewall
+chmod 755 ${INSTALL_DIR}/kura/bin/firewall
+cp ${INSTALL_DIR}/kura/install/firewall.service /lib/systemd/system/firewall.service
+chmod 644 /lib/systemd/system/firewall.service
+sed -i "s|/bin/sh KURA_DIR|/bin/bash ${INSTALL_DIR}/kura|" /lib/systemd/system/firewall.service
+systemctl daemon-reload
+systemctl enable firewall
+
+# disable NTP service
+if command -v timedatectl > /dev/null ;
+  then
+    timedatectl set-ntp false
+fi
+
+# set up logrotate - no need to restart as it is a cronjob
+cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate-kura.conf
+
+if [ ! -f /etc/cron.d/logrotate-kura ]; then
+    test -d /etc/cron.d || mkdir -p /etc/cron.d
+    touch /etc/cron.d/logrotate-kura
+    echo "*/5 * * * * root /usr/sbin/logrotate --state /var/log/logrotate-kura.status /etc/logrotate-kura.conf" >> /etc/cron.d/logrotate-kura
+fi
+
+# set up systemd-tmpfiles
+cp ${INSTALL_DIR}/kura/install/kura-tmpfiles.conf /etc/tmpfiles.d/kura.conf
+
+# set up kura files permissions
+chmod 700 ${INSTALL_DIR}/kura/bin/*.sh
+chown -R kurad:kurad /opt/eclipse
+chmod -R go-rwx /opt/eclipse
+chmod a+rx /opt/eclipse
+find /opt/eclipse/kura -type d -exec chmod u+x "{}" \;
+
 keytool -genkey -alias localhost -keyalg RSA -keysize 2048 -keystore /opt/eclipse/kura/user/security/httpskeystore.ks -deststoretype pkcs12 -dname "CN=YOFC, OU=信息技术部, O=长飞光纤光缆股份有限公司, L=武汉, S=湖北, C=中国" -ext ku=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,keyAgreement,keyCertSign -ext eku=serverAuth,clientAuth,codeSigning,timeStamping -validity 1000 -storepass changeit -keypass changeit
+
+bash "${INSTALL_DIR}/kura/install/customize-installation.sh"

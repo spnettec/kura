@@ -1,4 +1,16 @@
 #!/bin/bash
+#
+# Copyright (c) 2023 Eurotech and/or its affiliates and others
+#
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#  Eurotech
+#
 
 INSTALL_DIR=/opt/eclipse
 WD_TMP_FILE=/tmp/watchdog
@@ -56,18 +68,10 @@ function preInstall {
     rm -fr ${INSTALL_DIR}/kura* >> /tmp/kura_install.log 2>&1
     rm -fr /tmp/.kura/ >> /tmp/kura_install.log 2>&1
     rm /etc/init.d/firewall >> /tmp/kura_install.log 2>&1
-    rm /etc/dhcpd-*.conf >> /tmp/kura_install.log 2>&1
-    rm /etc/wpa_supplicant.conf >> /tmp/kura_install.log 2>&1
-    rm /etc/hostapd.conf >> /tmp/kura_install.log 2>&1
     rm /tmp/coninfo-* >> /tmp/kura_install.log 2>&1
     rm /var/log/kura.log >> /tmp/kura_install.log 2>&1
-    rm -fr /etc/ppp/chat >> /tmp/kura_install.log 2>&1
-    rm -fr /etc/ppp/peers >> /tmp/kura_install.log 2>&1
-    rm -fr /etc/ppp/scripts >> /tmp/kura_install.log 2>&1
-    rm /etc/ppp/*ap-secrets >> /tmp/kura_install.log 2>&1
     rm -f kura-*.zip >> /tmp/kura_install.log 2>&1
     rm -f kura_*.zip >> /tmp/kura_install.log 2>&1
-    
     echo ""
 }
 ##############################################
