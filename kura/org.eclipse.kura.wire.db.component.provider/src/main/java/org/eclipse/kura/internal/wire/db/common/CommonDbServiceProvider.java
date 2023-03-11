@@ -137,7 +137,9 @@ public class CommonDbServiceProvider {
         try (final PreparedStatement stmt = prepareStatement(c, tableName, wireRecordProperties, new Date().getTime(),
                 formatter)) {
             stmt.execute();
-            c.commit();
+            if (!c.getAutoCommit()) {
+                c.commit();
+            }
             logger.debug("Stored typed value");
         }
     }

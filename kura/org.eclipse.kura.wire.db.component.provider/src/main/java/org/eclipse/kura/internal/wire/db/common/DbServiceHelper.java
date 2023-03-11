@@ -38,9 +38,9 @@ public final class DbServiceHelper {
      * Instantiates a new DB Service Helper.
      *
      * @param dbService
-     *            the DB service
+     *                      the DB service
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     private DbServiceHelper(final BaseDbService dbService) {
         requireNonNull(dbService, "DB Service cannot be null");
@@ -51,10 +51,10 @@ public final class DbServiceHelper {
      * Creates instance of {@link DbServiceHelper}
      *
      * @param dbService
-     *            the {@link H2DbService}
+     *                      the {@link H2DbService}
      * @return the instance of {@link DbServiceHelper}
      * @throws org.eclipse.kura.KuraRuntimeException
-     *             if argument is null
+     *                                                   if argument is null
      */
     public static DbServiceHelper of(final BaseDbService dbService) {
         return new DbServiceHelper(dbService);
@@ -64,13 +64,13 @@ public final class DbServiceHelper {
      * Executes the provided SQL query.
      *
      * @param sql
-     *            the SQL query to execute
+     *                   the SQL query to execute
      * @param params
-     *            the extra parameters needed for the query
+     *                   the extra parameters needed for the query
      * @throws SQLException
-     *             the SQL exception
+     *                                  the SQL exception
      * @throws NullPointerException
-     *             if SQL query argument is null
+     *                                  if SQL query argument is null
      */
     public synchronized void execute(final Connection c, final String sql, final Integer... params)
             throws SQLException {
@@ -82,7 +82,9 @@ public final class DbServiceHelper {
                 stmt.setInt(1 + i, params[i]);
             }
             stmt.execute();
-            c.commit();
+            if (!c.getAutoCommit()) {
+                c.commit();
+            }
         }
 
         logger.debug("Executing SQL query... Done");
@@ -106,10 +108,10 @@ public final class DbServiceHelper {
      * any double quote present in the string.
      *
      * @param string
-     *            the string to be sanitized
+     *                   the string to be sanitized
      * @return the escaped string
      * @throws NullPointerException
-     *             if argument is null
+     *                                  if argument is null
      */
     public String sanitizeSqlTableAndColumnName(final String string) {
         requireNonNull(string, "Provided string cannot be null");
