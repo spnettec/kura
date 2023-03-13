@@ -91,6 +91,8 @@ ResultAny=yes" > /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.mode
     if (action.id == \"org.freedesktop.systemd1.manage-units\" &&
         subject.user == \"kurad\" &&
         (action.lookup(\"unit\") == \"named.service\" ||
+        action.lookup(\"unit\") == \"chrony.service\" ||
+        action.lookup(\"unit\") == \"chronyd.service\" ||
         action.lookup(\"unit\") == \"bluetooth.service\")) {
         return polkit.Result.YES;
     }
@@ -108,7 +110,9 @@ ResultAny=yes" > /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.mode
 			    echo "polkit.addRule(function(action, subject) {
     if (action.id == \"org.freedesktop.systemd1.manage-units\" &&
         subject.user == \"kurad\" &&
-        action.lookup(\"unit\") == \"bluetooth.service\") {
+        (action.lookup(\"unit\") == \"bluetooth.service\" ||
+        action.lookup(\"unit\") == \"chrony.service\" ||
+        action.lookup(\"unit\") == \"chronyd.service\" )) {
         return polkit.Result.YES;
     }
     if (action.id == \"org.freedesktop.systemd1.manage-unit-files\" &&
