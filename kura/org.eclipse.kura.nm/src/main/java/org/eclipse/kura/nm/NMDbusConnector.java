@@ -129,6 +129,24 @@ public class NMDbusConnector {
         logger.info("NM Version: {}", nmVersion);
     }
 
+    public String getDeviceIpInterface(Device device) throws DBusException {
+        return getDeviceIpInterface(device.getObjectPath());
+    }
+
+    public String getDeviceIpInterface(String dbusPath) throws DBusException {
+        Properties deviceProperties = this.dbusConnection.getRemoteObject(NM_BUS_NAME, dbusPath, Properties.class);
+
+        return deviceProperties.Get(NM_DEVICE_BUS_NAME, NM_DEVICE_PROPERTY_INTERFACE);
+    }
+
+    public List<String> getManagedDevices() {
+        if (Objects.isNull(this.cachedConfiguration)) {
+            return Arrays.asList();
+        }
+
+        return new NetworkProperties(this.cachedConfiguration).getStringList("net.interfaces");
+    }
+
     public synchronized List<String> getInterfaces() throws DBusException {
         List<Device> availableDevices = getAllDevices();
 
@@ -429,13 +447,6 @@ public class NMDbusConnector {
         }
 
         return deviceType;
-    }
-
-    private String getDeviceIpInterface(Device device) throws DBusException {
-        Properties deviceProperties = this.dbusConnection.getRemoteObject(NM_BUS_NAME, device.getObjectPath(),
-                Properties.class);
-
-        return deviceProperties.Get(NM_DEVICE_BUS_NAME, NM_DEVICE_PROPERTY_INTERFACE);
     }
 
     private Device getDeviceByIpIface(String iface) throws DBusException {
