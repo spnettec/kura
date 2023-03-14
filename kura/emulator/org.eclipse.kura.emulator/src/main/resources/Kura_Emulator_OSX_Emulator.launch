@@ -146,13 +146,10 @@
         <setEntry value="org.eclipse.kura.util.wire.test"/>
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
         <setEntry value="org.eclipse.kura.wire.ai.component.provider.test"/>
-        <setEntry value="org.eclipse.kura.wire.component.conditional.provider"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.provider.test"/>
-        <setEntry value="org.eclipse.kura.wire.script.filter.provider"/>
-        <setEntry value="org.eclipse.kura.wire.script.filter.provider.test"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
