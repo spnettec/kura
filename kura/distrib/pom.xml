@@ -1598,7 +1598,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.10</version>
                         <executions>
                             <execution>
                                 <id>generic-x86_64-deb</id>
@@ -1607,6 +1607,7 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
+                                	<skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
                                     <deb>${basedir}/target/kura_${project.version}_generic-x86_64_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/generic-x86_64/deb/control</controlDir>

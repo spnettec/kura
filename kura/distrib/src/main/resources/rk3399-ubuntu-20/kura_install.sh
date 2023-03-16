@@ -66,7 +66,7 @@ cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/ma
 chmod 700 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -i
 
-bash "${INSTALL_DIR}/kura/install/customize-installation.sh"
+# bash "${INSTALL_DIR}/kura/install/customize-installation.sh"
 
 # copy snapshot_0.xml
 cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/snapshot_0.xml
@@ -75,6 +75,7 @@ cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/s
 if [ ! -d /etc/sysconfig ]; then
     mkdir /etc/sysconfig
 fi
+cp ${INSTALL_DIR}/kura/install/iptables.init ${INSTALL_DIR}/kura/.data/iptables
 chmod 644 ${INSTALL_DIR}/kura/.data/iptables
 cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
 cp ${INSTALL_DIR}/kura/install/firewall.init ${INSTALL_DIR}/kura/bin/firewall
