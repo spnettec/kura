@@ -84,7 +84,7 @@
                 <esf:value></esf:value>
             </esf:property>
             <esf:property name="net.interface.eth1.config.ip4.address" type="String">
-                <esf:value>172.16.0.1</esf:value>
+                <esf:value>192.168.0.25</esf:value>
             </esf:property>
             <esf:property name="net.interface.eth0.config.dhcpClient6.enabled" type="Boolean">
                 <esf:value>false</esf:value>
