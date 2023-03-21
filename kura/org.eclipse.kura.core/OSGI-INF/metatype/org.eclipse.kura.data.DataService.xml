@@ -204,6 +204,15 @@
             min="1"
             description="%connectionScheduleDisconnectInactivityIntervalSecondsDesc" />
 
+          <AD id="maximum.payload.size"
+            name="Maximum Payload Size"
+            type="Long"
+            cardinality="0"
+            required="true"
+            default="16777216"
+            min="0"
+            description="The maximum allowed size in bytes for the message payload."/>
+
     </OCD>
     <Designate pid="org.eclipse.kura.data.DataService" factoryPid="org.eclipse.kura.data.DataService">
         <Object ocdref="org.eclipse.kura.data.DataService"/>

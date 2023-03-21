@@ -111,7 +111,7 @@ public class ConnectionManager {
                     if (err != null) {
                         logger.warn("Connecting to OPC-UA...failed", err);
                     } else {
-                        logger.info("Connectiong to OPC-UA...done");
+                        logger.info("Connecting to OPC-UA...done");
                     }
                 });
     }
