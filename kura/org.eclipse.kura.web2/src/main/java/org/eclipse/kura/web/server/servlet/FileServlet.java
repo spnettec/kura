@@ -872,7 +872,7 @@ class UploadRequest extends ServletFileUpload {
     public UploadRequest(DiskFileItemFactory diskFileItemFactory) {
         super(diskFileItemFactory);
         setSizeMax(FileServlet.getFileUploadSizeMax());
-        setFileCountMax(2L);
+        setFileCountMax(20L);
         this.formFields = new HashMap<>();
         this.fileItems = new ArrayList<>();
     }
