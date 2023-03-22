@@ -1226,7 +1226,7 @@
                                 <configuration>
                                     <skipPOMs>false</skipPOMs>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura_${project.version}_raspberry-pi-arm64_installer-nn.deb</deb>
+                                    <deb>${basedir}/target/kura_${project.version}_raspberry-pi-arm64-nn_installer.deb</deb>
                                     <controlDir>${basedir}/src/main/resources/raspberry-pi-arm64-nn/deb/control</controlDir>
                                     <dataSet>
                                         <data>
