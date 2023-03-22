@@ -67,7 +67,7 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public boolean getNatEnabled(String ifname) {
-        return (boolean) this.properties.get(String.format(NET_INTERFACE_CONFIG_NAT_ENABLED, ifname));
+        return (boolean) this.properties.getOrDefault(String.format(NET_INTERFACE_CONFIG_NAT_ENABLED, ifname), false);
     }
 
     public void setNatEnabled(String ifname, boolean natEnabled) {
@@ -268,8 +268,8 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public Password getWifiMasterPassphrase(String ifname) {
-        return getPasswordFromProperty(this.properties
-                .get(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_PASSPHRASE, ifname)));
+        return getPasswordFromProperty(
+                this.properties.get(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_PASSPHRASE, ifname)));
     }
 
     public void setWifiMasterPassphrase(String ifname, String passphrase) {
@@ -277,8 +277,7 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public String getWifiMasterSsid(String ifname) {
-        return (String) this.properties.getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_SSID, ifname),
-                "");
+        return (String) this.properties.getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_SSID, ifname), "");
     }
 
     public void setWifiMasterSsid(String ifname, String ssid) {
@@ -295,8 +294,8 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public Optional<String> getWifiMasterMode(String ifname) {
-        return Optional.ofNullable(
-                (String) this.properties.get(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_MODE, ifname)));
+        return Optional
+                .ofNullable((String) this.properties.get(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_MODE, ifname)));
     }
 
     public void setWifiMasterMode(String ifname, String mode) {
@@ -304,9 +303,8 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public List<Integer> getWifiMasterChannel(String ifname) {
-        return channelsAsIntegersList(
-                (String) this.properties.getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_CHANNEL, ifname),
-                        ""));
+        return channelsAsIntegersList((String) this.properties
+                .getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_MASTER_CHANNEL, ifname), ""));
     }
 
     public void setWifiMasterChannel(String ifname, List<Integer> channels) {
@@ -383,9 +381,8 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public List<Integer> getWifiInfraChannel(String ifname) {
-        return channelsAsIntegersList(
-                (String) this.properties.getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_INFRA_CHANNEL, ifname),
-                        ""));
+        return channelsAsIntegersList((String) this.properties
+                .getOrDefault(String.format(NET_INTERFACE_CONFIG_WIFI_INFRA_CHANNEL, ifname), ""));
     }
 
     public void setWifiInfraChannel(String ifname, List<Integer> channels) {
@@ -403,8 +400,8 @@ public class NetworkConfigurationServiceProperties {
     }
 
     public Password getWifiInfraPassphrase(String ifname) {
-        return getPasswordFromProperty(this.properties
-                .get(String.format(NET_INTERFACE_CONFIG_WIFI_INFRA_PASSPHRASE, ifname)));
+        return getPasswordFromProperty(
+                this.properties.get(String.format(NET_INTERFACE_CONFIG_WIFI_INFRA_PASSPHRASE, ifname)));
     }
 
     public void setWifiInfraPassphrase(String ifname, String passphrase) {

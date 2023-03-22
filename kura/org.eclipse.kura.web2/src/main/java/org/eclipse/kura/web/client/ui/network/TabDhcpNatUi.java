@@ -652,21 +652,21 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
 
                 @Override
                 public void onSuccess(GwtXSRFToken token) {
-                    TabDhcpNatUi.this.gwtNetworkService.getDhcpLeases(token, new AsyncCallback<List<String>>() {
+                    TabDhcpNatUi.this.gwtNetworkService.getDhcpLeases(token,
+                            new AsyncCallback<List<String>>() {
 
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            System.out.println("DhcpLease Failure");
-                        }
-
-                        @Override
-                        public void onSuccess(List<String> leases) {
-                            String values = "";
-                            for (String dl : leases) {
-                                values += dl.toString() + '\n';
-                            }
-                            TabDhcpNatUi.this.dhcpLease.setValue(values);
-                        }
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    System.out.println("DhcpLease Failure");
+                                }
+                                @Override
+                                public void onSuccess(List<String> leases) {
+                                    String values = "";
+                                    for (String dl : leases) {
+                                        values += dl.toString() + '\n';
+                                    }
+                                    TabDhcpNatUi.this.dhcpLease.setValue(values);
+                                }
                     });
                 }
             });
