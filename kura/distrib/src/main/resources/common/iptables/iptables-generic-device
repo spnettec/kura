@@ -53,6 +53,8 @@ COMMIT
 -A input-kura -p icmp -m icmp --icmp-type 8 -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT
 -A input-kura -j RETURN
 -A forward-kura -j RETURN
+-A forward-kura -i eth0 -o eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A forward-kura -i eth1 -o eth0 -j ACCEPT
 -A output-kura -p icmp -m icmp --icmp-type 0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A output-kura -j RETURN
 -A forward-kura-pf -j RETURN
