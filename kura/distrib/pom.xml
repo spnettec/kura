@@ -616,6 +616,11 @@
                                     <artifactId>org.eclipse.kura.wire.script.tools</artifactId>
                                     <version>${org.eclipse.kura.wire.script.tools.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                	<groupId>org.eclipse.kura</groupId>
+                                    <artifactId>org.eclipse.kura.rest.network.status.provider</artifactId>
+                                    <version>${org.eclipse.kura.rest.network.status.provider.version}</version>
+                                </artifactItem>
                             </artifactItems>
                             <stripVersion>true</stripVersion>
                             <outputDirectory>${project.basedir}/target/plugins</outputDirectory>
@@ -769,6 +774,7 @@
                                 <move file="target/plugins/org.eclipse.kura.configuration.change.manager.jar" tofile="target/plugins/org.eclipse.kura.configuration.change.manager_${org.eclipse.kura.configuration.change.manager.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.event.publisher.jar" tofile="target/plugins/org.eclipse.kura.event.publisher_${org.eclipse.kura.event.publisher.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.wire.script.tools.jar" tofile="target/plugins/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar" />
+                                <move file="target/plugins/org.eclipse.kura.rest.network.status.provider.jar" tofile="target/plugins/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar" />
                             </target>
                         </configuration>
                     </execution>
