@@ -75,6 +75,7 @@ public class NMDbusConnector {
     private static final String NM_DEVICE_PROPERTY_DEVICETYPE = "DeviceType";
     private static final String NM_DEVICE_PROPERTY_STATE = "State";
     private static final String NM_DEVICE_PROPERTY_IP4CONFIG = "Ip4Config";
+    private static final String NM_DEVICE_PROPERTY_CONNECTION = "connection";
 
     private static final String NM_DEVICE_GENERIC_PROPERTY_TYPEDESCRIPTION = "TypeDescription";
 
@@ -301,7 +302,11 @@ public class NMDbusConnector {
                 continue;
             }
 
-            manageConfiguredInterface(iface, properties);
+            try {
+                manageConfiguredInterface(iface, properties);
+            } catch (Exception e) {
+                logger.error("Unable to configure iface {}, skipping", iface, e);
+            }
         }
     }
 
@@ -381,26 +386,31 @@ public class NMDbusConnector {
     private synchronized void manageNonConfiguredInterfaces(List<String> configuredInterfaces,
             List<Device> availableInterfaces) throws DBusException {
         for (Device device : availableInterfaces) {
-            NMDeviceType deviceType = getDeviceType(device);
-            String ipInterface = getDeviceId(device);
+            try {
+                NMDeviceType deviceType = getDeviceType(device);
+                String ipInterface = getDeviceId(device);
 
-            if (!CONFIGURATION_SUPPORTED_DEVICE_TYPES.contains(deviceType)) {
-                logger.warn("Device \"{}\" of type \"{}\" currently not supported", ipInterface, deviceType);
-                continue;
-            }
-
-            if (Boolean.FALSE.equals(isDeviceManaged(device))) {
-                setDeviceManaged(device, true);
-            }
-
-            if (!configuredInterfaces.contains(ipInterface)) {
-                logger.warn("Device \"{}\" of type \"{}\" not configured. Disabling...", ipInterface, deviceType);
-
-                disable(device);
-
-                if (deviceType == NMDeviceType.NM_DEVICE_TYPE_MODEM) {
-                    handleModemManagerGPSSetup(device, Optional.of(false));
+                if (!CONFIGURATION_SUPPORTED_DEVICE_TYPES.contains(deviceType)) {
+                    logger.warn("Device \"{}\" of type \"{}\" currently not supported", ipInterface, deviceType);
+                    continue;
                 }
+
+                if (Boolean.FALSE.equals(isDeviceManaged(device))) {
+                    setDeviceManaged(device, true);
+                }
+
+                if (!configuredInterfaces.contains(ipInterface)) {
+                    logger.warn("Device \"{}\" of type \"{}\" not configured. Disabling...", ipInterface, deviceType);
+
+                    disable(device);
+
+                    if (deviceType == NMDeviceType.NM_DEVICE_TYPE_MODEM) {
+                        handleModemManagerGPSSetup(device, Optional.of(false));
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Unable to handle the not configured device with path {}, skipping",
+                        device.getObjectPath(), e);
             }
         }
     }
@@ -584,7 +594,7 @@ public class NMDbusConnector {
         try {
             Map<String, Map<String, Variant<?>>> connectionSettings = dev.GetAppliedConnection(new UInt32(0))
                     .getConnection();
-            String uuid = String.valueOf(connectionSettings.get("connection").get("uuid").getValue());
+            String uuid = String.valueOf(connectionSettings.get(NM_DEVICE_PROPERTY_CONNECTION).get("uuid").getValue());
 
             Settings settings = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_SETTINGS_BUS_PATH, Settings.class);
 
@@ -593,8 +603,56 @@ public class NMDbusConnector {
                     .of(this.dbusConnection.getRemoteObject(NM_BUS_NAME, connectionPath.getPath(), Connection.class));
         } catch (DBusExecutionException e) {
             logger.debug("Could not find applied connection for {}, caused by", dev.getObjectPath(), e);
-            return Optional.empty();
         }
+
+        return getAvaliableConnection(dev);
+    }
+
+    private Optional<Connection> getAvaliableConnection(Device dev) throws DBusException {
+        Optional<Connection> connectionToReturn = Optional.empty();
+
+        try {
+            logger.info("Active connection not found, looking for avaliable connections.");
+
+            Settings settings = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_SETTINGS_BUS_PATH, Settings.class);
+
+            List<DBusPath> connectionPath = settings.ListConnections();
+
+            Properties deviceProperties = this.dbusConnection.getRemoteObject(NM_BUS_NAME, dev.getObjectPath(),
+                    Properties.class);
+            String interfaceName = deviceProperties.Get(NM_DEVICE_BUS_NAME, NM_DEVICE_PROPERTY_INTERFACE);
+            String expectedConnectionName = String.format("kura-%s-connection", interfaceName);
+
+            boolean isFirst = true;
+            for (DBusPath path : connectionPath) {
+
+                Connection availableConnection = this.dbusConnection.getRemoteObject(NM_BUS_NAME, path.getPath(),
+                        Connection.class);
+
+                Map<String, Map<String, Variant<?>>> workingSettings = availableConnection.GetSettings();
+
+                String availableConnectionId = (String) workingSettings.get(NM_DEVICE_PROPERTY_CONNECTION).get("id")
+                        .getValue();
+                String availableConnectionUuid = (String) workingSettings.get(NM_DEVICE_PROPERTY_CONNECTION).get("uuid")
+                        .getValue();
+
+                if (availableConnectionId.equals(expectedConnectionName)) {
+                    if (isFirst) {
+                        logger.debug("Using avaliable connection uuid: {}", availableConnectionUuid);
+                        connectionToReturn = Optional.of(availableConnection);
+                        isFirst = false;
+                    } else {
+                        logger.debug("Deleting extra connection with uuid: {}", availableConnectionUuid);
+                        availableConnection.Delete();
+                    }
+                }
+            }
+
+        } catch (DBusExecutionException e) {
+            logger.debug("Could not find applied connection for {}, caused by", dev.getObjectPath(), e);
+        }
+
+        return connectionToReturn;
     }
 
     private void configurationEnforcementEnable() throws DBusException {

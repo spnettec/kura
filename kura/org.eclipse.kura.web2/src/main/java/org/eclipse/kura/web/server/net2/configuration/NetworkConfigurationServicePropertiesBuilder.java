@@ -45,14 +45,14 @@ public class NetworkConfigurationServicePropertiesBuilder {
         setIpv4DhcpServerProperties();
 
         switch (this.gwtConfig.getStatusEnum()) {
-        case netIPv4StatusDisabled:
-            break;
-        case netIPv4StatusUnmanaged:
-            break;
-        default:
-            setWifiProperties();
-            setModemProperties();
-            break;
+            case netIPv4StatusDisabled:
+                break;
+            case netIPv4StatusUnmanaged:
+                break;
+            default:
+                setWifiProperties();
+                setModemProperties();
+                break;
         }
 
         return this.properties.getProperties();
@@ -95,34 +95,37 @@ public class NetworkConfigurationServicePropertiesBuilder {
 
     private void setIpv4DhcpClientProperties() {
         switch (this.gwtConfig.getConfigModeEnum()) {
-        case netIPv4ConfigModeDHCP:
-            this.properties.setDhcpClient4Enabled(this.ifname, true);
-            break;
-        case netIPv4ConfigModeManual:
-            this.properties.setDhcpClient4Enabled(this.ifname, false);
-            break;
-        default:
-            break;
+            case netIPv4ConfigModeDHCP:
+                this.properties.setDhcpClient4Enabled(this.ifname, true);
+                break;
+            case netIPv4ConfigModeManual:
+                this.properties.setDhcpClient4Enabled(this.ifname, false);
+                break;
+            default:
+                break;
         }
     }
 
     private void setIpv4DhcpServerProperties() {
-        boolean isDhcpServer = this.gwtConfig.getConfigMode().equals(GwtNetIfConfigMode.netIPv4ConfigModeManual.name())
-                && !this.gwtConfig.getRouterMode().equals(GwtNetRouterMode.netRouterOff.name())
-                && !this.gwtConfig.getRouterMode().equals(GwtNetRouterMode.netRouterNat.name());
-        this.properties.setDhcpServer4Enabled(this.ifname, isDhcpServer);
-        boolean isNat = this.gwtConfig.getRouterModeEnum() == GwtNetRouterMode.netRouterDchpNat
-                || this.gwtConfig.getRouterModeEnum() == GwtNetRouterMode.netRouterNat;
-        this.properties.setNatEnabled(ifname, isNat);
+        boolean isManualAddress = this.gwtConfig.getConfigModeEnum() == GwtNetIfConfigMode.netIPv4ConfigModeManual;
+        boolean isDhcpServer = isManualAddress
+                && this.gwtConfig.getRouterModeEnum() != GwtNetRouterMode.netRouterOff
+                && this.gwtConfig.getRouterModeEnum() != GwtNetRouterMode.netRouterNat;
+        boolean isNatEnabled = isManualAddress
+                && (this.gwtConfig.getRouterModeEnum() == GwtNetRouterMode.netRouterNat
+                        || this.gwtConfig.getRouterModeEnum() == GwtNetRouterMode.netRouterDchpNat);
 
-        // if (isDhcpServer) {
-        this.properties.setDhcpServer4RangeStart(this.ifname, this.gwtConfig.getRouterDhcpBeginAddress());
-        this.properties.setDhcpServer4RangeEnd(this.ifname, this.gwtConfig.getRouterDhcpEndAddress());
-        this.properties.setDhcpServer4Netmask(this.ifname, this.gwtConfig.getRouterDhcpSubnetMask());
-        this.properties.setDhcpServer4LeaseTime(this.ifname, this.gwtConfig.getRouterDhcpDefaultLease());
-        this.properties.setDhcpServer4MaxLeaseTime(this.ifname, this.gwtConfig.getRouterDhcpMaxLease());
-        this.properties.setDhcpServer4PassDns(this.ifname, this.gwtConfig.getRouterDnsPass());
-        // }
+        this.properties.setDhcpServer4Enabled(this.ifname, isDhcpServer);
+        this.properties.setNatEnabled(this.ifname, isNatEnabled);
+        
+        if (isDhcpServer) {
+            this.properties.setDhcpServer4RangeStart(this.ifname, this.gwtConfig.getRouterDhcpBeginAddress());
+            this.properties.setDhcpServer4RangeEnd(this.ifname, this.gwtConfig.getRouterDhcpEndAddress());
+            this.properties.setDhcpServer4Netmask(this.ifname, this.gwtConfig.getRouterDhcpSubnetMask());
+            this.properties.setDhcpServer4LeaseTime(this.ifname, this.gwtConfig.getRouterDhcpDefaultLease());
+            this.properties.setDhcpServer4MaxLeaseTime(this.ifname, this.gwtConfig.getRouterDhcpMaxLease());
+            this.properties.setDhcpServer4PassDns(this.ifname, this.gwtConfig.getRouterDnsPass());
+        }
     }
 
     private void setWifiProperties() {
