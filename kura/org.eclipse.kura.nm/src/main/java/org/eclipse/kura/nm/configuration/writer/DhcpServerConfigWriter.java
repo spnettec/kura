@@ -181,7 +181,7 @@ public class DhcpServerConfigWriter {
         if (defaultLeaseTime.isPresent()) {
             return defaultLeaseTime.get();
         } else {
-            return -1;
+            return 7600;
         }
     }
 
@@ -191,7 +191,7 @@ public class DhcpServerConfigWriter {
         if (maxLeaseTime.isPresent()) {
             return maxLeaseTime.get();
         } else {
-            return -1;
+            return 7600;
         }
     }
 
@@ -211,7 +211,7 @@ public class DhcpServerConfigWriter {
         if (prefix.isPresent()) {
             return prefix.get();
         } else {
-            return -1;
+            return 24;
         }
     }
 

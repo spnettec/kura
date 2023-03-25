@@ -62,9 +62,6 @@
             <esf:property name="net.interface.eth0.config.dhcpServer4.prefix" type="Short">
                 <esf:value>24</esf:value>
             </esf:property>
-            <esf:property name="component.id" type="Long">
-                <esf:value>73</esf:value>
-            </esf:property>
             <esf:property name="net.interface.eth1.config.winsServers" type="String">
                 <esf:value></esf:value>
             </esf:property>
@@ -130,6 +127,9 @@
             </esf:property>
             <esf:property name="net.interface.lo.config.ip4.prefix" type="Short">
                 <esf:value>-1</esf:value>
+            </esf:property>
+            <esf:property name="net.interface.eth1.config.dhcpServer4.defaultLeaseTime" type="Integer">
+                <esf:value>7600</esf:value>
             </esf:property>
             <esf:property name="net.interface.eth1.config.dhcpClient4.enabled" type="Boolean">
                 <esf:value>false</esf:value>
