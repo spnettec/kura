@@ -101,7 +101,6 @@
         <setEntry value="org.eclipse.kura.watchdog.criticaltest"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
-        <setEntry value="org.eclipse.kura.wire.script.filter.provider.test"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
     <booleanAttribute key="includeOptional" value="true"/>
@@ -271,7 +270,7 @@
         <setEntry value="org.eclipse.kura.core.tamper.detection.test@default:default"/>
         <setEntry value="org.eclipse.kura.core.tamper.detection@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
-        <setEntry value="org.eclipse.kura.db.sqlite.provider.test@default:default"/>
+        <setEntry value="org.eclipse.kura.db.sqlite.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.db.sqlite.provider@default:default"/>
         <setEntry value="org.eclipse.kura.deployment.agent@default:default"/>
         <setEntry value="org.eclipse.kura.docs@default:default"/>
@@ -328,6 +327,8 @@
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.network.status.provider.test@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.network.status.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider.test@default:default"/>
@@ -343,7 +344,6 @@
         <setEntry value="org.eclipse.kura.wire.ai.component.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.camel@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.db.component.provider.test@default:false"/>
@@ -353,7 +353,6 @@
         <setEntry value="org.eclipse.kura.wire.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.wire.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.script.filter.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.script.tools@default:default"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider@default:default"/>
     </setAttribute>
