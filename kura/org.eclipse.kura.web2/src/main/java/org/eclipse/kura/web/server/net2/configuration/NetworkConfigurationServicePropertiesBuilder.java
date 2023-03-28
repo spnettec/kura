@@ -117,7 +117,7 @@ public class NetworkConfigurationServicePropertiesBuilder {
 
         this.properties.setDhcpServer4Enabled(this.ifname, isDhcpServer);
         this.properties.setNatEnabled(this.ifname, isNatEnabled);
-        
+
         if (isDhcpServer) {
             this.properties.setDhcpServer4RangeStart(this.ifname, this.gwtConfig.getRouterDhcpBeginAddress());
             this.properties.setDhcpServer4RangeEnd(this.ifname, this.gwtConfig.getRouterDhcpEndAddress());

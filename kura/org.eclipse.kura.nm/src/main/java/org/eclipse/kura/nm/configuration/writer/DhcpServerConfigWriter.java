@@ -106,19 +106,31 @@ public class DhcpServerConfigWriter {
                 addDNSServersOption(dhcpServerConfig, pw);
             } else if (dhcpServerTool == DhcpServerTool.DNSMASQ) {
                 pw.println("interface=" + dhcpServerConfig.getInterfaceName());
-                pw.println("dhcp-option=3,0.0.0.0");
-                pw.println("dhcp-option=6,0.0.0.0");
-                pw.println("port=0"); // disable DNS since managed by bind/bind9
+                pw.println("bind-interfaces");
+                pw.println("dhcp-option=1," + NetworkUtil.getNetmaskStringForm(dhcpServerConfig.getPrefix()));
+                pw.println("dhcp-option=3," + dhcpServerConfig.getRouterAddress().toString());
 
-                StringBuilder dhcpRangeProp = new StringBuilder("dhcp-range=").append(dhcpServerConfig.getRangeStart())
-                        .append(",").append(dhcpServerConfig.getRangeEnd()).append(",")
-                        .append(dhcpServerConfig.getMaximumLeaseTime()).append("s");
+                if (dhcpServerConfig.isPassDns()) {
+                    // announce DNS servers on this device
+                    pw.println("dhcp-option=6,0.0.0.0");
+                }
+
+                // all subnets are local
+                pw.println("dhcp-option=27,1");
+                pw.println("dhcp-lease-max=" + dhcpServerConfig.getMaximumLeaseTime());
+                // disable DNS server since managed by NetworkManager
+                pw.println("port=0");
+                
+                StringBuilder dhcpRangeProp = new StringBuilder("dhcp-range=")
+                    .append(dhcpServerConfig.getRangeStart())
+                    .append(",")
+                    .append(dhcpServerConfig.getRangeEnd()).append(",")
+                    .append(dhcpServerConfig.getDefaultLeaseTime()).append("s");
                 pw.println(dhcpRangeProp.toString());
             }
             pw.flush();
             fos.getFD().sync();
         } catch (Exception e) {
-            logger.error("error", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, WRITE_ERROR_MESSAGE + this.interfaceName, e);
         }
     }
