@@ -118,7 +118,7 @@
                 <jdk>[17,21]</jdk>
             </activation>
             <properties>
-                <tycho-p2-extras-plugin.version>3.0.1</tycho-p2-extras-plugin.version>
+                <tycho-p2-extras-plugin.version>3.0.4</tycho-p2-extras-plugin.version>
                 <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
             </properties>
         </profile>
