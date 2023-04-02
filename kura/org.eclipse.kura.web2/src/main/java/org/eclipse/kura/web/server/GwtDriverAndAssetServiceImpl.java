@@ -63,6 +63,8 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
+import com.eclipsesource.json.Json;
+
 public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet implements GwtDriverAndAssetService {
 
     private static final long serialVersionUID = 8627173534436639487L;
@@ -237,8 +239,18 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
         if (DataType.INTEGER == dataType) {
             return TypedValues.newIntegerValue(Integer.parseInt(userValue));
         }
+        if (DataType.INTEGERS == dataType) {
+            Integer[] values = Json.parse(userValue).asArray().values().stream().map(v -> v.asInt())
+                    .toArray(Integer[]::new);
+            return TypedValues.newIntegerValues(values);
+        }
         if (DataType.BOOLEAN == dataType) {
             return TypedValues.newBooleanValue(Boolean.parseBoolean(userValue));
+        }
+        if (DataType.BOOLEANS == dataType) {
+            Boolean[] values = Json.parse(userValue).asArray().values().stream().map(v -> v.asBoolean())
+                    .toArray(Boolean[]::new);
+            return TypedValues.newBooleanValues(values);
         }
         if (DataType.FLOAT == dataType) {
             return TypedValues.newFloatValue(Float.parseFloat(userValue));
@@ -246,14 +258,33 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
         if (DataType.DOUBLE == dataType) {
             return TypedValues.newDoubleValue(Double.parseDouble(userValue));
         }
+        if (DataType.DOUBLES == dataType) {
+            Double[] values = Json.parse(userValue).asArray().values().stream().map(v -> v.asDouble())
+                    .toArray(Double[]::new);
+            return TypedValues.newDoubleValues(values);
+        }
         if (DataType.LONG == dataType) {
             return TypedValues.newLongValue(Long.parseLong(userValue));
+        }
+        if (DataType.LONGS == dataType) {
+            Long[] values = Json.parse(userValue).asArray().values().stream().map(v -> v.asLong()).toArray(Long[]::new);
+            return TypedValues.newLongValues(values);
         }
         if (DataType.BIGINTEGER == dataType) {
             return TypedValues.newBigIntegerValue(new BigInteger(userValue));
         }
+        if (DataType.BIGINTEGERS == dataType) {
+            BigInteger[] values = Json.parse(userValue).asArray().values().stream()
+                    .map(v -> new BigInteger(v.toString())).toArray(BigInteger[]::new);
+            return TypedValues.newBigIntegerValues(values);
+        }
         if (DataType.STRING == dataType) {
             return TypedValues.newStringValue(userValue);
+        }
+        if (DataType.STRINGS == dataType) {
+            String[] values = Json.parse(userValue).asArray().values().stream().map(Object::toString)
+                    .toArray(String[]::new);
+            return TypedValues.newStringValues(values);
         }
         if (DataType.BYTE_ARRAY == dataType) {
             return TypedValues.newByteArrayValue(BASE64_DECODER.decode(userValue));
