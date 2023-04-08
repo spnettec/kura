@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -49,6 +49,7 @@ import org.eclipse.kura.marshalling.Marshaller;
 import org.eclipse.kura.rest.configuration.api.ComponentConfigurationList;
 import org.eclipse.kura.rest.configuration.api.DTOUtil;
 import org.eclipse.kura.util.service.ServiceUtil;
+import org.eclipse.kura.web.Console;
 import org.eclipse.kura.web.server.servlet.DeviceSnapshotsServlet;
 import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
@@ -56,6 +57,12 @@ import org.eclipse.kura.web.shared.model.GwtComponentInstanceInfo;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.eclipse.kura.web.shared.model.GwtConfigParameter;
 import org.eclipse.kura.web.shared.model.GwtConfigParameter.GwtConfigParameterType;
+import org.eclipse.kura.web.shared.model.GwtModemInterfaceConfig;
+import org.eclipse.kura.web.shared.model.GwtNetInterfaceConfig;
+import org.eclipse.kura.web.shared.model.GwtWifiConfig;
+import org.eclipse.kura.web.shared.model.GwtWifiNetInterfaceConfig;
+import org.eclipse.kura.web.shared.validator.PasswordStrengthValidators;
+import org.eclipse.kura.web.shared.validator.Validator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
@@ -82,7 +89,9 @@ public final class GwtServerUtil {
     /** The Constant to check if configuration policy is set to require. */
     public static final String PATTERN_CONFIGURATION_REQUIRE = "configuration-policy=\"require\"";
 
-    /** The Constant to check if the provided interface is a configurable component. */
+    /**
+     * The Constant to check if the provided interface is a configurable component.
+     */
     public static final String PATTERN_SERVICE_PROVIDE_CONFIGURABLE_COMP = "provide interface=\"org.eclipse.kura.configuration.ConfigurableComponent\"";
 
     /** The Constant to check if provided interface is Wire Emitter. */
@@ -91,7 +100,10 @@ public final class GwtServerUtil {
     /** The Constant to check if provided interface is Wire Receiver. */
     public static final String PATTERN_SERVICE_PROVIDE_RECEIVER = "provide interface=\"org.eclipse.kura.wire.WireReceiver\"";
 
-    /** The Constant to check if the provided interface is a self configuring component. */
+    /**
+     * The Constant to check if the provided interface is a self configuring
+     * component.
+     */
     public static final String PATTERN_SERVICE_PROVIDE_SELF_CONFIGURING_COMP = "provide interface=\"org.eclipse.kura.configuration.SelfConfiguringComponent\"";
 
     private static final String DRIVER_PID = "driver.pid";
@@ -168,7 +180,7 @@ public final class GwtServerUtil {
         case CHAR:
             for (String value : trimmedValues) {
                 if (!value.isEmpty()) {
-                    values.add(Character.valueOf(value.charAt(0)));
+                    values.add(new Character(value.charAt(0)));
                 }
             }
             return values.toArray(new Character[] {});
@@ -823,6 +835,45 @@ public final class GwtServerUtil {
         } catch (Exception e) {
             logger.error("Error exporting snapshot");
             throw new ServletException(e);
+        }
+    }
+
+    public static List<GwtNetInterfaceConfig> replaceNetworkConfigListSensitivePasswordsWithPlaceholder(
+            List<GwtNetInterfaceConfig> gwtNetworkConfigList) {
+        for (GwtNetInterfaceConfig netConfig : gwtNetworkConfigList) {
+            if (netConfig instanceof GwtWifiNetInterfaceConfig) {
+                GwtWifiNetInterfaceConfig wifiConfig = (GwtWifiNetInterfaceConfig) netConfig;
+                GwtWifiConfig gwtAPWifiConfig = wifiConfig.getAccessPointWifiConfig();
+                if (gwtAPWifiConfig != null) {
+                    gwtAPWifiConfig.setPassword(PASSWORD_PLACEHOLDER);
+                }
+
+                GwtWifiConfig gwtStationWifiConfig = wifiConfig.getStationWifiConfig();
+                if (gwtStationWifiConfig != null) {
+                    gwtStationWifiConfig.setPassword(PASSWORD_PLACEHOLDER);
+                }
+            } else if (netConfig instanceof GwtModemInterfaceConfig) {
+                GwtModemInterfaceConfig modemConfig = (GwtModemInterfaceConfig) netConfig;
+                modemConfig.setPassword(PASSWORD_PLACEHOLDER);
+            }
+        }
+
+        return gwtNetworkConfigList;
+    }
+
+    public static void validateUserPassword(final String password) throws GwtKuraException {
+        final List<Validator<String>> validators = PasswordStrengthValidators
+                .fromConfig(Console.getConsoleOptions().getUserOptions());
+
+        final List<String> errors = new ArrayList<>();
+
+        for (final Validator<String> validator : validators) {
+            validator.validate(password, errors::add);
+        }
+
+        if (!errors.isEmpty()) {
+            logger.warn("password strenght requirements not satisfied: {}", errors);
+            throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
         }
     }
 }
