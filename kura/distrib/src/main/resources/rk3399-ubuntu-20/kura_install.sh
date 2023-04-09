@@ -14,11 +14,6 @@
 
 INSTALL_DIR=/opt/eclipse
 
-# NetworkManager cannot modify connection settings that are from /etc/network/interfaces
-if test -f /etc/network/interfaces; then
-    mv /etc/network/interfaces /etc/network/interfaces.old
-fi
-
 # create known kura install location
 ln -sf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 
@@ -86,12 +81,26 @@ sed -i "s|/bin/sh KURA_DIR|/bin/bash ${INSTALL_DIR}/kura|" /lib/systemd/system/f
 systemctl daemon-reload
 systemctl enable firewall
 
-# disables cloud-init if exists and allows interface management to network-manager
+# disables cloud-init network management if exists, sets netplan network renderer to NetworkManager allowing interface management to NetworkManager
 if [ -d /etc/cloud/cloud.cfg.d ]; then
     echo "network: {config: disabled}" | sudo tee -a /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg > /dev/null
 fi
-if [ -f /usr/lib/NetworkManager/conf.d/10-globally-managed-devices.conf ]; then
-    rm /usr/lib/NetworkManager/conf.d/10-globally-managed-devices.conf
+if [ -d /etc/netplan/ ]; then
+    cp /etc/netplan/00-installer-config.yaml /etc/netplan/00-installer-config.yaml.BAK
+    cat << EOF >> /etc/netplan/00-installer-config.yaml
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: NetworkManager
+EOF
+fi
+if [ -d /usr/lib/NetworkManager/conf.d/ ]; then
+    TO_REMOVE=$( find /usr/lib/NetworkManager/conf.d/ -type f -name  "*-globally-managed-devices.conf" | awk 'NR==1{print $1}' )
+
+    if [ -f "${TO_REMOVE}" ]; then
+        rm "${TO_REMOVE}"
+    fi
 fi
 
 # disable NTP service
