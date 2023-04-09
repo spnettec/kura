@@ -46,9 +46,9 @@
             type="String"
             cardinality="1"
             required="true"
-            default="Javascript"
+            default="JavaScript"
             description="%scriptEngineNameDesc">
-            <Option label="Javascript" value="Javascript"/>
+            <Option label="JavaScript" value="JavaScript"/>
             <Option label="Groovy" value="Groovy"/>
         </AD>
         
