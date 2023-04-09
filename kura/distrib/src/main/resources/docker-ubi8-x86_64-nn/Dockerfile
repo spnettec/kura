@@ -14,15 +14,18 @@ COPY --from=kura_base /kura-install/kura_*_docker-x86_64-nn_installer.sh /kura-i
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
-  JAVA_HOME=/usr/lib/jvm/jre-1.8.0 \
+  JAVA_HOME=/usr/lib/jvm/jre-17-openjdk \
   SKIP_JAVA_VERSION_CHECK=true \
-  LAUNCHER_VERSION="1.5.800.v20200727-1323"
+  LAUNCHER_VERSION="1.6.400.v20210924-0641" \
+  TZ=Asia/Shanghai \
+  LANG=en_US.UTF-8
 
 RUN true && \
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     microdnf -y update && \
     microdnf -y install \
-        java-1.8.0-openjdk-headless \
+        java-17-openjdk-headless \
+        java-11-openjdk-headless \
         procps \
         zip \
         unzip \
@@ -50,13 +53,29 @@ RUN true && \
     if [ "$PACKED" == "true" ]; then touch /kura.packed && sh pack-kura; fi  && \
     chmod +x /usr/local/bin/*  && \
     unpack-kura  && \
-    dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp"  && \
-    add-config-ini "felix.fileinstall.disableNio2=true"  && \
-    add-config-ini "felix.fileinstall.dir=/load"  && \
+    export JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" && \
+    export PATH=$JAVA_HOME/bin:$PATH && \
+    export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar && \
+    dp-install-local "/kura-install/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
+    # dp-install-local "/kura-install/yofc-iot-apps-serial_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
+    # add-config-ini "felix.fileinstall.disableNio2=true" && \
+    # add-config-ini "felix.fileinstall.dir=/load" && \
+    rm -rf /kura-install && \
+    microdnf -y remove java-11-openjdk-headless && \
+    microdnf -y clean all && rm -rf /var/cache/yum && \
     pack-kura
 
 EXPOSE 443
+EXPOSE 1883
+EXPOSE 8088
 
-VOLUME ["/load"]
+VOLUME ["/load","/opt/eclipse"]
 
 ENTRYPOINT ["/usr/local/bin/kura-entry-point"]
