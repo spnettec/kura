@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.kura.camel.cloud.factory.internal;
 
+import java.util.Objects;
+
 /**
  * The configuration of a Camel based {@link org.eclipse.kura.cloud.CloudService} instance
  */
@@ -19,6 +21,7 @@ public class ServiceConfiguration {
 
     private String xml;
     private String initCode;
+    private String scriptEngineName;
     private boolean enableJmx;
 
     /**
@@ -47,6 +50,14 @@ public class ServiceConfiguration {
         this.enableJmx = enableJmx;
     }
 
+    public String getScriptEngineName() {
+        return scriptEngineName;
+    }
+
+    public void setScriptEngineName(String scriptEngineName) {
+        this.scriptEngineName = scriptEngineName;
+    }
+
     public boolean isEnableJmx() {
         return this.enableJmx;
     }
@@ -60,12 +71,7 @@ public class ServiceConfiguration {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (this.enableJmx ? 1231 : 1237);
-        result = prime * result + (this.initCode == null ? 0 : this.initCode.hashCode());
-        result = prime * result + (this.xml == null ? 0 : this.xml.hashCode());
-        return result;
+        return Objects.hash(enableJmx, initCode, scriptEngineName, xml);
     }
 
     @Override
@@ -80,24 +86,8 @@ public class ServiceConfiguration {
             return false;
         }
         ServiceConfiguration other = (ServiceConfiguration) obj;
-        if (this.enableJmx != other.enableJmx) {
-            return false;
-        }
-        if (this.initCode == null) {
-            if (other.initCode != null) {
-                return false;
-            }
-        } else if (!this.initCode.equals(other.initCode)) {
-            return false;
-        }
-        if (this.xml == null) {
-            if (other.xml != null) {
-                return false;
-            }
-        } else if (!this.xml.equals(other.xml)) {
-            return false;
-        }
-        return true;
+        return enableJmx == other.enableJmx && Objects.equals(initCode, other.initCode)
+                && Objects.equals(scriptEngineName, other.scriptEngineName) && Objects.equals(xml, other.xml);
     }
 
 }

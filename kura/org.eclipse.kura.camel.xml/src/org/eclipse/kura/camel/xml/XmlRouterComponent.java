@@ -53,6 +53,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
     private static final String LANGUAGE_PREREQS = "language.prereqs";
     private static final String DISABLE_JMX = "disableJmx";
     private static final String INIT_CODE = "initCode";
+    private static final String SCRIPT_ENGINE_NAME = "scriptEngineName";
 
     private final BundleContext bundleContext;
 
@@ -86,6 +87,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
                 asString(properties, CLOUD_SERVICE_PREREQS));
 
         final String initCodeTemp = parseInitCode(properties);
+        final String scriptEngineName = parseScriptEngineName(properties);
 
         // set component requirements
 
@@ -120,7 +122,8 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             // call init code before context start
 
             builder.addBeforeStart(camelContext -> {
-                scriptInitCamelContext(camelContext, initCodeTemp, XmlRouterComponent.class.getClassLoader());
+                scriptInitCamelContext(camelContext, initCodeTemp, scriptEngineName,
+                        XmlRouterComponent.class.getClassLoader());
             });
         }
 
@@ -215,6 +218,10 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
     private static String parseInitCode(final Map<String, Object> properties) {
         return Configuration.asString(properties, INIT_CODE, "");
+    }
+
+    private static String parseScriptEngineName(final Map<String, Object> properties) {
+        return Configuration.asString(properties, SCRIPT_ENGINE_NAME, "Javascript");
     }
 
     @Override

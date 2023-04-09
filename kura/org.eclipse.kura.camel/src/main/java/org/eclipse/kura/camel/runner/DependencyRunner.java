@@ -123,6 +123,7 @@ public class DependencyRunner<C> {
             boolean satisfied = dep.isSatisfied();
             logger.debug("Dependency - {}, satisied: {}", dep, satisfied);
             if (!satisfied) {
+                logger.warn("Dependency - {}, isnot satisied", dep);
                 return false;
             }
         }

@@ -305,6 +305,16 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-netty:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-util-json:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-xml-jaxp:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

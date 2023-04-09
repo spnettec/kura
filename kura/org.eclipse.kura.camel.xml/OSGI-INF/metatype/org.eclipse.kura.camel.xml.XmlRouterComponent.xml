@@ -41,7 +41,17 @@
             required="false"
             max="2147483647"
             />
-
+        <AD id="scriptEngineName"  
+            name="%scriptEngineName"
+            type="String"
+            cardinality="1"
+            required="true"
+            default="Javascript"
+            description="%scriptEngineNameDesc">
+            <Option label="Javascript" value="Javascript"/>
+            <Option label="Groovy" value="Groovy"/>
+        </AD>
+        
         <AD id="initCode"
             name="%initCode"
             type="String"

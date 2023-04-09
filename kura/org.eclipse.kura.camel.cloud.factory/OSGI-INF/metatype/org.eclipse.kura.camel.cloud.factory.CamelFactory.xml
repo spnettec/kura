@@ -24,6 +24,17 @@
             cardinality="1"
             required="true"
             description="%xmlDesc"/>
+
+        <AD id="scriptEngineName"  
+            name="%scriptEngineName"
+            type="String"
+            cardinality="1"
+            required="true"
+            default="Javascript"
+            description="%scriptEngineNameDesc">
+            <Option label="Javascript" value="Javascript"/>
+            <Option label="Groovy" value="Groovy"/>
+        </AD>
             
         <AD id="initCode"
             name="%initCode"

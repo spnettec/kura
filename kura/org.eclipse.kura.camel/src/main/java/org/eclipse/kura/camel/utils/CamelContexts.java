@@ -42,7 +42,7 @@ public final class CamelContexts {
      *             if calling the script fails
      */
     public static void scriptInitCamelContext(final CamelContext context, final String initCode,
-            final ClassLoader classLoader) throws ScriptException {
+            final String scriptEngineName, final ClassLoader classLoader) throws ScriptException {
 
         // pre-flight check
 
@@ -54,12 +54,13 @@ public final class CamelContexts {
 
             // setup runner
 
-            final ScriptRunner runner = create(classLoader, "JavaScript", initCode);
+            final ScriptRunner runner = create(classLoader, scriptEngineName, initCode);
 
             // setup arguments
 
             final SimpleBindings bindings = new SimpleBindings();
             bindings.put("camelContext", context);
+            bindings.put("logger", logger);
 
             // perform call
 

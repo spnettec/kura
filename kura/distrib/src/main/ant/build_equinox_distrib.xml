@@ -1667,6 +1667,10 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-spring_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-spring-xml_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-netty_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-util-json_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-xml-jaxp_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"

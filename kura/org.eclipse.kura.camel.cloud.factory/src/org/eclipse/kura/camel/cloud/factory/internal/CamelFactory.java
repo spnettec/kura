@@ -56,6 +56,7 @@ public class CamelFactory implements ConfigurableComponent, CamelCloudService {
         serviceConfiguration.setXml(asString(properties, "xml"));
         serviceConfiguration.setInitCode(asString(properties, "initCode"));
         serviceConfiguration.setEnableJmx(asBoolean(properties, "enableJmx", true));
+        serviceConfiguration.setScriptEngineName(asString(properties, "scriptEngineName"));
 
         createService(serviceConfiguration);
     }

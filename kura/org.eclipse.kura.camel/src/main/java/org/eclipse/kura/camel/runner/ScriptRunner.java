@@ -118,7 +118,7 @@ public abstract class ScriptRunner {
                 Iterator<ScriptEngineFactory> it = svcLoader.iterator();
                 while (it.hasNext()) {
                     ScriptEngineFactory factory = it.next();
-                    if (!factories.stream().anyMatch(f -> f.getClass() == factory.getClass())) {
+                    if (factories.stream().noneMatch(f -> f.getClass() == factory.getClass())) {
                         factory.getNames().forEach(name -> manager.registerEngineName(name, factory));
                     }
                 }
@@ -151,12 +151,12 @@ public abstract class ScriptRunner {
      * Run a Callable while swapping the context class loader
      *
      * @param classLoader
-     *                        the class loader to set while calling the code
+     *            the class loader to set while calling the code
      * @param code
-     *                        the code to call
+     *            the code to call
      * @return the return value of the code
      * @throws ScriptException
-     *                             if anything goes wrong
+     *             if anything goes wrong
      */
     public static <T> T runWithClassLoader(final ClassLoader classLoader, final Callable<T> code)
             throws ScriptException {

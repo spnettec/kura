@@ -140,7 +140,8 @@ public class XmlCamelCloudService {
     }
 
     private void callInitCode(final CamelContext router) throws ScriptException {
-        scriptInitCamelContext(router, this.configuration.getInitCode(), XmlCamelCloudService.class.getClassLoader());
+        scriptInitCamelContext(router, this.configuration.getInitCode(), this.configuration.getScriptEngineName(),
+                XmlCamelCloudService.class.getClassLoader());
     }
 
 }

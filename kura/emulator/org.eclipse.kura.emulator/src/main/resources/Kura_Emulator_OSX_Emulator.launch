@@ -286,6 +286,7 @@
         <setEntry value="org.apache.camel.camel-jms@default:default"/>
         <setEntry value="org.apache.camel.camel-log@default:default"/>
         <setEntry value="org.apache.camel.camel-management-api@default:default"/>
+        <setEntry value="org.apache.camel.camel-netty@default:default"/>
         <setEntry value="org.apache.camel.camel-paho-mqtt5@default:default"/>
         <setEntry value="org.apache.camel.camel-paho@default:default"/>
         <setEntry value="org.apache.camel.camel-seda@default:default"/>
@@ -295,6 +296,7 @@
         <setEntry value="org.apache.camel.camel-stream@default:default"/>
         <setEntry value="org.apache.camel.camel-support@default:default"/>
         <setEntry value="org.apache.camel.camel-timer@default:default"/>
+        <setEntry value="org.apache.camel.camel-util-json@default:default"/>
         <setEntry value="org.apache.camel.camel-util@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io-dsl@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io-util@default:default"/>
