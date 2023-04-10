@@ -1,5 +1,5 @@
 ARG base_image_version=latest
-FROM base-kura-docker-x86_64:${base_image_version} AS kura_base
+FROM base-kura-docker:${base_image_version} AS kura_base
 FROM alpine:latest
 
 MAINTAINER Eclipse Kura Developers <kura-dev@eclipse.org>
@@ -11,17 +11,18 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 COPY bin/ /usr/local/bin/
 
 COPY --from=kura_base /kura-install/kura_*_docker-x86_64-nn_installer.sh /kura-install/
+COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
   JAVA_HOME=/usr/lib/jvm/default-jvm \
   KURA_DIR=/opt/eclipse/kura \
-  LAUNCHER_VERSION="1.5.800.v20200727-1323" 
+  LAUNCHER_VERSION="1.6.400.v20210924-0641" 
 
 
 
 RUN chmod a+x -R /usr/local/bin && \
     apk update && \
-    apk --no-cache add openjdk8 bash zip curl gcompat procps unzip gzip tar && \
+    apk --no-cache add openjdk8 openjdk17 bash zip curl gcompat procps unzip gzip tar && \
     apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
     apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
     /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
@@ -32,7 +33,7 @@ RUN chmod a+x -R /usr/local/bin && \
     test -x "${KURA_DIR}/bin/start_kura.sh"&& \
     chmod a+x /usr/local/bin/* && \
     cd /root && \
-    rm -Rf /context /kura /root/.m2 /kura-install && \
+    rm -Rf /context /kura /root/.m2 && \
     install -m 0777 -d "${KURA_DIR}/data" && \
     ln -s /bin/bash /usr/bin/bash && \
     mkdir -p ${KURA_DIR}/packages && \
@@ -40,9 +41,20 @@ RUN chmod a+x -R /usr/local/bin && \
     PATH=$PATH":/usr/lib/jvm/java-1.8-openjdk/bin" && \
     unpack-kura && \
     sed -i "s/\-printf \'\%P.n\'//g" /usr/local/bin/dp-install && \
-    dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
-    add-config-ini "felix.fileinstall.disableNio2=true" && \
-    add-config-ini "felix.fileinstall.dir=/load" && \
+    dp-install-local "/kura-install/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
+    # dp-install-local "/kura-install/yofc-iot-apps-serial_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
+    # dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
+    # add-config-ini "felix.fileinstall.disableNio2=true" && \
+    # add-config-ini "felix.fileinstall.dir=/load" && \
+    apk del openjdk8 &&\
+    rm -Rf /kura-install &&\
     pack-kura
 
 EXPOSE 443

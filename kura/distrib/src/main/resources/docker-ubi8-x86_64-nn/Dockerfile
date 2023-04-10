@@ -1,5 +1,5 @@
 ARG base_image_version=latest
-FROM base-kura-docker-x86_64:${base_image_version} AS kura_base
+FROM base-kura-docker:${base_image_version} AS kura_base
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 MAINTAINER Eclipse Kura Developers <kura-dev@eclipse.org>
@@ -11,6 +11,7 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 COPY bin/ /usr/local/bin/
 
 COPY --from=kura_base /kura-install/kura_*_docker-x86_64-nn_installer.sh /kura-install/
+COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
@@ -41,7 +42,7 @@ RUN true && \
         findutils \
     && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
-    /kura-install/kura_*_docker-x86_64-nn_installer.sh && rm -rf /kura-install/ && \
+    /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
     chmod a+rw -R /opt/eclipse && \
     find /opt/eclipse -type d | xargs chmod a+x && \
     chmod a+rwx /var/log && \
@@ -67,7 +68,7 @@ RUN true && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
     # add-config-ini "felix.fileinstall.disableNio2=true" && \
     # add-config-ini "felix.fileinstall.dir=/load" && \
-    rm -rf /kura-install && \
+    rm -rf /kura-install/ && \
     microdnf -y remove java-11-openjdk-headless && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
     pack-kura

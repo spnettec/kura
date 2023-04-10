@@ -2004,20 +2004,18 @@
                             <configuration>
                               <target>
                                 <copy todir="${project.build.directory}" file="${project.basedir}/src/main/resources/docker-x86_64-nn/Dockerfile" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx/target/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.modbus/target/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb/target/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="~/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1/target/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx/target/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.modbus/target/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb/target/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1/target/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" />
                                 <exec executable="docker" dir="${project.build.directory}" failonerror="true">
                                     <arg value="build"/>
                                     <arg value="-t"/>
-                                    <arg value="base-kura-docker:${project.version}"/>
-                                    <arg value="-t"/>
-                                    <arg value="base-kura-docker-x86_64:${project.version}"/>
+                                    <arg value="base-kura-docker:latest"/>
                                     <arg value="."/>
                                 </exec>
                               </target>
@@ -2087,11 +2085,9 @@
                                 <arguments>
                                     <argument>build</argument>
                                     <argument>--build-arg</argument>
-                                    <argument>base_image_version=${project.version}</argument>
+                                    <argument>base_image_version=latest</argument>
                                     <argument>-t</argument>
-                                    <argument>kura-ubi8:${project.version}</argument>
-                                    <argument>-t</argument>
-                                    <argument>kura-ubi8-x86_64:${project.version}</argument>
+                                    <argument>kura-ubi8:latest</argument>
                                     <argument>.</argument>
                                 </arguments>
                             </configuration>
@@ -2133,11 +2129,9 @@
                                     <arguments>
                                         <argument>build</argument>
                                     <argument>--build-arg</argument>
-                                    <argument>base_image_version=${project.version}</argument>
+                                    <argument>base_image_version=latest</argument>
                                     <argument>-t</argument>
-                                    <argument>kura-alpine:${project.version}</argument>
-                                    <argument>-t</argument>
-                                    <argument>kura-alpine-x86_64:${project.version}</argument>
+                                    <argument>kura-alpine:latest</argument>
                                     <argument>.</argument>
                                 </arguments>
                             </configuration>
