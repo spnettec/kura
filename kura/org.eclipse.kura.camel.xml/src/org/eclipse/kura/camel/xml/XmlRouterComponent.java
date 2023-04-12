@@ -62,6 +62,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
     private Map<String, String> cloudServiceRequirements = new HashMap<>();
     private String initCode = "";
+    private String scriptEngineName = "";
 
     private boolean disableJmx;
 
@@ -87,7 +88,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
                 asString(properties, CLOUD_SERVICE_PREREQS));
 
         final String initCodeTemp = parseInitCode(properties);
-        final String scriptEngineName = parseScriptEngineName(properties);
+        final String scriptEngineNameTemp = parseScriptEngineName(properties);
 
         // set component requirements
 
@@ -122,7 +123,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             // call init code before context start
 
             builder.addBeforeStart(camelContext -> {
-                scriptInitCamelContext(camelContext, initCodeTemp, scriptEngineName,
+                scriptInitCamelContext(camelContext, initCodeTemp, scriptEngineNameTemp,
                         XmlRouterComponent.class.getClassLoader());
             });
         }
@@ -142,6 +143,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         this.requiredLanguages = newRequiredLanguages;
         this.cloudServiceRequirements = cloudServiceRequirementsTemp;
         this.initCode = initCodeTemp;
+        this.scriptEngineName = scriptEngineNameTemp;
         this.disableJmx = disableJmxTemp;
     }
 
@@ -157,6 +159,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
                 asString(properties, CLOUD_SERVICE_PREREQS));
 
         final String initCodeTemp = parseInitCode(properties);
+        final String scriptEngineNameTemp = parseScriptEngineName(properties);
 
         if (this.disableJmx != disableJmxTemp) {
             logger.debug("Require restart due to '{}' change", DISABLE_JMX);
@@ -179,6 +182,11 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         }
 
         if (!this.initCode.equals(initCodeTemp)) {
+            logger.debug("Require restart due to '{}' change", INIT_CODE);
+            return true;
+        }
+
+        if (!this.scriptEngineName.equals(scriptEngineNameTemp)) {
             logger.debug("Require restart due to '{}' change", INIT_CODE);
             return true;
         }
