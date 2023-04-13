@@ -1182,6 +1182,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.aries.spifly:org.apache.aries.spifly.dynamic.framework.extension:${org.apache.aries.spifly.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.aries:org.apache.aries.util:${org.apache.aries.util.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

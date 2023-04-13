@@ -212,7 +212,7 @@
         <setEntry value="groovy-sql@default:false"/>
         <setEntry value="groovy-templates@default:false"/>
         <setEntry value="groovy-xml@default:false"/>
-        <setEntry value="groovy@4:default"/>
+        <setEntry value="groovy@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>
         <setEntry value="io.netty.codec-http2@default:default"/>
@@ -257,7 +257,7 @@
         <setEntry value="org.apache.activemq.artemis-quorum-api@default:default"/>
         <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
         <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
-        <setEntry value="org.apache.aries.spifly.dynamic.bundle@1:default"/>
+        <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
         <setEntry value="org.apache.camel.camel-amqp@default:default"/>
         <setEntry value="org.apache.camel.camel-api@default:default"/>
         <setEntry value="org.apache.camel.camel-attachments@default:default"/>
