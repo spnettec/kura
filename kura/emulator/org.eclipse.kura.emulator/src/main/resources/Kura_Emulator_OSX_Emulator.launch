@@ -212,7 +212,7 @@
         <setEntry value="groovy-sql@default:false"/>
         <setEntry value="groovy-templates@default:false"/>
         <setEntry value="groovy-xml@default:false"/>
-        <setEntry value="groovy@3:default"/>
+        <setEntry value="groovy@4:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>
         <setEntry value="io.netty.codec-http2@default:default"/>
@@ -277,7 +277,7 @@
         <setEntry value="org.apache.camel.camel-endpointdsl-support@default:default"/>
         <setEntry value="org.apache.camel.camel-endpointdsl@default:default"/>
         <setEntry value="org.apache.camel.camel-file@default:default"/>
-        <setEntry value="org.apache.camel.camel-groovy@3:default"/>
+        <setEntry value="org.apache.camel.camel-groovy@default:default"/>
         <setEntry value="org.apache.camel.camel-gson@default:default"/>
         <setEntry value="org.apache.camel.camel-http-base@default:default"/>
         <setEntry value="org.apache.camel.camel-http-common@default:default"/>
