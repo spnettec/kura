@@ -1233,6 +1233,12 @@
 								</artifact>
 
 								<artifact>
+									<id>org.eclipse.platform:org.eclipse.equinox.wireadmin:jar:${org.eclipse.equinox.wireadmin-mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+
+								<artifact>
 									<id>org.eclipse.jetty:jetty-http:jar:${org.eclipse.jetty.http.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
