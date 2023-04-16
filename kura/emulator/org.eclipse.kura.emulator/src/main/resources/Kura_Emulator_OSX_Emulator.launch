@@ -208,7 +208,6 @@
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
         <setEntry value="groovy-json@default:false"/>
-        <setEntry value="groovy-jsr223@default:false"/>
         <setEntry value="groovy-sql@default:false"/>
         <setEntry value="groovy-templates@default:false"/>
         <setEntry value="groovy-xml@default:false"/>
@@ -366,7 +365,6 @@
         <setEntry value="org.eclipse.equinox.preferences@default:default"/>
         <setEntry value="org.eclipse.equinox.registry@default:default"/>
         <setEntry value="org.eclipse.equinox.util@default:default"/>
-        <setEntry value="org.eclipse.equinox.wireadmin@default:default"/>
         <setEntry value="org.eclipse.jetty.http@default:default"/>
         <setEntry value="org.eclipse.jetty.io@default:default"/>
         <setEntry value="org.eclipse.jetty.security@default:default"/>

@@ -34,6 +34,24 @@
 
     <build>
         <plugins>
+        	<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.0.0</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>read-project-properties</goal>
+						</goals>
+						<configuration>
+							<files>
+								<file>${basedir}/../../target-platform/config/kura.target-platform.build.properties</file>
+							</files>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -87,6 +105,11 @@
                                     <groupId>com.ibm.icu</groupId>
                                     <artifactId>icu4j</artifactId>
                                     <version>${icu.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.codehaus.groovy</groupId>
+                                    <artifactId>groovy-jsr223</artifactId>
+                                    <version>${org.codehaus.groovy.version}</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

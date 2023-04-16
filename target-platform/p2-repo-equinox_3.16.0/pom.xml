@@ -745,11 +745,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-jsr223:${org.codehaus.groovy.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>org.apache.httpcomponents:httpclient-osgi:${org.apache.httpcomponents.httpclient-osgi.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -1233,12 +1228,6 @@
 								</artifact>
 								<artifact>
 									<id>org.eclipse.platform:org.eclipse.equinox.util:jar:${org.eclipse.equinox.util-mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-
-								<artifact>
-									<id>org.eclipse.platform:org.eclipse.equinox.wireadmin:jar:${org.eclipse.equinox.wireadmin-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

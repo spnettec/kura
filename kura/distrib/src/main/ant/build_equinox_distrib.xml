@@ -1007,8 +1007,6 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.felix.deploymentadmin_${org.apache.felix.deploymentadmin.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.wireadmin_${org.eclipse.equinox.wireadmin.version}.jar@3:start" />
-            <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.http.jetty_${org.eclipse.equinox.http.jetty.version}.jar@5" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.jetty.customizer_${org.eclipse.kura.jetty.customizer.version}.jar" />
@@ -1763,15 +1761,12 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-json_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-jsr223_${org.codehaus.groovy.version}.jar@3" />	
-			
-			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-datetime_${org.codehaus.groovy.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/groovy-dateutil_${org.codehaus.groovy.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@2:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@1:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
