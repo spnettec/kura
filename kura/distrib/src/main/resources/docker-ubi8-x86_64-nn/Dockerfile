@@ -57,12 +57,9 @@ RUN true && \
     export JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" && \
     export PATH=$JAVA_HOME/bin:$PATH && \
     export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar && \
-    dp-install-local "/kura-install/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
-    # dp-install-local "/kura-install/yofc-iot-apps-serial_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \

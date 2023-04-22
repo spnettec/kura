@@ -1701,6 +1701,8 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-xml-io-util_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-vertx_${camel-core-osgi.version}.jar@2:start" />
+			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.karaf.camel-core-osgi_${camel-core-osgi.version}.jar@2:start" />
 			
 		
@@ -1936,6 +1938,25 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.github.jinahya.bit-io_${bit-io.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-compress_${commons-compress.version}.jar@4:start"/>
+			<!-- vertx config -->
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.core_${vertx.version}.jar@4:start"/>
+    		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.web-common_${vertx.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.web_${vertx.version}.jar@4:start"/>
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.bridge-common_${vertx.version}.jar@4:start"/>
+    		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.web-client_${vertx.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.uri-template_${vertx.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.tcp-eventbus-bridge_${vertx.version}.jar@4:start"/>
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.mqtt_${vertx.version}.jar@4:start"/>
+    		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.auth-common_${vertx.version}.jar@4:start"/>
 		</propertyfile>
 	</target>
 

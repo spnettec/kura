@@ -41,12 +41,9 @@ RUN chmod a+x -R /usr/local/bin && \
     PATH=$PATH":/usr/lib/jvm/java-1.8-openjdk/bin" && \
     unpack-kura && \
     sed -i "s/\-printf \'\%P.n\'//g" /usr/local/bin/dp-install && \
-    dp-install-local "/kura-install/yofc-iot-repack-vertx_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
-    # dp-install-local "/kura-install/yofc-iot-apps-serial_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-modbus_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \

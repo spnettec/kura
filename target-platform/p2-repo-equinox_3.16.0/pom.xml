@@ -188,6 +188,54 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								
+								<!-- vertx  -->
+								<artifact>
+									<id>io.vertx:vertx-core:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-web-common:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-web:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-bridge-common:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-web-client:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-uri-template:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-tcp-eventbus-bridge:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-mqtt:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-auth-common:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								
 
 								<!-- <artifact><source>true</source><id>jakarta.jws:jakarta.jws-api:jar:${jakarta.jws-api.version}</id></artifact>-->
 
@@ -216,6 +264,11 @@
 								</artifact>
 								<artifact>
 									<id>org.apache.camel:camel-core:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-vertx:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

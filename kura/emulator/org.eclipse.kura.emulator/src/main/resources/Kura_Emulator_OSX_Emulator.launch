@@ -231,6 +231,15 @@
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
+        <setEntry value="io.vertx.auth-common@default:default"/>
+        <setEntry value="io.vertx.bridge-common@default:default"/>
+        <setEntry value="io.vertx.core@default:default"/>
+        <setEntry value="io.vertx.mqtt@default:default"/>
+        <setEntry value="io.vertx.tcp-eventbus-bridge@default:default"/>
+        <setEntry value="io.vertx.uri-template@default:default"/>
+        <setEntry value="io.vertx.web-client@default:default"/>
+        <setEntry value="io.vertx.web-common@default:default"/>
+        <setEntry value="io.vertx.web@default:default"/>
         <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.enterprise.cdi-api@default:default"/>
@@ -297,6 +306,7 @@
         <setEntry value="org.apache.camel.camel-timer@default:default"/>
         <setEntry value="org.apache.camel.camel-util-json@default:default"/>
         <setEntry value="org.apache.camel.camel-util@default:default"/>
+        <setEntry value="org.apache.camel.camel-vertx@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io-dsl@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io-util@default:default"/>
         <setEntry value="org.apache.camel.camel-xml-io@default:default"/>
@@ -449,7 +459,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-ot3001@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-repack-vertx@default:default"/>
         <setEntry value="org.eclipse.kura.ai.triton.server@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
