@@ -660,6 +660,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-direct:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-servlet:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

@@ -1664,6 +1664,8 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-management-api_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-seda_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-direct_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-servlet_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"

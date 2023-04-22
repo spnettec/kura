@@ -281,6 +281,7 @@
         <setEntry value="org.apache.camel.camel-core-reifier@default:default"/>
         <setEntry value="org.apache.camel.camel-core-xml@default:default"/>
         <setEntry value="org.apache.camel.camel-core@default:default"/>
+        <setEntry value="org.apache.camel.camel-direct@default:default"/>
         <setEntry value="org.apache.camel.camel-dsl-support@default:default"/>
         <setEntry value="org.apache.camel.camel-endpointdsl-support@default:default"/>
         <setEntry value="org.apache.camel.camel-endpointdsl@default:default"/>
