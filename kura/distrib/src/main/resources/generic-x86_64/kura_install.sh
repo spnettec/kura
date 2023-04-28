@@ -56,6 +56,8 @@ systemctl disable chrony
 systemctl enable NetworkManager
 systemctl start NetworkManager
 systemctl enable ModemManager
+systemctl stop dnsmasq
+systemctl disable dnsmasq
 
 # set up users and grant permissions
 cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
@@ -121,6 +123,18 @@ if command -v timedatectl > /dev/null ;
   then
     timedatectl set-ntp false
 fi
+
+#set up bind/named
+mkdir -p /var/named
+chown -R bind /var/named
+cp ${INSTALL_DIR}/kura/install/named.ca /var/named/
+cp ${INSTALL_DIR}/kura/install/named.rfc1912.zones /etc/
+cp ${INSTALL_DIR}/kura/install/usr.sbin.named /etc/apparmor.d/
+if [ ! -f "/etc/bind/rndc.key" ] ; then
+    rndc-confgen -r /dev/urandom -a
+fi
+chown bind:bind /etc/bind/rndc.key
+chmod 600 /etc/bind/rndc.key
 
 # set up logrotate - no need to restart as it is a cronjob
 cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate-kura.conf
