@@ -96,11 +96,11 @@
         name="org.sonarlint.eclipse.feature.feature.group"
         optional="true"/>
     <repository
-        url="https://repo1.maven.org/maven2/.m2e/connectors/m2eclipse-tycho/0.9.0/N/LATEST/"/>
+        url="github.com/tesla/m2eclipse-tycho/releases/download/latest/"/>
     <repository
         url="http://mtoolkit-neon.s3-website-us-east-1.amazonaws.com"/>
     <repository
-        url="http://update.eclemma.org/"/>
+        url="https://download.eclipse.org/eclemma/releases/3.1.6/"/>
     <repository
         url="https://eclipse-uc.sonarlint.org/"/>
     <description>Install the tools needed in the IDE to work with the source code for ${scope.project.label}</description>
