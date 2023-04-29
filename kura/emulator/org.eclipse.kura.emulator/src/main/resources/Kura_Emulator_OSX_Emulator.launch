@@ -97,7 +97,6 @@
         <setEntry value="org.eclipse.kura.internal.driver.ibeacon.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.s7plc.test"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider.test"/>
         <setEntry value="org.eclipse.kura.linux.bluetooth"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
@@ -230,6 +229,7 @@
         <setEntry value="io.netty.tcnative-classes@default:default"/>
         <setEntry value="io.netty.transport-classes-epoll@default:default"/>
         <setEntry value="io.netty.transport-classes-kqueue@default:default"/>
+        <setEntry value="io.netty.transport-native-epoll@default:default"/>
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
@@ -297,6 +297,7 @@
         <setEntry value="org.apache.camel.camel-jms@default:default"/>
         <setEntry value="org.apache.camel.camel-log@default:default"/>
         <setEntry value="org.apache.camel.camel-management-api@default:default"/>
+        <setEntry value="org.apache.camel.camel-netty-http@default:default"/>
         <setEntry value="org.apache.camel.camel-netty@default:default"/>
         <setEntry value="org.apache.camel.camel-paho-mqtt5@default:default"/>
         <setEntry value="org.apache.camel.camel-paho@default:default"/>
