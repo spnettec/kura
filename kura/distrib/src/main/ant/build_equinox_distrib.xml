@@ -1677,6 +1677,10 @@ fi]]>
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-netty_${org.apache.camel.version}.jar@4:start" />
     		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-netty-http_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
+    	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-ref_${org.apache.camel.version}.jar@4:start" />
+    		<entry key="osgi.bundles" operation="+"
     	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-util-json_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-xml-jaxp_${org.apache.camel.version}.jar@4:start" />
@@ -1705,9 +1709,9 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-xml-io-util_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-vertx_${camel-core-osgi.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.camel-vertx_${org.apache.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.karaf.camel-core-osgi_${camel-core-osgi.version}.jar@4:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.camel.karaf.camel-core-osgi_${org.apache.camel.version}.jar@4:start" />
 			
 		
 			<entry key="osgi.bundles" operation="+"

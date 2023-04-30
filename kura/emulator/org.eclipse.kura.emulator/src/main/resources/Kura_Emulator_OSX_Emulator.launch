@@ -301,6 +301,7 @@
         <setEntry value="org.apache.camel.camel-netty@default:default"/>
         <setEntry value="org.apache.camel.camel-paho-mqtt5@default:default"/>
         <setEntry value="org.apache.camel.camel-paho@default:default"/>
+        <setEntry value="org.apache.camel.camel-ref@default:default"/>
         <setEntry value="org.apache.camel.camel-seda@default:default"/>
         <setEntry value="org.apache.camel.camel-servlet@default:default"/>
         <setEntry value="org.apache.camel.camel-spring-xml@default:default"/>

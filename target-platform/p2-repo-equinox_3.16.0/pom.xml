@@ -273,6 +273,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-ref:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-core-languages:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -702,7 +707,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.camel.karaf:camel-core-osgi:${camel-core-osgi.version}</id>
+									<id>org.apache.camel.karaf:camel-core-osgi:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

@@ -16,7 +16,7 @@ import static java.lang.String.format;
 import static org.eclipse.kura.camel.component.Configuration.asBoolean;
 import static org.eclipse.kura.camel.component.Configuration.asString;
 import static org.eclipse.kura.camel.runner.CamelRunner.createOsgiRegistry;
-import static org.eclipse.kura.camel.utils.CamelContexts.scriptInitCamelContext;
+import static org.eclipse.kura.camel.runner.ScriptRunner.create;
 import static org.osgi.framework.FrameworkUtil.getBundle;
 
 import java.util.Arrays;
@@ -26,16 +26,22 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.script.SimpleBindings;
+
 import org.eclipse.kura.camel.bean.PayloadFactory;
 import org.eclipse.kura.camel.component.AbstractXmlCamelComponent;
 import org.eclipse.kura.camel.component.Configuration;
 import org.eclipse.kura.camel.runner.CamelRunner.Builder;
+import org.eclipse.kura.camel.runner.ScriptRunner;
 import org.eclipse.kura.cloud.CloudService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.client.WebClient;
 
 /**
  * A ready to run XML based Apache Camel component
@@ -64,11 +70,23 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
     private String initCode = "";
     private String scriptEngineName = "";
 
+    private Vertx vertx;
+    private WebClient webClient;
+
     private boolean disableJmx;
 
     public XmlRouterComponent() {
         super("xml.data");
         this.bundleContext = FrameworkUtil.getBundle(XmlRouterComponent.class).getBundleContext();
+    }
+
+    @Override
+    protected void stop() throws Exception {
+        super.stop();
+        if (webClient != null) {
+            webClient.close();
+            webClient = null;
+        }
     }
 
     @Override
@@ -119,12 +137,41 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         }
 
         if (!initCodeTemp.isEmpty()) {
+            if (vertx != null) {
+                if (webClient != null) {
+                    webClient.close();
+                    webClient = WebClient.create(vertx);
+                } else {
+                    webClient = WebClient.create(vertx);
+                }
+            }
 
             // call init code before context start
 
             builder.addBeforeStart(camelContext -> {
-                scriptInitCamelContext(camelContext, initCodeTemp, scriptEngineNameTemp,
-                        XmlRouterComponent.class.getClassLoader());
+                if (initCode == null || initCode.isEmpty()) {
+                    return;
+                }
+
+                try {
+
+                    final ScriptRunner runner = create(XmlRouterComponent.class.getClassLoader(), scriptEngineName,
+                            initCode);
+
+                    final SimpleBindings bindings = new SimpleBindings();
+                    bindings.put("camelContext", camelContext);
+                    bindings.put("logger", logger);
+                    if (vertx != null) {
+                        bindings.put("webClient", webClient);
+                        bindings.put("vertx", vertx);
+                    }
+                    // perform call
+
+                    runner.run(bindings);
+                } catch (final Exception e) {
+                    logger.warn("Failed to run init code", e);
+                    throw e;
+                }
             });
         }
 
