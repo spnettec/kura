@@ -138,12 +138,13 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
         if (!initCodeTemp.isEmpty()) {
             if (vertx != null) {
-                if (webClient != null) {
-                    webClient.close();
-                    webClient = WebClient.create(vertx);
-                } else {
-                    webClient = WebClient.create(vertx);
-                }
+                vertx = Vertx.vertx();
+            }
+            if (webClient != null) {
+                webClient.close();
+                webClient = WebClient.create(vertx);
+            } else {
+                webClient = WebClient.create(vertx);
             }
 
             // call init code before context start
@@ -161,10 +162,9 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
                     final SimpleBindings bindings = new SimpleBindings();
                     bindings.put("camelContext", camelContext);
                     bindings.put("logger", logger);
-                    if (vertx != null) {
-                        bindings.put("webClient", webClient);
-                        bindings.put("vertx", vertx);
-                    }
+
+                    bindings.put("webClient", webClient);
+                    bindings.put("vertx", vertx);
                     // perform call
 
                     runner.run(bindings);
