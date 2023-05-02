@@ -137,7 +137,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         }
 
         if (!initCodeTemp.isEmpty()) {
-            if (vertx != null) {
+            if (vertx == null) {
                 vertx = Vertx.vertx();
             }
             if (webClient != null) {
