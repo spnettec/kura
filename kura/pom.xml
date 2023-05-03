@@ -266,6 +266,9 @@
                     --add-opens java.base/java.util=ALL-UNNAMED
                 </tycho.surefire.testenv.args>
             </properties>
+            <modules>
+                <module>features</module>
+            </modules>
         </profile>
         <profile>
             <id>default</id>
