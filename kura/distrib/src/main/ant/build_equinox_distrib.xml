@@ -1268,7 +1268,7 @@ fi]]>
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar@4:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar@3:start" />
         </propertyfile>
     </target>
 
@@ -1501,7 +1501,7 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.component.join.provider_${org.eclipse.kura.wire.component.join.provider.version}.jar@5:start" />
     		<entry key="osgi.bundles" operation="+"
-    	        value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar@5:start" />
+    	        value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar@3:start" />
         </propertyfile>
     </target>
 
@@ -1790,8 +1790,6 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree_${org.ow2.asm-tree.version}.jar@3:start" />
 			
-			<entry key="osgi.bundles" operation="+"
-							value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.pool_${org.apache.commons-pool.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -2057,31 +2055,31 @@ fi]]>
         </propertyfile>
     </target>
 
-    <target name="linux-kura-network-config" if="is.kura.network" depends="linux-config">
+    <target name="linux-kura-network-config" if="is.kura.network">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin_${org.eclipse.kura.net.admin.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin_${org.eclipse.kura.net.admin.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@5" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@4" />
         </propertyfile>
     </target>
 
-    <target name="linux-network-manager-config" if="is.network.manager" depends="linux-config">
+    <target name="linux-network-manager-config" if="is.network.manager">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.nm_${org.eclipse.kura.nm.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.nm_${org.eclipse.kura.nm.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@5" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@4" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar@4:start" />
         </propertyfile>
     </target>
 
-    <target name="linux-sysv-config" if="is.sysv" depends="linux-config">
+    <target name="linux-sysv-config" if="is.sysv">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
@@ -2093,7 +2091,7 @@ fi]]>
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.debian.provider_${org.eclipse.kura.linux.debian.provider.version}.jar@4" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.debian.provider_${org.eclipse.kura.linux.debian.provider.version}.jar@3" />
         </propertyfile>
     </target>
 
@@ -2101,11 +2099,11 @@ fi]]>
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.redhat.provider_${org.eclipse.kura.linux.redhat.provider.version}.jar@4" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.redhat.provider_${org.eclipse.kura.linux.redhat.provider.version}.jar@3" />
         </propertyfile>
     </target>
 
-    <target name="linux-systemd-config" if="is.systemd" depends="linux-config">
+    <target name="linux-systemd-config" if="is.systemd">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
