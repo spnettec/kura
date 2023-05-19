@@ -45,8 +45,8 @@
             description="%clockProviderDesc">
             
                <Option label="java-ntp" value="java-ntp"/>
-               <Option label="ntpd"     value="ntpd"/>
-               <Option label="chrony-advanced"	value="chrony-advanced"/>
+               <Option label="ntpd" value="ntpd"/>
+               <Option label="chrony-advanced" value="chrony-advanced"/>
         </AD>
 
         <AD id="clock.ntp.host"  
