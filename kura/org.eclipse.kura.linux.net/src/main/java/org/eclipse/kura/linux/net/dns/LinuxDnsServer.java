@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -282,8 +282,6 @@ public abstract class LinuxDnsServer {
     private String getForwardingNamedFile() {
         StringBuilder sb = new StringBuilder().append("// Forwarding and Caching Name Server Configuration\n")
                 .append("options {\n") //
-                .append("\tdnssec-enable no;\n") //
-                .append("\tdnssec-validation no;\n") //
                 .append("\tdirectory \"/var/named\";\n") //
                 .append("\tversion \"not currently available\";\n") //
                 .append("\tforwarders {");
@@ -309,11 +307,11 @@ public abstract class LinuxDnsServer {
         sb.append("};\n");
         sb.append("\tmax-cache-ttl 30;\n");
         sb.append("\tmax-ncache-ttl 30;\n");
-        sb.append("\tdnssec-enable yes;\n").append("\tdnssec-validation yes;\n").append("\tdnssec-lookaside auto;\n");
+        sb.append("\tdnssec-validation no;\n");
         sb.append("};\n") //
                 .append("zone \".\" IN {\n") //
                 .append("\ttype hint;\n") //
-                .append("\tfile \"/var/named/named.ca\";\n") //
+                .append("\tfile \"named.ca\";\n") //
                 .append("};\n") //
                 .append("include \"") //
                 .append(getDnsRfcZonesFileName()) //
@@ -344,9 +342,7 @@ public abstract class LinuxDnsServer {
                 .append("\n") //
                 .append("\tmax-cache-ttl 30;\n") //
                 .append("\tmax-ncache-ttl 30;\n") //
-                .append("\tdnssec-enable no;\n") //
                 .append("\tdnssec-validation no;\n") //
-                .append("\tdnssec-lookaside auto;\n") //
                 .append("\n") //
                 .append("\t/* Path to ISC DLV key */\n") //
                 .append("\nbindkeys-file \"/etc/named.iscdlv.key\";\n") //
@@ -354,7 +350,7 @@ public abstract class LinuxDnsServer {
                 .append("\n") //
                 .append("zone \".\" IN {\n") //
                 .append("\ttype hint;\n") //
-                .append("\tfile \"/var/named/named.ca\";\n") //
+                .append("\tfile \"named.ca\";\n") //
                 .append("};\n") //
                 .append("\n") //
                 .append("include \"") //
