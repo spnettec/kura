@@ -97,7 +97,6 @@
         <setEntry value="org.eclipse.kura.internal.driver.ibeacon.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.s7plc.test"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider.test"/>
         <setEntry value="org.eclipse.kura.linux.bluetooth"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
