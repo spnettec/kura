@@ -2832,6 +2832,7 @@
                                             <type>dp</type>
                                         </artifactItem>
                                     </artifactItems>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
