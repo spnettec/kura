@@ -92,6 +92,8 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
     @Override
     protected void customizeBuilder(final Builder builder, final Map<String, Object> properties) {
 
+        super.customizeBuilder(builder, properties);
+
         // JMX
 
         final boolean disableJmxTemp = asBoolean(properties, DISABLE_JMX, false);
@@ -118,8 +120,10 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
         logger.debug("Setting new language requirements");
         for (final String language : newRequiredLanguages) {
-            logger.debug("Require language: {}", language);
-            builder.requireLanguage(language);
+            if (!"simple".equals(language)) {
+                logger.debug("Require language: {}", language);
+                builder.requireLanguage(language);
+            }
         }
 
         // set cloud service requirements

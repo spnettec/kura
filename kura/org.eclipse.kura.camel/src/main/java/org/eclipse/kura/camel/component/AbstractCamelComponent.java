@@ -139,6 +139,9 @@ public abstract class AbstractCamelComponent {
      *            the properties provided to the {@link #start(Map)} method
      */
     protected void customizeBuilder(final Builder builder, final Map<String, Object> properties) {
+
+        builder.requireLanguage("simple");
+
     }
 
     protected void stop() throws Exception {
