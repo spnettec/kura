@@ -98,7 +98,7 @@ public class RemoteTargetTest {
         logger.debug("systemService.getPlatform(): " + this.systemService.getPlatform());
         this.testExtender = new TestExtender(this.systemService.getPlatform(), componentContext.getBundleContext());
 
-        this.bundleTracker = new BundleTracker<>(componentContext.getBundleContext(),
+        this.bundleTracker = new BundleTracker<Object>(componentContext.getBundleContext(),
                 Bundle.RESOLVED | Bundle.ACTIVE | Bundle.INSTALLED, this.testExtender);
         this.bundleTracker.open();
 

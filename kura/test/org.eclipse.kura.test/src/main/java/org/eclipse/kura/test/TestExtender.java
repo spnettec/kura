@@ -108,7 +108,7 @@ public class TestExtender implements BundleTrackerCustomizer<Object> {
 
     public List<Class<?>> getTestClass(Bundle bundle) {
         try {
-            List<Class<?>> clazzs = new ArrayList<>();
+            List<Class<?>> clazzs = new ArrayList<Class<?>>();
             Enumeration<?> entrs = bundle.findEntries("/", "*Test.class", true);
             if (entrs == null || !entrs.hasMoreElements()) {
                 return Collections.emptyList();

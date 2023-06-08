@@ -30,5 +30,5 @@ public @interface TestTarget {
     public static final String PLATFORM_RASPBERRY_PI = "Raspberr-Pi";
     public static final String PLATFORM_RELIAGATE = "reliagate";
 
-    public String[] targetPlatforms();
+    public String[]targetPlatforms();
 }
