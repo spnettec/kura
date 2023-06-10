@@ -174,7 +174,6 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
                     runner.run(bindings);
                 } catch (final Exception e) {
                     logger.warn("Failed to run init code", e);
-                    throw e;
                 }
             });
         }
