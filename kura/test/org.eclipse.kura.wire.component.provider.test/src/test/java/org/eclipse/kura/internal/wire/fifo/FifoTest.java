@@ -79,21 +79,26 @@ public class FifoTest {
             }
 
             @Override
-            public void emit(List<WireRecord> wireRecords) {
-                WireRecord wireRecord = wireRecords.get(0);
+            public void emit(Object wireRecords) {
+                if (List.class.isAssignableFrom(wireRecords.getClass()) && ((List<?>) wireRecords).size() > 0
+                        && ((List<?>) wireRecords).get(0) instanceof WireRecord) {
+                    @SuppressWarnings("unchecked")
+                    WireRecord wireRecord = ((List<WireRecord>) wireRecords).get(0);
 
-                TypedValue<Long> typedValue = (TypedValue<Long>) wireRecord.getProperties().get("timestamp");
-                long val = (long) typedValue.getValue();
+                    @SuppressWarnings("unchecked")
+                    TypedValue<Long> typedValue = (TypedValue<Long>) wireRecord.getProperties().get("timestamp");
+                    long val = (long) typedValue.getValue();
 
-                assertTrue(val > ts); // verify it's really FIFO
-                ts = val;
+                    assertTrue(val > ts); // verify it's really FIFO
+                    ts = val;
 
-                try {
-                    Thread.sleep(20); // slow down a bit
-                } catch (InterruptedException e) {
+                    try {
+                        Thread.sleep(20); // slow down a bit
+                    } catch (InterruptedException e) {
+                    }
+
+                    wiresLatch.countDown();
                 }
-
-                wiresLatch.countDown();
             }
         };
         when(wireHelperServiceMock.newWireSupport(fifo, null)).thenReturn(wireSupportMock);
@@ -152,21 +157,24 @@ public class FifoTest {
             }
 
             @Override
-            public void emit(List<WireRecord> wireRecords) {
-                WireRecord wireRecord = wireRecords.get(0);
+            public void emit(Object wireRecords) {
+                if (List.class.isAssignableFrom(wireRecords.getClass()) && ((List<?>) wireRecords).size() > 0
+                        && ((List<?>) wireRecords).get(0) instanceof WireRecord) {
+                    WireRecord wireRecord = ((List<WireRecord>) wireRecords).get(0);
 
-                TypedValue<Long> typedValue = (TypedValue<Long>) wireRecord.getProperties().get("timestamp");
-                long val = (long) typedValue.getValue();
+                    TypedValue<Long> typedValue = (TypedValue<Long>) wireRecord.getProperties().get("timestamp");
+                    long val = (long) typedValue.getValue();
 
-                assertTrue(val > ts); // verify it's really FIFO
-                ts = val;
+                    assertTrue(val > ts); // verify it's really FIFO
+                    ts = val;
 
-                try {
-                    Thread.sleep(100); // slow down a bit
-                } catch (InterruptedException e) {
+                    try {
+                        Thread.sleep(100); // slow down a bit
+                    } catch (InterruptedException e) {
+                    }
+
+                    wiresLatch.countDown();
                 }
-
-                wiresLatch.countDown();
             }
         };
         when(wireHelperServiceMock.newWireSupport(fifo, null)).thenReturn(wireSupportMock);

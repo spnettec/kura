@@ -34,5 +34,6 @@ public interface WireReceiver extends WireComponent, Consumer {
      * @throws NullPointerException
      *             if the argument is null
      */
-    public void onWireReceive(WireEnvelope wireEnvelope);
+    public void onWireReceive(Object wireEnvelope);
+
 }

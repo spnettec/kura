@@ -265,29 +265,33 @@ public class H2DbWireRecordStore implements WireEmitter, WireReceiver, Configura
 
     /** {@inheritDoc} */
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEvelope) {
-        requireNonNull(wireEvelope, "Wire Envelope cannot be null");
-        final List<WireRecord> records = wireEvelope.getRecords();
+    public synchronized void onWireReceive(final Object wireEnvelope) {
+        requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
+        if (wireEnvelope instanceof WireEnvelope) {
+            final List<WireRecord> records = ((WireEnvelope) wireEnvelope).getRecords();
 
-        if (this.dbHelper == null) {
-            logger.warn("H2DbService instance not attached");
-            return;
-        }
-
-        try {
-            if (getTableSize() >= this.wireRecordStoreOptions.getMaximumTableSize()) {
-                truncate();
+            if (this.dbHelper == null) {
+                logger.warn("H2DbService instance not attached");
+                return;
             }
-        } catch (SQLException e) {
-            logger.warn("Exception while trying to clean db");
-        }
 
-        for (WireRecord wireRecord : records) {
-            store(wireRecord);
-        }
+            try {
+                if (getTableSize() >= this.wireRecordStoreOptions.getMaximumTableSize()) {
+                    truncate();
+                }
+            } catch (SQLException e) {
+                logger.warn("Exception while trying to clean db");
+            }
 
-        // emit the list of Wire Records to the downstream components
-        this.wireSupport.emit(records);
+            for (WireRecord wireRecord : records) {
+                store(wireRecord);
+            }
+
+            // emit the list of Wire Records to the downstream components
+            this.wireSupport.emit(records);
+        } else {
+            logger.warn("receive object:{} is not WireEnvelope", wireEnvelope);
+        }
     }
 
     /**

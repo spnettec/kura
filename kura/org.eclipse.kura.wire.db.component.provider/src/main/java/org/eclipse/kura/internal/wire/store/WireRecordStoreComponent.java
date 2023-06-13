@@ -90,17 +90,20 @@ public class WireRecordStoreComponent implements WireEmitter, WireReceiver, Conf
     }
 
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEvelope) {
+    public synchronized void onWireReceive(final Object wireEnvelope) {
+        if (wireEnvelope instanceof WireEnvelope) {
+            final List<WireRecord> records = ((WireEnvelope) wireEnvelope).getRecords();
 
-        final List<WireRecord> records = wireEvelope.getRecords();
+            try {
+                this.state.store(records);
+            } catch (KuraException e) {
+                logger.warn("Failed to store Wire Records", e);
+            }
 
-        try {
-            this.state.store(records);
-        } catch (KuraException e) {
-            logger.warn("Failed to store Wire Records", e);
+            this.wireSupport.emit(records);
+        } else {
+            logger.warn("receive object:{} is not WireEnvelope", wireEnvelope);
         }
-
-        this.wireSupport.emit(records);
     }
 
     @Override

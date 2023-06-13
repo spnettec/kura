@@ -19,7 +19,6 @@ import java.util.Optional;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireRecord;
@@ -85,7 +84,7 @@ public class FilterComponent extends EngineProvider implements WireEmitter, Wire
     }
 
     @Override
-    public synchronized void onWireReceive(WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(Object wireEnvelope) {
         if (!this.sourceScript.isPresent()) {
             logger.warn("No source specified! Ignoring received WireEnvelope.");
             return;

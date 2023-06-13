@@ -18,7 +18,6 @@ import java.util.Random;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireSupport;
@@ -76,7 +75,7 @@ public class Delay implements WireEmitter, WireReceiver, ConfigurableComponent {
     }
 
     @Override
-    public void onWireReceive(final WireEnvelope wireEnvelope) {
+    public void onWireReceive(final Object wireEnvelope) {
         final long delayMs = (long) (this.random.nextGaussian() * this.delayStdDev + this.delayAverage);
 
         if (delayMs > 0) {
@@ -90,7 +89,8 @@ public class Delay implements WireEmitter, WireReceiver, ConfigurableComponent {
             }
         }
 
-        this.wireSupport.emit(wireEnvelope.getRecords());
+        this.wireSupport.emit(wireEnvelope);
+
     }
 
     @Override

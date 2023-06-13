@@ -75,6 +75,7 @@ public class AIComponent implements WireEmitter, WireReceiver, ConfigurableCompo
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void activate(final ComponentContext componentContext, final Map<String, Object> properties)
             throws ComponentException {
         logger.info("Activating AIComponent...");
@@ -109,20 +110,23 @@ public class AIComponent implements WireEmitter, WireReceiver, ConfigurableCompo
     }
 
     @Override
-    public synchronized void onWireReceive(WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
+        if (wireEnvelope instanceof WireEnvelope) {
+            for (WireRecord wireRecord : ((WireEnvelope) wireEnvelope).getRecords()) {
+                try {
 
-        for (WireRecord wireRecord : wireEnvelope.getRecords()) {
-            try {
+                    Optional<List<WireRecord>> inferenceResult = inferenceProcess(wireRecord);
+                    if (inferenceResult.isPresent()) {
+                        this.wireSupport.emit(inferenceResult.get());
+                    }
 
-                Optional<List<WireRecord>> inferenceResult = inferenceProcess(wireRecord);
-                if (inferenceResult.isPresent()) {
-                    this.wireSupport.emit(inferenceResult.get());
+                } catch (KuraException e) {
+                    logger.error("Error processing WireRecord.", e);
                 }
-
-            } catch (KuraException e) {
-                logger.error("Error processing WireRecord.", e);
             }
+        } else {
+            logger.warn("receive object:{} is not WireEnvelope", wireEnvelope);
         }
 
     }

@@ -52,6 +52,7 @@ public abstract class AbstractDualportMathComponent implements WireEmitter, Mult
         this.wireHelperService = null;
     }
 
+    @SuppressWarnings("unchecked")
     public void activate(final Map<String, Object> properties, ComponentContext context) {
         this.wireSupport = (MultiportWireSupport) this.wireHelperService.newWireSupport(this,
                 (ServiceReference<WireComponent>) context.getServiceReference());
@@ -96,11 +97,11 @@ public abstract class AbstractDualportMathComponent implements WireEmitter, Mult
         this.wireSupport.producersConnected(wires);
     }
 
-    private TypedValue<?> extractOperand(WireEnvelope wireEnvelope, String operandName) {
+    private TypedValue<?> extractOperand(Object wireEnvelope, String operandName) {
         if (wireEnvelope == null) {
             return null;
         }
-        final List<WireRecord> records = wireEnvelope.getRecords();
+        final List<WireRecord> records = ((WireEnvelope) wireEnvelope).getRecords();
         if (records.isEmpty()) {
             logger.warn("Received empty envelope");
             return null;
@@ -118,7 +119,7 @@ public abstract class AbstractDualportMathComponent implements WireEmitter, Mult
         return operand;
     }
 
-    public void onWireReceive(List<WireEnvelope> wireEnvelopes) {
+    public void onWireReceive(List<Object> wireEnvelopes) {
         final TypedValue<?> firstOperand = extractOperand(wireEnvelopes.get(0), this.options.getFirstOperandName());
         final TypedValue<?> secondOperand = extractOperand(wireEnvelopes.get(1), this.options.getSecondOperandName());
         if (firstOperand == null || secondOperand == null) {

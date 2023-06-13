@@ -25,7 +25,6 @@ import org.eclipse.kura.KuraStoreException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireRecord;
@@ -81,7 +80,7 @@ public class WireRecordQueryComponent implements WireEmitter, WireReceiver, Conf
     }
 
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(final Object wireEnvelope) {
 
         final Optional<List<WireRecord>> records;
 

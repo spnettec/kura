@@ -15,7 +15,6 @@ package org.eclipse.kura.wire.graph;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.eclipse.kura.wire.WireEnvelope;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -27,5 +26,5 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface PortAggregator {
 
-    public void onWireReceive(Consumer<List<WireEnvelope>> envelopes);
+    public void onWireReceive(Consumer<List<Object>> envelopes);
 }

@@ -14,7 +14,6 @@ package org.eclipse.kura.wire.graph;
 
 import java.util.function.Consumer;
 
-import org.eclipse.kura.wire.WireEnvelope;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -25,5 +24,6 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface ReceiverPort extends Port {
 
-    public void onWireReceive(Consumer<WireEnvelope> consumer);
+    public void onWireReceive(Consumer<Object> consumer);
+
 }

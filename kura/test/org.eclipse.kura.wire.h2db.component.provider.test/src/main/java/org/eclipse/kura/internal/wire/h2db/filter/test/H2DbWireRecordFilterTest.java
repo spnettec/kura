@@ -76,7 +76,7 @@ public class H2DbWireRecordFilterTest {
     private final TestEmitterReceiver testEmitter;
     private final TestEmitterReceiver testReceiver;
 
-    private Optional<WireEnvelope> receivedEnvelope = Optional.empty();
+    private Optional<Object> receivedEnvelope = Optional.empty();
 
     private final ConfigurationService configurationService;
 
@@ -129,7 +129,7 @@ public class H2DbWireRecordFilterTest {
         WireTestUtil.updateComponentConfiguration(this.configurationService, H2DB_WIRE_RECORD_FILTER_PID,
                 Collections.singletonMap("sql.view", sql)).get(30, TimeUnit.SECONDS);
 
-        final CompletableFuture<WireEnvelope> nextEnvelope = this.testReceiver.nextEnvelope();
+        final CompletableFuture<Object> nextEnvelope = this.testReceiver.nextEnvelope();
 
         this.testEmitter.emit();
 
@@ -137,23 +137,23 @@ public class H2DbWireRecordFilterTest {
     }
 
     private void thenEmittedEnvelopeIsEmpty() {
-        final WireEnvelope envelope = this.receivedEnvelope
+        final Object envelope = this.receivedEnvelope
                 .orElseThrow(() -> new IllegalStateException("no envelopes received"));
 
-        if (envelope.getRecords().isEmpty()) {
+        if (((WireEnvelope) envelope).getRecords().isEmpty()) {
             return;
         }
 
-        final WireRecord record = envelope.getRecords().get(0);
+        final WireRecord record = ((WireEnvelope) envelope).getRecords().get(0);
 
         assertTrue(record.getProperties().isEmpty());
     }
 
     private void thenEmittedEnvelopeHasProperty(final String key, final TypedValue<?> value) {
-        final WireEnvelope envelope = this.receivedEnvelope
+        final Object envelope = this.receivedEnvelope
                 .orElseThrow(() -> new IllegalStateException("no envelopes received"));
 
-        final WireRecord record = envelope.getRecords().get(0);
+        final WireRecord record = ((WireEnvelope) envelope).getRecords().get(0);
 
         assertEquals(Collections.singletonMap(key, value), record.getProperties());
     }

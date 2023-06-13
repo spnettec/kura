@@ -28,7 +28,6 @@ import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireSupport;
@@ -105,7 +104,7 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
     }
 
     @Override
-    public void onWireReceive(WireEnvelope wireEnvelope) {
+    public void onWireReceive(Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
         if (this.emitterThread != null) {
             this.emitterThread.submit(wireEnvelope);
@@ -140,10 +139,10 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
         private final Condition consumer = this.lock.newCondition();
 
         private boolean run = true;
-        private final ArrayList<WireEnvelope> queue;
+        private final ArrayList<Object> queue;
         private final int queueCapacity;
 
-        private Consumer<WireEnvelope> submitter;
+        private Consumer<Object> submitter;
 
         public FifoEmitterThread(String threadName, int queueCapacity, boolean discardEnvelopes) {
             this.queue = new ArrayList<>();
@@ -156,8 +155,8 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
             }
         }
 
-        private Consumer<WireEnvelope> getEnvelopeDiscardingSubmitter() {
-            return (envelope) -> {
+        private Consumer<Object> getEnvelopeDiscardingSubmitter() {
+            return envelope -> {
                 try {
                     this.lock.lock();
                     if (!this.run || this.queue.size() >= this.queueCapacity) {
@@ -174,8 +173,8 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
             };
         }
 
-        private Consumer<WireEnvelope> getEmitterBlockingSubmitter() {
-            return (envelope) -> {
+        private Consumer<Object> getEmitterBlockingSubmitter() {
+            return envelope -> {
                 try {
                     this.lock.lock();
                     while (this.run && this.queue.size() >= this.queueCapacity) {
@@ -207,7 +206,7 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
             }
         }
 
-        public void submit(WireEnvelope envelope) {
+        public void submit(Object envelope) {
             this.submitter.accept(envelope);
         }
 
@@ -215,7 +214,7 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
         public void run() {
             while (this.run) {
                 try {
-                    WireEnvelope next = null;
+                    Object next = null;
                     try {
                         this.lock.lock();
                         while (this.run && this.queue.isEmpty()) {
@@ -229,7 +228,7 @@ public class Fifo implements WireEmitter, WireReceiver, ConfigurableComponent {
                     } finally {
                         this.lock.unlock();
                     }
-                    Fifo.this.wireSupport.emit(next.getRecords());
+                    Fifo.this.wireSupport.emit(next);
                 } catch (Exception e) {
                     logger.warn("Unexpected exception while dispatching envelope", e);
                 }

@@ -68,7 +68,7 @@ public class DbComponentsTestBase {
     private final String testReceiverPid;
     private final String testEmitterPid;
 
-    private List<WireEnvelope> receivedEnvelopes = new ArrayList<>();
+    private List<Object> receivedEnvelopes = new ArrayList<>();
 
     private final ConfigurationService configurationService;
 
@@ -179,7 +179,7 @@ public class DbComponentsTestBase {
                         Collections.singletonMap(wireComponentTestTarget.filterQueryPropertyKey(), sql))
                 .get(30, TimeUnit.SECONDS);
 
-        final CompletableFuture<WireEnvelope> nextEnvelope = this.testReceiver.nextEnvelope();
+        final CompletableFuture<Object> nextEnvelope = this.testReceiver.nextEnvelope();
 
         this.testEmitter.emit();
 
@@ -195,19 +195,22 @@ public class DbComponentsTestBase {
     }
 
     protected void thenEmittedEnvelopeIsEmpty() {
-        final WireEnvelope envelope = this.receivedEnvelopes.get(0);
-
-        if (envelope.getRecords().isEmpty()) {
+        final Object envelope = this.receivedEnvelopes.get(0);
+        if (!(envelope instanceof WireEnvelope)) {
             return;
         }
 
-        final WireRecord record = envelope.getRecords().get(0);
+        if (((WireEnvelope) envelope).getRecords().isEmpty()) {
+            return;
+        }
+
+        final WireRecord record = ((WireEnvelope) envelope).getRecords().get(0);
 
         assertTrue(record.getProperties().isEmpty());
     }
 
     protected void thenEmittedRecordCountIs(final int expectedValue) {
-        assertEquals(expectedValue, this.receivedEnvelopes.get(0).getRecords().size());
+        assertEquals(expectedValue, ((WireEnvelope) this.receivedEnvelopes.get(0)).getRecords().size());
     }
 
     protected void thenFilterEmitsEnvelopeWithProperty(final String key, final TypedValue<?> value) {
@@ -221,7 +224,7 @@ public class DbComponentsTestBase {
 
     protected void thenFilterEmitsEnvelopeWithProperty(final int envelopeIndex, final int recordIndex, final String key,
             final TypedValue<?> value) {
-        final WireEnvelope envelope = this.receivedEnvelopes.get(envelopeIndex);
+        final WireEnvelope envelope = (WireEnvelope) this.receivedEnvelopes.get(envelopeIndex);
 
         final WireRecord record = envelope.getRecords().get(recordIndex);
 
@@ -230,7 +233,7 @@ public class DbComponentsTestBase {
 
     protected void thenFilterEmitsEnvelopeWithoutProperty(final int envelopeIndex, final int recordIndex,
             final String key) {
-        final WireEnvelope envelope = this.receivedEnvelopes.get(envelopeIndex);
+        final WireEnvelope envelope = (WireEnvelope) this.receivedEnvelopes.get(envelopeIndex);
 
         final WireRecord record = envelope.getRecords().get(recordIndex);
 
@@ -247,7 +250,7 @@ public class DbComponentsTestBase {
 
     protected void thenFilterEmitsEnvelopeWithByteArrayProperty(final int envelopeIndex, final int recordIndex,
             final String key, final byte[] value) {
-        final WireEnvelope envelope = this.receivedEnvelopes.get(envelopeIndex);
+        final WireEnvelope envelope = (WireEnvelope) this.receivedEnvelopes.get(envelopeIndex);
 
         final WireRecord record = envelope.getRecords().get(recordIndex);
 
@@ -255,7 +258,7 @@ public class DbComponentsTestBase {
     }
 
     protected void thenFilterEmitsEmptyEnvelope() {
-        final WireEnvelope envelope = this.receivedEnvelopes.get(0);
+        final WireEnvelope envelope = (WireEnvelope) this.receivedEnvelopes.get(0);
 
         assertEquals(0, envelope.getRecords().size());
     }
@@ -265,7 +268,7 @@ public class DbComponentsTestBase {
     }
 
     protected void thenEnvelopeRecordCountIs(final int envelopeIndex, final int recordCount) {
-        assertEquals(recordCount, this.receivedEnvelopes.get(envelopeIndex).getRecords().size());
+        assertEquals(recordCount, ((WireEnvelope) this.receivedEnvelopes.get(envelopeIndex)).getRecords().size());
     }
 
     protected <T> Map<String, T> collectArgsToMap(final Object[] args, final Function<Object, T> valueMapper) {

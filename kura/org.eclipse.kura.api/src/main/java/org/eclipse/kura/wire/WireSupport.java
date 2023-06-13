@@ -13,8 +13,6 @@
  ******************************************************************************/
 package org.eclipse.kura.wire;
 
-import java.util.List;
-
 import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.service.wireadmin.Consumer;
 import org.osgi.service.wireadmin.Producer;
@@ -38,5 +36,6 @@ public interface WireSupport extends Producer, Consumer {
      * @throws NullPointerException
      *             if the argument is null
      */
-    public void emit(List<WireRecord> wireRecords);
+    public void emit(Object wireRecords);
+
 }

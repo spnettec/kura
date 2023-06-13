@@ -34,7 +34,6 @@ import org.eclipse.kura.internal.wire.db.common.DbServiceProvider;
 import org.eclipse.kura.internal.wire.db.common.H2DbServiceProviderImpl;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireRecord;
@@ -110,6 +109,7 @@ public class DbWireRecordFilter implements WireEmitter, WireReceiver, Configurab
      * @param properties
      *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating DB Wire Record Filter...");
         this.options = new DbWireRecordFilterOptions(properties);
@@ -188,7 +188,7 @@ public class DbWireRecordFilter implements WireEmitter, WireReceiver, Configurab
      * provided by the user in the component configuration.
      */
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(final Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
 
         if (this.dbServiceProvider == null) {

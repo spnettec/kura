@@ -277,13 +277,13 @@ public class BoolLogicTest {
     public void testNotOperation() throws Exception {
         updateLogicOperation("NOT");
         try {
-            CompletableFuture<WireEnvelope> out0Recfuture = outReceiver.nextEnvelope();
+            CompletableFuture<Object> out0Recfuture = outReceiver.nextEnvelope();
             in0emitter.emit(new WireRecord(mapWithTrue));
-            WireRecord receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+            WireRecord receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
             assertFalse((boolean) receivedRecord.getProperties().get(RESULT_NAME_DEFAULT).getValue());
             out0Recfuture = outReceiver.nextEnvelope();
             in0emitter.emit(new WireRecord(mapWithFalse));
-            receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+            receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
             assertTrue((boolean) receivedRecord.getProperties().get(RESULT_NAME_DEFAULT).getValue());
 
         } catch (TimeoutException e) {
@@ -322,13 +322,13 @@ public class BoolLogicTest {
         } else {
             in0emitter.emit(new WireRecord(mapWithFalse));
         }
-        CompletableFuture<WireEnvelope> out0Recfuture = outReceiver.nextEnvelope();
+        CompletableFuture<Object> out0Recfuture = outReceiver.nextEnvelope();
         if (operator2) {
             in1emitter.emit(new WireRecord(mapWithTrue));
         } else {
             in1emitter.emit(new WireRecord(mapWithFalse));
         }
-        WireRecord receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+        WireRecord receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
         return (boolean) receivedRecord.getProperties().get(RESULT_NAME_DEFAULT).getValue();
     }
 

@@ -85,28 +85,34 @@ public final class JoinComponent implements MultiportWireReceiver, WireEmitter, 
         logger.debug("Updating Join Wire Component... Done");
     }
 
-    private void onWireReceive(List<WireEnvelope> envelopes) {
-        final WireEnvelope firstEnvelope = envelopes.get(0);
-        final WireEnvelope secondEnvelope = envelopes.get(1);
-        final List<WireRecord> firstRecords = firstEnvelope != null ? firstEnvelope.getRecords()
-                : Collections.emptyList();
-        final List<WireRecord> secondRecords = secondEnvelope != null ? secondEnvelope.getRecords()
-                : Collections.emptyList();
-        final List<WireRecord> result = new ArrayList<>();
-        forEachPair(firstRecords.iterator(), secondRecords.iterator(), (first, second) -> {
-            if (first == null) {
-                result.add(new WireRecord(covertProperies(second.getProperties())));
-                return;
-            }
-            if (second == null) {
-                result.add(new WireRecord(covertProperies(first.getProperties())));
-                return;
-            }
-            final Map<String, TypedValue<?>> resultProperties = new HashMap<>(covertProperies(first.getProperties()));
-            resultProperties.putAll(covertProperies(second.getProperties()));
-            result.add(new WireRecord(resultProperties));
-        });
-        this.wireSupport.emit(result);
+    private void onWireReceive(List<Object> envelopes) {
+        final Object firstEnvelope = envelopes.get(0);
+        final Object secondEnvelope = envelopes.get(1);
+        if (firstEnvelope instanceof WireEnvelope && secondEnvelope instanceof WireEnvelope) {
+            final List<WireRecord> firstRecords = firstEnvelope != null ? ((WireEnvelope) firstEnvelope).getRecords()
+                    : Collections.emptyList();
+            final List<WireRecord> secondRecords = secondEnvelope != null ? ((WireEnvelope) secondEnvelope).getRecords()
+                    : Collections.emptyList();
+            final List<WireRecord> result = new ArrayList<>();
+            forEachPair(firstRecords.iterator(), secondRecords.iterator(), (first, second) -> {
+                if (first == null) {
+                    result.add(new WireRecord(covertProperies(second.getProperties())));
+                    return;
+                }
+                if (second == null) {
+                    result.add(new WireRecord(covertProperies(first.getProperties())));
+                    return;
+                }
+                final Map<String, TypedValue<?>> resultProperties = new HashMap<>(
+                        covertProperies(first.getProperties()));
+                resultProperties.putAll(covertProperies(second.getProperties()));
+                result.add(new WireRecord(resultProperties));
+            });
+            this.wireSupport.emit(result);
+        } else {
+            logger.warn("receive firstEnvelope:{} or secondEnvelope:{} is not WireEnvelope", firstEnvelope,
+                    secondEnvelope);
+        }
     }
 
     private <T, U> void forEachPair(Iterator<T> first, Iterator<U> second, BiConsumer<T, U> consumer) {

@@ -14,7 +14,6 @@ package org.eclipse.kura.wire.camel;
 
 import org.apache.camel.CamelContext;
 import org.eclipse.kura.util.base.StringUtil;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,7 @@ public abstract class AbstractReceiverWireComponent extends AbstractEndpointWire
     private static final Logger logger = LoggerFactory.getLogger(AbstractReceiverWireComponent.class);
 
     @Override
-    public void onWireReceive(final WireEnvelope envelope) {
+    public void onWireReceive(final Object envelope) {
         logger.debug("Received: {}", envelope);
 
         withContext(context -> {
@@ -36,7 +35,7 @@ public abstract class AbstractReceiverWireComponent extends AbstractEndpointWire
         });
     }
 
-    private void processReceive(final CamelContext context, final WireEnvelope envelope) throws Exception {
+    private void processReceive(final CamelContext context, final Object envelope) throws Exception {
 
         final String endpointUri = this.endpointUri;
 
@@ -48,6 +47,5 @@ public abstract class AbstractReceiverWireComponent extends AbstractEndpointWire
         processReceive(context, endpointUri, envelope);
     }
 
-    protected abstract void processReceive(CamelContext context, String endpointUri, WireEnvelope envelope)
-            throws Exception;
+    protected abstract void processReceive(CamelContext context, String endpointUri, Object envelope) throws Exception;
 }

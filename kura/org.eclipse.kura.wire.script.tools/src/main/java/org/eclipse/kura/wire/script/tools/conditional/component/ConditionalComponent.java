@@ -22,7 +22,6 @@ import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.graph.EmitterPort;
@@ -100,14 +99,14 @@ public final class ConditionalComponent extends EngineProvider
 
     /** {@inheritDoc} */
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(final Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
 
         evaluateScriptAndEmitOutput(wireEnvelope);
 
     }
 
-    private void evaluateScriptAndEmitOutput(WireEnvelope wireEnvelope) {
+    private void evaluateScriptAndEmitOutput(Object wireEnvelope) {
 
         if (!this.booleanExpression.isPresent() || this.booleanExpression.get().isEmpty()) {
             logger.warn("No source specified! Ignoring received WireEnvelope.");
@@ -126,12 +125,10 @@ public final class ConditionalComponent extends EngineProvider
             return;
         }
 
-        final WireEnvelope outputEnvelope = this.wireSupport.createWireEnvelope(wireEnvelope.getRecords());
-
-        if ((boolean) result.get().getValue()) {
-            this.thenPort.emit(outputEnvelope);
+        if (Boolean.TRUE.equals(result.get().getValue())) {
+            this.thenPort.emit(wireEnvelope);
         } else {
-            this.elsePort.emit(outputEnvelope);
+            this.elsePort.emit(wireEnvelope);
         }
     }
 

@@ -51,6 +51,7 @@ public class GainOffsetComponent implements WireEmitter, WireReceiver, Configura
         this.wireHelperService = null;
     }
 
+    @SuppressWarnings("unchecked")
     public void activate(final Map<String, Object> properties, ComponentContext componentContext) {
         this.wireSupport = this.wireHelperService.newWireSupport(this,
                 (ServiceReference<WireComponent>) componentContext.getServiceReference());
@@ -90,11 +91,11 @@ public class GainOffsetComponent implements WireEmitter, WireReceiver, Configura
     }
 
     @Override
-    public void onWireReceive(WireEnvelope wireEnvelope) {
+    public void onWireReceive(Object wireEnvelope) {
         if (this.options == null) {
             logger.warn("Invalid configuration, please review");
         }
-        final List<WireRecord> inputRecords = wireEnvelope.getRecords();
+        final List<WireRecord> inputRecords = ((WireEnvelope) wireEnvelope).getRecords();
         final List<WireRecord> records = new ArrayList<>(inputRecords.size());
         for (final WireRecord record : inputRecords) {
             records.add(processRecord(record));

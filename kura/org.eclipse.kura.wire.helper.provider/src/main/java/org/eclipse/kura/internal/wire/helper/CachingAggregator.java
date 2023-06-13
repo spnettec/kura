@@ -19,14 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.graph.PortAggregator;
 import org.eclipse.kura.wire.graph.ReceiverPort;
 
 public class CachingAggregator implements PortAggregator {
 
-    private final List<WireEnvelope> envelopes;
-    private Consumer<List<WireEnvelope>> consumer = envelopes -> {
+    private final List<Object> envelopes;
+    private Consumer<List<Object>> consumer = envelopes -> {
         // do nothing
     };
 
@@ -47,7 +46,7 @@ public class CachingAggregator implements PortAggregator {
     }
 
     @Override
-    public void onWireReceive(Consumer<List<WireEnvelope>> consumer) {
+    public void onWireReceive(Consumer<List<Object>> consumer) {
         requireNonNull(consumer);
         this.consumer = consumer;
     }

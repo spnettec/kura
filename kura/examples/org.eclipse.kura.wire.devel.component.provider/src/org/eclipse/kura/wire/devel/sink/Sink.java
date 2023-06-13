@@ -19,7 +19,6 @@ import java.util.Map;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.wire.WireComponent;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireSupport;
@@ -89,7 +88,7 @@ public class Sink implements WireReceiver, ConfigurableComponent {
     }
 
     @Override
-    public void onWireReceive(final WireEnvelope wireEnvelope) {
+    public void onWireReceive(final Object wireEnvelope) {
         if (this.measureTimings) {
             final long currentTimestamp = System.currentTimeMillis();
             if (this.lastTimestamp != 0) {

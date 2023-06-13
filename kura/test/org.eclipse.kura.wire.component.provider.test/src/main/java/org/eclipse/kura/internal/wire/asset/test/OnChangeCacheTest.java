@@ -80,8 +80,7 @@ public class OnChangeCacheTest {
     public void shouldAywaysEmitEventsIfOnChangeIsDisalbed() {
         givenAssetWithChangeCacheDisabled();
 
-        whenDriverEmitsEvents(
-                "foo", "bar", //
+        whenDriverEmitsEvents("foo", "bar", //
                 "bar", 15, //
                 "foo", "bar", //
                 "bar", 15 //
@@ -126,8 +125,7 @@ public class OnChangeCacheTest {
     public void shouldNotEmitSameValuesAgainOnChannelEventIfNotChanged() {
         givenAssetWithChangeCacheEnabledAndEmitEmptyEnvelopesSetTo(false);
 
-        whenDriverEmitsEvents(
-                "foo", "bar", //
+        whenDriverEmitsEvents("foo", "bar", //
                 "bar", 15, //
                 "foo", "bar", //
                 "bar", 15 //
@@ -170,8 +168,7 @@ public class OnChangeCacheTest {
     public void shouldNotEmitOnlyChangedValuesOnChannelEvent() {
         givenAssetWithChangeCacheEnabledAndEmitEmptyEnvelopesSetTo(false);
 
-        whenDriverEmitsEvents(
-                "foo", "bar", //
+        whenDriverEmitsEvents("foo", "bar", //
                 "bar", 15, //
                 "foo", "bar", //
                 "bar", 15, //
@@ -209,7 +206,7 @@ public class OnChangeCacheTest {
     private TestEmitterReceiver testEmitter;
     private MockDriver driver = new MockDriver();
 
-    private List<WireEnvelope> envelopes = new ArrayList<>();
+    private List<Object> envelopes = new ArrayList<>();
 
     static {
         TEST_ASSET_CONFIG.put("driver.pid", "testDriver");
@@ -246,8 +243,7 @@ public class OnChangeCacheTest {
             final BundleContext bundleContext = FrameworkUtil.getBundle(OnChangeCacheTest.class).getBundleContext();
 
             final WireGraphService wireGraphService = WireTestUtil
-                    .trackService(WireGraphService.class, Optional.empty())
-                    .get(30, TimeUnit.SECONDS);
+                    .trackService(WireGraphService.class, Optional.empty()).get(30, TimeUnit.SECONDS);
 
             final GraphBuilder graphBuilder = new GraphBuilder().addTestEmitterReceiver("emitter")
                     .addTestEmitterReceiver("receiver")
@@ -342,45 +338,49 @@ public class OnChangeCacheTest {
     private void thenAssetOutputContains(final int index, final Object... properties) {
         awaitEnvelope(index);
 
-        final WireEnvelope envelope = envelopes.get(index);
+        final Object envelope = envelopes.get(index);
 
         final Iterator<Object> iter = Arrays.asList(properties).iterator();
 
         while (iter.hasNext()) {
             final String key = (String) iter.next();
             final TypedValue<?> value = TypedValues.newTypedValue(iter.next());
-
-            assertEquals(value, envelope.getRecords().get(0).getProperties().get(key));
+            if (envelope instanceof WireEnvelope) {
+                assertEquals(value, ((WireEnvelope) envelope).getRecords().get(0).getProperties().get(key));
+            }
         }
     }
 
     private void thenAssetOutputContainsKey(final int index, final String key) {
         awaitEnvelope(index);
 
-        final WireEnvelope envelope = envelopes.get(index);
-
-        assertTrue(envelope.getRecords().get(0).getProperties().containsKey(key));
+        final Object envelope = envelopes.get(index);
+        if (envelope instanceof WireEnvelope) {
+            assertTrue(((WireEnvelope) envelope).getRecords().get(0).getProperties().containsKey(key));
+        }
     }
 
     private void thenAssetOutputPropertyCountIs(final int index, final int expectedCount) {
         awaitEnvelope(index);
 
-        final WireEnvelope envelope = envelopes.get(index);
-
-        assertEquals(expectedCount, envelope.getRecords().get(0).getProperties().size());
+        final Object envelope = envelopes.get(index);
+        if (envelope instanceof WireEnvelope) {
+            assertEquals(expectedCount, ((WireEnvelope) envelope).getRecords().get(0).getProperties().size());
+        }
     }
 
     private void thenAssetOutputDoesNotContain(final int index, final String... properties) {
         awaitEnvelope(index);
 
-        final WireEnvelope envelope = envelopes.get(index);
+        final Object envelope = envelopes.get(index);
 
         final Iterator<String> iter = Arrays.asList(properties).iterator();
 
         while (iter.hasNext()) {
             final String key = (String) iter.next();
-
-            assertFalse(envelope.getRecords().get(0).getProperties().containsKey(key));
+            if (envelope instanceof WireEnvelope) {
+                assertFalse(((WireEnvelope) envelope).getRecords().get(0).getProperties().containsKey(key));
+            }
         }
     }
 

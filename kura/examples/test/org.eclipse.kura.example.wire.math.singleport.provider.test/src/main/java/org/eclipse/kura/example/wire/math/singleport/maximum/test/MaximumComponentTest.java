@@ -213,13 +213,13 @@ public class MaximumComponentTest {
             myMap.put(OPERAND_NAME_DEFAULT, TypedValues.newDoubleValue(i));
             inEmitter.emit(new WireRecord(myMap));
         }
-        CompletableFuture<WireEnvelope> out0Recfuture = outReceiver.nextEnvelope();
+        CompletableFuture<Object> out0Recfuture = outReceiver.nextEnvelope();
         myMap.clear();
         myMap.put(OPERAND_NAME_DEFAULT, TypedValues.newDoubleValue(9));
         inEmitter.emit(new WireRecord(myMap));
 
         try {
-            WireRecord receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+            WireRecord receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
             logger.info("received {}", receivedRecord.getProperties());
             assertTrue(((double) receivedRecord.getProperties().get(RESULT_NAME_DEFAULT).getValue() == 9));
 

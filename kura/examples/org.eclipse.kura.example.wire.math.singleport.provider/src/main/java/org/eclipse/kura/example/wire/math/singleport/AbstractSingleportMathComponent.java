@@ -51,6 +51,7 @@ public abstract class AbstractSingleportMathComponent
         this.wireHelperService = null;
     }
 
+    @SuppressWarnings("unchecked")
     public void activate(final Map<String, Object> properties, ComponentContext componentContext) {
         this.wireSupport = this.wireHelperService.newWireSupport(this,
                 (ServiceReference<WireComponent>) componentContext.getServiceReference());
@@ -93,8 +94,8 @@ public abstract class AbstractSingleportMathComponent
     }
 
     @Override
-    public void onWireReceive(WireEnvelope wireEnvelope) {
-        final List<WireRecord> records = wireEnvelope.getRecords();
+    public void onWireReceive(Object wireEnvelope) {
+        final List<WireRecord> records = ((WireEnvelope) wireEnvelope).getRecords();
         if (records.isEmpty()) {
             logger.warn("Received empty envelope");
             return;

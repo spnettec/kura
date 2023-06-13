@@ -313,9 +313,9 @@ public class TrigonometricComponentTest {
 
     private Double performTrigonometricOperation(Map<String, TypedValue<?>> properties)
             throws InterruptedException, ExecutionException, TimeoutException {
-        CompletableFuture<WireEnvelope> out0Recfuture = outReceiver.nextEnvelope();
+        CompletableFuture<Object> out0Recfuture = outReceiver.nextEnvelope();
         inEmitter.emit(new WireRecord(properties));
-        WireRecord receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+        WireRecord receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
         return (Double) receivedRecord.getProperties().get(RESULT_NAME_DEFAULT).getValue();
     }
 

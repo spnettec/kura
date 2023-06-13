@@ -17,7 +17,6 @@ import static org.apache.camel.impl.engine.DefaultFluentProducerTemplate.on;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.FluentProducerTemplate;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,7 @@ public class CamelProduce extends AbstractReceiverWireComponent {
     }
 
     @Override
-    protected void processReceive(final CamelContext context, final String endpointUri, final WireEnvelope envelope)
+    protected void processReceive(final CamelContext context, final String endpointUri, final Object envelope)
             throws Exception {
         if (template != null && context != null) {
             try {

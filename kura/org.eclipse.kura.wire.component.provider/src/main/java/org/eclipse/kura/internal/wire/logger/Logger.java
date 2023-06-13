@@ -57,7 +57,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -69,7 +69,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -81,10 +81,11 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for activation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the properties
+     *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating Logger Wire Component...");
         this.properties = properties;
@@ -97,7 +98,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for updating.
      *
      * @param properties
-     *                       the updated properties
+     *            the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating Logger Wire Component...");
@@ -109,7 +110,7 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
      * OSGi Service Component callback for deactivation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Deactivating Logger Wire Component...");
@@ -119,20 +120,29 @@ public final class Logger implements WireReceiver, ConfigurableComponent {
 
     /** {@inheritDoc} */
     @Override
-    public void onWireReceive(final WireEnvelope wireEnvelope) {
+    public void onWireReceive(final Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
-        logger.info("Received WireEnvelope from {}", () -> wireEnvelope.getEmitterPid());
+        if (wireEnvelope instanceof WireEnvelope) {
+            logger.info("Received WireEnvelope from {}", ((WireEnvelope) wireEnvelope)::getEmitterPid);
+        } else {
+            logger.info("Received Object from {}", wireEnvelope.getClass().getSimpleName());
+        }
 
         if (VERBOSE.name().equals(getLoggingLevel())) {
-            logger.info("Record List content: ");
-            for (WireRecord record : wireEnvelope.getRecords()) {
-                logger.info("  Record content: ");
+            if (wireEnvelope instanceof WireEnvelope) {
+                logger.info("Record List content: ");
+                for (WireRecord inRecord : ((WireEnvelope) wireEnvelope).getRecords()) {
+                    logger.info("  Record content: ");
 
-                for (Entry<String, TypedValue<?>> entry : record.getProperties().entrySet()) {
-                    logger.info("    {} : {}", () -> entry.getKey(), () -> entry.getValue().getValue());
+                    for (Entry<String, TypedValue<?>> entry : inRecord.getProperties().entrySet()) {
+                        logger.info("    {} : {}", entry::getKey, () -> entry.getValue().getValue());
+                    }
                 }
+            } else {
+                logger.info("  Object content: ");
+                logger.info("    {} : {}", wireEnvelope.getClass().getSimpleName(), wireEnvelope);
             }
-            logger.info("");
+            logger.info("**************************************************");
         }
     }
 

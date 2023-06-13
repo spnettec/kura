@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.wire.graph;
 
-import org.eclipse.kura.wire.WireEnvelope;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -29,6 +28,6 @@ public interface EmitterPort extends Port {
      * @param wireEnvelope
      *            the message that needs to be sent.
      */
-    public void emit(WireEnvelope wireEnvelope);
+    public void emit(Object wireEnvelope);
 
 }

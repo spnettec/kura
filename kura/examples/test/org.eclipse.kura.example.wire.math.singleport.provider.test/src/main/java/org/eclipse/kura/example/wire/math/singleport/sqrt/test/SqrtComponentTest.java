@@ -203,14 +203,14 @@ public class SqrtComponentTest {
             throw e;
         }
 
-        CompletableFuture<WireEnvelope> out0Recfuture = outReceiver.nextEnvelope();
+        CompletableFuture<Object> out0Recfuture = outReceiver.nextEnvelope();
 
         Map<String, TypedValue<?>> myMap = new HashMap<>();
         myMap.put(OPERAND_NAME_DEFAULT, TypedValues.newDoubleValue(4));
         inEmitter.emit(new WireRecord(myMap));
 
         try {
-            WireRecord receivedRecord = out0Recfuture.get(1, TimeUnit.SECONDS).getRecords().get(0);
+            WireRecord receivedRecord = ((WireEnvelope) out0Recfuture.get(1, TimeUnit.SECONDS)).getRecords().get(0);
             logger.info("received {}", receivedRecord.getProperties());
             assertTrue(((double) receivedRecord.getProperties().get("myResult").getValue() == 2));
 

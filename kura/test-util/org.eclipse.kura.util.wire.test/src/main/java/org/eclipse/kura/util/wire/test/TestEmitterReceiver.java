@@ -39,7 +39,7 @@ public class TestEmitterReceiver implements WireEmitter, WireReceiver, Configura
     private WireHelperService wireHelperService;
     private MultiportWireSupport wireSupport;
 
-    private Consumer<WireEnvelope> consumer;
+    private Consumer<Object> consumer;
 
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.info("activating...");
@@ -83,7 +83,7 @@ public class TestEmitterReceiver implements WireEmitter, WireReceiver, Configura
     }
 
     @Override
-    public void onWireReceive(WireEnvelope arg0) {
+    public void onWireReceive(Object arg0) {
         this.consumer.accept(arg0);
     }
 
@@ -91,12 +91,12 @@ public class TestEmitterReceiver implements WireEmitter, WireReceiver, Configura
         return this.wireSupport;
     }
 
-    public void setConsumer(Consumer<WireEnvelope> consumer) {
+    public void setConsumer(Consumer<Object> consumer) {
         this.consumer = consumer;
     }
 
-    public CompletableFuture<WireEnvelope> nextEnvelope() {
-        final CompletableFuture<WireEnvelope> result = new CompletableFuture<>();
+    public CompletableFuture<Object> nextEnvelope() {
+        final CompletableFuture<Object> result = new CompletableFuture<>();
 
         setConsumer(result::complete);
 
@@ -112,7 +112,7 @@ public class TestEmitterReceiver implements WireEmitter, WireReceiver, Configura
     }
 
     public void emit(final List<WireRecord> records, final int port) {
-        this.emit(this.wireSupport.createWireEnvelope(records), port);
+        this.wireSupport.getEmitterPorts().get(port).emit(records);
     }
 
     public void emit(final List<WireRecord> records) {

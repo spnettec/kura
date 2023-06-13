@@ -39,7 +39,6 @@ import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.type.TypedValues;
 import org.eclipse.kura.wire.WireComponent;
 import org.eclipse.kura.wire.WireEmitter;
-import org.eclipse.kura.wire.WireEnvelope;
 import org.eclipse.kura.wire.WireHelperService;
 import org.eclipse.kura.wire.WireReceiver;
 import org.eclipse.kura.wire.WireRecord;
@@ -251,7 +250,7 @@ public class H2DbWireRecordFilter implements WireEmitter, WireReceiver, Configur
      * provided by the user in the component configuration.
      */
     @Override
-    public synchronized void onWireReceive(final WireEnvelope wireEnvelope) {
+    public synchronized void onWireReceive(final Object wireEnvelope) {
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
 
         if (this.dbHelper == null) {

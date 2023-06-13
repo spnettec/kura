@@ -92,12 +92,12 @@ public class LogicalComponent implements WireEmitter, ConfigurableComponent, Mul
         this.wireSupport.producersConnected(wires);
     }
 
-    private Boolean extractOperand(WireEnvelope wireEnvelope, String operandName) {
-        final Map<String, TypedValue<?>> properties = wireEnvelope.getRecords().get(0).getProperties();
+    private Boolean extractOperand(Object wireEnvelope, String operandName) {
+        final Map<String, TypedValue<?>> properties = ((WireEnvelope) wireEnvelope).getRecords().get(0).getProperties();
         return (Boolean) properties.get(operandName).getValue();
     }
 
-    public void onWireReceive(List<WireEnvelope> wireEnvelopes) {
+    public void onWireReceive(List<Object> wireEnvelopes) {
         final Boolean firstOperand = extractOperand(wireEnvelopes.get(0), this.options.getFirstOperandName());
         final Boolean result;
         if (this.options.isUnaryOperator()) {

@@ -76,7 +76,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * Binds the Wire Helper Service.
      *
      * @param wireHelperService
-     *                              the new Wire Helper Service
+     *            the new Wire Helper Service
      */
     public void bindWireHelperService(final WireHelperService wireHelperService) {
         if (isNull(this.wireHelperService)) {
@@ -106,10 +106,11 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for activation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      * @param properties
-     *                             the properties
+     *            the properties
      */
+    @SuppressWarnings("unchecked")
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug("Activating Cloud Subscriber Wire Component...");
         this.wireSupport = this.wireHelperService.newWireSupport(this,
@@ -123,7 +124,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for updating.
      *
      * @param properties
-     *                       the updated properties
+     *            the updated properties
      */
     public void updated(final Map<String, Object> properties) {
         logger.debug("Updating Cloud Subscriber Wire Component...");
@@ -137,7 +138,7 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * OSGi Service Component callback for deactivation.
      *
      * @param componentContext
-     *                             the component context
+     *            the component context
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug("Deactivating Cloud Subscriber Wire Component...");
@@ -167,10 +168,10 @@ public final class CloudSubscriber implements WireEmitter, ConfigurableComponent
      * Builds a list of {@link WireRecord}s from the provided Kura Payload.
      *
      * @param payload
-     *                    the payload
+     *            the payload
      * @return a List of {@link WireRecord}s
      * @throws NullPointerException
-     *                                  if the payload provided is null
+     *             if the payload provided is null
      */
     private List<WireRecord> buildWireRecord(final KuraPayload payload) {
         requireNonNull(payload, "Payload cannot be null");

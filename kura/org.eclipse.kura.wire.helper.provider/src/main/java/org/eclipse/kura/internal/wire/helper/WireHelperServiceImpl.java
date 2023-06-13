@@ -17,6 +17,7 @@ import static java.util.Objects.requireNonNull;
 import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_PID;
 import static org.eclipse.kura.wire.graph.Constants.EMITTER_PORT_COUNT_PROP_NAME;
 import static org.eclipse.kura.wire.graph.Constants.RECEIVER_PORT_COUNT_PROP_NAME;
+import static org.eclipse.kura.wire.graph.Constants.WIRE_EMITTER_NULL_AS_WIRE_ENVELOPE;
 import static org.osgi.framework.Constants.SERVICE_PID;
 
 import org.eclipse.kura.util.service.ServiceUtil;
@@ -136,6 +137,19 @@ public final class WireHelperServiceImpl implements WireHelperService {
         return defaultValue;
     }
 
+    private boolean getBoolOrDefault(Object value, boolean defaultValue) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        } else {
+            try {
+                return Boolean.valueOf(value.toString());
+            } catch (Exception e) {
+
+            }
+        }
+        return defaultValue;
+    }
+
     /** {@inheritDoc} */
     @Override
     public WireSupport newWireSupport(final WireComponent wireComponent,
@@ -151,11 +165,15 @@ public final class WireHelperServiceImpl implements WireHelperService {
         }
         final String servicePid = (String) wireComponentRef.getProperty(SERVICE_PID);
         final String kuraServicePid = (String) wireComponentRef.getProperty(KURA_SERVICE_PID);
+        final boolean isNulltoEnvenlope = getBoolOrDefault(
+                wireComponentRef.getProperty(WIRE_EMITTER_NULL_AS_WIRE_ENVELOPE.value()), true);
+
         int receiverPortCount = getIntOrDefault(wireComponentRef.getProperty(RECEIVER_PORT_COUNT_PROP_NAME.value()),
                 wireComponent instanceof WireReceiver ? 1 : 0);
         int emitterPortCount = getIntOrDefault(wireComponentRef.getProperty(EMITTER_PORT_COUNT_PROP_NAME.value()),
                 wireComponent instanceof WireEmitter ? 1 : 0);
 
-        return new WireSupportImpl(wireComponent, servicePid, kuraServicePid, receiverPortCount, emitterPortCount);
+        return new WireSupportImpl(wireComponent, servicePid, kuraServicePid, receiverPortCount, emitterPortCount,
+                isNulltoEnvenlope);
     }
 }

@@ -273,6 +273,21 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-vertx-common:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-vertx-http:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-vertx-websocket:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-ref:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

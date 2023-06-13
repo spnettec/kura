@@ -60,12 +60,14 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
 
     private final String servicePid;
 
+    private final boolean isNulltoEnvenlope;
+
     private final ExecutorService receiverExecutor;
 
     private final Map<Wire, ReceiverPortImpl> receiverPortByWire;
 
     WireSupportImpl(final WireComponent wireComponent, final String servicePid, final String kuraServicePid,
-            int inputPortCount, int outputPortCount) {
+            int inputPortCount, int outputPortCount, boolean isNulltoEnvenlope) {
         requireNonNull(wireComponent, "Wire component cannot be null");
         requireNonNull(servicePid, "service pid cannot be null");
         requireNonNull(kuraServicePid, "kura service pid cannot be null");
@@ -80,7 +82,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         if (outputPortCount < 0) {
             throw new IllegalArgumentException("Output port count must be greater or equal than zero");
         }
-
+        this.isNulltoEnvenlope = isNulltoEnvenlope;
         this.receiverPorts = new ArrayList<>(inputPortCount);
         this.emitterPorts = new ArrayList<>(outputPortCount);
         this.receiverPortByWire = new HashMap<>();
@@ -125,10 +127,26 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     @Override
-    public synchronized void emit(final List<WireRecord> wireRecords) {
+    public synchronized void emit(Object wireRecords) {
         requireNonNull(wireRecords, "Wire Records cannot be null");
-        final WireEnvelope envelope = createWireEnvelope(wireRecords);
+        if (List.class.isAssignableFrom(wireRecords.getClass())) {
+            if (((List<?>) wireRecords).isEmpty()) {
+                if (this.isNulltoEnvenlope) {
+                    wireRecords = createWireEnvelope(Collections.emptyList());
+                }
+            } else if (((List<?>) wireRecords).get(0) instanceof WireRecord) {
+                wireRecords = createWireEnvelope((List<WireRecord>) wireRecords);
+            }
+        } else if (wireRecords instanceof WireEnvelope) {
+            wireRecords = ((WireEnvelope) wireRecords).getRecords();
+            wireRecords = createWireEnvelope((List<WireRecord>) wireRecords);
+        } else if (wireRecords instanceof WireRecord) {
+            wireRecords = createWireEnvelope(Collections.singletonList((WireRecord) wireRecords));
+        }
+        final Object envelope = wireRecords;
+
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (EmitterPort emitterPort : this.emitterPorts) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -180,11 +198,11 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
             logger.warn("Wire cannot be null");
             return;
         }
-        final WireEnvelope envelope = (WireEnvelope) value;
+        final Object envelopeValue = value;
         if (wireComponent instanceof WireReceiver) {
             receiverExecutor.execute(() -> {
                 try {
-                    ((WireReceiver) WireSupportImpl.this.wireComponent).onWireReceive(envelope);
+                    ((WireReceiver) WireSupportImpl.this.wireComponent).onWireReceive(envelopeValue);
                 } catch (Exception e) {
                     logger.error("Excute receive massage error", e);
                 }
@@ -192,7 +210,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         } else {
             receiverExecutor.execute(() -> {
                 final ReceiverPortImpl receiverPort = WireSupportImpl.this.receiverPortByWire.get(wire);
-                receiverPort.consumer.accept(envelope);
+                receiverPort.consumer.accept(envelopeValue);
             });
         }
     }
@@ -220,7 +238,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     private class EmitterPortImpl extends PortImpl implements EmitterPort {
 
         @Override
-        public void emit(WireEnvelope envelope) {
+        public void emit(Object envelope) {
             for (final Wire wire : this.connectedWires) {
                 wire.update(envelope);
             }
@@ -229,19 +247,18 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
 
     private class ReceiverPortImpl extends PortImpl implements ReceiverPort {
 
-        Consumer<WireEnvelope> consumer = envelope -> {
+        Consumer<Object> consumer = envelope -> {
             // do nothing
         };
 
         @Override
-        public void onWireReceive(Consumer<WireEnvelope> consumer) {
+        public void onWireReceive(Consumer<Object> consumer) {
             requireNonNull(consumer);
             this.consumer = consumer;
         }
     }
 
-    @Override
-    public WireEnvelope createWireEnvelope(List<WireRecord> records) {
+    private WireEnvelope createWireEnvelope(List<WireRecord> records) {
         return new WireEnvelope(servicePid, records);
     }
 
@@ -253,8 +270,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         private final String namePrefix;
 
         WireDefaultThreadFactory(String name) {
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            group = Thread.currentThread().getThreadGroup();
             namePrefix = "WirePool-" + POOL_NUMBER.getAndIncrement() + "-" + name + "-";
         }
 

@@ -20,6 +20,7 @@ package org.eclipse.kura.wire.graph;
 public enum Constants {
 
     WIRE_EMITTER_PORT_PROP_NAME("emitter.port"),
+    WIRE_EMITTER_NULL_AS_WIRE_ENVELOPE("emitter.null.as.wire.envelope"),
     WIRE_RECEIVER_PORT_PROP_NAME("receiver.port"),
     RECEIVER_PORT_COUNT_PROP_NAME("receiver.port.count"),
     EMITTER_PORT_COUNT_PROP_NAME("emitter.port.count"),

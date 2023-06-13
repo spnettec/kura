@@ -14,7 +14,7 @@
 package org.eclipse.kura.type;
 
 import static java.util.Objects.requireNonNull;
-import static org.eclipse.kura.type.DataType.LONG;
+import static org.eclipse.kura.type.DataType.BIGINTEGER;
 
 import java.math.BigInteger;
 
@@ -43,7 +43,7 @@ public class BigIntegerValue implements TypedValue<BigInteger> {
      * Instantiates a new long value.
      *
      * @param value
-     *                  the value
+     *            the value
      */
     public BigIntegerValue(final BigInteger value) {
         this.value = value;
@@ -78,7 +78,7 @@ public class BigIntegerValue implements TypedValue<BigInteger> {
     /** {@inheritDoc} */
     @Override
     public DataType getType() {
-        return LONG;
+        return BIGINTEGER;
     }
 
     /** {@inheritDoc} */

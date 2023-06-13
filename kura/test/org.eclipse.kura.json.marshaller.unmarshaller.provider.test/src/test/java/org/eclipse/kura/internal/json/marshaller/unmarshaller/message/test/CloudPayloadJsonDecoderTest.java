@@ -43,7 +43,7 @@ public class CloudPayloadJsonDecoderTest {
         KuraPayload kuraPayload = CloudPayloadJsonDecoder.buildFromString(stringToConvert);
         assertNotNull(kuraPayload);
     }
-    
+
     @Test(expected = ParseException.class)
     public void testStringToJsonEmptyStringFailure() {
         String stringToConvert = "";

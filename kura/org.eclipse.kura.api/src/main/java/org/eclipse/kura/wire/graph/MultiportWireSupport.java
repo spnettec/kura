@@ -14,8 +14,6 @@ package org.eclipse.kura.wire.graph;
 
 import java.util.List;
 
-import org.eclipse.kura.wire.WireEnvelope;
-import org.eclipse.kura.wire.WireRecord;
 import org.eclipse.kura.wire.WireSupport;
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -40,14 +38,5 @@ public interface MultiportWireSupport extends WireSupport {
      * @return a list of {@link ReceiverPort}
      */
     public List<ReceiverPort> getReceiverPorts();
-
-    /**
-     * This method allows to create a {@link WireEnvelope} from the list of {@link WireRecord} passed as an argument.
-     *
-     * @param records
-     *            a list of {@link WireRecord}s that will be wrapped into a {@link WireEnvelope}
-     * @return a {@link WireEnvelope} that wraps the list of {@link WireRecord}s passed.
-     */
-    public WireEnvelope createWireEnvelope(List<WireRecord> records);
 
 }
