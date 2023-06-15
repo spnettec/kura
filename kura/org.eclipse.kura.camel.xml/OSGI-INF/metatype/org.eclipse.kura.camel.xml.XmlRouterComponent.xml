@@ -27,6 +27,7 @@
             description="%dslNameDesc">
             <Option label="xml" value="xml"/>
             <Option label="Groovy" value="groovy"/>
+            <Option label="Javascript" value="js"/>
         </AD>
         <AD id="component.prereqs" name="%reqCom"
             description="%reqComDesc"

@@ -297,6 +297,7 @@
         <setEntry value="org.apache.camel.camel-http@default:default"/>
         <setEntry value="org.apache.camel.camel-jackson@default:default"/>
         <setEntry value="org.apache.camel.camel-jms@default:default"/>
+        <setEntry value="org.apache.camel.camel-js-dsl@default:default"/>
         <setEntry value="org.apache.camel.camel-log@default:default"/>
         <setEntry value="org.apache.camel.camel-management-api@default:default"/>
         <setEntry value="org.apache.camel.camel-netty-http@default:default"/>
@@ -393,6 +394,7 @@
         <setEntry value="org.eclipse.jetty.servlets@default:default"/>
         <setEntry value="org.eclipse.jetty.util.ajax@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer@default:default"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
@@ -514,7 +516,6 @@
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>
         <setEntry value="org.eclipse.kura.localization.resources@default:false"/>
         <setEntry value="org.eclipse.kura.localization@default:default"/>

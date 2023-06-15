@@ -323,6 +323,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-js-dsl:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-base-engine:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
