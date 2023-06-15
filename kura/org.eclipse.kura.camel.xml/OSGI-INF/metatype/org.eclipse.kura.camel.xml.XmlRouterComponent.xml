@@ -18,6 +18,16 @@
     &lt;/route&gt;&#10;
 &lt;/routes&gt;'/>
 
+		<AD id="file.extension"  
+            name="%dslName"
+            type="String"
+            cardinality="1"
+            required="true"
+            default="xml"
+            description="%dslNameDesc">
+            <Option label="xml" value="xml"/>
+            <Option label="Groovy" value="groovy"/>
+        </AD>
         <AD id="component.prereqs" name="%reqCom"
             description="%reqComDesc"
             type="String"

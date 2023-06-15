@@ -46,7 +46,6 @@ Export-Package: org.eclipse.kura.camel;version="1.1.0",
    org.eclipse.kura.camel.runner,
    org.apache.camel,
    org.eclipse.kura.configuration",
- org.eclipse.kura.camel.router;version="1.1.0";uses:="org.osgi.framework,org.apache.camel,org.eclipse.kura.camel.component",
  org.eclipse.kura.camel.runner;version="1.1.0";
   uses:="org.osgi.framework,
    org.apache.camel.builder,

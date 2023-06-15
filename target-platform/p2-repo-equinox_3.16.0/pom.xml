@@ -313,6 +313,16 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>org.apache.camel:camel-groovy-dsl-common:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-groovy-dsl:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.camel:camel-base-engine:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -389,6 +399,16 @@
 								</artifact>
 								<artifact>
 									<id>org.apache.camel:camel-util-json:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-tooling-model:${org.apache.camel.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.apache.camel:camel-rest:${org.apache.camel.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

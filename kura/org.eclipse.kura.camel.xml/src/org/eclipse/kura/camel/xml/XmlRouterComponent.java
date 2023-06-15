@@ -139,18 +139,19 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             }
             builder.cloudService(null, filter, Builder.addAsCloudComponent(entry.getKey()));
         }
+        
+        if (vertx == null) {
+            vertx = Vertx.vertx();
+        }
+        if (webClient != null) {
+            webClient.close();
+            webClient = WebClient.create(vertx);
+        } else {
+            webClient = WebClient.create(vertx);
+        }
 
         if (!initCodeTemp.isEmpty()) {
-            if (vertx == null) {
-                vertx = Vertx.vertx();
-            }
-            if (webClient != null) {
-                webClient.close();
-                webClient = WebClient.create(vertx);
-            } else {
-                webClient = WebClient.create(vertx);
-            }
-
+            
             // call init code before context start
 
             builder.addBeforeStart(camelContext -> {
@@ -182,9 +183,9 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
         final BundleContext ctx = getBundle(XmlRouterComponent.class).getBundleContext();
         final Map<String, Map<Class<?>, Object>> services = new HashMap<>();
-        final Map<Class<?>, Object> classMap = new HashMap<>();
-        classMap.put(PayloadFactory.class, new PayloadFactory());
-        services.put("payloadFactory", classMap);
+        services.put("payloadFactory", Map.of(PayloadFactory.class, new PayloadFactory()));
+        services.put("vertx", Map.of(Vertx.class, vertx));
+        services.put("webClient", Map.of(WebClient.class, webClient));
         builder.registryFactory(createOsgiRegistry(ctx, services));
 
         // assign new state
@@ -199,6 +200,9 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
 
     @Override
     protected boolean isRestartNeeded(final Map<String, Object> properties) {
+        if (super.isRestartNeeded(properties)) {
+            return true;
+        }
 
         final boolean disableJmxTemp = asBoolean(properties, DISABLE_JMX, false);
 

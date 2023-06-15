@@ -502,9 +502,9 @@ public class CamelRunner {
         this.context = camelContext;
 
         this.context.start();
-        
+
         this.routes.applyRoutes(this.context);
-        
+
         fireLifecycle(this.context, ContextLifecycleListener::started);
     }
 
@@ -652,13 +652,13 @@ public class CamelRunner {
      * @param xml
      *            the new set of routes, may be {@code null}
      */
-    public void setRoutes(final String xml) throws Exception {
+    public void setRoutes(final String xml, String filename) throws Exception {
         logger.info("Setting routes...");
 
         if (xml == null || xml.trim().isEmpty()) {
             clearRoutes();
         } else {
-            setRoutes(new XmlRoutesProvider(xml));
+            setRoutes(new DslRoutesProvider(xml, filename));
         }
     }
 

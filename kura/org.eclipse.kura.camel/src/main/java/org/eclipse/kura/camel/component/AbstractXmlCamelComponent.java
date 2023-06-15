@@ -46,8 +46,10 @@ public abstract class AbstractXmlCamelComponent extends AbstractCamelComponent i
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractXmlCamelComponent.class);
     private final String xmlDataProperty;
+    private String data = "";
+    private String model = "xml";
 
-    public AbstractXmlCamelComponent(final String xmlDataProperty) {
+    protected AbstractXmlCamelComponent(final String xmlDataProperty) {
         Objects.requireNonNull(xmlDataProperty);
 
         this.xmlDataProperty = xmlDataProperty;
@@ -94,10 +96,23 @@ public abstract class AbstractXmlCamelComponent extends AbstractCamelComponent i
     }
 
     private void applyRoutes(final Map<String, Object> properties) throws Exception {
-        this.runner.setRoutes(asString(properties, this.xmlDataProperty));
+        this.model = asString(properties, "file.extension", "xml");
+        String fileName = "data." + this.model;
+        this.data = asString(properties, this.xmlDataProperty);
+        this.runner.setRoutes(this.data, fileName);
     }
 
     protected boolean isRestartNeeded(final Map<String, Object> properties) {
+        String dataTemp = asString(properties, this.xmlDataProperty);
+        if (!this.data.equals(dataTemp)) {
+            logger.debug("Require restart due to '{}' change", this.xmlDataProperty);
+            return true;
+        }
+        String modelTemp = asString(properties, "file.extension", "xml");
+        if (!this.model.equals(modelTemp)) {
+            logger.debug("Require restart due to '{}' change", "file.extension");
+            return true;
+        }
         return false;
     }
 
