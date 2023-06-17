@@ -52,7 +52,7 @@ public class HeapStress implements ConfigurableComponent {
     public HeapStress() {
         super();
         this.worker = Executors.newScheduledThreadPool(5);
-        this.handle = new ArrayList<ScheduledFuture<?>>();
+        this.handle = new ArrayList<>();
     }
 
     // ----------------------------------------------------------------
@@ -65,8 +65,8 @@ public class HeapStress implements ConfigurableComponent {
         logger.info("Activating Stress...");
 
         this.properties = properties;
-        for (String s : properties.keySet()) {
-            logger.info("Activate - " + s + ": " + properties.get(s));
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            logger.info("Activate - {}:{}", entry.getKey(), entry.getValue());
         }
 
         doUpdate();
@@ -88,8 +88,8 @@ public class HeapStress implements ConfigurableComponent {
 
         // store the properties received
         this.properties = properties;
-        for (String s : properties.keySet()) {
-            logger.info("Update - " + s + ": " + properties.get(s));
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            logger.info("Update - {}:{}", entry.getKey(), entry.getValue());
         }
 
         // try to kick off a new job
@@ -145,7 +145,7 @@ public class HeapStress implements ConfigurableComponent {
 
                         Thread.currentThread().setName(name);
                     }
-                }, delay * i, interval, TimeUnit.MILLISECONDS);
+                }, Long.valueOf(delay) * i, interval, TimeUnit.MILLISECONDS);
                 this.handle.add(futureHandle);
             }
         }
@@ -169,6 +169,7 @@ public class HeapStress implements ConfigurableComponent {
             }
         } catch (InterruptedException e) {
             logger.warn("Interrupted", e);
+            Thread.currentThread().interrupt();
         }
     }
 }
