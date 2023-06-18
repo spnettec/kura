@@ -1952,7 +1952,7 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.sun.jna_${net.java.dev.jna.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/tel.schich.javacan_${javacan.version}.jar@4:start"/>
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/tel.schich.javacan-core_${javacan.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.pcap4j.core_${pcap4j.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"

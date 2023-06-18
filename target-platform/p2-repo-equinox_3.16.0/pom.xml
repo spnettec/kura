@@ -1710,7 +1710,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>tel.schich:javacan:jar:${javacan.version}</id>
+									<id>tel.schich:javacan-core:jar:${javacan.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
