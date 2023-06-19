@@ -4,7 +4,7 @@ Section: misc
 Priority: low
 Depends: dos2unix, unzip, 
  telnet, bluez-hcidump, 
- bluez, chrony, ntpdate, 
+ bluez, chrony, ntpdate, dmidecode,
  openjdk-17-jre-headless | temurin-17-jdk,
  cron
 Architecture: all

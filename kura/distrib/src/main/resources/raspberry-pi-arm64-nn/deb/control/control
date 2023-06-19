@@ -3,7 +3,7 @@ Version: [[project.version]]
 Section: misc
 Priority: low
 Depends: dos2unix, unzip, telnet, 
- bluez-hcidump, bluez, chrony, 
+ bluez-hcidump, bluez, chrony, dmidecode,
  ntpdate, pi-bluetooth, rpi.gpio-common, 
  openjdk-17-jre-headless | temurin-17-jdk,
  cron

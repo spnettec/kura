@@ -37,6 +37,7 @@ RUN true && \
         dos2unix \
         openssl \
         net-tools \
+        dmidecode \
         hostname \
         which \
         findutils \
