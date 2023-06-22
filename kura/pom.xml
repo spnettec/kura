@@ -81,7 +81,6 @@
         <module>org.eclipse.kura.net.configuration</module>
         <module>org.eclipse.kura.nm</module>
         <module>org.eclipse.kura.net.admin.firewall</module>
-        <module>org.eclipse.kura.protocol.modbus</module>
         <module>org.eclipse.kura.stress</module>
         <module>org.eclipse.kura.util</module>
         <module>org.eclipse.kura.wire.camel</module>

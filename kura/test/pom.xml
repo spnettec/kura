@@ -1028,7 +1028,6 @@
         <module>org.eclipse.kura.nm.test</module>
         <module>org.eclipse.kura.net.configuration.test</module>
         <module>org.eclipse.kura.rest.asset.provider.test</module>
-        <module>org.eclipse.kura.protocol.modbus.test</module>
         <module>org.eclipse.kura.stress.test</module>
         <module>org.eclipse.kura.test</module>
         <module>org.eclipse.kura.util.test</module>
