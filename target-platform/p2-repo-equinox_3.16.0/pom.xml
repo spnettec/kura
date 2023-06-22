@@ -255,7 +255,7 @@
 										 g.apache.qpid.jms.message.facade;version="[1.7,3)",org.apache.qpid.jms.
 										 provider.amqp.message;version="[1.7,3)",org.slf4j;version="[1.7,3)"
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.component.amqp;version="3.20.5";uses:="
+										<Export-Package>org.apache.camel.component.amqp;version="3.20.6";uses:="
 										 javax.jms,org.apache.camel,org.apache.camel.component.jms,org.apache.ca
 										 mel.spi,org.apache.camel.spi.annotations,org.apache.camel.support.compo
 										 nent"
@@ -488,7 +488,7 @@
 													 n="[3,5)",javax.servlet.http;version="[3,5)",org.slf4j;version="[1.7,2)
 													 "
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.http.common;version="3.20.5";uses:="jav
+										<Export-Package>org.apache.camel.http.common;version="3.20.6";uses:="jav
 													 ax.servlet,javax.servlet.http,org.apache.camel,org.apache.camel.cloud,o
 													 rg.apache.camel.http.base,org.apache.camel.http.base.cookie,org.apache.
 													 camel.spi,org.apache.camel.support,org.slf4j"
@@ -527,7 +527,7 @@
 									<transitive>false</transitive>
 									<instructions>
 										<Import-Package>*;resolution:=optional</Import-Package>
-										<Export-Package>org.apache.camel.builder.endpoint;version="3.20.5";uses:
+										<Export-Package>org.apache.camel.builder.endpoint;version="3.20.6";uses:
 													 ="org.apache.camel,org.apache.camel.builder,org.apache.camel.builder.en
 													 dpoint.dsl,org.apache.camel.model,org.apache.camel.spi,org.apache.camel
 													 .support,org.apache.camel.util.function",org.apache.camel.builder.endpo
@@ -729,7 +729,7 @@
 													 "[0,2)",javax.servlet;version="[3,5)",javax.servlet.http;version="[3,5)
 													 ",org.slf4j;version="[1.7,2)"
 				                      	</Import-Package>
-										<Export-Package>org.apache.camel.component.servlet;version="3.20.5";uses
+										<Export-Package>org.apache.camel.component.servlet;version="3.20.6";uses
 													 :="javax.activation,javax.servlet,javax.servlet.http,org.apache.camel,o
 													 rg.apache.camel.http.common,org.apache.camel.spi,org.apache.camel.spi.a
 													 nnotations,org.apache.camel.support.component"
@@ -939,11 +939,6 @@
 								</artifact>
 								<artifact>
 									<id>com.google.guava:guava:${guava.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.google.guava:guava:${guava31.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
