@@ -396,7 +396,7 @@
         <setEntry value="org.eclipse.jetty.servlets@default:default"/>
         <setEntry value="org.eclipse.jetty.util.ajax@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:default"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
