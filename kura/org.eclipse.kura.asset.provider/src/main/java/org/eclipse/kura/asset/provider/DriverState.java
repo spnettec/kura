@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2018, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraRuntimeException;
-import org.eclipse.kura.asset.provider.BaseAsset.ChannelListenerRegistration;
+import org.eclipse.kura.asset.provider.BaseAsset.ChannelListenerHolder;
 import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.listener.ChannelListener;
@@ -37,7 +37,7 @@ public class DriverState {
     private static final Logger logger = LoggerFactory.getLogger(DriverState.class);
 
     private final Driver driver;
-    private final Set<ChannelListenerRegistration> attachedListeners;
+    private final Set<ChannelListenerHolder> attachedListeners;
 
     private PreparedRead preparedRead;
 
@@ -81,21 +81,21 @@ public class DriverState {
         }
     }
 
-    public void syncChannelListeners(final Set<ChannelListenerRegistration> targetState,
+    public void syncChannelListeners(final Set<ChannelListenerHolder> targetState,
             final Map<String, Channel> channels) {
         setChannelListenersInternal(new HashSet<>(targetState), channels);
     }
 
-    private void setChannelListenersInternal(final Set<ChannelListenerRegistration> targetState,
+    private void setChannelListenersInternal(final Set<ChannelListenerHolder> targetState,
             final Map<String, Channel> channels) {
 
-        List<ChannelListenerRegistration> tobeRemoved = this.attachedListeners.stream()
+        List<ChannelListenerHolder> tobeRemoved = this.attachedListeners.stream()
                 .filter(reg -> !targetState.contains(reg)).collect(Collectors.toList());
         if (!tobeRemoved.isEmpty()) {
             this.detach(tobeRemoved);
         }
 
-        Map<ChannelListenerRegistration, Channel> regChannels = targetState.stream().filter(reg -> {
+        Map<ChannelListenerHolder, Channel> regChannels = targetState.stream().filter(reg -> {
             if (this.attachedListeners.contains(reg)) {
                 return false;
             }
@@ -110,22 +110,21 @@ public class DriverState {
 
     }
 
-    private void attach(final Map<ChannelListenerRegistration, Channel> regChannels) {
+    private void attach(final Map<ChannelListenerHolder, Channel> regChannels) {
         logger.debug("Registering Channel Listener for monitoring...");
-        Map<ChannelListenerRegistration, Map<String, Object>> listenerChannelConfigs = regChannels.entrySet().stream()
+        Map<ChannelListenerHolder, Map<String, Object>> listenerChannelConfigs = regChannels.entrySet().stream()
                 .collect(Collectors.toMap(Entry::getKey, regChannel -> regChannel.getValue().getConfiguration()));
         try {
-            this.driver.registerChannelListeners(listenerChannelConfigs.entrySet().stream().collect(Collectors.toMap(
-                    listenerChannelConfig -> listenerChannelConfig.getKey().getChannelListener(), Entry::getValue)));
-            Set<ChannelListenerRegistration> regs = regChannels.entrySet().stream().map(Entry::getKey)
+            this.driver.registerChannelListeners(listenerChannelConfigs.entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
+            Set<ChannelListenerHolder> regs = regChannels.entrySet().stream().map(Entry::getKey)
                     .collect(Collectors.toSet());
             this.attachedListeners.addAll(regs);
         } catch (KuraRuntimeException kuraError) {
             if (kuraError.getCode() == KuraErrorCode.OPERATION_NOT_SUPPORTED) {
-                for (Map.Entry<ChannelListenerRegistration, Map<String, Object>> entry : listenerChannelConfigs
-                        .entrySet()) {
+                for (Map.Entry<ChannelListenerHolder, Map<String, Object>> entry : listenerChannelConfigs.entrySet()) {
                     try {
-                        this.driver.registerChannelListener(entry.getValue(), entry.getKey().getChannelListener());
+                        this.driver.registerChannelListener(entry.getValue(), entry.getKey());
                         this.attachedListeners.add(entry.getKey());
                     } catch (Exception regError) {
                         logger.warn("Failed to register channel listener", regError);
@@ -142,17 +141,17 @@ public class DriverState {
 
     }
 
-    private void detach(final Collection<ChannelListenerRegistration> registrations) {
+    private void detach(final Collection<ChannelListenerHolder> registrations) {
         logger.debug("Unregistering Asset Listener...");
 
         try {
             Collection<ChannelListener> listeners = registrations.stream()
-                    .map(ChannelListenerRegistration::getChannelListener).collect(Collectors.toSet());
+                    .map(ChannelListenerHolder::getChannelListener).collect(Collectors.toSet());
             this.driver.unregisterChannelListeners(listeners);
             this.attachedListeners.removeAll(registrations);
         } catch (KuraRuntimeException kuraError) {
             if (kuraError.getCode() == KuraErrorCode.OPERATION_NOT_SUPPORTED) {
-                for (ChannelListenerRegistration registration : registrations) {
+                for (ChannelListenerHolder registration : registrations) {
                     try {
                         this.driver.unregisterChannelListener(registration.getChannelListener());
                         this.attachedListeners.remove(registration);
