@@ -43,7 +43,7 @@ RUN true && \
         findutils \
     && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
-    /kura-install/kura_*_docker-x86_64-nn_installer.sh && rm -rf /kura-install/ && \
+    /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
     find /opt/eclipse -type d | xargs chmod a+x && \
