@@ -2103,7 +2103,7 @@ fi]]>
         </propertyfile>
     </target>
 
-    <target name="linux-debian-config" if="is.debian" depends="linux-config">
+    <target name="linux-debian-config" if="is.debian">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
@@ -2111,7 +2111,7 @@ fi]]>
         </propertyfile>
     </target>
 
-    <target name="linux-redhat-config" if="is.redhat" depends="linux-config">
+    <target name="linux-redhat-config" if="is.redhat">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
