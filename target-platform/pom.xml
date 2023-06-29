@@ -34,7 +34,7 @@
         <!-- plugins versions common to Java 8 and Java 17 builds -->
         <exists-maven-plugin.version>0.0.3</exists-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-        <maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
+        <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
         <maven-bundle-plugin.version>5.1.8</maven-bundle-plugin.version>
         <maven-clean-plugin.version>2.4.1</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>

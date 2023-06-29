@@ -1803,7 +1803,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
+				<version>${maven-antrun-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>install-equinox</id>

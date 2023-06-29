@@ -134,6 +134,7 @@
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat"/>
         <setEntry value="org.eclipse.kura.raspberrypi.sensehat.example"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider.test"/>
+        <setEntry value="org.eclipse.kura.rest.command.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.inventory.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.network.status.provider.test"/>
@@ -524,6 +525,7 @@
         <setEntry value="org.eclipse.kura.net.configuration@default:default"/>
         <setEntry value="org.eclipse.kura.request.handler.jaxrs@default:default"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.command.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.configuration.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.inventory.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.network.status.provider@default:default"/>

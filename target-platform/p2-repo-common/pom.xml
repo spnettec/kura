@@ -240,7 +240,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <delete dir="../../kura/target-definition/common/"/>
                                 <mkdir dir="../../kura/target-definition/common/repository"/>
                                 <copy todir="../../kura/target-definition/common/repository">
@@ -249,7 +249,7 @@
                                 <copy todir="../../kura/target-definition/common/source">
                                     <fileset dir="${project.build.directory}/source"/>
                                 </copy>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
