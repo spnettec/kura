@@ -74,7 +74,6 @@ import org.eclipse.kura.net.wifi.WifiRadioMode;
 import org.eclipse.kura.net.wifi.WifiSecurity;
 import org.eclipse.kura.system.SystemService;
 import org.eclipse.kura.usb.UsbDevice;
-import org.eclipse.kura.web.Console;
 import org.eclipse.kura.web.server.util.GwtServerUtil;
 import org.eclipse.kura.web.server.util.KuraExceptionHandler;
 import org.eclipse.kura.web.server.util.ServiceLocator;
@@ -103,8 +102,6 @@ import org.eclipse.kura.web.shared.model.GwtWifiNetInterfaceConfig;
 import org.eclipse.kura.web.shared.model.GwtWifiRadioMode;
 import org.eclipse.kura.web.shared.model.GwtWifiSecurity;
 import org.eclipse.kura.web.shared.model.GwtWifiWirelessMode;
-import org.eclipse.kura.web.shared.validator.PasswordStrengthValidators;
-import org.eclipse.kura.web.shared.validator.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1670,6 +1667,11 @@ public class GwtNetworkServiceImpl {
         GwtWifiSecurity security = gwtWifiConfig.getSecurityEnum();
         String passKey = GwtSafeHtmlUtils.htmlUnescape(gwtWifiConfig.getPassword());
         String wifiPassphrasePropName = wifiModeBasePropName + "passphrase";
+
+        if (security == GwtWifiSecurity.netWifiSecurityNONE) {
+            properties.put(wifiPassphrasePropName, null);
+            return;
+        }
 
         String wirelessSSID = gwtWifiConfig.getWirelessSsid();
 
