@@ -48,6 +48,9 @@
         <Logger name="org.eclipse" level="info" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="org.apache.activemq" level="warn" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="AuditLogger" level="trace" additivity="false">
             <AppenderRef ref="audit"/>
         </Logger>
