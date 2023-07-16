@@ -139,7 +139,10 @@ public final class OpcUaDriver implements Driver, ConfigurableComponent {
     protected ConnectionManager connectSync() throws ConnectionException {
         try {
             return connectAsync().get(this.options.getRequestTimeout(), TimeUnit.SECONDS);
-        } catch (final Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ConnectionException(e);
+        } catch (Exception e) {
             throw new ConnectionException(e);
         }
     }
