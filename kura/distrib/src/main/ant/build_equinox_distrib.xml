@@ -1847,12 +1847,12 @@ fi]]>
 	<!-- Artemis config targets -->
 	<target name="artemis-config">
 		<find-jar-version2 dir="../target-definition/equinox_3.16.0/repository/plugins"
-			prefix="com.google.guava_31" property="guava31.distrib.version" />
+			prefix="com.google.guava_32" property="guava32.distrib.version" />
 
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_31${guava31.distrib.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava_32${guava32.distrib.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.google.guava.failureaccess_${guava.failureaccess.version}.jar@3" />
 
