@@ -158,6 +158,9 @@
             <esf:property name="net.interface.eth0.config.ip4.status" type="String">
                 <esf:value>netIPv4StatusEnabledWAN</esf:value>
             </esf:property>
+            <esf:property name="net.interface.eth0.config.ip6.status" array="false" encrypted="false" type="String">
+                <esf:value>netIPv6StatusDisabled</esf:value>
+            </esf:property>
         </esf:properties>
     </esf:configuration>
     <esf:configuration pid="org.eclipse.kura.watchdog.WatchdogService">
