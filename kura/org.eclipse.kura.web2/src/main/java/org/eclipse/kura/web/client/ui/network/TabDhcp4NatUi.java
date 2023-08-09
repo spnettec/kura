@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2023 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -55,7 +55,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
+public class TabDhcp4NatUi extends AbstractServicesUi implements NetworkTab {
 
     private static final String ROUTER_OFF_MESSAGE = MessageUtils.get(GwtNetRouterMode.netRouterOff.name());
     private static final String ROUTER_NAT_MESSAGE = MessageUtils.get(GwtNetRouterMode.netRouterNat.name());
@@ -63,7 +63,7 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
     private static final String WIFI_STATION_MODE = GwtWifiWirelessMode.netWifiWirelessModeStation.name();
     private static TabDhcpNatUiUiBinder uiBinder = GWT.create(TabDhcpNatUiUiBinder.class);
 
-    interface TabDhcpNatUiUiBinder extends UiBinder<Widget, TabDhcpNatUi> {
+    interface TabDhcpNatUiUiBinder extends UiBinder<Widget, TabDhcp4NatUi> {
     }
 
     private static final String REGEX_IPV4 = "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
@@ -71,7 +71,7 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
     private final GwtSecurityTokenServiceAsync gwtXSRFService = GWT.create(GwtSecurityTokenService.class);
     private final GwtNetworkServiceAsync gwtNetworkService = GWT.create(GwtNetworkService.class);
     private final GwtSession session;
-    private final TabTcpIpUi tcpTab;
+    private final TabIp4Ui tcpTab;
     private final TabWirelessUi wirelessTab;
     private Boolean dirty;
     private GwtNetInterfaceConfig selectedNetIfConfig;
@@ -167,7 +167,7 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
     @UiField
     AlertDialog alertDialog;
 
-    public TabDhcpNatUi(GwtSession currentSession, TabTcpIpUi tcp, TabWirelessUi wireless, NetworkTabsUi netTabs) {
+    public TabDhcp4NatUi(GwtSession currentSession, TabIp4Ui tcp, TabWirelessUi wireless, NetworkTabsUi netTabs) {
         initWidget(uiBinder.createAndBindUi(this));
         this.tabs = netTabs;
         this.tcpTab = tcp;
@@ -372,16 +372,16 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.radio1.setText(MSGS.trueLabel());
         this.radio2.setText(MSGS.falseLabel());
         this.radio1.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipPassDns()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipPassDns()));
             }
         });
         this.radio1.addMouseOutHandler(event -> resetHelp());
         this.radio2.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipPassDns()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipPassDns()));
             }
         });
         this.radio2.addMouseOutHandler(event -> resetHelp());
@@ -396,9 +396,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.labelMaxLease.setText(MSGS.netRouterDhcpMaxLease());
         this.labelMaxLease.setShowRequiredIndicator(true);
         this.maxLease.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpMaxLeaseTime()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpMaxLeaseTime()));
             }
         });
         this.maxLease.addMouseOutHandler(event -> resetHelp());
@@ -413,9 +413,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.labelDefaultLease.setText(MSGS.netRouterDhcpDefaultLease());
         this.labelDefaultLease.setShowRequiredIndicator(true);
         this.defaultLease.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpDefaultLeaseTime()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpDefaultLeaseTime()));
             }
         });
         this.defaultLease.addMouseOutHandler(event -> resetHelp());
@@ -430,9 +430,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.labelSubnet.setText(MSGS.netRouterDhcpSubnetMask());
         this.labelSubnet.setShowRequiredIndicator(true);
         this.subnet.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpSubnet()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpSubnet()));
             }
         });
         this.subnet.addMouseOutHandler(event -> resetHelp());
@@ -447,9 +447,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.labelEnd.setText(MSGS.netRouterDhcpEndingAddress());
         this.labelEnd.setShowRequiredIndicator(true);
         this.end.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpEndAddr()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpEndAddr()));
             }
         });
         this.end.addMouseOutHandler(event -> resetHelp());
@@ -464,9 +464,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.labelBegin.setText(MSGS.netRouterDhcpBeginningAddress());
         this.labelBegin.setShowRequiredIndicator(true);
         this.begin.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpBeginAddr()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipDhcpBeginAddr()));
             }
         });
         this.begin.addMouseOutHandler(event -> resetHelp());
@@ -489,22 +489,22 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
             i++;
         }
         this.router.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netRouterToolTipMode()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netRouterToolTipMode()));
             }
         });
         this.router.addMouseOutHandler(event -> resetHelp());
         this.router.addChangeHandler(event -> {
             setDirty(true);
             ListBox box = (ListBox) event.getSource();
-            if (TabDhcpNatUi.this.tcpTab.isDhcp() && !box.getSelectedItemText().equals(ROUTER_OFF_MESSAGE)) {
-                TabDhcpNatUi.this.groupRouter.setValidationState(ValidationState.ERROR);
-                TabDhcpNatUi.this.helpRouter.setText(MSGS.netRouterConfiguredForDhcpError());
-                TabDhcpNatUi.this.helpRouter.setColor("red");
+            if (TabDhcp4NatUi.this.tcpTab.isDhcp() && !box.getSelectedItemText().equals(ROUTER_OFF_MESSAGE)) {
+                TabDhcp4NatUi.this.groupRouter.setValidationState(ValidationState.ERROR);
+                TabDhcp4NatUi.this.helpRouter.setText(MSGS.netRouterConfiguredForDhcpError());
+                TabDhcp4NatUi.this.helpRouter.setColor("red");
             } else {
-                TabDhcpNatUi.this.groupRouter.setValidationState(ValidationState.NONE);
-                TabDhcpNatUi.this.helpRouter.setText("");
+                TabDhcp4NatUi.this.groupRouter.setValidationState(ValidationState.NONE);
+                TabDhcp4NatUi.this.helpRouter.setText("");
             }
             if (this.router.getSelectedIndex() == 0 || this.router.getSelectedIndex() == 2) {
                 this.alertDialog.show(MSGS.netRouterDhcpNATWarning(), Severity.ALERT, (ConfirmListener) null);
@@ -520,9 +520,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         // Dhcp Lease
         this.labelDhcpLease.setText(MSGS.netLabelDhcpLease());
         this.dhcpLease.addMouseOverHandler(event -> {
-            if (TabDhcpNatUi.this.router.isEnabled()) {
-                TabDhcpNatUi.this.helpText.clear();
-                TabDhcpNatUi.this.helpText.add(new Span(MSGS.netDhcpLeaseHelp()));
+            if (TabDhcp4NatUi.this.router.isEnabled()) {
+                TabDhcp4NatUi.this.helpText.clear();
+                TabDhcp4NatUi.this.helpText.add(new Span(MSGS.netDhcpLeaseHelp()));
             }
         });
     }
@@ -532,20 +532,31 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         this.helpText.add(new Span(MSGS.netHelpDefaultHint()));
     }
 
+    private boolean isPositiveInteger(String value) {
+        try {
+            if (Integer.parseInt(value) > 0) {
+                return true;
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return false;
+    }
+
     private void checkDhcpRangeValidity() {
         if (!isDhcpRangeValid()) {
-            TabDhcpNatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
-            TabDhcpNatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
         } else {
-            TabDhcpNatUi.this.groupBegin.setValidationState(ValidationState.NONE);
-            TabDhcpNatUi.this.groupEnd.setValidationState(ValidationState.NONE);
+            TabDhcp4NatUi.this.groupBegin.setValidationState(ValidationState.NONE);
+            TabDhcp4NatUi.this.groupEnd.setValidationState(ValidationState.NONE);
         }
     }
 
     private boolean isDhcpRangeValid() {
         try {
-            long beginAddress = addressToLong(TabDhcpNatUi.this.begin.getText().trim());
-            long endAddress = addressToLong(TabDhcpNatUi.this.end.getText().trim());
+            long beginAddress = addressToLong(TabDhcp4NatUi.this.begin.getText().trim());
+            long endAddress = addressToLong(TabDhcp4NatUi.this.end.getText().trim());
             return endAddress > beginAddress;
         } catch (NumberFormatException e) {
             return false;
@@ -575,12 +586,12 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         param.setRequired(true);
         param.setType(GwtConfigParameterType.STRING);
         if (!validateTextBox(param, groupSubnet).isEmpty()) {
-            TabDhcpNatUi.this.groupSubnet.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupSubnet.setValidationState(ValidationState.ERROR);
         }
-        if (!TabDhcpNatUi.this.subnet.getText().matches(REGEX_IPV4)) {
-            TabDhcpNatUi.this.groupSubnet.setValidationState(ValidationState.ERROR);
+        if (!TabDhcp4NatUi.this.subnet.getText().matches(REGEX_IPV4)) {
+            TabDhcp4NatUi.this.groupSubnet.setValidationState(ValidationState.ERROR);
         } else {
-            TabDhcpNatUi.this.groupSubnet.setValidationState(ValidationState.NONE);
+            TabDhcp4NatUi.this.groupSubnet.setValidationState(ValidationState.NONE);
         }
     }
 
@@ -589,10 +600,10 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         param.setRequired(true);
         param.setType(GwtConfigParameterType.STRING);
         if (!validateTextBox(param, groupEnd).isEmpty()) {
-            TabDhcpNatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
         }
-        if (!TabDhcpNatUi.this.end.getText().matches(REGEX_IPV4)) {
-            TabDhcpNatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
+        if (!TabDhcp4NatUi.this.end.getText().matches(REGEX_IPV4)) {
+            TabDhcp4NatUi.this.groupEnd.setValidationState(ValidationState.ERROR);
         } else {
             checkDhcpRangeValidity();
         }
@@ -603,10 +614,10 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         param.setRequired(true);
         param.setType(GwtConfigParameterType.STRING);
         if (!validateTextBox(param, groupBegin).isEmpty()) {
-            TabDhcpNatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
         }
-        if (!TabDhcpNatUi.this.begin.getText().matches(REGEX_IPV4)) {
-            TabDhcpNatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
+        if (!TabDhcp4NatUi.this.begin.getText().matches(REGEX_IPV4)) {
+            TabDhcp4NatUi.this.groupBegin.setValidationState(ValidationState.ERROR);
         } else {
             checkDhcpRangeValidity();
         }
@@ -618,9 +629,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         param.setType(GwtConfigParameterType.INTEGER);
         param.setMin("1");
         if (!validateTextBox(param, groupMaxLease).isEmpty()) {
-            TabDhcpNatUi.this.groupMaxLease.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupMaxLease.setValidationState(ValidationState.ERROR);
         } else {
-            TabDhcpNatUi.this.groupMaxLease.setValidationState(ValidationState.NONE);
+            TabDhcp4NatUi.this.groupMaxLease.setValidationState(ValidationState.NONE);
         }
     }
 
@@ -630,9 +641,9 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
         param.setType(GwtConfigParameterType.INTEGER);
         param.setMin("1");
         if (!validateTextBox(param, groupDefaultLease).isEmpty()) {
-            TabDhcpNatUi.this.groupDefaultLease.setValidationState(ValidationState.ERROR);
+            TabDhcp4NatUi.this.groupDefaultLease.setValidationState(ValidationState.ERROR);
         } else {
-            TabDhcpNatUi.this.groupDefaultLease.setValidationState(ValidationState.NONE);
+            TabDhcp4NatUi.this.groupDefaultLease.setValidationState(ValidationState.NONE);
         }
     }
 
@@ -652,7 +663,7 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
 
                 @Override
                 public void onSuccess(GwtXSRFToken token) {
-                    TabDhcpNatUi.this.gwtNetworkService.getDhcpLeases(token,
+                    TabDhcp4NatUi.this.gwtNetworkService.getDhcpLeases(token,
                             new AsyncCallback<List<String>>() {
 
                                 @Override
@@ -665,7 +676,7 @@ public class TabDhcpNatUi extends AbstractServicesUi implements NetworkTab {
                                     for (String dl : leases) {
                                         values += dl.toString() + '\n';
                                     }
-                                    TabDhcpNatUi.this.dhcpLease.setValue(values);
+                                    TabDhcp4NatUi.this.dhcpLease.setValue(values);
                                 }
                     });
                 }

@@ -74,7 +74,7 @@ public class TabModemUi extends Composite implements NetworkTab {
     private static final Messages MSGS = GWT.create(Messages.class);
     private static final String REGEX_NUM = "(?:\\d*)?\\d+";
 
-    private final TabTcpIpUi tcpTab;
+    private final TabIp4Ui tcpTab;
     private final NetworkTabsUi tabs;
     private boolean dirty;
     private GwtModemInterfaceConfig selectedNetIfConfig;
@@ -270,7 +270,7 @@ public class TabModemUi extends Composite implements NetworkTab {
     @UiField
     HelpButton failureHelp;
 
-    public TabModemUi(GwtSession currentSession, TabTcpIpUi tcp, NetworkTabsUi tabs) {
+    public TabModemUi(GwtSession currentSession, TabIp4Ui tcp, NetworkTabsUi tabs) {
         this.pdpInit = false;
         initWidget(uiBinder.createAndBindUi(this));
         this.tcpTab = tcp;
