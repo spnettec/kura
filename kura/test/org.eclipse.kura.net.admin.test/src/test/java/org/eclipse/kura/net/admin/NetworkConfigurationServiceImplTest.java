@@ -451,7 +451,7 @@ public class NetworkConfigurationServiceImplTest {
 
         List<AD> ads = ocd.getAD();
         assertNotNull(ads);
-        assertEquals(97, ads.size());
+        assertEquals(124, ads.size());
 
         int adsConfigured = 0;
         for (AD ad : ads) {
@@ -546,6 +546,34 @@ public class NetworkConfigurationServiceImplTest {
                 adsConfigured++;
             }
 
+            if ("net.interface.eth2.config.ip6.address.method".equals(ad.getId())) {
+                assertEquals("net.interface.eth2.config.ip6.address.method", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertTrue(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.eth2.config.ip6.gateway".equals(ad.getId())) {
+                assertEquals("net.interface.eth2.config.ip6.gateway", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.eth2.config.ip6.prefix".equals(ad.getId())) {
+                assertEquals("net.interface.eth2.config.ip6.prefix", ad.getName());
+                assertEquals("SHORT", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.eth2.config.ip6.address".equals(ad.getId())) {
+                assertEquals("net.interface.eth2.config.ip6.address", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
             if ("net.interface.lo.config.driver".equals(ad.getId())) {
                 assertEquals("net.interface.lo.config.driver", ad.getName());
                 assertEquals("STRING", ad.getType().name());
@@ -563,6 +591,20 @@ public class NetworkConfigurationServiceImplTest {
             if ("net.interface.lo.config.ip4.prefix".equals(ad.getId())) {
                 assertEquals("net.interface.lo.config.ip4.prefix", ad.getName());
                 assertEquals("SHORT", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.lo.config.ip6.prefix".equals(ad.getId())) {
+                assertEquals("net.interface.lo.config.ip6.prefix", ad.getName());
+                assertEquals("SHORT", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.lo.config.ip6.address".equals(ad.getId())) {
+                assertEquals("net.interface.lo.config.ip6.address", ad.getName());
+                assertEquals("STRING", ad.getType().name());
                 assertFalse(ad.isRequired());
                 adsConfigured++;
             }
@@ -763,6 +805,34 @@ public class NetworkConfigurationServiceImplTest {
                 adsConfigured++;
             }
 
+            if ("net.interface.wlan1.config.ip6.address.method".equals(ad.getId())) {
+                assertEquals("net.interface.wlan1.config.ip6.address.method", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertTrue(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.wlan1.config.ip6.gateway".equals(ad.getId())) {
+                assertEquals("net.interface.wlan1.config.ip6.gateway", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.wlan1.config.ip6.prefix".equals(ad.getId())) {
+                assertEquals("net.interface.wlan1.config.ip6.prefix", ad.getName());
+                assertEquals("SHORT", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
+            if ("net.interface.wlan1.config.ip6.address".equals(ad.getId())) {
+                assertEquals("net.interface.wlan1.config.ip6.address", ad.getName());
+                assertEquals("STRING", ad.getType().name());
+                assertFalse(ad.isRequired());
+                adsConfigured++;
+            }
+
             if ("net.interfaces".equals(ad.getId())) {
                 assertEquals("net.interfaces", ad.getName());
                 assertEquals("STRING", ad.getType().name());
@@ -770,7 +840,7 @@ public class NetworkConfigurationServiceImplTest {
                 adsConfigured++;
             }
         }
-        assertEquals(41, adsConfigured);
+        assertEquals(51, adsConfigured);
     }
 
     private static NetInterfaceType guessNetworkType(final String interfaceName) {
