@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2023 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -47,6 +47,7 @@ import org.eclipse.kura.net.firewall.FirewallConfiguration;
 import org.eclipse.kura.net.firewall.FirewallNatConfig;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP;
 import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4;
+import org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP4.FirewallOpenPortConfigIP4Builder;
 import org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP;
 import org.eclipse.kura.net.firewall.RuleType;
 import org.junit.Test;
@@ -483,7 +484,7 @@ public class FirewallConfigurationServiceImplTest {
     }
 
     @Test
-    public void testSetFirewallOpenPortConfiguration() throws KuraException {
+    public void testSetFirewallOpenPortConfiguration() throws KuraException, UnknownHostException {
         FirewallConfigurationServiceImpl svc = new FirewallConfigurationServiceImpl() {
 
             @Override
@@ -502,10 +503,9 @@ public class FirewallConfigurationServiceImplTest {
         };
 
         List<FirewallOpenPortConfigIP<? extends IPAddress>> firewallConfiguration = new ArrayList<>();
-        FirewallOpenPortConfigIP4 port = new FirewallOpenPortConfigIP4(1234, NetProtocol.tcp, null, null, null, null,
-                null);
-        firewallConfiguration.add(port);
-
+        FirewallOpenPortConfigIP4Builder builder = FirewallOpenPortConfigIP4.builder();
+        builder.withPort(1234).withProtocol(NetProtocol.tcp);
+        firewallConfiguration.add(builder.build());
         svc.setFirewallOpenPortConfiguration(firewallConfiguration);
 
     }
