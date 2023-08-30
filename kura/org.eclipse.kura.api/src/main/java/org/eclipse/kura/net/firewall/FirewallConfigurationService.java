@@ -34,9 +34,7 @@ public interface FirewallConfigurationService {
      * Set the firewall ports configuration.
      * 
      * @param the
-     *                list of
-     *                {@link org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP} to
-     *                be applied.
+     *            list of {@link org.eclipse.kura.net.firewall.FirewallOpenPortConfigIP} to be applied.
      * @throws KuraException
      */
     public void setFirewallOpenPortConfiguration(
@@ -46,9 +44,7 @@ public interface FirewallConfigurationService {
      * Set the firewall ports forwarding configuration.
      * 
      * @param the
-     *                list of
-     *                {@link org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP}
-     *                to be applied.
+     *            list of {@link org.eclipse.kura.net.firewall.FirewallPortForwardConfigIP} to be applied.
      * @throws KuraException
      */
     public void setFirewallPortForwardingConfiguration(
@@ -58,8 +54,7 @@ public interface FirewallConfigurationService {
      * Set the firewall nat configuration.
      * 
      * @param the
-     *                list of {@link org.eclipse.kura.net.firewall.FirewallNatConfig} to
-     *                be applied.
+     *            list of {@link org.eclipse.kura.net.firewall.FirewallNatConfig} to be applied.
      * @throws KuraException
      */
     public void setFirewallNatConfiguration(List<FirewallNatConfig> natConfigs) throws KuraException;
@@ -68,8 +63,7 @@ public interface FirewallConfigurationService {
      * Adds flooding protection rules to the firewall configuration.
      * 
      * @param floodingRules
-     *                          Set of rules specified as Strings to protect against
-     *                          flooding attacks
+     *            Set of rules specified as Strings to protect against flooding attacks
      */
     public void addFloodingProtectionRules(Set<String> floodingRules);
 

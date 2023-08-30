@@ -1458,6 +1458,8 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.position.provider_${org.eclipse.kura.rest.position.provider.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.system.provider_${org.eclipse.kura.rest.system.provider.version}.jar@4:start" />
+            <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.wire.provider_${org.eclipse.kura.rest.wire.provider.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.request.handler.jaxrs_${org.eclipse.kura.request.handler.jaxrs.version}.jar@4" />
@@ -1546,6 +1548,9 @@ fi]]>
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.rest.position.provider_${org.eclipse.kura.rest.position.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.rest.system.provider_${org.eclipse.kura.rest.system.provider.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.rest.wire.provider_${org.eclipse.kura.rest.wire.provider.version}.jar"
