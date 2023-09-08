@@ -10,9 +10,7 @@
  * Contributors:
  *  Eurotech
  *******************************************************************************/
-package org.eclipse.kura.net.admin.ipv6;
-
-import org.eclipse.kura.net.firewall.FirewallConfigurationService;
+package org.eclipse.kura.net.firewall;
 
 public interface FirewallConfigurationServiceIPv6 extends FirewallConfigurationService {
 
