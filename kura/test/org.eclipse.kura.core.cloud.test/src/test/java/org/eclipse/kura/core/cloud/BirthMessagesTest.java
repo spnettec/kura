@@ -206,6 +206,50 @@ public class BirthMessagesTest {
         thenBirthIsPublishedAfter(SEND_DELAY, BIRTH_TOPIC_PREFIX + CloudServiceOptions.getTopicAppsSuffix());
     }
 
+    @Test
+    public void shouldPublishBirthOnInstalledEvent() throws KuraException {
+        givenDeploymentAdminPackageInstallEvent();
+        givenConfiguredCloudService();
+        givenConnected();
+
+        whenHandleEvent();
+
+        thenBirthIsPublishedAfter(SEND_DELAY, BIRTH_TOPIC_PREFIX + CloudServiceOptions.getTopicBirthSuffix());
+    }
+
+    @Test
+    public void shouldPublishBirthOnUninstalledEvent() throws KuraException {
+        givenDeploymentAdminPackageUninstallEvent();
+        givenConfiguredCloudService();
+        givenConnected();
+
+        whenHandleEvent();
+
+        thenBirthIsPublishedAfter(SEND_DELAY, BIRTH_TOPIC_PREFIX + CloudServiceOptions.getTopicBirthSuffix());
+    }
+
+    @Test
+    public void shouldNotPublishBirthOnInstalledEventIfNotConnected() throws KuraException {
+        givenDeploymentAdminPackageInstallEvent();
+        givenConfiguredCloudService();
+        givenDisconnected();
+
+        whenHandleEvent();
+
+        thenNoBirthIsPublished();
+    }
+
+    @Test
+    public void shouldNotPublishBirthOnUninstalledEventIfNotConnected() throws KuraException {
+        givenDeploymentAdminPackageUninstallEvent();
+        givenConfiguredCloudService();
+        givenDisconnected();
+
+        whenHandleEvent();
+
+        thenNoBirthIsPublished();
+    }
+
     /*
      * Steps
      */
@@ -243,6 +287,14 @@ public class BirthMessagesTest {
 
     private void givenTamperEvent() {
         this.event = new Event(TamperEvent.TAMPER_EVENT_TOPIC, new HashMap<String, Object>());
+    }
+
+    private void givenDeploymentAdminPackageInstallEvent() {
+        this.event = new Event(CloudServiceImpl.EVENT_TOPIC_DEPLOYMENT_ADMIN_INSTALL, new HashMap<String, Object>());
+    }
+
+    private void givenDeploymentAdminPackageUninstallEvent() {
+        this.event = new Event(CloudServiceImpl.EVENT_TOPIC_DEPLOYMENT_ADMIN_UNINSTALL, new HashMap<String, Object>());
     }
 
     /*
@@ -438,11 +490,6 @@ public class BirthMessagesTest {
         when(componentContext.getBundleContext()).thenReturn(bundleContext);
 
         return componentContext;
-    }
-
-    private Object anyObject() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }
