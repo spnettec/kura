@@ -140,6 +140,7 @@
         <setEntry value="org.eclipse.kura.rest.network.status.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.position.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.provider.test"/>
+        <setEntry value="org.eclipse.kura.rest.security.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.system.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
@@ -533,6 +534,7 @@
         <setEntry value="org.eclipse.kura.rest.network.status.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.position.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.security.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.system.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
