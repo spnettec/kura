@@ -978,6 +978,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>com.github.ben-manes.caffeine:caffeine:${caffeine.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>org.apache.commons:commons-configuration2:${commons-configuration2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -1077,7 +1082,7 @@
 										</Import-Package>
 										<Export-Package>io.netty.resolver.dns;uses:="io.netty.channel,io.netty
 														 .channel.socket,io.netty.handler.codec.dns,io.netty.handler.logging,i
-														 o.netty.resolver,io.netty.util.concurrent";version="4.1.96"
+														 o.netty.resolver,io.netty.util.concurrent";version="4.1.97"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -1654,7 +1659,7 @@
 										 ,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.
 										 types.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigne
 										 d,org.eclipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo
-										 .opcua.stack.core.types.structured";version="0.6.10",org.eclipse.milo
+										 .opcua.stack.core.types.structured";version="0.6.11",org.eclipse.milo
 										 .opcua.sdk.client.model.nodes.objects;uses:="org.eclipse.milo.opcua.s
 										 dk.client,org.eclipse.milo.opcua.sdk.client.model.nodes.variables,org
 										 .eclipse.milo.opcua.sdk.client.model.types.objects,org.eclipse.milo.o
@@ -1662,21 +1667,21 @@
 										 nt.nodes,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.sta
 										 ck.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.builtin
 										 .unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ecli
-										 pse.milo.opcua.stack.core.types.structured";version="0.6.10",org.ecli
+										 pse.milo.opcua.stack.core.types.structured";version="0.6.11",org.ecli
 										 pse.milo.opcua.sdk.client.model.types.variables;uses:="org.eclipse.mi
 										 lo.opcua.sdk.core,org.eclipse.milo.opcua.sdk.core.nodes,org.eclipse.m
 										 ilo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.types.builtin,
 										 org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.
 										 milo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.stack.c
-										 ore.types.structured";version="0.6.10",org.eclipse.milo.opcua.sdk.cli
+										 ore.types.structured";version="0.6.11",org.eclipse.milo.opcua.sdk.cli
 										 ent.model.types.objects;uses:="org.eclipse.milo.opcua.sdk.client.mode
 										 l.types.variables,org.eclipse.milo.opcua.sdk.core,org.eclipse.milo.op
 										 cua.sdk.core.nodes,org.eclipse.milo.opcua.stack.core,org.eclipse.milo
 										 .opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.core.typ
 										 es.builtin.unsigned,org.eclipse.milo.opcua.stack.core.types.enumerate
-										 d,org.eclipse.milo.opcua.stack.core.types.structured";version="0.6.10
+										 d,org.eclipse.milo.opcua.stack.core.types.structured";version="0.6.11
 										 ",org.eclipse.milo.opcua.sdk.client.model;uses:="org.eclipse.milo.opc
-										 ua.sdk.client,org.eclipse.milo.opcua.stack.core";version="0.6.10",org
+										 ua.sdk.client,org.eclipse.milo.opcua.stack.core";version="0.6.11",org
 										 .eclipse.milo.opcua.sdk.client.nodes;uses:="org.eclipse.milo.opcua.sd
 										 k.client,org.eclipse.milo.opcua.sdk.client.methods,org.eclipse.milo.o
 										 pcua.sdk.client.model.nodes.variables,org.eclipse.milo.opcua.sdk.core
@@ -1684,7 +1689,7 @@
 										 ore,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.milo.
 										 opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.stack.
 										 core.types.enumerated,org.eclipse.milo.opcua.stack.core.types.structu
-										 red";version="0.6.10",org.eclipse.milo.opcua.sdk.client;uses:="com.go
+										 red";version="0.6.11",org.eclipse.milo.opcua.sdk.client;uses:="com.go
 										 ogle.common.cache,org.eclipse.milo.opcua.sdk.client.api,org.eclipse.m
 										 ilo.opcua.sdk.client.api.config,org.eclipse.milo.opcua.sdk.client.api
 										 .subscriptions,org.eclipse.milo.opcua.sdk.client.nodes,org.eclipse.mi
@@ -1695,47 +1700,47 @@
 										 e.milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.co
 										 re.types.builtin.unsigned,org.eclipse.milo.opcua.stack.core.types.enu
 										 merated,org.eclipse.milo.opcua.stack.core.types.structured,org.eclips
-										 e.milo.opcua.stack.core.util";version="0.6.10",org.eclipse.milo.opcua
+										 e.milo.opcua.stack.core.util";version="0.6.11",org.eclipse.milo.opcua
 										 .sdk.client.session;uses:="org.eclipse.milo.opcua.sdk.client,org.ecli
 										 pse.milo.opcua.stack.client,org.eclipse.milo.opcua.stack.core.util";v
-										 ersion="0.6.10",org.eclipse.milo.opcua.sdk.client.api;uses:="org.ecli
+										 ersion="0.6.11",org.eclipse.milo.opcua.sdk.client.api;uses:="org.ecli
 										 pse.milo.opcua.sdk.client,org.eclipse.milo.opcua.sdk.client.api.confi
 										 g,org.eclipse.milo.opcua.sdk.client.api.services,org.eclipse.milo.opc
 										 ua.sdk.client.api.subscriptions,org.eclipse.milo.opcua.stack.core.ser
 										 ialization,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclips
 										 e.milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua
-										 .stack.core.types.structured";version="0.6.10",org.eclipse.milo.opcua
+										 .stack.core.types.structured";version="0.6.11",org.eclipse.milo.opcua
 										 .sdk.client.api.services;uses:="org.eclipse.milo.opcua.stack.core.typ
 										 es.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,o
 										 rg.eclipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.op
-										 cua.stack.core.types.structured";version="0.6.10",org.eclipse.milo.op
+										 cua.stack.core.types.structured";version="0.6.11",org.eclipse.milo.op
 										 cua.sdk.client.api.config;uses:="io.netty.channel.nio,io.netty.util,o
 										 rg.eclipse.milo.opcua.sdk.client.api.identity,org.eclipse.milo.opcua.
 										 stack.client,org.eclipse.milo.opcua.stack.client.security,org.eclipse
 										 .milo.opcua.stack.core.channel,org.eclipse.milo.opcua.stack.core.type
 										 s.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,or
-										 g.eclipse.milo.opcua.stack.core.types.structured";version="0.6.10",or
+										 g.eclipse.milo.opcua.stack.core.types.structured";version="0.6.11",or
 										 g.eclipse.milo.opcua.sdk.client.api.subscriptions;uses:="com.google.c
 										 ommon.collect,org.eclipse.milo.opcua.sdk.client,org.eclipse.milo.opcu
 										 a.stack.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.ecli
 										 pse.milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opc
 										 ua.stack.core.types.enumerated,org.eclipse.milo.opcua.stack.core.type
-										 s.structured";version="0.6.10",org.eclipse.milo.opcua.sdk.client.api.
+										 s.structured";version="0.6.11",org.eclipse.milo.opcua.sdk.client.api.
 										 identity;uses:="org.eclipse.milo.opcua.stack.client.security,org.ecli
 										 pse.milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.
-										 core.types.structured";version="0.6.10",org.eclipse.milo.opcua.sdk.cl
+										 core.types.structured";version="0.6.11",org.eclipse.milo.opcua.sdk.cl
 										 ient.subscriptions;uses:="com.google.common.collect,org.eclipse.milo.
 										 opcua.sdk.client,org.eclipse.milo.opcua.sdk.client.api.subscriptions,
 										 org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.t
 										 ypes.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned
 										 ,org.eclipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.
 										 opcua.stack.core.types.structured,org.eclipse.milo.opcua.stack.core.u
-										 til";version="0.6.10",org.eclipse.milo.opcua.sdk.client.methods;uses:
+										 til";version="0.6.11",org.eclipse.milo.opcua.sdk.client.methods;uses:
 										 ="org.eclipse.milo.opcua.sdk.client,org.eclipse.milo.opcua.sdk.client
 										 .api,org.eclipse.milo.opcua.sdk.client.nodes,org.eclipse.milo.opcua.s
 										 tack.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse
 										 .milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.
-										 stack.core.types.structured";version="0.6.10"
+										 stack.core.types.structured";version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -1758,12 +1763,12 @@
 										 on.collect,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.s
 										 tack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.built
 										 in.unsigned,org.eclipse.milo.opcua.stack.core.types.structured,org.ec
-										 lipse.milo.opcua.stack.core.util";version="0.6.10",org.eclipse.milo.o
+										 lipse.milo.opcua.stack.core.util";version="0.6.11",org.eclipse.milo.o
 										 pcua.sdk.core.nodes;uses:="org.eclipse.milo.opcua.sdk.core,org.eclips
 										 e.milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.co
 										 re.types.builtin.unsigned,org.eclipse.milo.opcua.stack.core.types.enu
 										 merated,org.eclipse.milo.opcua.stack.core.types.structured";version="
-										 0.6.10",org.eclipse.milo.opcua.sdk.core.util;version="0.6.10"
+										 0.6.11",org.eclipse.milo.opcua.sdk.core.util;version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -1813,22 +1818,22 @@
 										 opcua.stack.core.channel.headers,org.eclipse.milo.opcua.stack.core.se
 										 curity,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.mi
 										 lo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.stack.cor
-										 e.util";version="0.6.10",org.eclipse.milo.opcua.stack.client.transpor
+										 e.util";version="0.6.11",org.eclipse.milo.opcua.stack.client.transpor
 										 t;uses:="io.netty.channel,io.netty.util,org.eclipse.milo.opcua.stack.
 										 client,org.eclipse.milo.opcua.stack.core.serialization";version="0.6.
-										 10",org.eclipse.milo.opcua.stack.client.transport.websocket;uses:="io
+										 11",org.eclipse.milo.opcua.stack.client.transport.websocket;uses:="io
 										 .netty.buffer,io.netty.channel,io.netty.channel.socket,io.netty.handl
 										 er.codec,io.netty.handler.codec.http.websocketx,org.eclipse.milo.opcu
 										 a.stack.client,org.eclipse.milo.opcua.stack.client.transport,org.ecli
-										 pse.milo.opcua.stack.client.transport.uasc";version="0.6.10",org.ecli
+										 pse.milo.opcua.stack.client.transport.uasc";version="0.6.11",org.ecli
 										 pse.milo.opcua.stack.client.transport.http;uses:="io.netty.channel,io
 										 .netty.handler.codec,io.netty.handler.codec.http,org.eclipse.milo.opc
 										 ua.stack.client,org.eclipse.milo.opcua.stack.client.transport,org.ecl
-										 ipse.milo.opcua.stack.core.serialization";version="0.6.10",org.eclips
+										 ipse.milo.opcua.stack.core.serialization";version="0.6.11",org.eclips
 										 e.milo.opcua.stack.client.transport.tcp;uses:="com.digitalpetri.netty
 										 .fsm,io.netty.channel,io.netty.channel.socket,org.eclipse.milo.opcua.
 										 stack.client,org.eclipse.milo.opcua.stack.client.transport,org.eclips
-										 e.milo.opcua.stack.client.transport.uasc";version="0.6.10",org.eclips
+										 e.milo.opcua.stack.client.transport.uasc";version="0.6.11",org.eclips
 										 e.milo.opcua.stack.client;uses:="io.netty.channel.nio,io.netty.util,o
 										 rg.eclipse.milo.opcua.stack.client.security,org.eclipse.milo.opcua.st
 										 ack.client.transport,org.eclipse.milo.opcua.stack.core,org.eclipse.mi
@@ -1836,10 +1841,10 @@
 										 zation,org.eclipse.milo.opcua.stack.core.types,org.eclipse.milo.opcua
 										 .stack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.bui
 										 ltin.unsigned,org.eclipse.milo.opcua.stack.core.types.structured";ver
-										 sion="0.6.10",org.eclipse.milo.opcua.stack.client.security;uses:="org
+										 sion="0.6.11",org.eclipse.milo.opcua.stack.client.security;uses:="org
 										 .eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.secu
 										 rity,org.eclipse.milo.opcua.stack.core.util.validation";version="0.6.
-										 10"
+										 11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -1885,59 +1890,59 @@
 										 re.serialization,org.eclipse.milo.opcua.stack.core.serialization.code
 										 cs,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.milo.o
 										 pcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.stack.c
-										 ore.types.enumerated";version="0.6.10",org.eclipse.milo.opcua.stack.c
-										 ore.types.builtin.unsigned;version="0.6.10",org.eclipse.milo.opcua.st
+										 ore.types.enumerated";version="0.6.11",org.eclipse.milo.opcua.stack.c
+										 ore.types.builtin.unsigned;version="0.6.11",org.eclipse.milo.opcua.st
 										 ack.core.types.builtin;uses:="org.eclipse.milo.opcua.stack.core,org.e
 										 clipse.milo.opcua.stack.core.serialization,org.eclipse.milo.opcua.sta
 										 ck.core.types,org.eclipse.milo.opcua.stack.core.types.builtin.unsigne
-										 d,org.eclipse.milo.opcua.stack.core.types.enumerated";version="0.6.10
+										 d,org.eclipse.milo.opcua.stack.core.types.enumerated";version="0.6.11
 										 ",org.eclipse.milo.opcua.stack.core.types.enumerated;uses:="org.eclip
 										 se.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.serializat
 										 ion,org.eclipse.milo.opcua.stack.core.serialization.codecs,org.eclips
-										 e.milo.opcua.stack.core.types.builtin";version="0.6.10",org.eclipse.m
+										 e.milo.opcua.stack.core.types.builtin";version="0.6.11",org.eclipse.m
 										 ilo.opcua.stack.core.types;uses:="org.eclipse.milo.opcua.stack.core,o
 										 rg.eclipse.milo.opcua.stack.core.serialization,org.eclipse.milo.opcua
 										 .stack.core.serialization.codecs,org.eclipse.milo.opcua.stack.core.ty
-										 pes.builtin";version="0.6.10",org.eclipse.milo.opcua.stack.core.seria
+										 pes.builtin";version="0.6.11",org.eclipse.milo.opcua.stack.core.seria
 										 lization;uses:="io.netty.buffer,org.eclipse.milo.opcua.stack.core,org
 										 .eclipse.milo.opcua.stack.core.channel,org.eclipse.milo.opcua.stack.c
 										 ore.serialization.codecs,org.eclipse.milo.opcua.stack.core.types,org.
 										 eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.st
 										 ack.core.types.builtin.unsigned,org.eclipse.milo.opcua.stack.core.typ
-										 es.structured,org.w3c.dom,org.xml.sax";version="0.6.10",org.eclipse.m
+										 es.structured,org.w3c.dom,org.xml.sax";version="0.6.11",org.eclipse.m
 										 ilo.opcua.stack.core.serialization.codecs;uses:="org.eclipse.milo.opc
 										 ua.stack.core,org.eclipse.milo.opcua.stack.core.serialization";versio
-										 n="0.6.10",org.eclipse.milo.opcua.stack.core;uses:="com.google.common
+										 n="0.6.11",org.eclipse.milo.opcua.stack.core;uses:="com.google.common
 										 .collect,io.netty.channel.nio,io.netty.util,org.eclipse.milo.opcua.st
 										 ack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.builti
 										 n.unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ecl
 										 ipse.milo.opcua.stack.core.types.structured,org.eclipse.milo.opcua.st
-										 ack.core.util.annotations";version="0.6.10",org.eclipse.milo.opcua.st
+										 ack.core.util.annotations";version="0.6.11",org.eclipse.milo.opcua.st
 										 ack.core.util;uses:="io.netty.buffer,javax.xml.parsers,javax.xml.tran
 										 sform,org.bouncycastle.asn1.x500,org.bouncycastle.asn1.x509,org.bounc
 										 ycastle.cert,org.bouncycastle.pkcs,org.eclipse.milo.opcua.stack.core,
 										 org.eclipse.milo.opcua.stack.core.security,org.eclipse.milo.opcua.sta
 										 ck.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.structu
-										 red";version="0.6.10",org.eclipse.milo.opcua.stack.core.util.annotati
-										 ons;version="0.6.10",org.eclipse.milo.opcua.stack.core.util.validatio
+										 red";version="0.6.11",org.eclipse.milo.opcua.stack.core.util.annotati
+										 ons;version="0.6.11",org.eclipse.milo.opcua.stack.core.util.validatio
 										 n;uses:="com.google.common.collect,org.eclipse.milo.opcua.stack.core"
-										 ;version="0.6.10",org.eclipse.milo.opcua.stack.core.channel;uses:="io
+										 ;version="0.6.11",org.eclipse.milo.opcua.stack.core.channel;uses:="io
 										 .netty.buffer,io.netty.channel,io.netty.util,org.eclipse.milo.opcua.s
 										 tack.core,org.eclipse.milo.opcua.stack.core.channel.messages,org.ecli
 										 pse.milo.opcua.stack.core.security,org.eclipse.milo.opcua.stack.core.
 										 serialization,org.eclipse.milo.opcua.stack.core.types.builtin,org.ecl
 										 ipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.st
-										 ack.core.types.structured";version="0.6.10",org.eclipse.milo.opcua.st
+										 ack.core.types.structured";version="0.6.11",org.eclipse.milo.opcua.st
 										 ack.core.channel.headers;uses:="io.netty.buffer,org.eclipse.milo.opcu
 										 a.stack.core,org.eclipse.milo.opcua.stack.core.channel,org.eclipse.mi
 										 lo.opcua.stack.core.channel.messages,org.eclipse.milo.opcua.stack.cor
-										 e.types.builtin";version="0.6.10",org.eclipse.milo.opcua.stack.core.c
+										 e.types.builtin";version="0.6.11",org.eclipse.milo.opcua.stack.core.c
 										 hannel.messages;uses:="io.netty.buffer,org.eclipse.milo.opcua.stack.c
-										 ore,org.eclipse.milo.opcua.stack.core.types.builtin";version="0.6.10"
+										 ore,org.eclipse.milo.opcua.stack.core.types.builtin";version="0.6.11"
 										 ,org.eclipse.milo.opcua.stack.core.security;uses:="com.google.common.
 										 collect,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stac
-										 k.core.types.builtin";version="0.6.10",org.eclipse.milo.opcua.stack.c
-										 ore.transport;version="0.6.10"
+										 k.core.types.builtin";version="0.6.11",org.eclipse.milo.opcua.stack.c
+										 ore.transport;version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -1971,7 +1976,7 @@
 										 se.milo.opcua.sdk.server,org.eclipse.milo.opcua.sdk.server.nodes,org.
 										 eclipse.milo.opcua.stack.core.serialization.codecs,org.eclipse.milo.o
 										 pcua.stack.core.types,org.eclipse.milo.opcua.stack.core.types.builtin
-										 ,org.eclipse.milo.opcua.stack.core.types.structured";version="0.6.10"
+										 ,org.eclipse.milo.opcua.stack.core.types.structured";version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -2036,13 +2041,13 @@
 										<Export-Package>org.eclipse.milo.opcua.sdk.server.identity;uses:="org.
 										 eclipse.milo.opcua.sdk.server,org.eclipse.milo.opcua.stack.core,org.e
 										 clipse.milo.opcua.stack.core.security,org.eclipse.milo.opcua.stack.co
-										 re.types.structured";version="0.6.10",org.eclipse.milo.opcua.sdk.serv
+										 re.types.structured";version="0.6.11",org.eclipse.milo.opcua.sdk.serv
 										 er.api.services;uses:="org.eclipse.milo.opcua.sdk.core,org.eclipse.mi
 										 lo.opcua.sdk.server,org.eclipse.milo.opcua.sdk.server.api,org.eclipse
 										 .milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.cor
 										 e.types.builtin.unsigned,org.eclipse.milo.opcua.stack.core.types.enum
 										 erated,org.eclipse.milo.opcua.stack.core.types.structured,org.eclipse
-										 .milo.opcua.stack.core.util";version="0.6.10",org.eclipse.milo.opcua.
+										 .milo.opcua.stack.core.util";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.api;uses:="com.google.common.collect,com.google.common.eve
 										 ntbus,org.eclipse.milo.opcua.sdk.core,org.eclipse.milo.opcua.sdk.core
 										 .nodes,org.eclipse.milo.opcua.sdk.server,org.eclipse.milo.opcua.sdk.s
@@ -2053,33 +2058,33 @@
 										 k.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.mi
 										 lo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.sta
 										 ck.core.types.enumerated,org.eclipse.milo.opcua.stack.core.types.stru
-										 ctured";version="0.6.10",org.eclipse.milo.opcua.sdk.server.api.config
+										 ctured";version="0.6.11",org.eclipse.milo.opcua.sdk.server.api.config
 										 ;uses:="org.eclipse.milo.opcua.sdk.server.identity,org.eclipse.milo.o
 										 pcua.stack.core.channel,org.eclipse.milo.opcua.stack.core.security,or
 										 g.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.
 										 stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.stack.core.t
 										 ypes.structured,org.eclipse.milo.opcua.stack.server,org.eclipse.milo.
-										 opcua.stack.server.security";version="0.6.10",org.eclipse.milo.opcua.
+										 opcua.stack.server.security";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.api.methods;uses:="org.eclipse.milo.opcua.sdk.server,org.e
 										 clipse.milo.opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.no
 										 des,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.co
 										 re.types.builtin,org.eclipse.milo.opcua.stack.core.types.structured";
-										 version="0.6.10",org.eclipse.milo.opcua.sdk.server.util;uses:="org.ec
+										 version="0.6.11",org.eclipse.milo.opcua.sdk.server.util;uses:="org.ec
 										 lipse.milo.opcua.sdk.core,org.eclipse.milo.opcua.sdk.server,org.eclip
 										 se.milo.opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.api.se
 										 rvices,org.eclipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua
 										 .stack.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclip
 										 se.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.stac
-										 k.core.types.structured";version="0.6.10",org.eclipse.milo.opcua.sdk.
+										 k.core.types.structured";version="0.6.11",org.eclipse.milo.opcua.sdk.
 										 server.services.helpers;uses:="org.eclipse.milo.opcua.sdk.server,org.
 										 eclipse.milo.opcua.sdk.server.api,org.eclipse.milo.opcua.stack.core.t
 										 ypes.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned
 										 ,org.eclipse.milo.opcua.stack.core.types.structured,org.eclipse.milo.
-										 opcua.stack.server.services";version="0.6.10",org.eclipse.milo.opcua.
+										 opcua.stack.server.services";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.services;uses:="io.netty.util,org.eclipse.milo.opcua.sdk.s
 										 erver,org.eclipse.milo.opcua.sdk.server.subscriptions,org.eclipse.mil
 										 o.opcua.stack.core,org.eclipse.milo.opcua.stack.core.types.structured
-										 ,org.eclipse.milo.opcua.stack.server.services";version="0.6.10",org.e
+										 ,org.eclipse.milo.opcua.stack.server.services";version="0.6.11",org.e
 										 clipse.milo.opcua.sdk.server;uses:="com.google.common.collect,com.goo
 										 gle.common.eventbus,org.eclipse.milo.opcua.sdk.core,org.eclipse.milo.
 										 opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.api.config,org
@@ -2094,19 +2099,19 @@
 										 cua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.stack.co
 										 re.types.enumerated,org.eclipse.milo.opcua.stack.core.types.structure
 										 d,org.eclipse.milo.opcua.stack.server,org.eclipse.milo.opcua.stack.se
-										 rver.services";version="0.6.10",org.eclipse.milo.opcua.sdk.server.sub
+										 rver.services";version="0.6.11",org.eclipse.milo.opcua.sdk.server.sub
 										 scriptions;uses:="org.eclipse.milo.opcua.sdk.server,org.eclipse.milo.
 										 opcua.sdk.server.diagnostics,org.eclipse.milo.opcua.sdk.server.items,
 										 org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.t
 										 ypes.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned
 										 ,org.eclipse.milo.opcua.stack.core.types.structured,org.eclipse.milo.
-										 opcua.stack.server.services";version="0.6.10",org.eclipse.milo.opcua.
+										 opcua.stack.server.services";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.diagnostics;uses:="org.eclipse.milo.opcua.sdk.server,org.e
 										 clipse.milo.opcua.sdk.server.subscriptions,org.eclipse.milo.opcua.sta
 										 ck.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.builtin
 										 .unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ecli
 										 pse.milo.opcua.stack.core.types.structured,org.eclipse.milo.opcua.sta
-										 ck.server.services";version="0.6.10",org.eclipse.milo.opcua.sdk.serve
+										 ck.server.services";version="0.6.11",org.eclipse.milo.opcua.sdk.serve
 										 r.diagnostics.objects;uses:="org.eclipse.milo.opcua.sdk.server,org.ec
 										 lipse.milo.opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.mod
 										 el.nodes.objects,org.eclipse.milo.opcua.sdk.server.nodes";version="0.
@@ -2114,20 +2119,20 @@
 										 org.eclipse.milo.opcua.sdk.server,org.eclipse.milo.opcua.sdk.server.a
 										 pi,org.eclipse.milo.opcua.sdk.server.model.nodes.variables,org.eclips
 										 e.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua.sdk.server.subsc
-										 riptions";version="0.6.10",org.eclipse.milo.opcua.sdk.server.items;us
+										 riptions";version="0.6.11",org.eclipse.milo.opcua.sdk.server.items;us
 										 es:="org.eclipse.milo.opcua.sdk.server,org.eclipse.milo.opcua.sdk.ser
 										 ver.api,org.eclipse.milo.opcua.sdk.server.model.nodes.objects,org.ecl
 										 ipse.milo.opcua.sdk.server.util,org.eclipse.milo.opcua.stack.core,org
 										 .eclipse.milo.opcua.stack.core.serialization,org.eclipse.milo.opcua.s
 										 tack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.built
 										 in.unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ec
-										 lipse.milo.opcua.stack.core.types.structured";version="0.6.10",org.ec
+										 lipse.milo.opcua.stack.core.types.structured";version="0.6.11",org.ec
 										 lipse.milo.opcua.sdk.server.nodes.factories;uses:="org.eclipse.milo.o
 										 pcua.sdk.core.nodes,org.eclipse.milo.opcua.sdk.server,org.eclipse.mil
 										 o.opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.model.nodes.
 										 objects,org.eclipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcu
 										 a.stack.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.ecli
-										 pse.milo.opcua.stack.core.util";version="0.6.10",org.eclipse.milo.opc
+										 pse.milo.opcua.stack.core.util";version="0.6.11",org.eclipse.milo.opc
 										 ua.sdk.server.nodes;uses:="com.google.common.collect,org.eclipse.milo
 										 .opcua.sdk.core,org.eclipse.milo.opcua.sdk.core.nodes,org.eclipse.mil
 										 o.opcua.sdk.server,org.eclipse.milo.opcua.sdk.server.api,org.eclipse.
@@ -2136,40 +2141,40 @@
 										 lipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.types.b
 										 uiltin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.e
 										 clipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.
-										 stack.core.types.structured";version="0.6.10",org.eclipse.milo.opcua.
+										 stack.core.types.structured";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.nodes.delegates;uses:="org.eclipse.milo.opcua.sdk.core.nod
 										 es,org.eclipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua.sta
 										 ck.core,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.m
 										 ilo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.st
-										 ack.core.types.enumerated";version="0.6.10",org.eclipse.milo.opcua.sd
+										 ack.core.types.enumerated";version="0.6.11",org.eclipse.milo.opcua.sd
 										 k.server.nodes.filters;uses:="org.eclipse.milo.opcua.sdk.server,org.e
 										 clipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua.stack.core,
-										 org.eclipse.milo.opcua.stack.core.types.builtin";version="0.6.10",org
+										 org.eclipse.milo.opcua.stack.core.types.builtin";version="0.6.11",org
 										 .eclipse.milo.opcua.sdk.server.namespaces;uses:="org.eclipse.milo.opc
 										 ua.sdk.server,org.eclipse.milo.opcua.sdk.server.api,org.eclipse.milo.
 										 opcua.sdk.server.nodes,org.eclipse.milo.opcua.stack.core.types.builti
-										 n.unsigned";version="0.6.10",org.eclipse.milo.opcua.sdk.server.namesp
+										 n.unsigned";version="0.6.11",org.eclipse.milo.opcua.sdk.server.namesp
 										 aces.loader;uses:="org.eclipse.milo.opcua.sdk.server.api,org.eclipse.
-										 milo.opcua.sdk.server.nodes";version="0.6.10",org.eclipse.milo.opcua.
+										 milo.opcua.sdk.server.nodes";version="0.6.11",org.eclipse.milo.opcua.
 										 sdk.server.model.nodes.objects;uses:="org.eclipse.milo.opcua.sdk.serv
 										 er.model.nodes.variables,org.eclipse.milo.opcua.sdk.server.model.type
 										 s.objects,org.eclipse.milo.opcua.sdk.server.model.types.variables,org
 										 .eclipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua.stack.cor
 										 e.types.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsig
 										 ned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.eclipse.mi
-										 lo.opcua.stack.core.types.structured";version="0.6.10",org.eclipse.mi
+										 lo.opcua.stack.core.types.structured";version="0.6.11",org.eclipse.mi
 										 lo.opcua.sdk.server.model.nodes.variables;uses:="org.eclipse.milo.opc
 										 ua.sdk.server.model.types.variables,org.eclipse.milo.opcua.sdk.server
 										 .nodes,org.eclipse.milo.opcua.stack.core.types.builtin,org.eclipse.mi
 										 lo.opcua.stack.core.types.builtin.unsigned,org.eclipse.milo.opcua.sta
 										 ck.core.types.enumerated,org.eclipse.milo.opcua.stack.core.types.stru
-										 ctured";version="0.6.10",org.eclipse.milo.opcua.sdk.server.model.type
+										 ctured";version="0.6.11",org.eclipse.milo.opcua.sdk.server.model.type
 										 s.objects;uses:="org.eclipse.milo.opcua.sdk.core,org.eclipse.milo.opc
 										 ua.sdk.core.nodes,org.eclipse.milo.opcua.sdk.server.model.types.varia
 										 bles,org.eclipse.milo.opcua.sdk.server.nodes,org.eclipse.milo.opcua.s
 										 tack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.built
 										 in.unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ec
-										 lipse.milo.opcua.stack.core.types.structured";version="0.6.10",org.ec
+										 lipse.milo.opcua.stack.core.types.structured";version="0.6.11",org.ec
 										 lipse.milo.opcua.sdk.server.model.types.variables;uses:="org.eclipse.
 										 milo.opcua.sdk.core,org.eclipse.milo.opcua.sdk.core.nodes,org.eclipse
 										 .milo.opcua.stack.core.types.builtin,org.eclipse.milo.opcua.stack.cor
@@ -2180,21 +2185,21 @@
 										 ver.nodes,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.st
 										 ack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.builti
 										 n.unsigned,org.eclipse.milo.opcua.stack.core.types.enumerated,org.ecl
-										 ipse.milo.opcua.stack.core.types.structured";version="0.6.10",org.ecl
+										 ipse.milo.opcua.stack.core.types.structured";version="0.6.11",org.ecl
 										 ipse.milo.opcua.sdk.server.model;uses:="org.eclipse.milo.opcua.sdk.se
-										 rver,org.eclipse.milo.opcua.stack.core";version="0.6.10",org.eclipse.
+										 rver,org.eclipse.milo.opcua.stack.core";version="0.6.11",org.eclipse.
 										 milo.opcua.sdk.server.events.operators;uses:="com.google.common.colle
 										 ct,org.eclipse.milo.opcua.sdk.server.events,org.eclipse.milo.opcua.sd
 										 k.server.model.nodes.objects,org.eclipse.milo.opcua.stack.core,org.ec
 										 lipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.s
-										 tack.core.types.structured";version="0.6.10",org.eclipse.milo.opcua.s
+										 tack.core.types.structured";version="0.6.11",org.eclipse.milo.opcua.s
 										 dk.server.events;uses:="org.eclipse.milo.opcua.sdk.server,org.eclipse
 										 .milo.opcua.sdk.server.api,org.eclipse.milo.opcua.sdk.server.model.no
 										 des.objects,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.
 										 stack.core.types.builtin,org.eclipse.milo.opcua.stack.core.types.stru
-										 ctured";version="0.6.10",org.eclipse.milo.opcua.sdk.server.events.con
-										 versions;uses:="org.eclipse.milo.opcua.stack.core";version="0.6.10",o
-										 rg.eclipse.milo.opcua.sdk.server.annotations;version="0.6.10"
+										 ctured";version="0.6.11",org.eclipse.milo.opcua.sdk.server.events.con
+										 versions;uses:="org.eclipse.milo.opcua.stack.core";version="0.6.11",o
+										 rg.eclipse.milo.opcua.sdk.server.annotations;version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>
@@ -2241,7 +2246,7 @@
 										 .netty.util,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.opcua.
 										 stack.core.serialization,org.eclipse.milo.opcua.stack.core.types.buil
 										 tin,org.eclipse.milo.opcua.stack.core.types.structured,org.eclipse.mi
-										 lo.opcua.stack.server";version="0.6.10",org.eclipse.milo.opcua.stack.
+										 lo.opcua.stack.server";version="0.6.11",org.eclipse.milo.opcua.stack.
 										 server;uses:="com.google.common.collect,io.netty.channel,org.eclipse.
 										 milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.channel,org.e
 										 clipse.milo.opcua.stack.core.security,org.eclipse.milo.opcua.stack.co
@@ -2250,24 +2255,24 @@
 										 es.builtin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,o
 										 rg.eclipse.milo.opcua.stack.core.types.enumerated,org.eclipse.milo.op
 										 cua.stack.core.types.structured,org.eclipse.milo.opcua.stack.server.s
-										 ecurity,org.eclipse.milo.opcua.stack.server.services";version="0.6.10
+										 ecurity,org.eclipse.milo.opcua.stack.server.services";version="0.6.11
 										 ",org.eclipse.milo.opcua.stack.server.transport;uses:="io.netty.chann
 										 el,io.netty.handler.ipfilter,org.eclipse.milo.opcua.stack.core.util,o
-										 rg.eclipse.milo.opcua.stack.server";version="0.6.10",org.eclipse.milo
+										 rg.eclipse.milo.opcua.stack.server";version="0.6.11",org.eclipse.milo
 										 .opcua.stack.server.transport.uasc;uses:="io.netty.buffer,io.netty.ch
 										 annel,io.netty.handler.codec,org.eclipse.milo.opcua.stack.core.channe
 										 l.headers,org.eclipse.milo.opcua.stack.core.transport,org.eclipse.mil
-										 o.opcua.stack.server";version="0.6.10",org.eclipse.milo.opcua.stack.s
+										 o.opcua.stack.server";version="0.6.11",org.eclipse.milo.opcua.stack.s
 										 erver.transport.http;uses:="io.netty.channel,io.netty.channel.socket,
 										 io.netty.handler.codec.http,org.eclipse.milo.opcua.stack.server";vers
-										 ion="0.6.10",org.eclipse.milo.opcua.stack.server.transport.websocket;
+										 ion="0.6.11",org.eclipse.milo.opcua.stack.server.transport.websocket;
 										 uses:="io.netty.channel,io.netty.handler.codec.http.websocketx,org.ec
-										 lipse.milo.opcua.stack.server";version="0.6.10",org.eclipse.milo.opcu
+										 lipse.milo.opcua.stack.server";version="0.6.11",org.eclipse.milo.opcu
 										 a.stack.server.transport.tcp;uses:="io.netty.channel,io.netty.channel
-										 .socket,org.eclipse.milo.opcua.stack.server";version="0.6.10",org.ecl
+										 .socket,org.eclipse.milo.opcua.stack.server";version="0.6.11",org.ecl
 										 ipse.milo.opcua.stack.server.security;uses:="org.eclipse.milo.opcua.s
 										 tack.core,org.eclipse.milo.opcua.stack.core.security,org.eclipse.milo
-										 .opcua.stack.core.util.validation";version="0.6.10"
+										 .opcua.stack.core.util.validation";version="0.6.11"
 										</Export-Package>
 									</instructions>
 								</artifact>

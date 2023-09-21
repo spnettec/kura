@@ -141,6 +141,7 @@
         <setEntry value="org.eclipse.kura.rest.position.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.security.provider.test"/>
+        <setEntry value="org.eclipse.kura.rest.service.listing.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.system.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
@@ -201,6 +202,7 @@
         <setEntry value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml@default:default"/>
         <setEntry value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
+        <setEntry value="com.github.ben-manes.caffeine@default:default"/>
         <setEntry value="com.github.jinahya.bit-io@default:default"/>
         <setEntry value="com.google.gson@default:default"/>
         <setEntry value="com.google.guava.failureaccess@default:default"/>
@@ -535,6 +537,7 @@
         <setEntry value="org.eclipse.kura.rest.position.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.security.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.rest.service.listing.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.system.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>

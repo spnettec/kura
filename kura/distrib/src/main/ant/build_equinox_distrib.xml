@@ -1920,6 +1920,8 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-native_${org.apache.activemq.artemis-native.version}.jar@3" />
 			
+    		<entry key="osgi.bundles" operation="+"
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.github.ben-manes.caffeine_${commons-configuration2.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-configuration2_${commons-configuration2.version}.jar@3" />
 						
