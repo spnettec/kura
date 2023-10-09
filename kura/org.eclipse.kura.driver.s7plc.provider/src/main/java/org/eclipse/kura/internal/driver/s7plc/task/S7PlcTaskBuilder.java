@@ -158,6 +158,12 @@ public final class S7PlcTaskBuilder {
             case "CHAR_UNICODE":
                 charsetName = "UNICODE";
                 break;
+            case "CHAR_UNICODEBIGUNMARKED":
+                charsetName = "UnicodeBigUnmarked";
+                break;
+            case "CHAR_UNICODELITTLEUNMARKED":
+                charsetName = "UnicodeLittleUnmarked";
+                break;
             default:
                 charsetName = "US-ASCII";
 

@@ -41,13 +41,16 @@ public class StringData implements BinaryData<String> {
     @Override
     public void write(Buffer buf, int offset, String value) {
         value = value == null ? "" : value;
-        Charset charsetTemp = AutoCharsetReader.getEncoding(value);
+        Charset charsetTemp = this.charset;
         if (charsetTemp == null) {
-            charsetTemp = this.charset == null ? StandardCharsets.UTF_8 : this.charset;
+            charsetTemp = AutoCharsetReader.getEncoding(value);
+        }
+        if (charsetTemp == null) {
+            charsetTemp = StandardCharsets.US_ASCII;
         }
         final byte[] raw = value.getBytes(charsetTemp);
         int amount = this.wrapped.getSize();
-        int size = value.length();
+        int size = raw.length;
         byte[] sendByte = new byte[amount + 2];
         sendByte[0] = (byte) amount;
         sendByte[1] = (byte) size;
