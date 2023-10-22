@@ -25,7 +25,7 @@
    <property name="kura.service.pid" value="org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6"/>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>
    <service>
-      <provide interface="org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6"/>
+      <provide interface="org.eclipse.kura.net.firewall.FirewallConfigurationServiceIPv6"/>
       <provide interface="org.eclipse.kura.configuration.SelfConfiguringComponent"/>
    </service>
    <reference bind="setEventAdmin" cardinality="1..1" interface="org.osgi.service.event.EventAdmin" name="EventAdmin" policy="static"/>

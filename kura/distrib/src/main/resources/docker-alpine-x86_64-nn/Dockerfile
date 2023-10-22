@@ -16,7 +16,7 @@ COPY --from=kura_base /kura-install/*.dp /kura-install/
 ENV \
   JAVA_HOME=/usr/lib/jvm/default-jvm \
   KURA_DIR=/opt/eclipse/kura \
-  LAUNCHER_VERSION="1.6.400.v20210924-0641" 
+  LAUNCHER_VERSION="1.6.500.v20230717-2134" 
 
 
 

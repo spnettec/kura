@@ -17,7 +17,7 @@ ENV \
   KURA_DIR=/opt/eclipse/kura \
   JAVA_HOME=/usr/lib/jvm/jre-17-openjdk \
   SKIP_JAVA_VERSION_CHECK=true \
-  LAUNCHER_VERSION="1.6.400.v20210924-0641" \
+  LAUNCHER_VERSION="1.6.500.v20230717-2134" \
   TZ=Asia/Shanghai \
   LANG=en_US.UTF-8
 
