@@ -85,12 +85,8 @@ public class FloodingProtectionOptions {
     private static final int FRAG_HIGH_THR_DEFAULT = 4 * 1024 * 1024;
 
     private static final String PID = "org.eclipse.kura.internal.floodingprotection.FloodingProtectionConfigurator";
-    private static final String FP_DESCRIPTION = "The service enables flooding protection mechanisms via iptables.";
     private static final String FP_ENABLED_PROP_NAME_IPV4 = "flooding.protection.enabled";
-    private static final String FP_ENABLED_DESCRIPTION_IPV4 = "Enable the flooding protection feature for IPv4.";
     private static final String FP_ENABLED_PROP_NAME_IPV6 = "flooding.protection.enabled.ipv6";
-    private static final String FP_ENABLED_DESCRIPTION_IPV6 = "Enable the flooding protection feature for IPv6. "
-            + "If the device does not support IPv6, this property will be ignored.";
     private static final boolean FP_ENABLED_DEFAULT_IPV4 = false;
     private static final boolean FP_ENABLED_DEFAULT_IPV6 = false;
 

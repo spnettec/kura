@@ -23,6 +23,6 @@
       <provide interface="org.eclipse.kura.security.FloodingProtectionConfigurationService"/>
    </service>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>
-   <reference bind="setFirewallConfigurationService" cardinality="1..1" interface="org.eclipse.kura.net.admin.FirewallConfigurationService" name="FirewallConfigurationService" policy="static"/>
-   <reference bind="setFirewallConfigurationServiceIPv6" cardinality="0..1" interface="org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6" name="FirewallConfigurationServiceIPv6" policy="static" policy-option="greedy"/>
+   <reference bind="setFirewallConfigurationService" cardinality="1..1" interface="org.eclipse.kura.net.firewall.FirewallConfigurationService" name="FirewallConfigurationService" policy="static"/>
+   <reference bind="setFirewallConfigurationServiceIPv6" cardinality="0..1" interface="org.eclipse.kura.net.firewall.FirewallConfigurationServiceIPv6" name="FirewallConfigurationServiceIPv6" policy="static" policy-option="greedy"/>
 </scr:component>
