@@ -238,7 +238,7 @@
         <antcall target="artemis-config" />
         
         <!-- Added plc4j bundles configs -->
-		<antcall target="common-config" />
+			<antcall target="common-config" />
 
         <!-- Deployment hook bundles configs -->
         <antcall target="deployment-hooks-config" />
@@ -331,7 +331,7 @@ JAVA_VERSION_NUM=$(echo "$JAVA_VERSION" | awk -F. '{printf("%03d%03d",$1,$2);}')
 OPEN_MODULE_OPTIONS=''
 
 if [ $JAVA_VERSION_NUM -gt 001008 ] ; then
-        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-modules=ALL-SYSTEM"
 fi
 
 if [ -z "$KURA_RUNNING" ] ; then
@@ -340,11 +340,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
-		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
-    	--add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-		-Dio.netty.tryReflectionSetAccessible=true \
+				-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -390,7 +387,7 @@ JAVA_VERSION_NUM=$(echo "$JAVA_VERSION" | awk -F. '{printf("%03d%03d",$1,$2);}')
 OPEN_MODULE_OPTIONS=''
 
 if [ $JAVA_VERSION_NUM -gt 001008 ] ; then
-        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-modules=ALL-SYSTEM"
 fi
 
 if [ -z "$KURA_RUNNING" ] ; then
@@ -401,11 +398,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
-		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
-        --add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-		-Dio.netty.tryReflectionSetAccessible=true \
+				-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -453,7 +447,7 @@ JAVA_VERSION_NUM=$(echo "$JAVA_VERSION" | awk -F. '{printf("%03d%03d",$1,$2);}')
 OPEN_MODULE_OPTIONS=''
 
 if [ $JAVA_VERSION_NUM -gt 001008 ] ; then
-        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+        OPEN_MODULE_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED --add-modules=ALL-SYSTEM"
 fi
 
 if [ -z "$KURA_RUNNING" ] ; then
@@ -462,11 +456,8 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
-		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
-        --add-opens java.base/java.lang=ALL-UNNAMED \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-		-Dio.netty.tryReflectionSetAccessible=true \
+				-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -1995,8 +1986,10 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.pcap4j.packetfactory-static_${pcap4j.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.github.jinahya.bit-io_${bit-io.version}.jar@4:start"/>
+			<!--
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-compress_${commons-compress.version}.jar@4:start"/>
+			-->
 			<!-- vertx config -->
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.core_${vertx.version}.jar@4:start"/>

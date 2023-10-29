@@ -335,7 +335,6 @@
         <setEntry value="org.apache.commons.collections@default:default"/>
         <setEntry value="org.apache.commons.commons-beanutils@default:default"/>
         <setEntry value="org.apache.commons.commons-codec@default:default"/>
-        <setEntry value="org.apache.commons.commons-compress@default:default"/>
         <setEntry value="org.apache.commons.commons-configuration2@default:default"/>
         <setEntry value="org.apache.commons.commons-csv@default:default"/>
         <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
