@@ -341,7 +341,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-				-Dio.netty.tryReflectionSetAccessible=true \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
@@ -399,7 +399,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-				-Dio.netty.tryReflectionSetAccessible=true \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
@@ -457,7 +457,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
-				-Dio.netty.tryReflectionSetAccessible=true \
+		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \
