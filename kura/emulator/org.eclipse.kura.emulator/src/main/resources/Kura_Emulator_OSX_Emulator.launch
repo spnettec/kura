@@ -196,6 +196,7 @@
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
+        <setEntry value="com.eclipsesource.jaxrs.provider.multipart@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
