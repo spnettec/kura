@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <properties>
-    	<tycho-version>2.7.5</tycho-version>
+    	<tycho-version>4.0.3</tycho-version>
     	<osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
@@ -133,7 +133,7 @@
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>3.0.4</tycho-version>
+                <tycho-version>4.0.3</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -Dosgi.console=5002

@@ -80,7 +80,7 @@
                     <plugin>
                         <groupId>org.eclipse.tycho.extras</groupId>
                         <artifactId>tycho-source-feature-plugin</artifactId>
-                        <version>${tycho-version}</version>
+                        <version>2.7.5</version>
                         <executions>
                             <execution>
                                 <id>source-feature</id>
