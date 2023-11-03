@@ -350,7 +350,7 @@ public class GwtNetworkServiceImpl {
                                 gwtWifiConfig.setDriver(wifiConfig.getDriver());
 
                                 // security
-                                switch(wifiConfig.getSecurity()){
+                                switch (wifiConfig.getSecurity()) {
                                     case SECURITY_WPA:
                                         gwtWifiConfig.setSecurity(GwtWifiSecurity.netWifiSecurityWPA.name());
                                         break;
@@ -430,25 +430,25 @@ public class GwtNetworkServiceImpl {
                                 GwtWifiRadioMode gwtWifiRadioMode = null;
                                 if (wifiConfig.getRadioMode() != null) {
                                     switch (wifiConfig.getRadioMode()) {
-                                    case RADIO_MODE_80211a:
-                                        gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeA;
-                                        break;
-                                    case RADIO_MODE_80211b:
-                                        gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeB;
-                                        break;
-                                    case RADIO_MODE_80211g:
-                                        gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeBG;
-                                        break;
-                                    case RADIO_MODE_80211nHT20:
-                                    case RADIO_MODE_80211nHT40above:
-                                    case RADIO_MODE_80211nHT40below:
-                                        gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeBGN;
-                                        break;
-                                    case RADIO_MODE_80211_AC:
-                                        gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeANAC;
-                                        break;
-                                    default:
-                                        break;
+                                        case RADIO_MODE_80211a:
+                                            gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeA;
+                                            break;
+                                        case RADIO_MODE_80211b:
+                                            gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeB;
+                                            break;
+                                        case RADIO_MODE_80211g:
+                                            gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeBG;
+                                            break;
+                                        case RADIO_MODE_80211nHT20:
+                                        case RADIO_MODE_80211nHT40above:
+                                        case RADIO_MODE_80211nHT40below:
+                                            gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeBGN;
+                                            break;
+                                        case RADIO_MODE_80211_AC:
+                                            gwtWifiRadioMode = GwtWifiRadioMode.netWifiRadioModeANAC;
+                                            break;
+                                        default:
+                                            break;
                                     }
                                 }
                                 if (gwtWifiRadioMode != null) {
@@ -1299,12 +1299,12 @@ public class GwtNetworkServiceImpl {
         }
     }
 
-    public static List<String> getDhcpLeases() throws GwtKuraException {
+    public static List<String> getDhcpLeases(String interfaceName) throws GwtKuraException {
         List<String> dhcpLease = new ArrayList<>();
 
         NetworkAdminService nas = ServiceLocator.getInstance().getService(NetworkAdminService.class);
         try {
-            List<DhcpLease> leases = nas.getDhcpLeases();
+            List<DhcpLease> leases = nas.getDhcpLeases(interfaceName);
 
             for (DhcpLease dl : leases) {
                 GwtDhcpLease dhcp = new GwtDhcpLease();
@@ -1815,24 +1815,24 @@ public class GwtNetworkServiceImpl {
         WifiRadioMode wifiRadioMode;
 
         switch (radioMode) {
-        case netWifiRadioModeA:
-            wifiRadioMode = WifiRadioMode.RADIO_MODE_80211a;
-            break;
-        case netWifiRadioModeB:
-            wifiRadioMode = WifiRadioMode.RADIO_MODE_80211b;
-            break;
-        case netWifiRadioModeBG:
-            wifiRadioMode = WifiRadioMode.RADIO_MODE_80211g;
-            break;
-        case netWifiRadioModeBGN:
-            wifiRadioMode = WifiRadioMode.RADIO_MODE_80211nHT20;
-            break;
-        case netWifiRadioModeANAC:
-            wifiRadioMode = WifiRadioMode.RADIO_MODE_80211_AC;
-            break;
+            case netWifiRadioModeA:
+                wifiRadioMode = WifiRadioMode.RADIO_MODE_80211a;
+                break;
+            case netWifiRadioModeB:
+                wifiRadioMode = WifiRadioMode.RADIO_MODE_80211b;
+                break;
+            case netWifiRadioModeBG:
+                wifiRadioMode = WifiRadioMode.RADIO_MODE_80211g;
+                break;
+            case netWifiRadioModeBGN:
+                wifiRadioMode = WifiRadioMode.RADIO_MODE_80211nHT20;
+                break;
+            case netWifiRadioModeANAC:
+                wifiRadioMode = WifiRadioMode.RADIO_MODE_80211_AC;
+                break;
 
-        default:
-            throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
+            default:
+                throw new GwtKuraException(GwtKuraErrorCode.ILLEGAL_ARGUMENT);
         }
 
         return wifiRadioMode;
