@@ -52,7 +52,7 @@ public interface Modem3gpp extends DBusInterface {
 
     }
 
-    public static interface PropertyInitialEpsBearerSettingsType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyInitialEpsBearerSettingsType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 }

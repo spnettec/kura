@@ -129,7 +129,7 @@ public interface NetworkManager extends DBusInterface {
 
     }
 
-    public static interface PropertyGlobalDnsConfigurationType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyGlobalDnsConfigurationType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 

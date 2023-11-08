@@ -36,23 +36,23 @@ public interface Signal extends DBusInterface {
 
     public void Setup(UInt32 rate);
 
-    public static interface PropertyCdmaType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyCdmaType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 
-    public static interface PropertyEvdoType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyEvdoType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 
-    public static interface PropertyGsmType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyGsmType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 
-    public static interface PropertyUmtsType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyUmtsType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 
-    public static interface PropertyLteType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyLteType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 }

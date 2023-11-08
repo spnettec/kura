@@ -93,7 +93,7 @@ public interface Call extends DBusInterface {
 
     }
 
-    public static interface PropertyAudioFormatType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyAudioFormatType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 }

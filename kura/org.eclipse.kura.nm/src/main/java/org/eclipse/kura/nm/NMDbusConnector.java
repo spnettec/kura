@@ -46,6 +46,7 @@ import org.eclipse.kura.nm.status.SupportedChannelsProperties;
 import org.freedesktop.NetworkManager;
 import org.freedesktop.dbus.DBusPath;
 import org.freedesktop.dbus.connections.impl.DBusConnection;
+import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.exceptions.DBusExecutionException;
 import org.freedesktop.dbus.interfaces.Properties;
@@ -108,7 +109,7 @@ public class NMDbusConnector {
     }
 
     public static synchronized NMDbusConnector getInstance() throws DBusException {
-        return getInstance(DBusConnection.getConnection(DBusConnection.DEFAULT_SYSTEM_BUS_ADDRESS));
+        return getInstance(DBusConnectionBuilder.forSystemBus().build());
     }
 
     public static synchronized NMDbusConnector getInstance(DBusConnection dbusConnection) throws DBusException {

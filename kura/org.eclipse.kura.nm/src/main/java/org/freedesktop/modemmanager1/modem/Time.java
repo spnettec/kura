@@ -32,7 +32,7 @@ public interface Time extends DBusInterface {
 
     public String GetNetworkTime();
 
-    public static interface PropertyNetworkTimezoneType extends TypeRef<Map<String, Variant>> {
+    public static interface PropertyNetworkTimezoneType extends TypeRef<Map<String, Variant<?>>> {
 
     }
 

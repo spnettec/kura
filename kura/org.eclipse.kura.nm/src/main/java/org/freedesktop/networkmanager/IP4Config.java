@@ -48,7 +48,7 @@ public interface IP4Config extends DBusInterface {
 
     }
 
-    public static interface PropertyAddressDataType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyAddressDataType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 
@@ -56,7 +56,7 @@ public interface IP4Config extends DBusInterface {
 
     }
 
-    public static interface PropertyRouteDataType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyRouteDataType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 
@@ -64,7 +64,7 @@ public interface IP4Config extends DBusInterface {
 
     }
 
-    public static interface PropertyNameserverDataType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyNameserverDataType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 

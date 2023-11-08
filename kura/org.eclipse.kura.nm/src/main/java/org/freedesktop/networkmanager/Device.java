@@ -76,7 +76,7 @@ public interface Device extends DBusInterface {
 
     }
 
-    public static interface PropertyLldpNeighborsType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyLldpNeighborsType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 

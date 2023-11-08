@@ -44,7 +44,7 @@ public interface IP6Config extends DBusInterface {
 
     }
 
-    public static interface PropertyAddressDataType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyAddressDataType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 
@@ -52,7 +52,7 @@ public interface IP6Config extends DBusInterface {
 
     }
 
-    public static interface PropertyRouteDataType extends TypeRef<List<Map<String, Variant>>> {
+    public static interface PropertyRouteDataType extends TypeRef<List<Map<String, Variant<?>>>> {
 
     }
 

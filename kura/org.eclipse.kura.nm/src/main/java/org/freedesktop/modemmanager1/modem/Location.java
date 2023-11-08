@@ -47,7 +47,7 @@ public interface Location extends DBusInterface {
 
     public void SetGpsRefreshRate(UInt32 rate);
 
-    public static interface PropertyLocationType extends TypeRef<Map<UInt32, Variant>> {
+    public static interface PropertyLocationType extends TypeRef<Map<UInt32, Variant<?>>> {
 
     }
 
