@@ -513,7 +513,11 @@ public class NMDbusConnector {
             this.networkManager.activateConnection(connection.get(), device);
             dsLock.waitForSignal();
         } catch (DBusExecutionException e) {
-            logger.warn("Couldn't complete activation of {} interface, caused by:", deviceId, e);
+            if (e.getMessage().contains("because device has no carrier")) {
+                logger.warn("Couldn't complete activation of {} interface, caused by:{}", deviceId, e.getMessage());
+            } else {
+                logger.warn("Couldn't complete activation of {} interface, caused by:", deviceId, e);
+            }
         }
 
         // Housekeeping
