@@ -178,7 +178,44 @@ public class NetworkManagerDbusWrapper {
                 String availableConnectionId = (String) availableConnectionSettings.get(NM_SETTING_CONNECTION_KEY)
                         .get("id").getValue();
 
-                if (availableConnectionId.equals(expectedConnectionName)) {
+                if (availableConnectionId.equals(expectedConnectionName)
+                        || availableConnectionId.equals(interfaceName)) {
+                    connections.add(availableConnection);
+                }
+
+            }
+
+        } catch (DBusExecutionException e) {
+            logger.debug("Could not find applied connection for {}, caused by", dev.getObjectPath(), e);
+        }
+
+        return connections;
+    }
+
+    protected List<Connection> getHousekeepingConnections(Device dev) throws DBusException {
+        List<Connection> connections = new ArrayList<>();
+
+        try {
+            Settings settings = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_SETTINGS_BUS_PATH, Settings.class);
+
+            List<DBusPath> connectionPath = settings.ListConnections();
+
+            Properties deviceProperties = this.dbusConnection.getRemoteObject(NM_BUS_NAME, dev.getObjectPath(),
+                    Properties.class);
+            String interfaceName = deviceProperties.Get(NM_DEVICE_BUS_NAME, NM_DEVICE_PROPERTY_INTERFACE);
+            String expectedConnectionName = String.format("kura-%s-connection", interfaceName);
+
+            for (DBusPath path : connectionPath) {
+
+                Connection availableConnection = this.dbusConnection.getRemoteObject(NM_BUS_NAME, path.getPath(),
+                        Connection.class);
+
+                Map<String, Map<String, Variant<?>>> availableConnectionSettings = availableConnection.GetSettings();
+                String availableConnectionId = (String) availableConnectionSettings.get(NM_SETTING_CONNECTION_KEY)
+                        .get("id").getValue();
+
+                if (availableConnectionId.equals(expectedConnectionName)
+                        || availableConnectionId.equals(interfaceName)) {
                     connections.add(availableConnection);
                 }
 
