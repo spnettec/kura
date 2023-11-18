@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -71,7 +70,7 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         requireNonNull(wireComponent, "Wire component cannot be null");
         requireNonNull(servicePid, "service pid cannot be null");
         requireNonNull(kuraServicePid, "kura service pid cannot be null");
-        receiverExecutor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+        receiverExecutor = new ThreadPoolExecutor(1, 4, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
                 new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
         this.servicePid = servicePid;
         this.wireComponent = wireComponent;
@@ -147,23 +146,13 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         }
         final Object envelope = wireRecords;
 
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (EmitterPort emitterPort : this.emitterPorts) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    emitterPort.emit(envelope);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            futures.add(future);
+            try {
+                emitterPort.emit(envelope);
+            } catch (Exception e) {
+                logger.error("emit error", e);
+            }
         }
-        try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        } catch (Exception e) {
-            logger.error("emit error", e);
-        }
-
     }
 
     /** {@inheritDoc} */
@@ -209,8 +198,12 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
             });
         } else {
             receiverExecutor.execute(() -> {
-                final ReceiverPortImpl receiverPort = WireSupportImpl.this.receiverPortByWire.get(wire);
-                receiverPort.consumer.accept(envelopeValue);
+                try {
+                    final ReceiverPortImpl receiverPort = WireSupportImpl.this.receiverPortByWire.get(wire);
+                    receiverPort.consumer.accept(envelopeValue);
+                } catch (Exception e) {
+                    logger.error("Excute consumer massage error", e);
+                }
             });
         }
     }
