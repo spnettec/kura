@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.ext.web.client.WebClient;
 
 /**
@@ -139,9 +140,9 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             }
             builder.cloudService(null, filter, Builder.addAsCloudComponent(entry.getKey()));
         }
-        
+
         if (vertx == null) {
-            vertx = Vertx.vertx();
+            vertx = Vertx.vertx(new VertxOptions().setPreferNativeTransport(true));
         }
         if (webClient != null) {
             webClient.close();
@@ -151,7 +152,7 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         }
 
         if (!initCodeTemp.isEmpty()) {
-            
+
             // call init code before context start
 
             builder.addBeforeStart(camelContext -> {

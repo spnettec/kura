@@ -230,6 +230,9 @@
 
         <!-- Rest bundles config -->
         <antcall target="rest-config" />
+    	
+    	<!-- Rest network configuration bundle config -->
+    	<antcall target="rest-network-config" />
 
         <!-- Asset bundles config -->
         <antcall target="asset-config" />
@@ -811,6 +814,8 @@ fi]]>
         <antcall target="camel-jar" />
 
         <antcall target="rest-jar" />
+    	
+    	<antcall target="rest-network-config-jar" />
 
         <antcall target="asset-jar" />
 
@@ -1466,6 +1471,14 @@ fi]]>
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.request.handler.jaxrs_${org.eclipse.kura.request.handler.jaxrs.version}.jar@4" />
         </propertyfile>
     </target>
+	
+    <target name="rest-network-config" unless="is.nn">
+	<propertyfile
+	    file="${project.build.directory}/${build.output.name}/config.ini">
+	    <entry key="osgi.bundles" operation="+"
+		value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.network.configuration.provider_${org.eclipse.kura.rest.network.configuration.provider.version}.jar@4:start" />
+	</propertyfile>
+    </target>
 
     <target name="deployment-hooks-config">
         <propertyfile
@@ -1575,6 +1588,15 @@ fi]]>
                 file="${project.build.directory}/plugins/org.eclipse.kura.request.handler.jaxrs_${org.eclipse.kura.request.handler.jaxrs.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
         </zip>
+    </target>
+	
+    <target name="rest-network-config-jar" unless="is.nn">
+	<zip destfile="${project.build.directory}/${build.output.name}.zip"
+	    update="true">
+	    <zipfileset
+		file="${project.build.directory}/plugins/org.eclipse.kura.rest.network.configuration.provider_${org.eclipse.kura.rest.network.configuration.provider.version}.jar"
+		prefix="${build.output.name}/${plugins.folder}" />
+	</zip>
     </target>
 
     <target name="deployment-hooks-jar">
@@ -1904,15 +1926,9 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.resolver-dns_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.tcnative-classes_${io.netty.tnative.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-classes-epoll_${io.netty.version}.jar@3" />
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-epoll_${io.netty.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-classes-kqueue_${io.netty.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-unix-common_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-server-osgi_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
@@ -2003,6 +2019,8 @@ fi]]>
 			<!-- vertx config -->
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.core_${vertx.version}.jar@4:start"/>
+			<entry key="osgi.bundles" operation="+"
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.vertx-io_uring-incubator_${vertx.version}.jar@4:start"/>
     		<entry key="osgi.bundles" operation="+"
     	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.web-common_${vertx.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
