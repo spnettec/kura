@@ -2024,7 +2024,7 @@ fi]]>
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.core_${vertx.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
-			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.vertx-io_uring-incubator_${vertx.version}.jar@4:start"/>
+			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.io_uring-incubator_${vertx.version}.jar@4:start"/>
     		<entry key="osgi.bundles" operation="+"
     	    	value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.vertx.web-common_${vertx.version}.jar@4:start"/>
 			<entry key="osgi.bundles" operation="+"
