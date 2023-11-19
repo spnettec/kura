@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.asset.provider.AssetConstants;
 import org.eclipse.kura.channel.Channel;
@@ -60,7 +61,7 @@ public class WireAssetTest {
     private static void sync(final WireAsset asset) {
         final CountDownLatch latch = new CountDownLatch(1);
 
-        asset.getBaseAssetExecutor().runConfig(latch::countDown);
+        asset.getBaseAssetExecutor().runConfig(latch::countDown, 2, TimeUnit.SECONDS);
 
         try {
             latch.await();

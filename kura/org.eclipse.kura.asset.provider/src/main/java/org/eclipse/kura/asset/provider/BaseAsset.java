@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,6 +42,7 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.annotation.Extensible;
 import org.eclipse.kura.asset.Asset;
 import org.eclipse.kura.asset.AssetConfiguration;
+import org.eclipse.kura.asset.provider.BaseAsset.ChannelListenerHolder;
 import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.ChannelStatus;
@@ -343,7 +343,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final BaseAssetConfiguration conf = this.config;
 
-        final List<ChannelRecord> channelRecords = unwrap(this.executor.runIO(() -> {
+        final List<ChannelRecord> channelRecords = this.executor.runIO(() -> {
             final List<ChannelRecord> records;
             final PreparedRead preparedRead = state.getPreparedRead();
             if (preparedRead != null) {
@@ -355,7 +355,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 }
             }
             return records;
-        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
+        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
 
         logger.debug("Reading asset channels...Done");
         return getFinalRecords(channelRecords, this.config.getAssetConfiguration().getAssetChannels());
@@ -408,11 +408,12 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.executor.runIO(() -> {
+            this.executor.runIO(() -> {
                 state.getDriver().read(validRecords);
                 return null;
-            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
+            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
         }
+
         logger.debug("Reading asset channels...Done");
         return getFinalRecords(channelRecords, channels);
     }
@@ -574,20 +575,12 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            unwrap(this.executor.runIO(() -> {
+            this.executor.runIO(() -> {
                 state.getDriver().write(validRecords);
                 return null;
-            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS));
+            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
         }
         logger.debug("Writing to channels...Done");
-    }
-
-    private static <T> T unwrap(final CompletableFuture<T> future) throws KuraException {
-        try {
-            return future.get();
-        } catch (final Exception e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e, e.getMessage());
-        }
     }
 
     protected boolean isChannelListenerValid(final ChannelListenerHolder reg, final Channel channel) {

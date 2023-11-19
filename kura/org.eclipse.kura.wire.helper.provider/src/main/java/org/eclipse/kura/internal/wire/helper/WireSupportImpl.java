@@ -58,10 +58,11 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     private final WireComponent wireComponent;
 
     private final String servicePid;
+    private final String kuraServicePid;
 
     private final boolean isNulltoEnvenlope;
 
-    private final ExecutorService receiverExecutor;
+    private ExecutorService receiverExecutor;
 
     private final Map<Wire, ReceiverPortImpl> receiverPortByWire;
 
@@ -70,11 +71,10 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         requireNonNull(wireComponent, "Wire component cannot be null");
         requireNonNull(servicePid, "service pid cannot be null");
         requireNonNull(kuraServicePid, "kura service pid cannot be null");
-        receiverExecutor = new ThreadPoolExecutor(1, 4, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
-                new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
         this.servicePid = servicePid;
+        this.kuraServicePid = kuraServicePid;
         this.wireComponent = wireComponent;
-
+        receiverExecutor = createExecutorService(kuraServicePid);
         if (inputPortCount < 0) {
             throw new IllegalArgumentException("Input port count must be greater or equal than zero");
         }
@@ -93,6 +93,11 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
         for (int i = 0; i < outputPortCount; i++) {
             emitterPorts.add(new EmitterPortImpl());
         }
+    }
+
+    private ExecutorService createExecutorService(String kuraServicePid) {
+        return new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
     }
 
     private void clearReceiverPorts() {
@@ -166,7 +171,11 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     public synchronized void producersConnected(final Wire[] wires) {
         clearReceiverPorts();
         if (wires == null) {
+            receiverExecutor.shutdownNow();
             return;
+        }
+        if (receiverExecutor.isShutdown()) {
+            receiverExecutor = createExecutorService(this.kuraServicePid);
         }
         for (Wire w : wires) {
             try {

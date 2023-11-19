@@ -667,7 +667,7 @@ public final class AssetTest {
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        executor.runConfig(latch::countDown);
+        executor.runConfig(latch::countDown, 2, TimeUnit.SECONDS);
         try {
             latch.await();
         } catch (InterruptedException e) {

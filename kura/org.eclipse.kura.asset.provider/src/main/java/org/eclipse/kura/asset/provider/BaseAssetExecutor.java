@@ -14,16 +14,17 @@ package org.eclipse.kura.asset.provider;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eclipse.kura.KuraErrorCode;
+import org.eclipse.kura.KuraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
 
 public class BaseAssetExecutor {
 
@@ -34,6 +35,7 @@ public class BaseAssetExecutor {
 
     private final ExecutorService configExecutor;
     private final boolean isConfigExecutorShared;
+    private final TimeLimiter timeLimiter;
 
     private final AtomicReference<CompletableFuture<Void>> queue = new AtomicReference<>(
             CompletableFuture.completedFuture(null));
@@ -48,52 +50,17 @@ public class BaseAssetExecutor {
         this.isIoExecutorShared = isIoExecutorShared;
         this.configExecutor = configExecutor;
         this.isConfigExecutorShared = isConfigExecutorShared;
+        this.timeLimiter = SimpleTimeLimiter.create(ioExecutor);
+
     }
 
-    public <T> CompletableFuture<T> runIO(final Callable<T> task) {
-        final CompletableFuture<T> result = new CompletableFuture<>();
+    public <T> T runIO(final Callable<T> task, long timeOut, TimeUnit timeUnit) throws KuraException {
+        try {
+            return timeLimiter.callWithTimeout(task, timeOut, timeUnit);
+        } catch (Exception e) {
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error");
+        }
 
-        this.ioExecutor.execute(() -> {
-            try {
-                result.complete(task.call());
-            } catch (Exception e) {
-                result.completeExceptionally(e);
-            }
-        });
-
-        return result;
-    }
-
-    public <T> CompletableFuture<T> runIO(final Callable<T> task, long timeOut, TimeUnit timeUnit) {
-        final CompletableFuture<T> result = new CompletableFuture<>();
-
-        this.ioExecutor.execute(() -> {
-            try {
-                result.complete(runWithTimeout(task, timeOut, timeUnit));
-            } catch (Exception e) {
-                result.completeExceptionally(e);
-            }
-        });
-
-        return result;
-    }
-
-    public CompletableFuture<Void> runConfig(final Runnable task) {
-
-        final CompletableFuture<Void> next = new CompletableFuture<>();
-        final CompletableFuture<Void> previous = this.queue.getAndSet(next);
-
-        previous.whenComplete((ok, err) -> this.configExecutor.execute(() -> {
-            try {
-                task.run();
-                next.complete(null);
-            } catch (Exception e) {
-                logger.warn("Asset task failed", e);
-                next.completeExceptionally(e);
-            }
-        }));
-
-        return next;
     }
 
     public CompletableFuture<Void> runConfig(final Runnable task, long timeOut, TimeUnit timeUnit) {
@@ -103,10 +70,10 @@ public class BaseAssetExecutor {
 
         previous.whenComplete((ok, err) -> this.configExecutor.execute(() -> {
             try {
-                runWithTimeout(task, timeOut, timeUnit);
+                timeLimiter.runWithTimeout(task, timeOut, timeUnit);
                 next.complete(null);
             } catch (Exception e) {
-                logger.warn("Asset task failed", e);
+                logger.warn("config task run failed", e);
                 next.completeExceptionally(e);
             }
         }));
@@ -122,40 +89,4 @@ public class BaseAssetExecutor {
             this.configExecutor.shutdown();
         }
     }
-
-    public static void runWithTimeout(final Runnable runnable, long timeout, TimeUnit timeUnit) throws Exception {
-        runWithTimeout(new Callable<Object>() {
-
-            @Override
-            public Object call() throws Exception {
-                runnable.run();
-                return null;
-            }
-        }, timeout, timeUnit);
-    }
-
-    public static <T> T runWithTimeout(Callable<T> callable, long timeout, TimeUnit timeUnit) throws Exception {
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
-        final Future<T> future = executor.submit(callable);
-        executor.shutdown(); // This does not cancel the already-scheduled task.
-        try {
-            return future.get(timeout, timeUnit);
-        } catch (TimeoutException e) {
-            // remove this if you do not want to cancel the job in progress
-            // or set the argument to 'false' if you do not want to interrupt the thread
-            future.cancel(true);
-            throw e;
-        } catch (ExecutionException e) {
-            // unwrap the root cause
-            Throwable t = e.getCause();
-            if (t instanceof Error) {
-                throw (Error) t;
-            } else if (t instanceof Exception) {
-                throw (Exception) t;
-            } else {
-                throw new IllegalStateException(t);
-            }
-        }
-    }
-
 }
