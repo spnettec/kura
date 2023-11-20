@@ -96,7 +96,8 @@ final class WireSupportImpl implements WireSupport, MultiportWireSupport {
     }
 
     private ExecutorService createExecutorService(String kuraServicePid) {
-        return new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+        int cores = Runtime.getRuntime().availableProcessors();
+        return new ThreadPoolExecutor(1, cores * 2, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
                 new WireDefaultThreadFactory(kuraServicePid), new ThreadPoolExecutor.DiscardOldestPolicy());
     }
 
