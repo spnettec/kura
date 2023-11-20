@@ -1168,11 +1168,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.jboss.logging:jboss-logging:${org.jboss.logging.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>commons-beanutils:commons-beanutils:${commons-beanutils.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -1204,7 +1199,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.quartz-scheduler:quartz:${quartz.version}</id>
+									<id>org.quartz-scheduler:quartz:${quartz-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 									<override>true</override>
@@ -1281,16 +1276,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.apache.aries.spifly:org.apache.aries.spifly.dynamic.framework.extension:${org.apache.aries.spifly.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.aries:org.apache.aries.util:${org.apache.aries.util.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								
 								<artifact>
 									<id>commons-net:commons-net:${org.apache.commons.commons-net.version}</id>
 									<source>true</source>
@@ -1368,21 +1354,13 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.eclipse.jetty:jetty-servlets:jar:${org.eclipse.jetty.servlets.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								
 								<artifact>
 									<id>org.eclipse.jetty:jetty-util:jar:${org.eclipse.jetty.util.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.eclipse.jetty:jetty-util-ajax:jar:${org.eclipse.jetty.util.ajax.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								
 								<artifact>
 									<id>org.apache.felix:org.apache.felix.dependencymanager:jar:${org.apache.felix.dependencymanager.version}</id>
 									<source>true</source>
@@ -2325,11 +2303,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.pcap4j:pcap4j-packetfactory-static:jar:${pcap4j.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>com.github.jinahya:bit-io:jar:${bit-io.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -2339,38 +2312,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<!--
-					              <artifact>
-					                  <id>com.eclipsesource.jaxrs:jersey-min:jar:${com.eclipsesource.jaxrs.jersey-min.version}</id>
-					                  <source>true</source>
-					                  <transitive>false</transitive>
-					              </artifact
-					              <artifact>
-					                  <id>com.eclipsesource.jaxrs:publisher:jar:${com.eclipsesource.jaxrs.publisher-mvn.version}</id>
-					                  <source>true</source>
-					                  <transitive>false</transitive>
-					                  <override>true</override>
-					                  <instructions>
-					                      <Import-Package>javax.servlet;version="[2.3.0,5.0.0)",javax.servlet.ht
-					                                     tp;version="[2.3.0,5.0.0)",javax.ws.rs;version="[2.0.0,3.0.0)",javax.
-					                                     ws.rs.core;version="[2.0.0,3.0.0)",javax.ws.rs.ext;version="[2.0.0,3.
-					                                     0.0)",org.glassfish.jersey.internal;version="[2.3.0,3.0.0)",org.glass
-					                                     fish.jersey.server;version="[2.3.0,3.0.0)",org.glassfish.jersey.servl
-					                                     et;version="[2.3.0,3.0.0)",org.osgi.framework;version="[1.5.0,2.0.0)"
-					                                     ,org.osgi.service.cm;version="[1.2.0,2.0.0)",org.osgi.service.http;ve
-					                                     rsion="[1.2.0,2.0.0)",org.osgi.util.tracker;version="[1.4.0,2.0.0)"
-					                      </Import-Package>
-					                      <Export-Package>
-					                      		com.eclipsesource.jaxrs.publisher;version="5.3.1"
-					                      </Export-Package>
-					                      
-					                      <Bundle-Activator>
-					                      	    com.eclipsesource.jaxrs.publisher.internal.Activator
-					                      </Bundle-Activator>
-					                      
-					                  </instructions>
-					              </artifact>
-					            -->
+								
 								<artifact>
 									<id>com.eclipsesource.jaxrs:provider-gson:jar:${com.eclipsesource.jaxrs.provider.gson-mvn.version}</id>
 									<source>true</source>

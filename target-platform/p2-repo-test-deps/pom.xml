@@ -46,11 +46,6 @@
 							<artifacts>
 
 								<artifactItem>
-									<id>io.dropwizard.metrics:metrics-core:${io.dropwizard.metrics.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
-								<artifactItem>
 									<id>io.moquette:moquette-broker:${moquette-broker.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -79,16 +74,6 @@
 
 								<artifactItem>
 									<id>org.mockito:mockito-core:${mockito-core.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
-								<artifactItem>
-									<id>net.bytebuddy:byte-buddy:${byte-buddy.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
-								<artifactItem>
-									<id>net.bytebuddy:byte-buddy-agent:${byte-buddy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
