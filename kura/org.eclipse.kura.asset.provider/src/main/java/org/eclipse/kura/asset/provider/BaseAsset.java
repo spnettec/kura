@@ -324,10 +324,10 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
     }
 
     protected String getKuraServiceDesc() throws KuraException {
-        if (this.config.getProperties().get(ConfigurationService.KURA_SERVICE_NAME) == null) {
+        if (this.config.getProperties().get(ConfigurationService.KURA_SERVICE_DESC) == null) {
             return getKuraServiceName();
         }
-        return this.config.getProperties().get(ConfigurationService.KURA_SERVICE_DESC).toString();
+        return this.getKuraServicePid();
     }
 
     /** {@inheritDoc} */
@@ -534,8 +534,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         // TODO make this configurable and maybe allow using shared thread pools
 
-        final ExecutorService ioExecutor = new ThreadPoolExecutor(1, 5, 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>());
+        final ExecutorService ioExecutor = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors() * 2,
+                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
         final ExecutorService configExecutor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>());
 

@@ -225,7 +225,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
     @Override
     public void onWireReceive(final Object wireEnvelope) {
         if (this.getDriver() == null) {
-            logger.warn("Driver not attached");
+            logger.warn("Driver:{} {}", getAssetConfiguration().getDriverPid(), " not attached");
             return;
         }
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
