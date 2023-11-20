@@ -135,7 +135,7 @@
     <properties>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
-        <tycho-version>3.0.4</tycho-version>
+        <tycho-version>4.0.4</tycho-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
@@ -157,11 +157,11 @@
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
         <maven-deploy-plugin.version>3.0.0</maven-deploy-plugin.version>
         <maven-eclipse-plugin.version>2.10</maven-eclipse-plugin.version>
-        <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
+        <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <slf4j.version>1.7.36</slf4j.version>
         <wagon-ssh.version>3.2.0</wagon-ssh.version>
@@ -251,7 +251,7 @@
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>3.0.4</tycho-version>
+                <tycho-version>4.0.4</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -DbuildingWithTycho=true -Dosgi.locking=none

@@ -348,7 +348,6 @@
         <setEntry value="org.apache.commons.commons-text@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
-        <setEntry value="org.apache.commons.pool@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
         <setEntry value="org.apache.felix.deploymentadmin@default:default"/>
         <setEntry value="org.apache.felix.fileinstall@default:default"/>
@@ -370,9 +369,7 @@
         <setEntry value="org.apache.logging.log4j.slf4j.impl@default:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
         <setEntry value="org.apache.qpid.proton-j@default:default"/>
-        <setEntry value="org.apache.servicemix.bundles.aopalliance@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.c3p0@default:default"/>
-        <setEntry value="org.apache.servicemix.bundles.reflections@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-aop@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-beans@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-context@default:default"/>

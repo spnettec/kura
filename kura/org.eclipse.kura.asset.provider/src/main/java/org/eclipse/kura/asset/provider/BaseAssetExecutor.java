@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
@@ -57,8 +58,13 @@ public class BaseAssetExecutor {
     public <T> T runIO(final Callable<T> task, long timeOut, TimeUnit timeUnit) throws KuraException {
         try {
             return timeLimiter.callWithTimeout(task, timeOut, timeUnit);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call Interrupted");
+        } catch (TimeoutException e) {
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call timeout");
         } catch (Exception e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call exception");
         }
 
     }
@@ -72,6 +78,10 @@ public class BaseAssetExecutor {
             try {
                 timeLimiter.runWithTimeout(task, timeOut, timeUnit);
                 next.complete(null);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("config task run failed", e);
+                next.completeExceptionally(e);
             } catch (Exception e) {
                 logger.warn("config task run failed", e);
                 next.completeExceptionally(e);

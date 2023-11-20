@@ -897,11 +897,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.aopalliance:${aopalliance-mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+							
 								<artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-context:${spring-mvn.version}</id>
 									<source>true</source>
@@ -1172,11 +1168,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.reflections:${org.apache.servicemix.bundles.reflections-mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>org.jboss.logging:jboss-logging:${org.jboss.logging.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -1206,11 +1197,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>commons-pool:commons-pool:${org.apache.commons-pool-mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								
 								<artifact>
 									<id>org.apache.commons:commons-pool2:jar:${org.apache.commons-pool2.version}</id>
 									<source>true</source>
@@ -2281,11 +2268,7 @@
 										</Export-Package>
 									</instructions>
 								</artifact>
-								<artifact>
-									<id>org.jooq:jool:jar:${org.jooq.jool.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								
 								<artifact>
 									<id>com.digitalpetri.fsm:strict-machine:jar:${strict-machine-mvn.version}</id>
 									<source>true</source>
@@ -2348,11 +2331,6 @@
 								</artifact>
 								<artifact>
 									<id>com.github.jinahya:bit-io:jar:${bit-io.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.commons:commons-compress:jar:${commons-compress-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
