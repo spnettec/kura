@@ -102,7 +102,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
 
     private static final Logger logger = LogManager.getLogger(WireAsset.class);
 
-    private WireHelperService wireHelperService;
+    private volatile WireHelperService wireHelperService;
 
     private WireSupport wireSupport;
 
@@ -224,6 +224,10 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      */
     @Override
     public void onWireReceive(final Object wireEnvelope) {
+        if (this.getDriver() == null) {
+            logger.warn("Driver not attached");
+            return;
+        }
         requireNonNull(wireEnvelope, "Wire Envelope cannot be null");
 
         emitAllReadChannels();
