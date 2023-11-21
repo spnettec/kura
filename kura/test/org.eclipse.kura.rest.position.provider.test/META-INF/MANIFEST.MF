@@ -26,5 +26,5 @@ Import-Package: com.eclipsesource.json;version="0.9.5",
  org.mockito.stubbing;version="[4.0,5.0)",
  org.osgi.util.measurement;version="1.0.1",
  org.osgi.util.position;version="1.0.1",
- org.slf4j;version="1.6.4"
+ org.slf4j;version="[1.7,3)"
 Fragment-Host: org.eclipse.kura.rest.position.provider
