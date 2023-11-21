@@ -2254,11 +2254,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.github.jinahya:bit-io:jar:${bit-io.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>net.java.dev.jna:jna:jar:${net.java.dev.jna.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
