@@ -762,17 +762,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.slf4j:jcl-over-slf4j:${slf4j.api.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.logging.log4j:log4j-jul:${logging.log4j.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.logging.log4j:log4j-jcl:${logging.log4j.version}</id>
+									<id>org.apache.logging.log4j:log4j-slf4j-impl:${logging.log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -787,7 +777,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.logging.log4j:log4j-slf4j-impl:${logging.log4j.version}</id>
+									<id>commons-logging:commons-logging:${commons-logging-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -948,41 +938,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.apache.activemq:artemis-mqtt-protocol:${org.apache.activemq.artemis.upstream.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.activemq:artemis-amqp-protocol:${org.apache.activemq.artemis.upstream.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.activemq:artemis-stomp-protocol:${org.apache.activemq.artemis.upstream.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.activemq:activemq-artemis-native:${org.apache.activemq.artemis-native.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.activemq:artemis-server-osgi:${org.apache.activemq.artemis.upstream.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.apache.activemq:artemis-quorum-api:${org.apache.activemq.artemis.upstream.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.github.ben-manes.caffeine:caffeine:${caffeine.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+	
 								<artifact>
 									<id>org.apache.commons:commons-configuration2:${commons-configuration2.version}</id>
 									<source>true</source>
@@ -990,11 +946,6 @@
 								</artifact>
 								<artifact>
 									<id>org.apache.commons:commons-text:${commons-text-mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.jctools:jctools-core:${jctools-core.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

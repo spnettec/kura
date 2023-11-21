@@ -1033,7 +1033,7 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/slf4j.api_${slf4j.api.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jcl.over.slf4j_${slf4j.api.version}.jar@3:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.logging_${commons-logging.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/log4j2-api-config_${log4j2-api-config.version}.jar@3" />
             <entry key="osgi.bundles" operation="+"
@@ -1926,28 +1926,10 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/io.netty.transport-native-unix-common_${io.netty.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-server-osgi_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-quorum-api_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-mqtt-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3:start" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-amqp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-stomp-protocol_${org.apache.activemq.artemis.upstream.version}.jar@3" />
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.activemq.artemis-native_${org.apache.activemq.artemis-native.version}.jar@3" />
-			
-    		<entry key="osgi.bundles" operation="+"
-    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/com.github.ben-manes.caffeine_${caffeine.version}.SNAPSHOT.jar@3" />
-			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-configuration2_${commons-configuration2.version}.jar@3" />
 						
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-text_${commons-text.version}.jar@3" />
-			
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jctools.core_${jctools-core.version}.jar@3:start" />
 			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jgroups_${jgroups.version}.jar@3" />

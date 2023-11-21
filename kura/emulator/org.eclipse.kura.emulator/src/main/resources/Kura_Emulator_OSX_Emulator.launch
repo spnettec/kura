@@ -207,7 +207,6 @@
         <setEntry value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml@default:default"/>
         <setEntry value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
-        <setEntry value="com.github.ben-manes.caffeine@default:default"/>
         <setEntry value="com.github.jinahya.bit-io@default:default"/>
         <setEntry value="com.google.gson@default:default"/>
         <setEntry value="com.google.guava.failureaccess@default:default"/>
@@ -268,15 +267,8 @@
         <setEntry value="jakarta.xml.ws-api@default:default"/>
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.el-api@default:default"/>
-        <setEntry value="jcl.over.slf4j@default:default"/>
         <setEntry value="log4j2-api-config@default:false"/>
         <setEntry value="minimal-json@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-amqp-protocol@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-native@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-quorum-api@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-server-osgi@default:default"/>
-        <setEntry value="org.apache.activemq.artemis-stomp-protocol@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
         <setEntry value="org.apache.camel.camel-amqp@default:default"/>
         <setEntry value="org.apache.camel.camel-api@default:default"/>
@@ -348,6 +340,7 @@
         <setEntry value="org.apache.commons.commons-text@default:default"/>
         <setEntry value="org.apache.commons.exec@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
+        <setEntry value="org.apache.commons.logging@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
         <setEntry value="org.apache.felix.deploymentadmin@default:default"/>
         <setEntry value="org.apache.felix.fileinstall@default:default"/>
@@ -364,8 +357,6 @@
         <setEntry value="org.apache.johnzon.core@default:default"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
-        <setEntry value="org.apache.logging.log4j.jcl@default:default"/>
-        <setEntry value="org.apache.logging.log4j.jul@default:default"/>
         <setEntry value="org.apache.logging.log4j.slf4j.impl@default:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
         <setEntry value="org.apache.qpid.proton-j@default:default"/>
@@ -431,7 +422,6 @@
         <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.gwtproject.gwt-user@default:default"/>
-        <setEntry value="org.jctools.core@default:default"/>
         <setEntry value="org.jgroups@default:default"/>
         <setEntry value="org.jvnet.mimepull@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
