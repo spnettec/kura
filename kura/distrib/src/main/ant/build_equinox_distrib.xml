@@ -1854,13 +1854,13 @@ fi]]>
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.commons_${org.ow2.asm-commons.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.commons_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.util_${org.ow2.asm-util.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.util_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree.analysis_${org.ow2.asm-analysis.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree.analysis_${org.ow2.asm.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree_${org.ow2.asm-tree.version}.jar@3:start" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.objectweb.asm.tree_${org.ow2.asm.version}.jar@3:start" />
 			
             <entry key="osgi.bundles" operation="+"
 			    value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.paho.client.mqttv3_${org.eclipse.paho.client.version}.jar@3:start" />
