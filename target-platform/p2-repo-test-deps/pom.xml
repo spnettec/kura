@@ -60,12 +60,6 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.apache.camel:camel-mock:${org.apache.camel.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-
 								<artifactItem>
 									<id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
 									<source>true</source>
