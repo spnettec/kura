@@ -298,7 +298,7 @@
         <setEntry value="org.apache.johnzon.core@default:default"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@default:default"/>
-        <setEntry value="org.apache.logging.log4j.slf4j.impl@default:default"/>
+        <setEntry value="org.apache.logging.log4j.slf4j2.impl@3:default"/>
         <setEntry value="org.apache.qpid.jms.client@default:default"/>
         <setEntry value="org.apache.qpid.proton-j@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.c3p0@default:default"/>
