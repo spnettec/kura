@@ -243,7 +243,11 @@
 								
 
 								<!-- <artifact><source>true</source><id>jakarta.jws:jakarta.jws-api:jar:${jakarta.jws-api.version}</id></artifact>-->
-
+								<artifact>
+									<id>org.slf4j:jul-to-slf4j:${slf4j.api.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
 								
 								<artifact>
 									<id>org.slf4j:slf4j-api:${slf4j.api.version}</id>
