@@ -66,6 +66,11 @@
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
+									<id>org.apache.activemq:artemis-mqtt-protocol:jar:2.31.2</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifactItem>
+								<artifactItem>
                                     <id>org.mockito:mockito-core:${mockito-core.version}</id>
                                     <source>true</source>
 									<transitive>false</transitive>
