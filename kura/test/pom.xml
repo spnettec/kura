@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.8.1</version>
+            <version>5.7.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -380,7 +380,7 @@
                                 <autoStart>true</autoStart>
                             </bundle>
                             <bundle>
-                                <id>org.apache.logging.log4j.slf4j.impl</id>
+                                <id>org.apache.logging.log4j.slf4j2.impl</id>
                                 <level>4</level>
                                 <autoStart>true</autoStart>
                             </bundle>
@@ -703,7 +703,7 @@
                                 </requirement>
                                 <requirement>
                                     <type>p2-installable-unit</type>
-                                    <id>org.apache.logging.log4j.slf4j.impl</id>
+                                    <id>org.apache.logging.log4j.slf4j2.impl</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>

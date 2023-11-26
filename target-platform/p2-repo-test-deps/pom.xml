@@ -65,12 +65,21 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
-
 								<artifactItem>
-									<id>org.mockito:mockito-core:${mockito-core.version}</id>
-									<source>true</source>
+                                    <id>org.mockito:mockito-core:${mockito-core.version}</id>
+                                    <source>true</source>
 									<transitive>false</transitive>
-								</artifactItem>
+                                </artifactItem>
+                                <artifactItem>
+                                    <id>net.bytebuddy:byte-buddy:${byte-buddy.version}</id>
+                                    <source>true</source>
+									<transitive>false</transitive>
+                                </artifactItem>
+                                <artifactItem>
+                                    <id>net.bytebuddy:byte-buddy-agent:${byte-buddy.version}</id>
+                                    <source>true</source>
+									<transitive>false</transitive>
+                                </artifactItem>
 								<artifactItem>
 									<id>org.objenesis:objenesis:${objenesis.version}</id>
 									<source>true</source>
