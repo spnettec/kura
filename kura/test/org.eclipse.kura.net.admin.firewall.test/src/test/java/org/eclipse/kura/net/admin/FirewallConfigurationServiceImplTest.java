@@ -33,7 +33,7 @@ import java.util.Set;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
-import org.eclipse.kura.core.net.FirewallConfiguration;
+import org.eclipse.kura.net.firewall.FirewallConfiguration;
 import org.eclipse.kura.linux.net.iptables.AbstractLinuxFirewall;
 import org.eclipse.kura.linux.net.iptables.LinuxFirewall;
 import org.eclipse.kura.linux.net.iptables.LocalRule;
