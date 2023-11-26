@@ -163,8 +163,9 @@
         <maven-eclipse-plugin.version>2.10</maven-eclipse-plugin.version>
         <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.9</slf4j.version>
         <wagon-ssh.version>3.2.0</wagon-ssh.version>
+        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <properties-maven-plugin.version>1.0-alpha-2</properties-maven-plugin.version>
     </properties>
 
@@ -413,7 +414,6 @@
             <url>${kura.addons.url}</url>
             <snapshots>
                 <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
             </snapshots>
         </repository>
         <repository>

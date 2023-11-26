@@ -44,7 +44,11 @@
 						</goals>
 						<configuration>
 							<artifacts>
-
+								<artifactItem>
+									<id>org.apache.camel:camel-mock:jar:3.21.2</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifactItem>
 								<artifactItem>
 									<id>io.moquette:moquette-broker:${moquette-broker.version}</id>
 									<source>true</source>
