@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 
 /**
  * A ready to run XML based Apache Camel component
@@ -144,11 +145,17 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
         if (vertx == null) {
             vertx = Vertx.vertx(new VertxOptions().setPreferNativeTransport(true));
         }
-        if (webClient != null) {
-            webClient.close();
-            webClient = WebClient.create(vertx);
-        } else {
-            webClient = WebClient.create(vertx);
+        final ClassLoader original = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(XmlRouterComponent.class.getClassLoader());
+            if (webClient != null) {
+                webClient.close();
+                webClient = WebClient.create(vertx, new WebClientOptions().setIdleTimeout(60000));
+            } else {
+                webClient = WebClient.create(vertx, new WebClientOptions().setIdleTimeout(60000));
+            }
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
 
         if (!initCodeTemp.isEmpty()) {
