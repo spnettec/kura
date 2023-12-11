@@ -13,10 +13,12 @@
  ******************************************************************************/
 package org.eclipse.kura.type;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.eclipse.kura.annotation.Nullable;
 import org.osgi.annotation.versioning.ProviderType;
@@ -40,7 +42,7 @@ public final class TypedValues {
      * Creates new boolean value.
      *
      * @param value
-     *                  the primitive boolean value
+     *            the primitive boolean value
      * @return the boolean value represented as {@link TypedValue}
      */
     public static BooleanValue newBooleanValue(final boolean value) {
@@ -51,7 +53,7 @@ public final class TypedValues {
      * Creates new boolean value array.
      *
      * @param value
-     *                  the boolean value array
+     *            the boolean value array
      * @return the boolean value represented as {@link TypedValue}
      */
     public static BooleanValues newBooleanValues(final Boolean[] values) {
@@ -62,10 +64,10 @@ public final class TypedValues {
      * Creates new byte array value.
      *
      * @param value
-     *                  the primitive byte array value
+     *            the primitive byte array value
      * @return the byte array value represented as {@link TypedValue}
      * @throws org.eclipse.kura.KuraRuntimeException
-     *                                                   if the argument is null
+     *             if the argument is null
      */
     public static ByteArrayValue newByteArrayValue(final byte[] value) {
         return new ByteArrayValue(value);
@@ -75,7 +77,7 @@ public final class TypedValues {
      * Creates new float value.
      *
      * @param value
-     *                  the primitive float value
+     *            the primitive float value
      * @return the float value represented as {@link TypedValue}
      */
     public static FloatValue newFloatValue(final float value) {
@@ -86,7 +88,7 @@ public final class TypedValues {
      * Creates new float value array.
      *
      * @param value
-     *                  the float value array
+     *            the float value array
      * @return the float value represented as {@link TypedValue}
      */
     public static FloatValues newFloatValues(final Float[] value) {
@@ -97,7 +99,7 @@ public final class TypedValues {
      * Creates new double value.
      *
      * @param value
-     *                  the primitive double value
+     *            the primitive double value
      * @return the double value represented as {@link TypedValue}
      */
     public static DoubleValue newDoubleValue(final double value) {
@@ -108,7 +110,7 @@ public final class TypedValues {
      * Creates new double value array.
      *
      * @param value
-     *                  the double value
+     *            the double value
      * @return the double value represented as {@link TypedValue}
      */
     public static DoubleValues newDoubleValues(final Double[] value) {
@@ -119,7 +121,7 @@ public final class TypedValues {
      * Creates new integer value.
      *
      * @param value
-     *                  the primitive integer value
+     *            the primitive integer value
      * @return the integer value represented as {@link TypedValue}
      */
     public static IntegerValue newIntegerValue(final int value) {
@@ -130,7 +132,7 @@ public final class TypedValues {
      * Creates new integer value array.
      *
      * @param value
-     *                  the integer value array
+     *            the integer value array
      * @return the integer value represented as {@link TypedValue}
      */
     public static IntegerValues newIntegerValues(final Integer[] value) {
@@ -141,7 +143,7 @@ public final class TypedValues {
      * Creates new long value.
      *
      * @param value
-     *                  the primitive long value
+     *            the primitive long value
      * @return the long value represented as {@link TypedValue}
      */
     public static LongValue newLongValue(final long value) {
@@ -152,8 +154,8 @@ public final class TypedValues {
      * Creates new long value array.
      *
      * @param value
-     *                  array
-     *                  the long value
+     *            array
+     *            the long value
      * @return the long value represented as {@link TypedValue}
      */
     public static LongValues newLongValues(final Long[] value) {
@@ -172,7 +174,7 @@ public final class TypedValues {
      * Creates new string value.
      *
      * @param value
-     *                  the string value to be represented as {@link TypedValue}
+     *            the string value to be represented as {@link TypedValue}
      * @return the string value represented as {@link TypedValue}
      */
     public static StringValue newStringValue(@Nullable final String value) {
@@ -183,7 +185,7 @@ public final class TypedValues {
      * Creates new string value array.
      *
      * @param value
-     *                  the string value to be represented as {@link TypedValue}
+     *            the string value to be represented as {@link TypedValue}
      * @return the string value represented as {@link TypedValue}
      */
     public static StringValues newStringValues(@Nullable final String[] value) {
@@ -194,10 +196,10 @@ public final class TypedValues {
      * Creates new TypedValue inferring the type from the argument.
      *
      * @param value
-     *                  an object that needs to be represented as {@link TypedValue}
+     *            an object that needs to be represented as {@link TypedValue}
      * @return a {@link TypedValue} that represents the conversion of {@code value}
      * @throws IllegalArgumentException
-     *                                      if {@code value} cannot be represented as {@link TypedValue}
+     *             if {@code value} cannot be represented as {@link TypedValue}
      */
     public static TypedValue<?> newTypedValue(final Object value) {
         if (value instanceof Boolean) {
@@ -214,12 +216,16 @@ public final class TypedValues {
             return newLongValue((Long) value);
         } else if (value instanceof BigInteger) {
             return newBigIntegerValue((BigInteger) value);
+        } else if (value instanceof BigDecimal) {
+            return newDoubleValue(((BigDecimal) value).doubleValue());
         } else if (value instanceof String) {
             return newStringValue((String) value);
         } else if (value instanceof Float[]) {
             return newFloatValues((Float[]) value);
         } else if (value instanceof Double[]) {
             return newDoubleValues((Double[]) value);
+        } else if (value instanceof BigDecimal[]) {
+            return newDoubleValues(Stream.of((BigDecimal[]) value).map(Number::doubleValue).toArray(Double[]::new));
         } else if (value instanceof Integer[]) {
             return newIntegerValues((Integer[]) value);
         } else if (value instanceof Long[]) {
@@ -237,12 +243,12 @@ public final class TypedValues {
      * Parses a TypedValue of given type from a String.
      *
      * @param value
-     *                  the String to be parsed into a {@link TypedValue}
+     *            the String to be parsed into a {@link TypedValue}
      * @param type
-     *                  the {@link DataType} of the returned {@link TypedValue}
+     *            the {@link DataType} of the returned {@link TypedValue}
      * @return a {@link TypedValue} that represents the conversion of {@code value}
      * @throws IllegalArgumentException
-     *                                      if {@code value} cannot be represented as {@link TypedValue}
+     *             if {@code value} cannot be represented as {@link TypedValue}
      */
     public static TypedValue<?> parseTypedValue(final DataType type, final String value) {
         Objects.requireNonNull(value, "value cannot be null");
