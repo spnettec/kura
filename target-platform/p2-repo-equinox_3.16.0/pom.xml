@@ -516,25 +516,6 @@
 									<id>io.netty:netty-resolver-dns:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<Import-Package>io.netty.bootstrap;version="[4.1,5)",io.netty.buffer;v
-														 ersion="[4.1,5)",io.netty.channel;version="[4.1,5)",io.netty.channel.
-														 socket;version="[4.1,5)",io.netty.handler.codec;version="[4.1,5)",io.
-														 netty.handler.codec.dns;version="[4.1,5)",io.netty.handler.logging;ve
-														 rsion="[4.1,5)",io.netty.resolver;version="[4.1,5)",io.netty.util;ver
-														 sion="[4.1,5)",io.netty.util.collection;version="[4.1,5)",io.netty.ut
-														 il.concurrent;version="[4.1,5)",io.netty.util.internal;version="[4.1,
-														 5)",io.netty.util.internal.logging;version="[4.1,5)",javax.naming,jav
-														 ax.naming.directory,sun.net.dns;resolution:=optional,sun.nio.ch;resol
-														 ution:=optional,org.eclipse.jetty.npn;version="[1,2)";resolution:=opt
-														 ional,org.eclipse.jetty.alpn;version="[1,2)";resolution:=optional
-										</Import-Package>
-										<Export-Package>io.netty.resolver.dns;uses:="io.netty.channel,io.netty
-														 .channel.socket,io.netty.handler.codec.dns,io.netty.handler.logging,i
-														 o.netty.resolver,io.netty.util.concurrent";version="4.1.97"
-										</Export-Package>
-									</instructions>
 								</artifact>
 								<artifact>
 									<id>io.netty:netty-transport:${io.netty.version}</id>
