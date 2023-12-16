@@ -37,7 +37,8 @@ public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
 
     private static final String CLOUD_SERVICE_FACTORY_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.SparkplugCloudEndpoint";
     private static final String DATA_SERVICE_FACTORY_PID = "org.eclipse.kura.data.DataService";
-    private static final String DATA_TRANSPORT_SERVICE_FACTORY_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport";
+    private static final String DATA_TRANSPORT_SERVICE_FACTORY_PID =
+            "org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport";
 
     private static final String DATA_TRANSPORT_SERVICE_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport";
 
