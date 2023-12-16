@@ -11,7 +11,7 @@ shift
 
 echo "Registering '$DP' ..."
 
-DP_NAME="$($SCRIPT_DIR/dp-extract-name "$DP")"
+DP_NAME="$(echo $(unzip -q -c "$DP" META-INF/MANIFEST.MF | grep 'Bundle-SymbolicName' | cut -d ':' -f 2 | tr -d '\r'))"
 
 echo "Register '$DP' as '$DP_NAME'"
 

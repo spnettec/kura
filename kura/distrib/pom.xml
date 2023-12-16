@@ -32,7 +32,7 @@
     <name>distrib</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <tycho-version>2.1.0</tycho-version>
+        <tycho-version>4.0.4</tycho-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <zip_workspace.prefix>user_workspace_archive_${project.version}</zip_workspace.prefix>
 
@@ -959,7 +959,7 @@
                 <plugin>
                     <groupId>de.dentrassi.maven</groupId>
                     <artifactId>rpm</artifactId>
-                    <version>1.7.0</version>
+                    <version>1.11.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.eclipse.tycho</groupId>
@@ -1100,15 +1100,6 @@
     </dependencies>
 
     <profiles>
-        <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>[1.8,15)</jdk>
-            </activation>
-            <properties>
-                <skip.js.nashorn.engine.components>false</skip.js.nashorn.engine.components>
-            </properties>
-        </profile>
         <profile>
             <id>java17</id>
             <activation>

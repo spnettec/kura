@@ -276,7 +276,7 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
         MarketplacePackageDescriptorBuilder descriptorBuilder = MarketplacePackageDescriptor.builder();
 
         try {
-            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection = (HttpsURLConnection) new URI(url).toURL().openConnection();
             connection.setSSLSocketFactory(sslManagerServiceOverride.getSSLSocketFactory());
 
             connection.setRequestMethod("GET");
@@ -419,7 +419,7 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
 
                 Properties deployedPackages = readDeployedPackages();
                 String sUrl = deployedPackages.getProperty(name);
-                File dpFile = new File(new URL(sUrl).getPath());
+                File dpFile = new File(new URI(sUrl).getPath());
                 if (!Files.deleteIfExists(dpFile.toPath())) {
                     logger.warn("Cannot delete file at URL: {}", sUrl);
                 }
@@ -509,8 +509,8 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
     }
 
     private DeploymentPackage installDeploymentPackageInternal(String urlSpec)
-            throws DeploymentException, IOException, GeneralSecurityException {
-        URL url = new URL(urlSpec);
+            throws DeploymentException, IOException, GeneralSecurityException, URISyntaxException {
+        URL url = new URI(urlSpec).toURL();
         File dpFile = null;
         if (!"file".equals(url.getProtocol())) {
             dpFile = getFileFromRemote(url);
@@ -550,7 +550,7 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
         return dp;
     }
 
-    private File getFileFromRemote(URL url) throws GeneralSecurityException, IOException {
+    private File getFileFromRemote(URL url) throws GeneralSecurityException, IOException, URISyntaxException {
 
         File dpFile = File.createTempFile("dpa", null);
         dpFile.deleteOnExit();
@@ -571,7 +571,7 @@ public class DeploymentAgent implements DeploymentAgentService, ConfigurableComp
                 || responseCode == HttpURLConnection.HTTP_SEE_OTHER) {
             String newLocation = urlConnection.getHeaderField("Location");
             if (StringUtils.isNotEmpty(newLocation)) {
-                return getFileFromRemote(new URL(newLocation));
+                return getFileFromRemote(new URI(newLocation).toURL());
             } else {
                 throw new KuraRuntimeException(KuraErrorCode.INVALID_PARAMETER);
             }

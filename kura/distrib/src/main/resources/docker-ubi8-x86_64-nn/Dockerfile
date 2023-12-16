@@ -26,7 +26,6 @@ RUN true && \
     microdnf -y update && \
     microdnf -y install \
         java-17-openjdk-headless \
-        java-11-openjdk-headless \
         procps \
         zip \
         unzip \
@@ -56,9 +55,6 @@ RUN true && \
     if [ "$PACKED" == "true" ]; then touch /kura.packed && sh pack-kura; fi  && \
     chmod +x /usr/local/bin/*  && \
     unpack-kura  && \
-    export JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" && \
-    export PATH=$JAVA_HOME/bin:$PATH && \
-    export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar && \
     dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
@@ -68,7 +64,6 @@ RUN true && \
     # add-config-ini "felix.fileinstall.disableNio2=true" && \
     # add-config-ini "felix.fileinstall.dir=/load" && \
     rm -rf /kura-install/ && \
-    microdnf -y remove java-11-openjdk-headless && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
     pack-kura
 

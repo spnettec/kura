@@ -22,7 +22,7 @@ ENV \
 
 RUN chmod a+x -R /usr/local/bin && \
     apk update && \
-    apk --no-cache add openjdk8 openjdk17 bash zip curl gcompat procps unzip gzip tar && \
+    apk --no-cache add openjdk17 bash zip curl gcompat procps unzip gzip tar && \
     apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
     apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat dmidecode && \
     /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
@@ -39,7 +39,6 @@ RUN chmod a+x -R /usr/local/bin && \
     ln -s /bin/bash /usr/bin/bash && \
     mkdir -p ${KURA_DIR}/packages && \
     if [ "$PACKED" == "true" ]; then touch /kura.packed && pack-kura; fi && \
-    PATH=$PATH":/usr/lib/jvm/java-1.8-openjdk/bin" && \
     unpack-kura && \
     sed -i "s/\-printf \'\%P.n\'//g" /usr/local/bin/dp-install && \
     dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
@@ -51,7 +50,6 @@ RUN chmod a+x -R /usr/local/bin && \
     # dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
     # add-config-ini "felix.fileinstall.disableNio2=true" && \
     # add-config-ini "felix.fileinstall.dir=/load" && \
-    apk del openjdk8 &&\
     rm -Rf /kura-install &&\
     pack-kura
 
