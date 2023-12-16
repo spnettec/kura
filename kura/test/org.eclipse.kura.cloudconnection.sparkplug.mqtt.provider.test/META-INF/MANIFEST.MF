@@ -9,5 +9,5 @@ Bundle-ActivationPolicy: lazy
 Fragment-Host: org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider
 Import-Package: org.junit;version="[4.0.0,5.0.0)",
  org.junit.runners;version="[4.12,5.0)",
- org.mockito;version="[4.0.0,5.0.0)",
- org.mockito.stubbing;version="[4.0.0,5.0.0)"
+ org.mockito,
+ org.mockito.stubbing
