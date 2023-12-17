@@ -39,11 +39,11 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <echo file="${project.basedir}/../distrib/build.properties" append="false">
                                                                         kura.build.version=${kura.build.version}
                                                                 </echo>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

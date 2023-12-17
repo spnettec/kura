@@ -36,24 +36,24 @@
         <skip.can.example>true</skip.can.example>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
 
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
 
         <!-- plugins versions common to Java 8 and Java 17 builds -->
-        <exists-maven-plugin.version>0.0.6</exists-maven-plugin.version>
+        <exists-maven-plugin.version>0.12.0</exists-maven-plugin.version>
         <findbugs-maven-plugin.version>3.0.5</findbugs-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-        <license-maven-plugin.version>2.2</license-maven-plugin.version>
+        <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
         <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
         <maven-deploy-plugin.version>3.0.0</maven-deploy-plugin.version>
         <maven-eclipse-plugin.version>2.10</maven-eclipse-plugin.version>
-        <maven-site-plugin.version>3.3</maven-site-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <wagon-ssh.version>3.2.0</wagon-ssh.version>
+        <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
+        <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
+        <wagon-ssh.version>3.5.3</wagon-ssh.version>
         <slf4j.version>2.0.9</slf4j.version>
     </properties>
 

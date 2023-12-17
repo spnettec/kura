@@ -32,19 +32,19 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <!-- plugins versions common to Java 8 and Java 17 builds -->
-        <exists-maven-plugin.version>0.0.3</exists-maven-plugin.version>
+        <exists-maven-plugin.version>0.12.0</exists-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
-        <maven-bundle-plugin.version>5.1.8</maven-bundle-plugin.version>
-        <maven-clean-plugin.version>2.4.1</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <maven-checkstyle-plugin.version>2.17</maven-checkstyle-plugin.version>
-        <maven-dependency-plugin.version>3.0.0</maven-dependency-plugin.version>
-        <maven-deploy-plugin.version>2.8.1</maven-deploy-plugin.version>
-        <maven-site-plugin.version>3.3</maven-site-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <properties-maven-plugin.version>1.0-alpha-2</properties-maven-plugin.version>
-        <tycho-p2-extras-plugin.version>1.7.0</tycho-p2-extras-plugin.version>
+        <maven-bundle-plugin.version>5.1.9</maven-bundle-plugin.version>
+        <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
+        <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
+        <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+        <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
+        <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
+        <properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
+        <tycho-p2-extras-plugin.version>4.0.4</tycho-p2-extras-plugin.version>
         <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
     </properties>
 
@@ -104,16 +104,6 @@
     </distributionManagement>
     
     <profiles>
-        <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>[1.8,15)</jdk>
-            </activation>
-            <properties>
-                <tycho-p2-extras-plugin.version>1.7.0</tycho-p2-extras-plugin.version>
-                <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
-            </properties>
-        </profile>
         <profile>
             <id>java17</id>
             <activation>

@@ -66,17 +66,6 @@
                 </pluginManagement>
             </build>
         </profile>
-
-        <profile>
-            <id>nashorn-available-tests</id>
-            <activation>
-                <jdk>[1.8,15)</jdk>
-            </activation>
-
-            <modules>
-                <module>org.eclipse.kura.camel.test</module>
-            </modules>
-        </profile>
     </profiles>
 
     <build>

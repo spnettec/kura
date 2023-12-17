@@ -17,7 +17,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>properties-maven-plugin</artifactId>
-				<version>1.0.0</version>
+				<version>1.2.1</version>
 				<executions>
 					<execution>
 						<phase>initialize</phase>
@@ -45,7 +45,7 @@
 						<configuration>
 							<artifacts>
 								<artifactItem>
-									<id>org.apache.camel:camel-mock:jar:3.21.2</id>
+									<id>org.apache.camel:camel-mock:jar:3.21.3</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>

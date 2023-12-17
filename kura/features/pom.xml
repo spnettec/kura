@@ -72,55 +72,6 @@
 
     <profiles>
         <profile>
-            <id>source-feature-generation-tycho1</id>
-            <activation>
-                <file>
-                    <exists>sourceTemplateFeature/feature.properties</exists>
-                </file>
-                <jdk>[1.8,15)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.eclipse.tycho.extras</groupId>
-                        <artifactId>tycho-source-feature-plugin</artifactId>
-                        <version>2.7.5</version>
-                        <executions>
-                            <execution>
-                                <id>source-feature</id>
-                                <goals>
-                                    <goal>source-feature</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.eclipse.tycho</groupId>
-                        <artifactId>tycho-p2-plugin</artifactId>
-                        <version>${tycho-version}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-p2-metadata</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>p2-metadata</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>                        
-                        <version>${maven-deploy-plugin.version}</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>source-feature-generation-tycho3</id>
             <activation>
                 <file>
