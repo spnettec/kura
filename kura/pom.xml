@@ -666,19 +666,6 @@
                     <configuration>
                         <lifecycleMappingMetadata>
                             <pluginExecutions>
-								<pluginExecution>
-		                           <pluginExecutionFilter>
-		                              <groupId>org.eclipse.tycho</groupId>
-		                              <artifactId>tycho-packaging-plugin</artifactId>
-		                              <versionRange>[1.0,)</versionRange>
-		                              <goals>
-		                                 <goal>build-qualifier</goal>
-		                                 <action>
-					                     <execute />
-					                   		</action>
-		                              	 </goals>
-		                           </pluginExecutionFilter>
-		                        </pluginExecution>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>
