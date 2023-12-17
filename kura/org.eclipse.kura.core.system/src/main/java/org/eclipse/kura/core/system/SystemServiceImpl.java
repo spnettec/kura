@@ -125,6 +125,10 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
 
     @SuppressWarnings({ "rawtypes", "unchecked", "checkstyle:methodLength" })
     protected void activate(ComponentContext componentContext) {
+        if (!SLF4JBridgeHandler.isInstalled()) {
+            SLF4JBridgeHandler.removeHandlersForRootLogger();
+            SLF4JBridgeHandler.install();
+        }
         this.componentContext = componentContext;
 
         AccessController.doPrivileged((PrivilegedAction) () -> {
