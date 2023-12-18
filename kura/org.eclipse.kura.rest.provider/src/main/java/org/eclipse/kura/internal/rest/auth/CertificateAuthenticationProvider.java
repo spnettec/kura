@@ -124,6 +124,8 @@ public class CertificateAuthenticationProvider implements AuthenticationProvider
 
     public static class CertificateAuthException extends Exception {
 
+        private static final long serialVersionUID = 6145155210236378533L;
+
         public enum Reason {
             CLIENT_CERTIFICATE_CHAIN_MISSING,
             MISSING_COMMON_NAME,
