@@ -413,7 +413,7 @@
         <setEntry value="org.eclipse.kura.broker.artemis.xml@default:default"/>
         <setEntry value="org.eclipse.kura.camel.cloud.factory@default:default"/>
         <setEntry value="org.eclipse.kura.camel.xml@default:default"/>
-        <setEntry value="org.eclipse.kura.camel@default:false"/>
+        <setEntry value="org.eclipse.kura.camel@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.raw.mqtt.provider@default:default"/>
         <setEntry value="org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider@default:default"/>

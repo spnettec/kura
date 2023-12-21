@@ -36,7 +36,8 @@ public class BaseAssetExecutor {
 
     private final ExecutorService configExecutor;
     private final boolean isConfigExecutorShared;
-    private final TimeLimiter timeLimiter;
+    private final TimeLimiter ioTimeLimiter;
+    private final TimeLimiter configTimeLimiter;
 
     private final AtomicReference<CompletableFuture<Void>> queue = new AtomicReference<>(
             CompletableFuture.completedFuture(null));
@@ -51,18 +52,19 @@ public class BaseAssetExecutor {
         this.isIoExecutorShared = isIoExecutorShared;
         this.configExecutor = configExecutor;
         this.isConfigExecutorShared = isConfigExecutorShared;
-        this.timeLimiter = SimpleTimeLimiter.create(ioExecutor);
+        this.ioTimeLimiter = SimpleTimeLimiter.create(ioExecutor);
+        this.configTimeLimiter = SimpleTimeLimiter.create(configExecutor);
 
     }
 
     public <T> T runIO(final Callable<T> task, long timeOut, TimeUnit timeUnit) throws KuraException {
         try {
-            return timeLimiter.callWithTimeout(task, timeOut, timeUnit);
+            return ioTimeLimiter.callWithTimeout(task, timeOut, timeUnit);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call Interrupted");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo interrupt error", "call Interrupted");
         } catch (TimeoutException e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call timeout");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo timeout error", "call timeout");
         } catch (Exception e) {
             throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call exception");
         }
@@ -74,19 +76,22 @@ public class BaseAssetExecutor {
         final CompletableFuture<Void> next = new CompletableFuture<>();
         final CompletableFuture<Void> previous = this.queue.getAndSet(next);
 
-        previous.whenComplete((ok, err) -> this.configExecutor.execute(() -> {
+        previous.whenComplete((ok, err) -> {
             try {
-                timeLimiter.runWithTimeout(task, timeOut, timeUnit);
+                configTimeLimiter.runWithTimeout(task, timeOut, timeUnit);
                 next.complete(null);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("config task run failed", e);
+                logger.warn("config task run interrupt failed", e);
+                next.completeExceptionally(e);
+            } catch (TimeoutException e) {
+                logger.warn("config task run timeout failed", e);
                 next.completeExceptionally(e);
             } catch (Exception e) {
                 logger.warn("config task run failed", e);
                 next.completeExceptionally(e);
             }
-        }));
+        });
 
         return next;
     }

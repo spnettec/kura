@@ -150,10 +150,9 @@ public class XmlRouterComponent extends AbstractXmlCamelComponent {
             Thread.currentThread().setContextClassLoader(XmlRouterComponent.class.getClassLoader());
             if (webClient != null) {
                 webClient.close();
-                webClient = WebClient.create(vertx, new WebClientOptions().setIdleTimeout(60000));
-            } else {
-                webClient = WebClient.create(vertx, new WebClientOptions().setIdleTimeout(60000));
             }
+            webClient = WebClient.create(vertx, new WebClientOptions().setIdleTimeout(60000));
+
         } finally {
             Thread.currentThread().setContextClassLoader(original);
         }

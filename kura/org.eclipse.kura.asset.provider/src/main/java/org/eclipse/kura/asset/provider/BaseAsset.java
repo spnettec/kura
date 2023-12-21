@@ -259,7 +259,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             updateChannelListenerRegistrations(this.channelListeners, this.config.getAssetConfiguration());
             newState.syncChannelListeners(this.channelListeners,
                     this.config.getAssetConfiguration().getAssetChannels());
-        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+        }, 60, TimeUnit.SECONDS);
     }
 
     public void unsetDriver() {
@@ -272,7 +272,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                     onPreparedReadReleased(preparedRead);
                 }
                 oldState.shutdown();
-            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+            }, 60, TimeUnit.SECONDS);
         }
     }
 
@@ -488,8 +488,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             return;
         }
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels),
-                this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels), 60,
+                TimeUnit.SECONDS);
     }
 
     /** {@inheritDoc} */
@@ -514,8 +514,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final Map<String, Channel> channels = this.config.getAssetConfiguration().getAssetChannels();
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels),
-                this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels), 60,
+                TimeUnit.SECONDS);
     }
 
     protected void onPreparedReadCreated(PreparedRead preparedRead) {

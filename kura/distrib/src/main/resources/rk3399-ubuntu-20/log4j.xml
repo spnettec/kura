@@ -54,6 +54,12 @@
         <Logger name="org.apache.activemq" level="warn" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="com.influxdb" level="error" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="org.glassfish.jersey.internal.inject.Providers" level="error" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="AuditLogger" level="trace" additivity="false">
             <AppenderRef ref="audit"/>
         </Logger>

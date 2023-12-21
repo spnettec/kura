@@ -29,6 +29,12 @@
         <Logger name="org.eclipse" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="com.influxdb" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.glassfish.jersey.internal.inject.Providers" level="error" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="org.apache.activemq" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
