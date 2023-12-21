@@ -760,33 +760,33 @@
 								</artifact>
 
 								<artifact>
-									<id>org.eclipse.jetty:jetty-http:jar:${org.eclipse.jetty.http.version}</id>
+									<id>org.eclipse.jetty:jetty-http:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.jetty:jetty-io:jar:${org.eclipse.jetty.io.version}</id>
+									<id>org.eclipse.jetty:jetty-io:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.jetty:jetty-security:jar:${org.eclipse.jetty.security.version}</id>
+									<id>org.eclipse.jetty:jetty-security:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.jetty:jetty-server:jar:${org.eclipse.jetty.server.version}</id>
+									<id>org.eclipse.jetty:jetty-server:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.jetty:jetty-servlet:jar:${org.eclipse.jetty.servlet.version}</id>
+									<id>org.eclipse.jetty:jetty-servlet:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								
 								<artifact>
-									<id>org.eclipse.jetty:jetty-util:jar:${org.eclipse.jetty.util.version}</id>
+									<id>org.eclipse.jetty:jetty-util:jar:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

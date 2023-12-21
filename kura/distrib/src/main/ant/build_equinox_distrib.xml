@@ -1015,17 +1015,17 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.equinox.http.servlet_${org.eclipse.equinox.http.servlet.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.http_${org.eclipse.jetty.http.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.http_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.io_${org.eclipse.jetty.io.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.io_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.security_${org.eclipse.jetty.security.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.security_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.server_${org.eclipse.jetty.server.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.server_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.servlet_${org.eclipse.jetty.servlet.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.servlet_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.util_${org.eclipse.jetty.util.version}.jar@5:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.jetty.util_${org.eclipse.jetty.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-fileupload_${org.apache.commons.fileupload.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
