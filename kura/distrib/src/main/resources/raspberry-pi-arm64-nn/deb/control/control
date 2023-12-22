@@ -5,6 +5,7 @@ Priority: low
 Depends: dos2unix, unzip, telnet, 
  bluez-hcidump, bluez, chrony, dmidecode,
  ntpdate, pi-bluetooth, rpi.gpio-common, 
+ openjdk-21-jre-headless | temurin-21-jdk |
  openjdk-17-jre-headless | temurin-17-jdk,
  cron
 Architecture: all

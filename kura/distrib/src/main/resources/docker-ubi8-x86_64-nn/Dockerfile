@@ -25,7 +25,7 @@ RUN true && \
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     microdnf -y update && \
     microdnf -y install \
-        java-17-openjdk-headless \
+        java-21-openjdk-headless \
         procps \
         zip \
         unzip \
