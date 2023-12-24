@@ -17,7 +17,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -45,6 +47,7 @@ import org.eclipse.kura.data.DataTransportToken;
 import org.eclipse.kura.message.store.StoredMessage;
 import org.eclipse.kura.message.store.provider.MessageStore;
 import org.eclipse.kura.message.store.provider.MessageStoreProvider;
+import org.eclipse.kura.status.CloudConnectionStatusComponent;
 import org.eclipse.kura.status.CloudConnectionStatusEnum;
 import org.eclipse.kura.status.CloudConnectionStatusService;
 import org.eclipse.kura.watchdog.WatchdogService;
@@ -60,6 +63,7 @@ public class DataServiceImplTest {
 
     private DataServiceImpl dataServiceImpl;
     private DataTransportService dataTransportServiceMock;
+    private CloudConnectionStatusService ccssMock;
     private Map<String, Object> properties;
     private Optional<Exception> exception = Optional.empty();
     private final MessageStoreProvider messageStoreProvider = Mockito.mock(MessageStoreProvider.class);
@@ -109,7 +113,7 @@ public class DataServiceImplTest {
         thenExceptionIsThrown(IllegalArgumentException.class);
         thenStoredMessageCountIs(0);
     }
-    
+
     @Test
     public void shouldStoreMessagesWithNullPayload() throws KuraStoreException {
         givenDataService();
@@ -153,6 +157,21 @@ public class DataServiceImplTest {
     }
 
     @Test
+    public void shouldNotDisconnectOnConfigChange() throws KuraStoreException {
+        givenDataService();
+        givenMessageStoreProvider();
+        givenDataTrasportServiceDisconnected();
+        givenConfigurationProperty("connect.auto-on-startup", true);
+        givenIsActive();
+        givenDataTrasportServiceConnected();
+
+        whenConfigurationIsChanged("enable.recovery.on.connection.failure", true);
+
+        thenDataTrasportStaysConnected();
+        thenCloudConnectionStatusServiceIsNotChanged();
+    }
+
+    @Test
     public void shouldNotStoreMessagesWithPayloadSizeGreaterThanConfiguredThreshold() throws KuraStoreException {
         givenDataService();
         givenMessageStoreProvider();
@@ -173,8 +192,7 @@ public class DataServiceImplTest {
     private void givenMessageStoreProvider() throws KuraStoreException {
         Mockito.when(messageStoreProvider.openMessageStore(Mockito.any())).thenReturn(messageStore);
         Mockito.when(messageStore.store(Mockito.anyString(), Mockito.any(), Mockito.anyInt(), Mockito.anyBoolean(),
-                Mockito.anyInt()))
-                .thenAnswer(i -> {
+                Mockito.anyInt())).thenAnswer(i -> {
                     this.storedMessages.add(new StoredMessage.Builder(0) //
                             .withTopic(i.getArgument(0)) //
                             .withPayload(i.getArgument(1)) //
@@ -225,7 +243,7 @@ public class DataServiceImplTest {
             DataServiceOptions dataServiceOptions = new DataServiceOptions(Collections.emptyMap());
             MessageStoreProvider messageStoreProviderMock = mock(MessageStoreProvider.class);
             MessageStore messageStoreMock = mock(MessageStore.class);
-            CloudConnectionStatusService ccssMock = mock(CloudConnectionStatusService.class);
+            this.ccssMock = mock(CloudConnectionStatusService.class);
             WatchdogService watchdogServiceMock = mock(WatchdogService.class);
             initMockMessageStore(messageStoreProviderMock, messageStoreMock);
             TestUtil.setFieldValue(this.dataServiceImpl, "dataServiceOptions", dataServiceOptions);
@@ -238,10 +256,15 @@ public class DataServiceImplTest {
 
     }
 
+    private void whenConfigurationIsChanged(final String key, final Object value) {
+        this.properties.put(key, value);
+        this.dataServiceImpl.updated(properties);
+    }
+
     private void whenMessageIsPublished(final String topic, final byte[] payload, final int qos, final boolean retain,
             final int priority) {
         try {
-        this.dataServiceImpl.publish(topic, payload, qos, retain, priority);
+            this.dataServiceImpl.publish(topic, payload, qos, retain, priority);
         } catch (final Exception e) {
             this.exception = Optional.of(e);
         }
@@ -267,12 +290,25 @@ public class DataServiceImplTest {
         }
     }
 
+    private void thenDataTrasportStaysConnected() {
+        try {
+            verify(this.dataTransportServiceMock, times(0)).connect();
+        } catch (KuraConnectException e) {
+            fail();
+        }
+    }
+
+    private void thenCloudConnectionStatusServiceIsNotChanged() {
+        verify(this.ccssMock, times(1)).updateStatus(any(CloudConnectionStatusComponent.class),
+                eq(CloudConnectionStatusEnum.SLOW_BLINKING));
+    }
+
     private void thenStartConnectionTaskIsInvoked() {
         verify(this.dataServiceImpl, times(2)).startConnectionTask();
     }
 
-    private void thenMessageIsStored(final int index, final String topic, final byte[] payload, final int qos, final boolean retain,
-            final int priority) {
+    private void thenMessageIsStored(final int index, final String topic, final byte[] payload, final int qos,
+            final boolean retain, final int priority) {
         final StoredMessage message = this.storedMessages.get(index);
 
         assertEquals(topic, message.getTopic());
@@ -816,8 +852,8 @@ public class DataServiceImplTest {
     }
 
     private void initMockMessageStore(final MessageStoreProvider messageStoreProviderMock,
-            final MessageStore messageStoreMock, List<StoredMessage> unpublished,
-            List<StoredMessage> inFlight, List<StoredMessage> dropped) throws KuraStoreException {
+            final MessageStore messageStoreMock, List<StoredMessage> unpublished, List<StoredMessage> inFlight,
+            List<StoredMessage> dropped) throws KuraStoreException {
 
         when(messageStoreProviderMock.openMessageStore(ArgumentMatchers.any())).thenReturn(messageStoreMock);
 

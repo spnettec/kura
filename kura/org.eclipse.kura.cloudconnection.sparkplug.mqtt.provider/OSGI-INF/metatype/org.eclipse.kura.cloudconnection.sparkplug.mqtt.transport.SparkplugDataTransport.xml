@@ -13,11 +13,61 @@
       Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/SparkplugDataTransport">
 
     <OCD id="org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport"
-         name="SparkplugDataTransport"
-         description="Data Transport layer configuration.">
+         name="%name"
+         description="%description">
+
+         <Icon resource="MqttDataTransport" size="32"/>
+
+         <AD id="server.uris"
+             name="%serverUris"
+             type="String"
+             cardinality="0"
+             required="true"
+             default="tcp://broker1-url:1883"
+             description="%serverUrisDesc"/>
+
+         <AD id="client.id"
+             name="%clientId"
+             type="String"
+             cardinality="0" 
+             required="true"
+             default="client" 
+             description="%clientIdDesc"/>
+
+         <AD id="username"
+             name="%username"
+             type="String"
+             cardinality="0"
+             required="false"
+             default="" 
+             description="%usernameDesc"/>
+
+         <AD id="password"
+             name="%password"
+             type="Password"
+             cardinality="0" 
+             required="false"
+             default=""
+             description="%passwordDesc"/>
+
+         <AD id="keep.alive"
+             name="%keepAlive"
+             type="Integer"
+             cardinality="0"
+             required="true"
+             default="60"
+             description="%keepAliveDesc"/>
+
+         <AD id="connection.timeout"
+             name="%connectionTimeout"
+             type="Integer"
+             cardinality="0"
+             required="true"
+             default="30"
+             description="%connectionTimeoutDesc"/>
 
     </OCD>
 

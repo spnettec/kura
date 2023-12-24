@@ -35,17 +35,15 @@ import org.osgi.service.component.ComponentContext;
 
 public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
 
-    private static final String CLOUD_SERVICE_FACTORY_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.SparkplugCloudEndpoint";
+    private static final String CLOUD_ENDPOINT_FACTORY_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.SparkplugCloudEndpoint";
     private static final String DATA_SERVICE_FACTORY_PID = "org.eclipse.kura.data.DataService";
     private static final String DATA_TRANSPORT_SERVICE_FACTORY_PID =
             "org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport";
 
     private static final String DATA_TRANSPORT_SERVICE_PID = "org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.SparkplugDataTransport";
 
-    private static final String DATA_SERVICE_REFERENCE_NAME = "DataService"
-            + ComponentConstants.REFERENCE_TARGET_SUFFIX;
-    private static final String DATA_TRANSPORT_SERVICE_REFERENCE_NAME = "DataTransportService"
-            + ComponentConstants.REFERENCE_TARGET_SUFFIX;
+    private static final String DATA_SERVICE_REFERENCE_NAME = "DataService";
+    private static final String DATA_TRANSPORT_SERVICE_REFERENCE_NAME = "DataTransportService";
 
     private static final String REFERENCE_TARGET_VALUE_FORMAT = "(" + ConfigurationService.KURA_SERVICE_PID + "=%s)";
 
@@ -62,7 +60,42 @@ public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
 
     @Override
     public String getFactoryPid() {
-        return CLOUD_SERVICE_FACTORY_PID;
+        return CLOUD_ENDPOINT_FACTORY_PID;
+    }
+
+    @Override
+    public void createConfiguration(String pid, String instanceName, String description) throws KuraException {
+        if (pid == null || pid.equals("")) {
+            pid = CLOUD_ENDPOINT_FACTORY_PID + "-Cloud-" + new Date().getTime();
+        }
+        String dataTransportServicePid = DATA_TRANSPORT_SERVICE_PID + "-" + new Date().getTime();
+        this.configurationService.createFactoryConfiguration(DATA_TRANSPORT_SERVICE_FACTORY_PID,
+                dataTransportServicePid, null, false);
+        Map<String, Object> dataServiceProperties = new HashMap<>();
+        String name = DATA_TRANSPORT_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
+        dataServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataTransportServicePid));
+
+        String dataServicePid = DATA_SERVICE_FACTORY_PID + "-" + new Date().getTime();
+        this.configurationService.createFactoryConfiguration(DATA_SERVICE_FACTORY_PID, dataServicePid,
+                dataServiceProperties, false);
+
+        Map<String, Object> cloudServiceProperties = new HashMap<>();
+
+        name = DATA_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
+        cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataServicePid));
+
+        name = DATA_TRANSPORT_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
+        cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataTransportServicePid));
+
+        if (instanceName != null && !instanceName.equals("")) {
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, instanceName);
+        }
+        if (description != null && !description.equals("")) {
+            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
+        }
+        this.configurationService.createFactoryConfiguration(CLOUD_ENDPOINT_FACTORY_PID, pid, cloudServiceProperties,
+                true);
+
     }
 
     @Override
@@ -136,7 +169,7 @@ public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
                     return false;
                 }
                 final String factoryPid = (String) ref.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID);
-                return factoryPid.equals(CLOUD_SERVICE_FACTORY_PID);
+                return factoryPid.equals(CLOUD_ENDPOINT_FACTORY_PID);
             }).map(ref -> (String) ref.getProperty(ConfigurationService.KURA_SERVICE_PID)).collect(Collectors.toSet());
         } catch (InvalidSyntaxException e) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID, e);
@@ -147,10 +180,10 @@ public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
     public String getFactoryName() {
         try {
             ComponentConfiguration config = this.configurationService
-                    .getDefaultComponentConfiguration(CLOUD_SERVICE_FACTORY_PID);
+                    .getDefaultComponentConfiguration(CLOUD_ENDPOINT_FACTORY_PID);
             return config.getLocalizedDefinition(LocaleContextHolder.getLocale().getLanguage()).getName();
         } catch (Exception e) {
-            return CLOUD_SERVICE_FACTORY_PID;
+            return CLOUD_ENDPOINT_FACTORY_PID;
         }
     }
 
@@ -163,45 +196,15 @@ public class SparkplugCloudConnectionFactory implements CloudConnectionFactory {
             if (name != null) {
                 return name;
             }
-            return CLOUD_SERVICE_FACTORY_PID;
+            return CLOUD_ENDPOINT_FACTORY_PID;
         } catch (Exception e) {
-            return CLOUD_SERVICE_FACTORY_PID;
+            return CLOUD_ENDPOINT_FACTORY_PID;
         }
     }
 
     @Override
     public void createConfiguration(String pid) throws KuraException {
         createConfiguration(pid, null, null);
-    }
-
-    @Override
-    public void createConfiguration(String pid, String instanceName, String description) throws KuraException {
-        if (pid == null || pid.equals("")) {
-            pid = CLOUD_SERVICE_FACTORY_PID + "-Cloud-" + new Date().getTime();
-        }
-        String dataTransportServicePid = DATA_TRANSPORT_SERVICE_PID + "-" + new Date().getTime();
-        this.configurationService.createFactoryConfiguration(DATA_TRANSPORT_SERVICE_FACTORY_PID,
-                dataTransportServicePid, null, false);
-        Map<String, Object> dataServiceProperties = new HashMap<>();
-        String name = DATA_TRANSPORT_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
-        dataServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataTransportServicePid));
-
-        String dataServicePid = DATA_SERVICE_FACTORY_PID + "-" + new Date().getTime();
-        this.configurationService.createFactoryConfiguration(DATA_SERVICE_FACTORY_PID, dataServicePid,
-                dataServiceProperties, false);
-
-        Map<String, Object> cloudServiceProperties = new HashMap<>();
-        name = DATA_SERVICE_REFERENCE_NAME + ComponentConstants.REFERENCE_TARGET_SUFFIX;
-        cloudServiceProperties.put(name, String.format(REFERENCE_TARGET_VALUE_FORMAT, dataServicePid));
-        if (instanceName != null && !instanceName.equals("")) {
-            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_NAME, instanceName);
-        }
-        if (description != null && !description.equals("")) {
-            cloudServiceProperties.put(ConfigurationService.KURA_CLOUD_FACTORY_DESC, description);
-        }
-        this.configurationService.createFactoryConfiguration(CLOUD_SERVICE_FACTORY_PID, pid, cloudServiceProperties,
-                true);
-
     }
 
 }

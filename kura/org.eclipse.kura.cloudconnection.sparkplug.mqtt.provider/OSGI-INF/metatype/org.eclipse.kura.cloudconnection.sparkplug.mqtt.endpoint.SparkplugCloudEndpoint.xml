@@ -13,11 +13,11 @@
       Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/SparkplugCloudEndpoint">
 
     <OCD id="org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.SparkplugCloudEndpoint"
-         name="SparkplugCloudEndpoint"
-         description="Cloud Endpoint layer configuration.">
+         name="%name"
+         description="%description">
 
     </OCD>
 
