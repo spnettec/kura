@@ -12,7 +12,9 @@
  *******************************************************************************/
 package org.eclipse.kura.nm.signal.handlers;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.kura.nm.enums.NMDeviceState;
 import org.freedesktop.dbus.interfaces.DBusSigHandler;
@@ -26,12 +28,17 @@ public class NMDeviceStateChangeHandler implements DBusSigHandler<Device.StateCh
 
     private final CountDownLatch latch;
     private final String path;
-    private final NMDeviceState expectedState;
+    private final List<NMDeviceState> expectedStates;
+    private final AtomicBoolean canceled = new AtomicBoolean(false);
 
-    public NMDeviceStateChangeHandler(CountDownLatch latch, String path, NMDeviceState expectedNmDeviceState) {
+    public NMDeviceStateChangeHandler(CountDownLatch latch, String path, List<NMDeviceState> expectedStates) {
         this.latch = latch;
         this.path = path;
-        this.expectedState = expectedNmDeviceState;
+        this.expectedStates = expectedStates;
+    }
+
+    public void cancel() {
+        canceled.set(true);
     }
 
     @Override
@@ -39,9 +46,15 @@ public class NMDeviceStateChangeHandler implements DBusSigHandler<Device.StateCh
 
         NMDeviceState oldState = NMDeviceState.fromUInt32(s.getOldState());
         NMDeviceState newState = NMDeviceState.fromUInt32(s.getNewState());
-
+        if (canceled.get()) {
+            logger.warn("wait timeout. new state:{},expectedMark:{}", newState, expectedStates);
+            return;
+        }
+        if (this.latch.getCount() == 0) {
+            return;
+        }
         logger.trace("Device state change detected: {} -> {}, for {}", oldState, newState, s.getPath());
-        if (s.getPath().equals(this.path) && newState == this.expectedState) {
+        if (s.getPath().equals(this.path) && expectedStates.contains(newState)) {
             logger.debug("Notify waiting thread");
             this.latch.countDown();
         }
