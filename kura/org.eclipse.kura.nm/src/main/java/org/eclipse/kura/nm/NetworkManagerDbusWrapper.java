@@ -214,8 +214,8 @@ public class NetworkManagerDbusWrapper {
                 String availableConnectionId = (String) availableConnectionSettings.get(NM_SETTING_CONNECTION_KEY)
                         .get("id").getValue();
 
-                if (availableConnectionId.equals(expectedConnectionName)
-                        || availableConnectionId.equals(interfaceName)) {
+                if (availableConnectionId.equals(expectedConnectionName) || availableConnectionId.equals(interfaceName)
+                        || availableConnectionId.equals("Ifupdown (" + interfaceName + ")")) {
                     connections.add(availableConnection);
                 }
 
