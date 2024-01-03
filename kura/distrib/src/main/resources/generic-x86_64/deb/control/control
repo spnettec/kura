@@ -20,7 +20,7 @@ Depends: openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | te
  bluez | bluez5, bluez-hcidump | bluez5-noinst-tools,
  ntpdate, chrony, chronyc | chrony, cron | cronie, dmidecode,
  network-manager | networkmanager, bind9 | bind, isc-dhcp-server | dnsmasq | dhcp-server, isc-dhcp-server | dnsmasq | dhcp-client, iw, iptables, modemmanager,
- logrotate,
+ logrotate,libpcap-dev,
  gpsd
 Recommends: python3
 Architecture: all

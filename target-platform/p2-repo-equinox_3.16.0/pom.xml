@@ -1731,6 +1731,29 @@
 									<id>org.pcap4j:pcap4j-core:jar:${pcap4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
+									<instructions>
+								        <Import-Package>*;resolution:=optional</Import-Package>
+								        <Export-Package>*</Export-Package>
+								        <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+								        <_removeheaders>Bnd-LastModified</_removeheaders>
+								        <_reproducible>true</_reproducible>
+								        <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",osgi.serviceloader;filter:="(osgi.serviceloader=org.pcap4j.packet.factory.PacketFactoryBinderProvider)";cardinality:=multiple</Require-Capability>
+								    </instructions>
+								</artifact>
+								<artifact>
+									<id>org.pcap4j:pcap4j-packetfactory-static:${pcap4j.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+									<override>true</override>
+									<instructions>
+								        <Import-Package>*;resolution:=optional</Import-Package>
+								        <Export-Package>*</Export-Package>
+								        <_fixupmessages>"Classes found in the wrong directory";is:=warning</_fixupmessages>
+								        <_removeheaders>Bnd-LastModified</_removeheaders>
+								        <_reproducible>true</_reproducible>
+								        <Provide-Capability>osgi.serviceloader;osgi.serviceloader=org.pcap4j.packet.factory.PacketFactoryBinderProvider</Provide-Capability>
+								        <Require-Capability>osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)"</Require-Capability>
+								    </instructions>
 								</artifact>
 								<artifact>
 									<id>net.java.dev.jna:jna:jar:${net.java.dev.jna.version}</id>
