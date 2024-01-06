@@ -96,6 +96,13 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
 
     private String primaryInterfaceMacAddress;
 
+    static {
+        if (!SLF4JBridgeHandler.isInstalled()) {
+            SLF4JBridgeHandler.removeHandlersForRootLogger();
+            SLF4JBridgeHandler.install();
+        }
+    }
+
     // ----------------------------------------------------------------
     //
     // Dependencies
@@ -125,10 +132,6 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
 
     @SuppressWarnings({ "rawtypes", "unchecked", "checkstyle:methodLength" })
     protected void activate(ComponentContext componentContext) {
-        if (!SLF4JBridgeHandler.isInstalled()) {
-            SLF4JBridgeHandler.removeHandlersForRootLogger();
-            SLF4JBridgeHandler.install();
-        }
         this.componentContext = componentContext;
 
         AccessController.doPrivileged((PrivilegedAction) () -> {
@@ -1317,8 +1320,8 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
         CommandStatus status = this.executorService.execute(command);
         if (logger.isDebugEnabled()) {
             logger.debug("execute command {} :: exited with code - {}", command, status.getExitStatus().getExitCode());
-            logger.debug("execute stderr {}", new String(err.toByteArray(), Charsets.UTF_8));
-            logger.debug("execute stdout {}", new String(out.toByteArray(), Charsets.UTF_8));
+            logger.debug("execute stderr {}", new String(err.toByteArray(), StandardCharsets.UTF_8));
+            logger.debug("execute stdout {}", new String(out.toByteArray(), StandardCharsets.UTF_8));
         }
         return status;
     }
