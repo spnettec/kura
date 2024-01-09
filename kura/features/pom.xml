@@ -28,9 +28,6 @@
     <groupId>org.eclipse.kura.feature</groupId>
     <artifactId>features</artifactId>
     <packaging>pom</packaging>
-    <properties>
-		 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-	</properties>
 
     <!-- provide valid links for all feature projects -->
 
