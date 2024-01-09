@@ -220,9 +220,6 @@ public class GwtDriverAndAssetServiceImpl extends OsgiRemoteServiceServlet imple
         }
 
         if (exceptionMessage != null && !exceptionMessage.equals(userMessage)) {
-            if (userMessage != null) {
-                exceptionMessageBuilder.append(" - ");
-            }
             exceptionMessageBuilder.append(exceptionMessage);
         }
 
