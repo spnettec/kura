@@ -29,7 +29,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<org.apache.camel.version>3.21.3</org.apache.camel.version>
+		<org.apache.camel.version>3.22.0</org.apache.camel.version>
 		<kura.basedir>${project.basedir}/..</kura.basedir>
 		<sonar.coverage.jacoco.xmlReportPaths>
 			${project.basedir}/../test/org.eclipse.kura.camel.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
