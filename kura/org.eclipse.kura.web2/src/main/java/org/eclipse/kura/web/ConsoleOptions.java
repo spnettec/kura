@@ -103,11 +103,10 @@ public class ConsoleOptions {
             Integer[].class);
 
     private final SelfConfiguringComponentProperty<String> sslManagerServiceTarget = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("SslManagerService.target", "SslManagerService Target Filter", Tscalar.STRING) //
+            new AdBuilder("SslManagerService.target", "%sslManagerServiceTarget", Tscalar.STRING) //
                     .setRequired(true) //
                     .setDefault("(kura.service.pid=org.eclipse.kura.ssl.SslManagerService)") //
-                    .setDescription(
-                            "Specifies, as an OSGi target filter, the pid of the SslManagerService used to create HTTPS connections. This is needed for example for fetching package descriptions from Eclipse Marketplace.") //
+                    .setDescription("%sslManagerServiceTargetDesc") //
                     .build(),
             String.class);
 
