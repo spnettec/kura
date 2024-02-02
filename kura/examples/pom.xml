@@ -25,7 +25,7 @@
     <packaging>pom</packaging>
 
     <properties>
-    	<tycho-version>4.0.4</tycho-version>
+    	<tycho-version>4.0.5</tycho-version>
     	<osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
@@ -54,7 +54,7 @@
         <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
         <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
         <wagon-ssh.version>3.5.3</wagon-ssh.version>
-        <slf4j.version>2.0.9</slf4j.version>
+        <slf4j.version>2.0.11</slf4j.version>
     </properties>
 
     <distributionManagement>
@@ -104,28 +104,6 @@
 
     <profiles>
         <profile>
-            <id>java8</id>
-            <activation>
-                <jdk>[1.8,15)</jdk>
-            </activation>
-            <properties>
-                <osgi-dp-plugin-version>0.3.0</osgi-dp-plugin-version>
-                <tycho-version>2.7.5</tycho-version>
-
-                <tycho.surefire.testenv.args>
-                    -Dosgi.console=5002
-                    -DbuildingWithTycho=true -Dosgi.locking=none
-                    -Dds.showtrace=true -Djava.io.tmpdir=/tmp
-                    -Dorg.osgi.framework.area=/tmp/osgi/framework_storage
-                    -Dosgi.clean=true
-                    -Dorg.eclipse.kura.mode=emulator
-                    -Dkura.snapshots=${project.basedir}/target/
-                    -Dkura.configuration=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/kura.properties
-                    -Ddpa.configuration=/tmp/kura/dpa.properties
-                </tycho.surefire.testenv.args>
-            </properties>
-        </profile>
-        <profile>
             <id>java17</id>
             <activation>
                 <jdk>[17,21]</jdk>
@@ -133,7 +111,7 @@
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>4.0.4</tycho-version>
+                <tycho-version>4.0.5</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -Dosgi.console=5002
