@@ -162,6 +162,7 @@
         <setEntry value="org.eclipse.kura.wire.db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.h2db.component.provider.test"/>
         <setEntry value="org.eclipse.kura.wire.provider.test"/>
+        <setEntry value="org.eclipse.kura.wire.script.tools.test"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider.test"/>
     </setAttribute>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>

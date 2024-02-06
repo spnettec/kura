@@ -32,7 +32,7 @@
     <name>distrib</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <tycho-version>4.0.4</tycho-version>
+        <tycho-version>4.0.5</tycho-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <zip_workspace.prefix>user_workspace_archive_${project.version}</zip_workspace.prefix>
 
@@ -2536,12 +2536,14 @@
                                             <version>${org.eclipse.kura.ai.triton.server.version}</version>
                                             <type>dp</type>
                                         </artifactItem>
+                                        <!--
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
                                             <artifactId>org.eclipse.kura.wire.script.tools</artifactId>
                                             <version>${org.eclipse.kura.wire.script.tools.feature.version}</version>
                                             <type>dp</type>
                                         </artifactItem>
+                                        -->
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
                                             <artifactId>org.eclipse.kura.db.sqlite.provider</artifactId>
