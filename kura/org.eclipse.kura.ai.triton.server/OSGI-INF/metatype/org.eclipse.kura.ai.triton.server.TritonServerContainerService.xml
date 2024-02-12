@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2022 Eurotech and/or its affiliates and others
+    Copyright (c) 2022, 2024 Eurotech and/or its affiliates and others
 
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -73,6 +73,15 @@
             description="%modelsDesc">
         </AD>
 
+        <AD id="local.backends.path"
+            name="%localBackendsPath"
+            type="String"
+            cardinality="0"
+            required="false"
+            default=""
+            description="%localBackendsPathDesc">
+         </AD>
+       
         <AD id="local.backends.config"
             name="%localBackendsConfig"
             type="String"
@@ -109,6 +118,24 @@
             default="">
         </AD>
 
+        <AD id="container.runtime"
+            name="%containerRuntime"
+            description="%containerRuntimeDesc"
+            type="String"
+            cardinality="1"
+            required="false"
+            default="">
+        </AD>
+        
+        <AD id="devices"
+            name="%devices"
+            description="%devicesDesc"
+            type="String"
+            cardinality="1"
+            required="false"
+            default="">
+        </AD>
+        
         <AD id="timeout"
             name="%timeout"
             type="Integer"
