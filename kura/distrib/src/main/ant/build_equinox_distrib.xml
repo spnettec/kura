@@ -403,7 +403,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         ${OPEN_MODULE_OPTIONS} \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
-        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000 \
+        -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=*:8000,suspend=n \
         -Dkura.os.version=${kura.os.version} \
         -Dkura.arch=${kura.arch} \
         -Dtarget.device=${target.device} \

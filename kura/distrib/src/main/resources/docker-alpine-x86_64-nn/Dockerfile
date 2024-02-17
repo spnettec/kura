@@ -22,7 +22,7 @@ ENV \
 
 RUN chmod a+x -R /usr/local/bin && \
     apk update && \
-    apk --no-cache add openjdk21 bash zip curl gcompat procps unzip gzip tar && \
+    apk --no-cache add openjdk17-jre-headless bash zip curl gcompat procps unzip gzip tar && \
     apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
     apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat dmidecode && \
     /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
