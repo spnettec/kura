@@ -455,7 +455,6 @@ public class BirthMessagesTest {
             public void marshal(Object object, OutputStream w) throws Exception {
 
             }
-
         };
 
         EventAdmin eventAdmin = mock(EventAdmin.class);
