@@ -37,7 +37,7 @@
 					 file to add bundle to Javadocs creation -->
 				<groupId>org.eclipse.tycho.extras</groupId>
 			    <artifactId>tycho-document-bundle-plugin</artifactId>
-			    <version>${tycho.extras.version}</version>
+			    <version>${tycho-version}</version>
 			    <executions>
 				     <execution>
 				     	<id>eclipse-javadoc</id>
