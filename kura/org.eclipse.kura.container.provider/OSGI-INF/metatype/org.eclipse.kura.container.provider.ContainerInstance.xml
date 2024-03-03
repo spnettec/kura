@@ -28,12 +28,12 @@
             description="%containerImageTagDesc" type="String"
             cardinality="1" required="true" default="latest" />
 
-        <AD id="container.signature.trust.anchor" name="Trust anchor"
-            description="Trust anchor used to verify the container image signature.|TextArea" type="String"
+        <AD id="container.signature.trust.anchor" name="%containerSignatureTrustAnchor"
+            description="%containerSignatureTrustAnchorDesc" type="String"
             cardinality="1" required="false" default="" />
 
-        <AD id="container.signature.verify.transparency.log" name="Verify in transparency log"
-            description="Sets the transparency log verification, to be used when a container image signature has been uploaded to the transparency log." type="Boolean"
+        <AD id="container.signature.verify.transparency.log" name="%containerSignatureVerifyTransparencyLog"
+            description="%containerSignatureVerifyTransparencyLogDesc" type="Boolean"
             cardinality="1" required="false" default="true" />
         
         <AD id="registry.hostname" name="%registryHostname"
@@ -130,8 +130,8 @@
             required="false" default="" />
             
         <AD id="container.runtime"
-            name="Runtime"
-            description="Specifies the fully qualified name of an alternate OCI-compatible runtime, which is used to run commands specified by the 'run' instruction. Example: 'nvidia' corresponds to '--runtime=nvidia'."
+            name="%containerRuntime"
+            description="%containerRuntimeDesc"
             type="String"
             cardinality="1"
             required="false"
