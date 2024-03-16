@@ -347,8 +347,9 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                                 wireComponentDefinition.getInputPortNames(),
                                 wireComponentDefinition.getOutputPortNames());
 
-                        final GwtConfigComponent ocd = GwtServerUtil
-                                .toGwtConfigComponent(wireComponentDefinition.getComponentOCD(), null);
+                        final GwtConfigComponent ocd = GwtServerUtil.toGwtConfigComponent(
+                                wireComponentDefinition.getComponentOCD(),
+                                LocaleContextHolder.getLocale().getLanguage());
                         if (ocd != null) {
                             resultDefinitions.add(ocd);
                         }

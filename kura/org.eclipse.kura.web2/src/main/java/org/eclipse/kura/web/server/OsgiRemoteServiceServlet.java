@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.eclipse.kura.KuraException;
 import org.eclipse.kura.audit.AuditContext;
 import org.eclipse.kura.audit.AuditContext.Scope;
 import org.eclipse.kura.locale.LocaleContextHolder;
@@ -129,12 +130,26 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
      * alternative approach.
      *
      * @param request
+<<<<<<< HEAD
      *                          the HTTP request being serviced
+=======
+     *                      the HTTP request being serviced
+>>>>>>> refs/remotes/origin/develop
      * @param moduleBaseURL
+<<<<<<< HEAD
      *                          as specified in the incoming payload
+=======
+     *                      as specified in the incoming payload
+>>>>>>> refs/remotes/origin/develop
      * @param strongName
+<<<<<<< HEAD
      *                          a strong name that uniquely identifies a serialization policy
      *                          file
+=======
+     *                      a strong name that uniquely identifies a serialization
+     *                      policy
+     *                      file
+>>>>>>> refs/remotes/origin/develop
      * @return a {@link SerializationPolicy} for the given module base URL and
      *         strong name, or <code>null</code> if there is none
      */
@@ -279,7 +294,12 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
 
         final String userName = (String) rawUserName;
 
-        final Optional<GwtUserConfig> config = userManager.getUserConfig(userName);
+        Optional<GwtUserConfig> config;
+        try {
+            config = userManager.getUserConfig(userName);
+        } catch (KuraException e) {
+            throw new KuraPermissionException();
+        }
 
         if (!config.isPresent()) {
             throw new KuraPermissionException();

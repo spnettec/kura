@@ -45,6 +45,7 @@ import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.core.configuration.metatype.Tad;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.driver.descriptor.DriverDescriptor;
+import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.marshalling.Marshaller;
 import org.eclipse.kura.rest.configuration.api.ComponentConfigurationList;
 import org.eclipse.kura.rest.configuration.api.DTOUtil;
@@ -279,7 +280,7 @@ public final class GwtServerUtil {
      * Strip PID prefix.
      *
      * @param pid
-     *                the PID
+     *            the PID
      * @return the string
      */
     public static String stripPidPrefix(final String pid) {
@@ -448,6 +449,10 @@ public final class GwtServerUtil {
         }
 
         return gwtParam;
+    }
+
+    public static GwtConfigComponent toGwtConfigComponent(ComponentConfiguration config) {
+        return toGwtConfigComponent(config, LocaleContextHolder.getLocale().getLanguage());
     }
 
     public static GwtConfigComponent toGwtConfigComponent(ComponentConfiguration config, String locale) {
@@ -857,7 +862,7 @@ public final class GwtServerUtil {
                 if (gwt8021xConfig != null) {
                     gwt8021xConfig.setPassword(PASSWORD_PLACEHOLDER);
                 }
-                
+
             } else if (netConfig instanceof GwtModemInterfaceConfig) {
                 GwtModemInterfaceConfig modemConfig = (GwtModemInterfaceConfig) netConfig;
                 modemConfig.setPassword(PASSWORD_PLACEHOLDER);
