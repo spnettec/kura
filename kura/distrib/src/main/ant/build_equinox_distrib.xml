@@ -194,7 +194,6 @@
 		<!-- Populate config.ini with over java9 OSGi packages -->
 		<antcall target="osgi-java9-config" />
 
-<<<<<<< HEAD
 		<!-- Populate config.ini with correct versions -->
 		<replace file="${project.build.directory}/${build.output.name}/config.ini"
 			token="{kura.build.version}" value="${kura.build.version}" />
@@ -214,6 +213,7 @@
 		<antcall target="core.configuration-config" />
 		<antcall target="core.crypto-config" />
 		<antcall target="core.deployment-config" />
+		<antcall target="core.identity-config" />
 		<antcall target="core.inventory-config" />
 		<antcall target="core.tamper-config" />
 		<antcall target="core.net-config" />
@@ -225,36 +225,6 @@
 		<antcall target="linux.usb-config" />
 		<antcall target="linux.bluetooth-config" />
 		<antcall target="linux.watchdog-config" />
-=======
-        <!-- Populate config.ini with correct versions -->
-        <replace file="${project.build.directory}/${build.output.name}/config.ini"
-            token="{kura.build.version}" value="${kura.build.version}" />
-
-        <!-- Populate config.ini with correct Kura bundles -->
-        <antcall target="api-config" />
-        <antcall target="core-config" />
-        <antcall target="core.system-config" />
-        <antcall target="core.certificates-config" />
-        <antcall target="core.cloud-config" />
-        <antcall target="cloud.mqtt.eclipseiot-config" />
-        <antcall target="cloud.mqtt.raw-config" />
-        <antcall target="core.comm-config" />
-        <antcall target="core.configuration-config" />
-        <antcall target="core.crypto-config" />
-        <antcall target="core.deployment-config" />
-        <antcall target="core.identity-config" />
-        <antcall target="core.inventory-config" />
-        <antcall target="core.tamper-config" />
-        <antcall target="core.net-config" />
-        <antcall target="core.status-config" />
-        <antcall target="deployment.agent-config" />
-        <antcall target="linux.clock-config" />
-        <antcall target="linux.command-config" />
-        <antcall target="linux.position-config" />
-        <antcall target="linux.usb-config" />
-        <antcall target="linux.bluetooth-config" />
-        <antcall target="linux.watchdog-config" />
->>>>>>> refs/remotes/origin/develop
 
         <!-- Added Camel bundles configs -->
         <antcall target="camel-config" />
@@ -1103,7 +1073,7 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-net_${org.apache.commons.commons-net.version}.jar@3:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.exec_${org.apache.commons.exec.version}.jar" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-exec_${org.apache.commons.exec.version}.jar" />
             <entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.glassfish.jersey.containers.jersey-container-servlet-core_${glassfish.jersey.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
@@ -1854,7 +1824,7 @@ fi]]>
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-configuration2_${commons-configuration2.version}.jar@3" />
 						
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.commons-text_${commons-text.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.commons.text_${commons-text.version}.jar@3" />
 			
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.jgroups_${jgroups.version}.jar@3" />
