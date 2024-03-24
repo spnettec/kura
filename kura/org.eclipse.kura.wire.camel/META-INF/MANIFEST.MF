@@ -7,10 +7,10 @@ Bundle-Vendor: Eclipse Kura
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 Bundle-ActivationPolicy: lazy
 Service-Component: OSGI-INF/*.xml
-Import-Package: org.apache.camel;version="[2.21,4.0.0)",
+Import-Package: org.apache.camel,
  com.google.gson;version="2.7.0",
- org.apache.camel.builder;version="[2.21,4.0.0)",
- org.apache.camel.impl.engine;version="[2.21,4.0.0)",
+ org.apache.camel.builder,
+ org.apache.camel.impl.engine,
  org.eclipse.kura.camel.component;version="[1.1,2.0)",
  org.eclipse.kura.configuration;version="[1.2,3.0)",
  org.eclipse.kura.type;version="[1.1,2.0)",
