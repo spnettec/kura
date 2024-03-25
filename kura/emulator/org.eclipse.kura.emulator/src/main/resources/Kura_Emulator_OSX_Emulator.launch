@@ -68,6 +68,8 @@
         <setEntry value="org.eclipse.kura.example.camel.publisher"/>
         <setEntry value="org.eclipse.kura.example.camel.quickstart"/>
         <setEntry value="org.eclipse.kura.example.can"/>
+        <setEntry value="org.eclipse.kura.example.container.signature.validation"/>
+        <setEntry value="org.eclipse.kura.example.container.signature.validation.test"/>
         <setEntry value="org.eclipse.kura.example.driver.sensehat"/>
         <setEntry value="org.eclipse.kura.example.eddystone.advertiser"/>
         <setEntry value="org.eclipse.kura.example.eddystone.scanner"/>
@@ -75,6 +77,8 @@
         <setEntry value="org.eclipse.kura.example.gpio.led"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.advertiser"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
+        <setEntry value="org.eclipse.kura.example.identity.configuration.extension"/>
+        <setEntry value="org.eclipse.kura.example.identity.configuration.extension.test"/>
         <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
         <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
@@ -99,6 +103,7 @@
         <setEntry value="org.eclipse.kura.internal.driver.ibeacon.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.internal.driver.s7plc.test"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider.test"/>
         <setEntry value="org.eclipse.kura.linux.bluetooth"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
@@ -336,7 +341,7 @@
         <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
+        <setEntry value="org.eclipse.kura.jetty.customizer@default:default"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
