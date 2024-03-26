@@ -113,7 +113,7 @@
 
 
         <condition property="kura.osgi.repo"
-            value="../../target-platform/p2-repo-equinox_3.16.0/target/source">
+            value="../target-definition/equinox_3.16.0/repository">
             <or>
                 <not>
                     <isset property="kura.osgi" />
@@ -344,6 +344,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
+        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
@@ -402,6 +403,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
+        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=*:8000,suspend=n \
@@ -460,6 +462,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
+        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
@@ -679,7 +682,7 @@ fi]]>
                 file="${project.build.directory}/${build.output.name}/kura.properties"
                 prefix="${build.output.name}/${framework.config.folder}/" />
 
-            <zipfileset dir="../target-definition/equinox_3.16.0/repository/plugins"
+            <zipfileset dir="../target-definition/equinox_3.16.0/repository/plugins/"
 				prefix="${build.output.name}/${plugins.folder}">
 
 				<!-- exclude source bundles -->
