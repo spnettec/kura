@@ -174,11 +174,7 @@
         <setEntry value="org.eclipse.kura.core.status@default:default"/>
         <setEntry value="org.eclipse.kura.core.system.test@default:false"/>
         <setEntry value="org.eclipse.kura.core.system@default:default"/>
-        <setEntry value="org.eclipse.kura.core.tamper.detection.test@default:default"/>
-        <setEntry value="org.eclipse.kura.core.tamper.detection@default:default"/>
-        <setEntry value="org.eclipse.kura.core.test@default:false"/>
-        <setEntry value="org.eclipse.kura.core.testutil@default:default"/>
-        <setEntry value="org.eclipse.kura.core.util.test@default:false"/>
+        <setEntry value="org.eclipse.kura.core.identity@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
         <setEntry value="org.eclipse.kura.db.sqlite.provider.test@default:default"/>
         <setEntry value="org.eclipse.kura.db.sqlite.provider@default:default"/>
