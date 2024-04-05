@@ -16,6 +16,8 @@ import static java.util.Objects.isNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,8 +38,10 @@ import org.eclipse.kura.container.orchestration.ImageConfiguration;
 import org.eclipse.kura.container.orchestration.ImageInstanceDescriptor;
 import org.eclipse.kura.container.orchestration.ImageInstanceDescriptor.ImageInstanceDescriptorBuilder;
 import org.eclipse.kura.container.orchestration.PasswordRegistryCredentials;
+import org.eclipse.kura.container.orchestration.PortInternetProtocol;
 import org.eclipse.kura.container.orchestration.RegistryCredentials;
 import org.eclipse.kura.container.orchestration.listener.ContainerOrchestrationServiceListener;
+import org.eclipse.kura.container.orchestration.provider.impl.enforcement.AllowlistEnforcementMonitor;
 import org.eclipse.kura.crypto.CryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +90,9 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
     private DockerClient dockerClient;
     private CryptoService cryptoService;
     private List<ExposedPort> exposedPorts;
+    private AllowlistEnforcementMonitor allowlistEnforcementMonitor;
+
+    private Map<String, String> containerInstancesDigests = new HashMap<>();
 
     public void setDockerClient(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
@@ -125,17 +132,68 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
                 return;
             }
 
+            if (this.allowlistEnforcementMonitor != null) {
+                closeEnforcementMonitor();
+            }
+
             connect();
 
             if (!testConnection()) {
                 logger.error("Could not connect to docker CLI.");
                 return;
             }
-
             logger.info("Connection Successful");
+
+            if (currentConfig.isEnforcementEnabled()) {
+                try {
+                    startEnforcementMonitor();
+                } catch (Exception ex) {
+                    logger.error("Error starting enforcement monitor. Due to {}", ex.getMessage());
+                    closeEnforcementMonitor();
+                    logger.warn("Enforcement won't be active.");
+                }
+                enforceAlreadyRunningContainer();
+            }
         }
 
         logger.info("Bundle {} has updated with config!", APP_ID);
+    }
+
+    private void startEnforcementMonitor() {
+        logger.info("Enforcement monitor starting...");
+        this.allowlistEnforcementMonitor = this.dockerClient.eventsCmd().withEventFilter("start")
+                .exec(new AllowlistEnforcementMonitor(currentConfig.getEnforcementAllowlist(), this));
+        logger.info("Enforcement monitor starting...done.");
+    }
+
+    private void closeEnforcementMonitor() {
+
+        if (this.allowlistEnforcementMonitor == null) {
+            return;
+        }
+
+        try {
+            logger.info("Enforcement monitor closing...");
+            this.allowlistEnforcementMonitor.close();
+            this.allowlistEnforcementMonitor.awaitCompletion(5, TimeUnit.SECONDS);
+            this.allowlistEnforcementMonitor = null;
+            logger.info("Enforcement monitor closing...done.");
+        } catch (InterruptedException ex) {
+            logger.error("Waited too long to close enforcement monitor, stopping it...", ex);
+            Thread.currentThread().interrupt();
+        } catch (IOException ex) {
+            logger.error("Failed to close enforcement monitor, stopping it...", ex);
+        }
+    }
+
+    private void enforceAlreadyRunningContainer() {
+        if (this.allowlistEnforcementMonitor == null) {
+            logger.warn("Enforcement wasn't started. Check on running containers will not be performed.");
+            return;
+        }
+        logger.info("Enforcement check on already running containers...");
+        this.allowlistEnforcementMonitor.enforceAllowlistFor(listContainerDescriptors());
+        logger.info("Enforcement check on already running containers...done");
     }
 
     @Override
@@ -168,8 +226,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
         containers.forEach(container -> result.add(ContainerInstanceDescriptor.builder()
                 .setContainerName(getContainerName(container)).setContainerImage(getContainerTag(container))
                 .setContainerImageTag(getContainerVersion(container)).setContainerID(container.getId())
-                .setInternalPorts(parseInternalPortsFromDockerPs(container.getPorts()))
-                .setExternalPorts(parseExternalPortsFromDockerPs(container.getPorts()))
+                .setContainerPorts(parseContainerPortsList(container.getPorts()))
                 .setContainerState(convertDockerStateToFrameworkState(container.getState()))
                 .setFrameworkManaged(isFrameworkManaged(container)).build()));
 
@@ -204,34 +261,41 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
         }
     }
 
-    private List<Integer> parseExternalPortsFromDockerPs(ContainerPort[] ports) {
-        List<Integer> externalPorts = new ArrayList<>();
+    private List<org.eclipse.kura.container.orchestration.ContainerPort> parseContainerPortsList(
+            ContainerPort[] ports) {
 
-        ContainerPort[] tempPorts = ports;
-        for (ContainerPort tempPort : tempPorts) {
-            if (tempPort.getIp() != null) {
-                String ipFormatTest = tempPort.getIp();
-                if (ipFormatTest != null && (ipFormatTest.equals("::") || ipFormatTest.equals("0.0.0.0"))) {
-                    externalPorts.add(tempPort.getPublicPort());
-                }
+        List<org.eclipse.kura.container.orchestration.ContainerPort> kuraContainerPorts = new ArrayList<>();
+
+        Arrays.asList(ports).stream().forEach(containerPort -> {
+            String ipTest = containerPort.getIp();
+            if (ipTest != null && (ipTest.equals("::") || ipTest.equals("0.0.0.0"))) {
+                kuraContainerPorts
+                        .add(new org.eclipse.kura.container.orchestration.ContainerPort(containerPort.getPrivatePort(),
+                                containerPort.getPublicPort(), parsePortInternetProtocol(containerPort.getType())));
             }
-        }
-        return externalPorts;
+        });
+
+        return kuraContainerPorts;
     }
 
-    private List<Integer> parseInternalPortsFromDockerPs(ContainerPort[] ports) {
-        List<Integer> internalPorts = new ArrayList<>();
+    private PortInternetProtocol parsePortInternetProtocol(String dockerPortProtocol) {
 
-        ContainerPort[] tempPorts = ports;
-        for (ContainerPort tempPort : tempPorts) {
-            if (tempPort.getIp() != null) {
-                String ipFormatTest = tempPort.getIp();
-                if (ipFormatTest != null && (ipFormatTest.equals("::") || ipFormatTest.equals("0.0.0.0"))) {
-                    internalPorts.add(tempPort.getPrivatePort());
-                }
-            }
+        switch (dockerPortProtocol) {
+
+        case "tcp":
+            return PortInternetProtocol.TCP;
+
+        case "udp":
+            return PortInternetProtocol.UDP;
+
+        case "sctp":
+            return PortInternetProtocol.SCTP;
+
+        default:
+            throw new IllegalStateException();
+
         }
-        return internalPorts;
+
     }
 
     private ContainerState convertDockerStateToFrameworkState(String dockerState) {
@@ -313,6 +377,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
             logger.info("Creating new container instance");
             pullImage(container.getImageConfiguration());
             containerId = createContainer(container);
+            addContainerInstanceDigest(containerId, container.getEnforcementDigest());
             startContainer(containerId);
         }
 
@@ -329,9 +394,14 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
     @Override
     public void stopContainer(String id) throws KuraException {
         checkRequestEnv(id);
-
         try {
-            this.dockerClient.stopContainerCmd(id).exec();
+
+            if (listContainersIds().contains(id)) {
+                this.dockerClient.stopContainerCmd(id).exec();
+            }
+
+            removeContainerInstanceDigest(id);
+
         } catch (Exception e) {
             logger.error("Could not stop container {}. Caused by {}", id, e);
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR);
@@ -342,7 +412,11 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
     public void deleteContainer(String id) throws KuraException {
         checkRequestEnv(id);
         try {
-            this.dockerClient.removeContainerCmd(id).exec();
+
+            if (listContainersIds().contains(id)) {
+                this.dockerClient.removeContainerCmd(id).exec();
+            }
+
             this.frameworkManagedContainers.removeIf(c -> id.equals(c.id));
         } catch (Exception e) {
             logger.error("Could not remove container {}. Caused by {}", id, e);
@@ -482,7 +556,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
                 configuration = configuration.withPrivileged(containerDescription.isContainerPrivileged());
             }
 
-            commandBuilder.withExposedPorts(this.exposedPorts);
+            commandBuilder = commandBuilder.withExposedPorts(this.exposedPorts);
 
             return commandBuilder.withHostConfig(configuration).exec().getId();
 
@@ -604,7 +678,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
             HostConfig configuration) {
 
         Optional<String> runtime = containerDescription.getRuntime();
-        runtime.ifPresent(runtimeOption -> configuration.withRuntime(runtimeOption));
+        runtime.ifPresent(configuration::withRuntime);
 
         return configuration;
     }
@@ -612,10 +686,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
     private HostConfig containerPortManagementHandler(ContainerConfiguration containerDescription,
             HostConfig commandBuilder) {
 
-        if (containerDescription.getContainerPortsInternal() != null
-                && containerDescription.getContainerPortsExternal() != null
-                && containerDescription.getContainerPortsExternal().size() == containerDescription
-                        .getContainerPortsInternal().size()) {
+        if (containerDescription.getContainerPorts() != null && !containerDescription.getContainerPorts().isEmpty()) {
             List<ExposedPort> exposedPortsList = new LinkedList<>();
             Ports portbindings = new Ports();
 
@@ -765,6 +836,10 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
 
     private void cleanUpDocker() {
 
+        if (this.allowlistEnforcementMonitor != null) {
+            closeEnforcementMonitor();
+        }
+
         if (testConnection()) {
             this.dockerServiceListeners.forEach(ContainerOrchestrationServiceListener::onDisabled);
             disconnect();
@@ -857,7 +932,7 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
             } catch (InterruptedException e) {
                 throw e;
             } catch (Exception e) {
-                logger.error("Cannot pull container. Caused by {}", e);
+                logger.error("Cannot pull container. Caused by ", e);
                 throw new KuraException(KuraErrorCode.IO_ERROR, "Unable to pull container");
             }
         }
@@ -921,6 +996,53 @@ public class ContainerOrchestrationServiceImpl implements ConfigurableComponent,
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Delete Container Image",
                     "500 (server error). Image is most likely in use by a container.");
         }
+    }
+
+    public Set<String> getImageDigestsByContainerId(String containerId) {
+
+        Set<String> imageDigests = new HashSet<>();
+
+        String containerName = listContainerDescriptors().stream()
+                .filter(container -> container.getContainerId().equals(containerId)).findFirst()
+                .map(container -> container.getContainerName()).orElse(null);
+
+        if (containerName == null) {
+            return imageDigests;
+        }
+
+        dockerClient.listImagesCmd().withImageNameFilter(containerName).exec().stream().forEach(image -> {
+            List<String> digests = Arrays.asList(image.getRepoDigests());
+            digests.stream().forEach(digest -> imageDigests.add(digest.split("@")[1]));
+        });
+
+        return imageDigests;
+    }
+
+    private void addContainerInstanceDigest(String containerId, Optional<String> containerInstanceDigest) {
+
+        if (containerInstanceDigest.isPresent()) {
+            logger.info(
+                    "Container {} presented enforcement digest. Adding it to the digests allowlist: it will be used if the enforcement is enabled.",
+                    containerId);
+            this.containerInstancesDigests.put(containerId, containerInstanceDigest.get());
+        } else {
+            logger.info("Container {} doesn't contain the enforcement digest. "
+                    + "If enforcement is enabled, be sure that the digest is included in the Orchestration Service allowlist",
+                    containerId);
+        }
+
+    }
+
+    private void removeContainerInstanceDigest(String containerId) {
+        if (this.containerInstancesDigests.containsKey(containerId)) {
+            this.containerInstancesDigests.remove(containerId);
+            logger.info("Removed digest of container with ID {} from Container Instances Allowlist", containerId);
+            enforceAlreadyRunningContainer();
+        }
+    }
+
+    public Set<String> getContainerInstancesAllowlist() {
+        return new HashSet<>(this.containerInstancesDigests.values());
     }
 
 }

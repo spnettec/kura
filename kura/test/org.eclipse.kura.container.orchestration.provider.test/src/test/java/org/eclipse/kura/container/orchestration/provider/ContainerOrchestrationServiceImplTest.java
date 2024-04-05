@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2022, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -13,19 +13,26 @@
 package org.eclipse.kura.container.orchestration.provider;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.Password;
@@ -33,6 +40,7 @@ import org.eclipse.kura.container.orchestration.ContainerConfiguration;
 import org.eclipse.kura.container.orchestration.ContainerInstanceDescriptor;
 import org.eclipse.kura.container.orchestration.ImageConfiguration;
 import org.eclipse.kura.container.orchestration.PasswordRegistryCredentials;
+import org.eclipse.kura.container.orchestration.PortInternetProtocol;
 import org.eclipse.kura.container.orchestration.provider.impl.ContainerOrchestrationServiceImpl;
 import org.junit.Test;
 import org.mockito.Answers;
@@ -41,6 +49,7 @@ import org.mockito.Mockito;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.ListImagesCmd;
 import com.github.dockerjava.api.model.Container;
@@ -48,6 +57,17 @@ import com.github.dockerjava.api.model.ContainerPort;
 import com.github.dockerjava.api.model.Image;
 
 public class ContainerOrchestrationServiceImplTest {
+
+    private static final String CONTAINER_INSTANCE_DIGEST = "sha256:test";
+    private static final String[] REPO_DIGESTS_ARRAY = new String[] {
+            "ubuntu@sha256:c26ae7472d624ba1fafd296e73cecc4f93f853088e6a9c13c0d52f6ca5865107" };
+    private static final String[] EXPECTED_DIGESTS_ARRAY = new String[] {
+            "sha256:c26ae7472d624ba1fafd296e73cecc4f93f853088e6a9c13c0d52f6ca5865107" };
+    private static final String IMAGE_TAG_LATEST = "latest";
+    private static final String IMAGE_NAME_NGINX = "nginx";
+    private static final String CONTAINER_NAME_FRANK = "frank";
+    private static final String CONTAINER_ID_2 = "1f134f3s4";
+    private static final String CONTAINER_ID_1 = "1f12d3s23";
 
     private static final String DOCKER_HOST_URL = "dockerService.dockerHost";
     private static final String IS_ENABLED = "dockerService.enabled";
@@ -58,6 +78,8 @@ public class ContainerOrchestrationServiceImplTest {
     private static final String REPOSITORY_URL = "repository.hostname";
     private static final String REPOSITORY_USERNAME = "repository.username";
     private static final String REPOSITORY_PASSWORD = "repository.password";
+
+    private static final String ENFORCEMENT_ENABLED = "enforcement.enabled";
 
     private static final String REGISTRY_URL = "https://test";
     private static final String REGISTRY_USERNAME = "test";
@@ -70,6 +92,13 @@ public class ContainerOrchestrationServiceImplTest {
     private static final String DEFAULT_REPOSITORY_URL = "";
     private static final String DEFAULT_REPOSITORY_USERNAME = "";
     private static final String DEFAULT_REPOSITORY_PASSWORD = "";
+
+    private static final ContainerPort TCP_CONTAINER_PORT = new ContainerPort().withIp("0.0.0.0").withPrivatePort(100)
+            .withPublicPort(101).withType("tcp");
+    private static final ContainerPort UDP_CONTAINER_PORT = new ContainerPort().withIp("0.0.0.0").withPrivatePort(200)
+            .withPublicPort(201).withType("udp");
+    private static final ContainerPort SCTP_CONTAINER_PORT = new ContainerPort().withIp("0.0.0.0").withPrivatePort(300)
+            .withPublicPort(301).withType("sctp");
 
     private ContainerOrchestrationServiceImpl dockerService;
 
@@ -88,8 +117,13 @@ public class ContainerOrchestrationServiceImplTest {
     private Map<String, Object> properties;
     private String containerId;
 
+    CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
+    CreateContainerResponse createContainerResponse = mock(CreateContainerResponse.class);
+
+    Set<String> digestsList;
+
     @Test
-    public void testServiceActivateEmptyProperties() throws KuraException {
+    public void testServiceActivateEmptyProperties() {
         // Should use default properties
         givenEmptyProperties();
         givenDockerServiceImpl();
@@ -102,7 +136,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceActivateDefaultPropertiesDisabled() throws KuraException {
+    public void testServiceActivateDefaultPropertiesDisabled() {
         givenFullProperties(DEFAULT_IS_ENABLED);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -114,7 +148,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceActivateDefaultPropertiesEnabledAndAuth() throws KuraException, InterruptedException {
+    public void testServiceActivateDefaultPropertiesEnabledAndAuth() {
         givenFullProperties(true, true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -126,8 +160,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceActivateDefaultPropertiesEnabledWithAuthAndNoRepo()
-            throws KuraException, InterruptedException {
+    public void testServiceActivateDefaultPropertiesEnabledWithAuthAndNoRepo() {
         givenAuthWithRepoAndCredentials();
         givenDockerServiceImpl();
         givenDockerClient();
@@ -139,7 +172,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceUpdateDefaultPropertiesEnabled() throws KuraException {
+    public void testServiceUpdateDefaultPropertiesEnabled() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -151,7 +184,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceDeactivateDefaultPropertiesEnabled() throws KuraException {
+    public void testServiceDeactivateDefaultPropertiesEnabled() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -163,7 +196,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerWhenEmpty() throws KuraException {
+    public void testServiceListContainerWhenEmpty() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -174,7 +207,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerWithSomeContainer() throws KuraException {
+    public void testServiceListContainerWithSomeContainer() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -185,7 +218,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerByIdWhenEmpty() throws KuraException {
+    public void testServiceListContainerByIdWhenEmpty() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -196,7 +229,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerByIdWithSomeContainer() throws KuraException {
+    public void testServiceListContainerByIdWithSomeContainer() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -207,7 +240,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerByContainerDescriptorWhenEmpty() throws KuraException {
+    public void testServiceListContainerByContainerDescriptorWhenEmpty() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -218,7 +251,7 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     @Test
-    public void testServiceListContainerByContainerDescriptorWithSomeContainer() throws KuraException {
+    public void testServiceListContainerByContainerDescriptorWithSomeContainer() {
         givenFullProperties(true);
         givenDockerServiceImpl();
         givenDockerClient();
@@ -226,6 +259,17 @@ public class ContainerOrchestrationServiceImplTest {
         whenDockerClientMockSomeContainers();
 
         thenContainerListByContainerDescriptorEqualsExpectedStringArray();
+    }
+
+    @Test
+    public void testServiceListContainerByContainerDescriptorWithContainerWithPorts() throws KuraException {
+        givenFullProperties(true);
+        givenDockerServiceImpl();
+        givenDockerClient();
+
+        whenDockerClientMockContainerWithPorts();
+
+        thenContainerPortsInfosArePresent();
     }
 
     @Test
@@ -265,30 +309,77 @@ public class ContainerOrchestrationServiceImplTest {
 
         thenTestIfNewContainerDoesNotExists();
     }
-    
+
     @Test
     public void testDeleteImage() throws KuraException, InterruptedException {
         givenFullProperties(true);
         givenDockerServiceImplSpy();
         givenDockerClient();
-        
+
         whenImageIsDeletedById("y456y5146hrth");
-        
+
         thenCheckIfImageWasDeleted();
     }
-    
+
     @Test
     public void testListImage() throws KuraException, InterruptedException {
         givenFullProperties(true);
         givenDockerServiceImplSpy();
         givenDockerClient();
-        
+
         whenMockForImageListing();
-        
+
         whenImagesAreListed();
-        
+
         thenCheckIfImagesWereListed();
-        
+    }
+
+    @Test
+    public void testImageDigestsByContainerName() throws KuraException, InterruptedException {
+        givenFullProperties(true);
+        givenDockerServiceImplSpy();
+        givenDockerClient();
+
+        whenMockForImageDigestsListing();
+        whenDockerClientMockSomeContainers();
+        whenGetImageDigestsByContainerId(CONTAINER_ID_1);
+
+        thenDigestsListEqualsExpectedOne(EXPECTED_DIGESTS_ARRAY);
+    }
+
+    @Test
+    public void testContainerInstanceDigestIsAddedToAllowlist() throws KuraException, InterruptedException {
+
+        givenFullProperties(true);
+        givenEnforcementEnabledProperty(true);
+        givenDockerServiceImplSpy();
+        givenDockerClient();
+
+        whenActivateInstance();
+        whenDockerClientMockCreateContainer();
+        whenMockForContainerInstancesDigestAdding();
+        whenRunContainer();
+
+        thenContainerInstanceDigestIsAddedToAllowlist();
+        thenContainerInstanceDigestIsExpectedOne(CONTAINER_INSTANCE_DIGEST);
+    }
+
+    @Test
+    public void testContainerInstanceDigestIsAddedToAndRemovedFromAllowlist()
+            throws KuraException, InterruptedException {
+
+        givenFullProperties(true);
+        givenEnforcementEnabledProperty(true);
+        givenDockerServiceImplSpy();
+        givenDockerClient();
+
+        whenActivateInstance();
+        whenDockerClientMockCreateContainer();
+        whenMockForContainerInstancesDigestAdding();
+        whenRunContainer();
+        whenStopContainer();
+
+        thenContainerInstanceDigestIsNotInAllowlist();
     }
 
     /**
@@ -352,6 +443,10 @@ public class ContainerOrchestrationServiceImplTest {
         this.properties.put(IMAGES_DOWNLOAD_TIMEOUT, DEFAULT_IMAGES_DOWNLOAD_TIMEOUT);
     }
 
+    private void givenEnforcementEnabledProperty(boolean enabled) {
+        this.properties.put(ENFORCEMENT_ENABLED, enabled);
+    }
+
     /**
      * when
      */
@@ -382,18 +477,18 @@ public class ContainerOrchestrationServiceImplTest {
         List<Container> containerListmock = new LinkedList<>();
         // Build Container Mock
         Container mcont1 = mock(Container.class);
-        when(mcont1.getId()).thenReturn("1f12d3s23");
-        when(mcont1.toString()).thenReturn("1f12d3s23");
+        when(mcont1.getId()).thenReturn(CONTAINER_ID_1);
+        when(mcont1.toString()).thenReturn(CONTAINER_ID_1);
         when(mcont1.getNames()).thenReturn(new String[] { "jim", "/jim" });
-        when(mcont1.getImage()).thenReturn("nginx");
+        when(mcont1.getImage()).thenReturn(IMAGE_NAME_NGINX);
         when(mcont1.getPorts()).thenReturn(new ContainerPort[0]);
         when(mcont1.getState()).thenReturn("running");
         containerListmock.add(mcont1);
 
         Container mcont2 = mock(Container.class);
-        when(mcont2.getId()).thenReturn("1f134f3s4");
-        when(mcont2.toString()).thenReturn("1f134f3s4");
-        when(mcont2.getNames()).thenReturn(new String[] { "frank", "/frank" });
+        when(mcont2.getId()).thenReturn(CONTAINER_ID_2);
+        when(mcont2.toString()).thenReturn(CONTAINER_ID_2);
+        when(mcont2.getNames()).thenReturn(new String[] { CONTAINER_NAME_FRANK, "/frank" });
         when(mcont2.getImage()).thenReturn("nginx2");
         when(mcont2.getPorts()).thenReturn(new ContainerPort[0]);
         when(mcont2.getState()).thenReturn("running");
@@ -416,33 +511,73 @@ public class ContainerOrchestrationServiceImplTest {
         when(this.mockedListContainersCmd.exec()).thenReturn(containerListmock);
     }
 
+    private void whenDockerClientMockCreateContainer() {
+
+        this.createContainerCmd = mock(CreateContainerCmd.class, Mockito.RETURNS_DEEP_STUBS);
+        this.createContainerResponse = new CreateContainerResponse();
+        this.createContainerResponse.setId("containerId");
+        when(this.localDockerClient.createContainerCmd(anyString())).thenReturn(this.createContainerCmd);
+        when(this.createContainerCmd.withHostConfig(any())).thenReturn(this.createContainerCmd);
+        when(this.createContainerCmd.withHostConfig(any()).exec()).thenReturn(this.createContainerResponse);
+        when(this.createContainerCmd.withExposedPorts(anyList())).thenReturn(this.createContainerCmd);
+        when(this.createContainerCmd.withName(any())).thenReturn(this.createContainerCmd);
+    }
+
+    private void whenDockerClientMockContainerWithPorts() {
+
+        List<Container> containerListmock = new LinkedList<>();
+        // Build Container Mock
+        Container mcont1 = mock(Container.class);
+        when(mcont1.getId()).thenReturn("1f12d3s23");
+        when(mcont1.toString()).thenReturn("1f12d3s23");
+        when(mcont1.getNames()).thenReturn(new String[] { "jim", "/jim" });
+        when(mcont1.getImage()).thenReturn("nginx");
+        when(mcont1.getPorts())
+                .thenReturn(new ContainerPort[] { TCP_CONTAINER_PORT, UDP_CONTAINER_PORT, SCTP_CONTAINER_PORT });
+        when(mcont1.getState()).thenReturn("running");
+        containerListmock.add(mcont1);
+
+        this.runningContainers = new String[] { mcont1.toString() };
+
+        // Build Respective CD's
+        ContainerInstanceDescriptor mcontCD1 = ContainerInstanceDescriptor.builder().setContainerID(mcont1.getId())
+                .setContainerName(mcont1.getNames()[0]).setContainerImage(mcont1.getImage()).build();
+
+        this.runningContainerDescriptor = new ContainerInstanceDescriptor[] { mcontCD1 };
+
+        this.mockedListContainersCmd = mock(ListContainersCmd.class, Mockito.RETURNS_DEEP_STUBS);
+        when(this.localDockerClient.listContainersCmd()).thenReturn(this.mockedListContainersCmd);
+        when(this.mockedListContainersCmd.withShowAll(true)).thenReturn(this.mockedListContainersCmd);
+        when(this.mockedListContainersCmd.exec()).thenReturn(containerListmock);
+    }
+
     private void whenMockforContainerCreation() {
 
         // Build Respective CD's
         ContainerInstanceDescriptor mcontCD1 = ContainerInstanceDescriptor.builder().setContainerID("1d3dewf34r5")
-                .setContainerName("frank").setContainerImage("nginx").build();
+                .setContainerName(CONTAINER_NAME_FRANK).setContainerImage(IMAGE_NAME_NGINX).build();
 
-        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName("nginx")
-                .setImageTag("latest").setImageDownloadTimeoutSeconds(0)
+        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName(IMAGE_NAME_NGINX)
+                .setImageTag(IMAGE_TAG_LATEST).setImageDownloadTimeoutSeconds(0)
                 .setRegistryCredentials(Optional.of(new PasswordRegistryCredentials(Optional.of(REGISTRY_URL),
                         REGISTRY_USERNAME, new Password(REGISTRY_PASSWORD))))
                 .build();
 
-        this.containerConfig1 = ContainerConfiguration.builder().setContainerName("frank")
+        this.containerConfig1 = ContainerConfiguration.builder().setContainerName(CONTAINER_NAME_FRANK)
                 .setImageConfiguration(imageConfig).setVolumes(Collections.singletonMap("test", "~/test/test"))
                 .setDeviceList(Arrays.asList("/dev/gpio1", "/dev/gpio2"))
                 .setEnvVars(Arrays.asList("test=test", "test2=test2")).build();
 
         this.runningContainerDescriptor = new ContainerInstanceDescriptor[] { mcontCD1 };
 
-        CreateContainerCmd CCC = mock(CreateContainerCmd.class, Mockito.RETURNS_DEEP_STUBS);
-        when(this.localDockerClient.createContainerCmd(mcontCD1.getContainerImage())).thenReturn(CCC);
-        when(CCC.exec().getId()).thenReturn(mcontCD1.getContainerId());
+        CreateContainerCmd ccc = mock(CreateContainerCmd.class, Mockito.RETURNS_DEEP_STUBS);
+        when(this.localDockerClient.createContainerCmd(mcontCD1.getContainerImage())).thenReturn(ccc);
+        when(ccc.exec().getId()).thenReturn(mcontCD1.getContainerId());
 
         List<Image> images = new LinkedList<>();
         Image mockImage = mock(Image.class);
 
-        when(mockImage.getRepoTags()).thenReturn(new String[] { "nginx", "latest", "nginx:latest" });
+        when(mockImage.getRepoTags()).thenReturn(new String[] { IMAGE_NAME_NGINX, IMAGE_TAG_LATEST, "nginx:latest" });
 
         images.add(mockImage);
 
@@ -450,25 +585,71 @@ public class ContainerOrchestrationServiceImplTest {
         when(this.localDockerClient.listImagesCmd().exec()).thenReturn(images);
 
     }
-    
+
     private void whenMockForImageListing() {
-        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName("nginx")
-                .setImageTag("latest").setImageDownloadTimeoutSeconds(0)
+        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName(IMAGE_NAME_NGINX)
+                .setImageTag(IMAGE_TAG_LATEST).setImageDownloadTimeoutSeconds(0)
                 .setRegistryCredentials(Optional.of(new PasswordRegistryCredentials(Optional.of(REGISTRY_URL),
                         REGISTRY_USERNAME, new Password(REGISTRY_PASSWORD))))
                 .build();
-        
+
         List<Image> images = new LinkedList<>();
         Image mockImage = mock(Image.class);
 
         when(mockImage.getId()).thenReturn("ngnix");
-        when(mockImage.getRepoTags()).thenReturn(new String[] { "nginx", "latest", "nginx:latest" });
-
+        when(mockImage.getRepoTags()).thenReturn(new String[] { IMAGE_NAME_NGINX, IMAGE_TAG_LATEST, "nginx:latest" });
+        when(mockImage.getRepoDigests()).thenReturn(REPO_DIGESTS_ARRAY);
         images.add(mockImage);
 
         when(this.localDockerClient.listImagesCmd()).thenReturn(mock(ListImagesCmd.class));
         when(this.localDockerClient.listImagesCmd().withShowAll(true)).thenReturn(mock(ListImagesCmd.class));
         when(this.localDockerClient.listImagesCmd().withShowAll(true).exec()).thenReturn(images);
+
+    }
+
+    private void whenMockForImageDigestsListing() {
+        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName(IMAGE_NAME_NGINX)
+                .setImageTag(IMAGE_TAG_LATEST).setImageDownloadTimeoutSeconds(0)
+                .setRegistryCredentials(Optional.of(new PasswordRegistryCredentials(Optional.of(REGISTRY_URL),
+                        REGISTRY_USERNAME, new Password(REGISTRY_PASSWORD))))
+                .build();
+
+        List<Image> images = new LinkedList<>();
+        Image mockImage = mock(Image.class);
+
+        when(mockImage.getId()).thenReturn("ngnix");
+        when(mockImage.getRepoTags()).thenReturn(new String[] { IMAGE_NAME_NGINX, IMAGE_TAG_LATEST, "nginx:latest" });
+        when(mockImage.getRepoDigests()).thenReturn(REPO_DIGESTS_ARRAY);
+        images.add(mockImage);
+
+        when(this.localDockerClient.listImagesCmd()).thenReturn(mock(ListImagesCmd.class));
+        when(this.localDockerClient.listImagesCmd().withImageNameFilter(anyString()))
+                .thenReturn(mock(ListImagesCmd.class));
+        when(this.localDockerClient.listImagesCmd().withImageNameFilter(anyString()).exec()).thenReturn(images);
+
+    }
+
+    private void whenMockForContainerInstancesDigestAdding() {
+
+        // Build Respective CD's
+        ContainerInstanceDescriptor mcontCD1 = ContainerInstanceDescriptor.builder().setContainerID("1d3dewf34r5")
+                .setContainerName(CONTAINER_NAME_FRANK).setContainerImage(IMAGE_NAME_NGINX).build();
+
+        this.imageConfig = new ImageConfiguration.ImageConfigurationBuilder().setImageName(IMAGE_NAME_NGINX)
+                .setImageTag(IMAGE_TAG_LATEST).setImageDownloadTimeoutSeconds(0)
+                .setRegistryCredentials(Optional.of(new PasswordRegistryCredentials(Optional.of(REGISTRY_URL),
+                        REGISTRY_USERNAME, new Password(REGISTRY_PASSWORD))))
+                .build();
+
+        org.eclipse.kura.container.orchestration.ContainerPort containerPort = new org.eclipse.kura.container.orchestration.ContainerPort(
+                TCP_CONTAINER_PORT.getPrivatePort(), TCP_CONTAINER_PORT.getPublicPort());
+
+        this.containerConfig1 = ContainerConfiguration.builder().setContainerName(CONTAINER_NAME_FRANK)
+                .setImageConfiguration(imageConfig).setVolumes(Collections.singletonMap("test", "~/test/test"))
+                .setEnforcementDigest(Optional.of(CONTAINER_INSTANCE_DIGEST)).setLoggingType("NONE")
+                .setContainerPorts(Arrays.asList(containerPort)).build();
+
+        this.runningContainerDescriptor = new ContainerInstanceDescriptor[] { mcontCD1 };
 
     }
 
@@ -478,27 +659,31 @@ public class ContainerOrchestrationServiceImplTest {
     }
 
     private void whenStopContainer() throws KuraException {
-        // startContainer
+        // stopContainer
         this.dockerService.stopContainer(this.containerId);
     }
-    
+
     private void whenImageIsDeletedById(String imageId) throws KuraException {
-    	this.dockerService.deleteImage(imageId);
+        this.dockerService.deleteImage(imageId);
     }
-    
-    private void whenImagesAreListed() throws KuraException {
-    	this.dockerService.listImageInstanceDescriptors();
+
+    private void whenImagesAreListed() {
+        this.dockerService.listImageInstanceDescriptors();
+    }
+
+    private void whenGetImageDigestsByContainerId(String containerName) {
+        this.digestsList = this.dockerService.getImageDigestsByContainerId(containerName);
     }
 
     /**
      * then
      */
-    
-    private void thenNotStoppedMicroservice() throws KuraException {
+
+    private void thenNotStoppedMicroservice() {
         verify(this.localDockerClient, times(0)).removeContainerCmd(any(String.class));
     }
 
-    private void thenNotStartedMicroservice() throws KuraException {
+    private void thenNotStartedMicroservice() {
         verify(this.localDockerClient, times(0)).startContainerCmd(any(String.class));
     }
 
@@ -518,6 +703,24 @@ public class ContainerOrchestrationServiceImplTest {
         }
     }
 
+    private void thenContainerPortsInfosArePresent() {
+
+        assertFalse(this.dockerService.listContainerDescriptors().isEmpty());
+        List<org.eclipse.kura.container.orchestration.ContainerPort> containerPorts = this.dockerService
+                .listContainerDescriptors().get(0).getContainerPorts();
+
+        List<ContainerPort> expectedContainerPorts = Arrays.asList(TCP_CONTAINER_PORT, UDP_CONTAINER_PORT,
+                SCTP_CONTAINER_PORT);
+        List<PortInternetProtocol> expectedInternetPortProtocols = Arrays.asList(PortInternetProtocol.TCP,
+                PortInternetProtocol.UDP, PortInternetProtocol.SCTP);
+        for (int i = 0; i < containerPorts.size(); i++) {
+            assertEquals((int) expectedContainerPorts.get(i).getPublicPort(), containerPorts.get(i).getExternalPort());
+            assertEquals((int) expectedContainerPorts.get(i).getPrivatePort(), containerPorts.get(i).getInternalPort());
+            assertEquals(expectedInternetPortProtocols.get(i), containerPorts.get(i).getInternetProtocol());
+        }
+
+    }
+
     private void thenGetFirstContainerIDbyName() {
         assertEquals(this.dockerService.getContainerIdByName(this.runningContainerDescriptor[0].getContainerName())
                 .orElse(""), this.runningContainerDescriptor[0].getContainerId());
@@ -530,12 +733,30 @@ public class ContainerOrchestrationServiceImplTest {
     private void thenTestIfNewContainerDoesNotExists() {
         assertEquals(2, this.dockerService.listContainerDescriptors().size());
     }
-    
-    private void thenCheckIfImageWasDeleted() throws KuraException {
+
+    private void thenCheckIfImageWasDeleted() {
         verify(this.localDockerClient, times(1)).removeImageCmd(any(String.class));
     }
-    
-    private void thenCheckIfImagesWereListed() throws KuraException {
-    	verify(this.localDockerClient, times(1)).inspectImageCmd(any(String.class));
+
+    private void thenCheckIfImagesWereListed() {
+        verify(this.localDockerClient, times(1)).inspectImageCmd(any(String.class));
+    }
+
+    private void thenDigestsListEqualsExpectedOne(String[] digestsArray) {
+        assertEquals(new HashSet<>(Arrays.asList(digestsArray)), this.digestsList);
+    }
+
+    private void thenContainerInstanceDigestIsAddedToAllowlist() {
+        assertFalse(this.dockerService.getContainerInstancesAllowlist().isEmpty());
+    }
+
+    private void thenContainerInstanceDigestIsNotInAllowlist() {
+        this.dockerService.getContainerInstancesAllowlist().stream().forEach(System.err::println);
+        assertTrue(this.dockerService.getContainerInstancesAllowlist().isEmpty());
+    }
+
+    private void thenContainerInstanceDigestIsExpectedOne(String expected) {
+        List<String> actualDigests = new ArrayList<>(this.dockerService.getContainerInstancesAllowlist());
+        assertEquals(actualDigests.get(0), expected);
     }
 }
