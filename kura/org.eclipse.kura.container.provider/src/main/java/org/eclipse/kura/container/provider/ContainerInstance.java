@@ -16,6 +16,7 @@ package org.eclipse.kura.container.provider;
 import static java.util.Objects.isNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -49,8 +50,9 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
 
     private ContainerOrchestrationService containerOrchestrationService;
     private Set<ContainerSignatureValidationService> availableContainerSignatureValidationService = new HashSet<>();
-
+    private ConfigurationService configurationService;
     private State state = new Disabled(new ContainerInstanceOptions(Collections.emptyMap()));
+    private ContainerInstanceOptions currentOptions = null;
 
     public void setContainerOrchestrationService(final ContainerOrchestrationService containerOrchestrationService) {
         this.containerOrchestrationService = containerOrchestrationService;
@@ -68,6 +70,14 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
         logger.info("Container signature validation service {} removed.",
                 containerSignatureValidationService.getClass());
         this.availableContainerSignatureValidationService.remove(containerSignatureValidationService);
+    }
+
+    public synchronized void setConfigurationService(final ConfigurationService confService) {
+        this.configurationService = confService;
+    }
+
+    public synchronized void unsetConfigurationService() {
+        this.configurationService = null;
     }
 
     // ----------------------------------------------------------------
@@ -90,25 +100,51 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
         }
 
         try {
-            ContainerInstanceOptions newProps = new ContainerInstanceOptions(properties);
+            ContainerInstanceOptions newOptions = new ContainerInstanceOptions(properties);
 
-            if (newProps.getSignatureTrustAnchor().isPresent()) {
-                ValidationResult containerSignatureValidated = validateContainerImageSignature(newProps);
-                String imageDigest = containerSignatureValidated.imageDigest().orElse("?");
-                logger.info("Container signature validation result for {}@{}({}) - {}", newProps.getContainerImage(),
-                        imageDigest, newProps.getContainerImageTag(),
-                        containerSignatureValidated.isSignatureValid() ? "OK" : "FAIL");
-            } else {
-                logger.info("No trust anchor available. Signature validation skipped.");
+            if (this.currentOptions != null && this.currentOptions.equals(newOptions)) {
+                return;
             }
 
-            if (newProps.isEnabled()) {
+            this.currentOptions = newOptions;
+
+            if (!this.currentOptions.getEnforcementDigest().isPresent()) {
+
+                logger.info(
+                        "Container configuration doesn't include enforcement digest. Validating with Container Signature Validation service");
+
+                if (this.currentOptions.getSignatureTrustAnchor().isPresent()) {
+
+                    ValidationResult containerSignatureValidated = validateContainerImageSignature(this.currentOptions);
+
+                    logger.info("Container signature validation result for {}@{}({}) - {}",
+                            this.currentOptions.getContainerImage(),
+                            containerSignatureValidated.imageDigest().orElse("?"),
+                            this.currentOptions.getContainerImageTag(),
+                            containerSignatureValidated.isSignatureValid() ? "OK" : "FAIL");
+
+                    containerSignatureValidated.imageDigest().ifPresent(digest -> {
+
+                        Map<String, Object> updatedProperties = updatePropertiesWithSignatureDigest(properties, digest);
+                        this.currentOptions = new ContainerInstanceOptions(updatedProperties);
+                        updateSnapshotWithSignatureDigest(updatedProperties);
+
+                    });
+
+                } else {
+                    logger.info("No trust anchor available. Signature validation skipped.");
+                }
+
+            }
+
+            if (this.currentOptions.isEnabled()) {
                 this.containerOrchestrationService.registerListener(this);
             } else {
                 this.containerOrchestrationService.unregisterListener(this);
             }
 
-            updateState(s -> s.onConfigurationUpdated(newProps));
+            updateState(s -> s.onConfigurationUpdated(this.currentOptions));
+
         } catch (Exception e) {
             logger.error("Failed to create container instance. Please check configuration of container: {}. Caused by:",
                     properties.get(ConfigurationService.KURA_SERVICE_PID), e);
@@ -205,7 +241,7 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
         this.state = newState;
     }
 
-    private Optional<ContainerInstanceDescriptor> getExistingContainer(final String containerName) {
+    private Optional<ContainerInstanceDescriptor> getExistingContainerByName(final String containerName) {
         return containerOrchestrationService.listContainerDescriptors().stream()
                 .filter(c -> c.getContainerName().equals(containerName)).findAny();
     }
@@ -253,35 +289,37 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
         }
 
         private State updateStateInternal(ContainerInstanceOptions newOptions) {
-            if (!newOptions.isEnabled()) {
-                return new Disabled(newOptions);
-            }
 
-            final Optional<String> existingContainerId;
+            final Optional<ContainerInstanceDescriptor> existingContainer;
+            final boolean isInstanceEnabled = newOptions.isEnabled();
 
             try {
-                existingContainerId = getExistingContainer(newOptions.getContainerConfiguration().getContainerName())
-                        .map(ContainerInstanceDescriptor::getContainerName);
+                existingContainer = getExistingContainerByName(newOptions.getContainerConfiguration().getContainerName());
             } catch (final Exception e) {
                 logger.warn("failed to get existing container state", e);
                 return new Disabled(newOptions);
             }
 
-            if (existingContainerId.isPresent()) {
+            if (existingContainer.isPresent()) {
+
                 logger.info("found existing container with name {}",
                         newOptions.getContainerConfiguration().getContainerName());
-
-                if (newOptions.isEnabled()) {
+                if (isInstanceEnabled) {
                     return new Starting(newOptions);
                 } else {
-                    return new Created(newOptions, existingContainerId.get()).onDisabled();
+                    return new Created(newOptions, existingContainer.get().getContainerId()).onDisabled();
                 }
+
             } else {
-                return new Starting(newOptions);
+
+                if (isInstanceEnabled) {
+                    return new Starting(newOptions);
+                } else {
+                    return new Disabled(newOptions);
+                }
+
             }
-
         }
-
     }
 
     private class Starting implements State {
@@ -324,7 +362,7 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
             this.startupFuture.cancel(true);
 
             try {
-                final Optional<ContainerInstanceDescriptor> existingInstance = getExistingContainer(
+                final Optional<ContainerInstanceDescriptor> existingInstance = getExistingContainerByName(
                         this.options.getContainerName());
 
                 if (existingInstance.isPresent()) {
@@ -423,6 +461,26 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
             return new Disabled(this.options);
         }
 
+    }
+
+    private Map<String, Object> updatePropertiesWithSignatureDigest(Map<String, Object> oldProperties,
+            String enforcementDigest) {
+
+        Map<String, Object> updatedProperties = new HashMap<>(oldProperties);
+        updatedProperties.put("container.signature.enforcement.digest", enforcementDigest);
+        return updatedProperties;
+
+    }
+
+    private void updateSnapshotWithSignatureDigest(Map<String, Object> properties) {
+
+        try {
+            this.configurationService.updateConfiguration(
+                    (String) properties.get(ConfigurationService.KURA_SERVICE_PID), properties, true);
+        } catch (KuraException ex) {
+            logger.error("Impossible to update snapshot for pid {} due to {}",
+                    properties.get(ConfigurationService.KURA_SERVICE_PID), ex.getMessage());
+        }
     }
 
 }
