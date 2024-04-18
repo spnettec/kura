@@ -547,6 +547,11 @@ public class IdentityV2EndpointsTest extends AbstractRequestHandlerTest {
                     + this.properties + "]";
         }
 
+        @Override
+        public OCD getLocalizedDefinition(String locale) {
+            return this.ocd;
+        }
+
     }
 
 }
