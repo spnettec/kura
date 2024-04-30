@@ -68,6 +68,7 @@
         <setEntry value="org.eclipse.kura.example.camel.publisher"/>
         <setEntry value="org.eclipse.kura.example.camel.quickstart"/>
         <setEntry value="org.eclipse.kura.example.can"/>
+        <setEntry value="org.eclipse.kura.example.container.signature.validation"/>
         <setEntry value="org.eclipse.kura.example.container.signature.validation.test"/>
         <setEntry value="org.eclipse.kura.example.driver.sensehat"/>
         <setEntry value="org.eclipse.kura.example.eddystone.advertiser"/>
@@ -454,7 +455,6 @@
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
-        <setEntry value="org.eclipse.kura.example.container.signature.validation@default:default"/>
         <setEntry value="org.eclipse.kura.example.identity.configuration.extension@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
