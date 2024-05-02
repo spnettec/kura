@@ -768,6 +768,9 @@ fi]]>
                 file="${project.build.directory}/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.linux.clock_${org.eclipse.kura.linux.clock.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
@@ -1318,6 +1321,8 @@ fi]]>
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar@4:start" />
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@4" />
         </propertyfile>
     </target>
 
@@ -1994,9 +1999,7 @@ fi]]>
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin_${org.eclipse.kura.net.admin.version}.jar@4:start" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@4" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin_${org.eclipse.kura.net.admin.version}.jar@5:start" />
         </propertyfile>
     </target>
 
@@ -2006,9 +2009,7 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.nm_${org.eclipse.kura.nm.version}.jar@4:start" />
             <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar@4" />
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar@4:start" />
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar@4:start" />
         </propertyfile>
@@ -2096,9 +2097,6 @@ fi]]>
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.net.admin_${org.eclipse.kura.net.admin.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
         </zip>
     </target>
 
@@ -2107,9 +2105,6 @@ fi]]>
             update="true">
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.nm_${org.eclipse.kura.nm.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.net.configuration_${org.eclipse.kura.net.configuration.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar"
