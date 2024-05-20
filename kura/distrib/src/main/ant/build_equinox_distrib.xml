@@ -1692,19 +1692,19 @@ fi]]>
 			file="${project.build.directory}/${build.output.name}/config.ini">
 
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel_${org.eclipse.kura.camel.version}.jar@4" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel_${org.eclipse.kura.camel.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.cloud.factory_${org.eclipse.kura.camel.cloud.factory.version}.jar@5" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.cloud.factory_${org.eclipse.kura.camel.cloud.factory.version}.jar@5:start" />
 			
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.xml_${org.eclipse.kura.camel.xml.version}.jar@5" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.camel.xml_${org.eclipse.kura.camel.xml.version}.jar@5:start" />
     		<entry key="osgi.bundles" operation="+"
-    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.camel_${org.eclipse.kura.wire.camel.version}.jar@5" />
+    			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.camel_${org.eclipse.kura.wire.camel.version}.jar@5:start" />
 
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.qpid.jms.client_${apache-qpid-jms-client.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.qpid.jms.client_${apache-qpid-jms-client.version}.jar@3:start" />
 			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.qpid.proton-j_${apache-qpid-proton-j.version}.jar@3" />
+				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.apache.qpid.proton-j_${apache-qpid-proton-j.version}.jar@3:start" />
     		<entry key="osgi.bundles" operation="+"
     			value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/jakarta.jms-api_${jakarta.jms-api.version}.jar@3" />
 			<entry key="osgi.bundles" operation="+"
