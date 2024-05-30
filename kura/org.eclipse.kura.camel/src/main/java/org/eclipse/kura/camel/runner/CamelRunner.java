@@ -29,7 +29,6 @@ import org.apache.camel.core.osgi.OsgiBeanRepository;
 import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
 import org.apache.camel.model.RouteDefinition;
-import org.apache.camel.model.RoutesDefinition;
 import org.apache.camel.spi.BeanRepository;
 import org.apache.camel.spi.ComponentResolver;
 import org.apache.camel.spi.LanguageResolver;
@@ -618,7 +617,7 @@ public class CamelRunner {
      * Clear all routes from the context
      */
     public void clearRoutes() {
-        setRoutes(EmptyRoutesProvider.INSTANCE);
+        removeRoutes(this.context, fromRoutes(this.context.getRoutes()));
     }
 
     /**
@@ -627,14 +626,15 @@ public class CamelRunner {
      * @param routes
      *            the new set of routes, may be {@code null}
      */
-    public void setRoutes(final RoutesProvider routes) {
+    private void setRoutes(final RoutesProvider routesProvider) {
 
-        if (routes == null) {
-            clearRoutes();
+        clearRoutes();
+
+        if (routesProvider == null) {
             return;
         }
 
-        this.routes = routes;
+        this.routes = routesProvider;
 
         final CamelContext camelContext = this.context;
         if (camelContext != null && camelContext.isStarted()) {
@@ -660,23 +660,6 @@ public class CamelRunner {
         } else {
             setRoutes(new DslRoutesProvider(xml, filename));
         }
-    }
-
-    /**
-     * Replace the current set of route with an new one
-     *
-     * @param routes
-     *            the new set of routes, may be {@code null}
-     */
-    public void setRoutes(final RoutesDefinition routes) throws Exception {
-        logger.info("Setting routes...");
-
-        if (routes == null) {
-            clearRoutes();
-            return;
-        }
-
-        setRoutes(new SimpleRoutesProvider(routes));
     }
 
     /**
