@@ -245,8 +245,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 0) {
-                servicePid = servicePids.get(0);
+            if (servicePids.size() > 1) {
+                logger.error("addConfigurableComponent have multiple servicePids:{}", servicePids);
+                servicePid = servicePids.get(servicePids.size() - 1);
             }
         }
 
@@ -267,8 +268,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 0) {
-                servicePid = servicePids.get(0);
+            if (servicePids.size() > 1) {
+                logger.error("removeConfigurableComponent have multiple servicePids:{}", servicePids);
+                servicePid = servicePids.get(servicePids.size() - 1);
             }
         }
 
@@ -288,8 +290,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 0) {
-                servicePid = servicePids.get(0);
+            if (servicePids.size() > 1) {
+                logger.error("addSelfConfiguringComponent have multiple servicePids:{}", servicePids);
+                servicePid = servicePids.get(servicePids.size() - 1);
             }
         }
 
@@ -309,8 +312,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 0) {
-                servicePid = servicePids.get(0);
+            if (servicePids.size() > 1) {
+                logger.error("removeSelfConfiguringComponent have multiple servicePids:{}", servicePids);
+                servicePid = servicePids.get(servicePids.size() - 1);
             }
         }
 
@@ -1028,10 +1032,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             servicePid = pid;
         } else {
             if (!this.allActivatedPids.contains(pid)) {
-                // logger.error("non factory instance (service.pid): {} is created error before OCD registed",
-                // servicePid);
+                logger.error("non factory instance (service.pid): {} is created error before OCD registed", servicePid);
             } else {
-                // logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+                logger.warn("non factory instance (service.pid): {} is created before OCD registed", servicePid);
             }
         }
         updateDefaultConfiguration(pid, servicePid, ocd);
@@ -1057,7 +1060,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (servicePid == null) {
             servicePid = pid;
         } else if (!this.factoryPidByPid.containsKey(pid)) {
-            // logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
+            logger.error("non factory instance (service.pid): {} is created before OCD registed", servicePid);
         }
         updateDefaultConfiguration(pid, servicePid, ocd);
     }
@@ -1984,7 +1987,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *            the input value
+     *                  the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
