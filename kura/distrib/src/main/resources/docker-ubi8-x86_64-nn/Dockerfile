@@ -15,7 +15,6 @@ COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
-  JAVA_HOME=/usr/lib/jvm/jre-17-openjdk \
   SKIP_JAVA_VERSION_CHECK=true \
   LAUNCHER_VERSION="1.6.500.v20230717-2134" \
   TZ=Asia/Shanghai \
@@ -36,7 +35,6 @@ RUN true && \
         dos2unix \
         openssl \
         net-tools \
-        dmidecode \
         hostname \
         which \
         findutils \
@@ -61,8 +59,8 @@ RUN true && \
     dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
-    # add-config-ini "felix.fileinstall.disableNio2=true" && \
-    # add-config-ini "felix.fileinstall.dir=/load" && \
+    add-config-ini "felix.fileinstall.disableNio2=true" && \
+    add-config-ini "felix.fileinstall.dir=/load" && \
     rm -rf /kura-install/ && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
     pack-kura

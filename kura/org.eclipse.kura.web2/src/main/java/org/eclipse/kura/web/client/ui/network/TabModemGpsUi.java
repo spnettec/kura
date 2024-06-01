@@ -174,12 +174,14 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
     }
 
     private void refreshForm() {
-        if (this.selectedModemIfConfig.isGpsSupported()) {
-            this.radio1.setEnabled(true);
-            this.radio2.setEnabled(true);
-        } else {
-            this.radio1.setEnabled(false);
-            this.radio2.setEnabled(false);
+        if (this.selectedModemIfConfig != null) {
+            if (this.selectedModemIfConfig.isGpsSupported()) {
+                this.radio1.setEnabled(true);
+                this.radio2.setEnabled(true);
+            } else {
+                this.radio1.setEnabled(false);
+                this.radio2.setEnabled(false);
+            }
         }
     }
 

@@ -14,7 +14,6 @@ COPY --from=kura_base /kura-install/kura_*_docker-x86_64-nn_installer.sh /kura-i
 COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
-  JAVA_HOME=/usr/lib/jvm/default-jvm \
   KURA_DIR=/opt/eclipse/kura \
   LAUNCHER_VERSION="1.6.500.v20230717-2134" 
 
@@ -24,7 +23,8 @@ RUN chmod a+x -R /usr/local/bin && \
     apk update && \
     apk --no-cache add openjdk17-jre-headless bash zip curl gcompat procps unzip gzip tar && \
     apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
-    apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat dmidecode && \
+    apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
+    apk --no-cache add shadow && \
     /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
@@ -48,8 +48,8 @@ RUN chmod a+x -R /usr/local/bin && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
     # dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
-    # add-config-ini "felix.fileinstall.disableNio2=true" && \
-    # add-config-ini "felix.fileinstall.dir=/load" && \
+    add-config-ini "felix.fileinstall.disableNio2=true" && \
+    add-config-ini "felix.fileinstall.dir=/load" && \
     rm -Rf /kura-install &&\
     pack-kura
 
