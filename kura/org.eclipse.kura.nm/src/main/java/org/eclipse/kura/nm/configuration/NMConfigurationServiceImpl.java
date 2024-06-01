@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
@@ -325,9 +326,11 @@ public class NMConfigurationServiceImpl implements SelfConfiguringComponent {
 
                 if (prop instanceof String) {
                     String keystorePid = (String) prop;
+                    if (keystorePid != null && keystorePid.equals("")) {
 
-                    findAndDecodeCertificatesForInterface(interfaceName, modifiedProps,
-                            this.keystoreServices.get(keystorePid));
+                        findAndDecodeCertificatesForInterface(interfaceName, modifiedProps,
+                                this.keystoreServices.get(keystorePid));
+                    }
                 }
             }
         });

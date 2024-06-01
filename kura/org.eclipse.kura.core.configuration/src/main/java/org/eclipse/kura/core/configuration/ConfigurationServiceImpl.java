@@ -245,8 +245,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
-                servicePid = servicePids.get(servicePids.size() - 1);
+            if (servicePids.size() > 0) {
+                servicePid = servicePids.get(0);
             }
         }
 
@@ -267,8 +267,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
-                servicePid = servicePids.get(servicePids.size() - 1);
+            if (servicePids.size() > 0) {
+                servicePid = servicePids.get(0);
             }
         }
 
@@ -288,8 +288,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
-                servicePid = servicePids.get(servicePids.size() - 1);
+            if (servicePids.size() > 0) {
+                servicePid = servicePids.get(0);
             }
         }
 
@@ -309,8 +309,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
-                servicePid = servicePids.get(servicePids.size() - 1);
+            if (servicePids.size() > 0) {
+                servicePid = servicePids.get(0);
             }
         }
 
@@ -1016,7 +1016,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             // merge the current properties, if any, with the defaults from metatype
             mergeWithDefaults(ocd, props);
 
-            config.updateIfDifferent(CollectionsUtil.mapToDictionary(props));
+            config.update(CollectionsUtil.mapToDictionary(props));
             logger.info("Seeding updated configuration for pid: {}", pid);
         }
     }
@@ -1381,7 +1381,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                                     logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
                                 }
                             } else {
-                                logger.error("Component {} is not a SelfConfiguringComponent. Ignoring it.", obj);
+                                logger.error("Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
+                                        obj, pid);
                             }
                         } finally {
                             this.ctx.getBundleContext().ungetService(ref);
@@ -1813,7 +1814,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         // Update the new properties
         // use ConfigurationAdmin to do the update
         Configuration config = this.configurationAdmin.getConfiguration(this.servicePidByPid.get(pid), "?");
-        config.updateIfDifferent(CollectionsUtil.mapToDictionary(mergedProperties));
+        config.update(CollectionsUtil.mapToDictionary(mergedProperties));
 
         if (snapshotOnConfirmation) {
             snapshot();

@@ -921,7 +921,6 @@
                                         <include name="*.zip" />
                                         <include name="kura_${project.version}_*.sh" />
                                         <include name="kura_${project.version}_*.dp" />
-                                        <exclude name="kura_${project.version}_*.dp" />
                                         <exclude name="kura_${project.version}_*.zip" />
                                     </fileset>
                                 </checksum>
@@ -932,7 +931,6 @@
                                         <include name="*.zip" />
                                         <include name="kura_${project.version}_*.sh" />
                                         <include name="kura_${project.version}_*.dp" />
-                                        <exclude name="kura_${project.version}_*.dp" />
                                         <exclude name="kura_${project.version}_*.zip" />
                                     </fileset>
                                 </checksum>
