@@ -26,9 +26,9 @@
     <packaging>eclipse-plugin</packaging>
 
     <properties>
-        <graalvm.version>23.0.3</graalvm.version>
-        <org.codehaus.groovy.version>3.0.17</org.codehaus.groovy.version>
-        <icu.version>74.2</icu.version>
+        <graalvm.version>23.0.4</graalvm.version>
+        <org.codehaus.groovy.version>3.0.21</org.codehaus.groovy.version>
+        <icu.version>75.1</icu.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.wire.script.tools.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
