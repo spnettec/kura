@@ -245,13 +245,16 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
+            if (servicePids.size() > 0) {
                 logger.error("addConfigurableComponent have multiple servicePids:{}", servicePids);
                 servicePid = servicePids.get(servicePids.size() - 1);
+            } else {
+                logger.error("addConfigurableComponent get null servicePids list");
             }
         }
 
         if (servicePid == null) {
+            logger.error("addConfigurableComponent pid is null. properties:{}", reference.getProperties());
             return;
         }
 
@@ -268,13 +271,16 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
+            if (servicePids.size() > 0) {
                 logger.error("removeConfigurableComponent have multiple servicePids:{}", servicePids);
                 servicePid = servicePids.get(servicePids.size() - 1);
+            } else {
+                logger.error("removeConfigurableComponent get null servicePids list");
             }
         }
 
         if (servicePid == null) {
+            logger.error("removeConfigurableComponent pid is null. properties:{}", reference.getProperties());
             return;
         }
 
@@ -290,13 +296,16 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
+            if (servicePids.size() > 0) {
                 logger.error("addSelfConfiguringComponent have multiple servicePids:{}", servicePids);
                 servicePid = servicePids.get(servicePids.size() - 1);
+            } else {
+                logger.error("addSelfConfiguringComponent get null servicePids list");
             }
         }
 
         if (servicePid == null) {
+            logger.error("addSelfConfiguringComponent pid is null. properties:{}", reference.getProperties());
             return;
         }
 
@@ -312,13 +321,16 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (serviceIds instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> servicePids = (List<String>) serviceIds;
-            if (servicePids.size() > 1) {
+            if (servicePids.size() > 0) {
                 logger.error("removeSelfConfiguringComponent have multiple servicePids:{}", servicePids);
                 servicePid = servicePids.get(servicePids.size() - 1);
+            } else {
+                logger.error("removeSelfConfiguringComponent get null servicePids list");
             }
         }
 
         if (servicePid == null) {
+            logger.error("removeSelfConfiguringComponent pid is null. properties:{}", reference.getProperties());
             return;
         }
 
@@ -1309,6 +1321,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     String ppid = (String) ref.getProperty(KURA_SERVICE_PID);
                     if (pid.equals(ppid)) {
                         Object obj = this.ctx.getBundleContext().getService(ref);
+                        if (obj == null) {
+                            logger.error("null ref object. properties:{}", ref.getProperties());
+                        }
                         try {
                             if (obj instanceof SelfConfiguringComponent) {
                                 SelfConfiguringComponent selfConfigComp = null;
@@ -1987,7 +2002,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
      * Convert property value to string
      *
      * @param value
-     *                  the input value
+     *            the input value
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {

@@ -326,7 +326,7 @@ public class NMConfigurationServiceImpl implements SelfConfiguringComponent {
 
                 if (prop instanceof String) {
                     String keystorePid = (String) prop;
-                    if (keystorePid != null && keystorePid.equals("")) {
+                    if (keystorePid != null && !keystorePid.equals("")) {
 
                         findAndDecodeCertificatesForInterface(interfaceName, modifiedProps,
                                 this.keystoreServices.get(keystorePid));
