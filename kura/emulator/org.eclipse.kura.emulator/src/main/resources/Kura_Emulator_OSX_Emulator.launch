@@ -68,6 +68,8 @@
         <setEntry value="org.eclipse.kura.example.camel.publisher"/>
         <setEntry value="org.eclipse.kura.example.camel.quickstart"/>
         <setEntry value="org.eclipse.kura.example.can"/>
+        <setEntry value="org.eclipse.kura.example.container.signature.validation"/>
+        <setEntry value="org.eclipse.kura.example.container.signature.validation.test"/>
         <setEntry value="org.eclipse.kura.example.driver.sensehat"/>
         <setEntry value="org.eclipse.kura.example.eddystone.advertiser"/>
         <setEntry value="org.eclipse.kura.example.eddystone.scanner"/>
@@ -75,6 +77,8 @@
         <setEntry value="org.eclipse.kura.example.gpio.led"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.advertiser"/>
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
+        <setEntry value="org.eclipse.kura.example.identity.configuration.extension"/>
+        <setEntry value="org.eclipse.kura.example.identity.configuration.extension.test"/>
         <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
         <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
