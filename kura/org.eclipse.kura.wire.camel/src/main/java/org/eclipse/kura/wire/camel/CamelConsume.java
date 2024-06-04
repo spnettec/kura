@@ -14,22 +14,14 @@ package org.eclipse.kura.wire.camel;
 
 import static java.util.Arrays.asList;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.camel.CamelContext;
 import org.apache.camel.Consumer;
 import org.apache.camel.Endpoint;
 import org.apache.camel.Message;
-import org.eclipse.kura.type.TypedValue;
-import org.eclipse.kura.type.TypedValues;
 import org.eclipse.kura.wire.WireEmitter;
 import org.eclipse.kura.wire.WireRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
 
 public class CamelConsume extends AbstractEndpointWireComponent implements WireEmitter {
 
@@ -39,7 +31,6 @@ public class CamelConsume extends AbstractEndpointWireComponent implements WireE
     private Consumer consumer;
 
     private CamelContext camelContext;
-    private Gson gson = new Gson();
 
     @Override
     protected void bindContext(final CamelContext context) {
@@ -86,7 +77,7 @@ public class CamelConsume extends AbstractEndpointWireComponent implements WireE
 
     }
 
-    private void stopConsumer() throws Exception {
+    private void stopConsumer() {
 
         if (this.consumer != null) {
             logger.info("Stopping consumer");
@@ -110,15 +101,7 @@ public class CamelConsume extends AbstractEndpointWireComponent implements WireE
             return;
         }
 
-        String headers = gson.toJson(message.getHeaders());
-        Map<String, TypedValue<?>> properties = new HashMap<>();
-        properties.put("headers", TypedValues.newStringValue(headers));
-        properties.put("body", TypedValues.newStringValue(String.valueOf(body)));
-        WireRecord wireRecord = new WireRecord(properties);
-
-        logger.debug("Consumed: {}", wireRecord);
-
-        this.wireSupport.emit(Arrays.asList(wireRecord));
+        this.wireSupport.emit(body);
 
     }
 }
