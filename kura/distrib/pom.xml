@@ -1530,6 +1530,8 @@
                                         <property name="kura.arch" value="generic-arm64" />
                                         <property name="service.manager" value="systemd" />
                                         <property name="os.base" value="debian" />
+                                        <property name="driver.ble" value="no" />
+                                        <property name="add.nvidia" value="yes" />
                                         <property name="kura.mem.size" value="512m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
                                         <property name="network.provider" value="network-manager" />
@@ -1913,6 +1915,7 @@
                                         <property name="kura.arch" value="x86_64" />
                                         <property name="service.manager" value="systemd" />
                                         <property name="os.base" value="linux-generic" />
+                                        <property name="add.nvidia" value="yes" />
                                         <property name="kura.mem.size" value="1024m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
                                         <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
@@ -2125,6 +2128,7 @@
                                         <property name="kura.arch" value="nvidia-jetson-nano" />
                                         <property name="service.manager" value="systemd" />
                                         <property name="os.base" value="debian" />
+                                        <property name="add.nvidia" value="yes" />
                                         <property name="kura.mem.size" value="1024m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
                                         <property name="network.provider" value="${kura.network.provider}" />
@@ -2218,6 +2222,7 @@
                                         <property name="native.tag" value="aarch64" />
                                         <property name="kura.os.version" value="ubuntu" />
                                         <property name="kura.arch" value="nvidia-jetson-nano-nn" />
+                                        <property name="add.nvidia" value="yes" />
                                         <property name="service.manager" value="systemd" />
                                         <property name="os.base" value="debian" />
                                         <property name="kura.mem.size" value="1024m" />

@@ -162,11 +162,7 @@
         </condition>
         
         <condition property="is.nvidia.jetson.nano">
-            <contains string="${build.name}" substring="nvidia-jetson-nano" />
-        </condition>
-
-        <condition property="is.nvidia.jetson.nano">
-            <contains string="${build.name}" substring="nvidia-jetson-nano" />
+            <contains string="${add.nvidia}" substring="yes" />
         </condition>
 
         <condition property="is.network.manager">
@@ -344,7 +340,6 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
@@ -403,7 +398,6 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=*:8000,suspend=n \
@@ -462,7 +456,6 @@ if [ -z "$KURA_RUNNING" ] ; then
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         ${OPEN_MODULE_OPTIONS} \
-        --add-modules=ALL-SYSTEM \
         -Dpolyglot.engine.WarnInterpreterOnly=false \
 		-Dio.netty.tryReflectionSetAccessible=true \
         -Dkura.os.version=${kura.os.version} \
