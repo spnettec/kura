@@ -62,11 +62,12 @@ public class BaseAssetExecutor {
             return ioTimeLimiter.callWithTimeout(task, timeOut, timeUnit);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo interrupt error", "call Interrupted");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo interrupt error",
+                    "call Interrupted-" + e.getMessage());
         } catch (TimeoutException e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo timeout error", "call timeout");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo timeout error", "call timeout-" + e.getMessage());
         } catch (Exception e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call exception");
+            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call exception-" + e.getMessage());
         }
 
     }
