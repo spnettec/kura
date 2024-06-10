@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2023 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -14,11 +14,13 @@ package org.eclipse.kura.web;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -82,9 +84,9 @@ public class ConsoleOptions {
     private final SelfConfiguringComponentProperty<Boolean> passwordRequireSpecialCharacters = new SelfConfiguringComponentProperty<>(
             new AdBuilder("new.password.require.special.characters", "%passwordRequireSpecialCharacters",
                     Tscalar.BOOLEAN) //
-                            .setDefault("false") //
-                            .setDescription("%passwordRequireSpecialCharactersDesc") //
-                            .build(), //
+                    .setDefault("false") //
+                    .setDescription("%passwordRequireSpecialCharactersDesc") //
+                    .build(), //
             Boolean.class);
 
     private final SelfConfiguringComponentProperty<Boolean> passwordRequireBothCases = new SelfConfiguringComponentProperty<>(
@@ -164,7 +166,7 @@ public class ConsoleOptions {
     }
 
     public String getSslManagerServiceTarget() {
-        return sslManagerServiceTarget.get();
+        return this.sslManagerServiceTarget.get();
     }
 
     public boolean isPortAllowed(final int port) {
@@ -264,9 +266,9 @@ public class ConsoleOptions {
         final SelfConfiguringComponentProperty<Boolean> result = new SelfConfiguringComponentProperty<>(
                 new AdBuilder(getAuthenticationMethodPropertyId(name), "%authenticationMethod" + name + "Enabled",
                         Tscalar.BOOLEAN) //
-                                .setDefault(Boolean.toString(enabledByDefault)) //
-                                .setDescription("%authenticationMethod" + name + "EnabledDesc") //
-                                .build(), //
+                        .setDefault(Boolean.toString(enabledByDefault)) //
+                        .setDescription("%authenticationMethod" + name + "EnabledDesc") //
+                        .build(), //
                 Boolean.class);
 
         this.authenticationMethodProperties.put(name, result);
@@ -275,7 +277,7 @@ public class ConsoleOptions {
     }
 
     private static String getAuthenticationMethodPropertyId(final String name) {
-        return "auth.method" + name.replaceAll(" ", ".");
+        return "auth.method" + name.replace(" ", ".");
     }
 
     private void addAuthenticationMethodProperties() {
@@ -284,6 +286,42 @@ public class ConsoleOptions {
         for (final String authMethod : Console.instance().getAuthenticationMethods()) {
             addAuthenticationMethodProperty(authMethod, builtinAuthenticationMethods.contains(authMethod));
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.allowedPorts, this.appRoot, this.authenticationMethodProperties, this.bannerContent,
+                this.bannerEnabled, this.config, this.configurationProperties, this.passwordMinLength,
+                this.passwordRequireBothCases, this.passwordRequireDigits, this.passwordRequireSpecialCharacters,
+                this.sessionMaxInactivityInterval, this.sslManagerServiceTarget);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        ConsoleOptions other = (ConsoleOptions) obj;
+
+        return Objects.equals(this.appRoot.get(), other.appRoot.get())
+                && Objects.equals(this.sessionMaxInactivityInterval.get(), other.sessionMaxInactivityInterval.get())
+                && Objects.equals(this.bannerEnabled.get(), other.bannerEnabled.get())
+                && Objects.equals(this.bannerContent.get(), other.bannerContent.get())
+                && Objects.equals(this.passwordMinLength.get(), other.passwordMinLength.get())
+                && Objects.equals(this.passwordRequireDigits.get(), other.passwordRequireDigits.get())
+                && Objects.equals(this.passwordRequireSpecialCharacters.get(),
+                        other.passwordRequireSpecialCharacters.get())
+                && Objects.equals(this.passwordRequireBothCases.get(), other.passwordRequireBothCases.get())
+                && Arrays.equals(
+                        this.allowedPorts.getOptional().isPresent() ? this.allowedPorts.get() : new Integer[] {},
+                        other.allowedPorts.getOptional().isPresent() ? other.allowedPorts.get() : new Integer[] {})
+                && Objects.equals(this.sslManagerServiceTarget.get(), other.sslManagerServiceTarget.get())
+                && Objects.equals(getEnabledAuthMethods(), other.getEnabledAuthMethods());
+
     }
 
 }
