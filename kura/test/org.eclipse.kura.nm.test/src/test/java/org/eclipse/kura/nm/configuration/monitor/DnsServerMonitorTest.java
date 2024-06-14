@@ -29,7 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.executor.CommandExecutorService;
-import org.eclipse.kura.internal.linux.net.dns.DnsServerService;
+import org.eclipse.kura.net.dns.DnsServerService;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.dns.DnsServerConfigIP4;
 import org.eclipse.kura.nm.NetworkProperties;

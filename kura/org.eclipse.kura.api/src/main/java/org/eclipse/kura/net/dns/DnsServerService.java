@@ -10,10 +10,9 @@
  * Contributors:
  *  Eurotech
  *******************************************************************************/
-package org.eclipse.kura.internal.linux.net.dns;
+package org.eclipse.kura.net.dns;
 
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.net.dns.DnsServerConfig;
 
 /**
  * Interface to manage the DNS Service running in the underlying operating system.

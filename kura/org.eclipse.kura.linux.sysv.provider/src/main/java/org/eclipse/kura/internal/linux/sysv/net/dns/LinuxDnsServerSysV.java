@@ -15,8 +15,8 @@ package org.eclipse.kura.internal.linux.sysv.net.dns;
 
 import java.io.File;
 
-import org.eclipse.kura.internal.linux.net.dns.DnsServerService;
 import org.eclipse.kura.linux.net.dns.LinuxDnsServer;
+import org.eclipse.kura.net.dns.DnsServerService;
 
 public class LinuxDnsServerSysV extends LinuxDnsServer implements DnsServerService {
 

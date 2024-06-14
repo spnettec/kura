@@ -1321,9 +1321,6 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                     String ppid = (String) ref.getProperty(KURA_SERVICE_PID);
                     if (pid.equals(ppid)) {
                         Object obj = this.ctx.getBundleContext().getService(ref);
-                        if (obj == null) {
-                            logger.error("null ref object. properties:{}", ref.getProperties());
-                        }
                         try {
                             if (obj instanceof SelfConfiguringComponent) {
                                 SelfConfiguringComponent selfConfigComp = null;
@@ -1401,6 +1398,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                             } else {
                                 logger.error("Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
                                         obj, pid);
+                                if (obj == null) {
+                                    logger.warn("null ref object. properties:{}", ref.getProperties());
+                                    cc = getConfigurableComponentConfiguration(pid);
+                                }
                             }
                         } finally {
                             this.ctx.getBundleContext().ungetService(ref);

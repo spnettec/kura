@@ -16,7 +16,7 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" enabled="true" immediate="true" name="org.eclipse.kura.net.sysv.provider.DnsServerService">
    <implementation class="org.eclipse.kura.internal.linux.sysv.net.dns.LinuxDnsServerSysV"/>
    <service>
-      <provide interface="org.eclipse.kura.internal.linux.net.dns.DnsServerService"/>
+      <provide interface="org.eclipse.kura.net.dns.DnsServerService"/>
    </service>
    <property name="service.pid" value="org.eclipse.kura.net.sysv.provider.DnsServerService"/>
    <reference bind="setExecutorService" cardinality="1..1" interface="org.eclipse.kura.executor.PrivilegedExecutorService" name="PrivilegedExecutorService" policy="static" unbind="unsetExecutorService"/>
