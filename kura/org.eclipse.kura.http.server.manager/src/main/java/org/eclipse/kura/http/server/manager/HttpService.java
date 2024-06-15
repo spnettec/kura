@@ -292,6 +292,6 @@ public class HttpService implements ConfigurableComponent, EventHandler {
                 autoWaitKeystoreServiceAttempt++;
             }
 
-        }, 2000, 500);
+        }, 2000, 1000);
     }
 }
