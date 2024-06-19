@@ -137,7 +137,7 @@
     <properties>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
-        <tycho-version>4.0.6</tycho-version>
+        <tycho-version>4.0.8</tycho-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
@@ -206,7 +206,7 @@
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>4.0.6</tycho-version>
+                <tycho-version>4.0.8</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -DbuildingWithTycho=true -Dosgi.locking=none

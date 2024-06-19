@@ -332,11 +332,6 @@
 									<artifactId>camel-log</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
-								<artifactItem>
-									<groupId>org.apache.camel.karaf</groupId>
-									<artifactId>camel-core-osgi</artifactId>
-									<version>${org.apache.camel.version}</version>
-								</artifactItem>
                             </artifactItems>
                         </configuration>
                         <goals>
