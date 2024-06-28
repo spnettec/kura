@@ -508,11 +508,11 @@ public class NMConfigurationServiceImpl implements SelfConfiguringComponent {
                 DhcpServerConfigWriter dhcpServerConfigWriter = buildDhcpServerConfigWriter(interfaceName,
                         this.networkProperties);
                 try {
-                    dhcpServerConfigWriter.writeConfiguration();
-                    this.dhcpServerMonitor.putDhcpServerInterfaceConfiguration(interfaceName, true);
                     this.dhcpServerMonitor.disable(interfaceName); // Side effect: we rely on the monitor bringing the
                                                                    // server back up so that the configuration change
                                                                    // takes effect
+                    dhcpServerConfigWriter.writeConfiguration();
+                    this.dhcpServerMonitor.putDhcpServerInterfaceConfiguration(interfaceName, true);
 
                 } catch (UnknownHostException | KuraException e) {
                     logger.error("Failed to write DHCP Server configuration", e);
