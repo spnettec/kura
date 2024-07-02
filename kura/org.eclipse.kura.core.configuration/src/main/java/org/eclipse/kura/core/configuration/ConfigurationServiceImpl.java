@@ -1396,11 +1396,15 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                                     logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
                                 }
                             } else {
-                                logger.error("Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
-                                        obj, pid);
                                 if (obj == null) {
-                                    logger.warn("null ref object. properties:{}", ref.getProperties());
                                     cc = getConfigurableComponentConfiguration(pid);
+                                    if (cc == null) {
+                                        logger.error("null ref object. properties:{}", ref.getProperties());
+                                    }
+                                } else {
+                                    logger.error(
+                                            "Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
+                                            obj, pid);
                                 }
                             }
                         } finally {
