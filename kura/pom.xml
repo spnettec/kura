@@ -201,7 +201,7 @@
         <profile>
             <id>java17</id>
             <activation>
-                <jdk>[17,21]</jdk>
+                <jdk>[17,22]</jdk>
             </activation>
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
