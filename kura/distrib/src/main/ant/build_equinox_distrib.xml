@@ -160,6 +160,10 @@
                 </not>
             </and>
         </condition>
+        
+        <condition property="is.nvidia.jetson.nano">
+            <contains string="${add.nvidia}" substring="yes" />
+        </condition>
 
         <copy file="src/main/resources/${build.name}/snapshot_0.xml"
             tofile="${project.build.directory}/${build.output.name}/snapshot_0.xml" failonerror="false" />
@@ -273,6 +277,8 @@
         <antcall target="linux-debian-config" />
         <antcall target="linux-redhat-config" />
         <antcall target="linux-systemd-config" />
+        <antcall target="ai-wire-config" />
+        <antcall target="nvidia-triton-server-config" />
         <antcall target="linux-network-manager-config" />
 
         <!-- Add mToolkit to config.ini -->
@@ -835,6 +841,7 @@ fi]]>
         <antcall target="linux-debian-jars" />
         <antcall target="linux-redhat-jars" />
         <antcall target="linux-systemd-jars" />
+        <antcall target="nvidia-jetson-nano-jars" />
         <antcall target="linux-network-manager-jars" />
 
         <echo message="Building Kura Distribution for ${build.name}-jars..." />
@@ -2013,6 +2020,22 @@ fi]]>
         </propertyfile>
     </target>
 
+    <target name="ai-wire-config" if="is.nvidia.jetson.nano">
+        <propertyfile
+            file="${project.build.directory}/${build.output.name}/config.ini">
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.wire.ai.component.provider_${org.eclipse.kura.wire.ai.component.provider.version}.jar@4:start" />
+        </propertyfile>
+    </target>
+
+    <target name="nvidia-triton-server-config" if="is.nvidia.jetson.nano">
+        <propertyfile
+            file="${project.build.directory}/${build.output.name}/config.ini">
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar@4:start" />
+        </propertyfile>
+    </target>
+
     <target name="event-publisher-config">
         <propertyfile file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
@@ -2092,16 +2115,28 @@ fi]]>
         </zip>
     </target>
 
-    <target name="web2-jar-win" if="is.web2.jar.available">
-        <echo
-            message="web2-jar-win ${project.build.directory}/${build.output.name}/config.ini..." />
-        <copy
-            file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
-            todir="${build.install.dir.kura}/kura/plugins" />
-        <copy
-            file="../target-definition/common/repository/plugins/com.gwt.user_${com.gwt.user.version}.jar"
-            todir="${build.install.dir.kura}/plugins" />
+    <target name="nvidia-jetson-nano-jars" if="is.nvidia.jetson.nano">
+        <zip destfile="${project.build.directory}/${build.output.name}.zip"
+            update="true">
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.wire.ai.component.provider_${org.eclipse.kura.wire.ai.component.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+        </zip>
     </target>
+
+	<target name="web2-jar-win" if="is.web2.jar.available">
+		<echo
+			message="web2-jar-win ${project.build.directory}/${build.output.name}/config.ini..." />
+		<copy
+			file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
+			todir="${build.install.dir.kura}/kura/plugins" />
+		<copy
+			file="../target-definition/common/repository/plugins/org.gwtproject.gwt-user_${gwt-user.version}.jar"
+			todir="${build.install.dir.kura}/plugins" />
+	</target>
 
     <target name="emulator-gpio-jar-win">
         <echo
