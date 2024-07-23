@@ -74,7 +74,7 @@
                 <file>
                     <exists>sourceTemplateFeature/feature.properties</exists>
                 </file>
-                <jdk>[17,21]</jdk>
+                <jdk>[17,22]</jdk>
             </activation>
             <build>
                 <plugins>
