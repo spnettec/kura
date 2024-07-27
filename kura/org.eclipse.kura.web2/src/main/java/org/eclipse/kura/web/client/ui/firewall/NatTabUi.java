@@ -686,6 +686,12 @@ public class NatTabUi extends Composite implements Tab, ButtonBar.Listener {
         this.tooltipSource.setTitle(MSGS.firewallNatFormSourceNetworkToolTip());
         this.tooltipDestination.setTitle(MSGS.firewallNatFormDestinationNetworkToolTip());
         this.tooltipEnable.setTitle(MSGS.firewallNatFormMasqueradingToolTip());
+        this.tooltipInput.reconfigure();
+        this.tooltipOutput.reconfigure();
+        this.tooltipProtocol.reconfigure();
+        this.tooltipSource.reconfigure();
+        this.tooltipDestination.reconfigure();
+        this.tooltipEnable.reconfigure();
     }
 
     private void setModalFieldsLabels() {

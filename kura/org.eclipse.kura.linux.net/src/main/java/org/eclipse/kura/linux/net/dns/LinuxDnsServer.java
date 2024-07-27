@@ -293,7 +293,7 @@ public abstract class LinuxDnsServer {
         sb.append("};\n");
 
         sb.append("\tforward only;\n") //
-                .append("\tallow-transfer{\"none\";};\n") //
+                .append("\tallow-transfer {\"none\";};\n") //
                 .append("\tallow-query {");
 
         Set<NetworkPair<IP4Address>> allowedNetworks = this.dnsServerConfigIP4.getAllowedNetworks();

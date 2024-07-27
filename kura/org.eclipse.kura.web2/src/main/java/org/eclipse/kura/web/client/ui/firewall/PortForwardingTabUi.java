@@ -912,6 +912,16 @@ public class PortForwardingTabUi extends Composite implements Tab, ButtonBar.Lis
         this.tooltipPermittedNw.setTitle(MSGS.firewallPortForwardFormPermittedNetworkToolTip());
         this.tooltipPermittedMac.setTitle(MSGS.firewallPortForwardFormPermittedMacAddressToolTip());
         this.tooltipSource.setTitle(MSGS.firewallPortForwardFormSourcePortRangeToolTip());
+        this.tooltipInput.reconfigure();
+        this.tooltipOutput.reconfigure();
+        this.tooltipLan.reconfigure();
+        this.tooltipProtocol.reconfigure();
+        this.tooltipExternal.reconfigure();
+        this.tooltipInternal.reconfigure();
+        this.tooltipEnable.reconfigure();
+        this.tooltipPermittedNw.reconfigure();
+        this.tooltipPermittedMac.reconfigure();
+        this.tooltipSource.reconfigure();
     }
 
     private void setModalFieldsLabels() {

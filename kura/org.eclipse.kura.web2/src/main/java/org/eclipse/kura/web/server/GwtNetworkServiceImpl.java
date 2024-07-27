@@ -60,6 +60,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
 
     private static final long serialVersionUID = -4188750359099902616L;
     private static final String FIREWALL_CONFIGURATION_SERVICE_PID = "org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6";
+    private static final String FIREWALL_CONFIGURATION_SERVICE_PID_V4 = "org.eclipse.kura.net.admin.FirewallConfigurationService";
     private static final String UNKNOWN_NETWORK_IP6_SHORT = "::/0";
     private static final String UNKNOWN_NETWORK_IP6_LONG = "0:0:0:0:0:0:0:0/0";
     private static final String UNKNOWN_NETWORK_IP4 = "0.0.0.0/0";
@@ -411,7 +412,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(openPortsPropName, openPorts.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -505,7 +506,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(portForwardingPropName, portForwarding.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -596,7 +597,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(natPropName, nat.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
