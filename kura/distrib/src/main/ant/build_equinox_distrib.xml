@@ -212,7 +212,7 @@
 		<antcall target="linux.command-config" />
 		<antcall target="linux.position-config" />
 		<antcall target="linux.usb-config" />
-		<antcall target="linux.bluetooth-config" />
+		<antcall target="bluetooth-config" />
 		<antcall target="linux.watchdog-config" />
 
         <!-- Added Camel bundles configs -->
@@ -762,9 +762,6 @@ fi]]>
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.linux.usb.${native.tag}_${org.eclipse.kura.linux.usb.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.ble.provider_${org.eclipse.kura.ble.provider.version}.jar"
@@ -1345,11 +1342,9 @@ fi]]>
         </propertyfile>
     </target>
 
-	<target name="linux.bluetooth-config" unless="isnot.ble">
+	<target name="bluetooth-config" unless="isnot.ble">
 		<propertyfile
 			file="${project.build.directory}/${build.output.name}/config.ini">
-			<entry key="osgi.bundles" operation="+"
-				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
 				value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.ble.provider_${org.eclipse.kura.ble.provider.version}.jar@4:start" />
 			<entry key="osgi.bundles" operation="+"
