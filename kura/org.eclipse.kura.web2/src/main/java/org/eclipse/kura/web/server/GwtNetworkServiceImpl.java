@@ -59,8 +59,8 @@ import org.slf4j.LoggerFactory;
 public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements GwtNetworkService {
 
     private static final long serialVersionUID = -4188750359099902616L;
-    private static final String FIREWALL_CONFIGURATION_SERVICE_PID = "org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6";
-    private static final String FIREWALL_CONFIGURATION_SERVICE_PID_V4 = "org.eclipse.kura.net.admin.FirewallConfigurationService";
+    private static final String FIREWALL_IPV4_CONFIGURATION_SERVICE_PID = "org.eclipse.kura.net.admin.FirewallConfigurationService";
+    private static final String FIREWALL_IPV6_CONFIGURATION_SERVICE_PID = "org.eclipse.kura.net.admin.ipv6.FirewallConfigurationServiceIPv6";
     private static final String UNKNOWN_NETWORK_IP6_SHORT = "::/0";
     private static final String UNKNOWN_NETWORK_IP6_LONG = "0:0:0:0:0:0:0:0/0";
     private static final String UNKNOWN_NETWORK_IP4 = "0.0.0.0/0";
@@ -257,11 +257,11 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
         }
         return new ArrayList<>(gwtOpenPortEntries);
 
-        // if (isNet2()) {
-        // return org.eclipse.kura.web.server.net2.GwtNetworkServiceImpl.findDeviceFirewallOpenPortsIPv6();
-        // } else {
-        // throw new GwtKuraException(GwtKuraErrorCode.OPERATION_NOT_SUPPORTED);
-        // }
+//        if (isNet2()) {
+//            return org.eclipse.kura.web.server.net2.GwtNetworkServiceImpl.findDeviceFirewallOpenPortsIPv6();
+//        } else {
+//            throw new GwtKuraException(GwtKuraErrorCode.OPERATION_NOT_SUPPORTED);
+//        }
     }
 
     @Override
@@ -412,7 +412,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(openPortsPropName, openPorts.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV4_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -458,7 +458,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(openPortsPropName, openPorts.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV6_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -506,7 +506,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(portForwardingPropName, portForwarding.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV4_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -555,7 +555,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(portForwardingPropName, portForwarding.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV6_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -597,7 +597,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(natPropName, nat.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID_V4, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV4_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -639,7 +639,7 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             }
 
             properties.put(natPropName, nat.toString());
-            configurationService.updateConfiguration(FIREWALL_CONFIGURATION_SERVICE_PID, properties, true);
+            configurationService.updateConfiguration(FIREWALL_IPV6_CONFIGURATION_SERVICE_PID, properties, true);
         } catch (KuraException | UnknownHostException e) {
             throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR, e);
         }
@@ -683,10 +683,13 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
             entry.setPortRange(String.valueOf(firewallOpenPortConfigIP.getPort()));
         }
         entry.setProtocol(firewallOpenPortConfigIP.getProtocol().toString());
-        entry.setPermittedNetwork(firewallOpenPortConfigIP.getPermittedNetwork().getIpAddress().getHostAddress() + "/"
+        entry.setPermittedNetwork(firewallOpenPortConfigIP.getPermittedNetwork()
+                .getIpAddress().getHostAddress() + "/"
                 + firewallOpenPortConfigIP.getPermittedNetwork().getPrefix());
-        entry.setPermittedInterfaceName(firewallOpenPortConfigIP.getPermittedInterfaceName());
-        entry.setUnpermittedInterfaceName(firewallOpenPortConfigIP.getUnpermittedInterfaceName());
+        entry.setPermittedInterfaceName(
+                firewallOpenPortConfigIP.getPermittedInterfaceName());
+        entry.setUnpermittedInterfaceName(
+                firewallOpenPortConfigIP.getUnpermittedInterfaceName());
         entry.setPermittedMAC(firewallOpenPortConfigIP.getPermittedMac());
         entry.setSourcePortRange(firewallOpenPortConfigIP.getSourcePortRange());
         return entry;
@@ -703,7 +706,8 @@ public class GwtNetworkServiceImpl extends OsgiRemoteServiceServlet implements G
         entry.setOutPort(firewallPortForwardConfigIP.getOutPort());
         String masquerade = firewallPortForwardConfigIP.isMasquerade() ? "yes" : "no";
         entry.setMasquerade(masquerade);
-        entry.setPermittedNetwork(firewallPortForwardConfigIP.getPermittedNetwork().toString());
+        entry.setPermittedNetwork(
+                firewallPortForwardConfigIP.getPermittedNetwork().toString());
         entry.setPermittedMAC(firewallPortForwardConfigIP.getPermittedMac());
         entry.setSourcePortRange(firewallPortForwardConfigIP.getSourcePortRange());
         return entry;
