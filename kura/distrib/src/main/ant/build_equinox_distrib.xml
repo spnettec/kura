@@ -127,22 +127,6 @@
         <condition property="is.docker">
             <contains string="${build.name}" substring="docker" />
         </condition>
-        <condition property="is.sysv">
-            <and>
-                <contains string="${service.manager}" substring="sysv" />
-                <not>
-                    <contains string="${build.name}" substring="-nn" />
-                </not>
-            </and>
-        </condition>
-        <condition property="is.systemd">
-            <and>
-                <contains string="${service.manager}" substring="systemd" />
-                <not>
-                    <contains string="${build.name}" substring="-nn" />
-                </not>
-            </and>
-        </condition>
 
         <condition property="is.debian">
             <and>
@@ -273,10 +257,8 @@
         <antcall target="gpio-config" />
         <antcall target="emulator-gpio-config" />
         <antcall target="emulator-config" />
-        <antcall target="linux-sysv-config" />
         <antcall target="linux-debian-config" />
         <antcall target="linux-redhat-config" />
-        <antcall target="linux-systemd-config" />
         <antcall target="ai-wire-config" />
         <antcall target="nvidia-triton-server-config" />
         <antcall target="linux-network-manager-config" />
@@ -477,9 +459,7 @@ fi]]>
         <!-- Populate parameters -->
         <copy file="src/main/resources/${build.name}/kura_install.sh"
             tofile="${project.build.directory}/${build.output.name}/kura_install.sh" />
-        <copy file="src/main/resources/common/kura.init.yocto"
-            tofile="${project.build.directory}/${build.output.name}/kura.init.yocto"
-            failonerror="false" />
+        
         <copy file="src/main/resources/common/kura.init.raspbian"
             tofile="${project.build.directory}/${build.output.name}/kura.init.raspbian"
             failonerror="false" />
@@ -542,12 +522,6 @@ fi]]>
                 prefix="${build.output.name}/${install.folder}/" filemode="700" />
 
             <zipfileset
-                file="${project.build.directory}/${build.output.name}/kura.init.yocto"
-                prefix="${build.output.name}/${install.folder}" filemode="700" />
-            <zipfileset
-                file="${project.build.directory}/${build.output.name}/kura.init.raspbian"
-                prefix="${build.output.name}/${install.folder}" filemode="700" />
-            <zipfileset
                 file="${project.build.directory}/${build.output.name}/kura.service"
                 prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/${build.name}/firewall.service"
@@ -556,29 +530,6 @@ fi]]>
                 prefix="${build.output.name}/${install.folder}" filemode="700" />
             <zipfileset file="src/main/resources/${build.name}/iptables.init"
                 prefix="${build.output.name}/${install.folder}" filemode="700" />
-            <zipfileset file="src/main/resources/${build.name}/hostapd.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/dhcpd-eth0.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/dhcpd-wlan0.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/dhcpd-enp2s0.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/dhcpd-wlp4s0.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/ifcfg-enp2s0"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/ifcfg-enp3s0"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/ifcfg-wlp4s0"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/monit.init.raspbian"
-                prefix="${build.output.name}/${install.folder}" filemode="700" />
-
-            <zipfileset file="src/main/resources/common/monitrc.raspbian"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/network.interfaces"
-                prefix="${build.output.name}/${install.folder}" />
 
             <zipfileset file="src/main/resources/common/kura-tmpfiles.conf"
                 prefix="${build.output.name}/${install.folder}" />
@@ -586,12 +537,6 @@ fi]]>
             <zipfileset file="src/main/resources/${build.name}/kura.logrotate"
                 prefix="${build.output.name}/${install.folder}" />
 
-            <zipfileset file="src/main/resources/common/sysctl.kura.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/sysctl.kura.raspbian.conf"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/patch_sysctl.sh"
-                prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/common/find_net_interfaces.py"
                 prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/common/comment_interfaces_file.py"
@@ -611,31 +556,15 @@ fi]]>
                 <include name="*" />
             </zipfileset>
             
-            <zipfileset file="src/main/resources/common/named/named.conf"
-                prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/common/named/named.ca"
                 prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/common/named/named.rfc1912.zones"
                 prefix="${build.output.name}/${install.folder}" />
             <zipfileset file="src/main/resources/common/named/usr.sbin.named"
                 prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/${build.name}/bind.init"
-                prefix="${build.output.name}/${install.folder}" />
-
-            <zipfileset file="src/main/resources/common/ifdown-local"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/ifup-local"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/ifup-local.debian"
-                prefix="${build.output.name}/${install.folder}" />
-            <zipfileset file="src/main/resources/common/ifup-local.raspbian"
-                prefix="${build.output.name}/${install.folder}" />
 
             <zipfileset file="src/main/resources/common/dnsmasq"
                 prefix="${build.output.name}/${install.folder}" />
-
-            <zipfileset file="${project.build.directory}/${build.output.name}/selinuxKura.pp"
-            	prefix="${build.output.name}/${install.folder}" />
 
             <zipfileset
                 file="${project.build.directory}/${build.output.name}/start_kura.sh"
@@ -830,11 +759,8 @@ fi]]>
         <antcall target="gpio-jar" />
         <antcall target="emulator-gpio-jar" />
         <antcall target="emulator-jars" />
-        <antcall target="linux-sysv-jars" />
         <antcall target="linux-debian-jars" />
         <antcall target="linux-redhat-jars" />
-        <antcall target="linux-systemd-jars" />
-        <antcall target="nvidia-jetson-nano-jars" />
         <antcall target="linux-network-manager-jars" />
 
         <echo message="Building Kura Distribution for ${build.name}-jars..." />
@@ -1965,6 +1891,11 @@ fi]]>
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.net_${org.eclipse.kura.linux.net.version}.jar@4" />
         </propertyfile>
+        <propertyfile
+            file="${project.build.directory}/${build.output.name}/config.ini">
+            <entry key="osgi.bundles" operation="+"
+                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.systemd.provider_${org.eclipse.kura.linux.systemd.provider.version}.jar@4" />
+        </propertyfile>
     </target>
 
     <target name="linux-network-manager-config" depends="linux-config">
@@ -1976,14 +1907,6 @@ fi]]>
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.net.admin.firewall_${org.eclipse.kura.net.admin.firewall.version}.jar@5:start" />
             <entry key="osgi.bundles" operation="+"
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar@4:start" />
-        </propertyfile>
-    </target>
-
-    <target name="linux-sysv-config" if="is.sysv">
-        <propertyfile
-            file="${project.build.directory}/${build.output.name}/config.ini">
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.sysv.provider_${org.eclipse.kura.linux.sysv.provider.version}.jar@4" />
         </propertyfile>
     </target>
 
@@ -2003,15 +1926,7 @@ fi]]>
         </propertyfile>
     </target>
 
-    <target name="linux-systemd-config" if="is.systemd">
-        <propertyfile
-            file="${project.build.directory}/${build.output.name}/config.ini">
-            <entry key="osgi.bundles" operation="+"
-                value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.linux.systemd.provider_${org.eclipse.kura.linux.systemd.provider.version}.jar@4" />
-        </propertyfile>
-    </target>
-
-    <target name="ai-wire-config" if="is.nvidia.jetson.nano">
+	<target name="ai-wire-config" if="is.nvidia.jetson.nano">
         <propertyfile
             file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
@@ -2026,7 +1941,7 @@ fi]]>
                 value=", reference:file:${kura.install.dir}/${kura.symlink}/${plugins.folder}/org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar@4:start" />
         </propertyfile>
     </target>
-
+    
     <target name="event-publisher-config">
         <propertyfile file="${project.build.directory}/${build.output.name}/config.ini">
             <entry key="osgi.bundles" operation="+"
@@ -2053,6 +1968,12 @@ fi]]>
                 file="${project.build.directory}/plugins/org.eclipse.kura.linux.net_${org.eclipse.kura.linux.net.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
         </zip>
+        <zip destfile="${project.build.directory}/${build.output.name}.zip"
+            update="true">
+            <zipfileset
+                file="${project.build.directory}/plugins/org.eclipse.kura.linux.systemd.provider_${org.eclipse.kura.linux.systemd.provider.version}.jar"
+                prefix="${build.output.name}/${plugins.folder}" />
+        </zip>
     </target>
 
     <target name="linux-network-manager-jars">
@@ -2066,15 +1987,6 @@ fi]]>
                 prefix="${build.output.name}/${plugins.folder}" />
             <zipfileset
                 file="${project.build.directory}/plugins/org.eclipse.kura.rest.network.status.provider_${org.eclipse.kura.rest.network.status.provider.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-        </zip>
-    </target>
-	
-    <target name="linux-sysv-jars" if="is.sysv" depends="linux-jars">
-        <zip destfile="${project.build.directory}/${build.output.name}.zip"
-            update="true">
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.linux.sysv.provider_${org.eclipse.kura.linux.sysv.provider.version}.jar"
                 prefix="${build.output.name}/${plugins.folder}" />
         </zip>
     </target>
@@ -2096,38 +2008,17 @@ fi]]>
                 prefix="${build.output.name}/${plugins.folder}" />
         </zip>
     </target>
-
-    <target name="linux-systemd-jars" if="is.systemd" depends="linux-jars">
-        <zip destfile="${project.build.directory}/${build.output.name}.zip"
-            update="true">
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.linux.systemd.provider_${org.eclipse.kura.linux.systemd.provider.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-        </zip>
+        
+    <target name="web2-jar-win" if="is.web2.jar.available">
+        <echo
+            message="web2-jar-win ${project.build.directory}/${build.output.name}/config.ini..." />
+        <copy
+            file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
+            todir="${build.install.dir.kura}/kura/plugins" />
+        <copy
+            file="../target-definition/common/repository/plugins/com.gwt.user_${com.gwt.user.version}.jar"
+            todir="${build.install.dir.kura}/plugins" />
     </target>
-
-    <target name="nvidia-jetson-nano-jars" if="is.nvidia.jetson.nano">
-        <zip destfile="${project.build.directory}/${build.output.name}.zip"
-            update="true">
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.wire.ai.component.provider_${org.eclipse.kura.wire.ai.component.provider.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-            <zipfileset
-                file="${project.build.directory}/plugins/org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar"
-                prefix="${build.output.name}/${plugins.folder}" />
-        </zip>
-    </target>
-
-	<target name="web2-jar-win" if="is.web2.jar.available">
-		<echo
-			message="web2-jar-win ${project.build.directory}/${build.output.name}/config.ini..." />
-		<copy
-			file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
-			todir="${build.install.dir.kura}/kura/plugins" />
-		<copy
-			file="../target-definition/common/repository/plugins/org.gwtproject.gwt-user_${gwt-user.version}.jar"
-			todir="${build.install.dir.kura}/plugins" />
-	</target>
 
     <target name="emulator-gpio-jar-win">
         <echo

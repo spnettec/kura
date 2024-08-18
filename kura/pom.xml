@@ -96,7 +96,6 @@
         <module>org.eclipse.kura.wire.component.join.provider</module>
         <module>org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider</module>
         <module>org.eclipse.kura.cloudconnection.raw.mqtt.provider</module>
-        <module>org.eclipse.kura.linux.sysv.provider</module>
         <module>org.eclipse.kura.linux.systemd.provider</module>
         <module>org.eclipse.kura.linux.debian.provider</module>
         <module>org.eclipse.kura.linux.redhat.provider</module>
@@ -146,8 +145,8 @@
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
         <kura.addons.url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</kura.addons.url>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
 
         <!-- plugins versions common to Java 8 and Java 17 builds -->
         <bnd.baseline.version>7.0.0</bnd.baseline.version>
@@ -228,9 +227,6 @@
                     --add-opens java.base/java.util=ALL-UNNAMED
                 </tycho.surefire.testenv.args>
             </properties>
-            <modules>
-                <module>features</module>
-            </modules>
         </profile>
         <profile>
             <id>default</id>
@@ -325,7 +321,8 @@
             <properties>
                 <org.eclipse.kura.web.skip>false</org.eclipse.kura.web.skip>
             </properties>
-            <activation>  <!-- deactivated if noweb property is selected -->
+            <activation>
+                <!-- deactivated if noweb property is selected -->
                 <property>
                     <name>kura.skip.web</name>
                     <value>!true</value>
@@ -472,17 +469,17 @@
                         <environment>
                           <os>win32</os>
                           <ws>win32</ws>
-                          <arch>x86_64</arch>
+                          <arch>x86</arch>
                         </environment>
                         <environment>
                           <os>linux</os>
                           <ws>gtk</ws>
-                          <arch>x86_64</arch>
+                          <arch>x86</arch>
                         </environment>
                         <environment>
                           <os>macosx</os>
                           <ws>cocoa</ws>
-                          <arch>x86_64</arch>
+                          <arch>x86</arch>
                         </environment>
                     </environments>
                 </configuration>

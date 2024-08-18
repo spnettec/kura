@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2018, 2020 Eurotech and/or its affiliates and others
-  
+    Copyright (c) 2018, 2024 Eurotech and/or its affiliates and others
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
-	SPDX-License-Identifier: EPL-2.0
-	
-	Contributors:
-	 Eurotech
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
 
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/ConnectionManager">
@@ -56,15 +56,7 @@
             required="true"
             default="false"
             description="%gpsLockDesc"/>
-        
-        <AD id="republish.mqtt.birth.cert.on.modem.detect"
-            name="%modemDetect"
-            type="Boolean"
-            cardinality="0"
-            required="true"
-            default="false"
-            description="%modemDetectDesc"/>
-        
+
         <AD id="payload.encoding"
             name="%payload"
             type="String"
