@@ -592,26 +592,13 @@ fi]]>
 
             <zipfileset dir="${kura.osgi.repo}/plugins/" prefix="${build.output.name}/${plugins.folder}">
 
-				<!-- exclude source bundles -->
-				<exclude name="*.source_*.jar" />
+                <include name="org.eclipse.osgi_*.jar" />
+                <include name="org.eclipse.equinox.launcher_*.jar" />
 
             </zipfileset>
 
             <zipfileset dir="${project.build.directory}/${build.output.name}/plugins"
                 prefix="${build.output.name}/${plugins.folder}">
-
-                <exclude name="com.google.protobuf_2.6.0.jar" />
-                <exclude name="org.eclipse.paho.*" />
-                <exclude name="com.gwt.user_*" />
-                <exclude name="org.junit*" />
-                <exclude name="org.moka7*" />
-                <exclude name="org.xerial.sqlite-jdbc*" />
-
-                <!-- exclude source bundles -->
-                <exclude name="*.source_*.jar" />
-
-                <!-- exclude .SNAPSHOT bundles -->
-                <exclude name="*.SNAPSHOT.jar" />
 
             </zipfileset>
 
@@ -737,6 +724,11 @@ fi]]>
             <param name="start" value="s" />
         </antcall>
         <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.osgi.util_${org.eclipse.osgi.util.version}.jar" />
+            <param name="start.level" value="2" />
+            <param name="start" value="s" />
+        </antcall>
+        <antcall target="install-plugin">
             <param name="bundle.file" value="org.osgi.service.coordinator_${org.osgi.service.coordinator.version}.jar" />
             <param name="start.level" value="2" />
             <param name="start" value="s" />
@@ -793,11 +785,6 @@ fi]]>
         </antcall>
     	<antcall target="install-plugin">
             <param name="bundle.file" value="org.osgi.service.provisioning_${org.osgi.service.provisioning.version}.jar" />
-            <param name="start.level" value="2" />
-            <param name="start" value="s" />
-        </antcall>
-    	<antcall target="install-plugin">
-            <param name="bundle.file" value="org.eclipse.osgi.util_${org.eclipse.osgi.util.version}.jar" />
             <param name="start.level" value="2" />
             <param name="start" value="s" />
         </antcall>
@@ -935,7 +922,7 @@ fi]]>
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.commons.logging_${commons-logging.version}.jar" />
-            <param name="start.level" value="1" />
+            <param name="start.level" value="3" />
             <param name="start" value="s" />
         </antcall>
     	<!--
@@ -1062,6 +1049,11 @@ fi]]>
          </antcall>
         <antcall target="install-plugin">
              <param name="bundle.file" value="org.glassfish.jersey.core.jersey-client_${glassfish.jersey.version}.jar" />
+             <param name="start.level" value="3" />
+             <param name="start" value="" />
+         </antcall>
+        <antcall target="install-plugin">
+             <param name="bundle.file" value="org.glassfish.jersey.inject.jersey-hk2_${glassfish.jersey.version}.jar" />
              <param name="start.level" value="3" />
              <param name="start" value="" />
          </antcall>
@@ -1288,7 +1280,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.jvnet.mimepull_${jvnet.mimepull.version}.jar" />
             <param name="start.level" value="2" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.eurotech.gpsd4java_${com.eurotech.gpsd4java.version}.jar" />
@@ -1308,6 +1300,106 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.quartz-scheduler.quartz_${quartz.version}.jar" />
             <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vavr_${io.vavr.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.apache.commons.commons-pool2_${org.apache.commons-pool2.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.milo.dictionary-manager_${org.eclipse.milo.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.milo.bsd-core_${org.eclipse.milo.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.milo.bsd-generator_${org.eclipse.milo.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.milo.sdk-server_${org.eclipse.milo.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.milo.stack-server_${org.eclipse.milo.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="com.fazecast.jSerialComm_${jSerialComm.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="com.sun.jna_${net.java.dev.jna.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="s" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="tel.schich.javacan-core_${javacan.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.core_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.io_uring-incubator_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.web-common_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.web_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.bridge-common_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.web-client_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.uri-template_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.tcp-eventbus-bridge_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.mqtt_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.vertx.auth-common_${vertx.version}.jar" />
+            <param name="start.level" value="4" />
             <param name="start" value="" />
         </antcall>
     </target>
@@ -1544,19 +1636,19 @@ fi]]>
         </antcall>
     	<antcall target="install-plugin">
         <param name="bundle.file" value="org.gwtbootstrap3_${org.gwtbootstrap3.version}.jar" />
-        <param name="start.level" value="3" />
+        <param name="start.level" value="6" />
         <param name="start" value="" />
     </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.file" value="org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar" />
-            <param name="start.level" value="6" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.file" value="org.eclipse.kura.http.server.manager_${org.eclipse.kura.http.server.manager.version}.jar" />
-            <param name="start.level" value="5" />
-            <param name="start" value="s" />
-        </antcall>
+    <antcall target="install-plugin">
+        <param name="bundle.file" value="org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar" />
+        <param name="start.level" value="6" />
+        <param name="start" value="s" />
+    </antcall>
+    <antcall target="install-plugin">
+        <param name="bundle.file" value="org.eclipse.kura.http.server.manager_${org.eclipse.kura.http.server.manager.version}.jar" />
+        <param name="start.level" value="5" />
+        <param name="start" value="s" />
+    </antcall>
     </target>
 
     <target name="gpio-plugins" if="linux.gpio.jar.present">
@@ -1759,6 +1851,11 @@ fi]]>
             <param name="start.level" value="5" />
             <param name="start" value="s" />
         </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="org.eclipse.kura.wire.script.tools_${org.eclipse.kura.wire.script.tools.version}.jar" />
+            <param name="start.level" value="2" />
+            <param name="start" value="s" />
+        </antcall>
     </target>
 
     <target name="h2db-plugins">
@@ -1791,85 +1888,90 @@ fi]]>
             <param name="start.level" value="5" />
             <param name="start" value="s" />
         </antcall>
+    	<antcall target="install-plugin">
+            <param name="bundle.file" value="jakarta.jms-api_${jakarta.jms-api.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.qpid.jms.client_${apache-qpid-jms-client.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.qpid.proton-j_${apache-qpid-proton-j.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-beans_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-context_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-core_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-expression_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-jms_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.servicemix.bundles.spring-tx_${spring.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.fasterxml.jackson.core.jackson-core_${com.fasterxml.jackson.core.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.fasterxml.jackson.core.jackson-databind_${com.fasterxml.jackson.core.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.fasterxml.jackson.core.jackson-annotations_${com.fasterxml.jackson.core.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml_${com.fasterxml.jackson.dataformat.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations_${com.fasterxml.jackson.module.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.mvel2_${org.mvel.mvel2.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="javassist_${org.javassist.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.yaml.snakeyaml_${org.yaml.snakeyaml.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy_${org.codehaus.groovy.version}.jar" />
@@ -1879,32 +1981,32 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-xml_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-templates_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-sql_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-json_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-datetime_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="groovy-dateutil_${org.codehaus.groovy.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.apache.aries.spifly.dynamic.bundle_${org.apache.aries.spifly.version}.jar" />
@@ -1914,7 +2016,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.objectweb.asm_${org.ow2.asm.version}.jar" />
             <param name="start.level" value="3" />
-            <param name="start" value="s" />
+            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.objectweb.asm.commons_${org.ow2.asm.version}.jar" />
@@ -1993,12 +2095,27 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
+            <param name="bundle.file" value="io.netty.codec-dns_${io.netty.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
             <param name="bundle.file" value="io.netty.codec-http_${io.netty.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
+            <param name="bundle.file" value="io.netty.codec-http2_${io.netty.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
             <param name="bundle.file" value="io.netty.codec-mqtt_${io.netty.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.netty.codec-socks_${io.netty.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
@@ -2013,7 +2130,17 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
+            <param name="bundle.file" value="io.netty.handler-proxy_${io.netty.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
             <param name="bundle.file" value="io.netty.resolver_${io.netty.version}.jar" />
+            <param name="start.level" value="3" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin">
+            <param name="bundle.file" value="io.netty.resolver-dns_${io.netty.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
@@ -2095,7 +2222,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.eclipse.kura.broker.artemis.core_${org.eclipse.kura.broker.artemis.core.version}.jar" />
             <param name="start.level" value="4" />
-            <param name="start" value="" />
+            <param name="start" value="s" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.eclipse.kura.broker.artemis.simple.mqtt_${org.eclipse.kura.broker.artemis.simple.mqtt.version}.jar" />
@@ -2125,7 +2252,7 @@ fi]]>
 	    <antcall target="install-plugin">
 	        <param name="bundle.file" value="org.eclipse.kura.wire.ai.component.provider_${org.eclipse.kura.wire.ai.component.provider.version}.jar" />
 	        <param name="start.level" value="4" />
-	        <param name="start" value="" />
+	        <param name="start" value="s" />
 	    </antcall>
 	</target>
 
@@ -2133,7 +2260,7 @@ fi]]>
 	    <antcall target="install-plugin">
 	        <param name="bundle.file" value="org.eclipse.kura.ai.triton.server_${org.eclipse.kura.ai.triton.server.version}.jar" />
 	        <param name="start.level" value="4" />
-	        <param name="start" value="" />
+	        <param name="start" value="s" />
 	    </antcall>
 	</target>
     <target name="linux-network-plugins" unless="is.nn">
@@ -2178,7 +2305,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.file" value="org.eclipse.kura.event.publisher_${org.eclipse.kura.event.publisher.version}.jar" />
             <param name="start.level" value="6" />
-            <param name="start" value="" />
+            <param name="start" value="s" />
         </antcall>
     </target>
 

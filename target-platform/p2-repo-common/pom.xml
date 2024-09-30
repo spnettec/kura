@@ -213,6 +213,11 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
+                                    <artifactId>libsocket-can-osgi</artifactId>
+                                    <version>${libsocket-can-osgi.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.jetty.customizer</artifactId>
                                     <version>${org.eclipse.kura.jetty.customizer.version}</version>
                                 </artifactItem>
@@ -254,6 +259,7 @@
                                 <move file="target/source/plugins/org.eclipse.soda.dk.comm.aarch64.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.aarch64_${org.eclipse.soda.dk.comm.version}.jar"/>
                                 <move file="target/source/plugins/org.eclipse.soda.dk.comm.macosx.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.macosx_${org.eclipse.soda.dk.comm.version}.jar"/>
                                 <move file="target/source/plugins/log4j2-api-config.jar" tofile="target/source/plugins/log4j2-api-config_${log4j2-api-config.version}.jar"/>
+                                <move file="target/source/plugins/libsocket-can-osgi.jar" tofile="target/source/plugins/libsocket-can-osgi_${libsocket-can-osgi.version}.jar"/>
                             </target>
                         </configuration>
                     </execution>

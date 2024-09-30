@@ -265,6 +265,7 @@
         <setEntry value="jakarta.xml.ws-api@default:default"/>
         <setEntry value="javassist@default:default"/>
         <setEntry value="javax.el-api@default:default"/>
+        <setEntry value="jcl.over.slf4j@3:default"/>
         <setEntry value="log4j2-api-config@default:false"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@3:default"/>

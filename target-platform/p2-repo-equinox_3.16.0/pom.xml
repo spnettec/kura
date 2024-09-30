@@ -250,6 +250,12 @@
 								</artifact>
 								
 								<artifact>
+									<id>org.slf4j:jcl-over-slf4j:${slf4j.api.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								
+								<artifact>
 									<id>org.slf4j:slf4j-api:${slf4j.api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

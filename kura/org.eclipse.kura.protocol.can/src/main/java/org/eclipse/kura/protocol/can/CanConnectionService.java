@@ -24,27 +24,27 @@ public interface CanConnectionService {
 
     /**
      * Establishes a RAW CAN socket connection
-     *
+     * 
      * @throws IOException
      */
     public void connectCanSocket() throws IOException;
-
+    
     /**
      * Disconnects a CAN socket connection
-     *
+     * 
      * @throws IOException
      */
     public void disconnectCanSocket() throws IOException;
-
+    
     /**
      * Sends an array of bytes on a CAN socket
      *
      * @param ifName
-     *                    the name of the socket (eg "can0")
+     *            the name of the socket (eg "can0")
      * @param canId
-     *                    can identifier, must be unique
+     *            can identifier, must be unique
      * @param message
-     *                    the array of bytes to send to the socket
+     *            the array of bytes to send to the socket
      * @throws KuraException
      * @throws IOException
      */
@@ -58,9 +58,9 @@ public interface CanConnectionService {
      * no filter is applied.
      *
      * @param can_id
-     *                     id to be filtered
+     *            id to be filtered
      * @param can_mask
-     *                     mask to be applied to the id
+     *            mask to be applied to the id
      * @return CanMessage = canId and an array of bytes buffered on the socket if any
      * @throws KuraException
      * @throws IOException
