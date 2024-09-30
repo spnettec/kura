@@ -299,10 +299,6 @@
         <setEntry value="org.eclipse.kura.watchdog.criticaltest@default:default"/>
         <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.ai.component.provider.test@default:false"/>
-        <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.camel@default:default"/>
-        <setEntry value="org.eclipse.kura.wire.component.conditional.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.join.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.component.provider.test@default:false"/>
         <setEntry value="org.eclipse.kura.wire.component.provider@default:default"/>

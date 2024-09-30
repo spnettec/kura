@@ -265,6 +265,14 @@
                                 <type>p2-installable-unit</type>
                                 <artifactId>org.apache.logging.log4j.core</artifactId>
                             </dependency>
+                            <dependency>
+                                <type>p2-installable-unit</type>
+                                <artifactId>org.eclipse.kura.db.h2db.provider</artifactId>
+                            </dependency>
+                            <dependency>
+                                <type>p2-installable-unit</type>
+                                <artifactId>org.eclipse.kura.cloud.base.provider</artifactId>
+                            </dependency>
                         </dependencies>
                         <bundleStartLevel>
                             <bundle>
@@ -667,6 +675,16 @@
                                 <level>4</level>
                                 <autoStart>true</autoStart>
                             </bundle>
+                            <bundle>
+                                <id>org.eclipse.kura.cloud.base.provider</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
+                            <bundle>
+                                <id>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</id>
+                                <level>4</level>
+                                <autoStart>true</autoStart>
+                            </bundle>
                         </bundleStartLevel>
                     </configuration>
                 </plugin>
@@ -786,7 +804,7 @@
                                 </requirement>
                                 <requirement>
                                     <type>eclipse-plugin</type>
-                                    <id>org.eclipse.kura.core.cloud</id>
+                                    <id>org.eclipse.kura.core.cloud.command</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
                                 <requirement>
@@ -949,6 +967,21 @@
                                     <id>org.eclipse.kura.emulator.position</id>
                                     <versionRange>0.0.0</versionRange>
                                 </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.eclipse.kura.db.h2db.provider</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>      
+                                <requirement>
+                                    <type>eclipse-plugin</type>
+                                    <id>org.eclipse.kura.cloud.base.provider</id>
+                                    <versionRange>0.0.0</versionRange>
+                                </requirement>
                             </extraRequirements>
                         </dependency-resolution>
                     </configuration>
@@ -987,10 +1020,9 @@
         <module>org.eclipse.kura.core.certificates.test</module>
         <module>org.eclipse.kura.core.comm.test</module>
         <module>org.eclipse.kura.core.configuration.test</module>
-        <module>org.eclipse.kura.core.cloud.test</module>
+        <module>org.eclipse.kura.core.cloud.command.test</module>
         <module>org.eclipse.kura.core.cloud.factory.test</module>
         <module>org.eclipse.kura.core.crypto.test</module>
-        <module>org.eclipse.kura.core.db.test</module>
         <module>org.eclipse.kura.core.deployment.test</module>
         <module>org.eclipse.kura.core.identity.test</module>
         <module>org.eclipse.kura.core.inventory.test</module>
@@ -1064,8 +1096,11 @@
         <module>org.eclipse.kura.container.provider.test</module>
         <module>org.eclipse.kura.ai.triton.server.test</module>
         <module>org.eclipse.kura.db.sqlite.provider.test</module>
+        <module>org.eclipse.kura.db.h2db.provider.test</module>
         <module>org.eclipse.kura.message.store.provider.test</module>
         <module>org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test</module>
+        <module>org.eclipse.kura.cloudconnection.kapua.mqtt.provider.test</module>
+        <module>org.eclipse.kura.cloud.base.provider.test</module>
         <!--
         <module>org.eclipse.kura.raspberrypi.sensehat.test</module>
         -->
