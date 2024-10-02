@@ -19,7 +19,7 @@ Depends: openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | te
  polkit | policykit-1, ssh | openssh, openssl, busybox, openvpn,
  bluez | bluez5, bluez-hcidump | bluez5-noinst-tools,
  ntpdate, chrony, chronyc | chrony, cron | cronie,
- network-manager | networkmanager, bind9 | bind, dnsmasq | isc-dhcp-server, isc-dhcp-client, iw, iptables, modemmanager,
+ network-manager | networkmanager, bind9 | bind, dnsmasq | isc-dhcp-server, isc-dhcp-client | dhcpcd, iw, iptables, modemmanager,
  logrotate,
  gpsd
 Recommends: python3
