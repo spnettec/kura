@@ -61,8 +61,10 @@ do
         then
             OSGI_BUNDLES="${OSGI_BUNDLES},"
         fi
-        
-        OSGI_BUNDLES="${OSGI_BUNDLES}reference\:file\:${JAR}@${START_LEVEL}${START}"
+        if test -f "$JAR" 
+        then
+            OSGI_BUNDLES="${OSGI_BUNDLES}reference\:file\:${JAR}@${START_LEVEL}${START}"
+        fi
     done
 
 done
