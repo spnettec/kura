@@ -27,7 +27,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-        <org.apache.activemq.artemis.upstream.version>2.31.2</org.apache.activemq.artemis.upstream.version>
+        <org.apache.activemq.artemis.upstream.version>2.37.0</org.apache.activemq.artemis.upstream.version>
         <jctools-core.version>2.1.2</jctools-core.version>
         <caffeine.version>3.1.8</caffeine.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
@@ -114,7 +114,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.apache.activemq</groupId>
-                                    <artifactId>artemis-quorum-api</artifactId>
+                                    <artifactId>artemis-log-annotation-processor</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>

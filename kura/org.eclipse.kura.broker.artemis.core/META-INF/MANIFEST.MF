@@ -52,7 +52,7 @@ Bundle-ClassPath: .,
  lib/artemis-amqp-protocol.jar,
  lib/artemis-stomp-protocol.jar,
  lib/activemq-artemis-native.jar,
- lib/artemis-quorum-api.jar,
+ lib/artemis-log-annotation-processor.jar,
  lib/jctools-core.jar,
  lib/caffeine.jar
 Export-Package: org.eclipse.kura.broker.artemis.core;version="1.0.0";uses:="org.apache.activemq.artemis.core.config.impl"
