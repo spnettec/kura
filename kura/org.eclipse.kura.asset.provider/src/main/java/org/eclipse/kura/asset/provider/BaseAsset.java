@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2023 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -42,7 +42,6 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.annotation.Extensible;
 import org.eclipse.kura.asset.Asset;
 import org.eclipse.kura.asset.AssetConfiguration;
-import org.eclipse.kura.asset.provider.BaseAsset.ChannelListenerHolder;
 import org.eclipse.kura.channel.Channel;
 import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.channel.ChannelStatus;
@@ -292,15 +291,13 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final Map<String, Object> properties = this.config.getProperties();
 
-        final String componentName = properties.get(ConfigurationService.KURA_SERVICE_PID).toString();
-
         Tocd ocd = this.config.getDefinition();
 
         if (ocd == null) {
             ocd = getOCD();
         }
 
-        return new ComponentConfigurationImpl(componentName, ocd, new HashMap<>(properties));
+        return new ComponentConfigurationImpl(getKuraServicePid(), ocd, new HashMap<>(properties));
     }
 
     /**
@@ -312,7 +309,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         return CONF_PID;
     }
 
-    protected String getKuraServicePid() throws KuraException {
+    protected String getKuraServicePid() {
         return this.config.getKuraServicePid();
     }
 
@@ -638,10 +635,10 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         public void onChannelEvent(ChannelEvent event) {
             final ChannelRecord originaRecord = event.getChannelRecord();
 
-            if (shouldApplyScaleAndOffset(originaRecord, channel)) {
+            if (shouldApplyScaleAndOffset(originaRecord, this.channel)) {
                 final ChannelRecord cloned = cloneRecord(originaRecord);
 
-                applyScaleAndOffset(cloned, channel);
+                applyScaleAndOffset(cloned, this.channel);
 
                 this.listener.onChannelEvent(new ChannelEvent(cloned));
             } else {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2023 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -27,7 +27,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.kura.KuraException;
 import org.eclipse.kura.asset.AssetConfiguration;
 import org.eclipse.kura.asset.provider.BaseAsset;
 import org.eclipse.kura.channel.Channel;
@@ -128,7 +127,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Unbinds the Wire Helper Service.
      *
      * @param wireHelperService
-     *            the new Wire Helper Service
+     *                              the new Wire Helper Service
      */
     public void unbindWireHelperService(final WireHelperService wireHelperService) {
         if (this.wireHelperService == wireHelperService) {
@@ -257,7 +256,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
             try {
                 emitChannelRecords(readAllChannels());
             } catch (final Exception e) {
-                logger.error("Error while performing read from the Wire Asset...", e);
+                logger.error("Error while performing read from the Wire Asset: {}", getKuraServicePid(), e);
             }
         }
     }
@@ -271,8 +270,8 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * @throws NullPointerException
      *             if argument is null
      */
-    private List<ChannelRecord> determineWritingChannels(final WireRecord record) {
-        requireNonNull(record, "Wire Record cannot be null");
+    private List<ChannelRecord> determineWritingChannels(final WireRecord wireRecord) {
+        requireNonNull(wireRecord, "Wire Record cannot be null");
 
         final List<ChannelRecord> channelRecordsToWrite = CollectionUtil.newArrayList();
         final AssetConfiguration assetConfiguration = getAssetConfiguration();
@@ -286,7 +285,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
                 continue;
             }
 
-            Map<String, TypedValue<?>> wireRecordProperties = record.getProperties();
+            Map<String, TypedValue<?>> wireRecordProperties = wireRecord.getProperties();
 
             if (wireRecordProperties.containsKey(channelName)) {
                 final TypedValue<?> value = wireRecordProperties.get(channelName);
@@ -302,13 +301,13 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Emit the provided list of channel records to the associated wires.
      *
      * @param channelRecords
-     *            the list of channel records conforming to the
-     *            aforementioned
-     *            specification
+     *                           the list of channel records conforming to the
+     *                           aforementioned
+     *                           specification
      * @throws NullPointerException
-     *             if provided records list is null
+     *                                      if provided records list is null
      * @throws IllegalArgumentException
-     *             if provided records list is empty
+     *                                      if provided records list is empty
      */
     private void emitChannelRecords(final List<ChannelRecord> channelRecords) {
         requireNonNull(channelRecords, "List of Channel Records cannot be null");
@@ -331,12 +330,8 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
             return;
         }
 
-        try {
-            wireRecordProperties.put(WireAssetConstants.PROP_ASSET_NAME.value(),
-                    TypedValues.newStringValue(getKuraServiceName()));
-        } catch (KuraException e) {
-            logger.error("Configurations cannot be null", e);
-        }
+        wireRecordProperties.put(WireAssetConstants.PROP_ASSET_NAME.value(),
+                TypedValues.newStringValue(getKuraServicePid()));
 
         this.wireSupport.emit(new WireRecord(wireRecordProperties));
     }
@@ -345,9 +340,9 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
      * Perform Channel Write operation
      *
      * @param channelRecordsToWrite
-     *            the list of {@link ChannelRecord}s
+     *                                  the list of {@link ChannelRecord}s
      * @throws NullPointerException
-     *             if the provided list is null
+     *                                  if the provided list is null
      */
     private void writeChannels(final List<ChannelRecord> channelRecordsToWrite) {
         requireNonNull(channelRecordsToWrite, "List of Channel Records cannot be null");
@@ -358,7 +353,7 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
         try {
             write(channelRecordsToWrite);
         } catch (final Exception e) {
-            logger.error("Error while performing write from the Wire Asset...", e);
+            logger.error("Error while performing write from the Wire Asset: {}", getKuraServicePid(), e);
         }
     }
 
@@ -366,7 +361,8 @@ public final class WireAsset extends BaseAsset implements WireEmitter, WireRecei
         try {
             return Boolean.parseBoolean(properties.get(WireAssetConstants.LISTEN_PROP_NAME.value()).toString());
         } catch (Exception e) {
-            logger.warn("Failed to retreive \"listen\" property from channel configuration");
+            logger.warn("Failed to retreive \"listen\" property from channel configuration from the Wire Asset: {}",
+                    getKuraServicePid());
             return false;
         }
     }
