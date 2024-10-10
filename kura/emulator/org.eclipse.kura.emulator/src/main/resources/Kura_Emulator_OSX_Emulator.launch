@@ -20,6 +20,7 @@
         <setEntry value="org.eclipse.kura.ble.eddystone.provider"/>
         <setEntry value="org.eclipse.kura.ble.ibeacon.provider"/>
         <setEntry value="org.eclipse.kura.ble.provider"/>
+        <setEntry value="org.eclipse.kura.camel.test"/>
         <setEntry value="org.eclipse.kura.cloud.base.provider.test"/>
         <setEntry value="org.eclipse.kura.cloudconnection.kapua.mqtt.provider.test"/>
         <setEntry value="org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test"/>
