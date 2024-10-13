@@ -12,6 +12,9 @@
  *******************************************************************************/
 package org.eclipse.kura.web.client.ui.network;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.kura.web.client.messages.Messages;
 import org.eclipse.kura.web.client.util.HelpButton;
 import org.eclipse.kura.web.shared.model.GwtModemInterfaceConfig;
@@ -20,6 +23,7 @@ import org.eclipse.kura.web.shared.model.GwtSession;
 import org.gwtbootstrap3.client.ui.FieldSet;
 import org.gwtbootstrap3.client.ui.FormLabel;
 import org.gwtbootstrap3.client.ui.InlineRadio;
+import org.gwtbootstrap3.client.ui.ListBox;
 import org.gwtbootstrap3.client.ui.PanelHeader;
 import org.gwtbootstrap3.client.ui.html.Span;
 
@@ -39,6 +43,13 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     private static final Messages MSGS = GWT.create(Messages.class);
 
+    // Note: index of AVAIL_GPS_MODES and CONFIG_GPS_MODES must match!
+    // Strings used for the dropdown (item text) and that match the ModemGpsMode enum in the Kura API
+    private static final List<String> AVAIL_GPS_MODES = Arrays.asList("UNMANAGED", "MANAGED_GPS");
+    // Strings used for the configuration (i.e. that will be written in the sanpshot) and set as dropdown values
+    private static final List<String> CONFIG_GPS_MODES = Arrays.asList("kuraModemGpsModeUnmanaged",
+            "kuraModemGpsModeManagedGps");
+
     private final NetworkTabsUi tabs;
     private boolean dirty;
     GwtModemInterfaceConfig selectedModemIfConfig;
@@ -46,11 +57,16 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     @UiField
     FormLabel labelGps;
+    @UiField
+    FormLabel labelGpsMode;
 
     @UiField
     InlineRadio radio1;
     @UiField
     InlineRadio radio2;
+
+    @UiField
+    ListBox gpsMode;
 
     @UiField
     PanelHeader helpTitle;
@@ -63,6 +79,9 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     @UiField
     HelpButton gpsHelp;
+
+    @UiField
+    HelpButton gpsModeHelp;
 
     public TabModemGpsUi(GwtSession currentSession, NetworkTabsUi tabs) {
         initWidget(uiBinder.createAndBindUi(this));
@@ -103,9 +122,11 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
         GwtModemInterfaceConfig updatedModemNetIf = (GwtModemInterfaceConfig) updatedNetIf;
         if (this.formInitialized) {
             updatedModemNetIf.setGpsEnabled(this.radio1.getValue());
+            updatedModemNetIf.setGpsMode(this.gpsMode.getSelectedValue());
         } else {
             // initForm hasn't been called yet
             updatedModemNetIf.setGpsEnabled(this.selectedModemIfConfig.isGpsEnabled());
+            updatedModemNetIf.setGpsMode(this.selectedModemIfConfig.getGpsMode());
         }
     }
 
@@ -144,14 +165,38 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
             }
         });
         this.radio2.addMouseOutHandler(event -> resetHelp());
-        this.radio1.addValueChangeHandler(event -> setDirty(true));
-        this.radio2.addValueChangeHandler(event -> setDirty(true));
+        this.radio1.addValueChangeHandler(event -> {
+            setDirty(true);
+            this.gpsMode.setEnabled(this.radio1.getValue());
+        });
+        this.radio2.addValueChangeHandler(event -> {
+            setDirty(true);
+            this.gpsMode.setEnabled(this.radio1.getValue());
+        });
 
         this.helpTitle.setText(MSGS.netHelpTitle());
         this.radio1.setText(MSGS.trueLabel());
         this.radio2.setText(MSGS.falseLabel());
         this.radio1.setValue(true);
         this.radio2.setValue(false);
+
+        // GPS Mode
+        this.labelGpsMode.setText(MSGS.netModemGpsMode());
+        this.gpsMode.clear();
+
+        for (String mode : AVAIL_GPS_MODES) {
+            this.gpsMode.addItem(mode, CONFIG_GPS_MODES.get(AVAIL_GPS_MODES.indexOf(mode)));
+            this.gpsMode.getElement().getElementsByTagName("option").getItem(AVAIL_GPS_MODES.indexOf(mode))
+                    .setAttribute("disabled", "disabled");
+        }
+
+        this.gpsMode.addMouseOverHandler(event -> {
+            TabModemGpsUi.this.helpText.clear();
+            TabModemGpsUi.this.helpText.add(new Span(MSGS.netModemToolTipGpsMode()));
+        });
+        this.gpsMode.addMouseOutHandler(event -> resetHelp());
+        this.gpsMode.addChangeHandler(event -> setDirty(true));
+
         this.formInitialized = true;
     }
 
@@ -162,12 +207,14 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     private void update() {
         if (this.selectedModemIfConfig != null) {
-            if (this.selectedModemIfConfig.isGpsEnabled()) {
-                this.radio1.setValue(true);
-                this.radio2.setValue(false);
-            } else {
-                this.radio1.setValue(false);
-                this.radio2.setValue(true);
+            this.radio1.setValue(this.selectedModemIfConfig.isGpsEnabled());
+            this.radio2.setValue(!this.selectedModemIfConfig.isGpsEnabled());
+
+            for (int i = 0; i < this.gpsMode.getItemCount(); i++) {
+                if (this.gpsMode.getValue(i).equals(this.selectedModemIfConfig.getGpsMode())) {
+                    this.gpsMode.setSelectedIndex(i);
+                    break;
+                }
             }
         }
         refreshForm();
@@ -175,19 +222,23 @@ public class TabModemGpsUi extends Composite implements NetworkTab {
 
     private void refreshForm() {
         if (this.selectedModemIfConfig != null) {
-            if (this.selectedModemIfConfig.isGpsSupported()) {
-                this.radio1.setEnabled(true);
-                this.radio2.setEnabled(true);
-            } else {
-                this.radio1.setEnabled(false);
-                this.radio2.setEnabled(false);
+            this.radio1.setEnabled(this.selectedModemIfConfig.isGpsSupported());
+            this.radio2.setEnabled(this.selectedModemIfConfig.isGpsSupported());
+
+            for (int i = 0; i < this.gpsMode.getItemCount(); i++) {
+                if (this.selectedModemIfConfig.getSupportedGpsModes().contains(this.gpsMode.getItemText(i))) {
+                    this.gpsMode.getElement().getElementsByTagName("option").getItem(i).removeAttribute("disabled");
+                }
             }
         }
+
+        this.gpsMode.setEnabled(this.radio1.getValue());
     }
 
     private void reset() {
         this.radio1.setValue(true);
         this.radio2.setValue(false);
+        this.gpsMode.setSelectedIndex(0); // UNMANAGED
         update();
     }
 }
