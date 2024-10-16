@@ -16,7 +16,7 @@ COPY --from=kura_base /kura-install/*.dp /kura-install/
 ENV \
   KURA_DIR=/opt/eclipse/kura \
   SKIP_JAVA_VERSION_CHECK=true \
-  LAUNCHER_VERSION="1.6.800.v20240513-1750" \
+  LAUNCHER_VERSION="1.6.900.v20240613-2009" \
   TZ=Asia/Shanghai \
   LANG=en_US.UTF-8
 
