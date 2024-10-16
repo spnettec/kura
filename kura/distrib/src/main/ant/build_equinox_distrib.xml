@@ -2069,14 +2069,14 @@ fi]]>
     <!-- Artemis config targets -->
     <target name="artemis-plugins">
     	<find-jar-version2 dir="../target-definition/equinox_3.16.0/repository/plugins"
-    				prefix="com.google.guava_32" property="guava32.distrib.version" />
+    				prefix="com.google.guava_33" property="guava33.distrib.version" />
         <antcall target="install-plugin">
             <param name="bundle.file" value="com.google.guava.failureaccess_${guava.failureaccess.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.file" value="com.google.guava_32${guava32.distrib.version}.jar" />
+            <param name="bundle.file" value="com.google.guava_33${guava33.distrib.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>

@@ -1028,9 +1028,9 @@
 									<instructions>
 										<Import-Package>com.digitalpetri.netty.fsm,com.digitalpetri.strictmach
 										 ine,com.digitalpetri.strictmachine.dsl,com.google.common.base;version
-										 ="[31.0,33)",com.google.common.cache;version="[31.0,33)",com.google.c
-										 ommon.collect;version="[31.0,33)",com.google.common.primitives;versio
-										 n="[31.0,33)",io.netty.buffer;version="[4.1,5)",io.netty.channel.nio;
+										 ="[31.0,34)",com.google.common.cache;version="[31.0,34)",com.google.c
+										 ommon.collect;version="[31.0,34)",com.google.common.primitives;versio
+										 n="[31.0,34)",io.netty.buffer;version="[4.1,5)",io.netty.channel.nio;
 										 version="[4.1,5)",io.netty.util;version="[4.1,5)",javax.crypto,org.ec
 										 lipse.milo.opcua.sdk.client,org.eclipse.milo.opcua.sdk.client.api,org
 										 .eclipse.milo.opcua.sdk.client.api.config,org.eclipse.milo.opcua.sdk.
@@ -1156,8 +1156,8 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>com.google.common.base;version="[31.0,33)",com.google.
-										 common.collect;version="[31.0,33)",org.eclipse.milo.opcua.sdk.core,or
+										<Import-Package>com.google.common.base;version="[31.0,34)",com.google.
+										 common.collect;version="[31.0,34)",org.eclipse.milo.opcua.sdk.core,or
 										 g.eclipse.milo.opcua.stack.core;version="[0.6,1)",org.eclipse.milo.op
 										 cua.stack.core.types.builtin;version="[0.6,1)",org.eclipse.milo.opcua
 										 .stack.core.types.builtin.unsigned;version="[0.6,1)",org.eclipse.milo
@@ -1185,9 +1185,9 @@
 									<override>true</override>
 									<instructions>
 										<Import-Package>com.digitalpetri.netty.fsm,com.digitalpetri.strictmach
-										 ine,com.google.common.base;version="[31.0,33)",com.google.common.coll
-										 ect;version="[31.0,33)",com.google.common.primitives;version="[31.0,3
-										 3)",io.netty.bootstrap;version="[4.1,5)",io.netty.buffer;version="[4.
+										 ine,com.google.common.base;version="[31.0,34)",com.google.common.coll
+										 ect;version="[31.0,34)",com.google.common.primitives;version="[31.0,3
+										 4)",io.netty.bootstrap;version="[4.1,5)",io.netty.buffer;version="[4.
 										 1,5)",io.netty.channel;version="[4.1,5)",io.netty.channel.nio;version
 										 ="[4.1,5)",io.netty.channel.pool;version="[4.1,5)",io.netty.channel.s
 										 ocket;version="[4.1,5)",io.netty.channel.socket.nio;version="[4.1,5)"
@@ -1260,9 +1260,9 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>com.google.common.base;version="[31.0,33)",com.google.
-										 common.collect;version="[31.0,33)",com.google.common.io;version="[31.
-										 0,33)",com.google.common.primitives;version="[31.0,33)",io.netty.buff
+										<Import-Package>com.google.common.base;version="[31.0,34)",com.google.
+										 common.collect;version="[31.0,34)",com.google.common.io;version="[31.
+										 0,34)",com.google.common.primitives;version="[31.0,34)",io.netty.buff
 										 er;version="[4.1,5)",io.netty.channel;version="[4.1,5)",io.netty.chan
 										 nel.nio;version="[4.1,5)",io.netty.util;version="[4.1,5)",io.netty.ut
 										 il.concurrent;version="[4.1,5)",javax.crypto,javax.crypto.spec,javax.
@@ -1358,8 +1358,8 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>com.google.common.base;version="[31.0,33)",com.google.
-										 common.collect;version="[31.0,33)",org.eclipse.milo.opcua.binaryschem
+										<Import-Package>com.google.common.base;version="[31.0,34)",com.google.
+										 common.collect;version="[31.0,34)",org.eclipse.milo.opcua.binaryschem
 										 a.generator;version="[0.6,1)",org.eclipse.milo.opcua.sdk.core;version
 										 ="[0.6,1)",org.eclipse.milo.opcua.sdk.core.nodes;version="[0.6,1)",or
 										 g.eclipse.milo.opcua.sdk.core.util;version="[0.6,1)",org.eclipse.milo
@@ -1403,10 +1403,10 @@
 									<override>true</override>
 									<instructions>
 										<Import-Package>com.sun.management;resolution:=optional,com.google.com
-										 mon.base;version="[31.0,33)",com.google.common.cache;version="[31.0,3
-										 3)",com.google.common.collect;version="[31.0,33)",com.google.common.e
-										 ventbus;version="[31.0,33)",com.google.common.math;version="[31.0,33)
-										 ",com.google.common.primitives;version="[31.0,33)",io.netty.buffer;ve
+										 mon.base;version="[31.0,34)",com.google.common.cache;version="[31.0,3
+										 4)",com.google.common.collect;version="[31.0,34)",com.google.common.e
+										 ventbus;version="[31.0,34)",com.google.common.math;version="[31.0,34)
+										 ",com.google.common.primitives;version="[31.0,34)",io.netty.buffer;ve
 										 rsion="[4.1,5)",io.netty.util;version="[4.1,5)",javax.crypto,javax.se
 										 curity.auth.x500,org.eclipse.milo.opcua.sdk.core;version="[0.6,1)",or
 										 g.eclipse.milo.opcua.sdk.core.nodes;version="[0.6,1)",org.eclipse.mil
@@ -1615,9 +1615,9 @@
 									<transitive>false</transitive>
 									<override>true</override>
 									<instructions>
-										<Import-Package>com.google.common.base;version="[31.0,33)",com.google.
-										 common.collect;version="[31.0,33)",com.google.common.primitives;versi
-										 on="[31.0,33)",io.netty.bootstrap;version="[4.1,5)",io.netty.buffer;v
+										<Import-Package>com.google.common.base;version="[31.0,34)",com.google.
+										 common.collect;version="[31.0,34)",com.google.common.primitives;versi
+										 on="[31.0,34)",io.netty.bootstrap;version="[4.1,5)",io.netty.buffer;v
 										 ersion="[4.1,5)",io.netty.channel;version="[4.1,5)",io.netty.channel.
 										 nio;version="[4.1,5)",io.netty.channel.socket;version="[4.1,5)",io.ne
 										 tty.channel.socket.nio;version="[4.1,5)",io.netty.handler.codec;versi
