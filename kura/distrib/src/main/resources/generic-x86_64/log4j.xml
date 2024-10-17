@@ -20,7 +20,7 @@
     </Properties>
     <Filter type="ThresholdFilter" level="trace"/>
     <Appenders>
-        <RollingFile name="RollingFile" fileName="${log_dir}/${log_name}.log" filePattern="${log_dir}/${log_name}-%i.log.gz">
+        <RollingFile name="RollingFile" fileName="${log_dir}/${log_name}.log" filePattern="${log_dir}/${log_name}-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
             <PatternLayout>
                 <Pattern>%d{ISO8601} [%t] %-5p %c{1.} - %m%n%throwable{full}</Pattern>
             </PatternLayout>
@@ -29,7 +29,7 @@
             </Policies>
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
-        <RollingFile name="audit" fileName="${log_dir}/${log_name}-audit.log" filePattern="${log_dir}/${log_name}-audit-%i.log.gz">
+        <RollingFile name="audit" fileName="${log_dir}/${log_name}-audit.log" filePattern="${log_dir}/${log_name}-audit-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
             <RFC5424Layout enterpriseNumber="28392" includeMDC="true" mdcId="RequestContext" appName="EclipseKura" mdcPrefix="" newLine="true">
                 <LoggerFields>
                     <KeyValuePair key="thread" value="%t"/>
@@ -46,9 +46,6 @@
     </Appenders>
     <Loggers>
         <Logger name="org.eclipse" level="info" additivity="false">
-            <AppenderRef ref="RollingFile"/>
-        </Logger>
-        <Logger name="org.apache.activemq" level="warn" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="AuditLogger" level="trace" additivity="false">

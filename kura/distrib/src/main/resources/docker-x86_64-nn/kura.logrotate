@@ -1,9 +1,9 @@
 # Logrotate file for Kura.
 # Kura generated file. Do not modify or overwrite.
 
-/var/log/kura-console.log
+/var/log/kura*.log
 {
-        su root root
+        su root syslog
         missingok
         notifempty
         copytruncate
