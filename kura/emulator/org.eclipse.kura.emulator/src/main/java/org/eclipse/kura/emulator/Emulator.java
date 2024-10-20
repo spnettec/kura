@@ -96,6 +96,6 @@ public class Emulator {
     }
 
     private String generateRandomClientId() {
-        return "kura-emulator-" + RandomStringUtils.randomNumeric(6);
+        return "kura-emulator-" + RandomStringUtils.secure().nextNumeric(6);
     }
 }
