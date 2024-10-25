@@ -1175,7 +1175,9 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
-                                            <filemode>600</filemode>
+                                            <mapper>
+                                            	<filemode>600</filemode>
+                                            </mapper>
                                         </data>
                                     </dataSet>
                                 </configuration>
@@ -1364,7 +1366,9 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
-                                            <filemode>600</filemode>
+                                            <mapper>
+                                            	<filemode>600</filemode>
+                                            </mapper>
                                         </data>
                                     </dataSet>
                                 </configuration>
@@ -1554,7 +1558,9 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
-                                            <filemode>600</filemode>
+                                            <mapper>
+                                            	<filemode>600</filemode>
+                                            </mapper>
                                         </data>
                                     </dataSet>
                                 </configuration>
