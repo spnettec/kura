@@ -1149,7 +1149,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.10</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-arm32-deb</id>
@@ -1175,6 +1175,7 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
+                                            <filemode>600</filemode>
                                         </data>
                                     </dataSet>
                                 </configuration>
@@ -1246,7 +1247,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-arm32-nn-deb</id>
@@ -1337,7 +1338,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.10</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-x86_64-deb</id>
@@ -1363,6 +1364,7 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
+                                            <filemode>600</filemode>
                                         </data>
                                     </dataSet>
                                 </configuration>
@@ -1434,7 +1436,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-x86_64-nn-deb</id>
@@ -1526,7 +1528,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.10</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-aarch64-deb</id>
@@ -1552,6 +1554,7 @@
                                             <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
+                                            <filemode>600</filemode>
                                         </data>
                                     </dataSet>
                                 </configuration>
@@ -1623,7 +1626,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.0</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>generic-aarch64-nn-deb</id>
@@ -1745,7 +1748,7 @@
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
-                        <version>1.10</version>
+                        <version>1.11</version>
                         <executions>
                             <execution>
                                 <id>docker-x86_64-nn-deb</id>
