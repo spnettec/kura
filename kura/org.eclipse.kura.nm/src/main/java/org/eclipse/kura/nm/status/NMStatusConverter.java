@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.kura.net.IP4Address;
 import org.eclipse.kura.net.IP6Address;
 import org.eclipse.kura.net.IPAddress;
@@ -390,7 +391,13 @@ public class NMStatusConverter {
     private static WifiAccessPoint wifiAccessPointConvert(Properties nmAccessPoint) {
         WifiAccessPointBuilder builder = WifiAccessPoint.builder();
 
-        byte[] rawSsid = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "Ssid");
+        Object rawSsidObj = nmAccessPoint.Get(NM_ACCESSPOINT_BUS_NAME, "Ssid");
+        byte[] rawSsid;
+        if (rawSsidObj instanceof List) {
+            rawSsid = ArrayUtils.toPrimitive(((List<?>) rawSsidObj).toArray(new Byte[] {}));
+        } else {
+            rawSsid = (byte[]) rawSsidObj;
+        }
         String ssid = new String(rawSsid, StandardCharsets.UTF_8);
         builder.withSsid(ssid);
 
