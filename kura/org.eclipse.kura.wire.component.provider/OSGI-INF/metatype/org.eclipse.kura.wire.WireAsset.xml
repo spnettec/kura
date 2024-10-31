@@ -62,6 +62,14 @@
             default="false"
             description="%emiterrorsdesc">
         </AD>
+        <AD id="emit.connection.errors"
+            name="%emitconnectionerrors"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="%emitconnectionerrorsDesc">
+        </AD>
         <AD id="emit.on.change"
             name="%emitonchange"
             type="Boolean"
