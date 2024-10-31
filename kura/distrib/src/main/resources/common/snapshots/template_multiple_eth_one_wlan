@@ -127,10 +127,10 @@
                 <esf:value>true</esf:value>
             </esf:property>
             <esf:property name="net.interface.WIFI_INTERFACE_0.config.wifi.master.passphrase" array="false" encrypted="false" type="Password">
-                <esf:value>testKEYS</esf:value>
+                <esf:value>12345678</esf:value>
             </esf:property>
             <esf:property name="net.interface.WIFI_INTERFACE_0.config.wifi.master.securityType" array="false" encrypted="false" type="String">
-                <esf:value>SECURITY_WPA2</esf:value>
+                <esf:value>SECURITY_WPA_WPA2</esf:value>
             </esf:property>
             <esf:property name="net.interface.WIFI_INTERFACE_0.config.wifi.master.pairwiseCiphers" array="false" encrypted="false" type="String">
                 <esf:value>CCMP</esf:value>

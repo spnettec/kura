@@ -45,7 +45,7 @@
 						<configuration>
 							<artifacts>
 								<artifactItem>
-									<id>org.apache.camel:camel-mock:jar:3.21.3</id>
+									<id>org.apache.camel:camel-mock:jar:3.22.2</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
@@ -70,7 +70,7 @@
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.apache.activemq:artemis-mqtt-protocol:jar:2.31.2</id>
+									<id>org.apache.activemq:artemis-mqtt-protocol:jar:2.38.0</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
