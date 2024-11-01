@@ -34,5 +34,6 @@
               target="(kura.service.pid=org.eclipse.kura.json.marshaller.unmarshaller.provider)"
               unbind="unsetJsonMarshaller"/>
    <property name="kura.ui.service.hide" type="Boolean" value="true"/>
+   <property name="kura.ui.factory.hide" type="Boolean" value="true"/>
    <reference bind="setEventAdmin" cardinality="1..1" interface="org.osgi.service.event.EventAdmin" name="EventAdmin" policy="static" unbind="unsetEventAdmin"/>
 </scr:component>

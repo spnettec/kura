@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2024 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -14,7 +14,6 @@ package org.eclipse.kura.cloudconnection.raw.mqtt.cloud;
 
 import static org.eclipse.kura.cloudconnecton.raw.mqtt.util.Utils.catchAll;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.kura.KuraConnectException;
 import org.eclipse.kura.KuraDisconnectException;
+import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.KuraNotConnectedException;
 import org.eclipse.kura.cloud.CloudConnectionEstablishedEvent;
@@ -154,8 +154,7 @@ public class RawMqttCloudEndpoint
         byte[] body = kuraPayload.getBody();
 
         if (body == null) {
-            body = this.jsonMarshaller.marshal(kuraPayload).getBytes(StandardCharsets.UTF_8);
-            // throw new KuraException(KuraErrorCode.INVALID_PARAMETER, null, null, "missing message body");
+            throw new KuraException(KuraErrorCode.INVALID_PARAMETER, "Missing message body in received payload.");
         }
 
         final int qos = options.getQos().getValue();

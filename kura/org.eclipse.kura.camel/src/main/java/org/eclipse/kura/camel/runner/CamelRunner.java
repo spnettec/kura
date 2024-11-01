@@ -59,7 +59,7 @@ public class CamelRunner {
      * Creates a new {@link ContextFactory} backed by {@link OsgiDefaultCamelContext}
      *
      * @param bundleContext
-     *            the bundle context to use
+     *                          the bundle context to use
      * @return a context factory creating {@link OsgiDefaultCamelContext}s
      */
     public static ContextFactory createOsgiFactory(final BundleContext bundleContext) {
@@ -72,7 +72,7 @@ public class CamelRunner {
      * Creates a new {@link RegistryFactory} backed by {@link OsgiServiceRegistry}
      *
      * @param bundleContext
-     *            the bundle context to use
+     *                          the bundle context to use
      * @return a registry factory creating {@link OsgiServiceRegistry}s
      */
     public static RegistryFactory createOsgiRegistry(final BundleContext bundleContext) {
@@ -167,7 +167,7 @@ public class CamelRunner {
          * </p>
          *
          * @param disableJmx
-         *            whether JMX should be disabled or not
+         *                       whether JMX should be disabled or not
          * @return the builder instance
          */
         public Builder disableJmx(final boolean disableJmx) {
@@ -182,7 +182,7 @@ public class CamelRunner {
          * </p>
          *
          * @param shutdownTimeout
-         *            The shutdown timeout in seconds
+         *                            The shutdown timeout in seconds
          * @return the builder instance
          */
         public Builder shutdownTimeout(final int shutdownTimeout) {
@@ -237,11 +237,11 @@ public class CamelRunner {
          * </p>
          *
          * @param bundleContext
-         *            the bundle context to use for service lookup
+         *                          the bundle context to use for service lookup
          * @param filter
-         *            the filter expression to use searching for the cloud service instance
+         *                          the filter expression to use searching for the cloud service instance
          * @param consumer
-         *            the consumer processing the service instance
+         *                          the consumer processing the service instance
          * @return the builder instance
          */
         public Builder cloudService(BundleContext bundleContext, final String filter,
@@ -274,7 +274,7 @@ public class CamelRunner {
          * </p>
          *
          * @param filter
-         *            optional filter expression
+         *                   optional filter expression
          * @return the builder instance
          */
         public Builder cloudService(final String filter) {
@@ -289,9 +289,9 @@ public class CamelRunner {
          * </p>
          *
          * @param attribute
-         *            the OSGi attribute to look for
+         *                      the OSGi attribute to look for
          * @param value
-         *            the value the OSGi must have
+         *                      the value the OSGi must have
          * @return the builder instance
          */
         public Builder cloudService(final String attribute, final String value) {
@@ -305,7 +305,7 @@ public class CamelRunner {
          * Require a Camel component to be registered with OSGi before starting
          *
          * @param componentName
-         *            the component name (e.g. "timer")
+         *                          the component name (e.g. "timer")
          * @return the builder instance
          */
         public Builder requireComponent(final String componentName) {
@@ -313,7 +313,7 @@ public class CamelRunner {
                 final String filterString = String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS,
                         ComponentResolver.class.getName(), "component", componentName);
                 final Filter filter = FrameworkUtil.createFilter(filterString);
-                dependOn(filter, (context, service) -> {
+                dependOn(filter, (context0, service) -> {
                 });
             } catch (InvalidSyntaxException e) {
                 throw new IllegalArgumentException(String.format("Illegal component name: '%s'", componentName), e);
@@ -326,7 +326,7 @@ public class CamelRunner {
          * Require a Camel language to be registered with OSGi before starting
          *
          * @param languageName
-         *            the language name (e.g. "javaScript")
+         *                         the language name (e.g. "javaScript")
          * @return the builder instance
          */
         public Builder requireLanguage(final String languageName) {
@@ -334,7 +334,7 @@ public class CamelRunner {
                 final String filterString = String.format("(&(%s=%s)(%s=%s))", Constants.OBJECTCLASS,
                         LanguageResolver.class.getName(), "language", languageName);
                 final Filter filter = FrameworkUtil.createFilter(filterString);
-                dependOn(filter, (context, service) -> {
+                dependOn(filter, (context0, service) -> {
                 });
             } catch (InvalidSyntaxException e) {
                 throw new IllegalArgumentException(String.format("Illegal languageName name: '%s'", languageName), e);
@@ -351,7 +351,7 @@ public class CamelRunner {
          * Add an operation which will be executed before the Camel context is started
          *
          * @param beforeStart
-         *            the action to start
+         *                        the action to start
          * @return the builder instance
          */
         public Builder addBeforeStart(final BeforeStart beforeStart) {
@@ -366,7 +366,7 @@ public class CamelRunner {
          * Add a context lifecylce listener.
          *
          * @param listener
-         *            The listener to add
+         *                     The listener to add
          * @return the builder instance
          */
         public Builder addLifecycleListener(final ContextLifecycleListener listener) {
@@ -507,7 +507,7 @@ public class CamelRunner {
         fireLifecycle(this.context, ContextLifecycleListener::started);
     }
 
-    protected void stopCamel() throws Exception {
+    protected void stopCamel() {
         if (this.context != null) {
 
             fireLifecycle(this.context, ContextLifecycleListener::stopping);
@@ -549,9 +549,9 @@ public class CamelRunner {
      * </p>
      *
      * @param context
-     *            the context to work on
+     *                            the context to work on
      * @param removedRouteIds
-     *            the ID to remove
+     *                            the ID to remove
      */
     public static void removeRoutes(final CamelContext context, final Set<String> removedRouteIds) {
         Objects.requireNonNull(context);
@@ -576,9 +576,9 @@ public class CamelRunner {
      * </p>
      *
      * @param context
-     *            the context to work on
+     *                    the context to work on
      * @param routes
-     *            the collection of new routes
+     *                    the collection of new routes
      */
     public static void removeMissingRoutes(final CamelContext context, final Collection<RouteDefinition> routes) {
         Objects.requireNonNull(context);
@@ -602,7 +602,7 @@ public class CamelRunner {
      * Remove all routes of a context
      *
      * @param context
-     *            the context to work on
+     *                    the context to work on
      */
     public static void removeAllRoutes(final CamelContext context) {
         Objects.requireNonNull(context);
@@ -624,7 +624,7 @@ public class CamelRunner {
      * Replace the current set of route with an new one
      *
      * @param routes
-     *            the new set of routes, may be {@code null}
+     *                   the new set of routes, may be {@code null}
      */
     private void setRoutes(final RoutesProvider routesProvider) {
 
@@ -650,7 +650,7 @@ public class CamelRunner {
      * Replace the current set of route with an new one
      *
      * @param xml
-     *            the new set of routes, may be {@code null}
+     *                the new set of routes, may be {@code null}
      */
     public void setRoutes(final String xml, String filename) throws Exception {
         logger.info("Setting routes...");
@@ -666,7 +666,7 @@ public class CamelRunner {
      * Replace the current set of route with an new one
      *
      * @param routeBuilder
-     *            the new set of routes, may be {@code null}
+     *                         the new set of routes, may be {@code null}
      */
     public void setRoutes(final RouteBuilder routeBuilder) throws Exception {
         logger.info("Setting routes...");
