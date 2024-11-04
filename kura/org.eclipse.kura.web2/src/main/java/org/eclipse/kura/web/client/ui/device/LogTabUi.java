@@ -13,7 +13,7 @@
 package org.eclipse.kura.web.client.ui.device;
 
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 
 import org.eclipse.kura.web.Console;
 import org.eclipse.kura.web.client.messages.Messages;
@@ -222,7 +222,7 @@ public class LogTabUi extends Composite {
 
             @Override
             public void onSuccess(GwtXSRFToken token) {
-                LogTabUi.this.gwtLogService.initLogProviders(token, new AsyncCallback<Map<String, String>>() {
+                LogTabUi.this.gwtLogService.initLogProviders(token, new AsyncCallback<List<String>>() {
 
                     @Override
                     public void onFailure(Throwable caught) {
@@ -230,15 +230,16 @@ public class LogTabUi extends Composite {
                     }
 
                     @Override
-                    public void onSuccess(Map<String, String> pids) {
+                    public void onSuccess(List<String> pids) {
                         if (pids.isEmpty()) {
                             hideLogSection();
                         } else {
                             LogTabUi.this.hasLogProvider = true;
                             LogTabUi.this.deviceLogsPanel.setVisible(true);
-                            pids.forEach((pid, name) -> {
-                                LogTabUi.this.logProviderListBox.addItem(name, pid);
-                            });
+
+                            for (String pid : pids) {
+                                LogTabUi.this.logProviderListBox.addItem(pid, pid);
+                            }
 
                             LogTabUi.this.logProviderListBox.addChangeHandler(changeEvent -> displayLogs());
 
