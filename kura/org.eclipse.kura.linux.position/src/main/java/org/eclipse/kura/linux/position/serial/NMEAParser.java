@@ -10,7 +10,7 @@
  * Contributors:
  *  Eurotech
  *******************************************************************************/
-package org.eclipse.kura.linux.position;
+package org.eclipse.kura.linux.position.serial;
 
 import static java.lang.Math.toRadians;
 
@@ -58,7 +58,7 @@ public class NMEAParser {
      * Fill the fields of GPS position depending of the type of the sentence
      *
      * @param sentence
-     *                     most recent sentence String from GPS modem
+     *            most recent sentence String from GPS modem
      */
     public boolean parseSentence(String sentence) throws ParseException {
 
@@ -295,11 +295,11 @@ public class NMEAParser {
 
     /**
      * @param pos
-     *                      DDD?MM?.dddd
+     *            DDD?MM?.dddd
      * @param direction
-     *                      N/S, E/W
+     *            N/S, E/W
      * @param degChars
-     *                      number of characters representing degrees
+     *            number of characters representing degrees
      * @return
      */
     private double convertPosition(String pos, String direction, int degChars) {
@@ -318,11 +318,11 @@ public class NMEAParser {
         return deg;
     }
 
-    double convertPositionlat(String pos, String direction) {
+    public double convertPositionlat(String pos, String direction) {
         return convertPosition(pos, direction, 2);
     }
 
-    double convertPositionlon(String pos, String direction) {
+    public double convertPositionlon(String pos, String direction) {
         return convertPosition(pos, direction, 3);
     }
 
