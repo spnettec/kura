@@ -58,7 +58,8 @@ public class DhcpServerManager {
 
     public static DhcpServerTool getTool() {
         if (dhcpServerTool == DhcpServerTool.NONE) {
-            if (LinuxNetworkUtil.toolExists(DhcpServerTool.DNSMASQ.getValue())) {
+            if (LinuxNetworkUtil.toolExists(DhcpServerTool.DNSMASQ.getValue())
+                    && new File(FILE_DIR + "dnsmasq.d").exists()) {
                 dhcpServerTool = DhcpServerTool.DNSMASQ;
             } else if (LinuxNetworkUtil.toolExists(DhcpServerTool.UDHCPD.getValue())) {
                 dhcpServerTool = DhcpServerTool.UDHCPD;
