@@ -43,10 +43,15 @@ public class NMConfigurationEnforcementHandler implements DBusSigHandler<Device.
         logger.debug("Device state change detected: {} -> {} (reason: {}), for device {}", oldState, newState, reason,
                 s.getPath());
 
+        boolean deviceDisconnectedBecauseOfConfigurationEvent = oldState != NMDeviceState.NM_DEVICE_STATE_FAILED
+                && oldState != NMDeviceState.NM_DEVICE_STATE_UNAVAILABLE
+                && newState == NMDeviceState.NM_DEVICE_STATE_DISCONNECTED;
         boolean deviceIsConnectingToANewNetwork = newState == NMDeviceState.NM_DEVICE_STATE_CONFIG;
 
-        if (deviceIsConnectingToANewNetwork) {
-            logger.info("Network change detected on interface {}. Roll-back to cached configuration", s.getPath());
+        if (deviceIsConnectingToANewNetwork || deviceDisconnectedBecauseOfConfigurationEvent) {
+            logger.info(
+                    "Network change detected on interface {}. Roll-back to cached configuration. Device state change detected: {} -> {} (reason: {})",
+                    s.getPath(), oldState, newState, reason);
 
             CompletableFuture.runAsync(() -> {
                 try {

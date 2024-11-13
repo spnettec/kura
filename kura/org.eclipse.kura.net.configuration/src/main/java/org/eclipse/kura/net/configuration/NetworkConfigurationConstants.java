@@ -64,7 +64,7 @@ public final class NetworkConfigurationConstants {
     public static final boolean DEFAULT_IPV4_DHCP_CLIENT_ENABLED_VALUE = false;
     public static final NetInterfaceType DEFAULT_INTERFACE_TYPE_VALUE = NetInterfaceType.UNKNOWN;
     public static final NetInterfaceStatus DEFAULT_IPV4_STATUS_VALUE = NetInterfaceStatus.netIPv4StatusDisabled;
-    public static final boolean DEFAULT_AUTOCONNECT_VALUE = false;
+    public static final boolean DEFAULT_AUTOCONNECT_VALUE = true;
     public static final int DEFAULT_PROMISC_VALUE = -1;
     public static final short DEFAULT_IPV4_PREFIX_VALUE = -1;
     public static final short DEFAULT_IPV6_PREFIX_VALUE = -1;

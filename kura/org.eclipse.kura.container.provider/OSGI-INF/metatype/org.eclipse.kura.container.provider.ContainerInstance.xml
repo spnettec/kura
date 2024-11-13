@@ -27,21 +27,6 @@
         <AD id="container.image.tag" name="%containerImageTag"
             description="%containerImageTagDesc" type="String"
             cardinality="1" required="true" default="latest" />
-
-        <AD id="container.signature.trust.anchor" name="%containerSignatureTrustAnchor"
-            description="%containerSignatureTrustAnchorDesc" type="String"
-            cardinality="1" required="false" default="" />
-
-        <AD id="container.signature.verify.transparency.log" name="%containerSignatureVerifyTransparencyLog"
-            description="%containerSignatureVerifyTransparencyLogDesc" type="Boolean"
-            cardinality="1" required="false" default="true" />
-        
-        <AD
-            id="container.signature.enforcement.digest"
-            name="%containerSignatureEnforcementDigest"
-            description="%containerSignatureEnforcementDigestDesc"
-            type="String" cardinality="1" required="false"
-            default="" />
         
         <AD id="registry.hostname" name="%registryHostname"
             description="%registryHostnameDesc" 
@@ -59,6 +44,20 @@
             description="%registryPasswordDesc" 
             type="Password"
             cardinality="0" required="false" default="" />
+            
+        <AD id="container.signature.trust.anchor" name="%containerSignatureTrustAnchor"
+            description="%containerSignatureTrustAnchorDesc" type="String"
+            cardinality="1" required="false" default="" />
+            
+        <AD id="container.signature.verify.transparency.log" name="%containerSignatureVerifyTransparencyLog"
+            description="%containerSignatureVerifyTransparencyLogDesc" type="Boolean"
+            cardinality="1" required="false" default="true" />
+        
+        <AD id="container.signature.enforcement.digest"
+            name="%containerSignatureEnforcementDigest"
+            description="%containerSignatureEnforcementDigestDesc"
+            type="String" cardinality="1" required="false"
+            default="" />
         
         <AD id="container.image.download.retries" 
             name="%containerImageDownloadRetries" 
