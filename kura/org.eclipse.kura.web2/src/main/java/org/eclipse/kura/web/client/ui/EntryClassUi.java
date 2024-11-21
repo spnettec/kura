@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -694,8 +694,8 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
     private void sortConfigurationsByName(List<GwtConfigComponent> configs) {
         Collections.sort(configs, (arg0, arg1) -> {
             String name0;
-            String pid0 = arg0.getComponentId();
-            String pid1 = arg1.getComponentId();
+            String pid0 = arg0.getComponentId().toLowerCase();
+            String pid1 = arg1.getComponentId().toLowerCase();
             int start = pid0.lastIndexOf('.');
             int substringIndex = start + 1;
             if (start != -1 && substringIndex < pid0.length()) {
@@ -712,6 +712,7 @@ public class EntryClassUi extends Composite implements Context, ServicesUi.Liste
             } else {
                 name1 = pid1;
             }
+            
             return name0.compareTo(name1);
         });
     }
