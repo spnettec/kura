@@ -146,7 +146,7 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         final Tad valueType = new Tad();
         valueType.setName("%channel" + VALUE_TYPE.value().substring(1));
         valueType.setId(VALUE_TYPE.value());
-        valueType.setDescription("%channelvalue.typeDesc");
+        valueType.setDescription("%channel" + VALUE_TYPE.value().substring(1) + "Desc");
         valueType.setType(Tscalar.STRING);
         valueType.setRequired(true);
         valueType.setDefault(DataType.INTEGER.name());
@@ -156,9 +156,9 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         this.defaultElements.add(valueType);
 
         final Tad scaleOffsetType = new Tad();
-        scaleOffsetType.setName(AssetConstants.SCALE_OFFSET_TYPE.value().substring(1));
+        scaleOffsetType.setName("%channel" + AssetConstants.SCALE_OFFSET_TYPE.value().substring(1));
         scaleOffsetType.setId(AssetConstants.SCALE_OFFSET_TYPE.value());
-        scaleOffsetType.setDescription("Scale/Offset type of the channel");
+        scaleOffsetType.setDescription("%channel" + AssetConstants.SCALE_OFFSET_TYPE.value().substring(1) + "Desc");
         scaleOffsetType.setType(Tscalar.STRING);
         scaleOffsetType.setRequired(false);
         scaleOffsetType.setDefault(ScaleOffsetType.DEFINED_BY_VALUE_TYPE.name());
@@ -171,7 +171,7 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         valueScale.setName("%channel" + VALUE_SCALE.value().substring(1));
         valueScale.setId(VALUE_SCALE.value());
         valueScale.setDescription("%channelscaleDesc");
-        valueScale.setType(Tscalar.DOUBLE);
+        valueScale.setType(Tscalar.STRING);
         valueScale.setRequired(false);
 
         this.defaultElements.add(valueScale);
@@ -180,7 +180,7 @@ public class BaseChannelDescriptor implements ChannelDescriptor {
         valueOffset.setName("%channel" + VALUE_OFFSET.value().substring(1));
         valueOffset.setId(VALUE_OFFSET.value());
         valueOffset.setDescription("%channeloffsetDesc");
-        valueOffset.setType(Tscalar.DOUBLE);
+        valueOffset.setType(Tscalar.STRING);
         valueOffset.setRequired(false);
 
         this.defaultElements.add(valueOffset);
