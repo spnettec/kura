@@ -22,13 +22,22 @@ public class GwtConfigParameter implements IsSerializable {
     public enum GwtConfigParameterType {
 
         STRING,
+        STRINGS,
         LONG,
+        LONGS,
         DOUBLE,
+        DOUBLES,
         FLOAT,
+        FLOATS,
         INTEGER,
+        BIGINTEGER,
+        BIGINTEGERS,
+        INTEGERS,
         BYTE,
+        BYTE_ARRAY,
         CHAR,
         BOOLEAN,
+        BOOLEANS,
         SHORT,
         PASSWORD;
 
