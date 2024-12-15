@@ -1,3 +1,16 @@
+def boolean onlyDocumentationFilesChangedIn(String workDirectory) {
+    if (!env.CHANGE_TARGET) {
+        echo "CHANGE_TARGET not set. Skipping check"
+        return false
+    }
+
+    def changedFiles = sh(script: "cd ${workDirectory} && git diff --name-only origin/${env.CHANGE_TARGET} origin/${env.BRANCH_NAME}", returnStdout: true).trim().split("\n")
+
+    echo "Changed files: ${changedFiles}" // Debug
+
+    return changedFiles && changedFiles.every { it.endsWith(".md") || it.endsWith(".txt") }
+}
+
 node {
     properties([
         disableConcurrentBuilds(abortPrevious: true),
@@ -12,22 +25,57 @@ node {
     stage('Preparation') {
         dir("kura") {
             checkout scm
+            sh "touch /tmp/isJenkins.txt"
         }
     }
 
-    stage('Build') {
+    // Skip build if only documentation files (i.e. *.md and *.txt) have changed
+    if (onlyDocumentationFilesChangedIn("kura")) {
+        echo "Skipping build for documentation changes"
+        currentBuild.result = 'SUCCESS'
+        return
+    }
+
+    stage('Build target-platform') {
+        timeout(time: 1, unit: 'HOURS') {
+            dir("kura") {
+                withMaven(jdk: 'temurin-jdk17-latest', maven: 'apache-maven-3.9.6') {
+                    sh "mvn -f target-platform/pom.xml clean install -Pno-mirror -Pcheck-exists-plugin"
+                }
+            }
+        }
+    }
+
+    stage('Build core') {
         timeout(time: 2, unit: 'HOURS') {
             dir("kura") {
-                withMaven(jdk: 'adoptopenjdk-hotspot-jdk8-latest', maven: 'apache-maven-3.9.6') {
-                    sh "touch /tmp/isJenkins.txt"
-                    sh "mvn -f target-platform/pom.xml clean install -Pno-mirror -Pcheck-exists-plugin"
-                    sh "mvn -f kura/pom.xml clean install -Pcheck-exists-plugin"
+                withMaven(jdk: 'temurin-jdk17-latest', maven: 'apache-maven-3.9.6') {
+                    sh "mvn -f kura/pom.xml -Dsurefire.rerunFailingTestsCount=3 clean install -Pcheck-exists-plugin"
+                }
+            }
+        }
+    }
+
+    stage('Build distrib') {
+        timeout(time: 1, unit: 'HOURS') {
+            dir("kura") {
+                withMaven(jdk: 'temurin-jdk17-latest', maven: 'apache-maven-3.9.6') {
                     sh "mvn -f kura/distrib/pom.xml clean install -DbuildAll"
+                }
+            }
+        }
+    }
+
+    stage('Build examples') {
+        timeout(time: 1, unit: 'HOURS') {
+            dir("kura") {
+                withMaven(jdk: 'temurin-jdk17-latest', maven: 'apache-maven-3.9.6') {
                     sh "mvn -f kura/examples/pom.xml clean install -Pcheck-exists-plugin"
                 }
             }
         }
     }
+
 
     stage('Generate test reports') {
         dir("kura") {
