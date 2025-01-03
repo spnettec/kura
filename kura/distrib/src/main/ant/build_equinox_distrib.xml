@@ -1257,7 +1257,7 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.file" value="org.quartz-scheduler.quartz_${quartz.version}.jar" />
+            <param name="bundle.file" value="quartz_${quartz.version}.jar" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>

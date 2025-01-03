@@ -19,13 +19,15 @@ Eclipse-BuddyPolicy: ext
 Bundle-Vendor: Eclipse Kura
 Bundle-License: Eclipse Public License v2.0
 Bundle-ClassPath: .,
- lib/graal-sdk.jar,
- lib/js.jar,
- lib/js-launcher.jar,
- lib/js-scriptengine.jar,
+ lib/js-language.jar,
+ lib/truffle-runtime.jar,
+ lib/truffle-enterprise.jar,
+ lib/polyglot.jar,
  lib/launcher-common.jar,
+ lib/collections.jar,
+ lib/nativeimage.jar,
+ lib/word.jar,
  lib/truffle-api.jar,
- lib/regex.jar,
  lib/icu4j.jar,
  lib/groovy-jsr223.jar
 Provide-Capability: osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory

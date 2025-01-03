@@ -27,7 +27,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-        <org.apache.activemq.artemis.upstream.version>2.38.0</org.apache.activemq.artemis.upstream.version>
+        <org.apache.activemq.artemis.upstream.version>2.39.0</org.apache.activemq.artemis.upstream.version>
         <jctools-core.version>4.0.5</jctools-core.version>
         <caffeine.version>3.1.8</caffeine.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>

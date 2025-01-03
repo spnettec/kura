@@ -26,9 +26,8 @@
     <packaging>eclipse-plugin</packaging>
 
     <properties>
-        <graalvm.version>23.0.4</graalvm.version>
-        <org.codehaus.groovy.version>3.0.22</org.codehaus.groovy.version>
-        <icu.version>75.1</icu.version>
+        <graalvm.version>24.1.1</graalvm.version>
+        <org.codehaus.groovy.version>3.0.23</org.codehaus.groovy.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.wire.script.tools.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
@@ -49,33 +48,22 @@
                                 <!-- JS engine dependencies -->
                                 <artifactItem>
                                     <groupId>org.graalvm.js</groupId>
-                                    <artifactId>js</artifactId>
-                                    <version>${graalvm.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.graalvm.js</groupId>
-                                    <artifactId>js-scriptengine</artifactId>
-                                    <version>${graalvm.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.graalvm.js</groupId>
-                                    <artifactId>js-launcher</artifactId>
-                                    <version>${graalvm.version}</version>
-                                </artifactItem>
-                                <!-- Common infrastructure dependencies -->
-                                <artifactItem>
-                                    <groupId>org.graalvm.sdk</groupId>
-                                    <artifactId>graal-sdk</artifactId>
+                                    <artifactId>js-language</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.graalvm.truffle</groupId>
-                                    <artifactId>truffle-api</artifactId>
+                                    <artifactId>truffle-runtime</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.graalvm.regex</groupId>
-                                    <artifactId>regex</artifactId>
+                                    <groupId>org.graalvm.truffle</groupId>
+                                    <artifactId>truffle-enterprise</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.graalvm.polyglot</groupId>
+                                    <artifactId>polyglot</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
@@ -83,11 +71,37 @@
                                     <artifactId>launcher-common</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.graalvm.shadowed</groupId>
+                                    <artifactId>jline</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
+                                <!-- Common infrastructure dependencies -->
+                                <artifactItem>
+                                    <groupId>org.graalvm.sdk</groupId>
+                                    <artifactId>collections</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.graalvm.sdk</groupId>
+                                    <artifactId>nativeimage</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.graalvm.sdk</groupId>
+                                    <artifactId>word</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.graalvm.truffle</groupId>
+                                    <artifactId>truffle-api</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
                                 <!-- Transitive dependencies -->
                                 <artifactItem>
-                                    <groupId>com.ibm.icu</groupId>
+                                    <groupId>org.graalvm.shadowed</groupId>
                                     <artifactId>icu4j</artifactId>
-                                    <version>${icu.version}</version>
+                                    <version>${graalvm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.codehaus.groovy</groupId>
