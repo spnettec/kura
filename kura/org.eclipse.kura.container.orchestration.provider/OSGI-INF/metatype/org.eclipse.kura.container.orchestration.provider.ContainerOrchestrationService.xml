@@ -26,14 +26,14 @@
             description="%hostUrlDesc" type="String"
             cardinality="0" required="true" default="unix:///var/run/docker.sock" />
             
-        <AD id="enforcement.enabled" name="Allowlist Enforcement Enabled" type="Boolean" cardinality="0" required="true" default="false"
-            description="Enable/Disable the Allowlist enforcement. If enabled, only containers images whose digest can be found in the allowlist will be allowed to be run/loaded/created.">
+        <AD id="enforcement.enabled" name="%enforcementEnabled" type="Boolean" cardinality="0" required="true" default="false"
+            description="%enforcementEnabledDesc">
         </AD>
         
         <AD
             id="enforcement.allowlist"
-            name="Container Image Allowlist "
-            description="List of container image digests. Each entry must be separated by a new line of the text box|TextArea"
+            name="%enforcementAllowlist"
+            description="%enforcementAllowlistDesc"
             type="String"
             cardinality="1"
             required="false"
