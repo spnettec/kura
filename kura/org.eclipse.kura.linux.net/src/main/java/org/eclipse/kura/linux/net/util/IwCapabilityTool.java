@@ -142,7 +142,7 @@ public class IwCapabilityTool {
         final int exitValue = status.getExitStatus().getExitCode();
 
         if (!status.getExitStatus().isSuccessful()) {
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, commandLine, exitValue);
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, String.join(" ", commandLine), exitValue);
         }
 
         return new ByteArrayInputStream(((ByteArrayOutputStream) status.getOutputStream()).toByteArray());
