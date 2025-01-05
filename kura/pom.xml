@@ -135,7 +135,7 @@
     <properties>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
-        <tycho-version>4.0.9</tycho-version>
+        <tycho-version>4.0.10</tycho-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
@@ -204,7 +204,7 @@
             <properties>
                 <!-- TODO: update when new version is released to be working with Tycho 3. -->
                 <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>4.0.9</tycho-version>
+                <tycho-version>4.0.10</tycho-version>
 
                 <tycho.surefire.testenv.args>
                     -DbuildingWithTycho=true -Dosgi.locking=none
@@ -787,6 +787,22 @@
                                         <ignore></ignore>
                                     </action>
                                 </pluginExecution>
+                                <pluginExecution>
+	                           <pluginExecutionFilter>
+		                              <groupId>org.eclipse.tycho</groupId>
+		                              <artifactId>tycho-packaging-plugin</artifactId>
+		                              <versionRange>[1.0,)</versionRange>
+		                              <goals>
+		                                 <goal>build-qualifier</goal>
+		                                 <goal>build-qualifier-aggregator</goal>
+		                                 <goal>validate-id</goal>
+		                                 <goal>validate-version</goal>
+		                              </goals>
+		                           </pluginExecutionFilter>
+		                           <action>
+		                              <ignore />
+		                           </action>
+		                        </pluginExecution>
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
