@@ -333,8 +333,11 @@ public class AssetConfigurationUi extends AbstractServicesUi implements HasConfi
         this.columnVisibilityForm.add(this.selectAllColumnCheckbox);
 
         this.columnNameVisibilityMap.forEach((columnId, visible) -> {
+            GwtConfigParameter gwtPara = this.model.getChannelDescriptor().getParameters().stream()
+                    .filter(para -> para.getId().equals(columnId)).findFirst().orElseGet(null);
+            String label = gwtPara == null ? "" : gwtPara.getName();
 
-            CheckBox columnCheckBox = new CheckBox(toChannelPropertyName(columnId));
+            CheckBox columnCheckBox = new CheckBox(label);
             columnCheckBox.setFormValue(columnId);
             columnCheckBox.setValue(visible);
 
