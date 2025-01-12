@@ -100,7 +100,7 @@ public class ConsoleOptions {
             new AdBuilder("allowed.ports", "%allowedPorts", Tscalar.INTEGER) //
                     .setRequired(false) //
                     .setCardinality(3) //
-                    .setDefault("443,4443,8080") //
+                    // .setDefault("443,4443,8080") //
                     .setDescription("%allowedPortsDesc") //
                     .build(), //
             Integer[].class);
