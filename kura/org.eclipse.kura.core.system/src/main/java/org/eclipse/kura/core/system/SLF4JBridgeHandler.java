@@ -1,3 +1,15 @@
+/*******************************************************************************
+ * Copyright (c) 2021, 2025 Eurotech and/or its affiliates and others
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *  Eurotech
+ ******************************************************************************/
 package org.eclipse.kura.core.system;
 
 import java.text.MessageFormat;
@@ -130,9 +142,9 @@ public class SLF4JBridgeHandler extends Handler {
      * {@link #install()}.
      *
      * @throws SecurityException
-     *             A <code>SecurityException</code> is thrown, if a security manager
-     *             exists and if the caller does not have
-     *             LoggingPermission("control").
+     *                               A <code>SecurityException</code> is thrown, if a security manager
+     *                               exists and if the caller does not have
+     *                               LoggingPermission("control").
      */
     public static void uninstall() throws SecurityException {
         java.util.logging.Logger rootLogger = getRootLogger();
@@ -198,7 +210,7 @@ public class SLF4JBridgeHandler extends Handler {
      * Return the Logger instance that will be used for logging.
      * 
      * @param record
-     *            a LogRecord
+     *                   a LogRecord
      * @return an SLF4J logger corresponding to the record parameter's logger name
      */
     protected Logger getSLF4JLogger(LogRecord record) {
@@ -289,8 +301,8 @@ public class SLF4JBridgeHandler extends Handler {
      * about discarding log statements.
      *
      * @param record
-     *            Description of the log event. A null record is silently ignored
-     *            and is not published.
+     *                   Description of the log event. A null record is silently ignored
+     *                   and is not published.
      */
     public void publish(LogRecord record) {
         // Silently ignore null records.

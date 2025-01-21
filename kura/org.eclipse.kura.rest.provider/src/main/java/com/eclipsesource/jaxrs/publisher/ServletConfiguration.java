@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2015 Ivan Iliev and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2021, 2025 Eurotech and/or its affiliates and others
+ *
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *    Ivan Iliev - initial API and implementation
- *    Holger Staudacher  - ongoing development
+ *  Eurotech
  ******************************************************************************/
 package com.eclipsesource.jaxrs.publisher;
 
@@ -32,9 +33,9 @@ public interface ServletConfiguration {
      * </p>
      *
      * @param httpService
-     *            the {@link HttpService} to configure the servlet for.
+     *                        the {@link HttpService} to configure the servlet for.
      * @param rootPath
-     *            the configured root path of the servlet to register.
+     *                        the configured root path of the servlet to register.
      * @return the {@link HttpContext} to use for the servlet registration.
      */
     HttpContext getHttpContext(HttpService httpService, String rootPath);
@@ -45,9 +46,9 @@ public interface ServletConfiguration {
      * </p>
      *
      * @param httpService
-     *            the {@link HttpService} to configure the servlet for.
+     *                        the {@link HttpService} to configure the servlet for.
      * @param rootPath
-     *            the configured root path of the servlet to register.
+     *                        the configured root path of the servlet to register.
      * @return the init properties to use for the servlet registration.
      */
     Dictionary<String, String> getInitParams(HttpService httpService, String rootPath);

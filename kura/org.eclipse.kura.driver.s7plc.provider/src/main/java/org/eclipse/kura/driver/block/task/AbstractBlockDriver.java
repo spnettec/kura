@@ -1,15 +1,15 @@
 /*******************************************************************************
- * Copyright (c) 2017 Eurotech and/or its affiliates and others
+ * Copyright (c) 2021, 2025 Eurotech and/or its affiliates and others
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *     Eurotech
- *******************************************************************************/
-
+ *  Eurotech
+ ******************************************************************************/
 package org.eclipse.kura.driver.block.task;
 
 import static java.util.Objects.requireNonNull;
@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
  * </p>
  *
  * @param <T>
- *            the type of the domain, can be any type suitable for being used as an {@link HashMap} key
+ *                the type of the domain
  */
 public abstract class AbstractBlockDriver<T> implements Driver {
 
@@ -76,9 +76,9 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      * responsible of implementing the I/O operations for the specified domain.
      *
      * @param domain
-     *            the domain
+     *                   the domain
      * @param mode
-     *            the {@link Mode} for the returned {@link ToplevelBlockTask}
+     *                   the {@link Mode} for the returned {@link ToplevelBlockTask}
      * @return the created {@link ToplevelBlockTask}
      */
     protected abstract BlockFactory<ToplevelBlockTask> getTaskFactoryForDomain(T domain, Mode mode);
@@ -101,9 +101,9 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      *
      *
      * @param records
-     *            the list of {@link ChannelRecord} instances to be converted into {@link BlockTask} instances
+     *                    the list of {@link ChannelRecord} instances to be converted into {@link BlockTask} instances
      * @param mode
-     *            the mode, can be either {@link Mode#READ} or {@link Mode#WRITE}
+     *                    the mode, can be either {@link Mode#READ} or {@link Mode#WRITE}
      * @return a {@link Stream} yielding the converted tasks
      */
     protected abstract Stream<Pair<T, BlockTask>> toTasks(List<ChannelRecord> records, Mode mode);
@@ -114,7 +114,7 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      * value of the {@code minimumGapSize} parameter.
      *
      * @param domain
-     *            the domain
+     *                   the domain
      * @return the minimum gap size for the provided domain
      */
     protected int getReadMinimumGapSizeForDomain(T domain) {
@@ -127,12 +127,12 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      * argument, for example by adding prohibited blocks. The default implementation is no-op.
      *
      * @param domain
-     *            the domain
+     *                       the domain
      * @param mode
-     *            the {@link Mode} of the tasks to be aggregated, can be either {@link Mode#READ} or
-     *            {@link Mode#WRITE}
+     *                       the {@link Mode} of the tasks to be aggregated, can be either {@link Mode#READ} or
+     *                       {@link Mode#WRITE}
      * @param aggregator
-     *            the {@link BlockTaskAggregator} that will perform the aggregation
+     *                       the {@link BlockTaskAggregator} that will perform the aggregation
      */
     protected void beforeAggregation(T domain, Mode mode, BlockTaskAggregator aggregator) {
     }
@@ -152,12 +152,12 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      * </ol>
      *
      * @param records
-     *            the {@link ChannelRecord} instances to be converted to {@link BlockTask} instances.
+     *                    the {@link ChannelRecord} instances to be converted to {@link BlockTask} instances.
      * @param mode
-     *            the mode
+     *                    the mode
      * @return the list of {@link BlockTask} instances resulting from the aggregation.
      * @throws KuraException
-     *             if any exception is thrown during the process
+     *                           if any exception is thrown during the process
      */
     protected List<BlockTask> optimize(List<ChannelRecord> records, Mode mode) throws KuraException {
         try {
@@ -207,7 +207,7 @@ public abstract class AbstractBlockDriver<T> implements Driver {
      * exception thrown by the task and implement error handling.
      *
      * @param task
-     *            the {@link BlockTask} to be run
+     *                 the {@link BlockTask} to be run
      */
     protected void runTask(BlockTask task) {
         try {
