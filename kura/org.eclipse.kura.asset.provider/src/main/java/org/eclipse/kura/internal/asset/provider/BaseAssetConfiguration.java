@@ -427,9 +427,17 @@ public final class BaseAssetConfiguration {
             case DOUBLE:
                 return Double.parseDouble(value);
             case INTEGER:
-                return Integer.parseInt(value);
+                try {
+                    return Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    return Double.valueOf(value).intValue();
+                }
             case LONG:
-                return Long.parseLong(value);
+                try {
+                    return Long.parseLong(value);
+                } catch (NumberFormatException e) {
+                    return Double.valueOf(value).longValue();
+                }
             default:
                 throw new IllegalArgumentException(
                         value + " cannot be converted into a Number of type " + scaleOffsetType);
