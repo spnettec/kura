@@ -232,7 +232,12 @@ public class IpAddrShow {
         if (input.charAt(end - 1) == ':') {
             end--;
         }
-        return input.substring(start + 2, end);
+        String ifName = input.substring(start + 2, end);
+        end = ifName.indexOf('@');
+        if (end > 0) {
+            ifName = ifName.substring(0, end);
+        }
+        return ifName;
     }
 
     private String findValue(String input, String name, String regex) {
