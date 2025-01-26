@@ -67,7 +67,6 @@ import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.marshalling.Marshaller;
 import org.eclipse.kura.marshalling.Unmarshaller;
 import org.eclipse.kura.system.SystemService;
-import org.eclipse.kura.util.service.ServiceUtil;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -832,13 +831,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
         logger.info("Registering SelfConfiguringComponent - {}....", pid);
         if (!this.servicePidByPid.containsKey(pid)) {
-            // logger.error("servicePid:{} is not created by Factory,PID is:{}", servicePid, pid);
             this.servicePidByPid.put(pid, servicePid);
         }
         if (this.allActivatedPids.contains(pid)) {
             logger.error("pid:{} is already actived, servicePid is:{}", pid, servicePid);
+        } else {
+            this.allActivatedPids.add(pid);
         }
-        this.allActivatedPids.add(pid);
         if (this.activatedSelfConfigComponents.contains(pid)) {
             logger.error("pid:{} is already in SelfConfigComponents, servicePid is:{}", pid, servicePid);
         } else {
@@ -1316,26 +1315,49 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     private ComponentConfiguration getSelfConfiguringComponentConfiguration(String pid) {
         ComponentConfiguration cc = null;
-        final ServiceReference<?>[] refs = ServiceUtil.getServiceReferences(this.bundleContext,
-                SelfConfiguringComponent.class, null);
-
         try {
-            for (ServiceReference<?> ref : refs) {
-                String ppid = (String) ref.getProperty(KURA_SERVICE_PID);
-                final SelfConfiguringComponent selfConfigComp = (SelfConfiguringComponent) this.bundleContext
-                        .getService(ref);
-                if (pid.equals(ppid)) {
+            String filterExpression = "(" + KURA_SERVICE_PID + "=" + pid + ")";
+            ServiceReference<?>[] refs = this.ctx.getBundleContext().getServiceReferences((String) null,
+                    filterExpression);
+            if (refs != null) {
+                for (ServiceReference<?> ref : refs) {
+                    String ppid = (String) ref.getProperty(KURA_SERVICE_PID);
+                    if (pid.equals(ppid)) {
+                        Object obj = this.ctx.getBundleContext().getService(ref);
+                        try {
+                            if (obj instanceof SelfConfiguringComponent) {
+                                SelfConfiguringComponent selfConfigComp = null;
+                                selfConfigComp = (SelfConfiguringComponent) obj;
+                                try {
+                                    cc = selfConfigComp.getConfiguration();
+                                    if (!isValidSelfConfiguringComponent(pid, cc)) {
 
-                    cc = selfConfigComp.getConfiguration();
-                    if (!isValidSelfConfiguringComponent(pid, cc)) {
-                        return null;
+                                        return null;
+                                    }
+                                } catch (KuraException e) {
+                                    logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
+                                }
+                            } else {
+                                if (obj == null) {
+                                    cc = getConfigurableComponentConfiguration(pid);
+                                    if (cc == null) {
+                                        logger.error("null ref object. properties:{}", ref.getProperties());
+                                    }
+                                } else {
+                                    logger.error(
+                                            "Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
+                                            obj, pid);
+                                }
+                            }
+
+                        } finally {
+                            this.ctx.getBundleContext().ungetService(ref);
+                        }
                     }
                 }
             }
-        } catch (KuraException e) {
+        } catch (InvalidSyntaxException e) {
             logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
-        } finally {
-            ServiceUtil.ungetServiceReferences(this.bundleContext, refs);
         }
 
         return cc;
