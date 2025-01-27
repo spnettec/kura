@@ -4,9 +4,9 @@
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- *
+ * 
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -32,7 +32,8 @@ public class RestServiceOptions {
             900);
     private static final Property<Boolean> BASIC_AUTHENTICATION_ENABLED = new Property<>("auth.basic.enabled", true);
     private static final Property<Boolean> STATELESS_CERTIFICATE_AUTHENTICATION_ENABLED = new Property<>(
-            "auth.certificate.stateless.enabled", true);
+            "auth.certificate.stateless.enabled",
+            true);
 
     private final Set<Integer> allowedPorts;
     private final boolean passwordAuthEnabled;
@@ -53,15 +54,15 @@ public class RestServiceOptions {
     }
 
     public Set<Integer> getAllowedPorts() {
-        return this.allowedPorts;
+        return allowedPorts;
     }
 
     public boolean isPasswordAuthEnabled() {
-        return this.passwordAuthEnabled;
+        return passwordAuthEnabled;
     }
 
     public boolean isCertificateAuthEnabled() {
-        return this.certificateAuthEnabled;
+        return certificateAuthEnabled;
     }
 
     public boolean isSessionManagementEnabled() {
@@ -87,7 +88,9 @@ public class RestServiceOptions {
 
         final Set<Integer> result = new HashSet<>();
 
-        for (final Integer value : list) {
+        for (int i = 0; i < list.length; i++) {
+            final Integer value = list[i];
+
             if (value != null) {
                 result.add(value);
             }

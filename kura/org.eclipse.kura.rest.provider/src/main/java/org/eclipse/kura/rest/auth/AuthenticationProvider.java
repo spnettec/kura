@@ -25,7 +25,7 @@ import jakarta.ws.rs.container.ContainerRequestContext;
  * A service interface that allows to register custom authentication providers for the {@code RestService}.
  * Registered {@link AuthenticationProvider} instances will be considered along with the currently enabled
  * built in authentication methods (e.g password and certificate authentication).<br>
- *
+ * 
  * The registered authentication providers will be called in order, the first provider whose
  * {@link AuthenticationProvider#authenticate(HttpServletRequest, ContainerRequestContext)} returns a non-empty optional
  * will determine a successful authentication.

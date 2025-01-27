@@ -54,7 +54,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
     public Optional<Principal> authenticate(final HttpServletRequest request,
             final ContainerRequestContext requestContext) {
         try {
-            return this.wrapped.authenticate(request, requestContext);
+            return wrapped.authenticate(request, requestContext);
         } catch (final Exception e) {
             logger.warn("Unexpected exception calling authentication provider", e);
             return Optional.empty();
