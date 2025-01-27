@@ -22,12 +22,7 @@
   <set-property name="gwt.logging.logLevel" value="INFO"/>
   <set-property name="gwt.logging.enabled" value="TRUE"/>
 
-<<<<<<< HEAD
-  <inherits name="org.eclipse.kura.web2.ext" />
-  <set-property name="gwt.logging.consoleHandler" value="ENABLED"/>
-=======
   <!--<set-property name="gwt.logging.consoleHandler" value="ENABLED"/>-->
->>>>>>> refs/remotes/origin/develop
 
   <!-- We need the JUnit module in the main module,               -->
   <!-- otherwise eclipse complains (Google plugin bug?)           -->

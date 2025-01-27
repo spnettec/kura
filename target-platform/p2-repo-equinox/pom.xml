@@ -147,77 +147,77 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.glassfish.hk2:hk2-locator:${org.glassfish.hk2.version}</id>
+									<id>org.glassfish.hk2:hk2-locator:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.glassfish.hk2.external:aopalliance-repackaged:${org.glassfish.hk2.version}</id>
+									<id>org.glassfish.hk2.external:aopalliance-repackaged:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.glassfish.hk2:hk2-api:${org.glassfish.hk2.version}</id>
+									<id>org.glassfish.hk2:hk2-api:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.glassfish.hk2:hk2-utils:${org.glassfish.hk2.version}</id>
+									<id>org.glassfish.hk2:hk2-utils:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.jvnet.mimepull:mimepull:${jvnet.mimepull.version}</id>
+									<id>org.jvnet.mimepull:mimepull:${mimepull.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifactItem>
-									<id>org.glassfish.jersey.containers:jersey-container-servlet:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.containers:jersey-container-servlet:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.media:jersey-media-sse:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.media:jersey-media-sse:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.media:jersey-media-multipart:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.media:jersey-media-multipart:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.core:jersey-server:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.core:jersey-server:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.ext:jersey-entity-filtering:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.ext:jersey-entity-filtering:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.media:jersey-media-jaxb:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.media:jersey-media-jaxb:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.core:jersey-common:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.core:jersey-common:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.core:jersey-client:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.core:jersey-client:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
 								<artifactItem>
-									<id>org.glassfish.jersey.inject:jersey-hk2:${glassfish.jersey-mvn.version}</id>
+									<id>org.glassfish.jersey.inject:jersey-hk2:${jersey-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifactItem>
@@ -299,38 +299,39 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.logging.log4j:log4j-slf4j2-impl:${logging.log4j.version}</id>
+									<id>org.apache.logging.log4j:log4j-slf4j2-impl:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.logging.log4j:log4j-jul:${logging.log4j.version}</id>
+									<id>org.apache.logging.log4j:log4j-jul:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.logging.log4j:log4j-api:${logging.log4j.version}</id>
+									<id>org.apache.logging.log4j:log4j-api:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.logging.log4j:log4j-core:${logging.log4j.version}</id>
+									<id>org.apache.logging.log4j:log4j-core:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<!--
 								<artifact>
 									<id>commons-logging:commons-logging:${commons-logging-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-
+								-->
 								<artifact>
-									<id>org.apache.commons:commons-fileupload2-jakarta-servlet5:${org.apache.commons.fileupload-mvn.version}</id>
+									<id>org.apache.commons:commons-fileupload2-jakarta-servlet5:${commons-fileupload-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.commons:commons-fileupload2-core:${org.apache.commons.fileupload-mvn.version}</id>
+									<id>org.apache.commons:commons-fileupload2-core:${commons-fileupload-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -592,12 +593,12 @@
 									</instructions>
 								</artifact>
 								<artifact>
-									<id>com.google.guava:guava:${guava.version}</id>
+									<id>com.google.guava:guava:${guava-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.google.guava:failureaccess:jar:${guava.failureaccess.version}</id>
+									<id>com.google.guava:failureaccess:jar:${failureaccess.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -758,7 +759,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.javassist:javassist:${org.javassist.mvn.version}</id>
+									<id>org.javassist:javassist:${javassist.mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -773,17 +774,17 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.geronimo.specs:geronimo-json_1.0_spec:1.0-alpha-1</id>
+									<id>org.apache.geronimo.specs:geronimo-json_1.0_spec:${org.apache.geronimo.specs.json-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.geronimo.specs:geronimo-jms_2.0_spec:1.0-alpha-2</id>
+									<id>org.apache.geronimo.specs:geronimo-jms_2.0_spec:${org.apache.geronimo.specs.jms-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.apache.geronimo.specs:geronimo-jta_1.1_spec:${org.apache.geronimo.specs.jta.version}</id>
+									<id>org.apache.geronimo.specs:geronimo-jta_1.1_spec:${org.apache.geronimo.specs.jta-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -867,7 +868,7 @@
 								</artifact>
 
 								<artifact>
-									<id>org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:${org.apache.aries.spifly.version}</id>
+									<id>org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:${org.apache.aries.spifly.dynamic.bundle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -952,6 +953,11 @@
 									<id>org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.servlet.whiteboard:jar:${org.eclipse.osgi-technology.rest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
+									<override>true</override>
+									<instructions>
+										<Require-Capability>
+ 										</Require-Capability>
+									</instructions>
 								</artifact>
 
 								<artifact>
@@ -1119,11 +1125,13 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<!--
 								<artifact>
 									<id>org.eclipse.platform:org.eclipse.osgi.services:jar:${org.eclipse.osgi.services-mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								<artifact>
 									<id>org.eclipse.platform:org.eclipse.osgi.util:jar:${org.eclipse.osgi.util-mvn.version}</id>
 									<source>true</source>
