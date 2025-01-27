@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2024 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2025 Eurotech and/or its affiliates and others
  * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -28,10 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.kura.web.server.KuraRemoteServiceServlet;
 import org.eclipse.kura.web.server.KuraRemoteServiceServlet.KuraPermissionException;
 import org.eclipse.kura.web.server.RequiredPermissions.Mode;
@@ -46,6 +42,10 @@ import org.osgi.service.wireadmin.WireAdminListener;
 import org.osgi.service.wireadmin.WireConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * The Class EventHandlerServlet is responsible for interacting between Event
@@ -118,13 +118,13 @@ public final class WiresBlinkServlet extends LocaleServlet implements WireAdminL
      * Performs a GET request for Server Sent Event Value.
      *
      * @param request
-     *                 the request
+     *                     the request
      * @param response
-     *                 the response
+     *                     the response
      * @throws ServletException
-     *                          the servlet exception
+     *                              the servlet exception
      * @throws IOException
-     *                          Signals that an I/O exception has occurred.
+     *                              Signals that an I/O exception has occurred.
      */
     @Override
     public void doGet(final HttpServletRequest request, final HttpServletResponse response)

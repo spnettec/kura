@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -38,17 +38,11 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.FileCleanerCleanup;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.servlet5.JakartaFileCleaner;
+import org.apache.commons.fileupload2.jakarta.servlet5.JakartaServletFileUpload;
 import org.apache.commons.io.FileCleaningTracker;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.kura.KuraErrorCode;
@@ -85,7 +79,15 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 public class FileServlet extends AuditServlet {
+
+    private static final String SYSTEM_SERVICE_ERROR_MESSAGE = "Error locating SystemService";
 
     private static final String CANNOT_CLOSE_INPUT_STREAM = "Cannot close input stream";
 
@@ -138,7 +140,7 @@ public class FileServlet extends AuditServlet {
         logger.info("Servlet {} initialized", getServletName());
 
         ServletContext ctx = getServletContext();
-        this.fileCleaningTracker = FileCleanerCleanup.getFileCleaningTracker(ctx);
+        this.fileCleaningTracker = JakartaFileCleaner.getFileCleaningTracker(ctx);
 
         getZipUploadSizeMax();
         getZipUploadCountMax();
@@ -146,11 +148,12 @@ public class FileServlet extends AuditServlet {
         int sizeThreshold = getFileUploadInMemorySizeThreshold();
         File repository = new File(System.getProperty(JAVA_IO_TMPDIR));
 
-        logger.info("DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD: {}", DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD);
+        logger.info("DiskFileItemFactory.DEFAULT_THRESHOLD: {}", DiskFileItemFactory.DEFAULT_THRESHOLD);
         logger.info("DiskFileItemFactory: using size threshold of: {}", sizeThreshold);
 
-        this.diskFileItemFactory = new DiskFileItemFactory(sizeThreshold, repository);
-        this.diskFileItemFactory.setFileCleaningTracker(this.fileCleaningTracker);
+        this.diskFileItemFactory = DiskFileItemFactory.builder() //
+                .setBufferSize(sizeThreshold) //
+                .setPath(repository.toPath()).setFileCleaningTracker(this.fileCleaningTracker).get();
     }
 
     @Override
@@ -298,7 +301,7 @@ public class FileServlet extends AuditServlet {
 
     private void doPostCommand(HttpServletRequest req) throws ServletException, IOException {
         UploadRequest upload = new UploadRequest(this.diskFileItemFactory);
-        upload.setHeaderEncoding("UTF-8");
+        upload.setHeaderCharset(StandardCharsets.UTF_8);
 
         try {
             upload.parse(req);
@@ -326,7 +329,7 @@ public class FileServlet extends AuditServlet {
             workingDir = System.getProperty(JAVA_IO_TMPDIR, "/tmp");
         }
 
-        List<FileItem> fileItems = null;
+        List<DiskFileItem> fileItems = null;
         InputStream is = null;
         File localFolder = new File(workingDir);
         OutputStream os = null;
@@ -335,7 +338,7 @@ public class FileServlet extends AuditServlet {
             fileItems = upload.getFileItems();
 
             if (!fileItems.isEmpty()) {
-                FileItem item = fileItems.get(0);
+                DiskFileItem item = fileItems.get(0);
                 is = item.getInputStream();
 
                 byte[] bytes = IOUtils.toByteArray(is);
@@ -402,7 +405,7 @@ public class FileServlet extends AuditServlet {
                 }
             }
             if (fileItems != null) {
-                for (FileItem fileItem : fileItems) {
+                for (DiskFileItem fileItem : fileItems) {
                     fileItem.delete();
                 }
             }
@@ -425,7 +428,7 @@ public class FileServlet extends AuditServlet {
 
     private void doPostAsset(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         UploadRequest upload = new UploadRequest(this.diskFileItemFactory);
-        upload.setHeaderEncoding("UTF-8");
+        upload.setHeaderCharset(StandardCharsets.UTF_8);
         List<String> errors = new ArrayList<>();
 
         HttpSession session = req.getSession(false);
@@ -445,7 +448,7 @@ public class FileServlet extends AuditServlet {
             KuraRemoteServiceServlet.checkXSRFToken(req, token);
             // END XSRF security check
 
-            List<FileItem> fileItems = upload.getFileItems();
+            List<DiskFileItem> fileItems = upload.getFileItems();
             int fileItemsSize = fileItems.size();
             if (fileItemsSize != 1) {
                 logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
@@ -453,7 +456,7 @@ public class FileServlet extends AuditServlet {
                 throw new ServletException();
             }
 
-            FileItem fileItem = fileItems.get(0);
+            DiskFileItem fileItem = fileItems.get(0);
             byte[] data = fileItem.get();
             String csvString = new String(data, StandardCharsets.UTF_8);
             String assetPid = formFields.get("assetPid");
@@ -514,14 +517,14 @@ public class FileServlet extends AuditServlet {
         }
         // END XSRF security check
 
-        List<FileItem> fileItems = upload.getFileItems();
+        List<DiskFileItem> fileItems = upload.getFileItems();
         int fileItemsSize = fileItems.size();
         if (fileItemsSize != 1) {
             logger.error(EXPECTED_1_FILE_PATTERN, fileItemsSize);
             throw new ServletException("Wrong number of file items");
         }
 
-        FileItem fileItem = fileItems.get(0);
+        DiskFileItem fileItem = fileItems.get(0);
 
         String fileName = fileItem.getName();
 
@@ -571,7 +574,7 @@ public class FileServlet extends AuditServlet {
                 }
             }
             if (fileItems != null) {
-                for (FileItem fileItem0 : fileItems) {
+                for (DiskFileItem fileItem0 : fileItems) {
                     fileItem0.delete();
                 }
             }
@@ -611,7 +614,7 @@ public class FileServlet extends AuditServlet {
         }
 
         // Check that we have a file upload request
-        boolean isMultipart = ServletFileUpload.isMultipartContent(req);
+        boolean isMultipart = JakartaServletFileUpload.isMultipartContent(req);
         if (!isMultipart) {
             logger.error("Not a file upload request");
             throw new ServletException("Not a file upload request");
@@ -637,7 +640,7 @@ public class FileServlet extends AuditServlet {
         }
         // END XSRF security check
 
-        List<FileItem> fileItems = null;
+        List<DiskFileItem> fileItems = null;
         InputStream is = null;
         File localFile = null;
         OutputStream os = null;
@@ -652,7 +655,7 @@ public class FileServlet extends AuditServlet {
                 throw new ServletException("Wrong number of file items");
             }
 
-            FileItem item = fileItems.get(0);
+            DiskFileItem item = fileItems.get(0);
             String filename = item.getName();
             is = item.getInputStream();
 
@@ -729,7 +732,7 @@ public class FileServlet extends AuditServlet {
                 }
             }
             if (fileItems != null) {
-                for (FileItem fileItem : fileItems) {
+                for (DiskFileItem fileItem : fileItems) {
                     fileItem.delete();
                 }
             }
@@ -793,7 +796,7 @@ public class FileServlet extends AuditServlet {
             int sizeInBytes = sizeInMB * 1024 * 1024;
             tooBig = sizeInBytes;
         } catch (GwtKuraException e) {
-            logger.error("Error locating SystemService", e);
+            logger.error(SYSTEM_SERVICE_ERROR_MESSAGE, e);
         }
     }
 
@@ -803,7 +806,7 @@ public class FileServlet extends AuditServlet {
             SystemService systemService = locator.getService(SystemService.class);
             tooMany = systemService.getFileCommandZipMaxUploadNumber();
         } catch (GwtKuraException e) {
-            logger.error("Error locating SystemService", e);
+            logger.error(SYSTEM_SERVICE_ERROR_MESSAGE, e);
         }
     }
 
@@ -815,7 +818,7 @@ public class FileServlet extends AuditServlet {
             SystemService systemService = locator.getService(SystemService.class);
             sizeMax = Long.parseLong(systemService.getProperties().getProperty("file.upload.size.max", "-1"));
         } catch (GwtKuraException e) {
-            logger.error("Error locating SystemService", e);
+            logger.error(SYSTEM_SERVICE_ERROR_MESSAGE, e);
         }
 
         return sizeMax;
@@ -824,14 +827,13 @@ public class FileServlet extends AuditServlet {
     private static int getFileUploadInMemorySizeThreshold() {
         ServiceLocator locator = ServiceLocator.getInstance();
 
-        int sizeThreshold = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
+        int sizeThreshold = DiskFileItemFactory.DEFAULT_THRESHOLD;
         try {
             SystemService systemService = locator.getService(SystemService.class);
-            sizeThreshold = Integer
-                    .parseInt(systemService.getProperties().getProperty("file.upload.in.memory.size.threshold",
-                            String.valueOf(DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD)));
+            sizeThreshold = Integer.parseInt(systemService.getProperties().getProperty(
+                    "file.upload.in.memory.size.threshold", String.valueOf(DiskFileItemFactory.DEFAULT_THRESHOLD)));
         } catch (GwtKuraException e) {
-            logger.error("Error locating SystemService", e);
+            logger.error(SYSTEM_SERVICE_ERROR_MESSAGE, e);
         }
 
         return sizeThreshold;
@@ -869,12 +871,12 @@ public class FileServlet extends AuditServlet {
     }
 }
 
-class UploadRequest extends ServletFileUpload {
+class UploadRequest extends JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> {
 
     private static Logger logger = LoggerFactory.getLogger(UploadRequest.class);
 
     Map<String, String> formFields;
-    List<FileItem> fileItems;
+    List<DiskFileItem> fileItems;
 
     public UploadRequest(DiskFileItemFactory diskFileItemFactory) {
         super(diskFileItemFactory);
@@ -893,21 +895,25 @@ class UploadRequest extends ServletFileUpload {
         logger.debug("upload.getSizeMax(): {}", getSizeMax());
 
         // Parse the request
-        List<FileItem> items = null;
+        List<DiskFileItem> items = null;
         items = parseRequest(req);
 
         // Process the uploaded items
-        Iterator<FileItem> iter = items.iterator();
+        Iterator<DiskFileItem> iter = items.iterator();
         while (iter.hasNext()) {
-            FileItem item = iter.next();
+            DiskFileItem item = iter.next();
 
             if (item.isFormField()) {
-                String name = item.getFieldName();
-                String value = item.getString("UTF-8");
+                try {
+                    String name = item.getFieldName();
+                    String value = item.getString(StandardCharsets.UTF_8);
 
-                logger.debug("Form field item name: {}, value: {}", name, value);
+                    logger.debug("Form field item name: {}, value: {}", name, value);
 
-                this.formFields.put(name, value);
+                    this.formFields.put(name, value);
+                } catch (Exception e) {
+
+                }
             } else {
                 String fieldName = item.getFieldName();
                 String fileName = item.getName();
@@ -916,7 +922,7 @@ class UploadRequest extends ServletFileUpload {
                 long sizeInBytes = item.getSize();
 
                 logger.debug("File upload item name: {}, fileName: {}, contentType: {}, isInMemory: {}, size: {}",
-                        new Object[] { fieldName, fileName, contentType, isInMemory, sizeInBytes });
+                        fieldName, fileName, contentType, isInMemory, sizeInBytes);
 
                 this.fileItems.add(item);
             }
@@ -927,7 +933,7 @@ class UploadRequest extends ServletFileUpload {
         return this.formFields;
     }
 
-    public List<FileItem> getFileItems() {
+    public List<DiskFileItem> getFileItems() {
         return this.fileItems;
     }
 }

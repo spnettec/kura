@@ -76,13 +76,11 @@
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.identity.configuration.extension"/>
         <setEntry value="org.eclipse.kura.example.identity.configuration.extension.test"/>
-        <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
         <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
         <setEntry value="org.eclipse.kura.example.tamper.detection"/>
         <setEntry value="org.eclipse.kura.example.testutil"/>
-        <setEntry value="org.eclipse.kura.example.web.extension"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider"/>
         <setEntry value="org.eclipse.kura.example.wire.logic.multiport.provider.test"/>
         <setEntry value="org.eclipse.kura.example.wire.math.multiport.provider"/>
@@ -196,9 +194,6 @@
         <setEntry value="com.alibaba.fastjson2@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.provider.multipart@default:default"/>
-        <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-databind@default:default"/>
@@ -211,7 +206,7 @@
         <setEntry value="com.google.protobuf@default:default"/>
         <setEntry value="com.h2database@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
-        <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
+        <setEntry value="com.sun.xml.bind.jaxb-osgi*4.0.2@default:default"/>
         <setEntry value="com.zaxxer.HikariCP@default:default"/>
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
@@ -248,7 +243,7 @@
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
         <setEntry value="io.vertx.web@default:default"/>
-        <setEntry value="jakarta.activation-api@default:default"/>
+        <setEntry value="jakarta.activation-api*2.1.2@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.enterprise.cdi-api@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
@@ -259,7 +254,7 @@
         <setEntry value="jakarta.transaction-api@default:default"/>
         <setEntry value="jakarta.validation.jakarta.validation-api@default:default"/>
         <setEntry value="jakarta.ws.rs-api@default:default"/>
-        <setEntry value="jakarta.xml.bind-api@default:default"/>
+        <setEntry value="jakarta.xml.bind-api*4.0.2@default:default"/>
         <setEntry value="jakarta.xml.soap-api@default:default"/>
         <setEntry value="jakarta.xml.ws-api@default:default"/>
         <setEntry value="javassist@default:default"/>
@@ -274,7 +269,6 @@
         <setEntry value="org.apache.commons.commons-configuration2@default:default"/>
         <setEntry value="org.apache.commons.commons-csv@default:default"/>
         <setEntry value="org.apache.commons.commons-exec@default:default"/>
-        <setEntry value="org.apache.commons.commons-fileupload@default:default"/>
         <setEntry value="org.apache.commons.commons-io@default:default"/>
         <setEntry value="org.apache.commons.commons-net@default:default"/>
         <setEntry value="org.apache.commons.commons-pool2@default:default"/>
@@ -315,9 +309,6 @@
         <setEntry value="org.eclipse.equinox.common@2:true"/>
         <setEntry value="org.eclipse.equinox.console@default:default"/>
         <setEntry value="org.eclipse.equinox.event@default:default"/>
-        <setEntry value="org.eclipse.equinox.http.jetty@default:false"/>
-        <setEntry value="org.eclipse.equinox.http.registry@default:default"/>
-        <setEntry value="org.eclipse.equinox.http.servlet@default:default"/>
         <setEntry value="org.eclipse.equinox.io@default:default"/>
         <setEntry value="org.eclipse.equinox.launcher@default:default"/>
         <setEntry value="org.eclipse.equinox.metatype@default:default"/>
@@ -329,9 +320,7 @@
         <setEntry value="org.eclipse.jetty.io@default:default"/>
         <setEntry value="org.eclipse.jetty.security@default:default"/>
         <setEntry value="org.eclipse.jetty.server@default:default"/>
-        <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.jetty.customizer@default:false"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
         <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
@@ -361,7 +350,6 @@
         <setEntry value="org.glassfish.jersey.media.jersey-media-multipart@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
-        <setEntry value="org.gwtproject.gwt-user@default:default"/>
         <setEntry value="org.jgroups@default:default"/>
         <setEntry value="org.jvnet.mimepull@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
@@ -477,7 +465,6 @@
         <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
-        <setEntry value="org.eclipse.kura.web2.ext@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>
         <setEntry value="org.eclipse.kura.wire.ai.component.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.camel@default:default"/>

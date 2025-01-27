@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2022 Eurotech and/or its affiliates and others
- *
+ * Copyright (c) 2022, 2025 Eurotech and/or its affiliates and others
+ * 
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- *
+ * 
  * SPDX-License-Identifier: EPL-2.0
- *
+ * 
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -16,9 +16,9 @@ import java.security.Principal;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.annotation.Priority;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.container.ContainerRequestContext;
+import jakarta.annotation.Priority;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.container.ContainerRequestContext;
 
 import org.eclipse.kura.rest.auth.AuthenticationProvider;
 import org.slf4j.Logger;
@@ -86,7 +86,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.priority, this.wrapped);
+        return Objects.hash(priority, wrapped);
     }
 
     @Override
@@ -98,7 +98,7 @@ class AuthenticationProviderHolder implements Comparable<AuthenticationProviderH
             return false;
         }
         AuthenticationProviderHolder other = (AuthenticationProviderHolder) obj;
-        return this.priority == other.priority && Objects.equals(this.wrapped, other.wrapped);
+        return priority == other.priority && Objects.equals(wrapped, other.wrapped);
     }
 
 }

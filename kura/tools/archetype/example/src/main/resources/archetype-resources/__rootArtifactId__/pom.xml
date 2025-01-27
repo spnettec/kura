@@ -9,9 +9,9 @@
 
     <repositories>
         <repository>
-            <id>p2-repo-equinox_3.16.0</id>
+            <id>p2-repo-equinox</id>
             <layout>p2</layout>
-            <url>file://${basedir}/../target-definition/equinox_3.16.0/repository/</url>
+            <url>file://${basedir}/../target-definition/equinox/repository/</url>
         </repository>
         <repository>
             <id>p2-repo-common</id>
@@ -24,13 +24,13 @@
     		<plugin>
                 <groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-maven-plugin</artifactId>
-                <version>2.1.0</version>
+                <version>4.0.10</version>
                 <extensions>true</extensions>
             </plugin>
         	<plugin>
             	<groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-packaging-plugin</artifactId>
-                <version>2.1.0</version>
+                <version>4.0.10</version>
                 <configuration>
                 	<archive>
                     	<compress>false</compress>
@@ -73,7 +73,7 @@
     							<pluginExecution>
     								<pluginExecutionFilter>
     									<groupId>org.eclipse.tycho</groupId>
-    									<artifactId>tycho-packaging-plugin</artifactId>
+    									<artifactId></artifactId>
     									<versionRange>[0.20.0,)</versionRange>
     									<goals>
     										<goal>validate-version</goal>

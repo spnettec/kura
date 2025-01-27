@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
+  Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
 
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -210,7 +210,7 @@
                     -DbuildingWithTycho=true -Dosgi.locking=none
                     -Dds.showtrace=true
                     -Djava.io.tmpdir=/tmp
-                    -Dorg.osgi.framework.area=/tmp/osgi/framework_storage
+                    -Dorg.osgi.framework.storage=${project.basedir}/target/osgi/framework_storage
                     -Dosgi.clean=true
                     -Dkura.home=${project.basedir}/target/kura
                     -Dkura.plugins=${project.basedir}/target/kura/plugins
@@ -221,11 +221,9 @@
                     -Dkura.configuration=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/kura.properties
                     -Dlog4j.configurationFile=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/log4j.xml
                     -Dorg.eclipse.kura.mode=emulator
-                    -Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer
                     -Ddpa.configuration=/tmp/kura/dpa.properties
                     -Dosgi.console=5002
                     --add-opens java.base/java.lang=ALL-UNNAMED
-                    --add-opens java.base/java.util=ALL-UNNAMED
                 </tycho.surefire.testenv.args>
             </properties>
         </profile>
@@ -238,9 +236,9 @@
             </activation>
             <repositories>
                 <repository>
-                    <id>p2-repo-equinox_3.16.0</id>
+                    <id>p2-repo-equinox</id>
                     <layout>p2</layout>
-                    <url>file:///${kura.basedir}/target-definition/equinox_3.16.0/repository/</url>
+                    <url>file:///${kura.basedir}/target-definition/equinox/repository/</url>
                 </repository>
             </repositories>
         </profile>
@@ -254,9 +252,9 @@
             </activation>
             <repositories>
                 <repository>
-                    <id>p2-repo-equinox_3.16.0</id>
+                    <id>p2-repo-equinox</id>
                     <layout>p2</layout>
-                    <url>file:///${kura.basedir}/target-definition/equinox_3.16.0/repository/</url>
+                    <url>file:///${kura.basedir}/target-definition/equinox/repository/</url>
                 </repository>
             </repositories>
         </profile>
@@ -331,7 +329,6 @@
             </activation>
             <modules>
                 <module>org.eclipse.kura.web2</module>
-                <module>org.eclipse.kura.web2.ext</module>
             </modules>
         </profile>
         <profile>
@@ -608,6 +605,7 @@
                     <configuration>
                         <strictVersions>true</strictVersions>
                         <format>${kura.build.version}</format>
+                        <skipPomGeneration>true</skipPomGeneration>
                     </configuration>
                 </plugin>
                 <plugin>

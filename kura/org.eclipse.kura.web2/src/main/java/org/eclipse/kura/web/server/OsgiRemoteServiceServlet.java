@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -23,11 +23,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.kura.audit.AuditContext;
 import org.eclipse.kura.audit.AuditContext.Scope;
 import org.eclipse.kura.locale.LocaleContextHolder;
@@ -39,6 +34,11 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
 
@@ -123,26 +123,26 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
      * alternative approach.
      *
      * @param request
-<<<<<<< HEAD
+     *                          <<<<<<< HEAD
      *                          the HTTP request being serviced
-=======
-     *                      the HTTP request being serviced
->>>>>>> refs/remotes/origin/develop
+     *                          =======
+     *                          the HTTP request being serviced
+     *                          >>>>>>> refs/remotes/origin/develop
      * @param moduleBaseURL
-<<<<<<< HEAD
+     *                          <<<<<<< HEAD
      *                          as specified in the incoming payload
-=======
-     *                      as specified in the incoming payload
->>>>>>> refs/remotes/origin/develop
+     *                          =======
+     *                          as specified in the incoming payload
+     *                          >>>>>>> refs/remotes/origin/develop
      * @param strongName
-<<<<<<< HEAD
+     *                          <<<<<<< HEAD
      *                          a strong name that uniquely identifies a serialization policy
      *                          file
-=======
-     *                      a strong name that uniquely identifies a serialization
-     *                      policy
-     *                      file
->>>>>>> refs/remotes/origin/develop
+     *                          =======
+     *                          a strong name that uniquely identifies a serialization
+     *                          policy
+     *                          file
+     *                          >>>>>>> refs/remotes/origin/develop
      * @return a {@link SerializationPolicy} for the given module base URL and
      *         strong name, or <code>null</code> if there is none
      */

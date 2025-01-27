@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-    Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
+    Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
   
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
@@ -78,9 +78,9 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <target>
+                                    <tasks>
                                         <move file="target/source/plugins/libsocket-can-osgi.jar" tofile="target/source/plugins/libsocket-can-osgi_${libsocket-can-osgi.version}.jar"/>
-                                    </target>
+                                    </tasks>
                                 </configuration>
                             </execution>
                         </executions>
@@ -141,7 +141,7 @@
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>com.codeminders.hidapi.aarch64</artifactId>
                                     <version>${com.codeminders.hidapi.version}</version>
-                                </artifactItem>                               
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.sun.misc</artifactId>
@@ -202,11 +202,6 @@
                                     <artifactId>libsocket-can-osgi</artifactId>
                                     <version>${libsocket-can-osgi.version}</version>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.eclipse.kura.jetty.customizer</artifactId>
-                                    <version>${org.eclipse.kura.jetty.customizer.version}</version>
-                                </artifactItem>
                             </artifactItems>
                             <stripVersion>true</stripVersion>
                             <outputDirectory>${project.basedir}/target/source/plugins</outputDirectory>
@@ -219,33 +214,6 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>${maven-antrun-plugin.version}</version>
                 <executions>
-                    <execution>
-                        <id>setup</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <move file="target/source/plugins/com.codeminders.hidapi.jar" tofile="target/source/plugins/com.codeminders.hidapi_${com.codeminders.hidapi.version}.jar"/>
-                                <move file="target/source/plugins/com.codeminders.hidapi.x86_64.jar" tofile="target/source/plugins/com.codeminders.hidapi.x86_64_${com.codeminders.hidapi.version}.jar"/>
-                                <move file="target/source/plugins/com.codeminders.hidapi.aarch64.jar" tofile="target/source/plugins/com.codeminders.hidapi.aarch64_${com.codeminders.hidapi.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.kura.sun.misc.jar" tofile="target/source/plugins/org.eclipse.kura.sun.misc_${org.eclipse.kura.sun.misc.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.kura.jetty.customizer.jar" tofile="target/source/plugins/org.eclipse.kura.jetty.customizer_${org.eclipse.kura.jetty.customizer.version}.jar"/>
-                                <move file="target/source/plugins/org.usb4java.jar" tofile="target/source/plugins/org.usb4java_${org.usb4java.version}.jar"/>
-                                <move file="target/source/plugins/jdk.dio.jar" tofile="target/source/plugins/jdk.dio_${jdk.dio.version}.jar"/>
-                                <move file="target/source/plugins/jdk.dio.x86_64.jar" tofile="target/source/plugins/jdk.dio.x86_64_${jdk.dio.version}.jar"/>
-                                <move file="target/source/plugins/jdk.dio.aarch64.jar" tofile="target/source/plugins/jdk.dio.aarch64_${jdk.dio.version}.jar"/>
-                                <move file="target/source/plugins/usb4java-javax.jar" tofile="target/source/plugins/usb4java-javax_${usb4java-javax.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.soda.dk.comm.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm_${org.eclipse.soda.dk.comm.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.soda.dk.comm.x86_64.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.x86_64_${org.eclipse.soda.dk.comm.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.soda.dk.comm.aarch64.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.aarch64_${org.eclipse.soda.dk.comm.version}.jar"/>
-                                <move file="target/source/plugins/org.eclipse.soda.dk.comm.macosx.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.macosx_${org.eclipse.soda.dk.comm.version}.jar"/>
-                                <move file="target/source/plugins/log4j2-api-config.jar" tofile="target/source/plugins/log4j2-api-config_${log4j2-api-config.version}.jar"/>
-                                <move file="target/source/plugins/libsocket-can-osgi.jar" tofile="target/source/plugins/libsocket-can-osgi_${libsocket-can-osgi.version}.jar"/>
-                            </target>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>install-commons</id>
                         <phase>install</phase>
