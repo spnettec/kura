@@ -68,12 +68,7 @@
 									<id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
-								</artifactItem>
-								<artifactItem>
-									<id>org.apache.activemq:artemis-mqtt-protocol:jar:2.38.0</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
+								</artifactItem>Item>
 								<artifactItem>
                                     <id>org.mockito:mockito-core:${mockito-core.version}</id>
                                     <source>true</source>
@@ -89,11 +84,6 @@
                                     <source>true</source>
 									<transitive>false</transitive>
                                 </artifactItem>
-								<artifactItem>
-									<id>org.objenesis:objenesis:${objenesis.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
 								<artifact>
 									<id>junit:junit:${org.junit.version}</id>
 									<source>true</source>

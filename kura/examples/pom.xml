@@ -139,6 +139,11 @@
                     <layout>p2</layout>
                     <url>file:///${kura.basedir}/target-definition/equinox/repository/</url>
                 </repository>
+                <repository>
+                    <id>p2-repo-extra</id>
+                    <layout>p2</layout>
+                    <url>file:///${kura.basedir}/target-definition/extra/repository/</url>
+                </repository>
             </repositories>
         </profile>
         <profile>

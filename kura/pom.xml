@@ -351,17 +351,14 @@
             <url>file:///${kura.basedir}/target-definition/common/repository/</url>
         </repository>
         <repository>
+            <id>p2-repo-extra</id>
+            <layout>p2</layout>
+            <url>file:///${kura.basedir}/target-definition/extra/repository/</url>
+        </repository>
+        <repository>
             <id>p2-repo-test-deps</id>
             <layout>p2</layout>
             <url>file:///${kura.basedir}/target-definition/test-deps/repository/</url>
-        </repository>
-        <repository>
-            <id>kura_addons</id>
-            <name>Eclipse Kura Addons Maven Repository</name>
-            <url>${kura.addons.url}</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
         <repository>
 		    <id>jitpack.io</id>
@@ -464,20 +461,20 @@
                 <version>${tycho-version}</version>
                 <configuration>
                     <environments>
-                        <environment>
-                          <os>win32</os>
-                          <ws>win32</ws>
-                          <arch>x86</arch>
+                    	<environment>
+                          	<os>macosx</os>
+                          	<ws>cocoa</ws>
+                          	<arch>x86</arch>
                         </environment>
                         <environment>
-                          <os>linux</os>
-                          <ws>gtk</ws>
-                          <arch>x86</arch>
+                            <os>win32</os>
+                            <ws>win32</ws>
+                            <arch>x86</arch>
                         </environment>
                         <environment>
-                          <os>macosx</os>
-                          <ws>cocoa</ws>
-                          <arch>x86</arch>
+                            <os>linux</os>
+                            <ws>gtk</ws>
+                            <arch>x86</arch>
                         </environment>
                     </environments>
                 </configuration>
@@ -785,22 +782,6 @@
                                         <ignore></ignore>
                                     </action>
                                 </pluginExecution>
-                                <pluginExecution>
-	                           <pluginExecutionFilter>
-		                              <groupId>org.eclipse.tycho</groupId>
-		                              <artifactId>tycho-packaging-plugin</artifactId>
-		                              <versionRange>[1.0,)</versionRange>
-		                              <goals>
-		                                 <goal>build-qualifier</goal>
-		                                 <goal>build-qualifier-aggregator</goal>
-		                                 <goal>validate-id</goal>
-		                                 <goal>validate-version</goal>
-		                              </goals>
-		                           </pluginExecutionFilter>
-		                           <action>
-		                              <ignore />
-		                           </action>
-		                        </pluginExecution>
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>

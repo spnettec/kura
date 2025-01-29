@@ -76,6 +76,7 @@
         <setEntry value="org.eclipse.kura.example.ibeacon.scanner"/>
         <setEntry value="org.eclipse.kura.example.identity.configuration.extension"/>
         <setEntry value="org.eclipse.kura.example.identity.configuration.extension.test"/>
+        <setEntry value="org.eclipse.kura.example.project"/>
         <setEntry value="org.eclipse.kura.example.publisher"/>
         <setEntry value="org.eclipse.kura.example.rest.authentication.provider"/>
         <setEntry value="org.eclipse.kura.example.serial.publisher"/>
@@ -231,6 +232,7 @@
         <setEntry value="io.netty.resolver@default:default"/>
         <setEntry value="io.netty.transport-classes-epoll@default:default"/>
         <setEntry value="io.netty.transport-classes-kqueue@default:default"/>
+        <setEntry value="io.netty.transport-native-kqueue@default:false"/>
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
@@ -248,7 +250,6 @@
         <setEntry value="jakarta.activation-api*2.1.2@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
-        <setEntry value="jakarta.interceptor-api@default:default"/>
         <setEntry value="jakarta.jms-api@default:default"/>
         <setEntry value="jakarta.validation.jakarta.validation-api@default:default"/>
         <setEntry value="jakarta.ws.rs-api@default:default"/>
@@ -282,15 +283,15 @@
         <setEntry value="org.apache.felix.gogo.runtime@default:default"/>
         <setEntry value="org.apache.felix.gogo.shell@default:default"/>
         <setEntry value="org.apache.felix.http.bridge@default:default"/>
+        <setEntry value="org.apache.felix.http.proxy@default:default"/>
         <setEntry value="org.apache.felix.http.servlet-api@default:default"/>
+        <setEntry value="org.apache.felix.http.wrappers@default:default"/>
         <setEntry value="org.apache.felix.scr@1:true"/>
         <setEntry value="org.apache.felix.useradmin@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-jms_2.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-json_1.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-jta_1.1_spec@default:default"/>
-        <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
-        <setEntry value="org.apache.johnzon.core@default:default"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@3:default"/>
         <setEntry value="org.apache.logging.log4j.slf4j2.impl@3:default"/>
@@ -338,6 +339,8 @@
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.osgitech.rest.servlet.whiteboard@default:default"/>
+        <setEntry value="org.eclipse.osgitech.rest.sse@default:false"/>
+        <setEntry value="org.eclipse.osgitech.rest@default:default"/>
         <setEntry value="org.eclipse.paho.client.mqttv3@default:default"/>
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
         <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
@@ -351,12 +354,13 @@
         <setEntry value="org.glassfish.jersey.core.jersey-client@default:default"/>
         <setEntry value="org.glassfish.jersey.core.jersey-common@default:default"/>
         <setEntry value="org.glassfish.jersey.core.jersey-server@default:default"/>
+        <setEntry value="org.glassfish.jersey.ext.jersey-entity-filtering@default:default"/>
         <setEntry value="org.glassfish.jersey.inject.jersey-hk2@default:default"/>
+        <setEntry value="org.glassfish.jersey.media.jersey-media-jaxb@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-multipart@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
         <setEntry value="org.gwtbootstrap3@default:default"/>
         <setEntry value="org.gwtproject.gwt-servlet-jakarta@default:default"/>
-        <setEntry value="org.jgroups@default:default"/>
         <setEntry value="org.jvnet.mimepull@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>
         <setEntry value="org.objectweb.asm.tree.analysis@default:default"/>
@@ -373,6 +377,7 @@
         <setEntry value="org.osgi.service.metatype@default:default"/>
         <setEntry value="org.osgi.service.prefs@default:default"/>
         <setEntry value="org.osgi.service.provisioning@default:default"/>
+        <setEntry value="org.osgi.service.servlet@default:default"/>
         <setEntry value="org.osgi.service.upnp@default:default"/>
         <setEntry value="org.osgi.service.useradmin@default:default"/>
         <setEntry value="org.osgi.service.wireadmin@default:default"/>
@@ -446,7 +451,6 @@
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>
-        <setEntry value="org.eclipse.kura.example.project@default:default"/>
         <setEntry value="org.eclipse.kura.hook.file.move.provider@default:default"/>
         <setEntry value="org.eclipse.kura.http.server.manager@default:default"/>
         <setEntry value="org.eclipse.kura.json.marshaller.unmarshaller.provider@default:default"/>

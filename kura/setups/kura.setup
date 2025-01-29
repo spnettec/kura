@@ -492,6 +492,8 @@
       <dropinLocation
           rootFolder="${git.clone.location}/target-platform/p2-repo-equinox/target/repository"/>
       <dropinLocation
+          rootFolder="${git.clone.location}/target-platform/p2-repo-extra/target/repository"/>
+      <dropinLocation
           rootFolder="${git.clone.location}/target-platform/p2-repo-test-deps/target/repository"/>
       <dropinLocation
           rootFolder="${git.clone.location}/target-platform/usb4java-javax/target"

@@ -61,6 +61,7 @@
         <module>org.eclipse.kura.libsocket-can-osgi</module>
         <module>p2-repo-common</module>
         <module>p2-repo-equinox</module>
+        <module>p2-repo-extra</module>
         <module>p2-repo-test-deps</module>
     </modules>
 
