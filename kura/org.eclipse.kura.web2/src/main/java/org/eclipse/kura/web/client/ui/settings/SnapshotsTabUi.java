@@ -306,7 +306,7 @@ public class SnapshotsTabUi extends Composite implements Tab {
             rollbackModal.setClosable(true);
             rollbackModalBody.add(new Span(MSGS.deviceSnapshotRollbackConfirm()));
 
-            rollbackModalFooter.add(new Button("Yes", event -> {
+            rollbackModalFooter.add(new Button(MSGS.yesButton(), event -> {
                 EntryClassUi.showWaitModal();
                 SnapshotsTabUi.this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
 
@@ -339,7 +339,7 @@ public class SnapshotsTabUi extends Composite implements Tab {
                 rollbackModal.hide();
             }));
 
-            rollbackModalFooter.add(new Button("No", event -> rollbackModal.hide()));
+            rollbackModalFooter.add(new Button(MSGS.noButton(), event -> rollbackModal.hide()));
 
             rollbackModal.add(rollbackModalBody);
             rollbackModal.add(rollbackModalFooter);

@@ -839,12 +839,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             Object configValue = property.getValue();
 
             if (configValue instanceof Password || configValue instanceof Password[]) {
-                Object decryptedValue;
                 try {
-                    decryptedValue = decryptPasswordProperties(configValue);
+                    Object decryptedValue = decryptPasswordProperties(configValue);
                     configProperties.put(property.getKey(), decryptedValue);
-                } catch (KuraException e) {
-                    logger.error("Failed to decrypt password properties", e);
+                } catch (Exception e) {
                 }
             }
         }
