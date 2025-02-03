@@ -64,7 +64,7 @@
                                 <artifactItem>
                                     <groupId>com.eurotech</groupId>
                                     <artifactId>libsocket-can-java</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>1.0.1</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
