@@ -63,6 +63,7 @@ import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 public class SystemServiceImpl extends SuperSystemService implements SystemService {
 
@@ -661,7 +662,7 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
      * Returns ip of the first interface name of which begins with <code>prefix</code>.
      *
      * @param prefix
-     *            network interface name prefix e.g. eth, wlan
+     *                   network interface name prefix e.g. eth, wlan
      * @return ip of the first interface name of which begins with prefix; null if none found with ip
      * @throws SocketException
      */
@@ -1269,7 +1270,7 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
      * Assumptions are that the fullName starts with the package name and ends with the version.
      *
      * @param fullName
-     *            of the APK software package, e.g. "busybox-extras-1.31.1-r10"
+     *                     of the APK software package, e.g. "busybox-extras-1.31.1-r10"
      * @return String array with name in position 0 and version in position 1
      */
     private String[] getApkNameAndVersion(String fullName) {
