@@ -2018,38 +2018,6 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
     }
 
-    private Map<String, Configuration> getCurrentConfigs() throws KuraException {
-        final Map<String, Configuration> currentConfigs;
-
-        try {
-            currentConfigs = Arrays.stream(this.configurationAdmin.listConfigurations(null))
-                    .collect(Collectors.toMap(c -> {
-                        final Dictionary<String, Object> properties = c.getProperties();
-
-                        if (properties != null) {
-                            final Object kuraServicePid = properties.get(KURA_SERVICE_PID);
-
-                            if (kuraServicePid instanceof String) {
-                                return (String) kuraServicePid;
-                            }
-                        }
-
-                        return c.getPid();
-                    }, Function.identity()));
-
-        } catch (final IOException | InvalidSyntaxException e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, e);
-        }
-        return currentConfigs;
-    }
-
-    private Map<String, ComponentConfiguration> getSnapshotConfigs(long id) throws KuraException {
-        XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(id);
-        List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
-
-        return ComponentUtil.toMap(configs);
-    }
-
     private void rollbackConfigurationInternal(final ComponentConfiguration snapshotConfig,
             final Optional<Configuration> existingConfig) throws IOException {
         final Optional<String> factoryPid = Optional
@@ -2116,6 +2084,40 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     private boolean isFactoryComponent(final Entry<String, Configuration> currentConfigEntry) {
         return currentConfigEntry.getValue().getFactoryPid() != null;
+    }
+
+    private Map<String, Configuration> getCurrentConfigs() throws KuraException {
+
+        Map<String, Configuration> currentConfigs = new HashMap<>();
+
+        try {
+            Configuration[] currentKuraServiceConfigs = this.configurationAdmin
+                    .listConfigurations("(" + KURA_SERVICE_PID + "=*)");
+
+            if (currentKuraServiceConfigs != null) {
+                currentConfigs = Arrays.stream(currentKuraServiceConfigs).filter(this::isKuraServicePidString)
+                        .collect(Collectors.toMap(this::getKuraServicePid, Function.identity()));
+            }
+
+        } catch (final IOException | InvalidSyntaxException e) {
+            throw new KuraException(KuraErrorCode.IO_ERROR, e);
+        }
+        return currentConfigs;
+    }
+
+    private boolean isKuraServicePidString(Configuration config) {
+        return config.getProperties().get(KURA_SERVICE_PID) instanceof String;
+    }
+
+    private String getKuraServicePid(Configuration config) {
+        return (String) config.getProperties().get(KURA_SERVICE_PID);
+    }
+
+    private Map<String, ComponentConfiguration> getSnapshotConfigs(long id) throws KuraException {
+        XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(id);
+        List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
+
+        return ComponentUtil.toMap(configs);
     }
 
     private static final class TrackedComponentFactory {

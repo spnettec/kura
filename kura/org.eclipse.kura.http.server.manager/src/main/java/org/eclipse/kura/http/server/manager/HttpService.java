@@ -17,12 +17,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
-import org.eclipse.kura.system.SystemService;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
@@ -36,7 +38,6 @@ public class HttpService implements ConfigurableComponent, EventHandler {
 
     private HttpServiceOptions options;
 
-    private SystemService systemService;
     private KeystoreService keystoreService;
     private HttpServlet dispatcherServlet;
     private EventListener eventListener;
@@ -44,10 +45,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     private String keystoreServicePid;
 
     private JettyServerHolder jettyServerHolder;
-
-    public void setSystemService(SystemService systemService) {
-        this.systemService = systemService;
-    }
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
         this.keystoreService = keystoreService;
@@ -65,68 +63,79 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     public void activate(Map<String, Object> properties) {
         logger.info("Activating {}", this.getClass().getSimpleName());
 
-        this.options = new HttpServiceOptions(properties, this.systemService.getKuraHome());
+        this.options = new HttpServiceOptions(properties);
         if (this.keystoreService == null) {
             startKeystoreServicenMonitorTask();
             logger.info("Activating... Done. Wait keystoreService");
         } else {
-            activateHttpService();
-            logger.info("Activating... Done.");
+            startHttpService();
         }
+
+        logger.info("Activating... Done.");
     }
 
     public void updated(Map<String, Object> properties) {
         logger.info("Updating {}", this.getClass().getSimpleName());
 
-        HttpServiceOptions updatedOptions = new HttpServiceOptions(properties, this.systemService.getKuraHome());
+        HttpServiceOptions updatedOptions = new HttpServiceOptions(properties);
 
         if (!this.options.equals(updatedOptions)) {
             logger.debug("Updating, new props");
             this.options = updatedOptions;
 
-            deactivateHttpService();
-            if (this.keystoreService == null) {
-                startKeystoreServicenMonitorTask();
-                logger.info("Updating... Done. Wait keystoreService");
-            } else {
-                activateHttpService();
-                logger.info("Updating... Done.");
-            }
+            restartHttpService();
         }
 
+        logger.info("Updating... Done.");
     }
 
     public void deactivate() {
         logger.info("Deactivating {}", this.getClass().getSimpleName());
 
-        deactivateHttpService();
+        stopHttpService();
+        shutdownExecutor();
     }
 
     private synchronized void restartHttpService() {
-        deactivateHttpService();
-        activateHttpService();
+        stopHttpService();
+        startHttpService();
     }
 
-    private synchronized void activateHttpService() {
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
+    private synchronized void startHttpService() {
+        this.executorService.submit(() -> {
+            try {
+                logger.info("starting Jetty instance...");
+                this.jettyServerHolder = new JettyServerHolder(this.options, Optional.ofNullable(this.keystoreService),
+                        this.dispatcherServlet, this.eventListener);
+                logger.info("starting Jetty instance...done");
+            } catch (final Exception e) {
+                logger.error("Could not start Jetty Web server", e);
+            }
+        });
+    }
+
+    private synchronized void stopHttpService() {
+        this.executorService.submit(() -> {
+            try {
+                logger.info("stopping Jetty instance...");
+                if (this.jettyServerHolder != null) {
+                    this.jettyServerHolder.stop();
+                }
+            } catch (final Exception e) {
+                logger.error("Could not stop Jetty Web server", e);
+            }
+        });
+    }
+
+    private synchronized void shutdownExecutor() {
         try {
-            logger.info("starting Jetty instance...");
-            this.jettyServerHolder = new JettyServerHolder(this.options, Optional.ofNullable(this.keystoreService),
-                    this.dispatcherServlet, this.eventListener);
-            logger.info("starting Jetty instance...done");
-        } catch (final Exception e) {
-            logger.error("Could not start Jetty Web server", e);
+            this.executorService.shutdown();
+            this.executorService.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Could not stop executor", e);
         } finally {
-            Thread.currentThread().setContextClassLoader(original);
-        }
-    }
-
-    private synchronized void deactivateHttpService() {
-        try {
-            logger.info("stopping Jetty instance...");
-            this.jettyServerHolder.stop();
-        } catch (final Exception e) {
-            logger.error("Could not stop Jetty Web server", e);
+            this.executorService.shutdownNow();
         }
     }
 
@@ -164,7 +173,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
                                 "KeystoreServiceMonitor retry 10 times. KeystoreServiceMonitor task will be terminated.");
                     }
                     try {
-                        activateHttpService();
+                        startHttpService();
                     } catch (Exception e) {
                         logger.warn("activateHttpService error");
                     } finally {
@@ -177,4 +186,5 @@ public class HttpService implements ConfigurableComponent, EventHandler {
 
         }, 2000, 1000);
     }
+
 }
