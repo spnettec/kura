@@ -167,6 +167,7 @@
         <wagon-ssh.version>3.5.3</wagon-ssh.version>
         <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
+        <bnd.version>7.1.0</bnd.version>
     </properties>
 
     <distributionManagement>
@@ -604,6 +605,21 @@
                         <format>${kura.build.version}</format>
                         <skipPomGeneration>true</skipPomGeneration>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-maven-plugin</artifactId>
+                    <version>${bnd.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                            <goal>bnd-process</goal>
+                            </goals>
+                            <configuration>
+                                <packagingTypes>eclipse-plugin, eclipse-test-plugin</packagingTypes>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>biz.aQute.bnd</groupId>

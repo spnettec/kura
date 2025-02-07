@@ -347,8 +347,6 @@
                 <configuration>
                     <!-- make us aware of warnings -->
                     <showWarnings>true</showWarnings>
-                    <!-- Kura does not set bootdelegation, we let the compiler check for this -->
-                    <requireJREPackageImports>true</requireJREPackageImports>
                 </configuration>
             </plugin>
             <plugin>
