@@ -130,6 +130,7 @@
         <module>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</module>
         <module>emulator</module>
         <module>test-util</module>
+        <module>tools</module>
     </modules>
 
     <properties>
