@@ -14,6 +14,10 @@ package org.eclipse.kura.core.ssl;
 
 import static java.util.Objects.isNull;
 
+import java.util.Map;
+
+import org.eclipse.kura.util.configuration.Property;
+
 public class SslManagerServiceOptions {
 
     public enum RevocationCheckMode {
@@ -22,7 +26,24 @@ public class SslManagerServiceOptions {
         CRL_ONLY
     }
 
-    private final SslManagerServiceOCD properties;
+    public static final String PROP_PROTOCOL = "ssl.default.protocol";
+    public static final String PROP_CIPHERS = "ssl.default.cipherSuites";
+    public static final String PROP_HN_VERIFY = "ssl.hostname.verification";
+
+    public static final Boolean PROP_DEFAULT_HN_VERIFY = true;
+    public static final String PROP_DEFAULT_TRUST_PASSWORD = "changeit";
+
+    private static final Property<String> SELECTED_SSL_PROTOCOL = new Property<>(PROP_PROTOCOL, "");
+    private static final Property<String> SELECTED_SSL_CIPHERS = new Property<>(PROP_CIPHERS, "");
+    private static final Property<Boolean> SELECTED_SSL_HN_VERIFICATION = new Property<>(PROP_HN_VERIFY,
+            PROP_DEFAULT_HN_VERIFY);
+    private static final Property<Boolean> SSL_REVOCATION_CHECK_ENABLED = new Property<>("ssl.revocation.check.enabled",
+            false);
+    private static final Property<Boolean> SSL_REVOCATION_SOFT_FAIL = new Property<>("ssl.revocation.soft.fail", false);
+    private static final Property<String> SSL_REVOCATION_MODE = new Property<>("ssl.revocation.mode",
+            RevocationCheckMode.PREFER_OCSP.name());
+
+    private final Map<String, Object> properties;
 
     private final String sslProtocol;
     private final String sslCiphers;
@@ -31,20 +52,20 @@ public class SslManagerServiceOptions {
     private final RevocationCheckMode sslRevocationMode;
     private final boolean sslRevocationSoftFail;
 
-    public SslManagerServiceOptions(SslManagerServiceOCD properties) {
+    public SslManagerServiceOptions(Map<String, Object> properties) {
         if (isNull(properties)) {
             throw new IllegalArgumentException("SSL Options cannot be null!");
         }
         this.properties = properties;
-        this.sslProtocol = properties.ssl_default_protocol();
-        this.sslCiphers = properties.ssl_default_cipherSuites();
-        this.sslHNVerification = properties.ssl_hostname_verification();
-        this.sslRevocationCheckEnabled = properties.ssl_revocation_check_enabled();
-        this.sslRevocationMode = RevocationCheckMode.valueOf(properties.ssl_revocation_mode());
-        this.sslRevocationSoftFail = properties.ssl_revocation_soft_fail();
+        this.sslProtocol = SELECTED_SSL_PROTOCOL.get(properties).trim();
+        this.sslCiphers = SELECTED_SSL_CIPHERS.get(properties).trim();
+        this.sslHNVerification = SELECTED_SSL_HN_VERIFICATION.get(properties);
+        this.sslRevocationCheckEnabled = SSL_REVOCATION_CHECK_ENABLED.get(properties);
+        this.sslRevocationMode = RevocationCheckMode.valueOf(SSL_REVOCATION_MODE.get(properties));
+        this.sslRevocationSoftFail = SSL_REVOCATION_SOFT_FAIL.get(properties);
     }
 
-    public SslManagerServiceOCD getConfigurationProperties() {
+    public Map<String, Object> getConfigurationProperties() {
         return this.properties;
     }
 

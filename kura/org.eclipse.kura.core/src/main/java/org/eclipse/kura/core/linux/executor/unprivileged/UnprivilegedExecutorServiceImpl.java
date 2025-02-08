@@ -34,24 +34,16 @@ import org.eclipse.kura.executor.Pid;
 import org.eclipse.kura.executor.Signal;
 import org.eclipse.kura.executor.UnprivilegedExecutorService;
 import org.eclipse.kura.system.SystemService;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(name = "org.eclipse.kura.executor.UnprivilegedExecutorService", //
-        property = "service.pid=org.eclipse.kura.executor.UnprivilegedExecutorService" //
-)
 public class UnprivilegedExecutorServiceImpl implements UnprivilegedExecutorService {
 
     private static final Logger logger = LoggerFactory.getLogger(UnprivilegedExecutorServiceImpl.class);
     private static final LinuxSignal DEFAULT_SIGNAL = LinuxSignal.SIGTERM;
+    private ExecutorUtil executorUtil;
 
-    private final ExecutorUtil executorUtil;
-
-    @Activate
-    public UnprivilegedExecutorServiceImpl() {
+    protected void activate() {
         logger.info("activate...");
         String user = "unknown";
         try {
@@ -66,7 +58,6 @@ public class UnprivilegedExecutorServiceImpl implements UnprivilegedExecutorServ
         }
     }
 
-    @Deactivate
     protected void deactivate() {
         logger.info("deactivate...");
     }

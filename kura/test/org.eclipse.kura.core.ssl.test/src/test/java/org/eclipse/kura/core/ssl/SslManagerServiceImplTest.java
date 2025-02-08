@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2025 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -40,6 +40,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,11 +67,6 @@ public class SslManagerServiceImplTest {
     private static final String STORE_PASS = "pass";
 
     private KeyStore store;
-
-    @SslManagerServiceOCD(KeystoreService_target = "", TruststoreKeystoreService_target = "", ssl_default_cipherSuites = "", ssl_default_protocol = "TLSv1", ssl_hostname_verification = true, ssl_revocation_check_enabled = false, ssl_revocation_mode = "", ssl_revocation_soft_fail = false)
-    private static class dumyOCD {
-
-    }
 
     @Before
     public void setupDefaultKeystore()
@@ -129,6 +125,8 @@ public class SslManagerServiceImplTest {
         // test preparation of an SslSocketFactory
         setupDefaultKeystore();
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         SslServiceListeners listener = new SslServiceListeners(null) {
 
             @Override
@@ -142,15 +140,15 @@ public class SslManagerServiceImplTest {
         BundleContext bcMock = mock(BundleContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
 
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
+
         svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
+        svc.activate(ccMock, properties);
 
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
@@ -163,7 +161,7 @@ public class SslManagerServiceImplTest {
         assertEquals(1, sslContexts.size());
         assertEquals(factory, sslContexts.values().iterator().next().getSocketFactory());
 
-        svc.updated(propertiesOcd);
+        svc.updated(properties);
 
         Map<ConnectionSslOptions, SSLContext> updatedSslContexts = (Map<ConnectionSslOptions, SSLContext>) TestUtil
                 .getFieldValue(svc, "sslContexts");
@@ -178,6 +176,8 @@ public class SslManagerServiceImplTest {
         // test preparation of an SslSocketFactory
         setupDefaultKeystore();
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         SslServiceListener listener = () -> {
         };
 
@@ -186,15 +186,15 @@ public class SslManagerServiceImplTest {
         BundleContext bcMock = mock(BundleContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
 
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
+
         svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
+        svc.activate(ccMock, properties);
 
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
@@ -222,6 +222,8 @@ public class SslManagerServiceImplTest {
         // test preparation of an SslSocketFactory
         setupDefaultKeystore();
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         SslServiceListener listener = () -> {
         };
 
@@ -230,15 +232,15 @@ public class SslManagerServiceImplTest {
         BundleContext bcMock = mock(BundleContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
 
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
+
         svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
+        svc.activate(ccMock, properties);
 
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
@@ -266,6 +268,8 @@ public class SslManagerServiceImplTest {
         // test preparation of an SslSocketFactory
         setupDefaultKeystore();
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         SslServiceListener listener = () -> {
         };
 
@@ -274,15 +278,15 @@ public class SslManagerServiceImplTest {
         BundleContext bcMock = mock(BundleContext.class);
         when(ccMock.getBundleContext()).thenReturn(bcMock);
 
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
 
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
+
         svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
+        svc.activate(ccMock, properties);
 
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
@@ -309,6 +313,8 @@ public class SslManagerServiceImplTest {
         // test key installation
         setupDefaultKeystore();
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         SslServiceListeners listener = new SslServiceListeners(null) {
 
             @Override
@@ -317,28 +323,21 @@ public class SslManagerServiceImplTest {
             }
         };
 
-        ComponentContext ccMock = mock(ComponentContext.class);
-
-        BundleContext bcMock = mock(BundleContext.class);
-        when(ccMock.getBundleContext()).thenReturn(bcMock);
-
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
-
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
         Map<ConnectionSslOptions, SSLContext> sslContexts = new ConcurrentHashMap<>();
         TestUtil.setFieldValue(svc, "sslContexts", sslContexts);
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
 
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
 
         svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
 
-        svc.updated(propertiesOcd);
+        svc.updated(properties);
 
         // install a new private key and check it's really there
 
@@ -395,8 +394,12 @@ public class SslManagerServiceImplTest {
 
         String alias = "kura";
 
+        SslManagerServiceImpl svc = new SslManagerServiceImpl();
+
         KeystoreService keystoreService = mock(KeystoreService.class);
         when(keystoreService.getKeyStore()).thenReturn(store);
+
+        svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
 
         SslServiceListeners listener = new SslServiceListeners(null) {
 
@@ -406,25 +409,16 @@ public class SslManagerServiceImplTest {
             }
         };
 
-        ComponentContext ccMock = mock(ComponentContext.class);
-
-        BundleContext bcMock = mock(BundleContext.class);
-        when(ccMock.getBundleContext()).thenReturn(bcMock);
-
-        // Map<String, Object> properties = new HashMap<>();
-        // properties.put("ssl_default_protocol", "TLSv1");
-        // properties.put("ssl_hostname_verification", "true");
-        SslManagerServiceOCD propertiesOcd = dumyOCD.class.getAnnotation(SslManagerServiceOCD.class);
-        SslManagerServiceImpl svc = new SslManagerServiceImpl(ccMock, propertiesOcd);
-
-        svc.setKeystoreService(keystoreService, Collections.singletonMap("kura.service.pid", "foo"));
-
         TestUtil.setFieldValue(svc, "sslServiceListeners", listener);
 
         Map<ConnectionSslOptions, SSLContext> sslContexts = new ConcurrentHashMap<>();
         TestUtil.setFieldValue(svc, "sslContexts", sslContexts);
 
-        svc.updated(propertiesOcd);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("ssl.default.protocol", "TLSv1");
+        properties.put("ssl.hostname.verification", "true");
+
+        svc.updated(properties);
 
         KeyStore store = KeyStore.getInstance("jks");
 
