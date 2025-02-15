@@ -306,7 +306,6 @@
         <setEntry value="org.apache.servicemix.bundles.spring-tx@default:default"/>
         <setEntry value="org.eclipse.core.contenttype@default:default"/>
         <setEntry value="org.eclipse.core.jobs@default:default"/>
-        <setEntry value="org.eclipse.core.runtime@default:true"/>
         <setEntry value="org.eclipse.equinox.app@default:default"/>
         <setEntry value="org.eclipse.equinox.cm@default:default"/>
         <setEntry value="org.eclipse.equinox.common@2:true"/>
