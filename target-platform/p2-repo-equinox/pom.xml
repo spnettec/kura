@@ -204,11 +204,13 @@
                                     <artifactId>org.apache.felix.scr</artifactId>
                                     <version>${org.apache.felix.scr.version}</version>
                                 </artifactItem>
+                                <!--
                                 <artifactItem>
                                     <groupId>org.eclipse.platform</groupId>
                                     <artifactId>org.eclipse.core.runtime</artifactId>
                                     <version>${org.eclipse.core.runtime.version}</version>
                                 </artifactItem>
+                                -->
                                 <artifactItem>
                                     <groupId>org.eclipse.platform</groupId>
                                     <artifactId>org.eclipse.core.jobs</artifactId>
