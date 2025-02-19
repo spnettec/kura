@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
+
+    Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
 
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
 
-	SPDX-License-Identifier: EPL-2.0
+    SPDX-License-Identifier: EPL-2.0
 
-	Contributors:
-	 Eurotech
+    Contributors:
+     Eurotech
      Red Hat Inc
      Cavium
 
@@ -169,6 +170,25 @@
         <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
         <bnd.version>7.1.0</bnd.version>
+        <tycho.surefire.testenv.args>
+            -DbuildingWithTycho=true -Dosgi.locking=none
+            -Dds.showtrace=true
+            -Djava.io.tmpdir=/tmp
+            -Dorg.osgi.framework.storage=${project.basedir}/target/osgi/framework_storage
+            -Dosgi.clean=true
+            -Dkura.home=${project.basedir}/target/kura
+            -Dkura.plugins=${project.basedir}/target/kura/plugins
+            -Dkura.packages=${project.basedir}/target/kura/data/packages
+            -Dkura.data=${project.basedir}/target/kura
+            -Dkura.tmp=${project.basedir}/target/kura/tmp
+            -Dkura.snapshots=${project.basedir}/target/kura/user/snapshots
+            -Dkura.configuration=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/kura.properties
+            -Dlog4j.configurationFile=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/log4j.xml
+            -Dorg.eclipse.kura.mode=emulator
+            -Ddpa.configuration=/tmp/kura/dpa.properties
+            -Dosgi.console=5002
+            --add-opens java.base/java.lang=ALL-UNNAMED
+        </tycho.surefire.testenv.args>
     </properties>
 
     <distributionManagement>
@@ -198,37 +218,6 @@
     </pluginRepositories>
 
     <profiles>
-        <profile>
-            <id>java17</id>
-            <activation>
-                <jdk>[17,22]</jdk>
-            </activation>
-            <properties>
-                <!-- TODO: update when new version is released to be working with Tycho 3. -->
-                <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
-                <tycho-version>4.0.10</tycho-version>
-
-                <tycho.surefire.testenv.args>
-                    -DbuildingWithTycho=true -Dosgi.locking=none
-                    -Dds.showtrace=true
-                    -Djava.io.tmpdir=/tmp
-                    -Dorg.osgi.framework.storage=${project.basedir}/target/osgi/framework_storage
-                    -Dosgi.clean=true
-                    -Dkura.home=${project.basedir}/target/kura
-                    -Dkura.plugins=${project.basedir}/target/kura/plugins
-                    -Dkura.packages=${project.basedir}/target/kura/data/packages
-                    -Dkura.data=${project.basedir}/target/kura
-                    -Dkura.tmp=${project.basedir}/target/kura/tmp
-                    -Dkura.snapshots=${project.basedir}/target/kura/user/snapshots
-                    -Dkura.configuration=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/kura.properties
-                    -Dlog4j.configurationFile=file:${kura.basedir}/emulator/org.eclipse.kura.emulator/src/main/resources/log4j.xml
-                    -Dorg.eclipse.kura.mode=emulator
-                    -Ddpa.configuration=/tmp/kura/dpa.properties
-                    -Dosgi.console=5002
-                    --add-opens java.base/java.lang=ALL-UNNAMED
-                </tycho.surefire.testenv.args>
-            </properties>
-        </profile>
         <profile>
             <id>default</id>
             <activation>
@@ -617,7 +606,7 @@
                             <goal>bnd-process</goal>
                             </goals>
                             <configuration>
-                                <packagingTypes>eclipse-plugin, eclipse-test-plugin</packagingTypes>
+                                <packagingTypes>eclipse-plugin,eclipse-test-plugin</packagingTypes>
                             </configuration>
                         </execution>
                     </executions>
@@ -668,6 +657,19 @@
                     <configuration>
                         <lifecycleMappingMetadata>
                             <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>biz.aQute.bnd</groupId>
+                                        <artifactId>bnd-maven-plugin</artifactId>
+                                        <versionRange>[0.0.0,)</versionRange>
+                                        <goals>
+                                            <goal>bnd-process</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore/>
+                                    </action>
+                                </pluginExecution>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>

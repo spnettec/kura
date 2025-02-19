@@ -5,12 +5,13 @@ Bundle-SymbolicName: org.eclipse.kura.container.orchestration.provider
 Bundle-Version: 2.0.0.qualifier
 Bundle-Vendor: Eclipse Kura
 Automatic-Module-Name: org.eclipse.kura.container.orchestration.provider
-Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Bundle-ActivationPolicy: lazy
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
 Import-Package: com.google.common.base;version="31.0.0",
- com.google.common.collect;version="31.0.0",
- com.google.common.escape;version="31.0.0",
- com.google.common.io;version="31.0.0",
- com.google.common.net;version="31.0.0",
+ com.google.common.collect;version="32.1.1",
+ com.google.common.escape;version="32.1.1",
+ com.google.common.io;version="32.1.1",
+ com.google.common.net;version="32.1.1",
  org.apache.commons.lang3;version="3.4.0",
  org.eclipse.kura;version="[1.6,2.0)",
  org.eclipse.kura.configuration;version="[1.2,2.0)",
