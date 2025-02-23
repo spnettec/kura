@@ -42,7 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
 
-    private final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
+    private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
     private final Optional<RequiredPermissions> servicePermissionRequirements;
     private final Map<Method, RequiredPermissions> methodPermissionRequirements = new HashMap<>();
@@ -123,26 +123,13 @@ public class OsgiRemoteServiceServlet extends KuraRemoteServiceServlet {
      * alternative approach.
      *
      * @param request
-     *                          <<<<<<< HEAD
      *                          the HTTP request being serviced
-     *                          =======
-     *                          the HTTP request being serviced
-     *                          >>>>>>> refs/remotes/origin/develop
      * @param moduleBaseURL
-     *                          <<<<<<< HEAD
      *                          as specified in the incoming payload
-     *                          =======
-     *                          as specified in the incoming payload
-     *                          >>>>>>> refs/remotes/origin/develop
      * @param strongName
-     *                          <<<<<<< HEAD
-     *                          a strong name that uniquely identifies a serialization policy
-     *                          file
-     *                          =======
      *                          a strong name that uniquely identifies a serialization
      *                          policy
      *                          file
-     *                          >>>>>>> refs/remotes/origin/develop
      * @return a {@link SerializationPolicy} for the given module base URL and
      *         strong name, or <code>null</code> if there is none
      */
