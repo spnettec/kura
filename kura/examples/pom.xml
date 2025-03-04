@@ -25,11 +25,11 @@
     <packaging>pom</packaging>
 
     <properties>
-    	<tycho-version>4.0.10</tycho-version>
-    	<osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
+        <tycho-version>4.0.11</tycho-version>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <kura.build.version>${maven.build.timestamp}</kura.build.version>

@@ -137,7 +137,8 @@
     <properties>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
-        <tycho-version>4.0.10</tycho-version>
+        <tycho-version>4.0.11</tycho-version>
+        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
@@ -167,7 +168,6 @@
         <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
         <slf4j.version>2.0.11</slf4j.version>
         <wagon-ssh.version>3.5.3</wagon-ssh.version>
-        <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
         <bnd.version>7.1.0</bnd.version>
         <tycho.surefire.testenv.args>
@@ -594,6 +594,7 @@
                         <strictVersions>true</strictVersions>
                         <format>${kura.build.version}</format>
                         <skipPomGeneration>true</skipPomGeneration>
+                        <deriveHeaderFromSource>false</deriveHeaderFromSource>
                     </configuration>
                 </plugin>
                 <plugin>
