@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 Eurotech and/or its affiliates and others
+ * Copyright (c) 2017, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -9,25 +9,21 @@
  *
  * Contributors:
  *  Eurotech
- *******************************************************************************/
+ ******************************************************************************/
 package org.eclipse.kura.internal.xml.marshaller.unmarshaller;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -35,9 +31,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.input.CharSequenceInputStream;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.metatype.MetaData;
 import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.core.configuration.XmlSnapshotIdResult;
@@ -62,22 +58,26 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
 
     @Override
     public String marshal(Object object) throws KuraException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        StringWriter sw = new StringWriter();
         try {
-            marshal(object, buffer);
+            marshal(object, new StreamResult(sw));
         } catch (Exception e) {
             throw new KuraException(KuraErrorCode.ENCODE_ERROR, VALUE_CONSTANT);
         }
-        return buffer.toString();
+        return sw.toString();
     }
 
     @Override
-    public void marshal(Object object, OutputStream outputStream) throws Exception {
-        if (object instanceof XmlComponentConfigurations) {
-            new XmlJavaComponentConfigurationsMapper().marshal(outputStream, object);
-            outputStream.flush();
-            return;
+    public void marshal(OutputStream out, Object object) throws KuraException {
+        try {
+            marshal(object, new StreamResult(new OutputStreamWriter(out, StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new KuraException(KuraErrorCode.ENCODE_ERROR, VALUE_CONSTANT);
         }
+
+    }
+
+    private void marshal(Object object, StreamResult streamResult) throws Exception {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -196,9 +196,7 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             DOMSource source = new DOMSource(doc);
 
-            StreamResult result = new StreamResult(outputStream); // System.out
-            transformer.transform(source, result);
-            outputStream.flush();
+            transformer.transform(source, streamResult);
         } catch (ParserConfigurationException pce) {
             logger.warn("Parser Exception", pce);
         } catch (TransformerException tfe) {
@@ -208,45 +206,23 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
 
     // un-marshalling
     @Override
-    public <T> T unmarshal(String s, Class<T> clazz) throws KuraException {
-        ByteArrayInputStream sr = new ByteArrayInputStream(s.getBytes());
-        return unmarshal(sr, clazz);
+    public <T> T unmarshal(String stringInput, Class<T> clazz) throws KuraException {
+        CharSequenceInputStream stream = CharSequenceInputStream.builder().setBufferSize(8192)
+                .setCharset(StandardCharsets.UTF_8).setCharSequence(stringInput).get();
+        return doUnmarshal(stream, clazz);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> T unmarshal(InputStream inputStream, Class<T> clazz) throws KuraException {
-        if (clazz.equals(XmlComponentConfigurations.class)) {
-            try {
-                XMLInputFactory factory = XMLInputFactory.newInstance();
-                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-                factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-                factory.setProperty(XMLInputFactory.IS_COALESCING, true);
-                XMLStreamReader r = factory.createXMLStreamReader(inputStream);
-                List<ComponentConfiguration> cnfs = new ArrayList<>();
-                while (r.hasNext()) {
-                    int event = r.getEventType();
-                    if (event == XMLStreamConstants.START_ELEMENT && r.getLocalName().equals("configuration")) {
-                        ComponentConfiguration cnf = new XmlJavaComponentConfigurationsMapper().paraConfiguration(r);
-                        cnfs.add(cnf);
-                    }
-                    r.next();
-                }
-                XmlComponentConfigurations xcc = new XmlComponentConfigurations();
-                xcc.setConfigurations(cnfs);
-                return (T) xcc;
-            } catch (Exception e) {
-                throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-            }
-        }
+        return doUnmarshal(inputStream, clazz);
+    }
+
+    private <T> T doUnmarshal(InputStream inputStream, Class<T> clazz) throws KuraException {
         DocumentBuilderFactory factory = null;
         DocumentBuilder parser = null;
 
         try {
             factory = DocumentBuilderFactory.newInstance();
-            if (factory == null) {
-                throw KuraException.internalError("null DocumentBuilderFactory Instance");
-            }
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
@@ -265,9 +241,6 @@ public class XmlMarshallUnmarshallImpl implements Marshaller, Unmarshaller {
         Document doc = null;
         try {
             doc = parser.parse(inputStream);
-            if (doc == null) {
-                throw KuraException.internalError("null doc");
-            }
             doc.getDocumentElement().normalize();
         } catch (SAXException | IOException | IllegalArgumentException se) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_CONSTANT, se);

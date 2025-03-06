@@ -346,7 +346,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     }
 
-    protected void deactivate(ComponentContext componentContext) {
+    protected void deactivate() {
         logger.info("deactivate...");
 
         if (this.bundleTracker != null) {
@@ -956,7 +956,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
     }
 
     // returns configurations with encrypted passwords
-    private ComponentConfiguration getComponentConfigurationInternal(String pid) throws KuraException {
+    private ComponentConfiguration getComponentConfigurationInternal(String pid) {
         ComponentConfiguration cc;
         if (!this.activatedSelfConfigComponents.contains(pid)) {
             cc = getConfigurableComponentConfiguration(pid);
@@ -966,7 +966,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         return cc;
     }
 
-    private void updateDefaultConfiguration(String pid, String servicePid, Tocd ocd) throws KuraException, IOException {
+    private void updateDefaultConfiguration(String pid, String servicePid, Tocd ocd) throws IOException {
 
         Configuration config = this.configurationAdmin.getConfiguration(servicePid, "?");
         if (config != null) {
@@ -1017,8 +1017,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         updateDefaultConfiguration(pid, servicePid, ocd);
     }
 
-    private void updateWithDefaultConfigurationForFactorInstance(String pid, Tocd ocd)
-            throws KuraException, IOException {
+    private void updateWithDefaultConfigurationForFactorInstance(String pid, Tocd ocd) throws IOException {
         String servicePid = this.servicePidByPid.get(pid);
         if (servicePid == null) {
             servicePid = pid;
@@ -1139,7 +1138,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                         : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
         if (isEncrypt != null && !isEncrypt) {
             try (FileOutputStream outputfile = new FileOutputStream(fSnapshot)) {
-                marshal(xmlConfigs, outputfile);
+                marshal(outputfile, xmlConfigs);
             } catch (IOException e) {
                 throw KuraException.internalError(e);
             }
@@ -1153,7 +1152,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
         // Encrypt the XML
         try (FileOutputStream tempOutputfile = new FileOutputStream(tempFile)) {
-            marshal(xmlConfigs, tempOutputfile);
+            marshal(tempOutputfile, xmlConfigs);
         } catch (IOException e) {
             try {
                 Files.delete(tempFile.toPath());
@@ -1936,6 +1935,14 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
         return getServiceProviderOCDs(classNames);
     }
+    
+    protected <T> T unmarshal(final InputStream input, final Class<T> clazz) throws KuraException {
+        try {
+            return requireNonNull(this.xmlUnmarshaller.unmarshal(input, clazz));
+        } catch (final Exception e) {
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, "configuration", e);
+        }
+    }
 
     protected <T> T unmarshal(final File file, final Class<T> clazz) throws KuraException {
         if (file == null) {
@@ -1948,22 +1955,6 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             return requireNonNull(this.xmlUnmarshaller.unmarshal(new FileInputStream(file), clazz));
         } catch (final Exception e) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-        }
-    }
-
-    protected <T> T unmarshal(final String string, final Class<T> clazz) throws KuraException {
-        try {
-            return requireNonNull(this.xmlUnmarshaller.unmarshal(string, clazz));
-        } catch (final Exception e) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR, "configuration", e);
-        }
-    }
-
-    protected String marshal(final Object object) throws KuraException {
-        try {
-            return requireNonNull(this.xmlMarshaller.marshal(object));
-        } catch (Exception e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR, "configuration", e);
         }
     }
 
@@ -2010,9 +2001,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
     }
 
-    protected void marshal(Object object, OutputStream outputBuffer) throws KuraException {
+    protected void marshal(OutputStream outputBuffer, Object object) throws KuraException {
         try {
-            this.xmlMarshaller.marshal(object, outputBuffer);
+            this.xmlMarshaller.marshal(outputBuffer, object);
         } catch (Exception e) {
             throw new KuraException(KuraErrorCode.ENCODE_ERROR, e);
         }
