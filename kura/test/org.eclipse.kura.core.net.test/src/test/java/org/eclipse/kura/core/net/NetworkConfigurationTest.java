@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2022 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2017, 2025 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -1171,8 +1171,6 @@ public class NetworkConfigurationTest {
         netConfig.setPppNumber(123);
         netConfig.setPersist(true);
         netConfig.setMaxFail(10);
-        netConfig.setIdle(20);
-        netConfig.setActiveFilter("activeFilter");
         netConfig.setResetTimeout(30);
         netConfig.setLcpEchoInterval(40);
         netConfig.setLcpEchoFailure(50);
@@ -1202,8 +1200,6 @@ public class NetworkConfigurationTest {
         expected.put("net.interface.if2.config.pdpType", "");
         expected.put("net.interface.if2.config.persist", true);
         expected.put("net.interface.if2.config.maxFail", 10);
-        expected.put("net.interface.if2.config.idle", 20);
-        expected.put("net.interface.if2.config.activeFilter", "activeFilter");
         expected.put("net.interface.if2.config.resetTimeout", 30);
         expected.put("net.interface.if2.config.lcpEchoInterval", 40);
         expected.put("net.interface.if2.config.lcpEchoFailure", 50);
@@ -1320,8 +1316,6 @@ public class NetworkConfigurationTest {
         expected.put("prefix.pdpType", "");
         expected.put("prefix.persist", true);
         expected.put("prefix.maxFail", 10);
-        expected.put("prefix.idle", 20);
-        expected.put("prefix.activeFilter", "activeFilter");
         expected.put("prefix.resetTimeout", 30);
         expected.put("prefix.lcpEchoInterval", 40);
         expected.put("prefix.lcpEchoFailure", 50);
@@ -1342,8 +1336,6 @@ public class NetworkConfigurationTest {
         modemConfig.setPppNumber(123);
         modemConfig.setPersist(true);
         modemConfig.setMaxFail(10);
-        modemConfig.setIdle(20);
-        modemConfig.setActiveFilter("activeFilter");
         modemConfig.setResetTimeout(30);
         modemConfig.setLcpEchoInterval(40);
         modemConfig.setLcpEchoFailure(50);
@@ -1374,8 +1366,6 @@ public class NetworkConfigurationTest {
         expected.put("prefix.pdpType", "IP");
         expected.put("prefix.persist", true);
         expected.put("prefix.maxFail", 10);
-        expected.put("prefix.idle", 20);
-        expected.put("prefix.activeFilter", "activeFilter");
         expected.put("prefix.resetTimeout", 30);
         expected.put("prefix.lcpEchoInterval", 40);
         expected.put("prefix.lcpEchoFailure", 50);
@@ -1396,8 +1386,6 @@ public class NetworkConfigurationTest {
         modemConfig.setPppNumber(123);
         modemConfig.setPersist(true);
         modemConfig.setMaxFail(10);
-        modemConfig.setIdle(20);
-        modemConfig.setActiveFilter("activeFilter");
         modemConfig.setResetTimeout(30);
         modemConfig.setLcpEchoInterval(40);
         modemConfig.setLcpEchoFailure(50);
