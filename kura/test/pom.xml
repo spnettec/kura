@@ -904,7 +904,6 @@
         <module>org.eclipse.kura.net.admin.firewall.test</module>
         <module>org.eclipse.kura.nm.test</module>
         <module>org.eclipse.kura.net.configuration.test</module>
-        <module>org.eclipse.kura.rest.asset.provider.test</module>
         <module>org.eclipse.kura.stress.test</module>
         <module>org.eclipse.kura.test</module>
         <module>org.eclipse.kura.util.test</module>
@@ -925,6 +924,7 @@
         <module>org.eclipse.kura.rest.keystore.provider.test</module>
         <module>org.eclipse.kura.log.filesystem.provider.test</module>
         <module>org.eclipse.kura.rest.provider.test</module>
+        <module>org.eclipse.kura.rest.asset.provider.test</module>
         <module>org.eclipse.kura.rest.configuration.provider.test</module>
         <module>org.eclipse.kura.rest.network.configuration.provider.test</module>
         <module>org.eclipse.kura.rest.cloudconnection.provider.test</module>

@@ -618,21 +618,6 @@
                                     <version>${org.eclipse.jetty.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.eclipse.platform</groupId>
-                                    <artifactId>org.eclipse.equinox.io</artifactId>
-                                    <version>${org.eclipse.equinox.io.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.platform</groupId>
-                                    <artifactId>org.eclipse.equinox.util</artifactId>
-                                    <version>${org.eclipse.equinox.util.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.platform</groupId>
-                                    <artifactId>org.eclipse.equinox.wireadmin</artifactId>
-                                    <version>${org.eclipse.equinox.wireadmin.version}</version>
-                                </artifactItem>
-                                <artifactItem>
                                     <groupId>org.osgi</groupId>
                                     <artifactId>org.osgi.service.http.whiteboard</artifactId>
                                     <version>${org.osgi.service.http.whiteboard.version}</version>
@@ -786,7 +771,7 @@
                                 <artifactItem>
                                     <groupId>org.jvnet.mimepull</groupId>
                                     <artifactId>mimepull</artifactId>
-                                    <version>${mimepull.version}</version>
+                                    <version>${org.jvnet.mimepull.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.osgi</groupId>

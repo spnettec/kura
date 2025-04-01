@@ -75,6 +75,11 @@
 									<transitive>false</transitive>
                                 </artifactItem>
                                 <artifactItem>
+                                    <id>io.dropwizard.metrics:metrics-core:${io.dropwizard.metrics.version}</id>
+                                    <source>true</source>
+									<transitive>false</transitive>
+                                </artifactItem>
+                                <artifactItem>
                                     <id>net.bytebuddy:byte-buddy:${byte-buddy.version}</id>
                                     <source>true</source>
 									<transitive>false</transitive>
