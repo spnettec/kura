@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
-  
+    Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
-	SPDX-License-Identifier: EPL-2.0
-	
-	Contributors:
-	 Eurotech
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
 
 -->
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/PositionService">
@@ -37,12 +37,12 @@
         	description="%staticDesc"/>
         	
         <AD id="provider" 
-            name="provider" 
+            name="%provider" 
             type="String"
             cardinality="0"
             required="true"
-            default="serial"
-            description="Source for setting the position provider. Verify the availabiliy of the selected provider before activate it.">
+            default="gpsd"
+            description="%providerDesc">
             
             <Option label="serial" value="serial" />
             <Option label="gpsd" value="gpsd" />
@@ -51,39 +51,39 @@
         </AD>
         
         <AD id="modem.manager.refresh.rate.seconds"  
-            name="modem.manager.refresh.rate.seconds"
+            name="%modemManagerRefreshRateSeconds"
             type="Integer"
             cardinality="0" 
             required="true"
             default="30"
             min="0"
-            description="Refresh time in seconds at which the position is updated when using the Modem Manager Position Provider">
+            description="%modemManagerRefreshRateSecondsDesc">
         </AD>
         
         <AD id="gpsd.host" 
-            name="gpsd.host" 
+            name="%gpsdHost" 
             type="String"
             cardinality="0"
             required="false"
             default="localhost"
-            description="Host where the gpsd service is running." />
+            description="%gpsdHostDesc" />
             
         <AD id="gpsd.port" 
-            name="gpsd.port"
+            name="%gpsdPort"
             type="Integer"
             cardinality="0"
             required="false"
             default="2947"
-            description="Port where the gpsd service is running." />
+            description="%gpsdPortDesc" />
             
        <AD id="gpsd.max.fix.validity.interval.seconds"  
-            name="gpsd.max.fix.validity.interval.seconds"
+            name="%gpsdMaxFixValidityIntervalSeconds"
             type="Integer"
             cardinality="0" 
             required="true"
             default="60"
             min="0"
-            description="With some GPS receivers GPSD does not report to the clients that GPS fix has been lost. This parameter enables the following workaround: if no position updates are received from GPSD after the value of this parameter in seconds since last update, then the PositionService will assume that the GPS fix has been lost. Set to 0 to disable this feature.">
+            description="%gpsdMaxFixValidityIntervalSecondsDesc">
         </AD>
         	
        	<AD id="latitude"

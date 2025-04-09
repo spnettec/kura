@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2018, 2024 Eurotech and/or its affiliates and others
-  
+    Copyright (c) 2018, 2025 Eurotech and/or its affiliates and others
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
-	SPDX-License-Identifier: EPL-2.0
-	
-	Contributors:
-	 Eurotech
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -34,11 +34,46 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<configuration>
+							<outputDirectory>${project.basedir}/lib</outputDirectory>
+							<stripVersion>true</stripVersion>
+							<artifactItems>
+								<artifactItem>
+									<groupId>com.google.protobuf</groupId>
+									<artifactId>protobuf-java</artifactId>
+									<version>4.30.2</version>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<configuration>
 					<skip>true</skip>
 				</configuration>
 			</plugin>
+			<plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>lib</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 </project>
