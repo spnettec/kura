@@ -66,8 +66,8 @@
                                         ui:field="filePath"></g:FileUpload>
                                 </b:FormGroup>
                                 <b:ButtonGroup pull="RIGHT">
-                                    <b:Button ui:field="uploadCancel">{msgs.cancelButton}</b:Button>
-                                    <b:Button ui:field="uploadUpload">{msgs.uploadButton}</b:Button>
+                                    <b:Button ui:field="uploadCancel" text="{msgs.cancelButton}"/>
+                                    <b:Button ui:field="uploadUpload" text="{msgs.uploadButton}"/>
                                 </b:ButtonGroup>
                                 <g:Hidden ui:field="xsrfTokenField"></g:Hidden>
                             </b:FieldSet>
