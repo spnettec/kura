@@ -40,10 +40,11 @@ public enum ScaleOffsetType {
      * Converts {@code stringScaleOffsetType}, if possible, to the related {@link ScaleOffsetType}.
      *
      * @param stringDataType
-     *            String that we want to use to get the respective {@link ScaleOffsetType}.
+     *                           String that we want to use to get the respective {@link ScaleOffsetType}.
      * @return a ScaleOffsetType that corresponds to the String passed as argument.
      * @throws IllegalArgumentException
-     *             if the passed string does not correspond to an existing {@link ScaleOffsetType}.
+     *                                      if the passed string does not correspond to an existing
+     *                                      {@link ScaleOffsetType}.
      */
     public static ScaleOffsetType getScaleOffsetType(String stringScaleOffsetType) {
 
@@ -67,7 +68,7 @@ public enum ScaleOffsetType {
             return LONG;
         }
 
-        throw new IllegalArgumentException("Cannot convert to DataType");
+        throw new IllegalArgumentException("Cannot convert ScaleOffsetType:" + stringScaleOffsetType + " to DataType");
     }
 
 }

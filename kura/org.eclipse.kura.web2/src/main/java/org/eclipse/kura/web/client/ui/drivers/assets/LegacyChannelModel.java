@@ -70,7 +70,8 @@ public class LegacyChannelModel implements AssetModel.ChannelModel {
         for (GwtConfigParameter param : this.parameters) {
             if (param.getId().equals(getId(AssetConstants.SCALE_OFFSET_TYPE))) {
                 String paramValue = param.getValue() != null ? param.getValue() : param.getDefault();
-                scaleOffsetType = ScaleOffsetType.getScaleOffsetType(paramValue);
+                scaleOffsetType = paramValue == null ? ScaleOffsetType.DEFINED_BY_VALUE_TYPE
+                        : ScaleOffsetType.getScaleOffsetType(paramValue);
             }
             if (param.getId().equals(getId(AssetConstants.VALUE_TYPE))) {
                 String paramValue = param.getValue() != null ? param.getValue() : param.getDefault();

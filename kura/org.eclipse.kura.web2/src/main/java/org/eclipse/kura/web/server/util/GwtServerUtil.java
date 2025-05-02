@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2016, 2025 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -29,23 +29,21 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Icon;
 import org.eclipse.kura.configuration.metatype.OCD;
+import org.eclipse.kura.configuration.metatype.OCDService;
 import org.eclipse.kura.configuration.metatype.Option;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.core.configuration.metatype.Tad;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.driver.descriptor.DriverDescriptor;
+import org.eclipse.kura.driver.descriptor.DriverDescriptorService;
+import org.eclipse.kura.internal.wire.asset.WireAssetOCD;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.marshalling.Marshaller;
 import org.eclipse.kura.rest.configuration.api.ComponentConfigurationList;
@@ -77,6 +75,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * The Class GwtServerUtil is an utility class required for Kura Server
@@ -112,6 +114,9 @@ public final class GwtServerUtil {
     private static final String DRIVER_PID = "driver.pid";
 
     private static final Logger logger = LoggerFactory.getLogger(GwtServerUtil.class);
+
+    private static final ComponentConfiguration WIRE_ASSET_OCD_CONFIG = new ComponentConfigurationImpl(
+            "org.eclipse.kura.wire.WireAsset", new WireAssetOCD(), new HashMap<>());
 
     public static Object getObjectValue(GwtConfigParameter param) {
         Object objValue = null;
@@ -537,6 +542,27 @@ public final class GwtServerUtil {
                 new ComponentConfigurationImpl(comConfig == null ? "" : comConfig.getPid(), ocd, null), locale);
     }
 
+    public static ComponentConfiguration toComponentConfiguration(String pid, Object descriptor) {
+        if (!(descriptor instanceof List<?>)) {
+            return null;
+        }
+
+        final List<?> ads = (List<?>) descriptor;
+
+        final Tocd ocd = new Tocd();
+        ocd.setId(pid);
+        for (final Object ad : ads) {
+            if (!(ad instanceof Tad)) {
+                return null;
+            }
+            ocd.addAD((Tad) ad);
+        }
+        Tocd tocd = (Tocd) WIRE_ASSET_OCD_CONFIG.getDefinition();
+        ocd.setLocalization(tocd.getLocalization());
+        ocd.setLocaleUrls(tocd.getLocaleUrls());
+        return new ComponentConfigurationImpl(pid, ocd, null);
+    }
+
     public static ComponentConfiguration fromGwtConfigComponent(GwtConfigComponent gwtCompConfig,
             ComponentConfiguration currentCC) {
         if (currentCC == null) {
@@ -890,5 +916,45 @@ public final class GwtServerUtil {
 
     public static String getSessionIdHash(final HttpSession session) {
         return Integer.toUnsignedString(Objects.hash(session.getId()));
+    }
+
+    public static void fillDriverDefinitions(List<GwtConfigComponent> resultDefinitions) throws GwtKuraException {
+        ServiceLocator.applyToServiceOptionally(OCDService.class, ocdService -> {
+
+            for (ComponentConfiguration config : ocdService.getServiceProviderOCDs("org.eclipse.kura.driver.Driver")) {
+                final GwtConfigComponent descriptor = GwtServerUtil.toGwtConfigComponent(config,
+                        LocaleContextHolder.getLocale().getLanguage());
+                if (descriptor != null) {
+                    descriptor.setIsDriver(true);
+                    resultDefinitions.add(descriptor);
+                }
+            }
+            return null;
+        });
+    }
+
+    public static void fillDriverDescriptors(List<GwtConfigComponent> resultDescriptors) throws GwtKuraException {
+        ServiceLocator.applyToServiceOptionally(DriverDescriptorService.class, driverDescriptorService -> {
+
+            driverDescriptorService.listDriverDescriptors().stream()
+                    .map(descriptor -> GwtServerUtil.toGwtConfigComponent(descriptor,
+                            LocaleContextHolder.getLocale().getLanguage()))
+                    .filter(Objects::nonNull).forEach(resultDescriptors::add);
+            return null;
+        });
+    }
+
+    public static GwtConfigComponent getChannelDescriptor(final String driverPid) throws GwtKuraException {
+        final DriverDescriptorService driverDescriptorService = ServiceLocator.getInstance()
+                .getService(DriverDescriptorService.class);
+
+        Optional<DriverDescriptor> driverDescriptorOptional = driverDescriptorService.getDriverDescriptor(driverPid);
+
+        if (driverDescriptorOptional.isPresent()) {
+            DriverDescriptor driverDescriptor = driverDescriptorOptional.get();
+            return toGwtConfigComponent(driverDescriptor, LocaleContextHolder.getLocale().getLanguage());
+        } else {
+            throw new GwtKuraException(GwtKuraErrorCode.INTERNAL_ERROR);
+        }
     }
 }

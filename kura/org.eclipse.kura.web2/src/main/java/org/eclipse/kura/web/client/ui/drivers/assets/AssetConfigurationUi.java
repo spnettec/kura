@@ -870,10 +870,6 @@ public class AssetConfigurationUi extends AbstractServicesUi implements HasConfi
         return this.model.getAssetPid();
     }
 
-    private static String toChannelPropertyName(String propertyId) {
-        return propertyId.substring(propertyId.lastIndexOf(AssetConstants.CHANNEL_DEFAULT_PROPERTY_PREFIX.value()) + 1);
-    }
-
     private static class ColumnVisibilityMap extends HashMap<String, Boolean> {
 
         private static final long serialVersionUID = 1L;

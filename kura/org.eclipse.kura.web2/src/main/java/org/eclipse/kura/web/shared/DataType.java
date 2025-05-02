@@ -114,6 +114,6 @@ public enum DataType {
             return STRINGS;
         }
 
-        throw new IllegalArgumentException("Cannot convert to DataType");
+        throw new IllegalArgumentException("Cannot convert DataType:" + stringDataType + " to DataType");
     }
 }

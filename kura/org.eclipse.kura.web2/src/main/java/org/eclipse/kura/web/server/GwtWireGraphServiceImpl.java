@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2022 Eurotech and/or its affiliates and others
+ * Copyright (c) 2016, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurationService;
-import org.eclipse.kura.configuration.metatype.OCDService;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.metatype.Tad;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
@@ -40,12 +39,14 @@ import org.eclipse.kura.internal.wire.asset.WireAssetChannelDescriptor;
 import org.eclipse.kura.internal.wire.asset.WireAssetOCD;
 import org.eclipse.kura.locale.LocaleContextHolder;
 import org.eclipse.kura.web.server.util.GwtServerUtil;
+import org.eclipse.kura.web.server.util.GwtWireAssetConstants;
 import org.eclipse.kura.web.server.util.ServiceLocator;
 import org.eclipse.kura.web.shared.FilterUtil;
 import org.eclipse.kura.web.shared.GwtKuraErrorCode;
 import org.eclipse.kura.web.shared.GwtKuraException;
 import org.eclipse.kura.web.shared.IdHelper;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
+import org.eclipse.kura.web.shared.model.GwtSupportedFeatures;
 import org.eclipse.kura.web.shared.model.GwtWireComponentConfiguration;
 import org.eclipse.kura.web.shared.model.GwtWireComponentDescriptor;
 import org.eclipse.kura.web.shared.model.GwtWireComposerStaticInfo;
@@ -76,18 +77,23 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
 
     private static final ComponentConfiguration WIRE_ASSET_OCD_CONFIG = new ComponentConfigurationImpl(
             "org.eclipse.kura.wire.WireAsset", new WireAssetOCD(), new HashMap<>());
-    // private static final GwtConfigComponent WIRE_ASSET_CHANNEL_DESCRIPTOR = GwtServerUtil.toGwtConfigComponent(null,
-    // WireAssetChannelDescriptor.get().getDescriptor(), "");
-
     private static final Filter DRIVER_FILTER = getFilterUnchecked("(objectClass=org.eclipse.kura.driver.Driver)");
     private static final Filter ADDITIONAL_CONFIGS_FILTER = getFilterUnchecked(
             "(|(objectClass=org.eclipse.kura.driver.Driver)(service.factoryPid=org.eclipse.kura.wire.WireAsset))");
 
     private static final long serialVersionUID = -6577843865830245755L;
 
+    final GwtSupportedFeatures supportedFeatures;
+
+    public GwtWireGraphServiceImpl(final GwtSupportedFeatures supportedFeatures) {
+        this.supportedFeatures = supportedFeatures;
+    }
+
     @Override
     public GwtConfigComponent getGwtChannelDescriptor(final GwtXSRFToken xsrfToken, final String driverPid)
             throws GwtKuraException {
+        checkXSRFToken(xsrfToken);
+        
         final DriverDescriptorService driverDescriptorService = ServiceLocator.getInstance()
                 .getService(DriverDescriptorService.class);
 
@@ -311,12 +317,6 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
         });
     }
 
-    @Deprecated
-    private GwtConfigComponent getWireAssetDefinition() { // TODO provide a metatype for WireAsset
-
-        return GwtServerUtil.toGwtConfigComponent(WIRE_ASSET_OCD_CONFIG, LocaleContextHolder.getLocale().getLanguage());
-    }
-
     private void fillWireComponentDefinitions(List<GwtWireComponentDescriptor> resultDescriptors,
             List<GwtConfigComponent> resultDefinitions) throws GwtKuraException {
 
@@ -356,7 +356,13 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
                         result.setToolsSorted(wireComponentDefinition.getToolsSorted());
                         resultDescriptors.add(result);
                     }
-                    resultDefinitions.add(getWireAssetDefinition());
+
+                    if (supportedFeatures.isAssetAvailable() && supportedFeatures.areDriverServicesAvailable()) {
+                        resultDefinitions.add(GwtServerUtil.toGwtConfigComponent(WIRE_ASSET_OCD_CONFIG, LocaleContextHolder.getLocale().getLanguage()));
+                    }
+                    if (supportedFeatures.isAssetAvailable() && !supportedFeatures.areDriverServicesAvailable()) {
+                        resultDescriptors.removeIf(c -> GwtWireAssetConstants.WIRE_ASSET_PID.equals(c.getFactoryPid()));
+                    }
                     return null;
                 });
     }
@@ -393,33 +399,6 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
         return wireComponentDefinition.getComponentOCD().getDefinition().getDescription();
     }
 
-    private void fillDriverDefinitions(List<GwtConfigComponent> resultDefinitions) throws GwtKuraException {
-        ServiceLocator.applyToServiceOptionally(OCDService.class, ocdService -> {
-
-            for (ComponentConfiguration config : ocdService.getServiceProviderOCDs("org.eclipse.kura.driver.Driver")) {
-                final GwtConfigComponent descriptor = GwtServerUtil.toGwtConfigComponent(config,
-                        LocaleContextHolder.getLocale().getLanguage());
-                if (descriptor != null) {
-                    descriptor.setIsDriver(true);
-                    resultDefinitions.add(descriptor);
-                }
-            }
-            return null;
-        });
-    }
-
-    private void fillDriverDescriptors(List<GwtConfigComponent> resultDescriptors) throws GwtKuraException {
-
-        ServiceLocator.applyToServiceOptionally(DriverDescriptorService.class, driverDescriptorService -> {
-
-            driverDescriptorService.listDriverDescriptors().stream()
-                    .map(descriptor -> GwtServerUtil.toGwtConfigComponent(descriptor,
-                            LocaleContextHolder.getLocale().getLanguage()))
-                    .filter(Objects::nonNull).forEach(resultDescriptors::add);
-            return null;
-        });
-    }
-
     @Override
     public GwtWireComposerStaticInfo getWireComposerStaticInfo(GwtXSRFToken xsrfToken) throws GwtKuraException {
         this.checkXSRFToken(xsrfToken);
@@ -435,16 +414,22 @@ public final class GwtWireGraphServiceImpl extends OsgiRemoteServiceServlet impl
         final List<GwtConfigComponent> driverDescriptors = new ArrayList<>();
 
         fillWireComponentDefinitions(componentDescriptors, componentDefinitions);
-        fillDriverDefinitions(componentDefinitions);
-        fillDriverDescriptors(driverDescriptors);
+
+        if (supportedFeatures.areDriverServicesAvailable()) {
+            GwtServerUtil.fillDriverDefinitions(componentDefinitions);
+            GwtServerUtil.fillDriverDescriptors(driverDescriptors);
+        }
 
         result.setComponentDefinitions(componentDefinitions);
         result.setWireComponentDescriptors(componentDescriptors);
         result.setDriverDescriptors(driverDescriptors);
-        GwtConfigComponent wireAssetChannelDescriptor = GwtServerUtil.toGwtConfigComponent(
-                toComponentConfiguration("", WireAssetChannelDescriptor.get().getDescriptor()),
-                LocaleContextHolder.getLocale().getLanguage());
-        result.setBaseChannelDescriptor(wireAssetChannelDescriptor);
+
+        if (supportedFeatures.isAssetAvailable() && supportedFeatures.areDriverServicesAvailable()) {
+            GwtConfigComponent wireAssetChannelDescriptor = GwtServerUtil.toGwtConfigComponent(
+                    toComponentConfiguration("", WireAssetChannelDescriptor.get().getDescriptor()),
+                    LocaleContextHolder.getLocale().getLanguage());
+            result.setBaseChannelDescriptor(wireAssetChannelDescriptor);
+        }
 
         return result;
     }
