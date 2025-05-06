@@ -16,11 +16,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.kura.command.PasswordCommandService;
-import org.eclipse.kura.driver.DriverService;
 import org.eclipse.kura.driver.descriptor.DriverDescriptorService;
 import org.eclipse.kura.web.shared.model.GwtSupportedFeatures;
 import org.eclipse.kura.wire.graph.WireComponentDefinitionService;
-import org.eclipse.kura.wire.graph.WireGraphService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.namespace.PackageNamespace;
@@ -36,13 +34,12 @@ public class GwtFeatureUtil {
 
         final GwtSupportedFeatures result = new GwtSupportedFeatures();
 
-        final Set<String> wiredPackages = getWiredPackages();
+        final Set<String> wiredPackages = getWiredPackages(bundleContext);
 
-        result.setDriverServicesAvailable(isProviderServiceAvailable(DriverService.class, bundleContext)
-                && isProviderServiceAvailable(DriverDescriptorService.class, bundleContext));
+        result.setDriverServicesAvailable(isProviderServiceAvailable(DriverDescriptorService.class, bundleContext));
 
-        result.setWiresServicesAvailable(isProviderServiceAvailable(WireGraphService.class, bundleContext)
-                && isProviderServiceAvailable(WireComponentDefinitionService.class, bundleContext));
+        result.setWiresServicesAvailable(
+                isProviderServiceAvailable(WireComponentDefinitionService.class, bundleContext));
 
         result.setAssetAvailable(wiredPackages.contains("org.eclipse.kura.asset.provider")
                 && wiredPackages.contains("org.eclipse.kura.internal.wire.asset"));
@@ -52,8 +49,8 @@ public class GwtFeatureUtil {
         return result;
     }
 
-    private static final Set<String> getWiredPackages() {
-        final BundleWiring bundleWiring = FrameworkUtil.getBundle(GwtFeatureUtil.class).adapt(BundleWiring.class);
+    private static final Set<String> getWiredPackages(BundleContext bundleContext) {
+        final BundleWiring bundleWiring = bundleContext.getBundle().adapt(BundleWiring.class);
 
         return bundleWiring.getRequiredWires(PackageNamespace.PACKAGE_NAMESPACE).stream()
                 .map(w -> w.getCapability().getAttributes().get(PackageNamespace.PACKAGE_NAMESPACE))
