@@ -13,7 +13,7 @@
      Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/ClockService">
     <OCD id="org.eclipse.kura.clock.ClockService"
          name="%name"
          description="%description">

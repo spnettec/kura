@@ -145,8 +145,10 @@ public class IpConfigurationInterpreter {
                 try {
                     dhcpServerConfigIP4 = new DhcpServerConfigIP4(dhcpServerCfg, dhcpServerCfgIP4);
                 } catch (KuraException e) {
-                    logger.warn("This invalid DhcpServerCfgIP4 configuration is ignored - {}, {}", dhcpServerCfg,
-                            dhcpServerCfgIP4);
+                    if (dhcpEnabled) {
+                        logger.warn("This invalid DhcpServerCfgIP4 configuration is ignored - {}, {}", dhcpServerCfg,
+                                dhcpServerCfgIP4);
+                    }
                 }
             }
         }

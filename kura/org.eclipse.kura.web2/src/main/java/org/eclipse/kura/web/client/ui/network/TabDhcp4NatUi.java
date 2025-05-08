@@ -612,7 +612,8 @@ public class TabDhcp4NatUi extends AbstractServicesUi implements NetworkTab {
     }
 
     private void checkSubnetMatch() {
-        if (ROUTER_OFF_MESSAGE.equals(this.router.getSelectedValue())) {
+        if (ROUTER_OFF_MESSAGE.equals(this.router.getSelectedValue())
+                || ROUTER_NAT_MESSAGE.equals(this.router.getSelectedValue())) {
             return;
         }
         boolean isValid = false;
