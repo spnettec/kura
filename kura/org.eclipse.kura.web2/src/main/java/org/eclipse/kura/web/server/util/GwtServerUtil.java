@@ -14,7 +14,8 @@ package org.eclipse.kura.web.server.util;
 
 import static org.eclipse.kura.configuration.ConfigurationService.KURA_SERVICE_PID;
 
-import java.io.PrintWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,6 +78,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
@@ -810,8 +812,8 @@ public final class GwtServerUtil {
         return result;
     }
 
-    public static void writeXmlSnapshot(HttpServletResponse response, PrintWriter writer, final String filename,
-            List<ComponentConfiguration> configs) {
+    public static void writeXmlSnapshot(HttpServletResponse response, final String filename,
+            List<ComponentConfiguration> configs) throws IOException {
         // build a list of configuration which can be marshalled in XML
         List<ComponentConfiguration> configImpls = new ArrayList<>();
         for (ComponentConfiguration config : configs) {
@@ -825,26 +827,30 @@ public final class GwtServerUtil {
         String result = marshal(xmlConfigs);
 
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("application/xml");
+        response.setContentType("application/xml;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
         response.setHeader("Cache-Control", "no-transform, max-age=0");
+        try (ServletOutputStream output = response.getOutputStream()) {
+            response.getOutputStream().write((result == null ? "" : result).getBytes(StandardCharsets.UTF_8));
+        }
 
-        writer.write(result);
     }
 
-    public static void writeJsonSnapshot(HttpServletResponse response, PrintWriter writer, final String filename,
-            List<ComponentConfiguration> configs) {
+    public static void writeJsonSnapshot(HttpServletResponse response, final String filename,
+            List<ComponentConfiguration> configs) throws IOException {
 
         final ComponentConfigurationList dto = DTOUtil.toComponentConfigurationList(configs, null, false);
 
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=utf-8");
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
         response.setHeader("Cache-Control", "no-transform, max-age=0");
-
-        gson.toJson(dto, writer);
+        String result = gson.toJson(dto);
+        try (ServletOutputStream output = response.getOutputStream()) {
+            response.getOutputStream().write((result == null ? "" : result).getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     public static void writeSnapshot(final HttpServletResponse response, final List<ComponentConfiguration> configs,
@@ -856,12 +862,12 @@ public final class GwtServerUtil {
             downloadFormat = XML_FORMAT;
         }
 
-        try (PrintWriter writer = response.getWriter()) {
+        try {
 
             if (XML_FORMAT.equalsIgnoreCase(downloadFormat)) {
-                GwtServerUtil.writeXmlSnapshot(response, writer, filename + ".xml", configs);
+                GwtServerUtil.writeXmlSnapshot(response, filename + ".xml", configs);
             } else if (JSON_FORMAT.equalsIgnoreCase(downloadFormat)) {
-                GwtServerUtil.writeJsonSnapshot(response, writer, filename + ".json", configs);
+                GwtServerUtil.writeJsonSnapshot(response, filename + ".json", configs);
             }
 
         } catch (Exception e) {

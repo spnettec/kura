@@ -234,7 +234,7 @@ public class DriversAndAssetsListUi extends Composite {
 
             if (entry.isAsset()) {
                 getAssetsForDriver(grouped, entry.getDriverPid()).add(entry);
-            } else if (config.getConfiguration().isDriver()) {
+            } else /* if (config.getConfiguration().isDriver()) */ {
                 getAssetsForDriver(grouped, entry.getPid());
             }
         }
