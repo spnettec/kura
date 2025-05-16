@@ -13,16 +13,35 @@
 	 Eurotech
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" configuration-policy="require" immediate="true" modified="update" name="org.eclipse.kura.internal.rest.provider.RestService">
-   <implementation class="org.eclipse.kura.internal.rest.provider.RestService" />
-   <property name="service.pid" type="String" value="org.eclipse.kura.internal.rest.provider.RestService" />
-
-   <service>
-      <provide interface="org.eclipse.kura.configuration.ConfigurableComponent" />
-   </service>
-
-   <reference bind="setCryptoService" cardinality="1..1" interface="org.eclipse.kura.crypto.CryptoService" name="CryptoService" policy="static" />
-   <reference bind="setUserAdmin" cardinality="1..1" interface="org.osgi.service.useradmin.UserAdmin" name="UserAdmin" policy="static" />
-   <reference bind="bindAuthenticationProvider" cardinality="0..n" interface="org.eclipse.kura.rest.auth.AuthenticationProvider" name="AuthenticationProvider" policy="dynamic" unbind="unbindAuthenticationProvider" />
-   <reference bind="setConfigurationAdmin" cardinality="1..1" interface="org.osgi.service.cm.ConfigurationAdmin" name="ConfigurationAdmin" policy="static"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" 
+			name="org.eclipse.kura.internal.rest.provider.RestService" 
+			configuration-policy="require" 
+			immediate="true" 
+			activate="activate" 
+			deactivate="deactivate" 
+			modified="update">
+  <service>
+    <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
+  </service>
+  <reference name="AuthenticationProvider" cardinality="0..n" policy="dynamic" 
+  		interface="org.eclipse.kura.rest.auth.AuthenticationProvider" 
+  		bind="bindAuthenticationProvider" 
+  		unbind="unbindAuthenticationProvider"/>
+  <reference name="ConfigurationAdmin" 
+  		interface="org.osgi.service.cm.ConfigurationAdmin" 
+  		bind="setConfigurationAdmin"/>
+  <reference name="CryptoService" 
+  		interface="org.eclipse.kura.crypto.CryptoService" 
+  		bind="setCryptoService"/>
+  <reference name="LoginBannerService" 
+  		interface="org.eclipse.kura.identity.LoginBannerService" 
+  		bind="setLoginBannerService"/>
+  <reference name="PasswordStrengthVerificationService" 
+  		interface="org.eclipse.kura.identity.PasswordStrengthVerificationService" 
+  		bind="setPasswordStrengthVerificationService"/>
+  <reference name="UserAdmin" 
+  		interface="org.osgi.service.useradmin.UserAdmin" 
+  		bind="setUserAdmin"/>
+  <implementation class="org.eclipse.kura.internal.rest.provider.RestService"/>
 </scr:component>
+

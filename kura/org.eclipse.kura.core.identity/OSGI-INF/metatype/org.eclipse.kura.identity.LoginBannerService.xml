@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metatype:MetaData xmlns:metatype="http://www.osgi.org/xmlns/metatype/v1.2.0" 
+			localization="OSGI-INF/l10n/LoginBannerService">
+  <OCD id="org.eclipse.kura.identity.LoginBannerService" 
+        name="%name" 
+        description="%description">
+    <AD id="pre.login.banner.enabled" 
+        type="Boolean" 
+        name="%preLoginBannerEnabled" 
+        description="%preLoginBannerEnabledDesc" 
+        default="false"/>
+    <AD id="pre.login.banner.content" 
+        type="String" 
+        name="%preLoginBannerContent" 
+        description="%preLoginBannerContentDesc" 
+        default="Sample\ Banner\ Content"/>
+    <AD id="post.login.banner.enabled" 
+        type="Boolean" 
+        name="%postLoginBannerEnabled" 
+        description="%postLoginBannerEnabledDesc" 
+        default="false"/>
+    <AD id="post.login.banner.content" 
+        type="String" 
+        name="%postLoginBannerContent" 
+        description="%postLoginBannerContentDesc" 
+        default="Sample\ Banner\ Content"/>
+  </OCD>
+  <Designate pid="org.eclipse.kura.identity.LoginBannerService">
+    <Object ocdref="org.eclipse.kura.identity.LoginBannerService"/>
+  </Designate>
+</metatype:MetaData>

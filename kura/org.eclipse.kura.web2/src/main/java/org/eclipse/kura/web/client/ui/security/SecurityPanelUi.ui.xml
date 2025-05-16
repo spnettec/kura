@@ -2,16 +2,16 @@
 
 <!--
 
-    Copyright (c) 2020, 2021 Eurotech and/or its affiliates and others
-  
+    Copyright (c) 2020, 2025 Eurotech and/or its affiliates and others
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
-	SPDX-License-Identifier: EPL-2.0
-	
-	Contributors:
-	 Eurotech
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
 
 -->
 
@@ -56,6 +56,10 @@
                         ui:field="httpService" visible="false"/>
                     <b:TabListItem dataTarget="#consolePanel" text="{msgs.settingsSecurityWebConsole}"
                         ui:field="console" visible="false"/>
+                    <b:TabListItem dataTarget="#passwordStrengthPanel" text="{msgs.settingsSecurityPasswordStrength}"
+                        ui:field="passwordStrength" visible="false"/>
+                    <b:TabListItem dataTarget="#loginBannersPanel" text="{msgs.settingsSecurityLoginBanners}"
+                        ui:field="loginBanners" visible="false"/>
                     <b:TabListItem dataTarget="#threatManagerPanel" text="{msgs.settingsNetworkThreatManager}"
                         ui:field="threatManager" visible="false"/>
                     <b:TabListItem dataTarget="#tamperDetectionPanel" text="{msgs.settingsSecurityTamperDetection}"
@@ -90,6 +94,10 @@
                     <b:TabPane b:id="httpServicePanel" ui:field="httpServicePanel">
                     </b:TabPane>
                     <b:TabPane b:id="consolePanel" ui:field="consolePanel">
+                    </b:TabPane>
+                    <b:TabPane b:id="passwordStrengthPanel" ui:field="passwordStrengthPanel">
+                    </b:TabPane>
+                    <b:TabPane b:id="loginBannersPanel" ui:field="loginBannersPanel">
                     </b:TabPane>
                     <b:TabPane b:id="threatManagerPanel">
                     	<security:ThreatManagerTabUi ui:field="threatManagerPanel"></security:ThreatManagerTabUi>

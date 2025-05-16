@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2025 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *******************************************************************************/
@@ -30,6 +30,8 @@ import java.util.Objects;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.crypto.CryptoService;
+import org.eclipse.kura.identity.LoginBannerService;
+import org.eclipse.kura.identity.PasswordStrengthVerificationService;
 import org.eclipse.kura.internal.rest.auth.BasicAuthenticationProvider;
 import org.eclipse.kura.internal.rest.auth.CertificateAuthenticationProvider;
 import org.eclipse.kura.internal.rest.auth.RestSessionHelper;
@@ -51,9 +53,7 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.MessageBodyWriter;
-import jakarta.ws.rs.ext.Provider;
 
-@Provider
 @SuppressWarnings("restriction")
 public class RestService implements ConfigurableComponent {
 
@@ -77,6 +77,8 @@ public class RestService implements ConfigurableComponent {
 
     private final IncomingPortCheckFilter incomingPortCheckFilter = new IncomingPortCheckFilter();
     private final AuthenticationFilter authenticationFilter = new AuthenticationFilter();
+    private PasswordStrengthVerificationService passwordStrengthVerificationService;
+    private LoginBannerService loginBannerService;
 
     public void setUserAdmin(final UserAdmin userAdmin) {
         this.userAdmin = userAdmin;
@@ -89,6 +91,15 @@ public class RestService implements ConfigurableComponent {
 
     public void setConfigurationAdmin(final ConfigurationAdmin configurationAdmin) {
         this.configurationAdmin = configurationAdmin;
+    }
+
+    public void setPasswordStrengthVerificationService(
+            PasswordStrengthVerificationService passwordStrengthVerificationService) {
+        this.passwordStrengthVerificationService = passwordStrengthVerificationService;
+    }
+
+    public void setLoginBannerService(LoginBannerService loginBannerService) {
+        this.loginBannerService = loginBannerService;
     }
 
     public void bindAuthenticationProvider(final AuthenticationProvider provider) {
@@ -128,7 +139,8 @@ public class RestService implements ConfigurableComponent {
                 new HashSet<>(Arrays.asList(BASE_PATH + CHANGE_PASSWORD_PATH, BASE_PATH + XSRF_TOKEN_PATH)),
                 Collections.singleton(BASE_PATH + XSRF_TOKEN_PATH));
 
-        this.authRestService = new SessionRestService(userAdminHelper, restSessionHelper, this.configurationAdmin);
+        this.authRestService = new SessionRestService(userAdminHelper, restSessionHelper, this.configurationAdmin,
+                this.passwordStrengthVerificationService, this.loginBannerService);
 
         this.registeredServices.add(bundleContext.registerService(SessionRestService.class, this.authRestService,
                 RestServiceUtils.resourceProperties()));
@@ -168,7 +180,7 @@ public class RestService implements ConfigurableComponent {
         logger.info("updating...");
 
         final RestServiceOptions newOptions = new RestServiceOptions(properties);
-        
+
         if (!Objects.equals(this.options, newOptions)) {
             this.options = newOptions;
             this.authRestService.setOptions(newOptions);

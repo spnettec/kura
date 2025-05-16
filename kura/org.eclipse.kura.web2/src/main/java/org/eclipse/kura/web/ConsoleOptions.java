@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2024 Eurotech and/or its affiliates and others
+ * Copyright (c) 2019, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -30,7 +30,6 @@ import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.core.configuration.metatype.Tscalar;
 import org.eclipse.kura.web.server.util.GwtServerUtil;
-import org.eclipse.kura.web.shared.model.GwtConsoleUserOptions;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
@@ -51,51 +50,6 @@ public class ConsoleOptions {
                     .setDescription("%sessionMaxInactivityIntervalDesc") //
                     .build(), //
             Integer.class);
-
-    private final SelfConfiguringComponentProperty<Boolean> bannerEnabled = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("access.banner.enabled", "%bannerEnabled", Tscalar.BOOLEAN) //
-                    .setDefault("false") //
-                    .setDescription("%bannerEnabledDesc") //
-                    .build(), //
-            Boolean.class);
-
-    private final SelfConfiguringComponentProperty<String> bannerContent = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("access.banner.content", "%bannerContent", Tscalar.STRING) //
-                    .setDefault("Sample Banner Content") //
-                    .setDescription("%bannerContentDesc") //
-                    .build(), //
-            String.class);
-
-    private final SelfConfiguringComponentProperty<Integer> passwordMinLength = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("new.password.min.length", "%minPasswordLength", Tscalar.INTEGER) //
-                    .setDefault("8") //
-                    .setMin("0") //
-                    .setDescription("%minPasswordLengthDesc") //
-                    .build(), //
-            Integer.class);
-
-    private final SelfConfiguringComponentProperty<Boolean> passwordRequireDigits = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("new.password.require.digits", "%passwordRequireDigits", Tscalar.BOOLEAN) //
-                    .setDefault("false") //
-                    .setDescription("%passwordRequireDigitsDesc") //
-                    .build(), //
-            Boolean.class);
-
-    private final SelfConfiguringComponentProperty<Boolean> passwordRequireSpecialCharacters = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("new.password.require.special.characters", "%passwordRequireSpecialCharacters",
-                    Tscalar.BOOLEAN) //
-                    .setDefault("false") //
-                    .setDescription("%passwordRequireSpecialCharactersDesc") //
-                    .build(), //
-            Boolean.class);
-
-    private final SelfConfiguringComponentProperty<Boolean> passwordRequireBothCases = new SelfConfiguringComponentProperty<>(
-            new AdBuilder("new.password.require.both.cases", "%passwordRequireBothCases", Tscalar.BOOLEAN) //
-                    .setDefault("false") //
-                    .setDescription("%passwordRequireBothCasesDesc") //
-                    .build(), //
-            Boolean.class);
-
     private final SelfConfiguringComponentProperty<Integer[]> allowedPorts = new SelfConfiguringComponentProperty<>(
             new AdBuilder("allowed.ports", "%allowedPorts", Tscalar.INTEGER) //
                     .setRequired(false) //
@@ -149,14 +103,6 @@ public class ConsoleOptions {
         return this.sessionMaxInactivityInterval.get();
     }
 
-    public boolean isBannerEnabled() {
-        return this.bannerEnabled.get();
-    }
-
-    public String getBannerContent() {
-        return this.bannerContent.get();
-    }
-
     public Set<String> getEnabledAuthMethods() {
         return this.authenticationMethodProperties.entrySet().stream().filter(e -> e.getValue().get())
                 .map(Map.Entry::getKey).collect(Collectors.toSet());
@@ -200,26 +146,9 @@ public class ConsoleOptions {
         return property.get();
     }
 
-    public GwtConsoleUserOptions getUserOptions() {
-        final GwtConsoleUserOptions result = new GwtConsoleUserOptions();
-
-        result.setPasswordMinimumLength(this.passwordMinLength.get());
-        result.setPasswordRequireDigits(this.passwordRequireDigits.get());
-        result.setPasswordRequireSpecialChars(this.passwordRequireSpecialCharacters.get());
-        result.setPasswordRequireBothCases(this.passwordRequireBothCases.get());
-
-        return result;
-    }
-
     private void initProperties() {
         this.configurationProperties.add(this.appRoot);
         this.configurationProperties.add(this.sessionMaxInactivityInterval);
-        this.configurationProperties.add(this.bannerEnabled);
-        this.configurationProperties.add(this.bannerContent);
-        this.configurationProperties.add(this.passwordMinLength);
-        this.configurationProperties.add(this.passwordRequireDigits);
-        this.configurationProperties.add(this.passwordRequireSpecialCharacters);
-        this.configurationProperties.add(this.passwordRequireBothCases);
         this.configurationProperties.add(this.allowedPorts);
         this.configurationProperties.add(this.sslManagerServiceTarget);
 
@@ -291,9 +220,7 @@ public class ConsoleOptions {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.allowedPorts, this.appRoot, this.authenticationMethodProperties, this.bannerContent,
-                this.bannerEnabled, this.config, this.configurationProperties, this.passwordMinLength,
-                this.passwordRequireBothCases, this.passwordRequireDigits, this.passwordRequireSpecialCharacters,
+        return Objects.hash(this.allowedPorts, this.appRoot, this.authenticationMethodProperties,
                 this.sessionMaxInactivityInterval, this.sslManagerServiceTarget);
     }
 
@@ -310,13 +237,6 @@ public class ConsoleOptions {
 
         return Objects.equals(this.appRoot.get(), other.appRoot.get())
                 && Objects.equals(this.sessionMaxInactivityInterval.get(), other.sessionMaxInactivityInterval.get())
-                && Objects.equals(this.bannerEnabled.get(), other.bannerEnabled.get())
-                && Objects.equals(this.bannerContent.get(), other.bannerContent.get())
-                && Objects.equals(this.passwordMinLength.get(), other.passwordMinLength.get())
-                && Objects.equals(this.passwordRequireDigits.get(), other.passwordRequireDigits.get())
-                && Objects.equals(this.passwordRequireSpecialCharacters.get(),
-                        other.passwordRequireSpecialCharacters.get())
-                && Objects.equals(this.passwordRequireBothCases.get(), other.passwordRequireBothCases.get())
                 && Arrays.equals(
                         this.allowedPorts.getOptional().isPresent() ? this.allowedPorts.get() : new Integer[] {},
                         other.allowedPorts.getOptional().isPresent() ? other.allowedPorts.get() : new Integer[] {})

@@ -13,50 +13,36 @@
      Eurotech
 
 -->
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.4.0" 
-    activate="activate" 
-    immediate="true" 
-    name="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1">
-    
-    <implementation class="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1" />
-
-    <reference interface="org.eclipse.kura.cloudconnection.request.RequestHandlerRegistry"
-               bind="bindRequestHandlerRegistry"
-               unbind="unbindRequestHandlerRegistry"
-               cardinality="0..n"
-               name="RequestHandlerRegistry"
-               policy="dynamic" />
-
-    <reference interface="org.eclipse.kura.crypto.CryptoService" 
-               bind="bindCryptoService" 
-               cardinality="1..1"
-               name="CryptoService"
-               policy="static" />
-              
-    <reference interface="org.eclipse.kura.configuration.ConfigurationService"
-                bind="bindConfigurationService"
-                cardinality="1..1"
-                name="ConfigurationService" 
-                policy="static" />
-
-    <reference interface="org.osgi.service.useradmin.UserAdmin"
-               bind="bindUserAdmin"
-               cardinality="1..1"
-               name="UserAdmin"
-               policy="static" />
-               
-    <reference interface="org.eclipse.kura.internal.rest.identity.provider.LegacyIdentityService" 
-               bind="bindLegacyIdentityService" 
-               cardinality="1..1"  
-               name="LegacyIdentityService" 
-               policy="static" />
-
-    <service>
-        <provide interface="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1" />
-    </service>
-
-    <property name="service.pid" type="String" value="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1" />
-    <property name="kura.service.pid" type="String" value="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1" />
-    <property name="osgi.jakartars.resource" type="String" value="true"/>
-
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" 
+		name="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1" 
+		immediate="true" 
+		activate="activate">
+  <property name="kura.service.pid" type="String" value="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1"/>
+  <property name="osgi.jakartars.resource" type="String" value="true"/>
+  <service>
+    <provide interface="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1"/>
+  </service>
+  <reference name="CryptoService" 
+  		interface="org.eclipse.kura.crypto.CryptoService" 
+  		bind="bindCryptoService"/>
+  <reference 
+  		name="LegacyIdentityService" 
+  		cardinality="0..1" 
+  		interface="org.eclipse.kura.internal.rest.identity.provider.LegacyIdentityService" 
+  		bind="bindLegacyIdentityService"/>
+  <reference 
+  		name="PasswordStrengthVerificationService" 
+  		interface="org.eclipse.kura.identity.PasswordStrengthVerificationService" 
+  		bind="bindPasswordStrengthVerificationService"/>
+  <reference 
+  		name="RequestHandlerRegistry" 
+  		cardinality="0..n" policy="dynamic" 
+  		interface="org.eclipse.kura.cloudconnection.request.RequestHandlerRegistry" 
+  		bind="bindRequestHandlerRegistry" 
+  		unbind="unbindRequestHandlerRegistry"/>
+  <reference 
+  		name="UserAdmin" 
+  		interface="org.osgi.service.useradmin.UserAdmin" 
+  		bind="bindUserAdmin"/>
+  <implementation class="org.eclipse.kura.internal.rest.identity.provider.IdentityRestServiceV1"/>
 </scr:component>

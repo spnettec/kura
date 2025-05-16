@@ -16,8 +16,8 @@ import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.cloudconnection.request.RequestHandler;
 import org.eclipse.kura.cloudconnection.request.RequestHandlerRegistry;
-import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.crypto.CryptoService;
+import org.eclipse.kura.identity.PasswordStrengthVerificationService;
 import org.eclipse.kura.internal.rest.identity.provider.dto.PermissionDTO;
 import org.eclipse.kura.internal.rest.identity.provider.dto.UserConfigDTO;
 import org.eclipse.kura.internal.rest.identity.provider.dto.UserDTO;
@@ -61,14 +61,15 @@ public class IdentityRestServiceV1 {
 
     private CryptoService cryptoService;
     private UserAdmin userAdmin;
-    private ConfigurationService configurationService;
+    private PasswordStrengthVerificationService passwordStrengthVerificationService;
 
     public void bindCryptoService(CryptoService cryptoService) {
         this.cryptoService = cryptoService;
     }
 
-    public void bindConfigurationService(ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public void bindPasswordStrengthVerificationService(
+            PasswordStrengthVerificationService passwordStrengthVerificationService) {
+        this.passwordStrengthVerificationService = passwordStrengthVerificationService;
     }
 
     public void bindUserAdmin(UserAdmin userAdmin) {
@@ -101,7 +102,7 @@ public class IdentityRestServiceV1 {
         // create only if not externally set. Added mainly for testing purposes.
         if (this.legacyIdentityService == null) {
             this.legacyIdentityService = new LegacyIdentityService(this.cryptoService, this.userAdmin,
-                    this.configurationService);
+                    this.passwordStrengthVerificationService);
         }
     }
 

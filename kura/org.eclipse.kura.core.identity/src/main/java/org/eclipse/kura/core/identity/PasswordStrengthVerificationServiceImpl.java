@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024 Eurotech and/or its affiliates and others
+ * Copyright (c) 2024, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -12,34 +12,48 @@
  *******************************************************************************/
 package org.eclipse.kura.core.identity;
 
+import static java.util.Objects.nonNull;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.configuration.ComponentConfiguration;
-import org.eclipse.kura.configuration.ConfigurationService;
+import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.identity.PasswordStrengthRequirements;
 import org.eclipse.kura.identity.PasswordStrengthVerificationService;
 import org.eclipse.kura.util.validation.PasswordStrengthValidators;
 import org.eclipse.kura.util.validation.Validator;
 import org.eclipse.kura.util.validation.ValidatorOptions;
 
-@SuppressWarnings("restriction")
-public class PasswordStrengthVerificationServiceImpl implements PasswordStrengthVerificationService {
+public class PasswordStrengthVerificationServiceImpl
+        implements PasswordStrengthVerificationService, ConfigurableComponent {
 
-    private static final String KURA_WEB_CONSOLE_SERVICE_PID = "org.eclipse.kura.web.Console";
+    private AtomicReference<PasswordStrengthRequirements> requirements = null;
 
-    private ConfigurationService configurationService;
+    public void activate(Map<String, Object> options) {
+        this.requirements = new AtomicReference<>(buildPasswordStrengthRequirements(options));
+    }
 
-    public void setConfigurationService(final ConfigurationService configurationService) {
-        this.configurationService = configurationService;
+    public void updated(Map<String, Object> options) {
+        this.requirements.set(buildPasswordStrengthRequirements(options));
+    }
+
+    @Override
+    public PasswordStrengthRequirements getPasswordStrengthRequirements() {
+        return this.requirements.get();
     }
 
     @Override
     public void checkPasswordStrength(char[] password) throws KuraException {
-        ValidatorOptions validatorOptions = getValidatorOptions();
+        final PasswordStrengthRequirements currentRequirements = getPasswordStrengthRequirements();
+
+        ValidatorOptions validatorOptions = new ValidatorOptions(currentRequirements.getPasswordMinimumLength(),
+                currentRequirements.digitsRequired(), currentRequirements.bothCasesRequired(),
+                currentRequirements.specialCharactersRequired());
 
         final List<Validator<String>> validators = PasswordStrengthValidators.fromConfig(validatorOptions);
 
@@ -55,22 +69,29 @@ public class PasswordStrengthVerificationServiceImpl implements PasswordStrength
         }
     }
 
-    public ValidatorOptions getValidatorOptions() throws KuraException {
-        ComponentConfiguration consoleConfig = this.configurationService
-                .getComponentConfiguration(KURA_WEB_CONSOLE_SERVICE_PID);
+    private static PasswordStrengthRequirements buildPasswordStrengthRequirements(final Map<String, Object> options) {
+        return new PasswordStrengthRequirements(getInt(options, "new.password.min.length"),
+                getBool(options, "new.password.require.digits"),
+                getBool(options, "new.password.require.special.characters"),
+                getBool(options, "new.password.require.both.cases"));
+    }
 
-        if (consoleConfig == null) {
-            throw new KuraException(KuraErrorCode.SERVICE_UNAVAILABLE, "Console is not registered");
+    static boolean getBool(final Map<String, Object> options, String name) {
+        boolean result = false;
+        final Object resultRaw = options.getOrDefault(name, false);
+        if (nonNull(resultRaw) && resultRaw instanceof Boolean) {
+            result = (Boolean) resultRaw;
         }
-
-        return new ValidatorOptions(consoleConfig.getConfigurationProperties());
+        return result;
     }
 
-    @Override
-    public PasswordStrengthRequirements getPasswordStrengthRequirements() throws KuraException {
-        final ValidatorOptions validatorOptions = getValidatorOptions();
-        return new PasswordStrengthRequirements(validatorOptions.isPasswordMinimumLength(),
-                validatorOptions.isPasswordRequireDigits(), validatorOptions.isPasswordRequireSpecialChars(),
-                validatorOptions.isPasswordRequireBothCases());
+    static int getInt(final Map<String, Object> options, String name) {
+        int result = 0;
+        final Object resultRaw = options.get(name);
+        if (nonNull(resultRaw) && resultRaw instanceof Integer) {
+            result = (Integer) resultRaw;
+        }
+        return result;
     }
+
 }
