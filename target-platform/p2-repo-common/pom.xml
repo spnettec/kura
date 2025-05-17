@@ -274,11 +274,6 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.apache.qpid</groupId>
-                                    <artifactId>qpid-jms-client</artifactId>
-                                    <version>${apache-qpid-jms-client.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.apache.qpid</groupId>
                                     <artifactId>proton-j</artifactId>
                                     <version>${apache-qpid-proton-j.version}</version>
                                 </artifactItem>
@@ -337,11 +332,6 @@
                                     <groupId>com.google.guava</groupId>
                                     <artifactId>failureaccess</artifactId>
                                     <version>${failureaccess.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>io.netty</groupId>
-                                    <artifactId>netty-buffer</artifactId>
-                                    <version>${io.netty.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>io.netty</groupId>

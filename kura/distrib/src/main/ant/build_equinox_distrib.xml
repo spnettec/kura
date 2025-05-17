@@ -2416,12 +2416,6 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.vertx.io_uring-incubator" />
-            <param name="bundle.version" value="${vertx.version}" />
-            <param name="start.level" value="6" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
             <param name="bundle.name" value="io.vertx.mqtt" />
             <param name="bundle.version" value="${vertx.version}" />
             <param name="start.level" value="6" />

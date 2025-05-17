@@ -185,6 +185,8 @@
         <setEntry value="groovy-xml@default:false"/>
         <setEntry value="groovy@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
+        <setEntry value="io.netty.codec-base@default:default"/>
+        <setEntry value="io.netty.codec-compression@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>
         <setEntry value="io.netty.codec-http2@default:default"/>
         <setEntry value="io.netty.codec-http@default:default"/>
@@ -205,8 +207,8 @@
         <setEntry value="io.vavr@default:default"/>
         <setEntry value="io.vertx.auth-common@default:default"/>
         <setEntry value="io.vertx.bridge-common@default:default"/>
+        <setEntry value="io.vertx.core-logging@default:default"/>
         <setEntry value="io.vertx.core@default:default"/>
-        <setEntry value="io.vertx.io_uring-incubator@default:default"/>
         <setEntry value="io.vertx.mqtt@default:default"/>
         <setEntry value="io.vertx.tcp-eventbus-bridge@default:default"/>
         <setEntry value="io.vertx.uri-template@default:default"/>
