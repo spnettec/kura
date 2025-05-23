@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2023 Eurotech and/or its affiliates and others
+ * Copyright (c) 2021, 2025 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -257,7 +257,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
         thenTestPropertyTypeIs(Json.value("INTEGER"));
         thenTestPropertyValueIs(Json.value(123));
     }
-    
+
     @Test
     public void testGetShortProperty() throws KuraException {
         givenATestConfigurationPropertyWithAdTypeAndValue(Scalar.SHORT, (short) 123);
@@ -416,7 +416,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
         thenTestPropertyTypeIs(Json.value("INTEGER"));
         thenTestPropertyValueIs(Json.array(1, 2, 3));
     }
-    
+
     @Test
     public void testGetShortArrayProperty() throws KuraException {
         givenATestConfigurationPropertyWithAdTypeAndValue(Scalar.SHORT, new Short[] { 1, 2, 3 });
@@ -529,7 +529,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
         thenRequestSucceeds();
         thenReceivedPropertiesForPidContains("foo", "testProp", 123);
     }
-    
+
     @Test
     public void testUpdateShortProperty() throws KuraException {
         whenRequestIsPerformed(new MethodSpec("PUT"), "/configurableComponents/configurations/_update", "{\"configs\":["
@@ -628,7 +628,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
         thenRequestSucceeds();
         thenReceivedPropertiesForPidContainsArray("foo", "testProp", new Integer[] { 1, 2, 3 });
     }
-    
+
     @Test
     public void testUpdateShortArrayProperty() throws KuraException {
         whenRequestIsPerformed(new MethodSpec("PUT"), "/configurableComponents/configurations/_update",
@@ -1210,7 +1210,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     private void thenResponseElementIs(final JsonValue expected, final JsonProjection projection) {
         final JsonValue root = Json
-                .parse(expectResponse().body.orElseThrow(() -> new IllegalStateException("expected body")));
+                .parse(expectResponse().getBody().orElseThrow(() -> new IllegalStateException("expected body")));
         final JsonValue actual;
 
         try {
@@ -1225,7 +1225,7 @@ public class ConfigurationRestServiceTest extends AbstractRequestHandlerTest {
 
     private void thenResponseElementExists(final JsonProjection projection) {
         final JsonValue root = Json
-                .parse(expectResponse().body.orElseThrow(() -> new IllegalStateException("expected body")));
+                .parse(expectResponse().getBody().orElseThrow(() -> new IllegalStateException("expected body")));
 
         try {
             assertNotNull("response element " + projection + " is null", projection.apply(root));
