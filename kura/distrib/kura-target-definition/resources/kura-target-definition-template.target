@@ -108,6 +108,11 @@
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>
+                    <artifactId>org.eclipse.kura.rest.provider</artifactId>
+                    <version>${org.eclipse.kura.rest.provider.version}</version>
+                </dependency>  
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
                     <artifactId>jdk.dio.aarch64</artifactId>
                     <version>${jdk.dio.version}</version>
                 </dependency>
@@ -1053,6 +1058,11 @@
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>
+                    <artifactId>org.eclipse.kura.core.deployment</artifactId>
+                    <version>${org.eclipse.kura.core.deployment.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
                     <artifactId>org.eclipse.kura.cloud.base.provider</artifactId>
                     <version>${org.eclipse.kura.cloud.base.provider.version}</version>
                 </dependency>
@@ -1070,6 +1080,11 @@
                     <groupId>org.eclipse.kura</groupId>
                     <artifactId>org.eclipse.kura.core.status</artifactId>
                     <version>${org.eclipse.kura.core.status.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>org.eclipse.kura.core.identity</artifactId>
+                    <version>${org.eclipse.kura.core.identity.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>
@@ -1095,6 +1110,11 @@
                     <groupId>org.eclipse.kura</groupId>
                     <artifactId>org.eclipse.kura.json.marshaller.unmarshaller.provider</artifactId>
                     <version>${org.eclipse.kura.json.marshaller.unmarshaller.provider.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId>
+                    <version>${org.eclipse.kura.xml.marshaller.unmarshaller.provider.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>

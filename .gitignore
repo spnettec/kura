@@ -39,4 +39,11 @@ bin/
 maven.deps
 DEPENDENCIES
 .java-version
+<<<<<<< HEAD
 .tycho-consumer-pom.xml
+=======
+
+# VS Code
+javaConfig.json
+.vscode
+>>>>>>> refs/remotes/origin/develop
