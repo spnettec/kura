@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright (c) 2021, 2025 Eurotech and/or its affiliates and others
- * 
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  ******************************************************************************/
@@ -87,8 +87,8 @@ public class FloodingProtectionOptions {
     private static final String PID = "org.eclipse.kura.internal.floodingprotection.FloodingProtectionConfigurator";
     private static final String FP_ENABLED_PROP_NAME_IPV4 = "flooding.protection.enabled";
     private static final String FP_ENABLED_PROP_NAME_IPV6 = "flooding.protection.enabled.ipv6";
-    private static final boolean FP_ENABLED_DEFAULT_IPV4 = false;
-    private static final boolean FP_ENABLED_DEFAULT_IPV6 = false;
+    private static final boolean FP_ENABLED_DEFAULT_IPV4 = true;
+    private static final boolean FP_ENABLED_DEFAULT_IPV6 = true;
 
     private Map<String, Object> properties = new HashMap<>();
 
