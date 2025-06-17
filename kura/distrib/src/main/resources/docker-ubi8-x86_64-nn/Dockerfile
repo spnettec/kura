@@ -1,5 +1,5 @@
 ARG base_image_version=latest
-FROM base-kura-docker:${base_image_version} AS kura_base
+FROM base-kura-docker-x86_64:${base_image_version} AS kura_base
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 MAINTAINER Eclipse Kura Developers <kura-dev@eclipse.org>
@@ -16,7 +16,7 @@ COPY --from=kura_base /kura-install/*.dp /kura-install/
 ENV \
   KURA_DIR=/opt/eclipse/kura \
   SKIP_JAVA_VERSION_CHECK=true \
-  LAUNCHER_VERSION="1.6.1000" \
+  LAUNCHER_VERSION="1.7.0" \
   TZ=Asia/Shanghai \
   LANG=en_US.UTF-8
 
