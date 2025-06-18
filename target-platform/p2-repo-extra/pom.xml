@@ -268,19 +268,6 @@
 									<id>io.netty:netty-buffer:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<Import-Package>com.oracle.svm.core.annotate;resolution:=optional,io.netty.util;version="[4.2
-														 ,5)",io.netty.util.concurrent;version="[4.2,5)",io.netty.util.internal;
-														 version="[4.2,5)",io.netty.util.internal.logging;version="[4.2,5)",sun.
-														 nio.ch;resolution:=optional,org.bouncycastle.jcajce.provider;version="[
-														 1.0,2)";resolution:=optional
-										 </Import-Package>
-										<Export-Package>io.netty.buffer;uses:="io.netty.util";version="4.2.1",io
-														 .netty.buffer.search;uses:="io.netty.util";version="4.2.1",io.netty.buf
-														 fer.svm;version="4.2.1"
-										</Export-Package>
-									</instructions>
 								</artifact>
 								<artifact>
 									<id>io.netty:netty-codec-base:${io.netty.version}</id>
