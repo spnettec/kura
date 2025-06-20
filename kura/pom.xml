@@ -101,7 +101,7 @@
         <module>org.eclipse.kura.http.server.manager</module>
         <module>org.eclipse.kura.useradmin.store</module>
         <module>org.eclipse.kura.network.threat.manager</module>
-        <module>org.eclipse.kura.core.tamper.detection</module>
+        <module>org.eclipse.kura.rest.tamper.detection.provider</module>
         <module>org.eclipse.kura.log.filesystem.provider</module>
         <module>org.eclipse.kura.rest.cloudconnection.provider</module>
         <module>org.eclipse.kura.rest.configuration.provider</module>
@@ -156,7 +156,7 @@
         <bnd.baseline.version>7.0.0</bnd.baseline.version>
         <exists-maven-plugin.version>0.12.0</exists-maven-plugin.version>
         <findbugs-maven-plugin.version>3.0.5</findbugs-maven-plugin.version>
-        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
@@ -187,6 +187,7 @@
             -Ddpa.configuration=/tmp/kura/dpa.properties
             -Dosgi.console=5002
             --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens=java.base/java.util=ALL-UNNAMED
         </tycho.surefire.testenv.args>
     </properties>
 
@@ -595,7 +596,7 @@
                     <executions>
                         <execution>
                             <goals>
-                            <goal>bnd-process</goal>
+                                <goal>bnd-process</goal>
                             </goals>
                             <configuration>
                                 <packagingTypes>eclipse-plugin,eclipse-test-plugin</packagingTypes>
@@ -659,7 +660,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore/>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>

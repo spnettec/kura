@@ -12,7 +12,8 @@
      Eurotech
      Red Hat Inc
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -90,6 +91,10 @@
             <id>Eclipse Paho Repo</id>
             <url>https://repo.eclipse.org/content/repositories/paho-releases/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <distributionManagement>
@@ -104,7 +109,7 @@
             <url>https://repo.eclipse.org/content/repositories/kura-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-    
+
     <profiles>
         <profile>
             <id>can</id>
@@ -121,7 +126,7 @@
         <profile>
             <id>check-exists-plugin</id>
             <properties>
-            	<check.plugins.exist.remote>true</check.plugins.exist.remote>
+                <check.plugins.exist.remote>true</check.plugins.exist.remote>
             </properties>
         </profile>
     </profiles>

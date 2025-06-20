@@ -112,7 +112,10 @@
                                 <goal>test</goal>
                             </goals>
                             <configuration>
-                                <argLine>${tycho.testArgLine}</argLine>
+                                <argLine>
+                                    --add-opens=java.base/java.lang=ALL-UNNAMED
+                                    --add-opens=java.base/java.util=ALL-UNNAMED
+                                </argLine>
                             </configuration>
                         </execution>
                     </executions>
@@ -125,9 +128,11 @@
                         <failIfNoTests>false</failIfNoTests>
                         <providerHint>junit4</providerHint>
                         <useUnlimitedThreads>false</useUnlimitedThreads>
+                        
                         <argLine>
                             ${tycho.testArgLine}
                             ${tycho.surefire.testenv.args}
+                            -Dmoquette.path=${project.basedir}/src/main/resources/moquette/config
                         </argLine>
                         <!--                       <appArgLine>-consoleLog -console 5002 -noExit</appArgLine>-->
                         <dependencies>
@@ -921,7 +926,7 @@
         <module>org.eclipse.kura.xml.marshaller.unmarshaller.provider.test</module>
         <module>org.eclipse.kura.http.server.manager.test</module>
         <module>org.eclipse.kura.network.threat.manager.test</module>
-        <module>org.eclipse.kura.core.tamper.detection.test</module>
+        <module>org.eclipse.kura.rest.tamper.detection.provider.test</module>
         <module>org.eclipse.kura.useradmin.store.test</module>
         <module>org.eclipse.kura.core.keystore.test</module>
         <module>org.eclipse.kura.rest.keystore.provider.test</module>

@@ -18,7 +18,9 @@
      Cavium
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.eclipse.kura</groupId>
@@ -39,7 +41,7 @@
 
         <kura.skip.web>false</kura.skip.web>
         <kura.skip.examples>true</kura.skip.examples>
-        
+
         <kura.skip.replace.target.file>true</kura.skip.replace.target.file>
         <kura.skip.if.target.definition.build>false</kura.skip.if.target.definition.build>
         <kura.target.definition.location>kura-target-definition</kura.target.definition.location>
@@ -297,8 +299,8 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>org.eclipse.kura.core.tamper.detection</artifactId>
-                                    <version>${org.eclipse.kura.core.tamper.detection.version}</version>
+                                    <artifactId>org.eclipse.kura.rest.tamper.detection.provider</artifactId>
+                                    <version>${org.eclipse.kura.rest.tamper.detection.provider.version}</version>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
@@ -514,7 +516,7 @@
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.driver.ibeacon.provider</artifactId>
                                     <version>${org.eclipse.kura.driver.ibeacon.provider.version}</version>
-                                </artifactItem>    
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.driver.gpio.provider</artifactId>
@@ -554,7 +556,7 @@
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId>
                                     <version>${org.eclipse.kura.xml.marshaller.unmarshaller.provider.version}</version>
-                                </artifactItem>                     
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.wire.component.join.provider</artifactId>
@@ -778,7 +780,7 @@
                                 <move file="target/plugins/org.eclipse.kura.core.deployment.jar" tofile="target/plugins/org.eclipse.kura.core.deployment_${org.eclipse.kura.core.deployment.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.core.identity.jar" tofile="target/plugins/org.eclipse.kura.core.identity_${org.eclipse.kura.core.identity.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.core.inventory.jar" tofile="target/plugins/org.eclipse.kura.core.inventory_${org.eclipse.kura.core.inventory.version}.jar" />
-                                <move file="target/plugins/org.eclipse.kura.core.tamper.detection.jar" tofile="target/plugins/org.eclipse.kura.core.tamper.detection_${org.eclipse.kura.core.tamper.detection.version}.jar" />
+                                <move file="target/plugins/org.eclipse.kura.rest.tamper.detection.provider.jar" tofile="target/plugins/org.eclipse.kura.rest.tamper.detection.provider_${org.eclipse.kura.rest.tamper.detection.provider.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.core.net.jar" tofile="target/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.deployment.agent.jar" tofile="target/plugins/org.eclipse.kura.deployment.agent_${org.eclipse.kura.deployment.agent.version}.jar" />
                                 <move file="target/plugins/org.eclipse.kura.linux.clock.jar" tofile="target/plugins/org.eclipse.kura.linux.clock_${org.eclipse.kura.linux.clock.version}.jar" />
@@ -887,64 +889,111 @@
                         </goals>
                         <configuration>
                             <target name="distrib-store-files" if="${is.not.snapshot}">
-                                <!-- Copy distrib/config/kura.build.properties in distrib/RELEASE_INFO/${project.version}/config -->
-                                <copy file="config/kura.build.properties" todir="RELEASE_INFO/${project.version}/config" overwrite="true" />
+                                <!-- Copy distrib/config/kura.build.properties in
+                                distrib/RELEASE_INFO/${project.version}/config -->
+                                <copy file="config/kura.build.properties"
+                                    todir="RELEASE_INFO/${project.version}/config" overwrite="true" />
 
-                                <!-- Copy target-platform/config/kura.target-platform.build.properties in distrib/RELEASE_INFO/${project.version}/config -->
-                                <copy file="${kura.basedir}/../../target-platform/config/kura.target-platform.build.properties" todir="RELEASE_INFO/${project.version}/config" overwrite="true" />
+                                <!-- Copy
+                                target-platform/config/kura.target-platform.build.properties in
+                                distrib/RELEASE_INFO/${project.version}/config -->
+                                <copy
+                                    file="${kura.basedir}/../../target-platform/config/kura.target-platform.build.properties"
+                                    todir="RELEASE_INFO/${project.version}/config" overwrite="true" />
 
-                                <!-- Copy src/main/resources/common/previous-version-pom-template.xml in distrib/RELEASE_INFO/${project.version}/pom.xml -->
-                                <copy file="src/main/resources/common/release-info.root.pom.xml" tofile="RELEASE_INFO/${project.version}/pom.xml" overwrite="true" />
+                                <!-- Copy
+                                src/main/resources/common/previous-version-pom-template.xml in
+                                distrib/RELEASE_INFO/${project.version}/pom.xml -->
+                                <copy file="src/main/resources/common/release-info.root.pom.xml"
+                                    tofile="RELEASE_INFO/${project.version}/pom.xml"
+                                    overwrite="true" />
                                 <!-- replace kura version -->
-                                <replace token="&lt;version&gt;[kura-version]&lt;/version&gt;" value="&lt;version&gt;${project.version}&lt;/version&gt;" dir="RELEASE_INFO/${project.version}">
+                                <replace token="&lt;version&gt;[kura-version]&lt;/version&gt;"
+                                    value="&lt;version&gt;${project.version}&lt;/version&gt;"
+                                    dir="RELEASE_INFO/${project.version}">
                                     <include name="pom.xml" />
                                 </replace>
 
-                                <!-- Copy src/main/resources/common/kura-bundles-pom.xml in distrib/RELEASE_INFO/${project.version}/kura-bundles/pom.xml -->
-                                <copy file="src/main/resources/common/kura-bundles-pom.xml" tofile="RELEASE_INFO/${project.version}/kura-bundles/pom.xml" overwrite="true" />
+                                <!-- Copy src/main/resources/common/kura-bundles-pom.xml in
+                                distrib/RELEASE_INFO/${project.version}/kura-bundles/pom.xml -->
+                                <copy file="src/main/resources/common/kura-bundles-pom.xml"
+                                    tofile="RELEASE_INFO/${project.version}/kura-bundles/pom.xml"
+                                    overwrite="true" />
                                 <!-- replace kura version -->
-                                <replace token="&lt;version&gt;[kura-version]&lt;/version&gt;" value="&lt;version&gt;${project.version}&lt;/version&gt;" dir="RELEASE_INFO/${project.version}/kura-bundles">
+                                <replace token="&lt;version&gt;[kura-version]&lt;/version&gt;"
+                                    value="&lt;version&gt;${project.version}&lt;/version&gt;"
+                                    dir="RELEASE_INFO/${project.version}/kura-bundles">
                                     <include name="pom.xml" />
                                 </replace>
                                 <!-- execute script to add artifacts to pom file -->
-                                <exec executable="bash" output="RELEASE_INFO/${project.version}/kura-bundles/pom.xml" append="true">
+                                <exec executable="bash"
+                                    output="RELEASE_INFO/${project.version}/kura-bundles/pom.xml"
+                                    append="true">
                                     <arg value="src/main/sh/generate_kura_bundles_pom.sh" />
-                                    <arg value="RELEASE_INFO/${project.version}/config/kura.build.properties" />
+                                    <arg
+                                        value="RELEASE_INFO/${project.version}/config/kura.build.properties" />
                                 </exec>
 
-                                <!-- Copy target-platform/p2-repo-common/pom.xml in distrib/RELEASE_INFO/${project.version}/p2-repo-common/pom.xml -->
-                                <copy file="${kura.basedir}/../../target-platform/p2-repo-common/pom.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" overwrite="true" />
+                                <!-- Copy target-platform/p2-repo-common/pom.xml in
+                                distrib/RELEASE_INFO/${project.version}/p2-repo-common/pom.xml -->
+                                <copy
+                                    file="${kura.basedir}/../../target-platform/p2-repo-common/pom.xml"
+                                    tofile="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml"
+                                    overwrite="true" />
                                 <!-- replace artifactId -->
-                                <replace token="&lt;artifactId&gt;target-platform&lt;/artifactId&gt;" value="&lt;artifactId&gt;target-platform-previous&lt;/artifactId&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-common">
+                                <replace
+                                    token="&lt;artifactId&gt;target-platform&lt;/artifactId&gt;"
+                                    value="&lt;artifactId&gt;target-platform-previous&lt;/artifactId&gt;"
+                                    dir="RELEASE_INFO/${project.version}/p2-repo-common">
                                     <include name="pom.xml" />
                                 </replace>
                                 <!-- Add strip version -->
-                                <replace token="&lt;/artifactItems&gt;" value="&lt;/artifactItems&gt;&lt;stripVersion&gt;true&lt;/stripVersion&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-common">
+                                <replace token="&lt;/artifactItems&gt;"
+                                    value="&lt;/artifactItems&gt;&lt;stripVersion&gt;true&lt;/stripVersion&gt;"
+                                    dir="RELEASE_INFO/${project.version}/p2-repo-common">
                                     <include name="pom.xml" />
                                 </replace>
-                                <!-- execute script to add artifacts to pom file - need to have different input/output files (Win) -->
-                                <exec executable="bash" output="RELEASE_INFO/${project.version}/p2-repo-common/pom_.xml">
+                                <!-- execute script to add artifacts to pom file - need to have
+                                different input/output files (Win) -->
+                                <exec executable="bash"
+                                    output="RELEASE_INFO/${project.version}/p2-repo-common/pom_.xml">
                                     <arg value="src/main/sh/generate_p2_repo_pom.sh" />
-                                    <arg value="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
+                                    <arg
+                                        value="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
                                 </exec>
-                                <move file="RELEASE_INFO/${project.version}/p2-repo-common/pom_.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
+                                <move file="RELEASE_INFO/${project.version}/p2-repo-common/pom_.xml"
+                                    tofile="RELEASE_INFO/${project.version}/p2-repo-common/pom.xml" />
 
-                                <!-- Copy target-platform/p2-repo-equinox/pom.xml in distrib/RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml -->
-                                <copy file="${kura.basedir}/../../target-platform/p2-repo-equinox/pom.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml" overwrite="true" />
+                                <!-- Copy target-platform/p2-repo-equinox/pom.xml in
+                                distrib/RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml -->
+                                <copy
+                                    file="${kura.basedir}/../../target-platform/p2-repo-equinox/pom.xml"
+                                    tofile="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml"
+                                    overwrite="true" />
                                 <!-- replace artifactId -->
-                                <replace token="&lt;artifactId&gt;target-platform&lt;/artifactId&gt;" value="&lt;artifactId&gt;target-platform-previous&lt;/artifactId&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-equinox">
+                                <replace
+                                    token="&lt;artifactId&gt;target-platform&lt;/artifactId&gt;"
+                                    value="&lt;artifactId&gt;target-platform-previous&lt;/artifactId&gt;"
+                                    dir="RELEASE_INFO/${project.version}/p2-repo-equinox">
                                     <include name="pom.xml" />
                                 </replace>
                                 <!-- Add strip version -->
-                                <replace token="&lt;/artifactItems&gt;" value="&lt;/artifactItems&gt;&lt;stripVersion&gt;true&lt;/stripVersion&gt;" dir="RELEASE_INFO/${project.version}/p2-repo-equinox">
+                                <replace token="&lt;/artifactItems&gt;"
+                                    value="&lt;/artifactItems&gt;&lt;stripVersion&gt;true&lt;/stripVersion&gt;"
+                                    dir="RELEASE_INFO/${project.version}/p2-repo-equinox">
                                     <include name="pom.xml" />
                                 </replace>
-                                <!-- execute script to add artifacts to pom file - need to have different input/output files (Win) -->
-                                <exec executable="bash" output="RELEASE_INFO/${project.version}/p2-repo-equinox/pom_.xml">
+                                <!-- execute script to add artifacts to pom file - need to have
+                                different input/output files (Win) -->
+                                <exec executable="bash"
+                                    output="RELEASE_INFO/${project.version}/p2-repo-equinox/pom_.xml">
                                     <arg value="src/main/sh/generate_p2_repo_pom.sh" />
-                                    <arg value="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml" />
+                                    <arg
+                                        value="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml" />
                                 </exec>
-                                <move file="RELEASE_INFO/${project.version}/p2-repo-equinox/pom_.xml" tofile="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml" />
+                                <move
+                                    file="RELEASE_INFO/${project.version}/p2-repo-equinox/pom_.xml"
+                                    tofile="RELEASE_INFO/${project.version}/p2-repo-equinox/pom.xml" />
                             </target>
                         </configuration>
                     </execution>
@@ -1004,7 +1053,8 @@
                         <deriveHeaderFromSource>false</deriveHeaderFromSource>
                     </configuration>
                 </plugin>
-                <!--This plugin's configuration is used to store Eclipse m2e settings
+                <!--This
+                plugin's configuration is used to store Eclipse m2e settings
                     only. It has no influence on the Maven build itself. -->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
@@ -1230,12 +1280,14 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <target>
                                         <property name="buildNumber" value="buildNumber" />
                                         <property name="project.version" value="${project.version}" />
-                                        <property name="project.build.profile" value="${project.build.profile}" />
-                                        <property name="project.build.directory" value="${project.build.directory}" />
+                                        <property name="project.build.profile"
+                                            value="${project.build.profile}" />
+                                        <property name="project.build.directory"
+                                            value="${project.build.directory}" />
                                         <property name="build.name" value="x86_64" />
                                         <property name="target.device" value="x86_64" />
                                         <property name="native.tag" value="x86_64" />
@@ -1243,7 +1295,9 @@
                                         <property name="kura.arch" value="x86_64" />
                                         <property name="kura.mem.size" value="512m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
-                                        <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                        <ant
+                                            antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
+                                            target="dist-linux" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1261,16 +1315,18 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura_${package.version}-${package.revision}_amd64.deb</deb>
+                                    <deb>
+                                        ${basedir}/target/kura_${package.version}-${package.revision}_amd64.deb</deb>
                                     <snapshotExpand>true</snapshotExpand>
                                     <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                                     <controlDir>${basedir}/src/main/resources/x86_64/deb/control</controlDir>
                                     <skipPOMs>false</skipPOMs>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_x86_64.zip</src>
+                                            <src>
+                                                ${basedir}/target/kura_${project.version}_x86_64.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
@@ -1278,7 +1334,8 @@
                                             </mapper>
                                         </data>
                                         <data>
-                                            <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
+                                            <src>
+                                                ${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
                                             <mapper>
@@ -1295,7 +1352,7 @@
         </profile>
 
         <!-- x86_64-nn -->
-		<profile>
+        <profile>
             <id>x86_64-nn</id>
             <activation>
                 <property>
@@ -1335,12 +1392,14 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <target>
                                         <property name="buildNumber" value="buildNumber" />
                                         <property name="project.version" value="${project.version}" />
-                                        <property name="project.build.profile" value="${project.build.profile}" />
-                                        <property name="project.build.directory" value="${project.build.directory}" />
+                                        <property name="project.build.profile"
+                                            value="${project.build.profile}" />
+                                        <property name="project.build.directory"
+                                            value="${project.build.directory}" />
                                         <property name="build.name" value="x86_64-nn" />
                                         <property name="target.device" value="x86_64-nn" />
                                         <property name="native.tag" value="x86_64" />
@@ -1348,7 +1407,9 @@
                                         <property name="kura.arch" value="x86_64" />
                                         <property name="kura.mem.size" value="512m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
-                                        <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                        <ant
+                                            antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
+                                            target="dist-linux" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1366,16 +1427,18 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura-nn_${package.version}-${package.revision}_amd64.deb</deb>
+                                    <deb>
+                                        ${basedir}/target/kura-nn_${package.version}-${package.revision}_amd64.deb</deb>
                                     <snapshotExpand>true</snapshotExpand>
                                     <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                                     <controlDir>${basedir}/src/main/resources/x86_64-nn/deb/control</controlDir>
                                     <skipPOMs>false</skipPOMs>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_x86_64-nn.zip</src>
+                                            <src>
+                                                ${basedir}/target/kura_${project.version}_x86_64-nn.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
@@ -1432,12 +1495,14 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <target>
                                         <property name="buildNumber" value="buildNumber" />
                                         <property name="project.version" value="${project.version}" />
-                                        <property name="project.build.profile" value="${project.build.profile}" />
-                                        <property name="project.build.directory" value="${project.build.directory}" />
+                                        <property name="project.build.profile"
+                                            value="${project.build.profile}" />
+                                        <property name="project.build.directory"
+                                            value="${project.build.directory}" />
                                         <property name="build.name" value="aarch64" />
                                         <property name="target.device" value="aarch64" />
                                         <property name="native.tag" value="aarch64" />
@@ -1446,7 +1511,9 @@
                                         <property name="kura.mem.size" value="512m" />
                                         <property name="add.nvidia" value="yes" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
-                                        <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                        <ant
+                                            antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
+                                            target="dist-linux" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1464,16 +1531,18 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura_${package.version}-${package.revision}_arm64.deb</deb>
+                                    <deb>
+                                        ${basedir}/target/kura_${package.version}-${package.revision}_arm64.deb</deb>
                                     <snapshotExpand>true</snapshotExpand>
                                     <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                                     <controlDir>${basedir}/src/main/resources/aarch64/deb/control</controlDir>
                                     <skipPOMs>false</skipPOMs>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_aarch64.zip</src>
+                                            <src>
+                                                ${basedir}/target/kura_${project.version}_aarch64.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
@@ -1481,7 +1550,8 @@
                                             </mapper>
                                         </data>
                                         <data>
-                                            <src>${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
+                                            <src>
+                                                ${project.basedir}/src/main/resources/common/99-kura-nm.conf</src>
                                             <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                             <type>file</type>
                                             <mapper>
@@ -1498,7 +1568,7 @@
         </profile>
 
         <!-- aarch64-nn -->
-		<profile>
+        <profile>
             <id>aarch64-nn</id>
             <activation>
                 <property>
@@ -1538,12 +1608,14 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <target>
                                         <property name="buildNumber" value="buildNumber" />
                                         <property name="project.version" value="${project.version}" />
-                                        <property name="project.build.profile" value="${project.build.profile}" />
-                                        <property name="project.build.directory" value="${project.build.directory}" />
+                                        <property name="project.build.profile"
+                                            value="${project.build.profile}" />
+                                        <property name="project.build.directory"
+                                            value="${project.build.directory}" />
                                         <property name="build.name" value="aarch64-nn" />
                                         <property name="target.device" value="aarch64-nn" />
                                         <property name="native.tag" value="aarch64" />
@@ -1551,7 +1623,9 @@
                                         <property name="kura.arch" value="aarch64" />
                                         <property name="kura.mem.size" value="512m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
-                                        <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                        <ant
+                                            antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
+                                            target="dist-linux" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1569,16 +1643,18 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura-nn_${package.version}-${package.revision}_arm64.deb</deb>
+                                    <deb>
+                                        ${basedir}/target/kura-nn_${package.version}-${package.revision}_arm64.deb</deb>
                                     <snapshotExpand>true</snapshotExpand>
                                     <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                                     <controlDir>${basedir}/src/main/resources/aarch64-nn/deb/control</controlDir>
                                     <skipPOMs>false</skipPOMs>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_aarch64-nn.zip</src>
+                                            <src>
+                                                ${basedir}/target/kura_${project.version}_aarch64-nn.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
@@ -1593,7 +1669,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- dockers -->
 
         <profile>
@@ -1636,12 +1712,14 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <target>
                                         <property name="buildNumber" value="buildNumber" />
                                         <property name="project.version" value="${project.version}" />
-                                        <property name="project.build.profile" value="${project.build.profile}" />
-                                        <property name="project.build.directory" value="${project.build.directory}" />
+                                        <property name="project.build.profile"
+                                            value="${project.build.profile}" />
+                                        <property name="project.build.directory"
+                                            value="${project.build.directory}" />
                                         <property name="build.name" value="docker-x86_64-nn" />
                                         <property name="target.device" value="docker-x86_64-nn" />
                                         <property name="native.tag" value="x86_64" />
@@ -1649,7 +1727,9 @@
                                         <property name="kura.arch" value="x86_64" />
                                         <property name="kura.mem.size" value="1024m" />
                                         <property name="kura.install.dir" value="/opt/eclipse" />
-                                        <ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                        <ant
+                                            antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
+                                            target="dist-linux" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1660,9 +1740,9 @@
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>3.1.0</version>
                         <executions>
-                          <execution>
-                            <id>docker-x86_64-nn-build-container</id>
-                            <phase>package</phase>
+                            <execution>
+                                <id>docker-x86_64-nn-build-container</id>
+                                <phase>package</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
@@ -1685,7 +1765,7 @@
                             </configuration>
                           </execution>
                         </executions>
-                      </plugin>
+                    </plugin>
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
@@ -1698,16 +1778,19 @@
                                     <goal>jdeb</goal>
                                 </goals>
                                 <configuration>
-                                	<skip>${kura.skip.if.target.definition.build}</skip>
+                                    <skip>${kura.skip.if.target.definition.build}</skip>
                                     <verbose>true</verbose>
-                                    <deb>${basedir}/target/kura_${package.version}-${package.revision}_docker-x86_64-nn_installer.deb</deb>
+                                    <deb>
+                                        ${basedir}/target/kura_${package.version}-${package.revision}_docker-x86_64-nn_installer.deb</deb>
                                     <snapshotExpand>true</snapshotExpand>
                                     <snapshotTemplate>${package.snapshot}</snapshotTemplate>
-                                    <controlDir>${basedir}/src/main/resources/docker-x86_64-nn/deb/control</controlDir>
+                                    <controlDir>
+                                        ${basedir}/src/main/resources/docker-x86_64-nn/deb/control</controlDir>
                                     <skipPOMs>false</skipPOMs>
                                     <dataSet>
                                         <data>
-                                            <src>${basedir}/target/kura_${project.version}_docker-x86_64-nn.zip</src>
+                                            <src>
+                                                ${basedir}/target/kura_${project.version}_docker-x86_64-nn.zip</src>
                                             <type>file</type>
                                             <mapper>
                                                 <type>perm</type>
@@ -1763,7 +1846,7 @@
                             </goals>
                           </execution>
                         </executions>
-                      </plugin>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -1793,7 +1876,8 @@
                                 <phase>package</phase>
                                 <configuration>
                                     <executable>docker</executable>
-                                    <workingDirectory>${project.basedir}/src/main/resources/docker-alpine-x86_64-nn</workingDirectory>
+                                    <workingDirectory>
+                                        ${project.basedir}/src/main/resources/docker-alpine-x86_64-nn</workingDirectory>
                                     <arguments>
                                         <argument>build</argument>
                                     <argument>--build-arg</argument>
@@ -1808,7 +1892,7 @@
                             </goals>
                           </execution>
                         </executions>
-                      </plugin>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -1869,8 +1953,9 @@
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
                                             <artifactId>org.eclipse.kura.wire.ai.component.provider</artifactId>
-                                            <version>${org.eclipse.kura.wire.ai.component.provider.version}</version>
-                                       <type>dp</type>
+                                            <version>
+                                                ${org.eclipse.kura.wire.ai.component.provider.version}</version>
+                                            <type>dp</type>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
@@ -1881,7 +1966,8 @@
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
                                             <artifactId>org.eclipse.kura.wire.script.tools</artifactId>
-                                            <version>${org.eclipse.kura.wire.script.tools.feature.version}</version>
+                                            <version>
+                                                ${org.eclipse.kura.wire.script.tools.feature.version}</version>
                                             <type>dp</type>
                                         </artifactItem>
                                         <artifactItem>
@@ -1892,14 +1978,18 @@
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
-                                            <artifactId>org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider</artifactId>
-                                            <version>${org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.feature.version}</version>
+                                            <artifactId>
+                                                org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider</artifactId>
+                                            <version>
+                                                ${org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.feature.version}</version>
                                             <type>dp</type>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
-                                            <artifactId>org.eclipse.kura.cloudconnection.raw.mqtt.provider</artifactId>
-                                            <version>${org.eclipse.kura.cloudconnection.raw.mqtt.provider.feature.version}</version>
+                                            <artifactId>
+                                                org.eclipse.kura.cloudconnection.raw.mqtt.provider</artifactId>
+                                            <version>
+                                                ${org.eclipse.kura.cloudconnection.raw.mqtt.provider.feature.version}</version>
                                             <type>dp</type>
                                         </artifactItem>
                                     </artifactItems>
