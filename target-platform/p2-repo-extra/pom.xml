@@ -9,30 +9,44 @@
 
     <artifactId>p2-repo-extra</artifactId>
     <packaging>pom</packaging>
-
+	<properties>
+        <io.netty.version>4.2.2.Final</io.netty.version>
+        <vertx.version>5.0.0</vertx.version>
+        <org.codehaus.groovy.version>3.0.25</org.codehaus.groovy.version>
+        <apache-qpid-jms-client.version>2.7.0</apache-qpid-jms-client.version>
+        <org.eclipse.milo.version>0.6.16</org.eclipse.milo.version>
+        <commons-text.version>1.13.1</commons-text.version>
+        <com.fasterxml.jackson.version>2.19.0</com.fasterxml.jackson.version>
+        <commons-configuration2.version>2.12.0</commons-configuration2.version>
+        <org.yaml.snakeyaml.mvn.version>2.4</org.yaml.snakeyaml.mvn.version>
+        <org.apache.commons-pool2.version>2.12.1</org.apache.commons-pool2.version>
+        <gwt-user.version>2.12.2</gwt-user.version>
+        <org.gwtbootstrap3.version>1.0.1</org.gwtbootstrap3.version>
+        <org.apache.felix.fileinstall.version>3.7.4</org.apache.felix.fileinstall.version>
+        <org.eclipse.paho.client.mqttv3.version>1.2.5</org.eclipse.paho.client.mqttv3.version>
+        <strict-machine.version>0.7</strict-machine.version>
+        <netty-channel-fsm.version>0.9</netty-channel-fsm.version>
+        <fastjson2.version>2.0.57</fastjson2.version>
+        <jSerialComm.version>2.11.0</jSerialComm.version>
+        <javacan.version>3.5.0</javacan.version>
+        <net.java.dev.jna.version>5.17.0</net.java.dev.jna.version>
+        <io.vavr.version>0.10.6</io.vavr.version>
+        <org.apache.httpcomponents.httpcore-osgi.version>4.4.16</org.apache.httpcomponents.httpcore-osgi.version>
+        <org.apache.commons.codec.version>1.18.0</org.apache.commons.codec.version>
+        <jakarta.jms-api.version>3.1.0</jakarta.jms-api.version>
+        <jakarta.activation-api.javax.version>1.2.2</jakarta.activation-api.javax.version>
+        <jakarta.xml.bind-api.javax.version>2.3.3</jakarta.xml.bind-api.javax.version>
+        <jaxb-osgi.javax.version>2.3.9</jaxb-osgi.javax.version>
+        <org.junit.version>4.13.2</org.junit.version>
+        <org.hamcrest.version>2.2</org.hamcrest.version>
+        <moquette-broker.version>0.17</moquette-broker.version>
+    </properties>
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>properties-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<phase>initialize</phase>
-						<goals>
-							<goal>read-project-properties</goal>
-						</goals>
-						<configuration>
-							<files>
-								<file>${basedir}/../config/kura.target-platform.build.properties</file>
-							</files>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.reficio</groupId>
 				<artifactId>p2-maven-plugin</artifactId>
+				<version>${p2-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>generate-p2-site</id>
@@ -150,11 +164,6 @@
 									<transitive>false</transitive>
 								</artifact>>
 								<artifact>
-									<id>com.google.code.gson:gson:${com.google.gson.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>org.apache.commons:commons-configuration2:${commons-configuration2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
@@ -263,11 +272,6 @@
 													 .qpid.jms.util;uses:="org.apache.qpid.jms.message";version="2.7.0"
 										</Export-Package>
 									</instructions>
-								</artifact>
-								<artifact>
-									<id>io.netty:netty-buffer:${io.netty.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
 								</artifact>
 								<artifact>
 									<id>io.netty:netty-codec-base:${io.netty.version}</id>
@@ -430,12 +434,12 @@
 								</artifact>
 								
 								<artifact>
-									<id>com.digitalpetri.fsm:strict-machine:jar:${strict-machine-mvn.version}</id>
+									<id>com.digitalpetri.fsm:strict-machine:jar:${strict-machine.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.digitalpetri.netty:netty-channel-fsm:jar:${netty-channel-fsm-mvn.version}</id>
+									<id>com.digitalpetri.netty:netty-channel-fsm:jar:${netty-channel-fsm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -459,41 +463,76 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<artifact>
+									<id>jakarta.activation:jakarta.activation-api:jar:${jakarta.activation-api.javax.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>jakarta.xml.bind:jakarta.xml.bind-api:jar:${jakarta.xml.bind-api.javax.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>com.sun.xml.bind:jaxb-osgi:jar:${jaxb-osgi.javax.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>junit:junit:${org.junit.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+									<override>true</override>
+									<instructions>
+										<Export-Package>junit.extensions;version="4.13.2",junit.framework;vers
+					                         ion="4.13.2",junit.runner;version="4.13.2",junit.textui;version="4.13
+					                         .2",org.junit;version="4.13.2",org.junit.experimental;version="4.13.2
+					                         ",org.junit.experimental.categories;version="4.13.2",org.junit.experi
+					                         mental.max;version="4.13.2",org.junit.experimental.results;version="4
+					                         .13.2",org.junit.experimental.runners;version="4.13.2",org.junit.expe
+					                         rimental.theories;version="4.13.2",org.junit.experimental.theories.in
+					                         ternal;version="4.13.2";x-internal:=true,org.junit.experimental.theor
+					                         ies.suppliers;version="4.13.2",org.junit.internal;version="4.13.2";x-
+					                         internal:=true,org.junit.internal.builders;version="4.13.2";x-interna
+					                         l:=true,org.junit.internal.matchers;version="4.13.2";x-internal:=true
+					                         ,org.junit.internal.requests;version="4.13.2";x-internal:=true,org.ju
+					                         nit.internal.runners;version="4.13.2";x-internal:=true,org.junit.inte
+					                         rnal.runners.model;version="4.13.2";x-internal:=true,org.junit.intern
+					                         al.runners.rules;version="4.13.2";x-internal:=true,org.junit.internal
+					                         .runners.statements;version="4.13.2";x-internal:=true,org.junit.match
+					                         ers;version="4.13.2",org.junit.rules;version="4.13.2",org.junit.runne
+					                         r;version="4.13.2",org.junit.runner.manipulation;version="4.13.2",org
+					                         .junit.runner.notification;version="4.13.2",org.junit.runners;version
+					                         ="4.13.2",org.junit.runners.model;version="4.13.2",org.junit.runners.
+					                         parameterized;version="4.13.2",org.junit.validator;version="4.13.2"
+				                        </Export-Package>
+										<Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
+									</instructions>
+								</artifact>
+								<artifact>
+									<id>org.hamcrest:hamcrest:${org.hamcrest.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.hamcrest:hamcrest-core:${org.hamcrest.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifactItem>
+									<id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifactItem>
+								<artifactItem>
+									<id>io.moquette:moquette-broker:${moquette-broker.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifactItem>
 							</artifacts>
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>${maven-antrun-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>install-equinox</id>
-						<phase>install</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<delete dir="../../kura/target-definition/extra/" />
-								<mkdir dir="../../kura/target-definition/extra/repository" />
-								<copy todir="../../kura/target-definition/extra/repository">
-									<fileset dir="${project.build.directory}/repository" />
-								</copy>
-							</target>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>3.1.1</version>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

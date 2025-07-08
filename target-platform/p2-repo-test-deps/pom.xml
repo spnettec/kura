@@ -68,7 +68,7 @@
 									<id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
-								</artifactItem>Item>
+								</artifactItem>
 								<artifactItem>
                                     <id>org.mockito:mockito-core:${mockito-core.version}</id>
                                     <source>true</source>
