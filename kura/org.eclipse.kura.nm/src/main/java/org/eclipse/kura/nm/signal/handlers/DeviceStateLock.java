@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.nm.signal.handlers;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,23 +30,24 @@ public class DeviceStateLock {
     private final CountDownLatch latch = new CountDownLatch(1);
     private final NMDeviceStateChangeHandler stateHandler;
     private final DBusConnection dbusConnection;
+    private final int timeout;
 
-    public DeviceStateLock(DBusConnection dbusConnection, String dbusPath, List<NMDeviceState> expectedNmDeviceStates)
-            throws DBusException {
+    public DeviceStateLock(DBusConnection dbusConnection, String dbusPath, NMDeviceState expectedNmDeviceState,
+            int timeout) throws DBusException {
         if (Objects.isNull(dbusPath) || dbusPath.isEmpty() || dbusPath.equals("/")) {
             throw new IllegalArgumentException(String.format("Illegal DBus path for DeviceStateLock \"%s\"", dbusPath));
         }
         this.dbusConnection = Objects.requireNonNull(dbusConnection);
-        this.stateHandler = new NMDeviceStateChangeHandler(this.latch, dbusPath, expectedNmDeviceStates);
+        this.stateHandler = new NMDeviceStateChangeHandler(this.latch, dbusPath, expectedNmDeviceState);
+        this.timeout = timeout;
 
         this.dbusConnection.addSigHandler(Device.StateChanged.class, this.stateHandler);
     }
 
     public void waitForSignal() throws DBusException {
         try {
-            boolean countdownCompleted = this.latch.await(5, TimeUnit.SECONDS);
+            boolean countdownCompleted = this.latch.await(this.timeout, TimeUnit.SECONDS);
             if (!countdownCompleted) {
-                this.stateHandler.cancel();
                 logger.warn("Timeout elapsed. Exiting anyway");
             }
         } catch (InterruptedException e) {

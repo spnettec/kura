@@ -54,7 +54,7 @@ public class ConnectionStateChangedHandle implements DBusSigHandler<Wired.Proper
                     try {
                         String deviceId = ConnectionStateChangedHandle.this.nm.getInterfaceIdByDBusPath(s.getPath());
                         logger.info("{} disConnected!!!!", deviceId);
-                        ConnectionStateChangedHandle.this.nm.disconnect(deviceId);
+                        // ConnectionStateChangedHandle.this.nm.disconnect(deviceId);
                     } catch (DBusException e) {
                         logger.error("Failed to handle disconnect event for device: {}. Caused by:", s.getPath(), e);
                     }

@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.nm.signal.handlers;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,15 +27,15 @@ public class NMDeviceStateChangeHandler implements DBusSigHandler<Device.StateCh
 
     private final CountDownLatch latch;
     private final String path;
-    private final List<NMDeviceState> expectedStates;
+    private final NMDeviceState expectedState;
     private final AtomicBoolean canceled = new AtomicBoolean(false);
 
-    public NMDeviceStateChangeHandler(CountDownLatch latch, String path, List<NMDeviceState> expectedStates) {
+    public NMDeviceStateChangeHandler(CountDownLatch latch, String path, NMDeviceState expectedNmDeviceState) {
         this.latch = latch;
         this.path = path;
-        this.expectedStates = expectedStates;
+        this.expectedState = expectedNmDeviceState;
     }
-
+    
     public void cancel() {
         canceled.set(true);
     }
@@ -47,14 +46,14 @@ public class NMDeviceStateChangeHandler implements DBusSigHandler<Device.StateCh
         NMDeviceState oldState = NMDeviceState.fromUInt32(s.getOldState());
         NMDeviceState newState = NMDeviceState.fromUInt32(s.getNewState());
         if (canceled.get()) {
-            logger.warn("wait timeout. new state:{},expectedMark:{}", newState, expectedStates);
+            logger.warn("wait timeout. new state:{},expectedMark:{}", newState, expectedState);
             return;
         }
         if (this.latch.getCount() == 0) {
             return;
         }
         logger.trace("Device state change detected: {} -> {}, for {}", oldState, newState, s.getPath());
-        if (s.getPath().equals(this.path) && expectedStates.contains(newState)) {
+        if (s.getPath().equals(this.path) && newState == this.expectedState) {
             logger.debug("Notify waiting thread");
             this.latch.countDown();
         }
