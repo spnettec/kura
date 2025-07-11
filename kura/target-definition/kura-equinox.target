@@ -54,5 +54,6 @@
             </repositories>
         </location>
         <location path="/Users/heyoulin/iot-kura-develop/git/kura/target-platform/p2-repo-extra/target/repository" type="Profile"/>
+        <location path="/Users/heyoulin/iot-kura-develop/git/kura/target-platform/p2-repo-common/target/repository" type="Profile"/>
     </locations>
 </target>

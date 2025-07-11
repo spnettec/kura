@@ -21,7 +21,7 @@
                 <fileset dir="${project.build.directory}/plugins">
                     <filename regex="^${bundle.name}-([0-9.]+.*jar)$" />
                 </fileset>
-                <fileset dir="../../target-platform/p2-repo-extra/target/repository/plugins">
+                <fileset dir="../../target-platform/p2-repo-common/target/repository/plugins">
                     <filename regex="^${bundle.name}_([0-9.]+.*jar)$"/>
                 </fileset>
             </union>
@@ -37,7 +37,7 @@
             <fileset dir="${project.build.directory}/plugins">
                 <filename regex="^${bundle.name}-([0-9.]+.*jar)$" />
             </fileset>
-            <fileset dir="../../target-platform/p2-repo-extra/target/repository/plugins">
+            <fileset dir="../../target-platform/p2-repo-common/target/repository/plugins">
                  <filename regex="^${bundle.name}_([0-9.]+.*jar)$"/>
             </fileset>
           </union>
@@ -55,6 +55,36 @@
             toDir="${project.build.directory}/${build.output.name}/plugins/${start.level}${start}/"
             failonerror="true" overwrite="false" file="${toString:bundle.file}" />
     </target>
+	<target name="install-plugin-old">
+	        <first id="bundle.file">
+                <fileset dir="../../target-platform/p2-repo-extra/target/repository/plugins">
+                    <filename regex="^${bundle.name}_([0-9.]+.*jar)$"/>
+                </fileset>
+	        </first>
+
+	        <fail message="${bundle.name} not found">
+	            <condition>
+	                <equals arg1="${toString:bundle.file}" arg2="" />
+	            </condition>
+	        </fail>
+	        <resourcecount property="plugin.match.count">
+	            <fileset dir="../../target-platform/p2-repo-extra/target/repository/plugins">
+	                 <filename regex="^${bundle.name}_([0-9.]+.*jar)$"/>
+	            </fileset>
+	        </resourcecount>
+	        <fail message="Multiple versions (${plugin.match.count}) for ${bundle.name} found, expected exactly one">
+	            <condition>
+	                <not>
+	                    <equals arg1="${plugin.match.count}" arg2="1" />
+	                </not>
+	            </condition>
+	        </fail>
+
+	        <echo message="Installing ${toString:bundle.file}" />
+	        <copy
+	            toDir="${project.build.directory}/${build.output.name}/plugins/${start.level}${start}/"
+	            failonerror="true" overwrite="false" file="${toString:bundle.file}" />
+	</target>
 
     <target name="dist-linux">
 
@@ -712,6 +742,23 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.name" value="asm-analysis" />
             <param name="start.level" value="1" />
+            <param name="start" value="" />
+        </antcall>
+         <!--JAXB
+        dependenices-->
+        <antcall target="install-plugin-old">
+            <param name="bundle.name" value="jakarta.activation-api" />
+            <param name="start.level" value="2" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin-old">
+            <param name="bundle.name" value="jakarta.xml.bind-api" />
+            <param name="start.level" value="2" />
+            <param name="start" value="" />
+        </antcall>
+        <antcall target="install-plugin-old">
+            <param name="bundle.name" value="com.sun.xml.bind.jaxb-osgi" />
+            <param name="start.level" value="2" />
             <param name="start" value="" />
         </antcall>
         <!--Jersey
@@ -1659,41 +1706,6 @@ fi]]>
     <!-- Camel config targets -->
     <target name="camel-plugins">
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.camel.sun.misc" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-amqp" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-core" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-core-osgi" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-jms" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-script" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="camel-stream" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.camel" />
             <param name="start.level" value="4" />
             <param name="start" value="s" />
@@ -1714,7 +1726,7 @@ fi]]>
             <param name="start" value="s" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="qpid-jms-client" />
+            <param name="bundle.name" value="org.apache.qpid.jms.client" />
             <param name="start.level" value="3" />
             <param name="start" value="s" />
         </antcall>
@@ -1779,12 +1791,12 @@ fi]]>
             <param name="start" value="" />
         </antcall>
     	<antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.codec-base" />
+            <param name="bundle.name" value="netty-codec-base" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
     	<antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.codec-compression" />
+            <param name="bundle.name" value="netty-codec-compression" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
@@ -1828,7 +1840,7 @@ fi]]>
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
-        <antcall target="install-plugin">
+    	<antcall target="install-plugin">
             <param name="bundle.name" value="netty-transport-classes-kqueue" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
@@ -1998,7 +2010,7 @@ fi]]>
     
      <target name="extra-base-plugins">
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.alibaba.fastjson2" />
+            <param name="bundle.name" value="fastjson2" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2013,42 +2025,42 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fasterxml.jackson.core.jackson-annotations" />
+            <param name="bundle.name" value="jackson-annotations" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fasterxml.jackson.core.jackson-core" />
+            <param name="bundle.name" value="jackson-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fasterxml.jackson.core.jackson-databind" />
+            <param name="bundle.name" value="jackson-databind" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml" />
+            <param name="bundle.name" value="jackson-dataformat-yaml" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations" />
+            <param name="bundle.name" value="jackson-module-jaxb-annotations" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.fazecast.jSerialComm" />
+            <param name="bundle.name" value="jSerialComm" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.google.gson" />
+            <param name="bundle.name" value="gson" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="com.sun.jna" />
+            <param name="bundle.name" value="jna" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2088,33 +2100,32 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.codec-dns" />
-            <param name="bundle.version" value="${io.netty.version}" />
+            <param name="bundle.name" value="netty-codec-dns" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.codec-http2" />
+            <param name="bundle.name" value="netty-codec-http2" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.codec-socks" />
+            <param name="bundle.name" value="netty-codec-socks" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.handler-proxy" />
+            <param name="bundle.name" value="netty-handler-proxy" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.netty.resolver-dns" />
+            <param name="bundle.name" value="netty-resolver-dns" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="io.vavr" />
+            <param name="bundle.name" value="vavr" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2175,22 +2186,22 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.apache.commons.commons-codec" />
+            <param name="bundle.name" value="commons-codec" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.apache.commons.commons-configuration2" />
+            <param name="bundle.name" value="commons-configuration2" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.apache.commons.commons-pool2" />
+            <param name="bundle.name" value="commons-pool2" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.apache.commons.text" />
+            <param name="bundle.name" value="commons-text" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2200,52 +2211,52 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.apache.httpcomponents.httpcore" />
+            <param name="bundle.name" value="httpcore-osgi" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.bsd-core" />
+            <param name="bundle.name" value="bsd-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.bsd-generator" />
+            <param name="bundle.name" value="bsd-generator" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.dictionary-manager" />
+            <param name="bundle.name" value="dictionary-manager" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.sdk-client" />
+            <param name="bundle.name" value="sdk-client" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.sdk-core" />
+            <param name="bundle.name" value="sdk-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.sdk-server" />
+            <param name="bundle.name" value="sdk-server" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.stack-client" />
+            <param name="bundle.name" value="stack-client" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.stack-core" />
+            <param name="bundle.name" value="stack-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.milo.stack-server" />
+            <param name="bundle.name" value="stack-server" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2255,12 +2266,12 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="org.yaml.snakeyaml" />
+            <param name="bundle.name" value="snakeyaml" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="tel.schich.javacan-core" />
+            <param name="bundle.name" value="javacan-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>

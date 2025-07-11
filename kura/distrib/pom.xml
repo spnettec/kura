@@ -48,7 +48,7 @@
         <kura.repo.distribution>kura-6</kura.repo.distribution>
         <kura.repo.module>base</kura.repo.module>
 
-        <org.eclipse.equinox.launcher.version>1.6.900</org.eclipse.equinox.launcher.version>
+        <org.eclipse.equinox.launcher.version>1.7.0</org.eclipse.equinox.launcher.version>
         <kura.version>${project.version}</kura.version>
     </properties>
 
@@ -118,6 +118,28 @@
         </extensions>
 
         <plugins>
+
+            <!-- Responsible for removing the "-SNAPSHOT" from the project.version -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>regex-property</id>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>release.version</name>
+                            <value>${project.version}</value>
+                            <regex>-SNAPSHOT</regex>
+                            <replacement></replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <!-- Responsible for retrieving the short git commit (defaults to length 7)-->
             <plugin>
