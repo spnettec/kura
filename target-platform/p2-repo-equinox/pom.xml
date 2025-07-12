@@ -1043,19 +1043,8 @@
 									<transitive>false</transitive>
 								</artifact>
 								
-								
-								<artifact>
-									<id>com.alibaba.fastjson2:fastjson2:jar:${fastjson2.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
 								<artifact>
 									<id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>tel.schich:javacan-core:jar:${javacan.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

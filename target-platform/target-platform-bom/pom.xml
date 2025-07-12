@@ -1230,19 +1230,9 @@
 				<version>${org.eclipse.milo.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.alibaba.fastjson2</groupId>
-				<artifactId>fastjson2</artifactId>
-				<version>${fastjson2.version}</version>
-			</dependency>
-			<dependency>
 				<groupId>com.fazecast</groupId>
 				<artifactId>jSerialComm</artifactId>
 				<version>${jSerialComm.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>tel.schich</groupId>
-				<artifactId>javacan-core</artifactId>
-				<version>${javacan.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>net.java.dev.jna</groupId>
@@ -2229,16 +2219,8 @@
 			<artifactId>stack-server</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.alibaba.fastjson2</groupId>
-			<artifactId>fastjson2</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.fazecast</groupId>
 			<artifactId>jSerialComm</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>tel.schich</groupId>
-			<artifactId>javacan-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>

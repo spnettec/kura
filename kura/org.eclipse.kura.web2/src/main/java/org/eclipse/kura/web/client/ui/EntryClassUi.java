@@ -21,6 +21,7 @@ import static org.eclipse.kura.web.client.util.FilterBuilder.or;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -886,23 +887,24 @@ public class EntryClassUi extends Composite implements ServicesUi.Listener {
 
                 @Override
                 public void onSuccess(GwtXSRFToken token) {
-                    EntryClassUi.gwtComponentService.findFactoryComponents(token, new AsyncCallback<List<String>>() {
+                    EntryClassUi.gwtComponentService.findFactoryComponentPidNames(token,
+                            new AsyncCallback<Map<String, String>>() {
 
-                        @Override
-                        public void onFailure(Throwable ex) {
-                            FailureHandler.handle(ex, EntryClassUi.class.getName());
-                        }
+                                @Override
+                                public void onFailure(Throwable ex) {
+                                    FailureHandler.handle(ex, EntryClassUi.class.getName());
+                                }
 
-                        @Override
-                        public void onSuccess(final List<String> result) {
-                            EntryClassUi.this.factoriesList.clear();
-                            EntryClassUi.this.factoriesList.addItem(SELECT_COMPONENT);
-                            for (final String servicePid : result) {
-                                EntryClassUi.this.factoriesList.addItem(servicePid);
-                            }
-                            EntryClassUi.this.newFactoryComponentModal.show();
-                        }
-                    });
+                                @Override
+                                public void onSuccess(final Map<String, String> result) {
+                                    EntryClassUi.this.factoriesList.clear();
+                                    EntryClassUi.this.factoriesList.addItem(SELECT_COMPONENT);
+                                    result.entrySet().forEach(entry -> EntryClassUi.this.factoriesList
+                                            .addItem(entry.getValue(), entry.getKey()));
+
+                                    EntryClassUi.this.newFactoryComponentModal.show();
+                                }
+                            });
                 }
             });
         });

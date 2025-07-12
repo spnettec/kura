@@ -2010,7 +2010,7 @@ fi]]>
     
      <target name="extra-base-plugins">
         <antcall target="install-plugin">
-            <param name="bundle.name" value="fastjson2" />
+            <param name="bundle.name" value="com.alibaba.fastjson2" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
@@ -2271,7 +2271,7 @@ fi]]>
             <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
-            <param name="bundle.name" value="javacan-core" />
+            <param name="bundle.name" value="tel.schich.javacan-core" />
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
