@@ -13,6 +13,7 @@
 package org.eclipse.kura.nm.signal.handlers;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.kura.nm.NMDbusConnector;
 import org.freedesktop.NetworkManager;
@@ -32,12 +33,14 @@ public class NMDeviceAddedHandler implements DBusSigHandler<NetworkManager.Devic
 
     @Override
     public void handle(NetworkManager.DeviceAdded s) {
-        try {
-            logger.info("New network device connected at {}", s.getDevicePath());
-            String deviceId = this.nm.getInterfaceIdByDBusPath(s.getDevicePath().getPath());
-            this.nm.apply(deviceId);
-        } catch (DBusException e) {
-            logger.error("Failed to handle DeviceAdded event for device: {}. Caused by:", s.getDevicePath(), e);
-        }
+        logger.info("New network device connected at {}", s.getDevicePath());
+        CompletableFuture.runAsync(() -> {
+            try {
+                String deviceId = this.nm.getInterfaceIdByDBusPath(s.getDevicePath().getPath());
+                NMDeviceAddedHandler.this.nm.apply(deviceId);
+            } catch (DBusException e) {
+                logger.error("Failed to handle DeviceAdded event for device: {}. Caused by:", s.getDevicePath(), e);
+            }
+        });
     }
 }

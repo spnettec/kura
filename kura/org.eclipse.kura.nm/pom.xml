@@ -48,12 +48,12 @@
                                 <artifactItem>
                                     <groupId>com.github.hypfvieh</groupId>
                                     <artifactId>dbus-java-core</artifactId>
-                                    <version>5.1.0</version>
+                                    <version>5.1.1</version>
                                 </artifactItem>
                                 <dependency>
 								    <groupId>com.github.hypfvieh</groupId>
 								    <artifactId>dbus-java-transport-jnr-unixsocket</artifactId>
-								    <version>5.1.0</version>
+								    <version>5.1.1</version>
 								</dependency>
                                 <artifactItem>
                                     <groupId>com.github.jnr</groupId>
