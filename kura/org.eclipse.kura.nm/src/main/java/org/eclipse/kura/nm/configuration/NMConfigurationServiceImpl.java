@@ -428,8 +428,8 @@ public class NMConfigurationServiceImpl implements SelfConfiguringComponent {
         }
 
         try {
-            this.nmDbusConnector.apply(networkProperties);
-        } catch (DBusExecutionException | DBusException e) {
+            this.nmDbusConnector.asyncApply(networkProperties);
+        } catch (DBusExecutionException e) {
             logger.error("Couldn't apply network configuration settings due to: ", e);
         }
     }

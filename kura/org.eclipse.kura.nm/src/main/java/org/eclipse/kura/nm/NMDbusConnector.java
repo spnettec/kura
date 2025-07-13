@@ -24,6 +24,9 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -113,6 +116,8 @@ public class NMDbusConnector {
     private AtomicBoolean configurationEnforcementHandlerIsArmed = new AtomicBoolean(false);
     private ModemTaskManager modemTaskManager;
     private int timeout = 30;
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private CompletableFuture<Void> configurationTask;
 
     private NMDbusConnector(DBusConnection dbusConnection) throws DBusException {
         this.dbusConnection = Objects.requireNonNull(dbusConnection);
@@ -167,7 +172,7 @@ public class NMDbusConnector {
         logger.debug("NM Version: {}", nmVersion);
     }
 
-    public synchronized List<String> getInterfaceIds() throws DBusException {
+    public List<String> getInterfaceIds() throws DBusException {
         List<Device> availableDevices = this.networkManager.getAllDevices();
 
         List<String> supportedDeviceNames = new ArrayList<>();
@@ -182,7 +187,7 @@ public class NMDbusConnector {
         return supportedDeviceNames;
     }
 
-    public synchronized String getInterfaceName(String interfaceId) throws DBusException {
+    public String getInterfaceName(String interfaceId) throws DBusException {
         Optional<Device> device = getNetworkManagerDeviceByInterfaceId(interfaceId);
         if (device.isPresent()) {
             NMDeviceType deviceType = this.networkManager.getDeviceType(device.get().getObjectPath());
@@ -228,7 +233,7 @@ public class NMDbusConnector {
         }
     }
 
-    public synchronized NetworkInterfaceStatus getInterfaceStatus(String interfaceId, boolean recompute,
+    public NetworkInterfaceStatus getInterfaceStatus(String interfaceId, boolean recompute,
             CommandExecutorService commandExecutorService) throws DBusException, KuraException {
         NetworkInterfaceStatus networkInterfaceStatus = null;
 
@@ -365,6 +370,18 @@ public class NMDbusConnector {
         return networkInterfaceStatus;
     }
 
+    private void runAsync(Runnable task) {
+        cancelConfigurationTask();
+        this.configurationTask = CompletableFuture.runAsync(task, this.executorService);
+    }
+
+    private void cancelConfigurationTask() {
+        if (this.configurationTask != null && !this.configurationTask.isDone()) {
+            logger.warn("A previous configuration task is still running. Aborting current configuration task.");
+            this.configurationTask.cancel(true);
+        }
+    }
+
     public synchronized void apply(Map<String, Object> networkConfiguration) throws DBusException {
         logger.debug("Apply networkConfiguration");
         try {
@@ -409,6 +426,17 @@ public class NMDbusConnector {
         } finally {
             configurationEnforcementEnable();
         }
+    }
+
+    public synchronized void asyncApply(Map<String, Object> networkConfiguration) {
+        logger.debug("Apply networkConfiguration with asynchronous task");
+        runAsync(() -> {
+            try {
+                apply(networkConfiguration);
+            } catch (DBusException e) {
+                logger.error("Couldn't apply network configuration settings due to: ", e);
+            }
+        });
     }
 
     private synchronized void doApply(Map<String, Object> networkConfiguration) throws DBusException {
@@ -584,7 +612,8 @@ public class NMDbusConnector {
             String expectedConnectionName = String.format("kura-%s-connection", interfaceName);
             if (availableConnectionId.equals(expectedConnectionName)) {
                 dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
-                        Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED), this.timeout);
+                        Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED),
+                        this.timeout);
                 availableConnection.Update(newConnectionSettings);
             } else {
                 newConnectionSettings = NMSettingsConverter.buildSettings(properties, Optional.empty(), deviceId,
@@ -593,7 +622,8 @@ public class NMDbusConnector {
         }
         if (dsLock == null) {
             dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
-                    Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED), this.timeout);
+                    Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED),
+                    this.timeout);
             Settings settings = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_SETTINGS_BUS_PATH, Settings.class);
             DBusPath createdConnectionPath = settings.AddConnection(newConnectionSettings);
             Connection createdConnection = this.dbusConnection.getRemoteObject(NM_BUS_NAME,
@@ -717,9 +747,9 @@ public class NMDbusConnector {
         Device device = optDevice.get();
         NMDeviceState deviceState = this.networkManager.getDeviceState(device);
         if (Boolean.TRUE.equals(NMDeviceState.isConnected(deviceState))) {
-            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
-                    Arrays
-                    .asList(NMDeviceState.NM_DEVICE_STATE_DISCONNECTED, NMDeviceState.NM_DEVICE_STATE_DEACTIVATING), this.timeout);
+            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(), Arrays
+                    .asList(NMDeviceState.NM_DEVICE_STATE_DISCONNECTED, NMDeviceState.NM_DEVICE_STATE_DEACTIVATING),
+                    this.timeout);
             device.Disconnect();
             dsLock.waitForSignal();
         }

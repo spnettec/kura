@@ -13,7 +13,6 @@
 package org.eclipse.kura.nm.signal.handlers;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.kura.nm.NMDbusConnector;
 import org.freedesktop.dbus.exceptions.DBusException;
@@ -39,26 +38,24 @@ public class ConnectionStateChangedHandle implements DBusSigHandler<Wired.Proper
 
             if (varConnected.getValue() == Boolean.TRUE) {
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        String deviceId = ConnectionStateChangedHandle.this.nm.getInterfaceIdByDBusPath(s.getPath());
-                        logger.info("{} connected!!!!", deviceId);
-                        ConnectionStateChangedHandle.this.nm.apply(deviceId);
-                    } catch (DBusException e) {
-                        logger.error("Failed to handle connect event for device: {}. Caused by:", s.getPath(), e);
-                    }
-                });
+                try {
+                    String deviceId = ConnectionStateChangedHandle.this.nm.getInterfaceIdByDBusPath(s.getPath());
+                    logger.info("{} connected!!!!", deviceId);
+                    this.nm.apply(deviceId);
+                } catch (DBusException e) {
+                    logger.error("Failed to handle connect event for device: {}. Caused by:", s.getPath(), e);
+                }
+
             } else {
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        String deviceId = ConnectionStateChangedHandle.this.nm.getInterfaceIdByDBusPath(s.getPath());
-                        logger.info("{} disConnected!!!!", deviceId);
-                        ConnectionStateChangedHandle.this.nm.disconnect(deviceId);
-                    } catch (DBusException e) {
-                        logger.error("Failed to handle disconnect event for device: {}. Caused by:", s.getPath(), e);
-                    }
-                });
+                try {
+                    String deviceId = ConnectionStateChangedHandle.this.nm.getInterfaceIdByDBusPath(s.getPath());
+                    logger.info("{} disConnected!!!!", deviceId);
+                    this.nm.disconnect(deviceId);
+                } catch (DBusException e) {
+                    logger.error("Failed to handle disconnect event for device: {}. Caused by:", s.getPath(), e);
+                }
+
             }
         }
 

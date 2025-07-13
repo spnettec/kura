@@ -60,13 +60,13 @@ public class DeviceStateLock {
         }
     }
 
-    public void cancel() throws DBusException {
+    public void cancel() {
         try {
-            this.latch.countDown();
+            if (this.latch.getCount() > 0) {
+                this.latch.countDown();
+            }
         } catch (Exception e) {
 
-        } finally {
-            this.dbusConnection.removeSigHandler(Device.StateChanged.class, this.stateHandler);
         }
     }
 
