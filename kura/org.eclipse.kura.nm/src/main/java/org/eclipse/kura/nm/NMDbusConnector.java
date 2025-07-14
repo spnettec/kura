@@ -42,7 +42,6 @@ import org.eclipse.kura.nm.enums.MMModemLocationSource;
 import org.eclipse.kura.nm.enums.MMModemState;
 import org.eclipse.kura.nm.enums.NMDeviceState;
 import org.eclipse.kura.nm.enums.NMDeviceType;
-import org.eclipse.kura.nm.signal.handlers.ConnectionStateChangedHandle;
 import org.eclipse.kura.nm.signal.handlers.DeviceCreationLock;
 import org.eclipse.kura.nm.signal.handlers.DeviceStateLock;
 import org.eclipse.kura.nm.signal.handlers.NMConfigurationEnforcementHandler;
@@ -111,7 +110,6 @@ public class NMDbusConnector {
 
     private NMConfigurationEnforcementHandler configurationEnforcementHandler = null;
     private NMDeviceAddedHandler deviceAddedHandler = null;
-    private ConnectionStateChangedHandle connectionStateChangedHandle = null;
 
     private AtomicBoolean configurationEnforcementHandlerIsArmed = new AtomicBoolean(false);
     private ModemTaskManager modemTaskManager;
@@ -128,7 +126,8 @@ public class NMDbusConnector {
     }
 
     public static synchronized NMDbusConnector getInstance() throws DBusException {
-        return getInstance(DBusConnectionBuilder.forSystemBus().build());
+        return getInstance(DBusConnectionBuilder.forSystemBus().receivingThreadConfig().withSignalThreadCount(4)
+                .withMethodCallThreadCount(2).connectionConfig().withShared(false).build());
     }
 
     public static synchronized NMDbusConnector getInstance(DBusConnection dbusConnection) throws DBusException {
@@ -150,7 +149,6 @@ public class NMDbusConnector {
 
     protected boolean configurationEnforcementIsActive() {
         return Objects.nonNull(this.configurationEnforcementHandler) && Objects.nonNull(this.deviceAddedHandler)
-                && Objects.nonNull(this.connectionStateChangedHandle)
                 && this.configurationEnforcementHandlerIsArmed.get();
     }
 
@@ -612,8 +610,7 @@ public class NMDbusConnector {
             String expectedConnectionName = String.format("kura-%s-connection", interfaceName);
             if (availableConnectionId.equals(expectedConnectionName)) {
                 dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
-                        Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED),
-                        this.timeout);
+                        Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG), this.timeout);
                 availableConnection.Update(newConnectionSettings);
             } else {
                 newConnectionSettings = NMSettingsConverter.buildSettings(properties, Optional.empty(), deviceId,
@@ -622,8 +619,7 @@ public class NMDbusConnector {
         }
         if (dsLock == null) {
             dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
-                    Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG, NMDeviceState.NM_DEVICE_STATE_ACTIVATED),
-                    this.timeout);
+                    Arrays.asList(NMDeviceState.NM_DEVICE_STATE_CONFIG), this.timeout);
             Settings settings = this.dbusConnection.getRemoteObject(NM_BUS_NAME, NM_SETTINGS_BUS_PATH, Settings.class);
             DBusPath createdConnectionPath = settings.AddConnection(newConnectionSettings);
             Connection createdConnection = this.dbusConnection.getRemoteObject(NM_BUS_NAME,
@@ -747,9 +743,8 @@ public class NMDbusConnector {
         Device device = optDevice.get();
         NMDeviceState deviceState = this.networkManager.getDeviceState(device);
         if (Boolean.TRUE.equals(NMDeviceState.isConnected(deviceState))) {
-            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(), Arrays
-                    .asList(NMDeviceState.NM_DEVICE_STATE_DISCONNECTED, NMDeviceState.NM_DEVICE_STATE_DEACTIVATING),
-                    this.timeout);
+            DeviceStateLock dsLock = new DeviceStateLock(this.dbusConnection, device.getObjectPath(),
+                    Arrays.asList(NMDeviceState.NM_DEVICE_STATE_DISCONNECTED), this.timeout);
             device.Disconnect();
             dsLock.waitForSignal();
         }
@@ -762,12 +757,8 @@ public class NMDbusConnector {
         if (Objects.isNull(this.deviceAddedHandler)) {
             this.deviceAddedHandler = new NMDeviceAddedHandler(this);
         }
-        if (Objects.isNull(this.connectionStateChangedHandle)) {
-            this.connectionStateChangedHandle = new ConnectionStateChangedHandle(this);
-        }
         this.dbusConnection.addSigHandler(Device.StateChanged.class, this.configurationEnforcementHandler);
         this.dbusConnection.addSigHandler(NetworkManager.DeviceAdded.class, this.deviceAddedHandler);
-        this.dbusConnection.addSigHandler(Wired.PropertiesChanged.class, this.connectionStateChangedHandle);
         this.configurationEnforcementHandlerIsArmed.set(true);
         logger.debug("Network configuration enforcement set to {} (Expected: true)",
                 this.configurationEnforcementHandlerIsArmed);
@@ -779,9 +770,6 @@ public class NMDbusConnector {
         }
         if (Objects.nonNull(this.deviceAddedHandler)) {
             this.dbusConnection.removeSigHandler(NetworkManager.DeviceAdded.class, this.deviceAddedHandler);
-        }
-        if (Objects.nonNull(this.connectionStateChangedHandle)) {
-            this.dbusConnection.removeSigHandler(Wired.PropertiesChanged.class, this.connectionStateChangedHandle);
         }
         this.configurationEnforcementHandlerIsArmed.set(false);
         logger.debug("Network configuration enforcement set to {} (Expected: false)",

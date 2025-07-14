@@ -13,7 +13,6 @@
 package org.eclipse.kura.nm.signal.handlers;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.kura.nm.NMDbusConnector;
 import org.eclipse.kura.nm.enums.NMDeviceState;
@@ -53,15 +52,13 @@ public class NMConfigurationEnforcementHandler implements DBusSigHandler<Device.
                     "Network change detected on interface {}. Roll-back to cached configuration. Device state change detected: {} -> {} (reason: {})",
                     s.getPath(), oldState, newState, reason);
 
-            CompletableFuture.runAsync(() -> {
-                try {
-                    String deviceId = NMConfigurationEnforcementHandler.this.nm.getInterfaceIdByDBusPath(s.getPath());
-                    NMConfigurationEnforcementHandler.this.nm.apply(deviceId);
-                } catch (DBusException e) {
-                    logger.error("Failed to handle network configuration change event for device: {}. Caused by:",
-                            s.getPath(), e);
-                }
-            });
+            try {
+                String deviceId = this.nm.getInterfaceIdByDBusPath(s.getPath());
+                this.nm.apply(deviceId);
+            } catch (DBusException e) {
+                logger.error("Failed to handle network configuration change event for device: {}. Caused by:",
+                        s.getPath(), e);
+            }
 
         }
     }
