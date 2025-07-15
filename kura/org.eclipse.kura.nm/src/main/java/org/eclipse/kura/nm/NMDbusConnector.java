@@ -28,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.executor.CommandExecutorService;
@@ -111,7 +110,6 @@ public class NMDbusConnector {
     private NMConfigurationEnforcementHandler configurationEnforcementHandler = null;
     private NMDeviceAddedHandler deviceAddedHandler = null;
 
-    private AtomicBoolean configurationEnforcementHandlerIsArmed = new AtomicBoolean(false);
     private ModemTaskManager modemTaskManager;
     private int timeout = 30;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -127,7 +125,8 @@ public class NMDbusConnector {
 
     public static synchronized NMDbusConnector getInstance() throws DBusException {
         return getInstance(DBusConnectionBuilder.forSystemBus().receivingThreadConfig().withSignalThreadCount(4)
-                .withMethodCallThreadCount(2).connectionConfig().withShared(false).build());
+                .withMethodCallThreadCount(4).withMethodReturnThreadCount(4).connectionConfig().withShared(false)
+                .build());
     }
 
     public static synchronized NMDbusConnector getInstance(DBusConnection dbusConnection) throws DBusException {
@@ -145,11 +144,6 @@ public class NMDbusConnector {
     public void setSystemService(SystemService systemService) {
         this.optionalSystemService = Optional.of(systemService);
         this.timeout = systemService.getNetworkConfigurationTimeout();
-    }
-
-    protected boolean configurationEnforcementIsActive() {
-        return Objects.nonNull(this.configurationEnforcementHandler) && Objects.nonNull(this.deviceAddedHandler)
-                && this.configurationEnforcementHandlerIsArmed.get();
     }
 
     protected boolean modemTaskHandlerIsPresent(String deviceId) {
@@ -631,7 +625,6 @@ public class NMDbusConnector {
             this.networkManager.activateConnection(connection.get(), device);
             dsLock.waitForSignal();
         } catch (DBusExecutionException e) {
-            dsLock.cancel();
             if (e.getMessage().contains("because device has no carrier")) {
                 try {
                     this.disconnect(Optional.of(device), deviceId);
@@ -759,9 +752,6 @@ public class NMDbusConnector {
         }
         this.dbusConnection.addSigHandler(Device.StateChanged.class, this.configurationEnforcementHandler);
         this.dbusConnection.addSigHandler(NetworkManager.DeviceAdded.class, this.deviceAddedHandler);
-        this.configurationEnforcementHandlerIsArmed.set(true);
-        logger.debug("Network configuration enforcement set to {} (Expected: true)",
-                this.configurationEnforcementHandlerIsArmed);
     }
 
     private void configurationEnforcementDisable() throws DBusException {
@@ -771,9 +761,6 @@ public class NMDbusConnector {
         if (Objects.nonNull(this.deviceAddedHandler)) {
             this.dbusConnection.removeSigHandler(NetworkManager.DeviceAdded.class, this.deviceAddedHandler);
         }
-        this.configurationEnforcementHandlerIsArmed.set(false);
-        logger.debug("Network configuration enforcement set to {} (Expected: false)",
-                this.configurationEnforcementHandlerIsArmed);
     }
 
     public List<Location> getAvailableMMLocations() {

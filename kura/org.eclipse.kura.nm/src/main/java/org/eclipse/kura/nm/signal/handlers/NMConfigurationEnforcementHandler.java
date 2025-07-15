@@ -13,6 +13,7 @@
 package org.eclipse.kura.nm.signal.handlers;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.kura.nm.NMDbusConnector;
 import org.eclipse.kura.nm.enums.NMDeviceState;
@@ -27,6 +28,7 @@ public class NMConfigurationEnforcementHandler implements DBusSigHandler<Device.
 
     private static final Logger logger = LoggerFactory.getLogger(NMConfigurationEnforcementHandler.class);
     private final NMDbusConnector nm;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     public NMConfigurationEnforcementHandler(NMDbusConnector nmDbusConnector) {
         this.nm = Objects.requireNonNull(nmDbusConnector);
@@ -46,20 +48,30 @@ public class NMConfigurationEnforcementHandler implements DBusSigHandler<Device.
                 && oldState != NMDeviceState.NM_DEVICE_STATE_UNAVAILABLE
                 && newState == NMDeviceState.NM_DEVICE_STATE_DISCONNECTED;
         boolean deviceIsConnectingToANewNetwork = newState == NMDeviceState.NM_DEVICE_STATE_CONFIG;
-
+        logger.info(
+                "Network change detected on interface {}. Roll-back to cached configuration. Device state change detected: {} -> {} (reason: {})",
+                s.getPath(), oldState, newState, reason);
         if (deviceIsConnectingToANewNetwork || deviceDisconnectedBecauseOfConfigurationEvent) {
-            logger.info(
-                    "Network change detected on interface {}. Roll-back to cached configuration. Device state change detected: {} -> {} (reason: {})",
-                    s.getPath(), oldState, newState, reason);
-
+            if (isRunning.get()) {
+                logger.info("NewNetwork apply is running on interface {}.", s.getPath());
+                return;
+            }
             try {
+                isRunning.set(true);
+                if (deviceIsConnectingToANewNetwork) {
+                    logger.info("Device Is Connecting To A NewNetwork detected on interface {}.", s.getPath());
+                } else {
+                    logger.info("Device Disconnected Because Of Configuration Event detected on interface {}.",
+                            s.getPath());
+                }
                 String deviceId = this.nm.getInterfaceIdByDBusPath(s.getPath());
                 this.nm.apply(deviceId);
             } catch (DBusException e) {
                 logger.error("Failed to handle network configuration change event for device: {}. Caused by:",
                         s.getPath(), e);
+            } finally {
+                isRunning.set(false);
             }
-
         }
     }
 }

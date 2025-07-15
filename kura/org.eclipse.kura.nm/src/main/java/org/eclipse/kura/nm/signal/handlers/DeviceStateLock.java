@@ -49,7 +49,6 @@ public class DeviceStateLock {
         try {
             boolean countdownCompleted = this.latch.await(this.timeout, TimeUnit.SECONDS);
             if (!countdownCompleted) {
-                this.stateHandler.cancel();
                 logger.warn("Timeout elapsed. Exiting anyway");
             }
         } catch (InterruptedException e) {
@@ -57,16 +56,6 @@ public class DeviceStateLock {
             Thread.currentThread().interrupt();
         } finally {
             this.dbusConnection.removeSigHandler(Device.StateChanged.class, this.stateHandler);
-        }
-    }
-
-    public void cancel() {
-        try {
-            if (this.latch.getCount() > 0) {
-                this.latch.countDown();
-            }
-        } catch (Exception e) {
-
         }
     }
 
