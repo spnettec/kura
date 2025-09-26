@@ -2618,6 +2618,16 @@ fi]]>
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
+     	<antcall target="install-plugin">
+            <param name="bundle.name" value="org.eclipse.kura.driver.opcua.provider" />
+            <param name="start.level" value="4" />
+            <param name="start" value="s" />
+        </antcall>
+     	<antcall target="install-plugin">
+            <param name="bundle.name" value="org.eclipse.kura.driver.s7plc.provider" />
+            <param name="start.level" value="4" />
+            <param name="start" value="s" />
+        </antcall>
      </target>
 
 </project>
