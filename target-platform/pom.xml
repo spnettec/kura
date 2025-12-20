@@ -26,7 +26,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
-        <kura.addons.url>https://raw.github.com/eurotech/kura_addons/mvn-repo/</kura.addons.url>
+        <kura.addons.url>https://artifactory.dev.everyware.io/artifactory/kura-addons</kura.addons.url>
         <skip.libsocket-can>true</skip.libsocket-can>
 
         <maven.compiler.source>17</maven.compiler.source>
@@ -64,7 +64,7 @@
         <guava.version>33.4.0-jre</guava.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <hk2.version>3.1.1</hk2.version>
-        <io.netty.version>4.2.2.Final</io.netty.version>
+        <io.netty.version>4.2.9.Final</io.netty.version>
         <javassist.version>3.30.2-GA</javassist.version>
         <jersey.version>3.1.9</jersey.version>
         <log4j.version>2.24.3</log4j.version>
@@ -186,11 +186,11 @@
         <org.usb4java.version>2.0.0-SNAPSHOT</org.usb4java.version>
         <usb4java-javax.version>2.0.0-SNAPSHOT</usb4java-javax.version>
         
-        <vertx.version>5.0.4</vertx.version>
+        <vertx.version>5.0.6</vertx.version>
         <org.codehaus.groovy.version>3.0.25</org.codehaus.groovy.version>
         <org.eclipse.milo.version>0.6.16</org.eclipse.milo.version>
         <commons-text.version>1.13.1</commons-text.version>
-        <com.fasterxml.jackson.version>2.19.0</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.19.4</com.fasterxml.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
         <org.yaml.snakeyaml.mvn.version>2.4</org.yaml.snakeyaml.mvn.version>
         <org.apache.commons-pool2.version>2.12.1</org.apache.commons-pool2.version>
