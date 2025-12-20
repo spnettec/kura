@@ -50,7 +50,7 @@
     
     <properties>
         <tycho-version>4.0.11</tycho-version>
-        <jdeb-version>1.12</jdeb-version>
+        <jdeb-version>1.14</jdeb-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kura.basedir>${project.basedir}</kura.basedir>
