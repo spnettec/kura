@@ -98,7 +98,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="${project.build.directory}" file="${project.basedir}/src/main/resources/docker-x86_64-nn/Dockerfile" />
+                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-x86_64-nn/Dockerfile" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
