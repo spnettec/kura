@@ -18,12 +18,15 @@ ENV \
   SKIP_JAVA_VERSION_CHECK=true \
   LAUNCHER_VERSION="1.7.0" \
   TZ=Asia/Shanghai \
-  LANG=en_US.UTF-8
+  LANG=C.UTF-8 \
+  LC_ALL=C.UTF-8
 
 RUN true && \
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     microdnf -y update && \
     microdnf -y install \
+	    glibc-common \
+		glibc-all-langpacks \
         java-21-openjdk-headless \
         procps \
         zip \
