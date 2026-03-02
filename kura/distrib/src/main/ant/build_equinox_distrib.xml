@@ -2472,6 +2472,11 @@ fi]]>
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
+     	<antcall target="install-plugin">
+            <param name="bundle.name" value="jspecify" />
+            <param name="start.level" value="6" />
+            <param name="start" value="" />
+        </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="io.vertx.auth-common" />
             <param name="start.level" value="6" />

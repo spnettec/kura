@@ -836,11 +836,14 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								
-								
 
 								<artifact>
 									<id>io.vavr:vavr:${io.vavr.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>org.jspecify:jspecify:${org.jspecify.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
