@@ -59,6 +59,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>io.vertx:vertx-http-proxy:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>io.vertx:vertx-bridge-common:${vertx.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

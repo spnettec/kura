@@ -64,7 +64,7 @@
         <guava.version>33.4.0-jre</guava.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <hk2.version>3.1.1</hk2.version>
-        <io.netty.version>4.2.10.Final</io.netty.version>
+        <io.netty.version>4.2.12.Final</io.netty.version>
         <javassist.version>3.30.2-GA</javassist.version>
         <jersey.version>3.1.9</jersey.version>
         <log4j.version>2.24.3</log4j.version>
@@ -186,7 +186,7 @@
         <org.usb4java.version>2.0.0-SNAPSHOT</org.usb4java.version>
         <usb4java-javax.version>2.0.0-SNAPSHOT</usb4java-javax.version>
         
-        <vertx.version>5.0.8</vertx.version>
+        <vertx.version>5.0.10</vertx.version>
         <org.codehaus.groovy.version>3.0.25</org.codehaus.groovy.version>
         <org.eclipse.milo.version>0.6.16</org.eclipse.milo.version>
         <commons-text.version>1.13.1</commons-text.version>

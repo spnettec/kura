@@ -210,6 +210,7 @@
         <setEntry value="io.vertx.bridge-common@default:default"/>
         <setEntry value="io.vertx.core-logging@default:default"/>
         <setEntry value="io.vertx.core@default:default"/>
+        <setEntry value="io.vertx.http-proxy@default:default"/>
         <setEntry value="io.vertx.mqtt@default:default"/>
         <setEntry value="io.vertx.tcp-eventbus-bridge@default:default"/>
         <setEntry value="io.vertx.uri-template@default:default"/>

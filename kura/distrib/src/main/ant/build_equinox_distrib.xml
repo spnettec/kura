@@ -2518,6 +2518,11 @@ fi]]>
             <param name="start.level" value="6" />
             <param name="start" value="" />
         </antcall>
+     	<antcall target="install-plugin">
+            <param name="bundle.name" value="io.vertx.http-proxy" />
+            <param name="start.level" value="6" />
+            <param name="start" value="" />
+        </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="io.vertx.web-client" />
             <param name="start.level" value="6" />
