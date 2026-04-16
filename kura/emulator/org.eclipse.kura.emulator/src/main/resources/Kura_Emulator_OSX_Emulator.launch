@@ -93,7 +93,6 @@
         <setEntry value="org.eclipse.kura.network.threat.manager.test"/>
         <setEntry value="org.eclipse.kura.nm"/>
         <setEntry value="org.eclipse.kura.nm.test"/>
-        <setEntry value="org.eclipse.kura.protocol.can"/>
         <setEntry value="org.eclipse.kura.rest.asset.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.cloudconnection.provider.test"/>
         <setEntry value="org.eclipse.kura.rest.command.provider.test"/>

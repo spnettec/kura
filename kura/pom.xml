@@ -147,7 +147,6 @@
         <kura.basedir>${project.basedir}</kura.basedir>
         <kura.build.version>${maven.build.timestamp}</kura.build.version>
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
-        <kura.skip.can>true</kura.skip.can>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
         <kura.addons.url>https://artifactory.dev.everyware.io/artifactory/kura-addons</kura.addons.url>
 
@@ -220,18 +219,6 @@
     </pluginRepositories>
 
     <profiles>
-        <profile>
-            <id>can</id>
-            <activation>
-                <property>
-                    <name>kura.skip.can</name>
-                    <value>false</value>
-                </property>
-            </activation>
-            <modules>
-                <module>org.eclipse.kura.protocol.can</module>
-            </modules>
-        </profile>
         <profile>
             <id>javadocs</id>
             <activation>

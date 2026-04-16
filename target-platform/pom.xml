@@ -200,7 +200,7 @@
         <strict-machine.version>0.7</strict-machine.version>
         <netty-channel-fsm.version>0.9</netty-channel-fsm.version>
         <fastjson2.version>2.0.61</fastjson2.version>
-        <jSerialComm.version>2.11.0</jSerialComm.version>
+        <jSerialComm.version>2.11.4</jSerialComm.version>
         <javacan.version>3.5.0</javacan.version>
         <net.java.dev.jna.version>5.17.0</net.java.dev.jna.version>
         <io.vavr.version>1.0.0</io.vavr.version>
