@@ -43,7 +43,6 @@
         <module>org.eclipse.kura.core.certificates</module>
         <module>org.eclipse.kura.core.keystore</module>
         <module>org.eclipse.kura.cloud.base.provider</module>
-        <module>org.eclipse.kura.core.cloud.command</module>
         <module>org.eclipse.kura.core.cloud.factory</module>
         <module>org.eclipse.kura.core.comm</module>
         <module>org.eclipse.kura.core.configuration</module>
@@ -60,14 +59,7 @@
         <module>org.eclipse.kura.driver.opcua.provider</module>
         <module>org.eclipse.kura.driver.block</module>
         <module>org.eclipse.kura.driver.s7plc.provider</module>
-        <module>org.eclipse.kura.driver.ble.sensortag.provider</module>
-        <module>org.eclipse.kura.driver.ble.xdk</module>
-        <module>org.eclipse.kura.driver.ibeacon.provider</module>
         <module>org.eclipse.kura.driver.gpio.provider</module>
-        <module>org.eclipse.kura.driver.eddystone.provider</module>
-        <module>org.eclipse.kura.ble.provider</module>
-        <module>org.eclipse.kura.ble.ibeacon.provider</module>
-        <module>org.eclipse.kura.ble.eddystone.provider</module>
         <module>org.eclipse.kura.linux.clock</module>
         <module>org.eclipse.kura.linux.command</module>
         <module>org.eclipse.kura.linux.gpio</module>
@@ -94,6 +86,7 @@
         <module>org.eclipse.kura.rest.asset.provider</module>
         <module>org.eclipse.kura.misc.cloudcat</module>
         <module>org.eclipse.kura.json.marshaller.unmarshaller.provider</module>
+        <module>org.eclipse.kura.jul.to.slf4j.configuration</module>
         <module>org.eclipse.kura.xml.marshaller.unmarshaller.provider</module>
         <module>org.eclipse.kura.wire.component.join.provider</module>
         <module>org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider</module>
@@ -109,7 +102,6 @@
         <module>org.eclipse.kura.rest.network.configuration.provider</module>
         <module>org.eclipse.kura.rest.identity.provider</module>
         <module>org.eclipse.kura.rest.inventory.provider</module>
-        <module>org.eclipse.kura.rest.command.provider</module>
         <module>org.eclipse.kura.rest.packages.provider</module>
         <module>org.eclipse.kura.rest.position.provider</module>
         <module>org.eclipse.kura.rest.keystore.provider</module>
@@ -132,7 +124,6 @@
         <module>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</module>
         <module>org.eclipse.kura.web2</module>
         <module>emulator</module>
-        <module>test-util</module>
         <module>tools</module>
     </modules>
 
@@ -250,17 +241,6 @@
             </activation>
             <modules>
                 <module>tools</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>tests</id>
-            <activation>
-                <property>
-                    <name>!skipTests</name>
-                </property>
-            </activation>
-            <modules>
-                <module>test</module>
             </modules>
         </profile>
         <profile>

@@ -492,12 +492,6 @@
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>org.eclipse.kura.feature</groupId>
-                                            <artifactId>org.eclipse.kura.driver.ble.xdk</artifactId>
-                                            <version>${org.eclipse.kura.driver.ble.xdk.version}</version>
-                                            <type>dp</type>
-                                        </artifactItem>
-                                        <artifactItem>
-                                            <groupId>org.eclipse.kura.feature</groupId>
                                             <artifactId>org.eclipse.kura.wire.ai.component.provider</artifactId>
                                             <version>${org.eclipse.kura.wire.ai.component.provider.version}</version>
                                             <type>dp</type>

@@ -522,7 +522,6 @@
         <antcall target="api-plugins" />
         <antcall target="artemis-plugins" />
         <antcall target="asset-plugins" />
-        <antcall target="bluetooth-plugins" />
         <antcall target="camel-plugins" />
         <antcall target="cloud.mqtt.eclipseiot-plugins" />
         <antcall target="cloud.mqtt.kapua-plugins" />
@@ -558,7 +557,6 @@
         <antcall target="marshallers-plugins" />
         <antcall target="misc-plugins" />
         <antcall target="netty-plugins" />
-        <antcall target="rest-command" />
         <antcall target="rest-plugins" />
         <antcall target="rest-position" />
         <antcall target="rest.tamper-plugins" />
@@ -1591,6 +1589,11 @@ fi]]>
             <param name="start.level" value="4" />
             <param name="start" value="s" />
         </antcall>
+    	<antcall target="install-plugin">
+            <param name="bundle.name" value="org.eclipse.kura.jul.to.slf4j.configuration" />
+            <param name="start.level" value="4" />
+            <param name="start" value="s" />
+        </antcall>
     </target>
 
     <target name="core.certificates-plugins">
@@ -1604,11 +1607,6 @@ fi]]>
     <target name="core.cloud-plugins">
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.cloud.base.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.core.cloud.command" />
             <param name="start.level" value="4" />
             <param name="start" value="s" />
         </antcall>
@@ -1759,24 +1757,6 @@ fi]]>
         </antcall>
     </target>
 
-    <target name="bluetooth-plugins">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.ble.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.ble.ibeacon.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.ble.eddystone.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-    </target>
-
     <target name="linux.watchdog-plugins" unless="is.docker">
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.linux.watchdog" />
@@ -1869,14 +1849,6 @@ fi]]>
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.rest.asset.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-    </target>
-
-    <target name="rest-command">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.rest.command.provider" />
             <param name="start.level" value="4" />
             <param name="start" value="s" />
         </antcall>
