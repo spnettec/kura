@@ -15,7 +15,7 @@ COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
-  LAUNCHER_VERSION="1.7.0" 
+  LAUNCHER_VERSION="1.7.100" 
 
 
 
