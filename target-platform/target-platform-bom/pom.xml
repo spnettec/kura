@@ -212,11 +212,6 @@
                 <version>${com.google.gson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.hypfvieh</groupId>
-                <artifactId>bluez-dbus-osgi</artifactId>
-                <version>${bluez-dbus-osgi.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
@@ -774,11 +769,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.platform</groupId>
-                <artifactId>org.eclipse.equinox.io</artifactId>
-                <version>${org.eclipse.equinox.io.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.platform</groupId>
                 <artifactId>org.eclipse.equinox.metatype</artifactId>
                 <version>${org.eclipse.equinox.metatype.version}</version>
             </dependency>
@@ -934,21 +924,7 @@
             -->
             <!-- END target platform dependencies -->
             <!-- START Kura target platform BOM -->
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>com.codeminders.hidapi</artifactId>
-                <version>${com.codeminders.hidapi.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>com.codeminders.hidapi.x86_64</artifactId>
-                <version>${com.codeminders.hidapi.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>com.codeminders.hidapi.aarch64</artifactId>
-                <version>${com.codeminders.hidapi.version}</version>
-            </dependency>
+            
             <!--
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -956,21 +932,7 @@
                 <version>${com.gwt.user.version}</version>
             </dependency>
             -->
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>jdk.dio</artifactId>
-                <version>${jdk.dio.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>jdk.dio.aarch64</artifactId>
-                <version>${jdk.dio.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>jdk.dio.x86_64</artifactId>
-                <version>${jdk.dio.version}</version>
-            </dependency>
+            
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>log4j2-api-config</artifactId>
@@ -995,21 +957,7 @@
                 <artifactId>org.eclipse.kura.sun.misc</artifactId>
                 <version>${org.eclipse.kura.sun.misc.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.soda.dk.comm</artifactId>
-                <version>${org.eclipse.soda.dk.comm.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.soda.dk.comm.x86_64</artifactId>
-                <version>${org.eclipse.soda.dk.comm.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.soda.dk.comm.aarch64</artifactId>
-                <version>${org.eclipse.soda.dk.comm.version}</version>
-            </dependency>
+            
             <!--
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -1399,10 +1347,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.hypfvieh</groupId>
-            <artifactId>bluez-dbus-osgi</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -1852,10 +1796,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.platform</groupId>
-            <artifactId>org.eclipse.equinox.io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.platform</groupId>
             <artifactId>org.eclipse.equinox.metatype</artifactId>
         </dependency>
         <dependency>
@@ -1970,36 +1910,14 @@
         -->
         <!-- END test dependencies -->
         <!-- START Kura target platform BOM -->
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>com.codeminders.hidapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>com.codeminders.hidapi.x86_64</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>com.codeminders.hidapi.aarch64</artifactId>
-        </dependency>
+        
         <!--
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>com.gwt.user</artifactId>
         </dependency>
         -->
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>jdk.dio</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>jdk.dio.aarch64</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>jdk.dio.x86_64</artifactId>
-        </dependency>
+        
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>log4j2-api-config</artifactId>
@@ -2019,18 +1937,6 @@
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.sun.misc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.soda.dk.comm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.soda.dk.comm.x86_64</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.soda.dk.comm.aarch64</artifactId>
         </dependency>
         <!--
         <dependency>

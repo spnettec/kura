@@ -13,24 +13,15 @@
  *******************************************************************************/
 package org.eclipse.kura.core.comm;
 
-import static org.eclipse.kura.comm.CommURI.parseString;
-
 import java.io.IOException;
 
-import javax.microedition.io.Connection;
+import org.eclipse.kura.comm.CommConnection;
+import org.eclipse.kura.comm.CommURI;
 
-import org.osgi.service.io.ConnectionFactory;
-
-public class CommConnectionFactory implements ConnectionFactory {
+public class CommConnectionFactory implements org.eclipse.kura.comm.CommConnectionFactory {
 
     @Override
-    public Connection createConnection(String name, int mode, boolean timeouts) throws IOException {
-        try {
-            return new CommConnectionImpl(parseString(name), mode, timeouts);
-        } catch (IOException e) {
-            throw e; // re-throw
-        } catch (Throwable t) {
-            throw new IOException(t);
-        }
+    public CommConnection createConnection(final CommURI uri) throws IOException {
+        return new CommConnectionImpl(uri);
     }
 }

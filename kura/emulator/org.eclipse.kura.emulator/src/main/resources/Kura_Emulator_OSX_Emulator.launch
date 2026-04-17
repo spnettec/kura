@@ -16,10 +16,8 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-visa"/>
         <setEntry value="org.eclipse.kura.core.comm"/>
         <setEntry value="org.eclipse.kura.driver.block"/>
-        <setEntry value="org.eclipse.kura.driver.gpio.provider"/>
+        <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
-        <setEntry value="org.eclipse.kura.linux.command"/>
-        <setEntry value="org.eclipse.kura.linux.gpio"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
         <setEntry value="org.eclipse.kura.linux.position"/>
         <setEntry value="org.eclipse.kura.linux.systemd.provider"/>
@@ -187,7 +185,6 @@
         <setEntry value="org.eclipse.equinox.common@2:true"/>
         <setEntry value="org.eclipse.equinox.console@default:default"/>
         <setEntry value="org.eclipse.equinox.event@default:default"/>
-        <setEntry value="org.eclipse.equinox.io@default:default"/>
         <setEntry value="org.eclipse.equinox.launcher@default:default"/>
         <setEntry value="org.eclipse.equinox.metatype@default:default"/>
         <setEntry value="org.eclipse.equinox.preferences@default:default"/>
@@ -218,7 +215,6 @@
         <setEntry value="org.eclipse.osgitech.rest@default:default"/>
         <setEntry value="org.eclipse.paho.client.mqttv3@default:default"/>
         <setEntry value="org.eclipse.paho.mqttv5.client@default:default"/>
-        <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
         <setEntry value="org.glassfish.hk2.api@default:default"/>
         <setEntry value="org.glassfish.hk2.external.aopalliance-repackaged@default:default"/>
         <setEntry value="org.glassfish.hk2.locator@default:default"/>
@@ -268,7 +264,6 @@
         <setEntry value="quartz@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
         <setEntry value="tel.schich.javacan-core@default:default"/>
-        <setEntry value="usb4java-javax*2.0.0.SNAPSHOT@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
@@ -317,10 +312,8 @@
         <setEntry value="org.eclipse.kura.driver.opcua.provider@default:default"/>
         <setEntry value="org.eclipse.kura.driver.s7plc.provider@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.clock@default:default"/>
-        <setEntry value="org.eclipse.kura.emulator.gpio@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.net@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.position@default:default"/>
-        <setEntry value="org.eclipse.kura.emulator.usb@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.watchdog@default:default"/>
         <setEntry value="org.eclipse.kura.emulator@default:true"/>
         <setEntry value="org.eclipse.kura.event.publisher@default:false"/>

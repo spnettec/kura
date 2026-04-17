@@ -32,7 +32,6 @@
 	
 	<modules>
 		<module>org.eclipse.kura.emulator</module>
-		<module>org.eclipse.kura.emulator.gpio</module>
 		<module>org.eclipse.kura.emulator.clock</module>
 		<module>org.eclipse.kura.emulator.net</module>
 		<module>org.eclipse.kura.emulator.position</module>

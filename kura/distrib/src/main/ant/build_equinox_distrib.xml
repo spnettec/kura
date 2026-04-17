@@ -206,7 +206,6 @@
         <antcall target="deployment-hooks-plugins" />
         <antcall target="event-publisher-plugins" />
         <antcall target="filesystem-logprovider-plugins" />
-        <antcall target="gpio-plugins" />
         <antcall target="h2db-plugins" />
         <antcall target="keystore-management-plugins" />
         <antcall target="linux.clock-plugins" />
@@ -223,7 +222,6 @@
         <!-- Conditional entries. Check for jar presence, and invoke relevant ant
             target -->
         
-        <antcall target="emulator-gpio-plugins" />
 
         <propertyfile
             file="${project.build.directory}/${build.output.name}/dpa.properties">
@@ -544,12 +542,10 @@
         <antcall target="deployment-hooks-plugins" />
         <antcall target="event-publisher-plugins" />
         <antcall target="filesystem-logprovider-plugins" />
-        <antcall target="gpio-plugins" />
         <antcall target="gpsd4java-plugins" />
         <antcall target="h2db-plugins" />
         <antcall target="keystore-management-plugins" />
         <antcall target="linux.clock-plugins" />
-        <antcall target="linux.command-plugins" />
         <antcall target="linux.position-plugins" />
         <antcall target="linux.usb-plugins" />
         <antcall target="linux.watchdog-plugins" />
@@ -569,7 +565,6 @@
         <!-- Conditional entries. Check for jar presence, and invoke relevant ant
             target -->
         
-        <antcall target="emulator-gpio-plugins" />
         <antcall target="ai-wire-plugins" />
         <antcall target="nvidia-triton-server-plugins" />
         <antcall target="linux-network-plugins" />
@@ -1080,7 +1075,7 @@ fi]]>
         <antcall target="install-plugin-old">
             <param name="bundle.name" value="com.sun.xml.bind.jaxb-osgi" />
             <param name="start.level" value="2" />
-            <param name="start" value="" />
+            <param name="start" value="s" />
         </antcall>
         <!--Jersey dependencies-->
         <antcall target="install-plugin">
@@ -1201,11 +1196,6 @@ fi]]>
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.equinox.event" />
-            <param name="start.level" value="1" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.equinox.io" />
             <param name="start.level" value="1" />
             <param name="start" value="s" />
         </antcall>
@@ -1386,26 +1376,7 @@ fi]]>
             <param name="start.level" value="3" />
             <param name="start" value="s" />
         </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="com.codeminders.hidapi.${native.tag}" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="com.codeminders.hidapi" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.soda.dk.comm.${native.tag}" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.soda.dk.comm" />
-            <param name="start.level" value="3" />
-            <param name="start" value="s" />
-        </antcall>
+        
         <antcall target="install-plugin">
             <param name="bundle.name" value="commons-lang3" />
             <param name="start.level" value="4" />
@@ -1420,16 +1391,6 @@ fi]]>
             <param name="bundle.name" value="usb4java-javax" />
             <param name="start.level" value="4" />
             <param name="start" value="s" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="jdk.dio.${native.tag}" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="jdk.dio" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="commons-net" />
@@ -1488,11 +1449,6 @@ fi]]>
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="bcpg-jdk18on" />
-            <param name="start.level" value="3" />
-            <param name="start" value="" />
-        </antcall>
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="bluez-dbus-osgi" />
             <param name="start.level" value="3" />
             <param name="start" value="" />
         </antcall>
@@ -1617,6 +1573,14 @@ fi]]>
         </antcall>
     </target>
 
+    <target name="core.comm-plugins">
+        <antcall target="install-plugin">
+            <param name="bundle.name" value="org.eclipse.kura.core.comm" />
+            <param name="start.level" value="4" />
+            <param name="start" value="s" />
+        </antcall>
+    </target>
+
     <target name="cloud.mqtt.kapua-plugins">
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.cloudconnection.kapua.mqtt.provider" />
@@ -1637,15 +1601,7 @@ fi]]>
     <target name="cloud.mqtt.raw-plugins">
         <antcall target="install-plugin">
             <param name="bundle.name"
-                value="org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider" />
-            <param name="start.level" value="4" />
-            <param name="start" value="s" />
-        </antcall>
-    </target>
-
-    <target name="core.comm-plugins">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.core.comm" />
+                value="org.eclipse.kura.cloudconnection.raw.mqtt.provider" />
             <param name="start.level" value="4" />
             <param name="start" value="s" />
         </antcall>
@@ -1728,14 +1684,6 @@ fi]]>
         </antcall>
     </target>
 
-    <target name="linux.command-plugins">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.linux.command" />
-            <param name="start.level" value="4" />
-            <param name="start" value="" />
-        </antcall>
-    </target>
-
     <target name="linux.position-plugins">
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.linux.position" />
@@ -1794,22 +1742,6 @@ fi]]>
     <target name="http.server.manager-plugin">
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.http.server.manager" />
-            <param name="start.level" value="5" />
-            <param name="start" value="s" />
-        </antcall>
-    </target>
-
-    <target name="gpio-plugins" unless="is.docker">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.linux.gpio" />
-            <param name="start.level" value="5" />
-            <param name="start" value="s" />
-        </antcall>
-    </target>
-
-    <target name="emulator-gpio-plugins" if="is.docker">
-        <antcall target="install-plugin">
-            <param name="bundle.name" value="org.eclipse.kura.emulator.gpio" />
             <param name="start.level" value="5" />
             <param name="start" value="s" />
         </antcall>
@@ -2274,7 +2206,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.name" value="org.eclipse.kura.event.publisher" />
             <param name="start.level" value="6" />
-            <param name="start" value="" />
+            <param name="start" value="s" />
         </antcall>
     </target>
 
@@ -2377,7 +2309,7 @@ fi]]>
         <antcall target="install-plugin">
             <param name="bundle.name" value="jna" />
             <param name="start.level" value="6" />
-            <param name="start" value="" />
+            <param name="start" value="s" />
         </antcall>
         <antcall target="install-plugin">
             <param name="bundle.name" value="groovy" />

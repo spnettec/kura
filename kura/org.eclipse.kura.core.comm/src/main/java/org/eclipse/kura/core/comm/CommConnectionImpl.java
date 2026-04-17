@@ -18,7 +18,6 @@ import static java.util.Objects.requireNonNull;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,12 +25,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.StringJoiner;
 
-import javax.comm.CommPort;
-import javax.comm.CommPortIdentifier;
-import javax.comm.NoSuchPortException;
-import javax.comm.PortInUseException;
-import javax.comm.SerialPort;
-
+import com.fazecast.jSerialComm.SerialPort;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.kura.KuraException;
@@ -41,36 +35,14 @@ import org.eclipse.kura.comm.CommURI;
 public class CommConnectionImpl implements CommConnection, Closeable {
 
     private static final String SEND_MESSAGE = "sendMessage() - {}";
-    private static final String JAVA_EXT_DIRS = "java.ext.dirs";
-    private static final String KURA_EXT_DIR = "kura.ext.dir";
-
     private static final Logger logger = LogManager.getLogger(CommConnectionImpl.class);
-
-    // set up the appropriate ext dir for RXTX extra device nodes
-    static {
-        String kuraExtDir = System.getProperty(KURA_EXT_DIR);
-        if (kuraExtDir != null) {
-            StringBuffer sb = new StringBuffer();
-            String existingDirs = System.getProperty(JAVA_EXT_DIRS);
-            if (existingDirs != null) {
-                if (!existingDirs.contains(kuraExtDir)) {
-                    sb.append(existingDirs).append(File.pathSeparator).append(kuraExtDir);
-                    System.setProperty(JAVA_EXT_DIRS, sb.toString());
-                }
-            } else {
-                sb.append(kuraExtDir);
-                System.setProperty(JAVA_EXT_DIRS, sb.toString());
-            }
-        }
-    }
 
     private final CommURI commUri;
     private SerialPort serialPort;
     private InputStream inputStream;
     private OutputStream outputStream;
 
-    public CommConnectionImpl(CommURI commUri, int mode, boolean timeouts)
-            throws IOException, NoSuchPortException, PortInUseException {
+    public CommConnectionImpl(final CommURI commUri) throws IOException {
 
         requireNonNull(commUri);
 
@@ -85,32 +57,23 @@ public class CommConnectionImpl implements CommConnection, Closeable {
         final int openTimeout = this.commUri.getOpenTimeout();
         final int receiveTimeout = this.commUri.getReceiveTimeout();
 
-        final CommPortIdentifier commPortIdentifier = CommPortIdentifier.getPortIdentifier(port);
-
-        final CommPort commPort = commPortIdentifier.open(this.getClass().getName(), openTimeout);
-
-        if (commPort == null) {
-            throw new NoSuchPortException("CommPortIdentifier.open() returned a null port");
-        }
+        this.serialPort = SerialPort.getCommPort(port);
 
         try {
-            if (commPort instanceof SerialPort) {
-                this.serialPort = (SerialPort) commPort;
+            this.serialPort.setComPortParameters(baudRate, mapDataBits(dataBits), mapStopBits(stopBits), mapParity(parity));
+            this.serialPort.setFlowControl(mapFlowControl(flowControl));
+            final int timeoutMode = receiveTimeout > 0 ? SerialPort.TIMEOUT_READ_BLOCKING : SerialPort.TIMEOUT_NONBLOCKING;
+            this.serialPort.setComPortTimeouts(timeoutMode, receiveTimeout, 0);
 
-                this.serialPort.setSerialPortParams(baudRate, dataBits, stopBits, parity);
-                this.serialPort.setFlowControlMode(flowControl);
-                if (receiveTimeout > 0) {
-                    this.serialPort.enableReceiveTimeout(receiveTimeout);
-                    if (!this.serialPort.isReceiveTimeoutEnabled()) {
-                        throw new IOException("Serial receive timeout not supported by driver");
-                    }
-                }
-            } else {
-                throw new IOException("Unsupported Port Type");
+            if (!this.serialPort.openPort(openTimeout)) {
+                throw new IOException("Failed to open serial port " + port);
             }
         } catch (final Exception e) {
             logger.error("Failed to configure COM port", e);
-            commPort.close();
+            if (this.serialPort != null) {
+                this.serialPort.closePort();
+                this.serialPort = null;
+            }
             throw new IOException(e);
         }
     }
@@ -153,8 +116,6 @@ public class CommConnectionImpl implements CommConnection, Closeable {
     @Override
     public synchronized void close() throws IOException {
         if (this.serialPort != null) {
-            this.serialPort.notifyOnDataAvailable(false);
-            this.serialPort.removeEventListener();
             if (this.inputStream != null) {
                 this.inputStream.close();
                 this.inputStream = null;
@@ -164,9 +125,70 @@ public class CommConnectionImpl implements CommConnection, Closeable {
                 this.outputStream = null;
             }
 
-            this.serialPort.close();
+            this.serialPort.closePort();
             this.serialPort = null;
         }
+    }
+
+    private static int mapDataBits(final int dataBits) throws IOException {
+        switch (dataBits) {
+        case CommURI.DATABITS_5:
+        case CommURI.DATABITS_6:
+        case CommURI.DATABITS_7:
+        case CommURI.DATABITS_8:
+            return dataBits;
+        default:
+            throw new IOException("Unsupported data bits value: " + dataBits);
+        }
+    }
+
+    private static int mapStopBits(final int stopBits) throws IOException {
+        switch (stopBits) {
+        case CommURI.STOPBITS_1:
+            return SerialPort.ONE_STOP_BIT;
+        case CommURI.STOPBITS_1_5:
+            return SerialPort.ONE_POINT_FIVE_STOP_BITS;
+        case CommURI.STOPBITS_2:
+            return SerialPort.TWO_STOP_BITS;
+        default:
+            throw new IOException("Unsupported stop bits value: " + stopBits);
+        }
+    }
+
+    private static int mapParity(final int parity) throws IOException {
+        switch (parity) {
+        case CommURI.PARITY_NONE:
+            return SerialPort.NO_PARITY;
+        case CommURI.PARITY_ODD:
+            return SerialPort.ODD_PARITY;
+        case CommURI.PARITY_EVEN:
+            return SerialPort.EVEN_PARITY;
+        case CommURI.PARITY_MARK:
+            return SerialPort.MARK_PARITY;
+        case CommURI.PARITY_SPACE:
+            return SerialPort.SPACE_PARITY;
+        default:
+            throw new IOException("Unsupported parity value: " + parity);
+        }
+    }
+
+    private static int mapFlowControl(final int flowControl) {
+        int result = SerialPort.FLOW_CONTROL_DISABLED;
+
+        if ((flowControl & CommURI.FLOWCONTROL_RTSCTS_IN) != 0) {
+            result |= SerialPort.FLOW_CONTROL_CTS_ENABLED;
+        }
+        if ((flowControl & CommURI.FLOWCONTROL_RTSCTS_OUT) != 0) {
+            result |= SerialPort.FLOW_CONTROL_RTS_ENABLED;
+        }
+        if ((flowControl & CommURI.FLOWCONTROL_XONXOFF_IN) != 0) {
+            result |= SerialPort.FLOW_CONTROL_XONXOFF_IN_ENABLED;
+        }
+        if ((flowControl & CommURI.FLOWCONTROL_XONXOFF_OUT) != 0) {
+            result |= SerialPort.FLOW_CONTROL_XONXOFF_OUT_ENABLED;
+        }
+
+        return result;
     }
 
     private void checkIfClosed() throws IOException {

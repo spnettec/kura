@@ -64,7 +64,7 @@
         <kura.repo.distribution>kura-6</kura.repo.distribution>
         <kura.repo.module>base</kura.repo.module>
 
-        <org.eclipse.equinox.launcher.version>1.7.0</org.eclipse.equinox.launcher.version>
+        <org.eclipse.equinox.launcher.version>1.7.100</org.eclipse.equinox.launcher.version>
         <kura.version>${project.version}</kura.version>
     </properties>
 

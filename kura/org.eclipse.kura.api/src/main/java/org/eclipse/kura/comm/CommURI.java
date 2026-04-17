@@ -14,8 +14,6 @@ package org.eclipse.kura.comm;
 
 import java.net.URISyntaxException;
 
-import javax.comm.SerialPort;
-
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -26,26 +24,26 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public class CommURI {
 
-    public static final int DATABITS_5 = SerialPort.DATABITS_5;
-    public static final int DATABITS_6 = SerialPort.DATABITS_6;
-    public static final int DATABITS_7 = SerialPort.DATABITS_7;
-    public static final int DATABITS_8 = SerialPort.DATABITS_8;
+    public static final int DATABITS_5 = 5;
+    public static final int DATABITS_6 = 6;
+    public static final int DATABITS_7 = 7;
+    public static final int DATABITS_8 = 8;
 
-    public static final int PARITY_EVEN = SerialPort.PARITY_EVEN;
-    public static final int PARITY_MARK = SerialPort.PARITY_MARK;
-    public static final int PARITY_NONE = SerialPort.PARITY_NONE;
-    public static final int PARITY_ODD = SerialPort.PARITY_ODD;
-    public static final int PARITY_SPACE = SerialPort.PARITY_SPACE;
+    public static final int PARITY_NONE = 0;
+    public static final int PARITY_ODD = 1;
+    public static final int PARITY_EVEN = 2;
+    public static final int PARITY_MARK = 3;
+    public static final int PARITY_SPACE = 4;
 
-    public static final int STOPBITS_1 = SerialPort.STOPBITS_1;
-    public static final int STOPBITS_1_5 = SerialPort.STOPBITS_1_5;
-    public static final int STOPBITS_2 = SerialPort.STOPBITS_2;
+    public static final int STOPBITS_1 = 1;
+    public static final int STOPBITS_1_5 = 15;
+    public static final int STOPBITS_2 = 2;
 
-    public static final int FLOWCONTROL_NONE = SerialPort.FLOWCONTROL_NONE;
-    public static final int FLOWCONTROL_RTSCTS_IN = SerialPort.FLOWCONTROL_RTSCTS_IN;
-    public static final int FLOWCONTROL_RTSCTS_OUT = SerialPort.FLOWCONTROL_RTSCTS_OUT;
-    public static final int FLOWCONTROL_XONXOFF_IN = SerialPort.FLOWCONTROL_XONXOFF_IN;
-    public static final int FLOWCONTROL_XONXOFF_OUT = SerialPort.FLOWCONTROL_XONXOFF_OUT;
+    public static final int FLOWCONTROL_NONE = 0;
+    public static final int FLOWCONTROL_RTSCTS_IN = 1;
+    public static final int FLOWCONTROL_RTSCTS_OUT = 2;
+    public static final int FLOWCONTROL_XONXOFF_IN = 4;
+    public static final int FLOWCONTROL_XONXOFF_OUT = 8;
 
     private final String port;
     private final int baudRate;

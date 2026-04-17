@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.util.Set;
 
 import org.eclipse.kura.comm.CommConnection;
+import org.eclipse.kura.comm.CommConnectionFactory;
 import org.eclipse.kura.comm.CommURI;
 import org.eclipse.kura.linux.position.provider.LockStatusListener;
 import org.eclipse.kura.linux.position.serial.NMEAParser.Code;
@@ -26,7 +27,6 @@ import org.eclipse.kura.linux.position.serial.NMEAParser.ParseException;
 import org.eclipse.kura.position.GNSSType;
 import org.eclipse.kura.position.NmeaPosition;
 import org.eclipse.kura.position.PositionException;
-import org.osgi.service.io.ConnectionFactory;
 import org.osgi.util.position.Position;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class GpsDevice {
 
     private final NMEAParser nmeaParser = new NMEAParser();
 
-    public GpsDevice(final ConnectionFactory connFactory, final CommURI commURI, final LockStatusListener listener)
+    public GpsDevice(final CommConnectionFactory connFactory, final CommURI commURI, final LockStatusListener listener)
             throws PositionException {
         this.uri = commURI;
         this.listener = listener;
@@ -116,9 +116,10 @@ public class GpsDevice {
         private CommConnection conn = null;
         private boolean run = true;
 
-        public SerialCommunicate(final ConnectionFactory connFactory, final CommURI commURI) throws PositionException {
+        public SerialCommunicate(final CommConnectionFactory connFactory, final CommURI commURI)
+                throws PositionException {
             try {
-                this.conn = (CommConnection) connFactory.createConnection(enableTimeouts(commURI).toString(), 1, false);
+                this.conn = (CommConnection) connFactory.createConnection(commURI);
                 this.in = new BufferedInputStream(requireNonNull(this.conn.openInputStream()));
             } catch (Exception e) {
                 closeSerialPort();
@@ -244,12 +245,6 @@ public class GpsDevice {
             }
         }
 
-        private CommURI enableTimeouts(final CommURI original) {
-            return new CommURI.Builder(original.getPort()).withBaudRate(original.getBaudRate())
-                    .withDataBits(original.getDataBits()).withStopBits(original.getStopBits())
-                    .withFlowControl(original.getFlowControl()).withParity(original.getParity())
-                    .withOpenTimeout(SERIAL_TIMEOUT_MS).withReceiveTimeout(SERIAL_TIMEOUT_MS).build();
-        }
     }
 
     @Override

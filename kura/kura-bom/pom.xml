@@ -76,14 +76,12 @@
         <org.eclipse.kura.db.sqlite.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.db.sqlite.provider.version>
         <org.eclipse.kura.deployment.agent.version>2.0.0-SNAPSHOT</org.eclipse.kura.deployment.agent.version>
         <org.eclipse.kura.driver.block.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.block.version>
-        <org.eclipse.kura.driver.gpio.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.gpio.provider.version>
         <org.eclipse.kura.driver.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.helper.provider.version>
         <org.eclipse.kura.driver.ibeacon.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.ibeacon.provider.version>
         <org.eclipse.kura.driver.opcua.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.opcua.provider.version>
         <org.eclipse.kura.driver.s7plc.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.s7plc.provider.version>
         <org.eclipse.kura.emulator.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.version>
         <org.eclipse.kura.emulator.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.clock.version>
-        <org.eclipse.kura.emulator.gpio.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.gpio.version>
         <org.eclipse.kura.emulator.net.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.net.version>
         <org.eclipse.kura.emulator.position.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.position.version>
         <org.eclipse.kura.emulator.usb.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.usb.version>
@@ -95,7 +93,6 @@
         <org.eclipse.kura.jul.to.slf4j.configuration.version>1.0.0-SNAPSHOT</org.eclipse.kura.jul.to.slf4j.configuration.version>
         <org.eclipse.kura.linux.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.clock.version>
         <org.eclipse.kura.linux.command.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.command.version>
-        <org.eclipse.kura.linux.gpio.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.gpio.version>
         <org.eclipse.kura.linux.net.version>3.0.0-SNAPSHOT</org.eclipse.kura.linux.net.version>
         <org.eclipse.kura.linux.position.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.position.version>
         <org.eclipse.kura.linux.systemd.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.systemd.provider.version>
@@ -111,7 +108,6 @@
         <org.eclipse.kura.net.configuration.version>2.0.0-SNAPSHOT</org.eclipse.kura.net.configuration.version>
         <org.eclipse.kura.network.threat.manager.version>2.0.0-SNAPSHOT</org.eclipse.kura.network.threat.manager.version>
         <org.eclipse.kura.nm.version>2.0.0-SNAPSHOT</org.eclipse.kura.nm.version>
-        <!--<org.eclipse.kura.protocol.modbus.version>3.0.0-SNAPSHOT</org.eclipse.kura.protocol.modbus.version>-->
         <org.eclipse.kura.request.handler.jaxrs.version>2.0.0-SNAPSHOT</org.eclipse.kura.request.handler.jaxrs.version>
         <org.eclipse.kura.rest.asset.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.asset.provider.version>
         <org.eclipse.kura.rest.cloudconnection.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.cloudconnection.provider.version>
@@ -344,11 +340,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.driver.gpio.provider</artifactId>
-                <version>${org.eclipse.kura.driver.gpio.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.driver.helper.provider</artifactId>
                 <version>${org.eclipse.kura.driver.helper.provider.version}</version>
             </dependency>
@@ -376,11 +367,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.emulator.clock</artifactId>
 	            <version>${org.eclipse.kura.emulator.clock.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.emulator.gpio</artifactId>
-	            <version>${org.eclipse.kura.emulator.gpio.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -436,11 +422,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.linux.command</artifactId>
                 <version>${org.eclipse.kura.linux.command.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.linux.gpio</artifactId>
-                <version>${org.eclipse.kura.linux.gpio.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -517,13 +498,6 @@
                 <artifactId>org.eclipse.kura.nm</artifactId>
                 <version>${org.eclipse.kura.nm.version}</version>
             </dependency>
-            <!--
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.protocol.modbus</artifactId>
-                <version>${org.eclipse.kura.protocol.modbus.version}</version>
-            </dependency>
-            -->
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.request.handler.jaxrs</artifactId>
@@ -858,10 +832,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.driver.gpio.provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.driver.helper.provider</artifactId>
         </dependency>
         <dependency>
@@ -883,10 +853,6 @@
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.emulator.clock</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.emulator.gpio</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
@@ -931,10 +897,6 @@
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.linux.command</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.linux.gpio</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
@@ -996,12 +958,6 @@
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.nm</artifactId>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.protocol.modbus</artifactId>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.request.handler.jaxrs</artifactId>

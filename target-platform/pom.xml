@@ -67,7 +67,7 @@
         <io.netty.version>4.2.12.Final</io.netty.version>
         <javassist.version>3.30.2-GA</javassist.version>
         <jersey.version>3.1.9</jersey.version>
-        <log4j.version>2.24.3</log4j.version>
+        <log4j.version>2.25.4</log4j.version>
         <mimepull.version>1.10.0</mimepull.version>
         <org.apache.aries.spifly.dynamic.bundle.version>1.3.7</org.apache.aries.spifly.dynamic.bundle.version>
         <!--<org.apache.camel.version>2.25.3</org.apache.camel.version>-->
@@ -130,7 +130,6 @@
         <org.eclipse.equinox.common.version>3.20.300</org.eclipse.equinox.common.version>
         <org.eclipse.equinox.console.version>1.4.1100</org.eclipse.equinox.console.version>
         <org.eclipse.equinox.event.version>1.7.300</org.eclipse.equinox.event.version>
-        <org.eclipse.equinox.io.version>1.1.300</org.eclipse.equinox.io.version>
         <org.eclipse.equinox.launcher.version>1.7.100</org.eclipse.equinox.launcher.version>
         <org.eclipse.equinox.metatype.version>1.6.900</org.eclipse.equinox.metatype.version>
         <org.eclipse.equinox.preferences.version>3.12.100</org.eclipse.equinox.preferences.version>
@@ -174,9 +173,7 @@
         <!--<org.apache.activemq.artemis.upstream.version>2.6.4</org.apache.activemq.artemis.upstream.version>-->
         <usb4java.version>1.2.0</usb4java.version>
         <!-- END target platform dependencies -->
-        <com.codeminders.hidapi.version>2.0.0-SNAPSHOT</com.codeminders.hidapi.version>
         <!--<com.gwt.user.version>2.0.0-SNAPSHOT</com.gwt.user.version>-->
-        <jdk.dio.version>2.0.0-SNAPSHOT</jdk.dio.version>
         <log4j2-api-config.version>2.0.0-SNAPSHOT</log4j2-api-config.version>
         <!--<org.apache.activemq.artemis.version>3.0.0-SNAPSHOT</org.apache.activemq.artemis.version>-->
         <!-- <org.eclipse.kura.camel.sun.misc.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.sun.misc.version> -->
@@ -221,11 +218,8 @@
         <!--<module>org.apache.activemq.artemis</module>-->
         <!--<module>org.eclipse.kura.camel.sun.misc</module>-->
         <module>org.eclipse.kura.sun.misc</module>
-        <module>com.codeminders.hidapi-parent</module>
         <module>org.usb4java</module>
         <module>usb4java-javax</module>
-        <module>org.eclipse.soda.dk.comm-parent</module>
-        <module>jdk.dio-parent</module>
         <module>log4j2-api-config</module>
         <module>p2-repo-extra</module>
     </modules>

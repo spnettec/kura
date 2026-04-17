@@ -38,7 +38,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.soda.dk.comm"
+         id="com.fazecast.jSerialComm"
          download-size="0"
          install-size="0"
          version="0.0.0"

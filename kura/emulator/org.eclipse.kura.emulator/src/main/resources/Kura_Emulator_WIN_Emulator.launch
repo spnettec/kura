@@ -102,8 +102,6 @@
         <setEntry value="org.eclipse.kura.linux.gpio.test"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
         <setEntry value="org.eclipse.kura.linux.net.test"/>
-        <setEntry value="org.eclipse.kura.linux.position"/>
-        <setEntry value="org.eclipse.kura.linux.position.test"/>
         <setEntry value="org.eclipse.kura.linux.redhat.provider"/>
         <setEntry value="org.eclipse.kura.linux.systemd.provider"/>
         <setEntry value="org.eclipse.kura.linux.sysv.provider"/>
@@ -353,7 +351,6 @@
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.paho.client.mqttv3@default:default"/>
-        <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
         <setEntry value="org.glassfish.hk2.api@default:default"/>
         <setEntry value="org.glassfish.hk2.external.aopalliance-repackaged@default:default"/>
         <setEntry value="org.glassfish.hk2.locator@default:default"/>

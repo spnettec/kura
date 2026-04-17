@@ -108,8 +108,8 @@ public class MMLocationParser {
     }
 
     /*
-     * Used by MMPositionProvider to invalidate position in case ModemManager doesn't provide any data, neither the nmea
-     * nor the raw. Usually, the Nmea data is always provided, while the Raw is provided only if Nmea has fix.
+     * Invalidates the cached position when ModemManager doesn't provide either NMEA or raw location data. Usually, the
+     * NMEA data is always provided, while the raw data is available only when NMEA has a fix.
      */
 
     public void setInvalidFix() {

@@ -17,8 +17,7 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.kura.core.comm.CommConnectionFactory">
    <implementation class="org.eclipse.kura.core.comm.CommConnectionFactory"/>
    <service>
-      <provide interface="org.osgi.service.io.ConnectionFactory"/>
+      <provide interface="org.eclipse.kura.comm.CommConnectionFactory"/>
    </service>
-   <property name="io.scheme">comm</property>
    <property name="service.pid" value="org.eclipse.kura.core.comm.CommConnectionFactory"/>   
 </scr:component>

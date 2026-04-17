@@ -12,9 +12,11 @@
  ******************************************************************************/
 package org.eclipse.kura.comm;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-
-import javax.microedition.io.StreamConnection;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.eclipse.kura.KuraException;
 import org.osgi.annotation.versioning.ProviderType;
@@ -24,7 +26,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * this class may be operated on by more than one thread. Settings will be
  * those of the last thread to successfully change each particular setting.
  * <p>
- * Code written to use a javax.comm.SerialPort object in a shared mode should
+ * Code written to use a shared serial port connection should
  * make use of synchronization blocks where exclusive transactions are wanted.
  * In most instances, both the OutputStream and the InputStream should be
  * synchronized on, normally with the OutputStream being synchronized first.
@@ -39,7 +41,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *                                        .withParity(0)
  *                                        .withTimeout(2000)
  *                                        .build().toString();
- *            CommConnection connOne = (CommConnection) CommTest.connectionFactory.createConnection(uri, 1, false);
+ *            CommConnection connOne = CommTest.connectionFactory.createConnection(CommURI.parseString(uri));
  *            assertNotNull(connOne);
  *            uri = new CommURI.Builder("/dev/tty.PL2303-00002006")
  *                                        .withBaudRate(19200)
@@ -48,7 +50,7 @@ import org.osgi.annotation.versioning.ProviderType;
  *                                        .withParity(0)
  *                                        .withTimeout(2000)
  *                                        .build().toString();
- *            CommConnection connTwo = (CommConnection) CommTest.connectionFactory.createConnection(uri, 1, false);
+ *            CommConnection connTwo = CommTest.connectionFactory.createConnection(CommURI.parseString(uri));
  *            assertNotNull(connTwo);
  *
  *            InputStream isOne = connOne.openInputStream();
@@ -116,7 +118,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @noimplement This interface is not intended to be implemented by clients.
  */
 @ProviderType
-public interface CommConnection extends StreamConnection {
+public interface CommConnection {
 
     /**
      * Returns the URI for this connection.
@@ -124,6 +126,14 @@ public interface CommConnection extends StreamConnection {
      * @return this connection URI
      */
     public CommURI getURI();
+
+    DataInputStream openDataInputStream() throws IOException;
+
+    InputStream openInputStream() throws IOException;
+
+    DataOutputStream openDataOutputStream() throws IOException;
+
+    OutputStream openOutputStream() throws IOException;
 
     /**
      * Sends and array of bytes to a CommConnection
@@ -166,6 +176,5 @@ public interface CommConnection extends StreamConnection {
      */
     public byte[] flushSerialBuffer() throws KuraException, IOException;
 
-    @Override
     public void close() throws IOException;
 }

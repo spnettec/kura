@@ -59,10 +59,7 @@
         <module>org.eclipse.kura.driver.opcua.provider</module>
         <module>org.eclipse.kura.driver.block</module>
         <module>org.eclipse.kura.driver.s7plc.provider</module>
-        <module>org.eclipse.kura.driver.gpio.provider</module>
         <module>org.eclipse.kura.linux.clock</module>
-        <module>org.eclipse.kura.linux.command</module>
-        <module>org.eclipse.kura.linux.gpio</module>
         <module>org.eclipse.kura.linux.net</module>
         <module>org.eclipse.kura.linux.position</module>
         <module>org.eclipse.kura.linux.usb</module>

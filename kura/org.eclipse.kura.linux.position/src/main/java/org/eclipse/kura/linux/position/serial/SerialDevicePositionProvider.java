@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
+import org.eclipse.kura.comm.CommConnectionFactory;
 import org.eclipse.kura.comm.CommURI;
 import org.eclipse.kura.linux.position.options.PositionServiceOptions;
 import org.eclipse.kura.linux.position.provider.GpsDeviceAvailabilityListener;
@@ -24,7 +25,6 @@ import org.eclipse.kura.linux.position.provider.PositionProvider;
 import org.eclipse.kura.linux.position.provider.PositionProviderType;
 import org.eclipse.kura.position.GNSSType;
 import org.eclipse.kura.position.NmeaPosition;
-import org.osgi.service.io.ConnectionFactory;
 import org.osgi.util.measurement.Measurement;
 import org.osgi.util.measurement.Unit;
 import org.osgi.util.position.Position;
@@ -37,7 +37,7 @@ public class SerialDevicePositionProvider implements PositionProvider {
 
     private GpsDeviceTracker gpsDeviceTracker;
     private ModemGpsStatusTracker modemGpsStatusTracker;
-    private ConnectionFactory connectionFactory;
+    private CommConnectionFactory connectionFactory;
 
     private GpsDevice gpsDevice;
 
@@ -71,11 +71,11 @@ public class SerialDevicePositionProvider implements PositionProvider {
     //
     // ----------------------------------------------------------------
 
-    public void setConnectionFactory(final ConnectionFactory connectionFactory) {
+    public void setConnectionFactory(final CommConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
     }
 
-    public void unsetConnectionFactory(final ConnectionFactory connectionFactory) {
+    public void unsetConnectionFactory(final CommConnectionFactory connectionFactory) {
         this.connectionFactory = null;
     }
 
@@ -242,7 +242,7 @@ public class SerialDevicePositionProvider implements PositionProvider {
         return this.gpsDevice;
     }
 
-    public ConnectionFactory getConnectionFactory() {
+    public CommConnectionFactory getConnectionFactory() {
         return this.connectionFactory;
     }
 

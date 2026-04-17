@@ -30,19 +30,22 @@
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
         <RollingFile name="audit" fileName="${log_dir}/${log_name}-audit.log" filePattern="${log_dir}/${log_name}-audit-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
-            <RFC5424Layout enterpriseNumber="28392" includeMDC="true" mdcId="RequestContext" appName="EclipseKura" mdcPrefix="" newLine="true">
-                <LoggerFields>
-                    <KeyValuePair key="thread" value="%t"/>
-                    <KeyValuePair key="priority" value="%p"/>
-                    <KeyValuePair key="category" value="%c"/>
-                    <KeyValuePair key="exception" value="%ex"/>
-                </LoggerFields>
-            </RFC5424Layout>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="20 MB"/>
-            </Policies>
-            <DefaultRolloverStrategy max="10"/>
-        </RollingFile>
+		    <RFC5424Layout enterpriseNumber="28392" includeMDC="true" mdcId="RequestContext" appName="EclipseKura" mdcPrefix="" includeNL="true">
+		        <LoggerFields>
+		            <KeyValuePair key="thread" value="%t"/>
+		            <KeyValuePair key="priority" value="%p"/>
+		            <KeyValuePair key="category" value="%c"/>
+		            <KeyValuePair key="exception" value="%ex"/>
+		        </LoggerFields>
+		    </RFC5424Layout>
+		    <Policies>
+		        <SizeBasedTriggeringPolicy size="20 MB"/>
+		    </Policies>
+		    <DefaultRolloverStrategy max="10"/>
+		</RollingFile>
+		<Console name="STDOUT" target="SYSTEM_OUT">
+	        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5p %c{1.} - %m%n"/>
+	    </Console>
     </Appenders>
     <Loggers>
         <Logger name="org.eclipse" level="info" additivity="false">
@@ -56,6 +59,7 @@
         </Logger>
         <Root level="info">
             <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="STDOUT"/>
         </Root>
     </Loggers>
 </Configuration>

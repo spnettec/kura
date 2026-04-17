@@ -155,11 +155,6 @@
                                     <transitive>false</transitive>
                                 </artifact>
                                 <artifact>
-                                    <id>org.eclipse.platform:org.eclipse.equinox.io:${org.eclipse.equinox.io.version}</id>
-                                    <source>true</source>
-                                    <transitive>false</transitive>
-                                </artifact>
-                                <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.metatype:${org.eclipse.equinox.metatype.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
@@ -230,22 +225,6 @@
                                     <transitive>false</transitive>
                                 </artifact>
                                 
-                                
-                                <artifact>
-									<id>org.eclipse.kura:com.codeminders.hidapi:${com.codeminders.hidapi.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>org.eclipse.kura:com.codeminders.hidapi.x86_64:${com.codeminders.hidapi.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>org.eclipse.kura:com.codeminders.hidapi.aarch64:${com.codeminders.hidapi.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
                                 <artifact>
 									<id>commons-net:commons-net:${org.apache.commons.commons-net.version}</id>
 									<source>true</source>
@@ -273,21 +252,6 @@
 								</artifact>
                                 <artifact>
 									<id>com.h2database:h2:${com.h2database.h2.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>org.eclipse.kura:jdk.dio:${jdk.dio.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>org.eclipse.kura:jdk.dio.x86_64:${jdk.dio.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>org.eclipse.kura:jdk.dio.aarch64:${jdk.dio.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -418,11 +382,6 @@
 								</artifact>
                                 <artifact>
 									<id>com.google.code.gson:gson:${com.google.gson.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                <artifact>
-									<id>com.github.hypfvieh:bluez-dbus-osgi:${bluez-dbus-osgi.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

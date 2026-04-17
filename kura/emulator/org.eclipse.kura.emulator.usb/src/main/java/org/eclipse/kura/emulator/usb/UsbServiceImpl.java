@@ -16,9 +16,6 @@ package org.eclipse.kura.emulator.usb;
 import java.util.Collections;
 import java.util.List;
 
-import javax.usb.UsbServices;
-
-import org.eclipse.kura.KuraException;
 import org.eclipse.kura.usb.UsbBlockDevice;
 import org.eclipse.kura.usb.UsbDevice;
 import org.eclipse.kura.usb.UsbNetDevice;
@@ -32,11 +29,6 @@ public class UsbServiceImpl implements UsbService {
     }
 
     protected void deactivate(ComponentContext componentContext) {
-    }
-
-    @Override
-    public UsbServices getUsbServices() throws KuraException {
-        return null;
     }
 
     @Override

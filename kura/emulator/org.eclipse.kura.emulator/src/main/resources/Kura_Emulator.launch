@@ -96,7 +96,7 @@
         <setEntry value="org.eclipse.osgi.services@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
-        <setEntry value="org.eclipse.soda.dk.comm@default:default"/>
+        <setEntry value="com.fazecast.jSerialComm@default:default"/>
         <setEntry value="org.quartz-scheduler.quartz@default:default"/>
         <setEntry value="org.usb4java@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
@@ -242,8 +242,6 @@
         <setEntry value="org.eclipse.kura.linux.gpio@default:default"/>
         <setEntry value="org.eclipse.kura.linux.net.test@default:false"/>
         <setEntry value="org.eclipse.kura.linux.net@default:default"/>
-        <setEntry value="org.eclipse.kura.linux.position.test@default:false"/>
-        <setEntry value="org.eclipse.kura.linux.position@default:default"/>
         <setEntry value="org.eclipse.kura.linux.systemd.provider@default:default"/>
         <setEntry value="org.eclipse.kura.linux.usb.aarch64@default:false"/>
         <setEntry value="org.eclipse.kura.linux.usb.armv6hf@default:false"/>

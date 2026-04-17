@@ -498,9 +498,6 @@
       <dropinLocation
           rootFolder="${git.clone.location}/target-platform/usb4java-javax/target"
           recursive="false"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/org.eclipse.soda.dk.comm/target"
-          recursive="false"/>
     </targlet>
     <description>Kura</description>
   </setupTask>

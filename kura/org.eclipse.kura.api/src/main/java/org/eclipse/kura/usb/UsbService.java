@@ -14,9 +14,6 @@ package org.eclipse.kura.usb;
 
 import java.util.List;
 
-import javax.usb.UsbServices;
-
-import org.eclipse.kura.KuraException;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -26,14 +23,6 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface UsbService {
-
-    /**
-     * Gets the UsbServices currently available as specified by JSR-80 in the javax.usb
-     *
-     * @return The currently available javax.usb.UsbServices
-     * @throws KuraException
-     */
-    public UsbServices getUsbServices() throws KuraException;
 
     /**
      * Gets the USB devices on the gateway

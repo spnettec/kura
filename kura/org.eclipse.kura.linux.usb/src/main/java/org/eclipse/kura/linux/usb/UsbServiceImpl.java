@@ -18,12 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.usb.UsbException;
-import javax.usb.UsbHostManager;
-import javax.usb.UsbServices;
-
-import org.eclipse.kura.KuraErrorCode;
-import org.eclipse.kura.KuraException;
 import org.eclipse.kura.linux.udev.LinuxUdevListener;
 import org.eclipse.kura.usb.UsbBlockDevice;
 import org.eclipse.kura.usb.UsbDevice;
@@ -74,17 +68,6 @@ public class UsbServiceImpl implements UsbService, LinuxUdevListener {
 
     public void unsetEventAdmin(EventAdmin eventAdmin) {
         this.eventAdmin = null;
-    }
-
-    @Override
-    public UsbServices getUsbServices() throws KuraException {
-        try {
-            return UsbHostManager.getUsbServices();
-        } catch (SecurityException e) {
-            throw new KuraException(KuraErrorCode.SECURITY_EXCEPTION, e, (Object[]) null);
-        } catch (UsbException e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e, (Object[]) null);
-        }
     }
 
     @Override
