@@ -24,19 +24,17 @@ public class KuraErrorHandler extends ErrorHandler {
 
     @Override
     protected void writeErrorHtml(Request request, Writer writer, Charset charset, int code, String message,
-            Throwable cause, boolean showStacks) throws IOException {
+            Throwable cause) throws IOException {
         // do nothing
     }
 
     @Override
-    protected void writeErrorPlain(Request request, PrintWriter writer, int code, String message, Throwable cause,
-            boolean showStacks) {
+    protected void writeErrorPlain(Request request, PrintWriter writer, int code, String message, Throwable cause) {
         // do nothing
     }
 
     @Override
-    protected void writeErrorJson(Request request, PrintWriter writer, int code, String message, Throwable cause,
-            boolean showStacks) {
+    protected void writeErrorJson(Request request, PrintWriter writer, int code, String message, Throwable cause) {
         // do nothing
     }
 

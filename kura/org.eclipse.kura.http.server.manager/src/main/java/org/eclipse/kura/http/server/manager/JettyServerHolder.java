@@ -42,6 +42,7 @@ import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration.Customizer;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -164,8 +165,8 @@ public class JettyServerHolder {
         servletContextHandler.setErrorHandler(new ErrorHandler() {
 
             @Override
-            protected void writeErrorPage(HttpServletRequest request, Writer writer, int code, String message,
-                    boolean showStacks) throws IOException {
+            protected void writeErrorHtmlMessage(Request request, Writer writer, int code, String message,
+                    Throwable cause, String uri) throws IOException {
                 // do nothing
             }
 
