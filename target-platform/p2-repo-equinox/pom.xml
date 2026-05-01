@@ -180,6 +180,11 @@
                                     <transitive>false</transitive>
                                 </artifact>
                                 <artifact>
+                                    <id>org.eclipse.platform:org.eclipse.core.runtime:${org.eclipse.core.runtime.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
                                     <id>org.eclipse.platform:org.eclipse.core.jobs:${org.eclipse.core.jobs.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
