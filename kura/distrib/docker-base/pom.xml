@@ -59,7 +59,7 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>docker-aarch64-nn-jars</id>
+                        <id>docker-nn-jars</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -70,11 +70,11 @@
                                 <property name="project.version" value="${project.version}" />
                                 <property name="project.build.profile" value="${project.build.profile}" />
                                 <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="docker-aarch64-nn" />
-                                <property name="target.device" value="docker-aarch64-nn" />
-                                <property name="native.tag" value="aarch64" />
+                                <property name="build.name" value="docker-nn" />
+                                <property name="target.device" value="docker-nn" />
+                                <property name="native.tag" value="${native.tag}" />
                                 <property name="kura.os.version" value="linux" />
-                                <property name="kura.arch" value="aarch64" />
+                                <property name="kura.arch" value="${kura.arch}" />
                                 <property name="kura.mem.size" value="1024m" />
                                 <property name="kura.install.dir" value="/opt/eclipse" />
                                 <property name="kura.basedir" value="${kura.basedir}" />
@@ -91,14 +91,14 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>docker-aarch64-nn-build-container</id>
+                        <id>docker-nn-build-container</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-aarch64-nn/Dockerfile" />
+                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-nn/Dockerfile" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
@@ -117,26 +117,48 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>filter-deb-control</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/docker-nn/deb/control</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.vafer</groupId>
                 <artifactId>jdeb</artifactId>
                 <version>${jdeb-version}</version>
                 <executions>
                     <execution>
-                        <id>docker-aarch64-nn-deb</id>
+                        <id>docker-nn-deb</id>
                         <phase>package</phase>
                         <goals>
                             <goal>jdeb</goal>
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_docker-aarch64-nn_installer.deb</deb>
+                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_docker-nn_installer_${deb.arch}.deb</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
-                            <controlDir>${basedir}/../src/main/resources/docker-aarch64-nn/deb/control</controlDir>
+                            <controlDir>${project.build.directory}/filtered-control</controlDir>
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_docker-aarch64-nn.zip</src>
+                                    <src>${basedir}/target/kura_${project.version}_docker-nn.zip</src>
                                     <type>file</type>
                                     <mapper>
                                         <type>perm</type>

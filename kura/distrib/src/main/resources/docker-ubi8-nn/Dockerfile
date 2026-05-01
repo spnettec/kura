@@ -10,7 +10,7 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 
 COPY bin/ /usr/local/bin/
 
-COPY --from=kura_base /kura-install/kura_*_docker-aarch64-nn_installer.sh /kura-install/
+COPY --from=kura_base /kura-install/kura_*_docker-nn_installer.sh /kura-install/
 COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
@@ -43,7 +43,7 @@ RUN true && \
         findutils \
     && \
     microdnf -y clean all && rm -rf /var/cache/yum && \
-    /kura-install/kura_*_docker-aarch64-nn_installer.sh && \
+    /kura-install/kura_*_docker-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
     find /opt/eclipse -type d | xargs chmod a+x && \

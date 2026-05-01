@@ -19,7 +19,7 @@ Depends: dos2unix, unzip,
  bluez, chrony, 
  openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | temurin-17-jdk,
  cron
-Architecture: arm64
+Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>
 Homepage: https://eclipse-kura.github.io/kura/
 Description: Open-source IoT edge framework based on Java/OSGi

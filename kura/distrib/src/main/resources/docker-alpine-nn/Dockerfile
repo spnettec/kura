@@ -10,7 +10,7 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 
 COPY bin/ /usr/local/bin/
 
-COPY --from=kura_base /kura-install/kura_*_docker-aarch64-nn_installer.sh /kura-install/
+COPY --from=kura_base /kura-install/kura_*_docker-nn_installer.sh /kura-install/
 COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
@@ -25,7 +25,7 @@ RUN chmod a+x -R /usr/local/bin && \
     apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
     apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
     apk --no-cache add shadow && \
-    /kura-install/kura_*_docker-aarch64-nn_installer.sh && \
+    /kura-install/kura_*_docker-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
     find /opt/eclipse -type d | xargs chmod a+x && \
