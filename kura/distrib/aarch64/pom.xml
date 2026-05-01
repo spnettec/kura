@@ -84,6 +84,35 @@
                             </target>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>aarch64-yofc-dp-overlay</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property name="kura.tree" value="${project.build.directory}/kura_${project.version}_aarch64" />
+                                <property name="kura.zip" value="${project.build.directory}/kura_${project.version}_aarch64.zip" />
+                                <property name="dp.src" value="${HOME}/IdeaProjects/yofc-iot" />
+                                <mkdir dir="${kura.tree}/packages" />
+                                <copy todir="${kura.tree}/packages" failonerror="true">
+                                    <fileset file="${dp.src}/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
+                                </copy>
+                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp
+yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp
+yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp
+yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp
+]]></echo>
+                                <zip destfile="${kura.zip}" update="true">
+                                    <zipfileset dir="${kura.tree}/packages" prefix="kura_${project.version}_aarch64/packages" />
+                                </zip>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
