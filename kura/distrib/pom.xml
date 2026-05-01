@@ -196,6 +196,46 @@
             <artifactId>tel.schich.javacan-core</artifactId>
             <version>3.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.gwtbootstrap3</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.gwtproject.gwt-servlet-jakarta</artifactId>
+            <version>2.12.2</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>com.digitalpetri.netty.channel-fsm</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>io.vertx.core</artifactId>
+            <version>5.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>io.vertx.web-client</artifactId>
+            <version>5.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>1.2.5</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -430,7 +470,8 @@
                                 <includeArtifactIds>
                                 org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider, org.eclipse.kura.linux.clock, org.eclipse.kura.linux.net,
                                 org.eclipse.kura.linux.position, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog, org.eclipse.kura.net.configuration,
-                                org.eclipse.kura.request.handler.jaxrs
+                                org.eclipse.kura.request.handler.jaxrs,
+                                org.eclipse.kura.linux.usb.${native.tag}
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>

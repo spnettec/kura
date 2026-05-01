@@ -292,7 +292,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <exec executable="${project.basedir}/install-to-m2.sh"
+                                <exec executable="${project.basedir}/../install-to-m2.sh"
                                       dir="${project.basedir}"
                                       failonerror="true">
                                     <arg value="${project.build.directory}/repository/plugins" />
