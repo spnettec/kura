@@ -30,6 +30,8 @@
 
     <properties>
         <kura.basedir>../</kura.basedir>
+        <dist.assembly.name>kura_${project.version}_linux-nn</dist.assembly.name>
+        <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
     </properties>
 
    <build>
