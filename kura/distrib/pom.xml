@@ -36,16 +36,10 @@
         <module>aarch64</module>
         <module>aarch64-core</module>
         <module>aarch64-nn</module>
-        
-        <module>x86_64</module>
-        <module>x86_64-core</module>
-        <module>x86_64-nn</module>
 
-        
         <module>docker-base</module>
         <module>docker-alpine</module>
         <module>docker-ubi8</module>
-       
     </modules>
     
     <properties>

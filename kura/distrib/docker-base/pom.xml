@@ -59,7 +59,7 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>docker-x86_64-nn-jars</id>
+                        <id>docker-aarch64-nn-jars</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -70,11 +70,11 @@
                                 <property name="project.version" value="${project.version}" />
                                 <property name="project.build.profile" value="${project.build.profile}" />
                                 <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="docker-x86_64-nn" />
-                                <property name="target.device" value="docker-x86_64-nn" />
-                                <property name="native.tag" value="x86_64" />
+                                <property name="build.name" value="docker-aarch64-nn" />
+                                <property name="target.device" value="docker-aarch64-nn" />
+                                <property name="native.tag" value="aarch64" />
                                 <property name="kura.os.version" value="linux" />
-                                <property name="kura.arch" value="x86_64" />
+                                <property name="kura.arch" value="aarch64" />
                                 <property name="kura.mem.size" value="1024m" />
                                 <property name="kura.install.dir" value="/opt/eclipse" />
                                 <property name="kura.basedir" value="${kura.basedir}" />
@@ -91,14 +91,14 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>docker-x86_64-nn-build-container</id>
+                        <id>docker-aarch64-nn-build-container</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-x86_64-nn/Dockerfile" />
+                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-aarch64-nn/Dockerfile" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
                                 <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
@@ -122,21 +122,21 @@
                 <version>${jdeb-version}</version>
                 <executions>
                     <execution>
-                        <id>docker-x86_64-nn-deb</id>
+                        <id>docker-aarch64-nn-deb</id>
                         <phase>package</phase>
                         <goals>
                             <goal>jdeb</goal>
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_docker-x86_64-nn_installer.deb</deb>
+                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_docker-aarch64-nn_installer.deb</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
-                            <controlDir>${basedir}/../src/main/resources/docker-x86_64-nn/deb/control</controlDir>
+                            <controlDir>${basedir}/../src/main/resources/docker-aarch64-nn/deb/control</controlDir>
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_docker-x86_64-nn.zip</src>
+                                    <src>${basedir}/target/kura_${project.version}_docker-aarch64-nn.zip</src>
                                     <type>file</type>
                                     <mapper>
                                         <type>perm</type>

@@ -1,6 +1,6 @@
 ARG base_image_version=latest
 FROM base-kura-docker:${base_image_version} AS kura_base
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM alpine:latest
 
 MAINTAINER Eclipse Kura Developers <kura-dev@eclipse.org>
 LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
@@ -10,68 +10,51 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 
 COPY bin/ /usr/local/bin/
 
-COPY --from=kura_base /kura-install/kura_*_docker-x86_64-nn_installer.sh /kura-install/
+COPY --from=kura_base /kura-install/kura_*_docker-aarch64-nn_installer.sh /kura-install/
 COPY --from=kura_base /kura-install/*.dp /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
-  SKIP_JAVA_VERSION_CHECK=true \
-  LAUNCHER_VERSION="1.7.100" \
-  TZ=Asia/Shanghai \
-  LANG=C.UTF-8 \
-  LC_ALL=C.UTF-8
+  LAUNCHER_VERSION="1.7.100" 
 
-RUN true && \
-    rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
-    microdnf -y update && \
-    microdnf -y install \
-	    glibc-common \
-		glibc-all-langpacks \
-        java-21-openjdk-headless \
-        procps \
-        zip \
-        unzip \
-        gzip \
-        tar \
-        psmisc \
-        socat \
-        dos2unix \
-        openssl \
-        net-tools \
-        hostname \
-        which \
-        findutils \
-    && \
-    microdnf -y clean all && rm -rf /var/cache/yum && \
-    /kura-install/kura_*_docker-x86_64-nn_installer.sh && \
+
+
+RUN chmod a+x -R /usr/local/bin && \
+    apk update && \
+    apk --no-cache add openjdk21-jre bash zip curl gcompat procps unzip gzip tar && \
+    apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
+    apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
+    apk --no-cache add shadow && \
+    /kura-install/kura_*_docker-aarch64-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
     find /opt/eclipse -type d | xargs chmod a+x && \
     chmod a+rwx /var/log && \
     `# Test for the existence of the entry point` \
-    test -x "${KURA_DIR}/bin/start_kura.sh" && \
-    chmod a+x -R /usr/local/bin/ && \
+    test -x "${KURA_DIR}/bin/start_kura.sh"&& \
+    chmod a+x /usr/local/bin/* && \
+    cd /root && \
+    rm -Rf /context /kura /root/.m2 && \
     install -m 0777 -d "${KURA_DIR}/data" && \
+    ln -s /bin/bash /usr/bin/bash && \
     mkdir -p ${KURA_DIR}/packages && \
-    if [ "$PACKED" == "true" ]; then touch /kura.packed && sh pack-kura; fi  && \
-    chmod +x /usr/local/bin/*  && \
-    unpack-kura  && \
+    if [ "$PACKED" == "true" ]; then touch /kura.packed && pack-kura; fi && \
+    unpack-kura && \
+    sed -i "s/\-printf \'\%P.n\'//g" /usr/local/bin/dp-install && \
     dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
     dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
+    # dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
     add-config-ini "felix.fileinstall.disableNio2=true" && \
     add-config-ini "felix.fileinstall.dir=/load" && \
-    rm -rf /kura-install/ && \
-    microdnf -y clean all && rm -rf /var/cache/yum && \
+    rm -Rf /kura-install &&\
     pack-kura
 
 EXPOSE 443
-EXPOSE 1883
-EXPOSE 8088
 
-VOLUME ["/load","/opt/eclipse"]
+VOLUME ["/load"]
 
 ENTRYPOINT ["/usr/local/bin/kura-entry-point"]

@@ -59,11 +59,11 @@
                 <version>1.6.0</version>
                 <executions>
                     <execution>
-                        <id>docker-ubi8-x86_64-nn-build-container</id>
+                        <id>docker-ubi8-aarch64-nn-build-container</id>
                         <phase>package</phase>
                         <configuration>
                             <executable>docker</executable>
-                            <workingDirectory>${project.basedir}/../src/main/resources/docker-ubi8-x86_64-nn</workingDirectory>
+                            <workingDirectory>${project.basedir}/../src/main/resources/docker-ubi8-aarch64-nn</workingDirectory>
                             <arguments>
                                 <argument>build</argument>
                                 <argument>--build-arg</argument>
