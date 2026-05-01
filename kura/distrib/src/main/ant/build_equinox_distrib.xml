@@ -439,7 +439,11 @@
         <echo message="Building Kura Distribution for ${build.output.name}..." />
 
         <copy file="${kura.basedir}/src/main/resources/${build.name}/kura.properties"
-            tofile="${project.build.directory}/${build.output.name}/kura.properties" />
+            tofile="${project.build.directory}/${build.output.name}/kura.properties">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <propertyfile file="${project.build.directory}/${build.output.name}/kura.properties">
             <entry key="kura.version" value="YOFC SMART IOT EDGE GATEWAY V${kura.version}" />
             <entry key="kura.home" value="${kura.install.dir}/${kura.symlink}" />

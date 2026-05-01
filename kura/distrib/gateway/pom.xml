@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2025 Eurotech and/or its affiliates and others
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+     Eurotech
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>distrib</artifactId>
+        <groupId>org.eclipse.kura</groupId>
+        <version>6.0.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+
+    <artifactId>gateway</artifactId>
+    <name>gateway</name>
+
+    <packaging>pom</packaging>
+
+    <properties>
+        <kura.basedir>../</kura.basedir>
+    </properties>
+
+   <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create-timestamp</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>gateway-jars</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property name="buildNumber" value="buildNumber" />
+                                <property name="project.version" value="${project.version}" />
+                                <property name="project.build.profile" value="${project.build.profile}" />
+                                <property name="project.build.directory" value="${project.build.directory}" />
+                                <property name="build.name" value="linux" />
+                                <property name="target.device" value="linux" />
+                                <property name="native.tag" value="${native.tag}" />
+                                <property name="kura.os.version" value="debian" />
+                                <property name="kura.arch" value="${kura.arch}" />
+                                <property name="kura.mem.size" value="1024m" />
+                                <property name="add.nvidia" value="${add.nvidia}" />
+                                <property name="kura.install.dir" value="/opt/eclipse" />
+                                <property name="kura.basedir" value="${kura.basedir}" />
+
+                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>gateway-yofc-dp-overlay</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property name="kura.tree" value="${project.build.directory}/kura_${project.version}_linux" />
+                                <property name="kura.zip" value="${project.build.directory}/kura_${project.version}_linux.zip" />
+                                <property name="dp.src" value="${HOME}/IdeaProjects/yofc-iot" />
+                                <mkdir dir="${kura.tree}/packages" />
+                                <copy todir="${kura.tree}/packages" failonerror="true">
+                                    <fileset file="${dp.src}/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
+                                </copy>
+                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp
+yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp
+yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp
+yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp
+]]></echo>
+                                <zip destfile="${kura.zip}" update="true">
+                                    <zipfileset dir="${kura.tree}/packages" prefix="kura_${project.version}_linux/packages" />
+                                </zip>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>filter-deb-control</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/linux/deb/control</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.vafer</groupId>
+                <artifactId>jdeb</artifactId>
+                <version>${jdeb-version}</version>
+                <executions>
+                    <execution>
+                        <id>gateway-deb</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jdeb</goal>
+                        </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_${deb.arch}.deb</deb>
+                            <snapshotExpand>true</snapshotExpand>
+                            <snapshotTemplate>${package.snapshot}</snapshotTemplate>
+                            <controlDir>${project.build.directory}/filtered-control</controlDir>
+                            <skipPOMs>false</skipPOMs>
+                            <dataSet>
+                                <data>
+                                    <src>${basedir}/target/kura_${project.version}_linux.zip</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/tmp</prefix>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.basedir}/../src/main/resources/common/99-kura-nm.conf</src>
+                                    <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
+                                    <type>file</type>
+                                </data>
+                            </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

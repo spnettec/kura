@@ -23,13 +23,22 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>aarch64-nn</artifactId>
-    <name>aarch64-nn</name>
+    <artifactId>gateway-core</artifactId>
+    <name>gateway-core</name>
 
     <packaging>pom</packaging>
 
     <properties>
         <kura.basedir>../</kura.basedir>
+        <deb.name>kura-core</deb.name>
+        <deb.dependencies>
+            setserial, zip, gzip, unzip, procps, usbutils, socat, gawk, sed, inetutils-telnet, polkit | policykit-1, ssh | openssh, openssl, busybox, cron, logrotate, libpam-modules, python3, openjdk-17-jre-headless | temurin-17-jdk, dos2unix, libtirpc3, chrony
+        </deb.dependencies>
+        <deb.provides></deb.provides>
+        <deb.recommendations></deb.recommendations>
+        <deb.architecture>${deb.arch}</deb.architecture>
+        <target.device>generic</target.device>
+        <kura.os.version>debian</kura.os.version>
     </properties>
 
    <build>
@@ -59,7 +68,7 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>aarch64-nn-jars</id>
+                        <id>gateway-core-jars</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -70,16 +79,16 @@
                                 <property name="project.version" value="${project.version}" />
                                 <property name="project.build.profile" value="${project.build.profile}" />
                                 <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="aarch64-nn" />
-                                <property name="target.device" value="aarch64-nn" />
-                                <property name="native.tag" value="aarch64" />
-                                <property name="kura.os.version" value="debian" />
-                                <property name="kura.arch" value="aarch64" />
+                                <property name="target.device" value="${target.device}" />
+                                <property name="native.tag" value="${native.tag}"/>
+                                <property name="kura.os.version" value="${kura.os.version}" />
+                                <property name="build.name" value="${target.device}_${kura.os.version}" />
+                                <property name="kura.arch" value="${kura.arch}"/>
                                 <property name="kura.mem.size" value="1024m" />
                                 <property name="kura.install.dir" value="/opt/eclipse" />
                                 <property name="kura.basedir" value="${kura.basedir}" />
 
-                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
+                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-core" />
                             </target>
                         </configuration>
                     </execution>
@@ -91,21 +100,21 @@
                 <version>${jdeb-version}</version>
                 <executions>
                     <execution>
-                        <id>aarch64-nn-deb</id>
+                        <id>gateway-core-deb</id>
                         <phase>package</phase>
                         <goals>
                             <goal>jdeb</goal>
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura-nn_${package.version}-${package.revision}_arm64.deb</deb>
+                            <deb>${basedir}/target/${deb.name}_${package.version}-${package.revision}_${deb.architecture}.deb</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
-                            <controlDir>${basedir}/../src/main/resources/aarch64-nn/deb/control</controlDir>
+                            <controlDir>${project.basedir}/../src/main/resources/common/deb/control</controlDir>
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_aarch64-nn.zip</src>
+                                    <src>${basedir}/target/kura_${project.version}_${target.device}_${kura.os.version}.zip</src>
                                     <type>file</type>
                                     <mapper>
                                         <type>perm</type>

@@ -33,9 +33,9 @@
     <url>https://eclipse.dev/kura/</url>
 
     <modules>
-        <module>aarch64</module>
-        <module>aarch64-core</module>
-        <module>aarch64-nn</module>
+        <module>gateway</module>
+        <module>gateway-core</module>
+        <module>gateway-nn</module>
 
         <module>docker-base</module>
         <module>docker-alpine</module>
@@ -382,6 +382,32 @@
     </build>
 
     <profiles>
+        <!-- Auto-activated by host CPU architecture; sets native.tag/kura.arch/deb.arch
+             so a single source tree builds the right artifact on any Linux host. -->
+        <profile>
+            <id>arch-aarch64</id>
+            <activation>
+                <os><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <native.tag>aarch64</native.tag>
+                <kura.arch>aarch64</kura.arch>
+                <deb.arch>arm64</deb.arch>
+                <add.nvidia>yes</add.nvidia>
+            </properties>
+        </profile>
+        <profile>
+            <id>arch-x86_64</id>
+            <activation>
+                <os><arch>amd64</arch></os>
+            </activation>
+            <properties>
+                <native.tag>x86_64</native.tag>
+                <kura.arch>x86_64</kura.arch>
+                <deb.arch>amd64</deb.arch>
+                <add.nvidia>no</add.nvidia>
+            </properties>
+        </profile>
         <!-- Internal profile: FOR INTERNAL USE ONLY - active if -DreleaseBuild is *not* specified. -->
         <profile>
             <id>debugBuild</id>

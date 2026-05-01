@@ -23,8 +23,8 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>aarch64</artifactId>
-    <name>aarch64</name>
+    <artifactId>gateway-nn</artifactId>
+    <name>gateway-nn</name>
 
     <packaging>pom</packaging>
 
@@ -59,7 +59,7 @@
                 <version>1.7</version>
                 <executions>
                     <execution>
-                        <id>aarch64-jars</id>
+                        <id>gateway-nn-jars</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>run</goal>
@@ -70,13 +70,12 @@
                                 <property name="project.version" value="${project.version}" />
                                 <property name="project.build.profile" value="${project.build.profile}" />
                                 <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="aarch64" />
-                                <property name="target.device" value="aarch64" />
-                                <property name="native.tag" value="aarch64" />
+                                <property name="build.name" value="linux-nn" />
+                                <property name="target.device" value="linux-nn" />
+                                <property name="native.tag" value="${native.tag}" />
                                 <property name="kura.os.version" value="debian" />
-                                <property name="kura.arch" value="aarch64" />
+                                <property name="kura.arch" value="${kura.arch}" />
                                 <property name="kura.mem.size" value="1024m" />
-                                <property name="add.nvidia" value="yes" />
                                 <property name="kura.install.dir" value="/opt/eclipse" />
                                 <property name="kura.basedir" value="${kura.basedir}" />
 
@@ -84,33 +83,26 @@
                             </target>
                         </configuration>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
                     <execution>
-                        <id>aarch64-yofc-dp-overlay</id>
+                        <id>filter-deb-control</id>
                         <phase>prepare-package</phase>
                         <goals>
-                            <goal>run</goal>
+                            <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <target>
-                                <property name="kura.tree" value="${project.build.directory}/kura_${project.version}_aarch64" />
-                                <property name="kura.zip" value="${project.build.directory}/kura_${project.version}_aarch64.zip" />
-                                <property name="dp.src" value="${HOME}/IdeaProjects/yofc-iot" />
-                                <mkdir dir="${kura.tree}/packages" />
-                                <copy todir="${kura.tree}/packages" failonerror="true">
-                                    <fileset file="${dp.src}/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
-                                </copy>
-                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp
-yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp
-yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp
-yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp
-]]></echo>
-                                <zip destfile="${kura.zip}" update="true">
-                                    <zipfileset dir="${kura.tree}/packages" prefix="kura_${project.version}_aarch64/packages" />
-                                </zip>
-                            </target>
+                            <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/linux-nn/deb/control</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>
@@ -121,31 +113,26 @@ yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuase
                 <version>${jdeb-version}</version>
                 <executions>
                     <execution>
-                        <id>aarch64-deb</id>
+                        <id>gateway-nn-deb</id>
                         <phase>package</phase>
                         <goals>
                             <goal>jdeb</goal>
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_arm64.deb</deb>
+                            <deb>${basedir}/target/kura-nn_${package.version}-${package.revision}_${deb.arch}.deb</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
-                            <controlDir>${basedir}/../src/main/resources/aarch64/deb/control</controlDir>
+                            <controlDir>${project.build.directory}/filtered-control</controlDir>
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_aarch64.zip</src>
+                                    <src>${basedir}/target/kura_${project.version}_linux-nn.zip</src>
                                     <type>file</type>
                                     <mapper>
                                         <type>perm</type>
                                         <prefix>/tmp</prefix>
                                     </mapper>
-                                </data>
-                                <data>
-                                    <src>${project.basedir}/../src/main/resources/common/99-kura-nm.conf</src>
-                                    <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
-                                    <type>file</type>
                                 </data>
                             </dataSet>
                         </configuration>
