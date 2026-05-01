@@ -32,6 +32,15 @@
         <kura.basedir>../</kura.basedir>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>yofc-dp</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
    <build>
         <resources>
             <resource>
@@ -94,18 +103,18 @@
                             <target>
                                 <property name="kura.tree" value="${project.build.directory}/kura_${project.version}_linux" />
                                 <property name="kura.zip" value="${project.build.directory}/kura_${project.version}_linux.zip" />
-                                <property name="dp.src" value="${HOME}/IdeaProjects/yofc-iot" />
+                                <property name="dp.src" value="${project.basedir}/../yofc-dp/target" />
                                 <mkdir dir="${kura.tree}/packages" />
                                 <copy todir="${kura.tree}/packages" failonerror="true">
-                                    <fileset file="${dp.src}/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
-                                    <fileset file="${dp.src}/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
+                                    <fileset file="${dp.src}/yofc-iot-api-comp-${yofc.dp.version}.dp" />
+                                    <fileset file="${dp.src}/yofc-iot-apps-comp-${yofc.dp.version}.dp" />
+                                    <fileset file="${dp.src}/yofc-iot-repack-vertx-db-${yofc.dp.version}.dp" />
+                                    <fileset file="${dp.src}/yofc-iot-apps-opcuaserver-${yofc.dp.version}.dp" />
                                 </copy>
-                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp
-yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp
-yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp
-yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp
+                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp-${yofc.dp.version}.dp
+yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp-${yofc.dp.version}.dp
+yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db-${yofc.dp.version}.dp
+yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver-${yofc.dp.version}.dp
 ]]></echo>
                                 <zip destfile="${kura.zip}" update="true">
                                     <zipfileset dir="${kura.tree}/packages" prefix="kura_${project.version}_linux/packages" />

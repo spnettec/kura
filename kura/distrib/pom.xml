@@ -33,6 +33,8 @@
     <url>https://eclipse.dev/kura/</url>
 
     <modules>
+        <module>yofc-dp</module>
+
         <module>gateway</module>
         <module>gateway-core</module>
         <module>gateway-nn</module>
@@ -45,6 +47,7 @@
     <properties>
         <tycho-version>4.0.11</tycho-version>
         <jdeb-version>1.14</jdeb-version>
+        <yofc.dp.version>0.0.1-SNAPSHOT</yofc.dp.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kura.basedir>${project.basedir}</kura.basedir>

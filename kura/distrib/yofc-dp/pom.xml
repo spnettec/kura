@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2026 YOFC and/or its affiliates and others
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>distrib</artifactId>
+        <groupId>org.eclipse.kura</groupId>
+        <version>6.0.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+
+    <artifactId>yofc-dp</artifactId>
+    <name>yofc-dp</name>
+
+    <packaging>pom</packaging>
+
+    <properties>
+        <kura.basedir>../</kura.basedir>
+        <yofc.dp.version>0.0.1-SNAPSHOT</yofc.dp.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-api-comp</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-apps-comp</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-repack-vertx-db</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-apps-opcuaserver</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-apps-influxdb</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+        <dependency>
+            <groupId>com.yofc.iot</groupId>
+            <artifactId>yofc-iot-apps-influxdbv1</artifactId>
+            <version>${yofc.dp.version}</version>
+            <type>dp</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-yofc-dp</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeTypes>dp</includeTypes>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

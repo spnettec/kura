@@ -56,12 +56,12 @@ RUN true && \
     if [ "$PACKED" == "true" ]; then touch /kura.packed && sh pack-kura; fi  && \
     chmod +x /usr/local/bin/*  && \
     unpack-kura  && \
-    dp-install-local "/kura-install/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-repack-vertx-db-0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-api-comp-0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-comp-0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-opcuaserver-0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdb-0.0.1-SNAPSHOT.dp" && \
+    dp-install-local "/kura-install/yofc-iot-apps-influxdbv1-0.0.1-SNAPSHOT.dp" && \
     add-config-ini "felix.fileinstall.disableNio2=true" && \
     add-config-ini "felix.fileinstall.dir=/load" && \
     rm -rf /kura-install/ && \

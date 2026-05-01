@@ -32,6 +32,15 @@
         <kura.basedir>../</kura.basedir>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>yofc-dp</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
    <build>
         <resources>
             <resource>
@@ -99,12 +108,11 @@
                         <configuration>
                             <target>
                                 <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-nn/Dockerfile" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.repack/com.yofc.iot.repack.vertx.db/target/yofc-iot-repack-vertx-db_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/target/yofc-iot-api-comp_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/target/yofc-iot-apps-comp_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/target/yofc-iot-apps-opcuaserver_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb/target/yofc-iot-apps-influxdb_0.0.1-SNAPSHOT.dp" />
-                                <copy todir="${project.build.directory}" file="${HOME}/IdeaProjects/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1/target/yofc-iot-apps-influxdbv1_0.0.1-SNAPSHOT.dp" />
+                                <copy todir="${project.build.directory}">
+                                    <fileset dir="${project.basedir}/../yofc-dp/target">
+                                        <include name="*.dp" />
+                                    </fileset>
+                                </copy>
                                 <exec executable="docker" dir="${project.build.directory}" failonerror="true">
                                     <arg value="build"/>
                                     <arg value="-t"/>
