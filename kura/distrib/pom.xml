@@ -33,8 +33,6 @@
     <url>https://eclipse.dev/kura/</url>
 
     <modules>
-        <module>yofc-dp</module>
-
         <module>gateway</module>
         <module>gateway-core</module>
         <module>gateway-nn</module>

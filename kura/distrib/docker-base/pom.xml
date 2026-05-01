@@ -32,15 +32,6 @@
         <kura.basedir>../</kura.basedir>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>yofc-dp</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-        </dependency>
-    </dependencies>
-
    <build>
         <resources>
             <resource>
@@ -108,11 +99,6 @@
                         <configuration>
                             <target>
                                 <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-nn/Dockerfile" />
-                                <copy todir="${project.build.directory}">
-                                    <fileset dir="${project.basedir}/../yofc-dp/target">
-                                        <include name="*.dp" />
-                                    </fileset>
-                                </copy>
                                 <exec executable="docker" dir="${project.build.directory}" failonerror="true">
                                     <arg value="build"/>
                                     <arg value="-t"/>
@@ -120,6 +106,60 @@
                                     <arg value="."/>
                                 </exec>
                               </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-yofc-dp-into-context</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-api-comp</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-comp</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-repack-vertx-db</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-opcuaserver</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-influxdb</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-influxdbv1</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                 </executions>
