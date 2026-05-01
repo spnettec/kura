@@ -32,6 +32,8 @@
         <kura.basedir>../</kura.basedir>
         <dist.assembly.name>kura_${project.version}_docker-nn</dist.assembly.name>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <target.device>docker-nn</target.device>
+        <kura.os.version>linux</kura.os.version>
     </properties>
 
    <build>

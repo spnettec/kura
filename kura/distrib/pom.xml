@@ -48,6 +48,11 @@
         <yofc.dp.version>0.0.1-SNAPSHOT</yofc.dp.version>
         <!-- Modules that build the dist-linux variant (full networking) override this to false. -->
         <dist.linux.bundles.skip>true</dist.linux.bundles.skip>
+        <!-- Defaults for launcher script template substitution; modules override target.device. -->
+        <kura.mem.size>1024m</kura.mem.size>
+        <kura.os.version>debian</kura.os.version>
+        <kura.install.dir>/opt/eclipse</kura.install.dir>
+        <target.device>linux</target.device>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kura.basedir>${project.basedir}</kura.basedir>
@@ -584,6 +589,31 @@
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
                             </configuration>
                         </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>filter-launcher-scripts</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common/launcher</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
