@@ -32,15 +32,6 @@
         <kura.basedir>../</kura.basedir>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>yofc-dp</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-        </dependency>
-    </dependencies>
-
    <build>
         <resources>
             <resource>
@@ -94,32 +85,60 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>gateway-yofc-dp-overlay</id>
-                        <phase>prepare-package</phase>
+                        <id>gateway-zip-update-packages</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
-                                <property name="kura.tree" value="${project.build.directory}/kura_${project.version}_linux" />
-                                <property name="kura.zip" value="${project.build.directory}/kura_${project.version}_linux.zip" />
-                                <property name="dp.src" value="${project.basedir}/../yofc-dp/target" />
-                                <mkdir dir="${kura.tree}/packages" />
-                                <copy todir="${kura.tree}/packages" failonerror="true">
-                                    <fileset file="${dp.src}/yofc-iot-api-comp-${yofc.dp.version}.dp" />
-                                    <fileset file="${dp.src}/yofc-iot-apps-comp-${yofc.dp.version}.dp" />
-                                    <fileset file="${dp.src}/yofc-iot-repack-vertx-db-${yofc.dp.version}.dp" />
-                                    <fileset file="${dp.src}/yofc-iot-apps-opcuaserver-${yofc.dp.version}.dp" />
-                                </copy>
-                                <echo file="${kura.tree}/packages/dpa.properties"><![CDATA[yofc-iot-api-comp=file\:/opt/eclipse/kura/packages/yofc-iot-api-comp-${yofc.dp.version}.dp
-yofc-iot-apps-comp=file\:/opt/eclipse/kura/packages/yofc-iot-apps-comp-${yofc.dp.version}.dp
-yofc-iot-repack-vertx-db=file\:/opt/eclipse/kura/packages/yofc-iot-repack-vertx-db-${yofc.dp.version}.dp
-yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuaserver-${yofc.dp.version}.dp
-]]></echo>
-                                <zip destfile="${kura.zip}" update="true">
-                                    <zipfileset dir="${kura.tree}/packages" prefix="kura_${project.version}_linux/packages" />
+                                <zip destfile="${project.build.directory}/kura_${project.version}_linux.zip" update="true">
+                                    <zipfileset dir="${project.build.directory}/kura_${project.version}_linux/packages"
+                                                prefix="kura_${project.version}_linux/packages" />
                                 </zip>
                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-yofc-dp-into-tree</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-api-comp</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-comp</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-repack-vertx-db</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.yofc.iot</groupId>
+                                    <artifactId>yofc-iot-apps-opcuaserver</artifactId>
+                                    <version>${yofc.dp.version}</version>
+                                    <type>dp</type>
+                                </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                 </executions>
@@ -139,6 +158,22 @@ yofc-iot-apps-opcuaserver=file\:/opt/eclipse/kura/packages/yofc-iot-apps-opcuase
                             <resources>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/linux/deb/control</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>filter-dpa-properties</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/packages</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
