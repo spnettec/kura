@@ -1,0 +1,25 @@
+#!/bin/sh
+# Extract DeploymentPackage-SymbolicName from a .dp (zipped bundle).
+# Portable: only needs unzip + awk (works on Alpine busybox).
+set -e
+
+JAR_FILE="$1"
+PROP="DeploymentPackage-SymbolicName"
+
+unzip -p "$JAR_FILE" META-INF/MANIFEST.MF | tr -d '\r' | awk -v p="$PROP" '
+    $0 ~ "^"p":" {
+        sub("^"p": *", "")
+        val = $0
+        # MANIFEST.MF wraps lines >72 chars onto continuation lines starting with " "
+        while ((getline line) > 0) {
+            if (line ~ /^ /) {
+                sub(/^ /, "", line)
+                val = val line
+            } else {
+                break
+            }
+        }
+        print val
+        exit
+    }
+'
