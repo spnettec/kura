@@ -114,6 +114,21 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.camel</groupId>
+									<artifactId>camel-java-joor-dsl</artifactId>
+									<version>${org.apache.camel.version}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.camel</groupId>
+									<artifactId>camel-joor</artifactId>
+									<version>${org.apache.camel.version}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.jooq</groupId>
+									<artifactId>joor</artifactId>
+									<version>0.9.15</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.camel</groupId>
 									<artifactId>camel-base-engine</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
