@@ -223,6 +223,21 @@
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
 								<artifactItem>
+									<groupId>org.apache.httpcomponents.client5</groupId>
+									<artifactId>httpclient5</artifactId>
+									<version>5.5.2</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.httpcomponents.core5</groupId>
+									<artifactId>httpcore5</artifactId>
+									<version>5.4.2</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.apache.httpcomponents.core5</groupId>
+									<artifactId>httpcore5-h2</artifactId>
+									<version>5.4.2</version>
+								</artifactItem>
+								<artifactItem>
 									<groupId>org.apache.camel</groupId>
 									<artifactId>camel-cluster</artifactId>
 									<version>${org.apache.camel.version}</version>
