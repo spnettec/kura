@@ -679,18 +679,10 @@
                                     <filtering>false</filtering>
                                     <includes>
                                         <include>manage_kura_users.sh</include>
-                                        <include>customize-installation.sh</include>
-                                        <include>customize_kura_properties.py</include>
-                                        <include>customize_snapshot.py</include>
-                                        <include>network_tools.py</include>
                                         <include>kura-tmpfiles.conf</include>
                                         <include>kura.logrotate</include>
                                         <include>jdk-dio-properties/**</include>
                                     </includes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common/snapshots</directory>
-                                    <filtering>false</filtering>
                                 </resource>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/common</directory>
@@ -703,6 +695,31 @@
                             </resources>
                             <delimiters><delimiter>${*}</delimiter></delimiters>
                             <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-customize-install-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.network.resources.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>customize-installation.sh</include>
+                                        <include>customize_kura_properties.py</include>
+                                        <include>customize_snapshot.py</include>
+                                        <include>network_tools.py</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common/snapshots</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                     <execution>
