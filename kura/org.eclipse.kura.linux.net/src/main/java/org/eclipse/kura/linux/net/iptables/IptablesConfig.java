@@ -235,13 +235,28 @@ public class IptablesConfig extends IptablesConfigConstants {
     }
 
     private void internalFlush(String chain, String table) {
-        CommandStatus status;
-        if (this.executorService != null) {
-            status = execute(getIptablesCommand() + " -F " + chain + " -t " + table);
-            if (!status.getExitStatus().isSuccessful()) {
-                logger.error("Failed to flush rules from chain {} in table {}", chain, table);
-            }
+        if (this.executorService == null) {
+            return;
         }
+        if (!chainExists(chain, table)) {
+            // cold start: kura-prefixed chains don't exist yet — restore() will create them.
+            logger.debug("Skipping flush of chain {} in table {}: chain does not exist", chain, table);
+            return;
+        }
+        CommandStatus status = execute(getIptablesCommand() + " -F " + chain + " -t " + table);
+        if (!status.getExitStatus().isSuccessful()) {
+            logger.error("Failed to flush rules from chain {} in table {}", chain, table);
+        }
+    }
+
+    private boolean chainExists(String chain, String table) {
+        Command command = new Command((getIptablesCommand() + " -nL " + chain + " -t " + table).split(" "));
+        command.setExecuteInAShell(true);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        command.setOutputStream(out);
+        command.setErrorStream(err);
+        return this.executorService.execute(command).getExitStatus().isSuccessful();
     }
 
     /*
