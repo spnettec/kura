@@ -433,7 +433,7 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
-                                org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider, org.eclipse.kura.linux.clock, org.eclipse.kura.linux.net,
+                                org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider, org.eclipse.kura.linux.net,
                                 org.eclipse.kura.linux.position, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog, org.eclipse.kura.net.configuration,
                                 org.eclipse.kura.request.handler.jaxrs,
                                 org.eclipse.kura.linux.usb.${native.tag}
@@ -458,7 +458,7 @@
                                 org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,
                                 org.eclipse.kura.core.deployment, org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore, org.eclipse.kura.core.net,
                                 org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.opcua.provider, org.eclipse.kura.driver.s7plc.provider, org.eclipse.kura.hook.file.move.provider,
-                                org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat, org.eclipse.kura.network.threat.manager,
+                                org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,
                                 org.eclipse.kura.rest.asset.provider, org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,
                                 org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.network.configuration.provider, org.eclipse.kura.rest.packages.provider, org.eclipse.kura.rest.position.provider, org.eclipse.kura.rest.provider,
                                 org.eclipse.kura.rest.security.provider, org.eclipse.kura.rest.service.listing.provider, org.eclipse.kura.rest.system.provider, org.eclipse.kura.rest.tamper.detection.provider, org.eclipse.kura.rest.wire.provider,
@@ -544,6 +544,38 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6s</outputDirectory>
                                 <includeArtifactIds>
                                 jna, org.eclipse.kura.event.publisher, org.eclipse.kura.web2
+                                </includeArtifactIds>
+                                <excludeTypes>pom</excludeTypes>
+                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-dist-linux-bundles-clock</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${dist.network.resources.skip}</skip>
+                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
+                                <includeArtifactIds>
+                                org.eclipse.kura.linux.clock
+                                </includeArtifactIds>
+                                <excludeTypes>pom</excludeTypes>
+                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-dist-linux-bundles-threat-manager</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${dist.network.resources.skip}</skip>
+                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
+                                <includeArtifactIds>
+                                org.eclipse.kura.network.threat.manager
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -657,6 +689,7 @@
                         <configuration>
                             <skip>${dist.assembly.skip}</skip>
                             <outputDirectory>${project.build.directory}/${dist.assembly.name}/user/snapshots</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
