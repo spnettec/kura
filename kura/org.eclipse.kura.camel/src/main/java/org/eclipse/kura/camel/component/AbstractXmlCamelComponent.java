@@ -17,6 +17,8 @@ import static org.eclipse.kura.camel.component.Configuration.asString;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.osgi.framework.BundleContext;
@@ -45,6 +47,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractXmlCamelComponent extends AbstractCamelComponent implements ConfigurableComponent {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractXmlCamelComponent.class);
+    private static final Pattern JAVA_PUBLIC_CLASS_PATTERN = Pattern
+            .compile("(?m)^\\s*public\\s+(?:final\\s+|abstract\\s+)?class\\s+(\\w+)");
+
     private final String xmlDataProperty;
     private String data = "";
     private String model = "xml";
@@ -97,9 +102,18 @@ public abstract class AbstractXmlCamelComponent extends AbstractCamelComponent i
 
     private void applyRoutes(final Map<String, Object> properties) throws Exception {
         this.model = asString(properties, "file.extension", "xml");
-        String fileName = "data." + this.model;
         this.data = asString(properties, this.xmlDataProperty);
-        this.runner.setRoutes(this.data, fileName);
+        this.runner.setRoutes(this.data, deriveFileName(this.model, this.data));
+    }
+
+    private static String deriveFileName(String extension, String content) {
+        if ("java".equalsIgnoreCase(extension) && content != null) {
+            Matcher m = JAVA_PUBLIC_CLASS_PATTERN.matcher(content);
+            if (m.find()) {
+                return m.group(1) + ".java";
+            }
+        }
+        return "data." + extension;
     }
 
     protected boolean isRestartNeeded(final Map<String, Object> properties) {

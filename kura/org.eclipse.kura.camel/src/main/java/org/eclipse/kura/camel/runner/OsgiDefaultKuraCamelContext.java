@@ -18,9 +18,11 @@ import org.apache.camel.core.osgi.OsgiCamelContextHelper;
 import org.apache.camel.core.osgi.OsgiTypeConverter;
 import org.apache.camel.core.osgi.utils.BundleContextUtils;
 import org.apache.camel.core.osgi.utils.BundleDelegatingClassLoader;
+import org.apache.camel.dsl.java.joor.JavaRoutesBuilderLoader;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.spi.BeanRepository;
 import org.apache.camel.support.DefaultRegistry;
+import org.eclipse.kura.camel.runner.dsl.OsgiJavaRoutesBuilderLoader;
 import org.osgi.framework.BundleContext;
 
 public class OsgiDefaultKuraCamelContext extends DefaultCamelContext {
@@ -46,6 +48,12 @@ public class OsgiDefaultKuraCamelContext extends DefaultCamelContext {
         addLifecycleStrategy(repo1);
         // setup the application context classloader with the bundle classloader
         setApplicationContextClassLoader(new BundleDelegatingClassLoader(bundleContext.getBundle()));
+
+        // bind an OSGi-aware java DSL loader so camel-java-joor-dsl can compile
+        // user routes against the camel jars embedded in this bundle
+        OsgiJavaRoutesBuilderLoader javaLoader = new OsgiJavaRoutesBuilderLoader();
+        javaLoader.setCamelContext(this);
+        getRegistry().bind("routes-builder-loader-" + JavaRoutesBuilderLoader.EXTENSION, javaLoader);
 
         init();
     }
