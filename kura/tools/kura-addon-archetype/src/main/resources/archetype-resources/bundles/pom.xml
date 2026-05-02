@@ -313,11 +313,6 @@
             <url>https://repo.eclipse.org/content/repositories/kura-snapshots/</url>
         </repository>
         <repository>
-            <id>kura-addons</id>
-            <name>Kura Addons Maven Repository</name>
-            <url>https://artifactory.dev.everyware.io/artifactory/kura-addons</url>
-        </repository>
-        <repository>
             <id>central</id>
             <url>https://repo1.maven.org/maven2/</url>
         </repository>

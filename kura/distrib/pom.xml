@@ -48,11 +48,24 @@
         <yofc.dp.version>0.0.1-SNAPSHOT</yofc.dp.version>
         <!-- Modules that build the dist-linux variant (full networking) override this to false. -->
         <dist.linux.bundles.skip>true</dist.linux.bundles.skip>
+        <dist.assembly.skip>true</dist.assembly.skip>
+        <dist.network.resources.skip>true</dist.network.resources.skip>
+        <dist.jdk.dio.resources.skip>true</dist.jdk.dio.resources.skip>
+        <dist.dp.skip>true</dist.dp.skip>
+        <dist.profile.resources>common</dist.profile.resources>
+        <dist.build.name>${target.device}</dist.build.name>
+        <dist.kura.version.label>KURA_${kura.version}</dist.kura.version.label>
+        <buildNumber>buildNumber</buildNumber>
         <!-- Defaults for launcher script template substitution; modules override target.device. -->
         <kura.mem.size>1024m</kura.mem.size>
         <kura.os.version>debian</kura.os.version>
         <kura.install.dir>/opt/eclipse</kura.install.dir>
+        <kura.symlink>kura</kura.symlink>
         <target.device>linux</target.device>
+        <org.eclipse.osgi.version>3.24.100</org.eclipse.osgi.version>
+        <jakarta.activation-api.javax.version>1.2.2</jakarta.activation-api.javax.version>
+        <jakarta.xml.bind-api.javax.version>2.3.3</jakarta.xml.bind-api.javax.version>
+        <jaxb-osgi.javax.version>2.3.9</jaxb-osgi.javax.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kura.basedir>${project.basedir}</kura.basedir>
@@ -90,8 +103,8 @@
         
         <repository>
             <id>kura_addons</id>
-            <name>Eclipse Kura Addons Maven Repository</name>
-            <url>https://artifactory.dev.everyware.io/artifactory/kura-addons</url>
+            <name>Local Kura Addons Maven Repository</name>
+            <url>file://${user.home}/.m2/repository</url>
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
@@ -133,113 +146,15 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>kura-bom</artifactId>
+            <artifactId>target-platform-pde-deps</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <type>pom</type>
         </dependency>
-
-        <!-- P2-rebundled OSGi artifacts whose Maven Central counterparts lack OSGi
-             metadata. Installed to local m2 by target-platform/p2-repo-common's
-             install-to-m2.sh during the target-platform build. -->
         <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.apache.qpid.jms.client</artifactId>
-            <version>2.7.0</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.alibaba.fastjson2</artifactId>
-            <version>2.0.61</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.auth-common</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.bridge-common</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.core-logging</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.http-proxy</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.mqtt</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.tcp-eventbus-bridge</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.uri-template</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.web</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.web-common</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>tel.schich.javacan-core</artifactId>
-            <version>3.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
-            <version>4.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtbootstrap3</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtproject.gwt-servlet-jakarta</artifactId>
-            <version>2.12.2</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
-            <version>0.7.0</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.digitalpetri.netty.channel-fsm</artifactId>
-            <version>0.9.0</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.core</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>io.vertx.web-client</artifactId>
-            <version>5.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
-            <version>1.2.5</version>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>kura-bom</artifactId>
+            <version>6.0.0-SNAPSHOT</version>
+            <type>pom</type>
         </dependency>
     </dependencies>
 
@@ -278,6 +193,19 @@
                             <failIfNoMatch>false</failIfNoMatch>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>set-deployment-package-version</id>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>deployment.package.version</name>
+                            <value>${project.version}</value>
+                            <regex>-SNAPSHOT</regex>
+                            <replacement>.qualifier</replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -306,31 +234,12 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>set-deployment-package-version</id>
-                        <goals>
-                            <goal>regex-property</goal>
-                        </goals>
-                        <configuration>
-                            <name>deployment.package.version</name>
-                            <value>${project.version}</value>
-                            <regex>-SNAPSHOT</regex>
-                            <replacement>.qualifier</replacement>
-                            <failIfNoMatch>false</failIfNoMatch>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.6.1</version>
                 <executions>
                     <execution>
                         <id>get-kura-bundles</id>
+                        <inherited>false</inherited>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
@@ -342,6 +251,57 @@
                             <excludeGroupIds>
                             	org.usb4java
                             </excludeGroupIds>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-equinox-root-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.eclipse.platform</groupId>
+                                    <artifactId>org.eclipse.equinox.launcher</artifactId>
+                                    <version>${org.eclipse.equinox.launcher.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.platform</groupId>
+                                    <artifactId>org.eclipse.osgi</artifactId>
+                                    <version>${org.eclipse.osgi.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-javax-jaxb-compat-bundles</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dist.linux.bundles.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/2s</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>p2.osgi.bundle</groupId>
+                                    <artifactId>jakarta.activation-api</artifactId>
+                                    <version>${jakarta.activation-api.javax.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>p2.osgi.bundle</groupId>
+                                    <artifactId>jakarta.xml.bind-api</artifactId>
+                                    <version>${jakarta.xml.bind-api.javax.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>p2.osgi.bundle</groupId>
+                                    <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
+                                    <version>${jaxb-osgi.javax.version}</version>
+                                </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                         <execution>
@@ -592,77 +552,312 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <propertiesEncoding>${project.build.sourceEncoding}</propertiesEncoding>
+                </configuration>
                 <executions>
+                    <execution>
+                        <id>copy-common-framework-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/osgi/equinox/configuration</directory>
+                                    <filtering>true</filtering>
+                                    <includes><include>config.ini</include></includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/..</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>RELEASE_NOTES.txt</include>
+                                        <include>notice.html</include>
+                                        <include>epl-v20.html</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-jdk-dio-framework-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.jdk.dio.resources.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <includes><include>jdk.dio.policy</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-common-user-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <targetPath>user/security</targetPath>
+                                    <includes><include>cacerts.ks</include></includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <targetPath>user</targetPath>
+                                    <includes><include>kura_custom.properties</include></includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <targetPath>user/snapshots</targetPath>
+                                    <includes><include>snapshot_0.xml</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-profile-framework-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <filtering>true</filtering>
+                                    <includes><include>kura.properties</include></includes>
+                                </resource>
+                            </resources>
+                            <delimiters>
+                                <delimiter>${*}</delimiter>
+                                <delimiter>{*}</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-profile-user-snapshot</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/user/snapshots</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <filtering>false</filtering>
+                                    <includes><include>snapshot_0.xml</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-common-install-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>manage_kura_users.sh</include>
+                                        <include>customize-installation.sh</include>
+                                        <include>customize_kura_properties.py</include>
+                                        <include>customize_snapshot.py</include>
+                                        <include>network_tools.py</include>
+                                        <include>kura-tmpfiles.conf</include>
+                                        <include>kura.logrotate</include>
+                                        <include>jdk-dio-properties/**</include>
+                                        <include>snapshots/**</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>kura.service</include>
+                                        <include>kura.service.nn</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <delimiters><delimiter>${*}</delimiter></delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-profile-install-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>kura_install.sh</include>
+                                        <include>firewall.service</include>
+                                        <include>firewall.init</include>
+                                        <include>iptables.init</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-network-install-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.network.resources.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>comment_interfaces_file.py</include>
+                                        <include>customize_iptables.py</include>
+                                        <include>dnsmasq/**</include>
+                                        <include>iptables/**</include>
+                                        <include>named/**</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-console-skin-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/console/skin</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common/favicon</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-profile-log4j-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/log4j</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <filtering>false</filtering>
+                                    <includes><include>log4j.xml</include></includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>filter-launcher-scripts</id>
                         <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
+                        <goals><goal>copy-resources</goal></goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/bin</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/common/launcher</directory>
                                     <filtering>true</filtering>
                                 </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>gen_config_ini.sh</include>
+                                    </includes>
+                                </resource>
                             </resources>
-                            <delimiters>
-                                <delimiter>@</delimiter>
-                            </delimiters>
+                            <delimiters><delimiter>@</delimiter></delimiters>
                             <useDefaultDelimiters>false</useDefaultDelimiters>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
                 <executions>
                     <execution>
-                        <id>verify-if-snapshot</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
+                        <id>make-distribution-zip</id>
+                        <phase>package</phase>
+                        <goals><goal>single</goal></goals>
                         <configuration>
-                            <exportAntProperties>true</exportAntProperties>
-                            <target name="is-snapshot-check">
-                                <condition property="is.not.snapshot">
-                                    <not>
-                                        <contains string="${project.version}" substring="-SNAPSHOT" />
-                                    </not>
-                                </condition>
-                            </target>
+                            <skipAssembly>${dist.assembly.skip}</skipAssembly>
+                            <descriptors>
+                                <descriptor>${project.basedir}/../src/main/assembly/dist.xml</descriptor>
+                            </descriptors>
+                            <finalName>${dist.assembly.name}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
-                    <!--
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
                     <execution>
-                        <id>calc-checksums</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
+                        <id>create-installer-script</id>
+                        <phase>package</phase>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
-                            <failOnError>false</failOnError>
-                            <target name="checksum">
-                                <checksum algorithm="MD5">
-                                    <fileset dir="${basedir}/target">
-                                        <include name="*.deb"/>
-                                        <include name="*.dp"/>
-                                    </fileset>
-                                </checksum>
-                                <checksum algorithm="SHA-1">
-                                    <fileset dir="${basedir}/target">
-                                        <include name="*.deb"/>
-                                        <include name="*.dp"/>
-                                    </fileset>
-                                </checksum>
-                            </target>
+                            <skip>${dist.assembly.skip}</skip>
+                            <executable>${project.basedir}/../src/main/sh/create_installer.sh</executable>
+                            <arguments>
+                                <argument>${project.build.directory}</argument>
+                                <argument>${dist.assembly.name}.zip</argument>
+                                <argument>${dist.assembly.name}_installer.sh</argument>
+                                <argument>${dist.build.name}</argument>
+                                <argument>${kura.install.dir}</argument>
+                            </arguments>
                         </configuration>
                     </execution>
-                    -->
+                    <execution>
+                        <id>create-build-catalog</id>
+                        <phase>package</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <executable>${project.basedir}/../src/main/sh/get_build_versions.sh</executable>
+                            <arguments>
+                                <argument>${project.build.directory}</argument>
+                                <argument>${dist.assembly.name}.zip</argument>
+                                <argument>${dist.assembly.name}.catalog</argument>
+                                <argument>${dist.build.name}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -723,19 +918,6 @@
                                         <versionRange>[1.0,)</versionRange>
                                         <goals>
                                             <goal>copy</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.apache.maven.plugins</groupId>
-                                        <artifactId>maven-antrun-plugin</artifactId>
-                                        <versionRange>[1.0,)</versionRange>
-                                        <goals>
-                                            <goal>run</goal>
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>

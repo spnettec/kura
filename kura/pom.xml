@@ -136,7 +136,6 @@
         <kura.build.version>${maven.build.timestamp}</kura.build.version>
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
-        <kura.addons.url>https://artifactory.dev.everyware.io/artifactory/kura-addons</kura.addons.url>
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>

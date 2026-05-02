@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 https://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    <id>dist</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/${dist.assembly.name}</directory>
+            <outputDirectory>${dist.assembly.name}</outputDirectory>
+            <includes>
+                <include>bin/*.sh</include>
+                <include>install/*.sh</include>
+                <include>install/*.py</include>
+                <include>install/firewall.init</include>
+                <include>install/iptables.init</include>
+            </includes>
+            <fileMode>0755</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/${dist.assembly.name}</directory>
+            <outputDirectory>${dist.assembly.name}</outputDirectory>
+            <excludes>
+                <exclude>bin/*.sh</exclude>
+                <exclude>install/*.sh</exclude>
+                <exclude>install/*.py</exclude>
+                <exclude>install/firewall.init</exclude>
+                <exclude>install/iptables.init</exclude>
+            </excludes>
+            <fileMode>0644</fileMode>
+            <directoryMode>0755</directoryMode>
+        </fileSet>
+    </fileSets>
+</assembly>

@@ -31,7 +31,13 @@
     <properties>
         <kura.basedir>../</kura.basedir>
         <dist.assembly.name>kura_${project.version}_docker-nn</dist.assembly.name>
+        <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <dist.network.resources.skip>false</dist.network.resources.skip>
+        <dist.jdk.dio.resources.skip>true</dist.jdk.dio.resources.skip>
+        <dist.profile.resources>docker-nn</dist.profile.resources>
+        <dist.build.name>docker-nn</dist.build.name>
+        <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
         <target.device>docker-nn</target.device>
         <kura.os.version>linux</kura.os.version>
     </properties>
@@ -59,63 +65,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>docker-nn-jars</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <property name="buildNumber" value="buildNumber" />
-                                <property name="project.version" value="${project.version}" />
-                                <property name="project.build.profile" value="${project.build.profile}" />
-                                <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="docker-nn" />
-                                <property name="target.device" value="docker-nn" />
-                                <property name="native.tag" value="${native.tag}" />
-                                <property name="kura.os.version" value="linux" />
-                                <property name="kura.arch" value="${kura.arch}" />
-                                <property name="kura.mem.size" value="1024m" />
-                                <property name="kura.install.dir" value="/opt/eclipse" />
-                                <property name="kura.basedir" value="${kura.basedir}" />
-
-                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>docker-nn-build-container</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <copy todir="${project.build.directory}" file="${project.basedir}/../src/main/resources/docker-nn/Dockerfile" />
-                                <exec executable="docker" dir="${project.build.directory}" failonerror="true">
-                                    <arg value="build"/>
-                                    <arg value="-t"/>
-                                    <arg value="base-kura-docker:latest"/>
-                                    <arg value="."/>
-                                </exec>
-                              </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
@@ -125,6 +74,7 @@
                             <goal>copy</goal>
                         </goals>
                         <configuration>
+                            <skip>${dist.dp.skip}</skip>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <artifactItems>
                                 <artifactItem>
@@ -188,6 +138,25 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-dockerfile</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/docker-nn</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>Dockerfile</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -218,6 +187,29 @@
                                     </mapper>
                                 </data>
                             </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>docker-nn-build-container</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>docker</executable>
+                            <workingDirectory>${project.build.directory}</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>-t</argument>
+                                <argument>base-kura-docker:latest</argument>
+                                <argument>.</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

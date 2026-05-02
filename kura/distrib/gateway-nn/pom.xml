@@ -31,7 +31,13 @@
     <properties>
         <kura.basedir>../</kura.basedir>
         <dist.assembly.name>kura_${project.version}_linux-nn</dist.assembly.name>
+        <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <dist.network.resources.skip>false</dist.network.resources.skip>
+        <dist.jdk.dio.resources.skip>false</dist.jdk.dio.resources.skip>
+        <dist.profile.resources>linux-nn</dist.profile.resources>
+        <dist.build.name>linux-nn</dist.build.name>
+        <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
         <target.device>linux-nn</target.device>
     </properties>
 
@@ -53,38 +59,6 @@
                         <goals>
                             <goal>create-timestamp</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>gateway-nn-jars</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <property name="buildNumber" value="buildNumber" />
-                                <property name="project.version" value="${project.version}" />
-                                <property name="project.build.profile" value="${project.build.profile}" />
-                                <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="linux-nn" />
-                                <property name="target.device" value="linux-nn" />
-                                <property name="native.tag" value="${native.tag}" />
-                                <property name="kura.os.version" value="debian" />
-                                <property name="kura.arch" value="${kura.arch}" />
-                                <property name="kura.mem.size" value="1024m" />
-                                <property name="kura.install.dir" value="/opt/eclipse" />
-                                <property name="kura.basedir" value="${kura.basedir}" />
-
-                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
-                            </target>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

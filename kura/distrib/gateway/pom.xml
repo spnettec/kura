@@ -31,8 +31,30 @@
     <properties>
         <kura.basedir>../</kura.basedir>
         <dist.assembly.name>kura_${project.version}_linux</dist.assembly.name>
+        <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <dist.network.resources.skip>false</dist.network.resources.skip>
+        <dist.jdk.dio.resources.skip>false</dist.jdk.dio.resources.skip>
+        <dist.profile.resources>linux</dist.profile.resources>
+        <dist.build.name>linux</dist.build.name>
+        <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
+        <dist.empty.dpa.skip>false</dist.empty.dpa.skip>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>include-dp-install-list</id>
+            <activation>
+                <property>
+                    <name>dist.dp.skip</name>
+                    <value>false</value>
+                </property>
+            </activation>
+            <properties>
+                <dist.empty.dpa.skip>true</dist.empty.dpa.skip>
+            </properties>
+        </profile>
+    </profiles>
 
    <build>
         <resources>
@@ -57,54 +79,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>gateway-jars</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <property name="buildNumber" value="buildNumber" />
-                                <property name="project.version" value="${project.version}" />
-                                <property name="project.build.profile" value="${project.build.profile}" />
-                                <property name="project.build.directory" value="${project.build.directory}" />
-                                <property name="build.name" value="linux" />
-                                <property name="target.device" value="linux" />
-                                <property name="native.tag" value="${native.tag}" />
-                                <property name="kura.os.version" value="debian" />
-                                <property name="kura.arch" value="${kura.arch}" />
-                                <property name="kura.mem.size" value="1024m" />
-                                <property name="add.nvidia" value="${add.nvidia}" />
-                                <property name="kura.install.dir" value="/opt/eclipse" />
-                                <property name="kura.basedir" value="${kura.basedir}" />
-
-                                <ant antfile="${basedir}/../src/main/ant/build_equinox_distrib.xml" target="dist-linux" />
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>gateway-zip-update-packages</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <zip destfile="${project.build.directory}/kura_${project.version}_linux.zip" update="true">
-                                    <zipfileset dir="${project.build.directory}/kura_${project.version}_linux/packages"
-                                                prefix="kura_${project.version}_linux/packages" />
-                                </zip>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
@@ -114,6 +88,7 @@
                             <goal>copy</goal>
                         </goals>
                         <configuration>
+                            <skip>${dist.dp.skip}</skip>
                             <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
                             <artifactItems>
                                 <artifactItem>
@@ -172,11 +147,29 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
+                            <skip>${dist.dp.skip}</skip>
                             <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>src/main/resources/packages</directory>
                                     <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-empty-dpa-properties</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dist.empty.dpa.skip}</skip>
+                            <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/packages-empty</directory>
+                                    <filtering>false</filtering>
                                 </resource>
                             </resources>
                         </configuration>

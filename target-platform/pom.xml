@@ -221,6 +221,7 @@
         <module>usb4java-javax</module>
         <module>log4j2-api-config</module>
         <module>p2-repo-extra</module>
+        <module>target-platform-pde-deps</module>
     </modules>
 
     <repositories>
