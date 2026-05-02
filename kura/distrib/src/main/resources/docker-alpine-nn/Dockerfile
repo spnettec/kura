@@ -11,7 +11,10 @@ LABEL maintainer="Eclipse Kura Developers <kura-dev@eclipse.org>" \
 COPY bin/ /usr/local/bin/
 
 COPY --from=kura_base /kura-install/kura_*_docker-nn_installer.sh /kura-install/
-COPY --from=kura_base /kura-install/*.dp /kura-install/
+# Copy entire /kura-install/ tree so the COPY succeeds even when no .dp files
+# were staged (i.e. -Ddist.dp.skip=true / default). Files duplicated by the
+# previous COPY are harmless overwrites.
+COPY --from=kura_base /kura-install/ /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
@@ -41,12 +44,15 @@ RUN chmod a+x -R /usr/local/bin && \
     if [ "$PACKED" == "true" ]; then touch /kura.packed && pack-kura; fi && \
     unpack-kura && \
     sed -i "s/\-printf \'\%P.n\'//g" /usr/local/bin/dp-install && \
-    dp-install-local "/kura-install/yofc-iot-repack-vertx-db-0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-api-comp-0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-comp-0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-opcuaserver-0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-influxdb-0.0.1-SNAPSHOT.dp" && \
-    dp-install-local "/kura-install/yofc-iot-apps-influxdbv1-0.0.1-SNAPSHOT.dp" && \
+    for dp in \
+        yofc-iot-repack-vertx-db-0.0.1-SNAPSHOT.dp \
+        yofc-iot-api-comp-0.0.1-SNAPSHOT.dp \
+        yofc-iot-apps-comp-0.0.1-SNAPSHOT.dp \
+        yofc-iot-apps-opcuaserver-0.0.1-SNAPSHOT.dp \
+        yofc-iot-apps-influxdb-0.0.1-SNAPSHOT.dp \
+        yofc-iot-apps-influxdbv1-0.0.1-SNAPSHOT.dp; do \
+        if [ -f "/kura-install/$dp" ]; then dp-install-local "/kura-install/$dp"; fi; \
+    done && \
     # dp-install "https://repo1.maven.org/maven2/de/dentrassi/kura/addons/de.dentrassi.kura.addons.utils.fileinstall/0.6.0/de.dentrassi.kura.addons.utils.fileinstall-0.6.0.dp" && \
     add-config-ini "felix.fileinstall.disableNio2=true" && \
     add-config-ini "felix.fileinstall.dir=/load" && \
