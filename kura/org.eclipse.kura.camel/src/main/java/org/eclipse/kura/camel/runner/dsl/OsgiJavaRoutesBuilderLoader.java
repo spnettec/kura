@@ -22,7 +22,12 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import org.apache.camel.CamelContext;
+import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.dsl.java.joor.JavaRoutesBuilderLoader;
+import org.apache.camel.spi.CamelBeanPostProcessor;
+import org.apache.camel.spi.CompilePostProcessor;
+import org.apache.camel.support.PluginHelper;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
@@ -42,6 +47,33 @@ import org.slf4j.LoggerFactory;
 public class OsgiJavaRoutesBuilderLoader extends JavaRoutesBuilderLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(OsgiJavaRoutesBuilderLoader.class);
+
+    @Override
+    protected void doBuild() throws Exception {
+        super.doBuild();
+        // Camel's JavaRoutesBuilderLoader runs bean post-processing only for
+        // non-RouteBuilder pojos, so @BindToRegistry methods on a user
+        // RouteBuilder are silently dropped. camel-main / spring-boot
+        // post-process all RoutesBuilders via their runtime; in Kura we have
+        // to do it ourselves. Hook a post-compile step that bean-post-
+        // processes RouteBuilders after they're instantiated.
+        addCompilePostProcessor(new RouteBuilderBeanPostProcessor());
+    }
+
+    private static final class RouteBuilderBeanPostProcessor implements CompilePostProcessor {
+        @Override
+        public void postCompile(CamelContext context, String name, Class<?> clazz, byte[] byteCode,
+                Object instance) throws Exception {
+            if (!(instance instanceof RouteBuilder)) {
+                return;
+            }
+            CamelBeanPostProcessor bpp = PluginHelper.getBeanPostProcessor(context);
+            if (bpp != null) {
+                bpp.postProcessBeforeInitialization(instance, instance.getClass().getName());
+                bpp.postProcessAfterInitialization(instance, instance.getClass().getName());
+            }
+        }
+    }
 
     @Override
     protected ClassLoader resolveParentClassLoader() {
