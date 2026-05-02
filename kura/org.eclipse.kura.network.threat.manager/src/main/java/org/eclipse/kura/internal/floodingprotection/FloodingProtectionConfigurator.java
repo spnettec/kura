@@ -125,14 +125,18 @@ public class FloodingProtectionConfigurator
 
     private void configureThreshold(String fileName, int value) {
         Path sourceFile = Paths.get(fileName);
-        if (Files.exists(sourceFile)) {
-            try {
-                Files.write(sourceFile, Integer.toString(value).getBytes());
-            } catch (IOException e) {
-                logger.error("Cannot write to " + sourceFile, e);
-            }
-        } else {
+        if (!Files.exists(sourceFile)) {
             logger.warn("File {} does not exists.", fileName);
+            return;
+        }
+        if (!Files.isWritable(sourceFile)) {
+            logger.debug("Skipping threshold update; {} is read-only (container or restricted env).", sourceFile);
+            return;
+        }
+        try {
+            Files.write(sourceFile, Integer.toString(value).getBytes());
+        } catch (IOException e) {
+            logger.error("Cannot write to " + sourceFile, e);
         }
     }
 
