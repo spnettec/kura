@@ -27,7 +27,7 @@
 
     <properties>
         <graalvm.version>24.2.1</graalvm.version>
-        <org.codehaus.groovy.version>3.0.24</org.codehaus.groovy.version>
+		<org.apache.groovy.version>5.0.5</org.apache.groovy.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/org.eclipse.kura.wire.script.tools.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
@@ -104,9 +104,9 @@
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.codehaus.groovy</groupId>
+                                    <groupId>org.apache.groovy</groupId>
                                     <artifactId>groovy-jsr223</artifactId>
-                                    <version>${org.codehaus.groovy.version}</version>
+                                    <version>${org.apache.groovy.version}</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

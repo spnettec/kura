@@ -812,37 +812,37 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-xml:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-xml:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-templates:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-templates:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-sql:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-sql:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-json:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-json:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-datetime:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-datetime:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.codehaus.groovy:groovy-dateutil:${org.codehaus.groovy.version}</id>
+									<id>org.apache.groovy:groovy-dateutil:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -933,7 +933,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.fasterxml.jackson.core:jackson-annotations:${com.fasterxml.jackson.version}</id>
+									<id>com.fasterxml.jackson.core:jackson-annotations:${com.fasterxml.jackson.annotations.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -944,6 +944,26 @@
 								</artifact>
 								<artifact>
 									<id>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${com.fasterxml.jackson.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>tools.jackson.core:jackson-core:${tools.jackson.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>tools.jackson.core:jackson-databind:${tools.jackson.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>tools.jackson.module:jackson-module-jaxb-annotations:${tools.jackson.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>tools.jackson.dataformat:jackson-dataformat-yaml:${tools.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
