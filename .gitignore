@@ -39,11 +39,13 @@ bin/
 maven.deps
 DEPENDENCIES
 .java-version
-<<<<<<< HEAD
+.claude/settings.local.json
 .tycho-consumer-pom.xml
-=======
 
 # VS Code
 javaConfig.json
 .vscode
->>>>>>> refs/remotes/origin/develop
+
+# Local scratch files (migration handoff, bundle maps, etc.)
+.tmp-*
+.tmp-handoff/
