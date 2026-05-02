@@ -27,7 +27,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-        <org.apache.activemq.artemis.upstream.version>2.41.0</org.apache.activemq.artemis.upstream.version>
+        <org.apache.activemq.artemis.upstream.version>2.53.0</org.apache.activemq.artemis.upstream.version>
         <jctools-core.version>4.0.5</jctools-core.version>
         <caffeine.version>3.2.0</caffeine.version>
         <kura.basedir>${project.basedir}/..</kura.basedir>
@@ -48,62 +48,62 @@
                             <stripVersion>true</stripVersion>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-server</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-commons</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-core-client</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-jdbc-store</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-jms-client</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-jms-server</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-journal</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-selector</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-service-extensions</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-mqtt-protocol</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-amqp-protocol</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-stomp-protocol</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
@@ -113,7 +113,7 @@
                                     <version>2.0.0</version>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.apache.activemq</groupId>
+                                    <groupId>org.apache.artemis</groupId>
                                     <artifactId>artemis-log-annotation-processor</artifactId>
                                     <version>${org.apache.activemq.artemis.upstream.version}</version>
                                 </artifactItem>
