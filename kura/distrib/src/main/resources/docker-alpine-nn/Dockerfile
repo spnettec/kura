@@ -22,12 +22,20 @@ ENV \
 
 
 
-RUN chmod a+x -R /usr/local/bin && \
-    apk update && \
-    apk --no-cache add openjdk21-jre bash zip curl gcompat procps unzip gzip tar && \
-    apk --no-cache add dos2unix openssl net-tools which busybox-extras && \
-    apk --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
-    apk --no-cache add shadow && \
+RUN set -ex; \
+    apk_retry() { \
+        for attempt in 1 2 3 4 5; do \
+            apk "$@" && return 0; \
+            sleep "$((attempt * 2))"; \
+        done; \
+        apk "$@"; \
+    }; \
+    chmod a+x -R /usr/local/bin && \
+    apk_retry update && \
+    apk_retry --no-cache add openjdk21-jre bash zip curl gcompat procps unzip gzip tar && \
+    apk_retry --no-cache add dos2unix openssl net-tools which busybox-extras && \
+    apk_retry --no-cache add bluez bluez-deprecated chrony eudev glib psmisc socat && \
+    apk_retry --no-cache add shadow && \
     /kura-install/kura_*_docker-nn_installer.sh && \
     chmod -R go-rwx /opt/eclipse  && \
     chmod a+rx /opt/eclipse  && \
