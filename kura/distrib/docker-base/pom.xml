@@ -33,7 +33,7 @@
         <dist.assembly.name>kura_${project.version}_docker-nn</dist.assembly.name>
         <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
-        <dist.network.resources.skip>false</dist.network.resources.skip>
+        <dist.network.resources.skip>true</dist.network.resources.skip>
         <dist.jdk.dio.resources.skip>true</dist.jdk.dio.resources.skip>
         <dist.profile.resources>docker-nn</dist.profile.resources>
         <dist.build.name>docker-nn</dist.build.name>
