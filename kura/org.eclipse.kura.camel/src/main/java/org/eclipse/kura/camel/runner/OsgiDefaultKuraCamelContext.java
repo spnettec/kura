@@ -50,9 +50,12 @@ public class OsgiDefaultKuraCamelContext extends DefaultCamelContext {
         setApplicationContextClassLoader(new BundleDelegatingClassLoader(bundleContext.getBundle()));
 
         // bind an OSGi-aware java DSL loader so camel-java-joor-dsl can compile
-        // user routes against the camel jars embedded in this bundle
+        // user routes against the camel jars embedded in this bundle. build()
+        // runs JavaRoutesBuilderLoader.doBuild() which wires the internal
+        // JavaJoorClassLoader; without it compileResources NPEs on first call.
         OsgiJavaRoutesBuilderLoader javaLoader = new OsgiJavaRoutesBuilderLoader();
         javaLoader.setCamelContext(this);
+        javaLoader.build();
         getRegistry().bind("routes-builder-loader-" + JavaRoutesBuilderLoader.EXTENSION, javaLoader);
 
         init();
