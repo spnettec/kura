@@ -608,7 +608,7 @@ public class CamelRunner {
         Objects.requireNonNull(context);
 
         // remove all routes
-        ModelCamelContext mcc = context.adapt(ModelCamelContext.class);
+        ModelCamelContext mcc = (ModelCamelContext) context;
 
         removeRoutes(context, fromDefs(mcc.getRouteDefinitions()));
     }

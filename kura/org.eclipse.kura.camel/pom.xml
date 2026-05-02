@@ -29,7 +29,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<org.apache.camel.version>3.22.4</org.apache.camel.version>
+		<org.apache.camel.version>4.20.0</org.apache.camel.version>
 		<kura.basedir>${project.basedir}/..</kura.basedir>
 		<sonar.coverage.jacoco.xmlReportPaths>
 			${project.basedir}/../test/org.eclipse.kura.camel.test/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
@@ -104,17 +104,12 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.camel</groupId>
-									<artifactId>camel-groovy-dsl-common</artifactId>
+									<artifactId>camel-yaml-io</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.camel</groupId>
-									<artifactId>camel-groovy-dsl</artifactId>
-									<version>${org.apache.camel.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.apache.camel</groupId>
-									<artifactId>camel-js-dsl</artifactId>
+									<artifactId>camel-yaml-dsl</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
 								<artifactItem>
@@ -239,11 +234,6 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.camel</groupId>
-									<artifactId>camel-cloud</artifactId>
-									<version>${org.apache.camel.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.apache.camel</groupId>
 									<artifactId>camel-bean</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
@@ -304,7 +294,7 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.camel</groupId>
-									<artifactId>camel-jackson</artifactId>
+									<artifactId>camel-jackson3</artifactId>
 									<version>${org.apache.camel.version}</version>
 								</artifactItem>
 								<artifactItem>

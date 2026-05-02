@@ -41,7 +41,7 @@ public class OsgiDefaultKuraCamelContext extends DefaultCamelContext {
 
         // and these are blueprint specific
         OsgiBeanRepository repo1 = new OsgiBeanRepository(bundleContext);
-        setRegistry(new DefaultRegistry(repo1, registry));
+        getCamelContextExtension().setRegistry(new DefaultRegistry(repo1, registry));
         // Need to clean up the OSGi service when camel context is closed.
         addLifecycleStrategy(repo1);
         // setup the application context classloader with the bundle classloader

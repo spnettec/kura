@@ -19,12 +19,16 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.camel.core.osgi.utils.BundleDelegatingClassLoader;
-import org.apache.camel.impl.engine.DefaultPackageScanClassResolver;
 import org.apache.camel.spi.PackageScanFilter;
+import org.apache.camel.support.scan.DefaultPackageScanClassResolver;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OsgiPackageScanClassResolver extends DefaultPackageScanClassResolver {
+
+    private static final Logger LOG = LoggerFactory.getLogger(OsgiPackageScanClassResolver.class);
 
     private final Bundle bundle;
 
@@ -51,7 +55,7 @@ public class OsgiPackageScanClassResolver extends DefaultPackageScanClassResolve
             // Using the non-OSGi classloaders as a fallback
             // this is necessary when use JBI packaging for servicemix-camel SU
             // so that we get chance to use SU classloader to scan packages in the SU
-            log.trace("Cannot find any classes in bundles, not trying regular classloaders scanning: {}", packageName);
+            LOG.trace("Cannot find any classes in bundles, not trying regular classloaders scanning: {}", packageName);
             for (ClassLoader classLoader : super.getClassLoaders()) {
                 if (!isOsgiClassloader(classLoader)) {
                     find(test, packageName, classLoader, classes);
@@ -91,7 +95,7 @@ public class OsgiPackageScanClassResolver extends DefaultPackageScanClassResolve
         }
         Set<String> urls = new LinkedHashSet<>();
         for (Bundle bd : bundles) {
-            log.trace("Searching in bundle: {}", bd);
+            LOG.trace("Searching in bundle: {}", bd);
             try {
                 Enumeration<URL> paths = bd.findEntries("/" + packageName, "*.class", true);
                 while (paths != null && paths.hasMoreElements()) {
@@ -99,10 +103,10 @@ public class OsgiPackageScanClassResolver extends DefaultPackageScanClassResolve
                     String pathString = path.getPath();
                     String urlString = pathString.substring(pathString.indexOf(packageName));
                     urls.add(urlString);
-                    log.trace("Added url: {}", urlString);
+                    LOG.trace("Added url: {}", urlString);
                 }
             } catch (Throwable t) {
-                log.warn("Cannot search in bundle: " + bundle + " for classes matching criteria: " + test + " due: "
+                LOG.warn("Cannot search in bundle: " + bundle + " for classes matching criteria: " + test + " due: "
                         + t.getMessage() + ". This exception will be ignored.", t);
             }
         }

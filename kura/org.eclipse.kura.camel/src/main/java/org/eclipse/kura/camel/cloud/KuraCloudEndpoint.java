@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Endpoint implementation for {@link KuraCloudComponent}
  */
-@UriEndpoint(scheme = "kura-cloud", title = "Kura Cloud", label = "iot,kura,cloud", syntax = "kura-cloud:applicationId/appTopic")
+@UriEndpoint(scheme = "kura-cloud", title = "Kura Cloud", syntax = "kura-cloud:applicationId/appTopic")
 public class KuraCloudEndpoint extends DefaultEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(KuraCloudEndpoint.class);

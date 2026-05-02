@@ -12,7 +12,13 @@
  ******************************************************************************/
 package org.apache.camel.core.osgi;
 
+import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.apache.camel.spi.ComponentResolver;
+import org.apache.camel.spi.DataFormatResolver;
+import org.apache.camel.spi.FactoryFinderResolver;
+import org.apache.camel.spi.LanguageResolver;
+import org.apache.camel.spi.PackageScanClassResolver;
 import org.apache.camel.util.ObjectHelper;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -35,16 +41,27 @@ public final class OsgiCamelContextHelper {
         camelContext.setManagementNameStrategy(new OsgiManagementNameStrategy(camelContext, bundleContext));
         LOG.debug("Using OsgiClassResolver");
         camelContext.setClassResolver(new OsgiClassResolver(camelContext, bundleContext));
+        configureOsgiContextPlugins(camelContext, bundleContext);
+    }
+
+    private static void configureOsgiContextPlugins(DefaultCamelContext camelContext, BundleContext bundleContext) {
+        ExtendedCamelContext extension = camelContext.getCamelContextExtension();
+
         LOG.debug("Using OsgiFactoryFinderResolver");
-        camelContext.setFactoryFinderResolver(new OsgiFactoryFinderResolver(bundleContext));
+        FactoryFinderResolver factoryFinderResolver = new OsgiFactoryFinderResolver(bundleContext);
+        extension.addContextPlugin(FactoryFinderResolver.class, factoryFinderResolver);
+        extension.setDefaultFactoryFinder(
+                factoryFinderResolver.resolveFactoryFinder(camelContext.getClassResolver(), "META-INF/services/org/apache/camel/"));
+        extension.setBootstrapFactoryFinder(factoryFinderResolver.resolveBootstrapFactoryFinder(camelContext.getClassResolver()));
+
         LOG.debug("Using OsgiPackageScanClassResolver");
-        camelContext.setPackageScanClassResolver(new OsgiPackageScanClassResolver(bundleContext));
+        extension.addContextPlugin(PackageScanClassResolver.class, new OsgiPackageScanClassResolver(bundleContext));
         LOG.debug("Using OsgiComponentResolver");
-        camelContext.setComponentResolver(new OsgiComponentResolver(bundleContext));
+        extension.addContextPlugin(ComponentResolver.class, new OsgiComponentResolver(bundleContext));
         LOG.debug("Using OsgiLanguageResolver");
-        camelContext.setLanguageResolver(new OsgiLanguageResolver(bundleContext));
+        extension.addContextPlugin(LanguageResolver.class, new OsgiLanguageResolver(bundleContext));
         LOG.debug("Using OsgiDataFormatResolver");
-        camelContext.setDataFormatResolver(new OsgiDataFormatResolver(bundleContext));
+        extension.addContextPlugin(DataFormatResolver.class, new OsgiDataFormatResolver(bundleContext));
     }
 
 }

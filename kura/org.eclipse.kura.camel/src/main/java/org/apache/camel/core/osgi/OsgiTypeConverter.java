@@ -27,13 +27,14 @@ import org.apache.camel.TypeConverter;
 import org.apache.camel.TypeConverterExists;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.impl.converter.DefaultTypeConverter;
-import org.apache.camel.impl.engine.DefaultPackageScanClassResolver;
 import org.apache.camel.spi.BulkTypeConverters;
 import org.apache.camel.spi.Injector;
 import org.apache.camel.spi.PackageScanClassResolver;
+import org.apache.camel.spi.TypeConvertible;
 import org.apache.camel.spi.TypeConverterLoader;
 import org.apache.camel.spi.TypeConverterRegistry;
 import org.apache.camel.support.SimpleTypeConverter;
+import org.apache.camel.support.scan.DefaultPackageScanClassResolver;
 import org.apache.camel.support.service.ServiceHelper;
 import org.apache.camel.support.service.ServiceSupport;
 import org.osgi.framework.BundleContext;
@@ -188,6 +189,16 @@ public class OsgiTypeConverter extends ServiceSupport
     }
 
     @Override
+    public java.util.Map<Class<?>, TypeConverter> lookup(Class<?> toType) {
+        return getDelegate().lookup(toType);
+    }
+
+    @Override
+    public void addConverter(TypeConvertible<?, ?> typeConvertible, TypeConverter typeConverter) {
+        getDelegate().addConverter(typeConvertible, typeConverter);
+    }
+
+    @Override
     public void setInjector(Injector injector) {
         getDelegate().setInjector(injector);
     }
@@ -284,9 +295,8 @@ public class OsgiTypeConverter extends ServiceSupport
 
     private class OsgiDefaultTypeConverter extends DefaultTypeConverter {
 
-        public OsgiDefaultTypeConverter(PackageScanClassResolver resolver, Injector injector,
-                boolean loadTypeConverters) {
-            super(resolver, injector, loadTypeConverters);
+        public OsgiDefaultTypeConverter(PackageScanClassResolver resolver, Injector injector, boolean loadTypeConverters) {
+            super(resolver, injector, loadTypeConverters, false);
         }
 
         @Override
@@ -295,7 +305,7 @@ public class OsgiTypeConverter extends ServiceSupport
             // as OSGi loads these first and then gets triggered again later when there is both a META-INF/TypeConverter
             // and META-INF/TypeConverterLoaded file
             // for the same set of type converters and we get duplicates (so this is a way of filtering out duplicates)
-            TypeConverter converter = typeMappings.get(toType, fromType);
+            TypeConverter converter = lookup(toType, fromType);
             if (converter != null && converter != typeConverter) {
                 // the converter is already there which we want to keep (optimized via SimpleTypeConverter)
                 if (converter instanceof SimpleTypeConverter) {
