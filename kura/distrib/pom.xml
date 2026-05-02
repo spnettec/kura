@@ -686,8 +686,11 @@
                                         <include>kura-tmpfiles.conf</include>
                                         <include>kura.logrotate</include>
                                         <include>jdk-dio-properties/**</include>
-                                        <include>snapshots/**</include>
                                     </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${project.basedir}/../src/main/resources/common/snapshots</directory>
+                                    <filtering>false</filtering>
                                 </resource>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/common</directory>
