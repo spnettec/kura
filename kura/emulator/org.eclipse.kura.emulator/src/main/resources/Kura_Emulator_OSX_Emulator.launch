@@ -264,6 +264,8 @@
         <setEntry value="quartz@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
         <setEntry value="tel.schich.javacan-core@default:default"/>
+        <setEntry value="tools.jackson.core.jackson-core@default:default"/>
+        <setEntry value="tools.jackson.core.jackson-databind@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="com.yofc.iot.yofc-iot-api-comp@default:default"/>
@@ -356,10 +358,6 @@
         <setEntry value="org.eclipse.kura.wire.provider@default:default"/>
         <setEntry value="org.eclipse.kura.wire.script.tools@default:default"/>
         <setEntry value="org.eclipse.kura.xml.marshaller.unmarshaller.provider@default:default"/>
-        <setEntry value="tools.jackson.core.jackson-core@default:default"/>
-        <setEntry value="tools.jackson.core.jackson-databind@default:default"/>
-        <setEntry value="tools.jackson.dataformat.jackson-dataformat-yaml@default:default"/>
-        <setEntry value="tools.jackson.module.jackson-module-jaxb-annotations@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
     <stringAttribute key="timestamp" value="1360341874060"/>
