@@ -37,23 +37,35 @@ mvn -f kura/pom.xml clean install -Dmaven.test.skip=true
 mvn -f kura/distrib/pom.xml help:all-profiles  # 列出所有可用 profile
 mvn -f kura/distrib/pom.xml clean install -Paarch64  # 仅构建 aarch64
 mvn -f kura/distrib/pom.xml clean install -DbuildAllContainers  # 构建 Docker 容器
+mvn -f kura/distrib/pom.xml clean install -Ptarget-definition  # 仅构建 Target Definition（迭代调试 P2 时常用）
 ```
 
 ### 运行测试
 ```bash
-mvn -f kura/pom.xml test  # 运行所有测试
-mvn -f <module>/pom.xml test  # 运行特定模块测试
+mvn -f kura/pom.xml test                       # 全量
+mvn -f <module>/pom.xml test                   # 指定模块
+mvn -f <module>/pom.xml test -Dtest=ClassName  # 指定单个测试类（Tycho Surefire）
 ```
+Surefire 报告位于 `kura/test/*/target/surefire-reports/`。
+CI（Jenkinsfile）使用 `-Dsurefire.rerunFailingTestsCount=3` 来掩盖偶发性失败，本地复现时也应预留多次运行的余量。
 
 ### 代码检查
 ```bash
-mvn checkstyle:check  # Checkstyle 检查
+mvn checkstyle:check  # Checkstyle 检查（配置见根目录 checkstyle_checks.xml / suppressions.xml）
 ```
+
+### CI 行为参考（Jenkinsfile）
+- 使用 `temurin-jdk17-latest` + `apache-maven-3.9.6`
+- target-platform 阶段附加 `-Pno-mirror -Pcheck-exists-plugin`
+- 仅修改 `*.md` / `*.txt` 时跳过整个构建
+- Sonar 扫描会排除 `org.eclipse.kura.web2/**`、`org.eclipse.kura.nm/...freedesktop|w1/**` 中的生成代码
 
 ## 环境要求
 
-- **JDK 17**（注意：`org.eclipse.kura.web2` 模块使用 Java 11 编译目标）
-- **Maven 3.9.x**
+- **JDK 17** — 全仓 `maven.compiler.source/target=17`，CI 使用 `temurin-jdk17-latest`。
+  - 例外：`org.eclipse.kura.web2` 编译目标为 Java 11（受 GWT 编译器约束，改动时不要随意提升）。
+  - 注意：仓库中存在名为 `jdk21` 的提交，但仅修改 `docker-alpine-x86_64-nn` 容器的运行时基础镜像，**不是**构建目标语言级别。
+- **Maven 3.9.x**（CI 使用 3.9.6）
 - **Docker/Podman**（仅构建容器时需要）
 
 ## 架构分层
@@ -107,3 +119,8 @@ kura/tools/        → 工具（含 kura-addon-archetype 扩展模板）
 
 ### REST API 开发
 REST 模块位于 `kura/org.eclipse.kura.rest.*`，基于 JAX-RS/Jersey。新增 REST 端点参考现有 `rest.provider` 模块结构。
+
+## 其他
+
+- 仓库根的 `AGENTS.md` 与本文件内容近似（面向 Codex），修改本文件时请同步更新或保持二者一致。
+- `PROJECT_ANALYSIS_REPORT.md` 是历史快照，不是权威来源；以 pom / 实际代码为准。
