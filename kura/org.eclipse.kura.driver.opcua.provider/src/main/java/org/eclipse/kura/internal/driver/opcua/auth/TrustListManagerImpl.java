@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.eclipse.milo.opcua.stack.core.security.TrustListManager;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ByteString;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,8 @@ public class TrustListManagerImpl implements TrustListManager {
     private final Set<X509Certificate> issuerCertificates = new HashSet<>();
     private final Set<X509CRL> issuerCrls = new HashSet<>();
     private final Set<X509CRL> trustedCrls = new HashSet<>();
-    private final Set<X509Certificate> rejectedCertificates = new HashSet<>();
     private final Set<X509Certificate> trustedCertificates = new HashSet<>();
+    private volatile DateTime lastUpdateTime = new DateTime();
 
     public TrustListManagerImpl(final KeyStore keyStore) throws KeyStoreException {
 
@@ -91,11 +92,6 @@ public class TrustListManagerImpl implements TrustListManager {
     }
 
     @Override
-    public synchronized ImmutableList<X509Certificate> getRejectedCertificates() {
-        return ImmutableList.copyOf(rejectedCertificates);
-    }
-
-    @Override
     public synchronized ImmutableList<X509Certificate> getTrustedCertificates() {
         return ImmutableList.copyOf(trustedCertificates);
     }
@@ -103,16 +99,13 @@ public class TrustListManagerImpl implements TrustListManager {
     @Override
     public synchronized void addIssuerCertificate(X509Certificate certificate) {
         this.issuerCertificates.add(certificate);
-    }
-
-    @Override
-    public synchronized void addRejectedCertificate(X509Certificate certificate) {
-        this.rejectedCertificates.add(certificate);
+        this.lastUpdateTime = new DateTime();
     }
 
     @Override
     public synchronized void addTrustedCertificate(X509Certificate certificate) {
         this.trustedCertificates.add(certificate);
+        this.lastUpdateTime = new DateTime();
     }
 
     @Override
@@ -126,11 +119,6 @@ public class TrustListManagerImpl implements TrustListManager {
     }
 
     @Override
-    public synchronized boolean removeRejectedCertificate(ByteString arg0) {
-        return false;
-    }
-
-    @Override
     public synchronized boolean removeTrustedCertificate(ByteString arg0) {
         return false;
     }
@@ -139,24 +127,33 @@ public class TrustListManagerImpl implements TrustListManager {
     public synchronized void setIssuerCertificates(List<X509Certificate> certificates) {
         this.issuerCertificates.clear();
         this.issuerCertificates.addAll(certificates);
+        this.lastUpdateTime = new DateTime();
     }
 
     @Override
     public synchronized void setIssuerCrls(List<X509CRL> crls) {
         this.issuerCrls.clear();
         this.issuerCrls.addAll(crls);
+        this.lastUpdateTime = new DateTime();
     }
 
     @Override
     public synchronized void setTrustedCertificates(List<X509Certificate> certificates) {
         this.trustedCertificates.clear();
         this.trustedCertificates.addAll(certificates);
+        this.lastUpdateTime = new DateTime();
     }
 
     @Override
     public synchronized void setTrustedCrls(List<X509CRL> crls) {
         this.trustedCrls.clear();
         this.trustedCrls.addAll(crls);
+        this.lastUpdateTime = new DateTime();
+    }
+
+    @Override
+    public synchronized DateTime getLastUpdateTime() {
+        return this.lastUpdateTime;
     }
 
 }

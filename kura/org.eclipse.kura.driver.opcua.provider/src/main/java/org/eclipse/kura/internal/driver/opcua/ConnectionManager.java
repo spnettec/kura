@@ -37,13 +37,10 @@ import org.eclipse.kura.internal.driver.opcua.request.ReadParams;
 import org.eclipse.kura.internal.driver.opcua.request.Request;
 import org.eclipse.kura.internal.driver.opcua.request.WriteParams;
 import org.eclipse.kura.util.base.StringUtil;
+import org.eclipse.milo.opcua.sdk.client.DiscoveryClient;
 import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
-import org.eclipse.milo.opcua.sdk.client.api.UaClient;
-import org.eclipse.milo.opcua.sdk.client.api.config.OpcUaClientConfig;
-import org.eclipse.milo.opcua.sdk.client.api.config.OpcUaClientConfigBuilder;
-import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscription;
-import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscriptionManager;
-import org.eclipse.milo.opcua.stack.client.DiscoveryClient;
+import org.eclipse.milo.opcua.sdk.client.OpcUaClientConfig;
+import org.eclipse.milo.opcua.sdk.client.OpcUaClientConfigBuilder;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
@@ -75,19 +72,11 @@ public class ConnectionManager {
             final ListenerRegistrationRegistry subtreeListenerRegistrations) {
         this.options = options;
         this.client = client;
-        if (client.getSubscriptionManager() != null) {
-            client.getSubscriptionManager().addSubscriptionListener(new UaSubscriptionManager.SubscriptionListener() {
-
-                @Override
-                public void onSubscriptionTransferFailed(UaSubscription subscription, StatusCode statusCode) {
-                    failureHandler.accept(ConnectionManager.this, new RuntimeException("SubscriptionListener Failed"));
-                }
-            });
-        }
         this.queue = new AsyncTaskQueue();
         this.failureHandler = failureHandler;
         this.queue.onFailure(ex -> failureHandler.accept(this, ex));
-        this.subscriptionManager = new SubscriptionManager(options, client, this.queue, registrations);
+        this.subscriptionManager = new SubscriptionManager(options, client, this.queue, registrations,
+                () -> failureHandler.accept(this, new RuntimeException("SubscriptionListener Failed")));
         this.subtreeSubscriptionManager = new SubtreeSubscriptionManager(options, client, this.queue,
                 subtreeListenerRegistrations);
     }
@@ -105,7 +94,7 @@ public class ConnectionManager {
 
         return DiscoveryClient.getEndpoints(endpointString)
                 .thenCompose(endpoints -> tryConnectToEndpoints(options, endpoints)) //
-                .thenApply(client -> new ConnectionManager((OpcUaClient) client, options, failureHandler, registrations,
+                .thenApply(client -> new ConnectionManager(client, options, failureHandler, registrations,
                         subtreeListenerRegistrations)) //
                 .whenComplete((ok, err) -> {
                     if (err != null) {
@@ -147,7 +136,7 @@ public class ConnectionManager {
             tempList.add(request.getParameters().getReadValueId());
         }
 
-        final ReadResponse response = runSafe(this.client.read(0.0, TimestampsToReturn.Both, tempList),
+        final ReadResponse response = runSafe(this.client.readAsync(0.0, TimestampsToReturn.Both, tempList),
                 this.options.getRequestTimeout(), ex -> this.failureHandler.accept(this, ex));
 
         final DataValue[] results = response.getResults();
@@ -165,7 +154,7 @@ public class ConnectionManager {
             tempList.add(request.getParameters().getWriteValue());
         }
 
-        final WriteResponse response = runSafe(this.client.write(tempList), this.options.getRequestTimeout(),
+        final WriteResponse response = runSafe(this.client.writeAsync(tempList), this.options.getRequestTimeout(),
                 ex -> this.failureHandler.accept(this, ex));
 
         final StatusCode[] results = response.getResults();
@@ -184,7 +173,7 @@ public class ConnectionManager {
 
         this.queue.close(
                 () -> CompletableFuture.allOf(this.subscriptionManager.close(), this.subtreeSubscriptionManager.close()) //
-                        .whenComplete((ok, ex) -> this.client.disconnect() //
+                        .whenComplete((ok, ex) -> this.client.disconnectAsync() //
                                 .handle((o, e) -> {
                                     if (e == null) {
                                         logger.info("Disconnecting from OPC-UA...Done");
@@ -222,7 +211,7 @@ public class ConnectionManager {
         }
     }
 
-    private static CompletableFuture<UaClient> tryConnectToEndpoints(final OpcUaOptions options,
+    private static CompletableFuture<OpcUaClient> tryConnectToEndpoints(final OpcUaOptions options,
             final Collection<EndpointDescription> availableEndpoints) {
 
         dumpEndpoints("found endpoint", availableEndpoints);
@@ -232,7 +221,7 @@ public class ConnectionManager {
         dumpEndpoints("endpoint matches configuration", availableEndpoints);
 
         if (endpoints.isEmpty()) {
-            final CompletableFuture<UaClient> result = new CompletableFuture<>();
+            final CompletableFuture<OpcUaClient> result = new CompletableFuture<>();
             result.completeExceptionally(new ConnectionException("Unable to Connect...No desired Endpoints returned"));
             return result;
         }
@@ -280,7 +269,7 @@ public class ConnectionManager {
 
         private final Iterator<EndpointDescription> endpoints;
         private final Optional<KeyStoreLoader> certificateManager;
-        private final CompletableFuture<UaClient> future;
+        private final CompletableFuture<OpcUaClient> future;
         private final OpcUaOptions options;
 
         public ConnectionAttempt(final OpcUaOptions options, final Optional<KeyStoreLoader> certificateManager,
@@ -291,7 +280,7 @@ public class ConnectionManager {
             this.future = new CompletableFuture<>();
         }
 
-        public CompletableFuture<UaClient> connect() {
+        public CompletableFuture<OpcUaClient> connect() {
             tryNextEndpoint();
             return this.future;
         }
@@ -311,7 +300,6 @@ public class ConnectionManager {
                     .setApplicationName(LocalizedText.english(this.options.getApplicationName()))
                     .setApplicationUri(this.options.getApplicationUri())
                     .setRequestTimeout(UInteger.valueOf(this.options.getRequestTimeout()))
-                    .setAcknowledgeTimeout(UInteger.valueOf(this.options.getAcknowledgeTimeout()))
                     .setSessionTimeout(UInteger.valueOf(this.options.getSessionTimeout()))
                     .setIdentityProvider(this.options.getIdentityProvider());
 
@@ -344,11 +332,11 @@ public class ConnectionManager {
                 return;
             }
 
-            cl.connect() //
+            cl.connectAsync() //
                     .whenComplete((c, err) -> {
                         if (err != null) {
                             logger.warn("failed to connect to endpoint", err);
-                            cl.disconnect();
+                            cl.disconnectAsync();
                             tryNextEndpoint();
                             return;
                         }

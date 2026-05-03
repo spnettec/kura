@@ -56,7 +56,9 @@ public class SubtreeSubscriptionManager implements ListenerRegistrationRegistry.
         this.client = client;
         this.registrations = registrations;
         this.subtreeRegistrations = new ListenerRegistrationRegistry();
-        this.subscriptionManager = new SubscriptionManager(options, client, queue, this.subtreeRegistrations);
+        this.subscriptionManager = new SubscriptionManager(options, client, queue, this.subtreeRegistrations,
+                () -> {
+                });
         this.channelNameFormat = options.getSubtreeSubscriptionChannelNameFormat();
 
         synchronized (this) {

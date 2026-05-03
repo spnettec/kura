@@ -341,15 +341,10 @@
         <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
-        <setEntry value="org.eclipse.milo.bsd-core@default:default"/>
-        <setEntry value="org.eclipse.milo.bsd-generator@default:default"/>
-        <setEntry value="org.eclipse.milo.dictionary-manager@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-server@default:default"/>
-        <setEntry value="org.eclipse.milo.stack-client@default:default"/>
+        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.milo.stack-core@default:default"/>
-        <setEntry value="org.eclipse.milo.stack-server@default:default"/>
         <setEntry value="org.eclipse.osgi.services@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>

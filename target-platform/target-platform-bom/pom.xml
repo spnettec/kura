@@ -1134,47 +1134,22 @@
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.milo</groupId>
-				<artifactId>sdk-client</artifactId>
+				<artifactId>milo-sdk-client</artifactId>
 				<version>${org.eclipse.milo.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.milo</groupId>
-				<artifactId>sdk-core</artifactId>
+				<artifactId>milo-sdk-core</artifactId>
 				<version>${org.eclipse.milo.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.milo</groupId>
-				<artifactId>stack-client</artifactId>
+				<artifactId>milo-transport</artifactId>
 				<version>${org.eclipse.milo.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.milo</groupId>
-				<artifactId>stack-core</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>dictionary-manager</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>bsd-core</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>bsd-generator</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>sdk-server</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>stack-server</artifactId>
+				<artifactId>milo-stack-core</artifactId>
 				<version>${org.eclipse.milo.version}</version>
 			</dependency>
 			<dependency>
@@ -1291,12 +1266,12 @@
             <dependency>
                 <groupId>p2.osgi.bundle</groupId>
                 <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
-                <version>0.7.0</version>
+                <version>${strict-machine.version}</version>
             </dependency>
             <dependency>
                 <groupId>p2.osgi.bundle</groupId>
                 <artifactId>com.digitalpetri.netty.channel-fsm</artifactId>
-                <version>0.9.0</version>
+                <version>${netty-channel-fsm.version}</version>
             </dependency>
             <dependency>
                 <groupId>p2.osgi.bundle</groupId>
@@ -2191,39 +2166,19 @@
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.milo</groupId>
-			<artifactId>sdk-client</artifactId>
+			<artifactId>milo-sdk-client</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.milo</groupId>
-			<artifactId>sdk-core</artifactId>
+			<artifactId>milo-sdk-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.milo</groupId>
-			<artifactId>stack-client</artifactId>
+			<artifactId>milo-transport</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.milo</groupId>
-			<artifactId>stack-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>dictionary-manager</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>bsd-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>bsd-generator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>sdk-server</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>stack-server</artifactId>
+			<artifactId>milo-stack-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.fazecast</groupId>

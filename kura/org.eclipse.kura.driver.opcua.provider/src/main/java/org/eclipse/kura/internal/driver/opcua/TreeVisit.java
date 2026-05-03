@@ -28,7 +28,6 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.ExpandedNodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
-import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseDirection;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseResultMask;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
@@ -50,8 +49,8 @@ class TreeVisit {
     private static final Logger logger = LoggerFactory.getLogger(TreeVisit.class);
     private static final int BROWSE_RESULT_MASK = BrowseResultMask.BrowseName.getValue()
             | BrowseResultMask.TypeDefinition.getValue() | BrowseResultMask.NodeClass.getValue();
-    private static final ExpandedNodeId FOLDER_TYPE_EXPANDED_NODEID = new ExpandedNodeId(UShort.valueOf(0),
-            "http://opcfoundation.org/UA/", (UInteger) Identifiers.FolderType.getIdentifier());
+    private static final ExpandedNodeId FOLDER_TYPE_EXPANDED_NODEID = ExpandedNodeId.of("http://opcfoundation.org/UA/",
+            (UInteger) Identifiers.FolderType.getIdentifier());
 
     private final NodeId rootId;
     private final BiConsumer<String, NodeId> visitor;
@@ -88,7 +87,8 @@ class TreeVisit {
             if (logger.isDebugEnabled()) {
                 logger.debug("continuing to visit {}", rootPath);
             }
-            return this.client.browseNext(false, continuationPoint) //
+            return this.client.browseNextAsync(false, Collections.singletonList(continuationPoint)) //
+                    .thenApply(r -> r.getResults()[0]) //
                     .thenCompose(r -> visitRefs(rootPath, r.getReferences(), r.getContinuationPoint(), childrenVisits));
         } else {
             if (logger.isDebugEnabled()) {
@@ -134,7 +134,7 @@ class TreeVisit {
         final List<CompletableFuture<Void>> childrenVisits = new ArrayList<>();
 
         return this.client
-                .browse(new ViewDescription(NodeId.NULL_VALUE, DateTime.MIN_VALUE, UInteger.valueOf(0)),
+                .browseAsync(new ViewDescription(NodeId.NULL_VALUE, DateTime.MIN_VALUE, UInteger.valueOf(0)),
                         UInteger.valueOf(50), Collections.singletonList(browse)) //
                 .thenApply(r -> r.getResults()[0]) //
                 .thenCompose(r -> visitRefs(rootPath, r.getReferences(), r.getContinuationPoint(), childrenVisits));

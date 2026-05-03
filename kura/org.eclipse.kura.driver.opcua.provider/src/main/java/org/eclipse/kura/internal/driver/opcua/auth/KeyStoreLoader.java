@@ -23,15 +23,13 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.milo.opcua.stack.client.security.ClientCertificateValidator;
-import org.eclipse.milo.opcua.stack.client.security.DefaultClientCertificateValidator;
-import org.eclipse.milo.opcua.stack.core.UaException;
+import org.eclipse.milo.opcua.stack.core.security.CertificateValidator;
+import org.eclipse.milo.opcua.stack.core.security.DefaultClientCertificateValidator;
+import org.eclipse.milo.opcua.stack.core.security.MemoryCertificateQuarantine;
 import org.eclipse.milo.opcua.stack.core.util.validation.ValidationCheck;
 
 public class KeyStoreLoader {
@@ -40,7 +38,7 @@ public class KeyStoreLoader {
             ValidationCheck.VALIDITY);
 
     private final Optional<PrivateKeyEntry> privateKeyEntry;
-    private final ClientCertificateValidator certificateValidator;
+    private final CertificateValidator certificateValidator;
 
     public KeyStoreLoader(final String keyStorePath, final String keyStoreType,
             final char[] keyStorePassword, final String clientAlias, final boolean authenticateServer)
@@ -59,22 +57,12 @@ public class KeyStoreLoader {
         }
 
         if (!authenticateServer) {
-            this.certificateValidator = new ClientCertificateValidator() {
-
-                @Override
-                public void validateCertificateChain(List<X509Certificate> arg0) throws UaException {
-                    // accept all
-                }
-
-                @Override
-                public void validateCertificateChain(List<X509Certificate> arg0, String arg1, String... arg2)
-                        throws UaException {
-                    // accept all
-                }
+            this.certificateValidator = (chain, applicationUri, hostnames) -> {
+                // accept all
             };
         } else {
             this.certificateValidator = new DefaultClientCertificateValidator(new TrustListManagerImpl(keyStore),
-                    OPTIONAL_CHECKS);
+                    OPTIONAL_CHECKS, new MemoryCertificateQuarantine());
         }
     }
 
@@ -82,7 +70,7 @@ public class KeyStoreLoader {
         return privateKeyEntry;
     }
 
-    public ClientCertificateValidator getCertificateValidator() {
+    public CertificateValidator getCertificateValidator() {
         return certificateValidator;
     }
 

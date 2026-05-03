@@ -965,51 +965,25 @@
 								</artifact>
 								
 								<artifact>
-									<id>org.eclipse.milo:sdk-client:jar:${org.eclipse.milo.version}</id>
+									<id>org.eclipse.milo:milo-sdk-client:jar:${org.eclipse.milo.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.milo:sdk-core:jar:${org.eclipse.milo.version}</id>
+									<id>org.eclipse.milo:milo-sdk-core:jar:${org.eclipse.milo.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.milo:stack-client:jar:${org.eclipse.milo.version}</id>
+									<id>org.eclipse.milo:milo-transport:jar:${org.eclipse.milo.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.eclipse.milo:stack-core:jar:${org.eclipse.milo.version}</id>
+									<id>org.eclipse.milo:milo-stack-core:jar:${org.eclipse.milo.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:dictionary-manager:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:bsd-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:bsd-generator:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:sdk-server:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:stack-server:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								
 								<artifact>
 									<id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
 									<source>true</source>
