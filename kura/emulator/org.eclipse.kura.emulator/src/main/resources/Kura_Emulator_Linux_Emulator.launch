@@ -163,10 +163,6 @@
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.eurotech.gpsd4java@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
-        <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
-        <setEntry value="com.fasterxml.jackson.core.jackson-databind@default:default"/>
-        <setEntry value="com.fasterxml.jackson.dataformat.jackson-dataformat-yaml@default:default"/>
-        <setEntry value="com.fasterxml.jackson.module.jackson-module-jaxb-annotations@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
         <setEntry value="com.github.jinahya.bit-io@default:default"/>
         <setEntry value="com.google.gson@default:default"/>

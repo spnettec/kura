@@ -923,27 +923,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>com.fasterxml.jackson.core:jackson-core:${com.fasterxml.jackson.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.fasterxml.jackson.core:jackson-databind:${com.fasterxml.jackson.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>com.fasterxml.jackson.core:jackson-annotations:${com.fasterxml.jackson.annotations.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${com.fasterxml.jackson.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${com.fasterxml.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
