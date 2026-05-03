@@ -433,8 +433,8 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
-                                org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider, org.eclipse.kura.linux.net,
-                                org.eclipse.kura.linux.position, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog, org.eclipse.kura.net.configuration,
+                                org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider,
+                                org.eclipse.kura.linux.position, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog,
                                 org.eclipse.kura.request.handler.jaxrs,
                                 org.eclipse.kura.linux.usb.${native.tag}
                                 </includeArtifactIds>
@@ -456,11 +456,11 @@
                                 org.eclipse.kura.broker.artemis.simple.mqtt, org.eclipse.kura.broker.artemis.xml, org.eclipse.kura.camel, org.eclipse.kura.cloud.base.provider, org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,
                                 org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager, org.eclipse.kura.container.orchestration.provider, org.eclipse.kura.container.provider,
                                 org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,
-                                org.eclipse.kura.core.deployment, org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore, org.eclipse.kura.core.net,
+                                org.eclipse.kura.core.deployment, org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore,
                                 org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.opcua.provider, org.eclipse.kura.driver.s7plc.provider, org.eclipse.kura.hook.file.move.provider,
                                 org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,
                                 org.eclipse.kura.rest.asset.provider, org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,
-                                org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.network.configuration.provider, org.eclipse.kura.rest.packages.provider, org.eclipse.kura.rest.position.provider, org.eclipse.kura.rest.provider,
+                                org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.packages.provider, org.eclipse.kura.rest.position.provider, org.eclipse.kura.rest.provider,
                                 org.eclipse.kura.rest.security.provider, org.eclipse.kura.rest.service.listing.provider, org.eclipse.kura.rest.system.provider, org.eclipse.kura.rest.tamper.detection.provider, org.eclipse.kura.rest.wire.provider,
                                 org.eclipse.kura.util, org.eclipse.kura.wire.ai.component.provider, org.eclipse.kura.wire.component.provider, org.eclipse.kura.wire.db.component.provider, org.eclipse.kura.wire.h2db.component.provider,
                                 org.eclipse.kura.wire.helper.provider, org.eclipse.kura.wire.provider, org.usb4java, usb4java-javax
@@ -498,7 +498,7 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5s</outputDirectory>
                                 <includeArtifactIds>
                                 jakarta.ws.rs-api, jetty-ee10-servlet, org.apache.felix.http.bridge, org.eclipse.kura.camel.cloud.factory, org.eclipse.kura.camel.xml,
-                                org.eclipse.kura.deployment.agent, org.eclipse.kura.http.server.manager, org.eclipse.kura.net.admin.firewall, org.eclipse.kura.nm, org.eclipse.kura.rest.network.status.provider,
+                                org.eclipse.kura.deployment.agent, org.eclipse.kura.http.server.manager,
                                 org.eclipse.kura.wire.camel, org.eclipse.kura.wire.component.join.provider, org.eclipse.osgitech.rest, org.eclipse.osgitech.rest.servlet.whiteboard, org.osgi.service.jakartars
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
@@ -576,6 +576,54 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
                                 <includeArtifactIds>
                                 org.eclipse.kura.network.threat.manager
+                                </includeArtifactIds>
+                                <excludeTypes>pom</excludeTypes>
+                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-dist-linux-bundles-network-4</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${dist.network.resources.skip}</skip>
+                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
+                                <includeArtifactIds>
+                                org.eclipse.kura.linux.net, org.eclipse.kura.net.configuration
+                                </includeArtifactIds>
+                                <excludeTypes>pom</excludeTypes>
+                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-dist-linux-bundles-network-4s</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${dist.network.resources.skip}</skip>
+                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
+                                <includeArtifactIds>
+                                org.eclipse.kura.core.net, org.eclipse.kura.rest.network.configuration.provider
+                                </includeArtifactIds>
+                                <excludeTypes>pom</excludeTypes>
+                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-dist-linux-bundles-network-5s</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${dist.network.resources.skip}</skip>
+                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5s</outputDirectory>
+                                <includeArtifactIds>
+                                org.eclipse.kura.net.admin.firewall, org.eclipse.kura.nm, org.eclipse.kura.rest.network.status.provider
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
