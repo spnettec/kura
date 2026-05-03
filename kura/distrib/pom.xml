@@ -434,7 +434,7 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
                                 org.eclipse.kura.broker.artemis.core, org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider,
-                                org.eclipse.kura.linux.position, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog,
+                                org.eclipse.kura.linux.position, org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog,
                                 org.eclipse.kura.request.handler.jaxrs,
                                 org.eclipse.kura.linux.usb.${native.tag}
                                 </includeArtifactIds>
@@ -515,15 +515,16 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6</outputDirectory>
                                 <includeArtifactIds>
-                                bsd-core, bsd-generator, com.digitalpetri.fsm.strict-machine, com.digitalpetri.netty.channel-fsm, commons-codec,
-                                commons-configuration2, commons-exec, commons-pool2, commons-text, dictionary-manager,
+                                com.digitalpetri.fsm.strict-machine, com.digitalpetri.netty.channel-fsm, commons-codec,
+                                commons-configuration2, commons-exec, commons-pool2, commons-text,
                                 groovy, groovy-datetime, groovy-dateutil, groovy-json, groovy-sql,
                                 groovy-templates, groovy-xml, gson, httpcore-osgi, io.vertx.core,
                                 io.vertx.web-client, jSerialComm, jackson-annotations, jackson-core, jackson-databind,
                                 jackson-dataformat-yaml, jackson-module-jaxb-annotations, jakarta.jms-api, jspecify, minimal-json,
+                                milo-sdk-client, milo-sdk-core, milo-stack-core, milo-transport,
                                 netty-codec-dns, netty-codec-http2, netty-codec-socks, netty-handler-proxy, netty-resolver-dns,
-                                org.apache.felix.fileinstall, org.eclipse.kura.localization.resources, org.eclipse.paho.mqttv5.client, sdk-client, sdk-core,
-                                sdk-server, snakeyaml, stack-client, stack-core, stack-server,
+                                org.apache.felix.fileinstall, org.eclipse.kura.localization.resources, org.eclipse.paho.mqttv5.client,
+                                snakeyaml,
                                 vavr,
                                 com.alibaba.fastjson2, io.vertx.auth-common, io.vertx.bridge-common, io.vertx.core-logging, io.vertx.http-proxy,
                                 io.vertx.mqtt, io.vertx.tcp-eventbus-bridge, io.vertx.uri-template, io.vertx.web, io.vertx.web-common,
@@ -591,7 +592,7 @@
                                 <skip>${dist.network.resources.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
-                                org.eclipse.kura.linux.net, org.eclipse.kura.net.configuration
+                                org.eclipse.kura.linux.net, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.net.configuration
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
