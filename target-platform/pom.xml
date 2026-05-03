@@ -189,7 +189,7 @@
         <com.fasterxml.jackson.annotations.version>2.21</com.fasterxml.jackson.annotations.version>
         <tools.jackson.version>3.1.2</tools.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
-        <org.yaml.snakeyaml.mvn.version>2.4</org.yaml.snakeyaml.mvn.version>
+        <org.yaml.snakeyaml.mvn.version>2.6</org.yaml.snakeyaml.mvn.version>
         <org.apache.commons-pool2.version>2.12.1</org.apache.commons-pool2.version>
         <gwt-user.version>2.12.2</gwt-user.version>
         <org.gwtbootstrap3.version>1.0.1</org.gwtbootstrap3.version>
