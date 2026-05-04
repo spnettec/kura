@@ -19,6 +19,7 @@ Depends: openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | te
  polkit | policykit-1, ssh | openssh, openssl, busybox, openvpn,
  bluez | bluez5, bluez-hcidump | bluez5-noinst-tools,
  chrony, chronyc | chrony, cron | cronie, logrotate, gpsd, python3
+Recommends: kura-management-ui
 Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>
 Homepage: https://eclipse-kura.github.io/kura/

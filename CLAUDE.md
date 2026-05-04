@@ -128,7 +128,7 @@ REST 模块位于 `kura/org.eclipse.kura.rest.*`，基于 JAX-RS/Jersey。新增
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **kura** (43867 symbols, 122582 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **kura** (43806 symbols, 122495 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

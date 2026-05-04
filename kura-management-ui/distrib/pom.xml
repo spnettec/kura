@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2025, 2026 Eurotech and/or its affiliates and others
+    Copyright (c) 2026 YOFC
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Inherits from kura/distrib/pom.xml to reuse arch profiles, package.version /
+        package.snapshot computation, jdeb-version, and the YOFC repository setup.
+    -->
+    <parent>
+        <groupId>org.eclipse.kura</groupId>
+        <artifactId>distrib</artifactId>
+        <version>6.0.0-SNAPSHOT</version>
+        <relativePath>../../kura/distrib/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>kura-management-ui-distrib</artifactId>
+    <name>kura-management-ui-distrib</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <addon.installation.dir>/opt/eclipse/kura/plugins</addon.installation.dir>
+        <console.files.installation.dir>/opt/eclipse/kura/console</console.files.installation.dir>
+
+        <!-- name of the JAR produced by org.eclipse.kura.web2 (groupId.artifactId same) -->
+        <web2.jar.name>org.eclipse.kura.web2</web2.jar.name>
+        <!-- web2 has its own version distinct from the kura framework (it follows the
+             web UI's own semver). See bundles/org.eclipse.kura.web2/pom.xml. -->
+        <web2.version>3.0.0-SNAPSHOT</web2.version>
+
+        <!-- pure-Java GWT artifact: no native bits, deb is arch-neutral -->
+        <deb.architecture>all</deb.architecture>
+
+        <package.name>kura-management-ui</package.name>
+
+        <!-- the parent pom's profiles set ${release.version} / ${package.version} /
+             ${package.snapshot} / ${package.revision} for us; nothing extra needed here -->
+
+        <!-- bypass parent's distrib lifecycle (assembly / dep-bundle layers / jdeb) — we
+             provide our own jdeb step below -->
+        <dist.assembly.skip>true</dist.assembly.skip>
+        <dist.linux.bundles.skip>true</dist.linux.bundles.skip>
+        <dist.linux.family.skip>true</dist.linux.family.skip>
+        <dist.network.resources.skip>true</dist.network.resources.skip>
+        <dist.dp.skip>true</dist.dp.skip>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- Stage the web2 JAR (built by the kura/ reactor via Tycho) into a known
+                 location so jdeb can pick it up. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>stage-web2-jar</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/input_files</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../bundles/${web2.jar.name}/target</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>${web2.jar.name}-${web2.version}.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Assemble the addon .deb. Output: kura-management-ui_VER-REV_all.deb -->
+            <plugin>
+                <groupId>org.vafer</groupId>
+                <artifactId>jdeb</artifactId>
+                <version>${jdeb-version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-management-ui-deb</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jdeb</goal>
+                        </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <deb>${basedir}/target/${package.name}_${package.version}-${package.revision}_${deb.architecture}.deb</deb>
+                            <snapshotExpand>true</snapshotExpand>
+                            <snapshotTemplate>${package.snapshot}</snapshotTemplate>
+                            <controlDir>${project.basedir}/deb/control</controlDir>
+                            <skipPOMs>false</skipPOMs>
+                            <dataSet>
+                                <data>
+                                    <src>${project.build.directory}/input_files/${web2.jar.name}-${web2.version}.jar</src>
+                                    <dst>${web2.jar.name}_${web2.version}.jar</dst>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>${addon.installation.dir}/6s</prefix>
+                                        <user>kurad</user>
+                                        <group>kurad</group>
+                                        <filemode>600</filemode>
+                                    </mapper>
+                                </data>
+
+                                <data>
+                                    <src>${basedir}/extra/console</src>
+                                    <type>directory</type>
+                                    <conffile>true</conffile>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>${console.files.installation.dir}</prefix>
+                                        <user>root</user>
+                                        <group>root</group>
+                                        <filemode>600</filemode>
+                                    </mapper>
+                                </data>
+                            </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

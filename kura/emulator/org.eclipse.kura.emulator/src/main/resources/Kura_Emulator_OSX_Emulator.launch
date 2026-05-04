@@ -197,8 +197,8 @@
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
-        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.milo.stack-core@default:default"/>
+        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.osgitech.rest.servlet.whiteboard@default:default"/>

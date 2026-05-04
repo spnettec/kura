@@ -118,6 +118,27 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                    <!-- The web2 bundle is split out into the kura-management-ui addon .deb for
+                         linux/linux-nn variants. Docker images don't run apt, so we re-bundle
+                         the management-ui jar directly into the docker zip's plugins/6s/. -->
+                    <execution>
+                        <id>copy-management-ui-into-docker-zip</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6s</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.eclipse.kura</groupId>
+                                    <artifactId>org.eclipse.kura.web2</artifactId>
+                                    <version>3.0.0-SNAPSHOT</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -155,6 +176,24 @@
                                     <includes>
                                         <include>Dockerfile</include>
                                     </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- Re-bundle the management-ui addon's favicon assets into the docker zip,
+                         since docker images don't get them via the apt-installed addon .deb. -->
+                    <execution>
+                        <id>copy-management-ui-favicons-into-docker-zip</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/console/skin</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../../../kura-management-ui/distrib/extra/console/skin</directory>
+                                    <filtering>false</filtering>
                                 </resource>
                             </resources>
                         </configuration>

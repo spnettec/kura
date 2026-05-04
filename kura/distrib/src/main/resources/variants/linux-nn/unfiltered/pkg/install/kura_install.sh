@@ -29,8 +29,19 @@ backup_files() {
 IS_NETWORKING_PROFILE=false
 INSTALL_DIR=/opt/eclipse
 
+# If ${INSTALL_DIR}/kura already exists as a real directory (e.g. an addon .deb such as
+# kura-management-ui was unpacked before kura's setup ran), merge its files into the
+# unpacked kura_*/ tree so they survive the symlink replacement below.
+if [ -d "${INSTALL_DIR}/kura" ] && [ ! -L "${INSTALL_DIR}/kura" ]; then
+    KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
+    if [ -n "${KURA_VERSION_DIR}" ]; then
+        cp -rn "${INSTALL_DIR}/kura/." "${KURA_VERSION_DIR}" 2>/dev/null || true
+        rm -rf "${INSTALL_DIR}/kura"
+    fi
+fi
+
 # create known kura install location
-ln -sf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
+ln -snf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 
 # set up kura init
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service.nn > /lib/systemd/system/kura.service

@@ -39,6 +39,10 @@
         <module>docker-base</module>
         <module>docker-alpine</module>
         <module>docker-ubi8</module>
+
+        <!-- Addon distribution modules. Source paths mirror upstream eclipse-kura/kura-*
+             addon repos so cherry-picks apply cleanly. -->
+        <module>../../kura-management-ui/distrib</module>
     </modules>
     
     <properties>
@@ -553,7 +557,8 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6s</outputDirectory>
                                 <includeArtifactIds>
-                                jna, org.eclipse.kura.event.publisher, org.eclipse.kura.web2
+                                <!-- org.eclipse.kura.web2 split out to kura-management-ui addon .deb -->
+                                jna, org.eclipse.kura.event.publisher
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
