@@ -43,6 +43,7 @@
         <!-- Addon distribution modules. Source paths mirror upstream eclipse-kura/kura-*
              addon repos so cherry-picks apply cleanly. -->
         <module>../../kura-management-ui/distrib</module>
+        <module>../../kura-networking/distrib</module>
     </modules>
     
     <properties>
@@ -575,70 +576,6 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
                                 org.eclipse.kura.linux.clock
-                                </includeArtifactIds>
-                                <excludeTypes>pom</excludeTypes>
-                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>copy-dist-linux-bundles-threat-manager</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${dist.network.resources.skip}</skip>
-                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
-                                <includeArtifactIds>
-                                org.eclipse.kura.network.threat.manager
-                                </includeArtifactIds>
-                                <excludeTypes>pom</excludeTypes>
-                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>copy-dist-linux-bundles-network-4</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${dist.network.resources.skip}</skip>
-                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
-                                <includeArtifactIds>
-                                org.eclipse.kura.linux.net, org.eclipse.kura.linux.systemd.provider, org.eclipse.kura.net.configuration
-                                </includeArtifactIds>
-                                <excludeTypes>pom</excludeTypes>
-                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>copy-dist-linux-bundles-network-4s</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${dist.network.resources.skip}</skip>
-                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
-                                <includeArtifactIds>
-                                org.eclipse.kura.core.net, org.eclipse.kura.rest.network.configuration.provider
-                                </includeArtifactIds>
-                                <excludeTypes>pom</excludeTypes>
-                                <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>copy-dist-linux-bundles-network-5s</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>copy-dependencies</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${dist.network.resources.skip}</skip>
-                                <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5s</outputDirectory>
-                                <includeArtifactIds>
-                                org.eclipse.kura.net.admin.firewall, org.eclipse.kura.nm, org.eclipse.kura.rest.network.status.provider
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
