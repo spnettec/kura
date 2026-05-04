@@ -39,12 +39,6 @@
         <module>docker-base</module>
         <module>docker-alpine</module>
         <module>docker-ubi8</module>
-
-        <!-- Addon distribution modules. Source paths mirror upstream eclipse-kura/kura-*
-             addon repos so cherry-picks apply cleanly. -->
-        <module>../../kura-management-ui/distrib</module>
-        <module>../../kura-networking/distrib</module>
-        <module>../../kura-opcua/distrib</module>
     </modules>
     
     <properties>
