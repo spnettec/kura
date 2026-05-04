@@ -1132,26 +1132,8 @@
 				<artifactId>org.apache.felix.fileinstall</artifactId>
 				<version>${org.apache.felix.fileinstall.version}</version>
 			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>milo-sdk-client</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>milo-sdk-core</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>milo-transport</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.milo</groupId>
-				<artifactId>milo-stack-core</artifactId>
-				<version>${org.eclipse.milo.version}</version>
-			</dependency>
+			<!-- milo moved to kura-opcua sibling — opcua is the only consumer. -->
+
 			<dependency>
 				<groupId>com.fazecast</groupId>
 				<artifactId>jSerialComm</artifactId>
@@ -2164,22 +2146,7 @@
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.fileinstall</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-sdk-client</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-sdk-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-transport</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-stack-core</artifactId>
-		</dependency>
+		<!-- milo moved to kura-opcua sibling — opcua is the only consumer. -->
 		<dependency>
 			<groupId>com.fazecast</groupId>
 			<artifactId>jSerialComm</artifactId>

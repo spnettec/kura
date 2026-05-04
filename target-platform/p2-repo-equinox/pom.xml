@@ -964,26 +964,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								
-								<artifact>
-									<id>org.eclipse.milo:milo-sdk-client:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-sdk-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-transport:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-stack-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+								<!-- milo moved to kura-opcua sibling p2-repo-opcua-deps. -->
 								<artifact>
 									<id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
 									<source>true</source>
