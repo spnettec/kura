@@ -77,7 +77,7 @@
                             <outputDirectory>${project.build.directory}/input_files</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../bundles/${web2.jar.name}/target</directory>
+                                    <directory>${project.basedir}/../../../kura-management-ui/bundles/${web2.jar.name}/target</directory>
                                     <filtering>false</filtering>
                                     <includes>
                                         <include>${web2.jar.name}-${web2.version}.jar</include>

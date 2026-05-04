@@ -7,8 +7,9 @@
 # manually which (if any) to backport.
 #
 # Backport workflow per chosen commit:
-#   git cherry-pick <sha>
-#   # path-aligned (B.2 layout) — applies cleanly into kura-management-ui/bundles/...
+#   cd ~/iot-kura-develop/git/kura-management-ui      # cd into the sibling repo
+#   git cherry-pick <sha>                             # path-aligned, applies cleanly
+#   git push origin yofc/main                         # publish to spnettec/kura-management-ui
 #
 # To skip a commit forever (won't show again):
 #   echo <sha> >> .upstream-mgmt-ui-rejected
@@ -59,6 +60,6 @@ done
 
 echo
 echo "----"
-echo "Backport one:    git cherry-pick <sha>"
-echo "Reject forever:  echo <sha> >> $REJECTED"
+echo "Backport one:    cd ../kura-management-ui && git cherry-pick <sha> && git push origin yofc/main"
+echo "Reject forever:  echo <sha> >> $MARKER.rejected"
 echo "Mark all done:   git rev-parse $REMOTE/$BRANCH > $MARKER"
