@@ -33,9 +33,9 @@
         <dist.assembly.name>kura_${project.version}_linux</dist.assembly.name>
         <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <dist.linux.family.skip>false</dist.linux.family.skip>
         <dist.network.resources.skip>false</dist.network.resources.skip>
-        <dist.jdk.dio.resources.skip>false</dist.jdk.dio.resources.skip>
-        <dist.profile.resources>linux</dist.profile.resources>
+        <target.device>linux</target.device>
         <dist.build.name>linux</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
         <dist.empty.dpa.skip>false</dist.empty.dpa.skip>
@@ -134,7 +134,7 @@
                             <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/linux/deb/control</directory>
+                                    <directory>${project.basedir}/../src/main/resources/variants/linux/unfiltered/deb/control</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
@@ -204,7 +204,7 @@
                                     </mapper>
                                 </data>
                                 <data>
-                                    <src>${project.basedir}/../src/main/resources/common/99-kura-nm.conf</src>
+                                    <src>${project.basedir}/../src/main/resources/variants/linux/unfiltered/99-kura-nm.conf</src>
                                     <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
                                     <type>file</type>
                                 </data>

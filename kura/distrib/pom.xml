@@ -34,7 +34,6 @@
 
     <modules>
         <module>gateway</module>
-        <module>gateway-core</module>
         <module>gateway-nn</module>
 
         <module>docker-base</module>
@@ -49,12 +48,22 @@
         <!-- Modules that build the dist-linux variant (full networking) override this to false. -->
         <dist.linux.bundles.skip>true</dist.linux.bundles.skip>
         <dist.assembly.skip>true</dist.assembly.skip>
+        <!-- Gates OSGi bundle copy executions (see maven-dependency-plugin); resource layout no
+             longer keys off this — the variant overlay does. -->
         <dist.network.resources.skip>true</dist.network.resources.skip>
-        <dist.jdk.dio.resources.skip>true</dist.jdk.dio.resources.skip>
+        <!-- Pulls variants/linux/{filtered,unfiltered} on top of base. gateway and gateway-nn
+             set this to false; docker-base leaves it true and supplies its own overlay. -->
+        <dist.linux.family.skip>true</dist.linux.family.skip>
         <dist.dp.skip>true</dist.dp.skip>
-        <dist.profile.resources>common</dist.profile.resources>
         <dist.build.name>${target.device}</dist.build.name>
         <dist.kura.version.label>KURA_${kura.version}</dist.kura.version.label>
+        <!-- Path back to kura/distrib/ from any submodule. ${project.basedir} resolves in each
+             child's context, so /.. steps up to kura/distrib/. The 5 child modules sit one
+             directory below this pom. -->
+        <kura.distrib.basedir>${project.basedir}/..</kura.distrib.basedir>
+        <!-- Per-variant overlay root. linux/linux-nn inherit; docker-base overrides to its own
+             src/main/resources to keep its docker-only assets self-contained. -->
+        <variant.resources.dir>${kura.distrib.basedir}/src/main/resources/variants/${target.device}</variant.resources.dir>
         <buildNumber>buildNumber</buildNumber>
         <!-- Defaults for launcher script template substitution; modules override target.device. -->
         <kura.mem.size>1024m</kura.mem.size>
@@ -640,8 +649,9 @@
                     <propertiesEncoding>${project.build.sourceEncoding}</propertiesEncoding>
                 </configuration>
                 <executions>
+                    <!-- Static legal/notes from kura/distrib/ root, unchanged from upstream. -->
                     <execution>
-                        <id>copy-common-framework-resources</id>
+                        <id>copy-static-framework-resources</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
@@ -649,12 +659,7 @@
                             <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/osgi/equinox/configuration</directory>
-                                    <filtering>true</filtering>
-                                    <includes><include>config.ini</include></includes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/..</directory>
+                                    <directory>${kura.distrib.basedir}</directory>
                                     <filtering>false</filtering>
                                     <includes>
                                         <include>RELEASE_NOTES.txt</include>
@@ -665,63 +670,58 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- Base + variant overlay model (upstream-aligned).
+                         The four executions below run in declared order; later ones overlay
+                         (overwrite) earlier ones in the same destination tree. -->
                     <execution>
-                        <id>copy-jdk-dio-framework-resources</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.jdk.dio.resources.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <includes><include>jdk.dio.policy</include></includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-common-user-resources</id>
+                        <id>copy-base-filtered</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
                             <skip>${dist.assembly.skip}</skip>
                             <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <targetPath>user/security</targetPath>
-                                    <includes><include>cacerts.ks</include></includes>
+                                    <directory>${kura.distrib.basedir}/src/main/resources/filtered/pkg</directory>
+                                    <filtering>true</filtering>
                                 </resource>
+                            </resources>
+                            <delimiters>
+                                <delimiter>${*}</delimiter>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-base-unfiltered</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <directory>${kura.distrib.basedir}/src/main/resources/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
-                                    <targetPath>user</targetPath>
-                                    <includes><include>kura_custom.properties</include></includes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <targetPath>user/snapshots</targetPath>
-                                    <includes><include>snapshot_0.xml</include></includes>
                                 </resource>
                             </resources>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-profile-framework-resources</id>
+                        <id>copy-linux-family-filtered</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/framework</outputDirectory>
+                            <skip>${dist.linux.family.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <directory>${kura.distrib.basedir}/src/main/resources/variants/linux-shared/filtered/pkg</directory>
                                     <filtering>true</filtering>
-                                    <includes><include>kura.properties</include></includes>
                                 </resource>
                             </resources>
                             <delimiters>
@@ -732,174 +732,56 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-profile-user-snapshot</id>
+                        <id>copy-linux-family-unfiltered</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/user/snapshots</outputDirectory>
+                            <skip>${dist.linux.family.skip}</skip>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
                             <overwrite>true</overwrite>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
+                                    <directory>${kura.distrib.basedir}/src/main/resources/variants/linux-shared/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
-                                    <includes><include>snapshot_0.xml</include></includes>
                                 </resource>
                             </resources>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-common-install-resources</id>
+                        <id>copy-variant-filtered</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
                             <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <includes>
-                                        <include>manage_kura_users.sh</include>
-                                        <include>kura-tmpfiles.conf</include>
-                                        <include>kura.logrotate</include>
-                                        <include>jdk-dio-properties/**</include>
-                                    </includes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
+                                    <directory>${variant.resources.dir}/filtered/pkg</directory>
                                     <filtering>true</filtering>
-                                    <includes>
-                                        <include>kura.service</include>
-                                        <include>kura.service.nn</include>
-                                    </includes>
                                 </resource>
                             </resources>
-                            <delimiters><delimiter>${*}</delimiter></delimiters>
+                            <delimiters>
+                                <delimiter>${*}</delimiter>
+                                <delimiter>{*}</delimiter>
+                            </delimiters>
                             <useDefaultDelimiters>false</useDefaultDelimiters>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-customize-install-resources</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.network.resources.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <includes>
-                                        <include>customize-installation.sh</include>
-                                        <include>customize_kura_properties.py</include>
-                                        <include>customize_snapshot.py</include>
-                                        <include>network_tools.py</include>
-                                    </includes>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common/snapshots</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-profile-install-resources</id>
+                        <id>copy-variant-unfiltered</id>
                         <phase>prepare-package</phase>
                         <goals><goal>copy-resources</goal></goals>
                         <configuration>
                             <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
+                            <outputDirectory>${project.build.directory}/${dist.assembly.name}</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
-                                    <filtering>false</filtering>
-                                    <includes>
-                                        <include>kura_install.sh</include>
-                                        <include>firewall.service</include>
-                                        <include>firewall.init</include>
-                                        <include>iptables.init</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-network-install-resources</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.network.resources.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/install</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <includes>
-                                        <include>comment_interfaces_file.py</include>
-                                        <include>customize_iptables.py</include>
-                                        <include>dnsmasq/**</include>
-                                        <include>iptables/**</include>
-                                        <include>named/**</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-console-skin-resources</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/console/skin</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common/favicon</directory>
+                                    <directory>${variant.resources.dir}/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-profile-log4j-resources</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/log4j</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/${dist.profile.resources}</directory>
-                                    <filtering>false</filtering>
-                                    <includes><include>log4j.xml</include></includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>filter-launcher-scripts</id>
-                        <phase>prepare-package</phase>
-                        <goals><goal>copy-resources</goal></goals>
-                        <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/bin</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common/launcher</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                                <resource>
-                                    <directory>${project.basedir}/../src/main/resources/common</directory>
-                                    <filtering>false</filtering>
-                                    <includes>
-                                        <include>gen_config_ini.sh</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <delimiters><delimiter>@</delimiter></delimiters>
-                            <useDefaultDelimiters>false</useDefaultDelimiters>
                         </configuration>
                     </execution>
                 </executions>

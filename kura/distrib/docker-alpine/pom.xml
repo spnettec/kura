@@ -63,7 +63,7 @@
                         <phase>package</phase>
                         <configuration>
                             <executable>docker</executable>
-                            <workingDirectory>${project.basedir}/../src/main/resources/docker-alpine-nn</workingDirectory>
+                            <workingDirectory>${project.basedir}/src/main/resources</workingDirectory>
                             <arguments>
                                <argument>build</argument>
                                 <argument>--build-arg</argument>

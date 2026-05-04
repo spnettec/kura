@@ -33,13 +33,15 @@
         <dist.assembly.name>kura_${project.version}_docker-nn</dist.assembly.name>
         <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <!-- docker-base supplies its own variant overlay; skip the linux-family overlay. -->
+        <dist.linux.family.skip>true</dist.linux.family.skip>
         <dist.network.resources.skip>true</dist.network.resources.skip>
-        <dist.jdk.dio.resources.skip>true</dist.jdk.dio.resources.skip>
-        <dist.profile.resources>docker-nn</dist.profile.resources>
         <dist.build.name>docker-nn</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
         <target.device>docker-nn</target.device>
         <kura.os.version>linux</kura.os.version>
+        <!-- docker-base's overlay lives next to its own pom (Dockerfile + docker-only assets). -->
+        <variant.resources.dir>${project.basedir}/src/main/resources</variant.resources.dir>
     </properties>
 
    <build>
@@ -132,7 +134,7 @@
                             <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/docker-nn/deb/control</directory>
+                                    <directory>${project.basedir}/src/main/resources/unfiltered/deb/control</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
@@ -148,7 +150,7 @@
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/docker-nn</directory>
+                                    <directory>${project.basedir}/src/main/resources/unfiltered</directory>
                                     <filtering>false</filtering>
                                     <includes>
                                         <include>Dockerfile</include>

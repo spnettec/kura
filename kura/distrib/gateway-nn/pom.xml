@@ -33,9 +33,8 @@
         <dist.assembly.name>kura_${project.version}_linux-nn</dist.assembly.name>
         <dist.assembly.skip>false</dist.assembly.skip>
         <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+        <dist.linux.family.skip>false</dist.linux.family.skip>
         <dist.network.resources.skip>false</dist.network.resources.skip>
-        <dist.jdk.dio.resources.skip>false</dist.jdk.dio.resources.skip>
-        <dist.profile.resources>linux-nn</dist.profile.resources>
         <dist.build.name>linux-nn</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
         <target.device>linux-nn</target.device>
@@ -76,7 +75,7 @@
                             <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/../src/main/resources/linux-nn/deb/control</directory>
+                                    <directory>${project.basedir}/../src/main/resources/variants/linux-nn/unfiltered/deb/control</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
