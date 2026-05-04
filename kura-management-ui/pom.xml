@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2025, 2026 Eurotech and/or its affiliates and others
+    Copyright (c) 2026 YOFC
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Aggregator pom mirroring upstream eclipse-kura/kura-management-ui/pom.xml shape so
+        this subtree can be built standalone:
+            mvn -f kura-management-ui/pom.xml install
+        produces just the kura-management-ui_VER_all.deb addon (assumes web2 jar is already
+        in ~/.m2 — built earlier from the kura-management-ui sibling repo via the kura
+        monorepo's reactor).
+
+        The web2 bundle itself lives in the spnettec/kura-management-ui sibling clone at
+        ~/iot-kura-develop/git/kura-management-ui/bundles/. It is not built by THIS reactor;
+        it is built by the kura monorepo's reactor (kura/kura/pom.xml) which references it
+        via ../../kura-management-ui/bundles/org.eclipse.kura.web2.
+    -->
+
+    <groupId>org.eclipse.kura</groupId>
+    <artifactId>kura-management-ui-fork</artifactId>
+    <version>6.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Eclipse Kura Management UI — YOFC fork addon distribution</name>
+
+    <modules>
+        <module>distrib</module>
+    </modules>
+</project>
