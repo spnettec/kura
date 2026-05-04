@@ -24,21 +24,6 @@
 						</goals>
 						<configuration>
 							<artifacts>
-								<artifact>
-									<id>jakarta.activation:jakarta.activation-api:jar:${jakarta.activation-api.javax.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>jakarta.xml.bind:jakarta.xml.bind-api:jar:${jakarta.xml.bind-api.javax.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.sun.xml.bind:jaxb-osgi:${jaxb-osgi.javax.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
 								
 							</artifacts>
 						</configuration>
