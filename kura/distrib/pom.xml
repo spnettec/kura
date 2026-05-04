@@ -44,6 +44,7 @@
              addon repos so cherry-picks apply cleanly. -->
         <module>../../kura-management-ui/distrib</module>
         <module>../../kura-networking/distrib</module>
+        <module>../../kura-opcua/distrib</module>
     </modules>
     
     <properties>
@@ -471,7 +472,7 @@
                                 org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager, org.eclipse.kura.container.orchestration.provider, org.eclipse.kura.container.provider,
                                 org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,
                                 org.eclipse.kura.core.deployment, org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore,
-                                org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.opcua.provider, org.eclipse.kura.driver.s7plc.provider, org.eclipse.kura.hook.file.move.provider,
+                                org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.s7plc.provider, org.eclipse.kura.hook.file.move.provider,
                                 org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,
                                 org.eclipse.kura.rest.asset.provider, org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,
                                 org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.packages.provider, org.eclipse.kura.rest.position.provider, org.eclipse.kura.rest.provider,
