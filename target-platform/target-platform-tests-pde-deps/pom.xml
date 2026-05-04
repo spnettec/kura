@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2026 Eurotech and/or its affiliates and others
+    Copyright (c) 2026 YOFC
+
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.eclipse.kura</groupId>
+        <artifactId>target-platform</artifactId>
+        <version>6.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>target-platform-tests-pde-deps</artifactId>
+    <packaging>pom</packaging>
+    <name>Kura target platform PDE test dependencies</name>
+
+    <!--
+        Test-only deps. Direct deps below are P2 bundles produced by
+        target-platform/p2-repo-tests-deps reficio (mockito, byte-buddy,
+        hamcrest, dropwizard.metrics, moquette.broker) and parked under
+        groupId=p2.osgi.bundle in ~/.m2 by install-to-m2.sh.
+
+        kura.target files reference this artifact in their Maven location
+        only when the reactor includes test bundles. Production-only target
+        files reference target-platform-pde-deps alone.
+    -->
+
+    <dependencies>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>moquette-broker</artifactId>
+            <!-- reficio normalizes 0.17 (Maven) -> 0.17.0 (OSGi). -->
+            <version>${moquette-broker.version}.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.mockito.mockito-core</artifactId>
+            <version>${mockito-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>net.bytebuddy.byte-buddy</artifactId>
+            <version>${byte-buddy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>net.bytebuddy.byte-buddy-agent</artifactId>
+            <version>${byte-buddy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.hamcrest</artifactId>
+            <!-- reficio normalizes 2.2 (Maven) -> 2.2.0 (OSGi). -->
+            <version>${org.hamcrest.version}.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.hamcrest.core</artifactId>
+            <version>${org.hamcrest.core.version}.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.hamcrest.library</artifactId>
+            <version>${org.hamcrest.integration.version}.0</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>io.dropwizard.metrics.core</artifactId>
+            <version>${io.dropwizard.metrics.version}</version>
+        </dependency>
+    </dependencies>
+</project>

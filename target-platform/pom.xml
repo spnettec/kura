@@ -160,7 +160,7 @@
         <!-- START test dependencies -->
         <byte-buddy.version>1.18.8</byte-buddy.version>
         <io.dropwizard.metrics.version>3.2.2</io.dropwizard.metrics.version>
-        <mockito-core.version>5.7.0</mockito-core.version>
+        <mockito-core.version>5.21.0</mockito-core.version>
         <moquette-broker.version>0.17</moquette-broker.version>
         <!--<objenesis.version>3.3</objenesis.version>-->
         <org.junit.version>4.13.2</org.junit.version>
@@ -220,6 +220,7 @@
         <module>log4j2-api-config</module>
         <module>p2-repo-extra</module>
         <module>target-platform-pde-deps</module>
+        <module>target-platform-tests-pde-deps</module>
     </modules>
 
     <repositories>

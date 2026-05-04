@@ -1102,5 +1102,40 @@
             <artifactId>usb4java-javax</artifactId>
             <version>2.0.0.20260504223515</version>
         </dependency>
+
+        <!-- milo + digitalpetri are kept here even though no monorepo bundle
+             uses them — another non-kura project consumes them from this
+             monorepo's ~/.m2 install. opcua sibling has its own duplicate
+             reficio so it doesn't depend on monorepo for its own build. -->
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.eclipse.milo.sdk-client</artifactId>
+            <version>${org.eclipse.milo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.eclipse.milo.sdk-core</artifactId>
+            <version>${org.eclipse.milo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.eclipse.milo.stack-core</artifactId>
+            <version>${org.eclipse.milo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>org.eclipse.milo.transport</artifactId>
+            <version>${org.eclipse.milo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
+            <version>${strict-machine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>com.digitalpetri.netty.channel-fsm</artifactId>
+            <version>${netty-channel-fsm.version}</version>
+        </dependency>
     </dependencies>
 </project>
