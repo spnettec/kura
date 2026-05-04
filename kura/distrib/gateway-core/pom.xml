@@ -37,7 +37,10 @@
         <dist.build.name>${target.device}_${kura.os.version}</dist.build.name>
         <deb.name>kura-core</deb.name>
         <deb.dependencies>
-            setserial, zip, gzip, unzip, procps, usbutils, socat, gawk, sed, inetutils-telnet, polkit | policykit-1, ssh | openssh, openssl, busybox, cron, logrotate, libpam-modules, python3, openjdk-17-jre-headless | temurin-17-jdk, dos2unix, libtirpc3, chrony
+            setserial, zip, gzip, unzip, procps, usbutils, socat, gawk, sed, inetutils-telnet, 
+            polkit | policykit-1, ssh | openssh, openssl, busybox, cron, logrotate, libpam-modules, python3, 
+            openjdk-21-jre-headless | temurin-21-jdk | java-runtime-headless (= 21),
+            dos2unix, libtirpc3, chrony
         </deb.dependencies>
         <deb.provides></deb.provides>
         <deb.recommendations></deb.recommendations>
