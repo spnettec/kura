@@ -879,16 +879,6 @@
         </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtbootstrap3</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtproject.gwt-servlet-jakarta</artifactId>
-            <version>2.12.2</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
             <artifactId>org.hamcrest</artifactId>
             <version>2.2.0</version>
         </dependency>

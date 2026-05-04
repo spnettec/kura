@@ -104,16 +104,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>org.gwtproject:gwt-servlet-jakarta:${gwt-user.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.gwtbootstrap3:gwtbootstrap3:${org.gwtbootstrap3.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>tel.schich:javacan-core:jar:${javacan.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
