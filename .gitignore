@@ -50,3 +50,4 @@ javaConfig.json
 .tmp-*
 .tmp-handoff/
 .gitnexus
+/AGENTS.md
