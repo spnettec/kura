@@ -49,3 +49,4 @@ javaConfig.json
 # Local scratch files (migration handoff, bundle maps, etc.)
 .tmp-*
 .tmp-handoff/
+.gitnexus
