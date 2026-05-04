@@ -203,11 +203,7 @@
                                         <prefix>/tmp</prefix>
                                     </mapper>
                                 </data>
-                                <data>
-                                    <src>${project.basedir}/../src/main/resources/variants/linux/unfiltered/99-kura-nm.conf</src>
-                                    <dst>/etc/NetworkManager/conf.d/99-kura-nm.conf</dst>
-                                    <type>file</type>
-                                </data>
+                                <!-- 99-kura-nm.conf moved to kura-networking sibling deb. -->
                             </dataSet>
                         </configuration>
                     </execution>
