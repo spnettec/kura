@@ -10,6 +10,8 @@
 #
 set -euo pipefail
 
+cd "$(git rev-parse --show-toplevel)"
+
 REMOTE="yofc-mgmt-ui"
 BRANCH="yofc/main"
 PREFIX="kura-management-ui"

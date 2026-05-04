@@ -18,6 +18,8 @@
 #
 set -euo pipefail
 
+cd "$(git rev-parse --show-toplevel)"
+
 REMOTE="upstream-mgmt-ui"
 BRANCH="develop"
 SUBPATH="bundles/org.eclipse.kura.web2"
