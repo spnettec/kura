@@ -46,7 +46,7 @@
         <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
         
         <!-- START common dependencies -->
-        <apache-qpid-jms-client.version>2.7.0</apache-qpid-jms-client.version>
+        <apache-qpid-jms-client.version>2.10.0</apache-qpid-jms-client.version>
         <apache-qpid-proton-j.version>0.34.1</apache-qpid-proton-j.version>
         <bluez-dbus-osgi.version>0.3.1</bluez-dbus-osgi.version>
         <com.eclipsesource.minimal-json.version>0.9.5</com.eclipsesource.minimal-json.version>
@@ -89,7 +89,6 @@
         <org.eclipse.jetty.version>12.1.8</org.eclipse.jetty.version>
         <org.eclipse.osgi-technology.rest.version>1.2.3</org.eclipse.osgi-technology.rest.version>
         <org.eclipse.paho.client.mqttv3.version>1.2.5</org.eclipse.paho.client.mqttv3.version>
-        <org.hamcrest.core.version>2.2</org.hamcrest.core.version>
         <!--<org.jboss.logging.version>3.3.2.Final</org.jboss.logging.version>-->
         <org.knowhowlab.osgi.monitoradmin.version>1.0.3</org.knowhowlab.osgi.monitoradmin.version>
         <org.osgi.service.component.annotations.version>1.5.1</org.osgi.service.component.annotations.version>
@@ -208,19 +207,14 @@
     </properties>
 
     <modules>
-        <module>target-platform-bom</module>
-        <module>p2-repo-equinox</module>
-        <module>p2-repo-common</module>
-        <module>p2-repo-test-deps</module>
-        <!--<module>org.apache.activemq.artemis</module>-->
-        <!--<module>org.eclipse.kura.camel.sun.misc</module>-->
-        <module>org.eclipse.kura.sun.misc</module>
+    	<module>org.eclipse.kura.sun.misc</module>
         <module>org.usb4java</module>
         <module>usb4java-javax</module>
         <module>log4j2-api-config</module>
-        <module>p2-repo-extra</module>
+        <module>p2-repo-equinox</module>
+        <module>p2-repo-common</module>
+        <module>p2-repo-tests</module>
         <module>target-platform-pde-deps</module>
-        <module>target-platform-tests-pde-deps</module>
     </modules>
 
     <repositories>

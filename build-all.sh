@@ -31,8 +31,6 @@ mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS &&
 mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS &&
 
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
-# Tests modules are excluded — they import mockito 5.21.0 which is not in
-# target-platform-bom (still 5.7.0). Same as upstream.
 SCRIPT_DIR="$(dirname "$0")"
 
 if [ -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" ]; then

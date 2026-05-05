@@ -43,9 +43,9 @@
             <url>file:///${basedir}/../../../target-platform/p2-repo-common/target/repository/</url>
         </repository>
         <repository>
-            <id>p2-repo-test-deps</id>
+            <id>p2-repo-tests</id>
             <layout>p2</layout>
-            <url>file:///${basedir}/../../../target-platform/p2-repo-test-deps/target/repository/</url>
+            <url>file:///${basedir}/../../../target-platform/p2-repo-tests/target/repository/</url>
         </repository>
     </repositories>
 

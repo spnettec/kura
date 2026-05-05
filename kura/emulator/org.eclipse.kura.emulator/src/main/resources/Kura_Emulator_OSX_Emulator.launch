@@ -73,8 +73,7 @@
         <setEntry value="com.google.protobuf@default:default"/>
         <setEntry value="com.h2database@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
-        <setEntry value="com.sun.xml.bind.jaxb-osgi*2.3.9@default:default"/>
-        <setEntry value="com.sun.xml.bind.jaxb-osgi*4.0.2@default:default"/>
+        <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
         <setEntry value="com.zaxxer.HikariCP@default:default"/>
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
@@ -116,15 +115,13 @@
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
         <setEntry value="io.vertx.web@default:default"/>
-        <setEntry value="jakarta.activation-api*1.2.2@default:default"/>
-        <setEntry value="jakarta.activation-api*2.1.2@default:default"/>
+        <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
         <setEntry value="jakarta.jms-api@default:default"/>
         <setEntry value="jakarta.validation.jakarta.validation-api@default:default"/>
         <setEntry value="jakarta.ws.rs-api@default:default"/>
-        <setEntry value="jakarta.xml.bind-api*2.3.3@default:default"/>
-        <setEntry value="jakarta.xml.bind-api*4.0.2@default:default"/>
+        <setEntry value="jakarta.xml.bind-api@default:default"/>
         <setEntry value="jakarta.xml.soap-api@default:default"/>
         <setEntry value="jakarta.xml.ws-api@default:default"/>
         <setEntry value="javassist@default:default"/>

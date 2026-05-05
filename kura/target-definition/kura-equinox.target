@@ -19,13 +19,13 @@
         <!--
             Single Maven location, no Profile location with absolute paths. All
             bundles are resolved from ~/.m2:
-              - kura-bom: 210 kura framework bundles (org.eclipse.kura.*) by name
-              - target-platform-pde-deps: 211 P2 third-party bundles produced by
-                target-platform/p2-repo-{equinox,extra,common} reficio runs and
+              - kura-pde-deps: kura framework bundles (org.eclipse.kura.*) by name
+              - target-platform-pde-deps: P2 third-party bundles produced by
+                target-platform/p2-repo-{equinox,common,tests} reficio runs and
                 parked under p2.osgi.bundle/* by install-to-m2.sh
             One-time setup:
                 mvn -f target-platform/pom.xml install
-                mvn -f kura/kura-bom/pom.xml install
+                mvn -f kura/kura-pde-deps/pom.xml install
             That populates ~/.m2 — then this target file resolves on any machine.
         -->
         <location includeDependencyDepth="direct" includeDependencyScopes="compile,test"
@@ -34,7 +34,7 @@
             <dependencies>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>
-                    <artifactId>kura-bom</artifactId>
+                    <artifactId>kura-pde-deps</artifactId>
                     <version>6.0.0-SNAPSHOT</version>
                     <type>pom</type>
                 </dependency>

@@ -130,7 +130,7 @@
     <dependencies>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>target-platform-bom</artifactId>
+            <artifactId>target-platform-pde-deps</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <type>pom</type>
             <exclusions>
@@ -155,13 +155,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>target-platform-pde-deps</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
-            <type>pom</type>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>kura-bom</artifactId>
+            <artifactId>kura-pde-deps</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <type>pom</type>
         </dependency>
@@ -405,7 +399,7 @@
                                 netty-codec, netty-codec-base, netty-codec-compression, netty-codec-http, netty-codec-mqtt,
                                 netty-common, netty-handler, netty-resolver, netty-transport, netty-transport-classes-epoll,
                                 netty-transport-classes-kqueue, netty-transport-native-epoll, netty-transport-native-kqueue, netty-transport-native-unix-common, org.apache.servicemix.bundles.c3p0,
-                                org.eclipse.paho.client.mqttv3, org.gwtbootstrap3, org.gwtproject.gwt-servlet-jakarta, protobuf-java, quartz
+                                org.eclipse.paho.client.mqttv3, protobuf-java, quartz
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
