@@ -478,29 +478,14 @@
           launcher="setups/launchers/build-target-platform.launch"/>
     </setupTask>
   </setupTask>
-  <setupTask
-      xsi:type="setup.targlets:TargletTask"
-      filter="">
-    <targlet
-        name="${scope.project.label}"
-        activeRepositoryList="${eclipse.target.platform}"
-        includeAllPlatforms="true">
-      <requirement
-          name="*"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/p2-repo-common/target/repository"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/p2-repo-equinox/target/repository"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/p2-repo-extra/target/repository"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/p2-repo-test-deps/target/repository"/>
-      <dropinLocation
-          rootFolder="${git.clone.location}/target-platform/usb4java-javax/target"
-          recursive="false"/>
-    </targlet>
-    <description>Kura</description>
-  </setupTask>
+  <!--
+    Removed Oomph TargletTask: it auto-rewrote the workspace's active target
+    on every Eclipse startup, overriding the user's choice of
+    kura/target-definition/kura-equinox.target. The Modular Target paths it
+    referenced (p2-repo-extra, p2-repo-test-deps, p2-repo-equinox_3.16.0) no
+    longer exist after the consolidation to a PDE Maven-location target.
+    Restore from git history if the Modular Target workflow is needed again.
+  -->
   <setupTask
       xsi:type="setup.workingsets:WorkingSetTask">
     <workingSet
