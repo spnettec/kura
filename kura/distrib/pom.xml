@@ -455,7 +455,7 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
                                 <includeArtifactIds>
-                                commons-lang3, org.eclipse.kura.ai.triton.server, org.eclipse.kura.asset.cloudlet.provider, org.eclipse.kura.asset.helper.provider, org.eclipse.kura.asset.provider,
+                                commons-lang3, org.eclipse.kura.asset.cloudlet.provider, org.eclipse.kura.asset.helper.provider, org.eclipse.kura.asset.provider,
                                 org.eclipse.kura.broker.artemis.simple.mqtt, org.eclipse.kura.broker.artemis.xml, org.eclipse.kura.camel, org.eclipse.kura.cloud.base.provider, org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,
                                 org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager, org.eclipse.kura.container.orchestration.provider, org.eclipse.kura.container.provider,
                                 org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,
