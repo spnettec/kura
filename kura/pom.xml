@@ -33,9 +33,6 @@
         <module>org.eclipse.kura.asset.cloudlet.provider</module>
         <module>org.eclipse.kura.asset.provider</module>
         <module>org.eclipse.kura.asset.helper.provider</module>
-        <module>org.eclipse.kura.broker.artemis.core</module>
-        <module>org.eclipse.kura.broker.artemis.simple.mqtt</module>
-        <module>org.eclipse.kura.broker.artemis.xml</module>
         <module>org.eclipse.kura.camel</module>
         <module>org.eclipse.kura.camel.cloud.factory</module>
         <module>org.eclipse.kura.camel.xml</module>
@@ -168,9 +165,6 @@
         <org.eclipse.kura.asset.cloudlet.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.cloudlet.provider.version>
         <org.eclipse.kura.asset.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.helper.provider.version>
         <org.eclipse.kura.asset.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.asset.provider.version>
-        <org.eclipse.kura.broker.artemis.core.version>2.0.0-SNAPSHOT</org.eclipse.kura.broker.artemis.core.version>
-        <org.eclipse.kura.broker.artemis.simple.mqtt.version>2.0.0-SNAPSHOT</org.eclipse.kura.broker.artemis.simple.mqtt.version>
-        <org.eclipse.kura.broker.artemis.xml.version>2.0.0-SNAPSHOT</org.eclipse.kura.broker.artemis.xml.version>
         <org.eclipse.kura.camel.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.version>
         <org.eclipse.kura.camel.cloud.factory.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.cloud.factory.version>
         <org.eclipse.kura.camel.xml.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.xml.version>
@@ -294,21 +288,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.asset.provider</artifactId>
                 <version>${org.eclipse.kura.asset.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.broker.artemis.core</artifactId>
-                <version>${org.eclipse.kura.broker.artemis.core.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.broker.artemis.simple.mqtt</artifactId>
-                <version>${org.eclipse.kura.broker.artemis.simple.mqtt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.broker.artemis.xml</artifactId>
-                <version>${org.eclipse.kura.broker.artemis.xml.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
