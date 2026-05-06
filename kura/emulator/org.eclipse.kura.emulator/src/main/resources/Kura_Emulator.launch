@@ -44,6 +44,7 @@
         <setEntry value="com.h2database@default:default"/>
         <setEntry value="com.zaxxer.HikariCP@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
+        <setEntry value="io.netty.codec-haproxy@default:default"/>
         <setEntry value="io.netty.codec-http@default:default"/>
         <setEntry value="io.netty.codec-mqtt@default:default"/>
         <setEntry value="io.netty.codec@default:default"/>

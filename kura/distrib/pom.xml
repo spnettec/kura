@@ -365,7 +365,7 @@
                                 jakarta.inject-api, jakarta.validation-api, javassist, jersey-client, jersey-common,
                                 jersey-container-servlet, jersey-container-servlet-core, jersey-entity-filtering, jersey-hk2, jersey-media-jaxb,
                                 jersey-media-multipart, jersey-media-sse, jersey-server, mimepull, netty-buffer,
-                                netty-codec, netty-codec-base, netty-codec-compression, netty-codec-http, netty-codec-mqtt,
+                                netty-codec, netty-codec-base, netty-codec-compression, netty-codec-haproxy, netty-codec-http, netty-codec-mqtt,
                                 netty-common, netty-handler, netty-resolver, netty-transport, netty-transport-classes-epoll,
                                 netty-transport-classes-kqueue, netty-transport-native-epoll, netty-transport-native-kqueue, netty-transport-native-unix-common, org.apache.servicemix.bundles.c3p0,
                                 org.eclipse.paho.client.mqttv3, protobuf-java, quartz

@@ -191,6 +191,7 @@
         <setEntry value="groovy@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>
+        <setEntry value="io.netty.codec-haproxy@default:default"/>
         <setEntry value="io.netty.codec-http2@default:default"/>
         <setEntry value="io.netty.codec-http@default:default"/>
         <setEntry value="io.netty.codec-mqtt@default:default"/>

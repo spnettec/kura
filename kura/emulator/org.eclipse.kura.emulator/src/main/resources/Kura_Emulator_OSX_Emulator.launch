@@ -87,6 +87,7 @@
         <setEntry value="io.netty.codec-base@default:default"/>
         <setEntry value="io.netty.codec-compression@default:default"/>
         <setEntry value="io.netty.codec-dns@default:default"/>
+        <setEntry value="io.netty.codec-haproxy@default:default"/>
         <setEntry value="io.netty.codec-http2@default:default"/>
         <setEntry value="io.netty.codec-http@default:default"/>
         <setEntry value="io.netty.codec-mqtt@default:default"/>
@@ -262,10 +263,14 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
+        <setEntry value="org.apache.activemq.artemis@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.asset.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.broker.artemis.core@default:default"/>
+        <setEntry value="org.eclipse.kura.broker.artemis.simple.mqtt@default:default"/>
+        <setEntry value="org.eclipse.kura.broker.artemis.xml@default:default"/>
         <setEntry value="org.eclipse.kura.camel.cloud.factory@default:default"/>
         <setEntry value="org.eclipse.kura.camel.xml@default:default"/>
         <setEntry value="org.eclipse.kura.camel@default:default"/>
