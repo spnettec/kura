@@ -33,9 +33,6 @@
         <module>org.eclipse.kura.asset.cloudlet.provider</module>
         <module>org.eclipse.kura.asset.provider</module>
         <module>org.eclipse.kura.asset.helper.provider</module>
-        <module>org.eclipse.kura.camel</module>
-        <module>org.eclipse.kura.camel.cloud.factory</module>
-        <module>org.eclipse.kura.camel.xml</module>
         <module>org.eclipse.kura.core</module>
         <module>org.eclipse.kura.core.certificates</module>
         <module>org.eclipse.kura.core.keystore</module>
@@ -64,7 +61,6 @@
         <module>org.eclipse.kura.localization.resources</module>
         <module>org.eclipse.kura.stress</module>
         <module>org.eclipse.kura.util</module>
-        <module>org.eclipse.kura.wire.camel</module>
         <module>org.eclipse.kura.wire.db.component.provider</module>
         <module>org.eclipse.kura.wire.h2db.component.provider</module>
         <module>org.eclipse.kura.wire.component.provider</module>
@@ -165,9 +161,6 @@
         <org.eclipse.kura.asset.cloudlet.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.cloudlet.provider.version>
         <org.eclipse.kura.asset.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.helper.provider.version>
         <org.eclipse.kura.asset.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.asset.provider.version>
-        <org.eclipse.kura.camel.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.version>
-        <org.eclipse.kura.camel.cloud.factory.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.cloud.factory.version>
-        <org.eclipse.kura.camel.xml.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.xml.version>
         <org.eclipse.kura.cloud.base.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.cloud.base.provider.version>
         <org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>
         <org.eclipse.kura.cloudconnection.kapua.mqtt.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.kapua.mqtt.provider.version>
@@ -238,7 +231,6 @@
         <org.eclipse.kura.useradmin.store.version>2.0.0-SNAPSHOT</org.eclipse.kura.useradmin.store.version>
         <org.eclipse.kura.util.version>2.0.0-SNAPSHOT</org.eclipse.kura.util.version>
         <org.eclipse.kura.wire.ai.component.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.ai.component.provider.version>
-        <org.eclipse.kura.wire.camel.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.camel.version>
         <org.eclipse.kura.wire.component.join.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.component.join.provider.version>
         <org.eclipse.kura.wire.component.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.wire.component.provider.version>
         <org.eclipse.kura.wire.db.component.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.db.component.provider.version>
@@ -288,21 +280,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.asset.provider</artifactId>
                 <version>${org.eclipse.kura.asset.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.camel</artifactId>
-                <version>${org.eclipse.kura.camel.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.camel.cloud.factory</artifactId>
-                <version>${org.eclipse.kura.camel.cloud.factory.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.camel.xml</artifactId>
-                <version>${org.eclipse.kura.camel.xml.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -655,11 +632,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.wire.ai.component.provider</artifactId>
                 <version>${org.eclipse.kura.wire.ai.component.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.wire.camel</artifactId>
-                <version>${org.eclipse.kura.wire.camel.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
