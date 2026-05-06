@@ -218,8 +218,6 @@
         <setEntry value="org.glassfish.jersey.media.jersey-media-jaxb@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-multipart@default:default"/>
         <setEntry value="org.glassfish.jersey.media.jersey-media-sse@default:default"/>
-        <setEntry value="org.gwtbootstrap3@default:default"/>
-        <setEntry value="org.gwtproject.gwt-servlet-jakarta@default:default"/>
         <setEntry value="org.jspecify.jspecify@default:default"/>
         <setEntry value="org.jvnet.mimepull@default:default"/>
         <setEntry value="org.objectweb.asm.commons@default:default"/>

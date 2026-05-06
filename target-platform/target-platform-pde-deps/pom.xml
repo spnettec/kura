@@ -1117,7 +1117,7 @@
             <version>${netty-channel-fsm.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.paho</groupId>
+            <groupId>p2.osgi.bundle</groupId>
             <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
             <version>${org.eclipse.paho.client.mqttv3.version}</version>
         </dependency>
