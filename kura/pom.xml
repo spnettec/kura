@@ -29,7 +29,9 @@
     <modules>
         <module>kura-pde-deps</module>
         <module>target-definition</module>
-        <module>org.eclipse.kura.api</module>        <module>org.eclipse.kura.core</module>
+        <module>org.eclipse.kura.api</module>
+        <module>org.eclipse.kura.asset.provider</module>
+        <module>org.eclipse.kura.core</module>
         <module>org.eclipse.kura.core.certificates</module>
         <module>org.eclipse.kura.core.keystore</module>
         <module>org.eclipse.kura.cloud.base.provider</module>
@@ -245,6 +247,11 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.api</artifactId>
                 <version>${org.eclipse.kura.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.kura</groupId>
+                <artifactId>org.eclipse.kura.asset.provider</artifactId>
+                <version>${org.eclipse.kura.asset.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>

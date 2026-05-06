@@ -36,6 +36,10 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
+            <artifactId>org.eclipse.kura.asset.provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.cloud.base.provider</artifactId>
         </dependency>
         <dependency>
