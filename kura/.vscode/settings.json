@@ -2,5 +2,24 @@
     "java.format.settings.url": "setups/formatting/KuraFormatter.xml",
     "editor.defaultFormatter": "redhat.java",
     "editor.formatOnSave": true,
-    "java.debug.settings.onBuildFailureProceed": true
+    "java.debug.settings.onBuildFailureProceed": true,
+    // CRITICAL: VS Code Java debug forces JLS to build before every F5 by default,
+    // which overwrites Tycho's correctly-compiled target/classes with JLS's
+    // (broken because JLS can't fully resolve the OSGi target platform).
+    // Disable this — CLI Maven (Tycho) is the authoritative build.
+    "java.debug.settings.forceBuildBeforeLaunch": false,
+    "java.autobuild.enabled": false,
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.import.maven.disableTestClasspathFlag": true,
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-21",
+            "path": "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
+            "default": true
+        },
+        {
+            "name": "JavaSE-17",
+            "path": "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home"
+        }
+    ]
 }

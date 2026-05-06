@@ -7,6 +7,69 @@
             "request": "attach",
             "hostName": "${input:ipAddress}",
             "port": 8000
+        },
+        {
+            // Local Kura Emulator launch.
+            //
+            // Prerequisites (run once after any bundle list change):
+            //   1. mvn -f <kura>/pom.xml install -DskipTests   (compiles every bundle to target/classes)
+            //   2. Open Kura_Emulator_OSX_Emulator.launch in Eclipse and run it once. Eclipse
+            //      regenerates ~/iot-kura-develop/ws/.metadata/.plugins/org.eclipse.pde.core/
+            //      Kura_Emulator_OSX_Emulator/config.ini and dev.properties — those are the
+            //      files this VS Code launch reuses. After step 2 you can stop the Eclipse
+            //      launch and run this one repeatedly from VS Code.
+            //
+            // Web console: http://localhost:8080  (admin / admin)
+            //
+            // If you change the active set of bundles, repeat step 2 so config.ini regenerates.
+            "type": "java",
+            "name": "Kura Emulator (local, macOS aarch64)",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "mainClass": "org.eclipse.equinox.launcher.Main",
+            "classPaths": [
+                "/Users/heyoulin/iot-kura-develop/Eclipse.app/Contents/Eclipse/plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar"
+            ],
+            "vmArgs": [
+                // PDE-style dev classpath: tells Equinox to find each bundle's classes in target/classes
+                // (per the dev.properties Eclipse generates when you run the .launch). Without this,
+                // OSGi only looks at the bundle root and every "Could not load implementation object class" hits.
+                "-Dosgi.dev=file:${userHome}/iot-kura-develop/ws/.metadata/.plugins/org.eclipse.pde.core/Kura_Emulator_OSX_Emulator/dev.properties",
+                "-Dorg.osgi.service.http.port=8080",
+                "-Dkura.have.net.admin=false",
+                "-Dosgi.configuration.area=/tmp/osgi/framework_storage",
+                "-Dosgi.clean=true",
+                "-Dosgi.noShutdown=true",
+                "-Declipse.ignoreApp=true",
+                "-Dorg.eclipse.kura.mode=macosx",
+                "-Dkura.configuration=file:${workspaceFolder}/emulator/org.eclipse.kura.emulator/src/main/resources/kura.properties",
+                "-Ddpa.configuration=/tmp/kura/dpa.properties",
+                "-Dlog4j.configurationFile=file:${workspaceFolder}/emulator/org.eclipse.kura.emulator/src/main/resources/log4j.xml",
+                "-Dlog4j2.disable.jmx=true",
+                "-Dkura.data=${userHome}/iot-kura-develop/ws/kura/data",
+                "-Dkura.snapshots=${userHome}/iot-kura-develop/ws/kura/snapshots",
+                "-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer",
+                "-Dfelix.fileinstall.dir=${userHome}/iot-kura-develop/ws/kura/load",
+                "--add-modules=ALL-SYSTEM",
+                "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
+                "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+                "--add-opens", "java.base/javax.net.ssl=ALL-UNNAMED",
+                "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+                "--add-opens", "java.base/java.security=ALL-UNNAMED",
+                "--add-opens", "java.base/java.io=ALL-UNNAMED",
+                "-Dio.netty.tryReflectionSetAccessible=true",
+                "-Dpolyglot.engine.WarnInterpreterOnly=false",
+                "-XX:+HeapDumpOnOutOfMemoryError"
+            ],
+            "args": [
+                "-os", "macosx",
+                "-ws", "cocoa",
+                "-arch", "aarch64",
+                "-nl", "en_US",
+                "-consoleLog",
+                "-console",
+                "-configuration", "${userHome}/iot-kura-develop/ws/.metadata/.plugins/org.eclipse.pde.core/Kura_Emulator_OSX_Emulator/"
+            ]
         }
     ],
     "inputs": [
