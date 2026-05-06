@@ -1108,11 +1108,6 @@
         </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
-            <version>${jaxb-osgi.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
             <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
             <version>${strict-machine.version}</version>
         </dependency>

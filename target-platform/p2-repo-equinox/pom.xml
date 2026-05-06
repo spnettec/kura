@@ -1534,23 +1534,23 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-										<id>com.digitalpetri.fsm:strict-machine:${strict-machine.version}</id>
-										<source>true</source>
-										<transitive>false</transitive>
-									</artifact>
-									<artifact>
-										<id>com.digitalpetri.netty:netty-channel-fsm:${netty-channel-fsm.version}</id>
-										<source>true</source>
-										<transitive>false</transitive>
-									</artifact>
-									<!-- Already native OSGi (BSN=com.fazecast.jSerialComm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-									<!--
-									<artifact>
+									<id>com.digitalpetri.fsm:strict-machine:${strict-machine.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>com.digitalpetri.netty:netty-channel-fsm:${netty-channel-fsm.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<!-- Already native OSGi (BSN=com.fazecast.jSerialComm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
+								<artifact>
 									<id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-									-->
+								-->
 								<!-- Already native OSGi (BSN=com.sun.jna); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
 								<!--
 								<artifact>
@@ -1559,11 +1559,14 @@
 									<transitive>false</transitive>
 								</artifact>
 								-->
+								<!-- Already native OSGi (BSN=com.sun.xml.bind); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>com.sun.xml.bind:jaxb-osgi:${jaxb-osgi.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								<!-- Already native OSGi (BSN=jakarta.activation-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
 								<!--
 								<artifact>
