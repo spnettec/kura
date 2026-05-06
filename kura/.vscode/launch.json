@@ -27,8 +27,10 @@
             "request": "launch",
             "console": "integratedTerminal",
             "mainClass": "org.eclipse.equinox.launcher.Main",
+            // Eclipse install location is layout-dependent. Adjust this if Eclipse.app
+            // lives elsewhere or if the launcher version changes after an Eclipse upgrade.
             "classPaths": [
-                "/Users/heyoulin/iot-kura-develop/Eclipse.app/Contents/Eclipse/plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar"
+                "${userHome}/iot-kura-develop/Eclipse.app/Contents/Eclipse/plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar"
             ],
             "vmArgs": [
                 // PDE-style dev classpath: tells Equinox to find each bundle's classes in target/classes

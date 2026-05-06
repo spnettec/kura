@@ -10,16 +10,8 @@
     "java.debug.settings.forceBuildBeforeLaunch": false,
     "java.autobuild.enabled": false,
     "java.compile.nullAnalysis.mode": "disabled",
-    "java.import.maven.disableTestClasspathFlag": true,
-    "java.configuration.runtimes": [
-        {
-            "name": "JavaSE-21",
-            "path": "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
-            "default": true
-        },
-        {
-            "name": "JavaSE-17",
-            "path": "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home"
-        }
-    ]
+    "java.import.maven.disableTestClasspathFlag": true
+    // java.configuration.runtimes intentionally omitted — JLS auto-detects from
+    // /usr/libexec/java_home. Remove any JDK > 21 from the system if you don't
+    // want JLS to default to it (Equinox runtime here is JDK 21, can't load v70).
 }
