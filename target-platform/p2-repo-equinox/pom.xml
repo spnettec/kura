@@ -39,930 +39,1479 @@
 						</goals>
 						<configuration>
                             <artifacts>
+                                <!-- Already native OSGi (BSN=org.osgi.service.cm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.cm:${org.osgi.service.cm.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.component); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.component:${org.osgi.service.component.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.coordinator); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.coordinator:${org.osgi.service.coordinator.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.device); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.device:${org.osgi.service.device.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.event); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.event:${org.osgi.service.event.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.log.stream); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.log.stream:${org.osgi.service.log.stream.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.metatype); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.metatype:${org.osgi.service.metatype.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.prefs); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.prefs:${org.osgi.service.prefs.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.provisioning); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.provisioning:${org.osgi.service.provisioning.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.upnp); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.upnp:${org.osgi.service.upnp.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.useradmin); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.useradmin:${org.osgi.service.useradmin.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.wireadmin); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.service.wireadmin:${org.osgi.service.wireadmin.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.function); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.function:${org.osgi.util.function.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.measurement); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.measurement:${org.osgi.util.measurement.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.position); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.position:${org.osgi.util.position.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.promise); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.promise:${org.osgi.util.promise.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.pushstream); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.pushstream:${org.osgi.util.pushstream.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.util.xml); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.osgi:org.osgi.util.xml:${org.osgi.util.xml.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.cm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.cm:${org.eclipse.equinox.cm.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.common); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.common:${org.eclipse.equinox.common.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.console); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.console:${org.eclipse.equinox.console.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.registry); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.registry:${org.eclipse.equinox.registry.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.event); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.event:${org.eclipse.equinox.event.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.metatype); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.metatype:${org.eclipse.equinox.metatype.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.launcher); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.launcher:${org.eclipse.equinox.launcher.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.util); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.util:${org.eclipse.equinox.util.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.wireadmin); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.wireadmin:${org.eclipse.equinox.wireadmin.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.scr); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.apache.felix:org.apache.felix.scr:${org.apache.felix.scr.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.core.runtime); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.core.runtime:${org.eclipse.core.runtime.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.core.jobs); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.core.jobs:${org.eclipse.core.jobs.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.preferences); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.preferences:${org.eclipse.equinox.preferences.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.core.contenttype); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.core.contenttype:${org.eclipse.core.contenttype.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.equinox.app); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.equinox.app:${org.eclipse.equinox.app.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.osgi); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.osgi:${org.eclipse.osgi.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.osgi.util); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.eclipse.platform:org.eclipse.osgi.util:${org.eclipse.osgi.util.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.gogo.command); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.apache.felix:org.apache.felix.gogo.command:${org.apache.felix.gogo.command.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.gogo.runtime); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.apache.felix:org.apache.felix.gogo.runtime:${org.apache.felix.gogo.runtime.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.gogo.shell); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
                                     <id>org.apache.felix:org.apache.felix.gogo.shell:${org.apache.felix.gogo.shell.version}</id>
                                     <source>true</source>
                                     <transitive>false</transitive>
                                 </artifact>
+                                -->
                                 
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-net); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>commons-net:commons-net:${org.apache.commons.commons-net.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.google.protobuf); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.google.protobuf:protobuf-java:${com.google.protobuf.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.paho.client.mqttv3); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.paho:org.eclipse.paho.client.mqttv3:${org.eclipse.paho.client.mqttv3.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.kura.sun.misc); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.eclipse.kura.sun.misc:${org.eclipse.kura.sun.misc.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.usb4java); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.usb4java:${org.usb4java.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.h2database); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.h2database:h2:${com.h2database.h2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=slf4j.api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.slf4j:slf4j-api:${slf4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.logging.log4j.slf4j2.impl); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.logging.log4j:log4j-slf4j2-impl:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jcl.over.slf4j); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.slf4j:jcl-over-slf4j:${slf4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jul.to.slf4j); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.slf4j:jul-to-slf4j:${slf4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.logging.log4j.api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.logging.log4j:log4j-api:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=log4j2-api-config); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:log4j2-api-config:${log4j2-api-config.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.logging.log4j.core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.logging.log4j:log4j-core:${log4j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-fileupload2-jakarta-servlet5); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.commons:commons-fileupload2-jakarta-servlet5:${commons-fileupload.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-fileupload2-core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.commons:commons-fileupload2-core:${commons-fileupload.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-exec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.commons:commons-exec:${commons-exec.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=usb4java-javax); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:usb4java-javax:${usb4java-javax.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-io); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>commons-io:commons-io:${org.apache.commons.commons-io.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.lang3); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.commons:commons-lang3:${org.apache.commons.lang3.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-csv); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.commons:commons-csv:${commons-csv.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.soda.dk.comm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.eclipse.soda.dk.comm:${org.eclipse.soda.dk.comm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.soda.dk.comm.x86_64); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.eclipse.soda.dk.comm.x86_64:${org.eclipse.soda.dk.comm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.soda.dk.comm.aarch64); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.eclipse.soda.dk.comm.aarch64:${org.eclipse.soda.dk.comm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.qpid.proton-j); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.qpid:proton-j:${apache-qpid-proton-j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-beans); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-beans:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-context); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-context:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-core:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-expression); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-expression:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-jms); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-jms:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.spring-tx); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-tx:${spring.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=osgi.annotation); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:osgi.annotation:${osgi.annotation.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.google.gson); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.google.code.gson:gson:${com.google.gson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.google.guava); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.google.guava:guava:${guava.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.google.guava.failureaccess); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.google.guava:failureaccess:${failureaccess.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+								<!-- Already native OSGi (BSN=io.netty.buffer); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-buffer:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+                                <!-- Already native OSGi (BSN=io.netty.codec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-codec:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.codec-http); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-codec-http:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.codec-mqtt); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-codec-mqtt:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.common); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-common:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.handler); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-handler:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.resolver); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-resolver:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport-native-epoll); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport-native-epoll:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport-classes-epoll); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport-classes-epoll:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport-classes-kqueue); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport-classes-kqueue:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport-native-kqueue); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport-native-kqueue:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=io.netty.transport-native-unix-common); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>io.netty:netty-transport-native-unix-common:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.commons-beanutils); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>commons-beanutils:commons-beanutils:${commons-beanutils.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.commons.collections); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>commons-collections:commons-collections:${commons-collections.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.geronimo.specs.geronimo-json_1.0_spec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.geronimo.specs:geronimo-json_1.0_spec:${org.apache.geronimo.specs.json.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.geronimo.specs.geronimo-jms_2.0_spec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.geronimo.specs:geronimo-jms_2.0_spec:${org.apache.geronimo.specs.jms.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.geronimo.specs.geronimo-jta_1.1_spec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.geronimo.specs:geronimo-jta_1.1_spec:${org.apache.geronimo.specs.jta.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.annotation-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.annotation:jakarta.annotation-api:${jakarta.annotation-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.xml.ws-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.xml.ws:jakarta.xml.ws-api:${jakarta.xml.ws-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.xml.soap-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.xml.soap:jakarta.xml.soap-api:${jakarta.xml.soap-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.hk2.osgi-resource-locator); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.hk2:osgi-resource-locator:${osgi-resource-locator.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.useradmin); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.useradmin:${org.apache.felix.useradmin.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=bcpkix); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.bouncycastle:bcpkix-jdk18on:${org.bouncycastle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=bcprov); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.bouncycastle:bcprov-jdk18on:${org.bouncycastle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=bctls); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.bouncycastle:bctls-jdk18on:${org.bouncycastle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=bcutil); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.bouncycastle:bcutil-jdk18on:${org.bouncycastle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=bcpg); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.bouncycastle:bcpg-jdk18on:${org.bouncycastle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.eurotech.gpsd4java); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.eurotech:gpsd4java:${com.eurotech.gpsd4java.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.c3p0); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.servicemix.bundles:org.apache.servicemix.bundles.c3p0:${org.apache.servicemix.bundles.c3p0.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=com.zaxxer.HikariCP); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.zaxxer:HikariCP:${hikaricp.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=quartz); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.quartz-scheduler:quartz:${quartz.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.xerial.sqlite-jdbc); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.xerial:sqlite-jdbc:${org.xerial.sqlite-jdbc.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=minimal-json); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>com.eclipsesource.minimal-json:minimal-json:${com.eclipsesource.minimal-json.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.dependencymanager); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.dependencymanager:${org.apache.felix.dependencymanager.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.deploymentadmin); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.deploymentadmin:${org.apache.felix.deploymentadmin.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.http.servlet-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.http.servlet-api:${org.apache.felix.http.servlet-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.http.bridge); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.http.bridge:${org.apache.felix.http.bridge.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.http.proxy); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.http.proxy:${org.apache.felix.http.proxy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.felix.http.wrappers); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.felix:org.apache.felix.http.wrappers:${org.apache.felix.http.wrappers.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.http); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-http:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.security); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-security:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.server); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-server:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.session); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-session:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.util); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-util:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.io); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty:jetty-io:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.jetty.ee10.servlet); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.jetty.ee10:jetty-ee10-servlet:${org.eclipse.jetty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.http.whiteboard); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:org.osgi.service.http.whiteboard:${org.osgi.service.http.whiteboard.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.servlet); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:org.osgi.service.servlet:${org.osgi.service.servlet.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.ws.rs-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.ws.rs:jakarta.ws.rs-api:${jakarta.ws.rs-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.jakartars); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:org.osgi.service.jakartars:${org.osgi.service.jakartars.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.osgitech.rest); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest:${org.eclipse.osgi-technology.rest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.osgitech.rest.sse); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.sse:${org.eclipse.osgi-technology.rest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.osgitech.rest.servlet.whiteboard); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.servlet.whiteboard:${org.eclipse.osgi-technology.rest.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.apache.aries.spifly.dynamic.bundle); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:${org.apache.aries.spifly.dynamic.bundle.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.objectweb.asm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.ow2.asm:asm:${org.ow2.asm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.objectweb.asm.commons); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.ow2.asm:asm-commons:${org.ow2.asm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.objectweb.asm.tree); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.ow2.asm:asm-tree:${org.ow2.asm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.objectweb.asm.util); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.ow2.asm:asm-util:${org.ow2.asm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.objectweb.asm.tree.analysis); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.ow2.asm:asm-analysis:${org.ow2.asm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.hk2.api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.hk2:hk2-api:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.hk2.external.aopalliance-repackaged); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.hk2.external:aopalliance-repackaged:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.hk2.locator); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.hk2:hk2-locator:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.hk2.utils); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.hk2:hk2-utils:${hk2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.inject.jersey-hk2); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.inject:jersey-hk2:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.containers.jersey-container-servlet); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.containers:jersey-container-servlet:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.containers.jersey-container-servlet-core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.containers:jersey-container-servlet-core:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.core.jersey-client); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.core:jersey-client:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.core.jersey-common); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.core:jersey-common:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.core.jersey-server); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.core:jersey-server:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.ext.jersey-entity-filtering); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.ext:jersey-entity-filtering:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.media.jersey-media-jaxb); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.media:jersey-media-jaxb:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.media.jersey-media-sse); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.media:jersey-media-sse:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.glassfish.jersey.media.jersey-media-multipart); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.glassfish.jersey.media:jersey-media-multipart:${jersey.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.inject.jakarta.inject-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.inject:jakarta.inject-api:${jakarta.inject-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=jakarta.validation.jakarta.validation-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>jakarta.validation:jakarta.validation-api:${jakarta.validation-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=javassist); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.javassist:javassist:${javassist.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.jvnet.mimepull); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.jvnet.mimepull:mimepull:${org.jvnet.mimepull.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.component.annotations); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:org.osgi.service.component.annotations:${org.osgi.service.component.annotations.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.osgi.service.metatype.annotations); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+                                <!--
                                 <artifact>
 									<id>org.osgi:org.osgi.service.metatype.annotations:${org.osgi.service.metatype.annotations.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                -->
 
+								<!-- Already native OSGi (BSN=io.vavr); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.vavr:vavr:${io.vavr.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.jspecify.jspecify); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.jspecify:jspecify:${org.jspecify.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=groovy); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=groovy-xml); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy-xml:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								<artifact>
 									<id>org.apache.groovy:groovy-templates:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<!-- Already native OSGi (BSN=groovy-sql); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy-sql:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=groovy-json); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy-json:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=groovy-datetime); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy-datetime:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=groovy-dateutil); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.groovy:groovy-dateutil:${org.apache.groovy.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.apache.httpcomponents.httpcore); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.httpcomponents:httpcore-osgi:${org.apache.httpcomponents.httpcore-osgi.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.apache.commons.commons-codec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>commons-codec:commons-codec:${org.apache.commons.codec.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=jakarta.jms-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>jakarta.jms:jakarta.jms-api:${jakarta.jms-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.apache.commons.commons-configuration2); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.commons:commons-configuration2:${commons-configuration2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.apache.commons.text); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.commons:commons-text:${commons-text.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								
+								<!-- Already native OSGi (BSN=io.netty.codec-base); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-base:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-compression); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-compression:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-marshalling); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-marshalling:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-protobuf); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-protobuf:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-http2); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-http2:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-dns); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-dns:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.resolver-dns-native-macos); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-resolver-dns-native-macos:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.handler-proxy); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-handler-proxy:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.resolver-dns); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-resolver-dns:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=io.netty.codec-socks); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>io.netty:netty-codec-socks:${io.netty.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=com.fasterxml.jackson.core.jackson-annotations); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>com.fasterxml.jackson.core:jackson-annotations:${com.fasterxml.jackson.annotations.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=tools.jackson.core.jackson-core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>tools.jackson.core:jackson-core:${tools.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=tools.jackson.core.jackson-databind); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>tools.jackson.core:jackson-databind:${tools.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=tools.jackson.module.jackson-module-jaxb-annotations); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>tools.jackson.module:jackson-module-jaxb-annotations:${tools.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=tools.jackson.dataformat.jackson-dataformat-yaml); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>tools.jackson.dataformat:jackson-dataformat-yaml:${tools.jackson.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.yaml.snakeyaml); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.yaml:snakeyaml:${org.yaml.snakeyaml.mvn.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=org.apache.commons.commons-pool2); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.commons:commons-pool2:jar:${org.apache.commons-pool2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								
+								<!-- Already native OSGi (BSN=org.apache.felix.fileinstall); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>org.apache.felix:org.apache.felix.fileinstall:${org.apache.felix.fileinstall.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								
 								<artifact>
 									<id>org.eclipse.milo:milo-sdk-client:jar:${org.eclipse.milo.version}</id>
@@ -994,31 +1543,43 @@
 										<source>true</source>
 										<transitive>false</transitive>
 									</artifact>
+									<!-- Already native OSGi (BSN=com.fazecast.jSerialComm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+									<!--
 									<artifact>
 									<id>com.fazecast:jSerialComm:jar:${jSerialComm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+									-->
+								<!-- Already native OSGi (BSN=com.sun.jna); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>net.java.dev.jna:jna:jar:${net.java.dev.jna.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								<artifact>
 									<id>com.sun.xml.bind:jaxb-osgi:${jaxb-osgi.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<!-- Already native OSGi (BSN=jakarta.activation-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>jakarta.activation:jakarta.activation-api:${jakarta.activation-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
+								<!-- Already native OSGi (BSN=jakarta.xml.bind-api); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
+								<!--
 								<artifact>
 									<id>jakarta.xml.bind:jakarta.xml.bind-api:${jakarta.xml.bind-api.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								-->
 								
 								<artifact>
 									<id>org.hamcrest:hamcrest:${org.hamcrest.version}</id>

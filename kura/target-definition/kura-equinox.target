@@ -14,7 +14,7 @@
 
 -->
 <?pde version="3.8"?>
-<target name="Kura Target Definition" sequenceNumber="48">
+<target name="Kura Target Definition" sequenceNumber="49">
     <locations>
         <!--
             Single Maven location, no Profile location with absolute paths. All
@@ -54,6 +54,11 @@
                 <repository>
                     <id>kura-releases</id>
                     <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
+                </repository>
+                <repository>
+                    <id>kura-addons</id>
+                    <name>Kura Addons Maven Repository</name>
+                    <url>https://raw.githubusercontent.com/eurotech/kura_addons/mvn-repo</url>
                 </repository>
                 <repository>
                     <id>central</id>

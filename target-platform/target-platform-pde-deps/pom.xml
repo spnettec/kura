@@ -1032,8 +1032,8 @@
 		
         <!-- P2-rebundled OSGi artifacts installed by the p2-repo-* modules. -->
         <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.apache.qpid.jms.client</artifactId>
+            <groupId>org.apache.qpid</groupId>
+            <artifactId>qpid-jms-client</artifactId>
             <version>${apache-qpid-jms-client.version}</version>
         </dependency>
         <dependency>
@@ -1108,16 +1108,6 @@
         </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtbootstrap3</artifactId>
-            <version>${org.gwtbootstrap3.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>org.gwtproject.gwt-servlet-jakarta</artifactId>
-            <version>${gwt-user.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
             <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
             <version>${strict-machine.version}</version>
         </dependency>
@@ -1127,7 +1117,7 @@
             <version>${netty-channel-fsm.version}</version>
         </dependency>
         <dependency>
-            <groupId>p2.osgi.bundle</groupId>
+            <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
             <version>${org.eclipse.paho.client.mqttv3.version}</version>
         </dependency>

@@ -113,6 +113,8 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+                                <!-- Already native OSGi (BSN=org.apache.qpid.jms.client). Native Import-Package netty range [4.1.0,4.3.0) covers our 4.2.x; kura uses proton-j only, not jms-client. Kept commented for future Manifest tweaks. -->
+                                <!--
 								<artifact>
 									<id>org.apache.qpid:qpid-jms-client:${apache-qpid-jms-client.version}</id>
 									<source>true</source>
@@ -213,6 +215,9 @@
 										</Export-Package>
 									</instructions>
 								</artifact>
+                                -->
+                                <!-- Already native OSGi (BSN=org.eclipse.paho.mqttv5.client). No kura/sibling code imports any mqttv5 packages; native exports suffice. Kept commented for future Manifest tweaks. -->
+                                <!--
 								<artifact>
 									<id>org.eclipse.paho:org.eclipse.paho.mqttv5.client:${org.eclipse.paho.client.mqttv3.version}</id>
 									<source>true</source>
@@ -227,6 +232,7 @@
 										</Export-Package>
 									</instructions>
 								</artifact>
+                                -->
 								
 								<artifact>
 									<id>junit:junit:${org.junit.version}</id>
