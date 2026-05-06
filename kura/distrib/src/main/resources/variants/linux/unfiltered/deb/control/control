@@ -21,7 +21,7 @@ Depends: openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | te
  chrony, chronyc | chrony, cron | cronie,
  network-manager | networkmanager, bind9 | bind, dnsmasq | isc-dhcp-server, isc-dhcp-client | dhcpcd, iw, iptables, modemmanager,
  logrotate, gpsd, python3
-Suggests: kura-management-ui, kura-networking, kura-opcua
+Suggests: kura-management-ui, kura-networking, kura-opcua, kura-wires
 Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>
 Homepage: https://eclipse-kura.github.io/kura/
