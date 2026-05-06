@@ -72,9 +72,6 @@
         <kura.symlink>kura</kura.symlink>
         <target.device>linux</target.device>
         <org.eclipse.osgi.version>3.24.100</org.eclipse.osgi.version>
-        <jakarta.activation-api.javax.version>1.2.2</jakarta.activation-api.javax.version>
-        <jakarta.xml.bind-api.javax.version>2.3.3</jakarta.xml.bind-api.javax.version>
-        <jaxb-osgi.javax.version>2.3.9</jaxb-osgi.javax.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <kura.basedir>${project.basedir}</kura.basedir>
@@ -275,34 +272,6 @@
                                     <groupId>org.eclipse.platform</groupId>
                                     <artifactId>org.eclipse.osgi</artifactId>
                                     <version>${org.eclipse.osgi.version}</version>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-javax-jaxb-compat-bundles</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${dist.linux.bundles.skip}</skip>
-                            <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/2s</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>p2.osgi.bundle</groupId>
-                                    <artifactId>jakarta.activation-api</artifactId>
-                                    <version>${jakarta.activation-api.javax.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>p2.osgi.bundle</groupId>
-                                    <artifactId>jakarta.xml.bind-api</artifactId>
-                                    <version>${jakarta.xml.bind-api.javax.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>p2.osgi.bundle</groupId>
-                                    <artifactId>com.sun.xml.bind.jaxb-osgi</artifactId>
-                                    <version>${jaxb-osgi.javax.version}</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
