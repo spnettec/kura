@@ -1,1 +1,2 @@
-com.oracle.truffle.js.scriptengine.GraalJSEngineFactory
+org.eclipse.kura.script.provider.GraalPythonScriptEngineFactory
+org.eclipse.kura.script.provider.GraalWasmScriptEngineFactory
