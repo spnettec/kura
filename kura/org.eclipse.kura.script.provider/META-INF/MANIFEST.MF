@@ -4,6 +4,7 @@ Bundle-Name: Kura Script Engine Provider
 Bundle-SymbolicName: org.eclipse.kura.script.provider
 Bundle-Version: 1.0.0.qualifier
 Require-Capability: osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)",
+ osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
  osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
 Require-Bundle: groovy
 Bundle-ActivationPolicy: lazy
@@ -12,6 +13,7 @@ Bundle-Vendor: Eclipse Kura
 Bundle-License: Eclipse Public License v2.0
 Bundle-ClassPath: .,
  lib/js-language.jar,
+ lib/js-scriptengine.jar,
  lib/truffle-runtime.jar,
  lib/truffle-enterprise.jar,
  lib/polyglot.jar,

@@ -94,6 +94,12 @@
                                     <artifactId>regex</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
+                                <!-- GraalVM JSR-223 ScriptEngine for JS -->
+                                <artifactItem>
+                                    <groupId>org.graalvm.js</groupId>
+                                    <artifactId>js-scriptengine</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
                                 <!-- GraalVM Python engine -->
                                 <artifactItem>
                                     <groupId>org.graalvm.python</groupId>
