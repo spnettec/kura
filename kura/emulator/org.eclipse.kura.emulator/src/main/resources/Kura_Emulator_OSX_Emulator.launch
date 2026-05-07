@@ -332,6 +332,7 @@
         <setEntry value="org.eclipse.kura.rest.system.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.tamper.detection.provider@default:default"/>
         <setEntry value="org.eclipse.kura.rest.wire.provider@default:default"/>
+        <setEntry value="org.eclipse.kura.script.provider@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>
         <setEntry value="org.eclipse.kura.web2@default:default"/>

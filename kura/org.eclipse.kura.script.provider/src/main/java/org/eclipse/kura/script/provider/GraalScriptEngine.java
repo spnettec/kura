@@ -12,6 +12,7 @@ package org.eclipse.kura.script.provider;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Map.Entry;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -99,7 +100,7 @@ final class GraalScriptEngine extends AbstractScriptEngine implements Compilable
             return;
         }
         Value polyBindings = ctx.getBindings(this.languageId);
-        for (var entry : bindings.entrySet()) {
+        for (Entry<String, Object> entry : bindings.entrySet()) {
             polyBindings.putMember(entry.getKey(), entry.getValue());
         }
     }
