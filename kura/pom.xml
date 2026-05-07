@@ -66,6 +66,7 @@
         <module>org.eclipse.kura.http.server.manager</module>
         <module>org.eclipse.kura.useradmin.store</module>
         <module>org.eclipse.kura.rest.tamper.detection.provider</module>
+        <module>org.eclipse.kura.script.provider</module>
         <module>org.eclipse.kura.log.filesystem.provider</module>
         <module>org.eclipse.kura.rest.cloudconnection.provider</module>
         <module>org.eclipse.kura.rest.configuration.provider</module>
@@ -208,6 +209,7 @@
         <org.eclipse.kura.rest.security.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.security.provider.version>
         <org.eclipse.kura.rest.service.listing.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.service.listing.provider.version>
         <org.eclipse.kura.rest.system.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.system.provider.version>
+        <org.eclipse.kura.script.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.script.provider.version>
         <org.eclipse.kura.rest.wire.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.wire.provider.version>
         <org.eclipse.kura.stress.version>2.0.0-SNAPSHOT</org.eclipse.kura.stress.version>
         <org.eclipse.kura.useradmin.store.version>2.0.0-SNAPSHOT</org.eclipse.kura.useradmin.store.version>
@@ -574,6 +576,11 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.rest.system.provider</artifactId>
                 <version>${org.eclipse.kura.rest.system.provider.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.kura</groupId>
+                <artifactId>org.eclipse.kura.script.provider</artifactId>
+                <version>${org.eclipse.kura.script.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>

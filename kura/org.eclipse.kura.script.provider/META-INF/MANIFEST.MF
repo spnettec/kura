@@ -1,0 +1,40 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Kura Script Engine Provider
+Bundle-SymbolicName: org.eclipse.kura.script.provider
+Bundle-Version: 1.0.0.qualifier
+Require-Capability: osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)",
+ osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+Require-Bundle: groovy
+Bundle-ActivationPolicy: lazy
+Eclipse-BuddyPolicy: ext
+Bundle-Vendor: Eclipse Kura
+Bundle-License: Eclipse Public License v2.0
+Bundle-ClassPath: .,
+ lib/js-language.jar,
+ lib/truffle-runtime.jar,
+ lib/truffle-enterprise.jar,
+ lib/polyglot.jar,
+ lib/launcher-common.jar,
+ lib/jline.jar,
+ lib/collections.jar,
+ lib/nativeimage.jar,
+ lib/word.jar,
+ lib/truffle-api.jar,
+ lib/icu4j.jar,
+ lib/groovy-jsr223.jar,
+ lib/regex.jar,
+ lib/python-language.jar,
+ lib/profiler-tool.jar,
+ lib/json.jar,
+ lib/truffle-nfi.jar,
+ lib/truffle-nfi-libffi.jar,
+ lib/llvm-api.jar,
+ lib/xz.jar,
+ lib/bcprov-jdk18on.jar,
+ lib/bcpkix-jdk18on.jar,
+ lib/bcutil-jdk18on.jar,
+ lib/python-resources.jar,
+ lib/wasm-language.jar
+Export-Package: org.graalvm.polyglot
+Provide-Capability: osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory
