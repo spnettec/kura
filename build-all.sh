@@ -58,3 +58,20 @@ else
     echo "=== Stage 2: skipping kura-opcua (clone not found) ==="
 fi
 
+if [ -f "$SCRIPT_DIR/../kura-wires/bundles/pom.xml" ]; then
+    echo "=== Stage 2: building kura-wires addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-wires/bundles/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-wires/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-wires (clone not found) ==="
+fi
+
+if [ -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" ]; then
+    echo "=== Stage 2: building kura-camel bundles ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-camel (clone not found) ==="
+fi
+
