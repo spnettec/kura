@@ -416,14 +416,6 @@
 									<transitive>false</transitive>
 								</artifact>
                                 -->
-                                <!-- Already native OSGi (BSN=log4j2-api-config); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.eclipse.kura:log4j2-api-config:${log4j2-api-config.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
                                 <!-- Already native OSGi (BSN=org.apache.logging.log4j.core); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
                                 <!--
                                 <artifact>

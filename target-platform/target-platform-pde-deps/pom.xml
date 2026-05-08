@@ -820,12 +820,6 @@
             <version>${byte-buddy.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>log4j2-api-config</artifactId>
-            <version>${log4j2-api-config.version}</version>
-        </dependency>
-        
         <!-- END Kura target platform BOM -->
         
 		<dependency>

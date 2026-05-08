@@ -263,7 +263,7 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/1</outputDirectory>
                                 <includeArtifactIds>
-                                asm, asm-analysis, asm-commons, asm-tree, asm-util,                                log4j2-api-config, org.eclipse.equinox.console
+                                asm, asm-analysis, asm-commons, asm-tree, asm-util,                                org.eclipse.equinox.console
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
