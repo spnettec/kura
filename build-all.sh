@@ -23,8 +23,8 @@ MAVEN_PROPS="-B"
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
 
 # Stage 1: monorepo only (target-platform + base kura-core.deb).
-# All five siblings (management-ui, networking, opcua, position, wires/camel) are
-# now Path Y — they self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
+# All eight siblings (management-ui, networking, opcua, position, deployment,
+# artemis, triton, wires/camel) are now Path Y — they self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
 # Monorepo no longer pulls any sibling bundle in cross-repo.
 mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS &&
 mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS &&
@@ -87,5 +87,32 @@ if [ -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" ]; then
         || exit 1
 else
     echo "=== Stage 2: skipping kura-camel (clone not found) ==="
+fi
+
+if [ -f "$SCRIPT_DIR/../kura-deployment/pom.xml" ]; then
+    echo "=== Stage 2: building kura-deployment addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-deployment/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-deployment/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-deployment (clone not found) ==="
+fi
+
+if [ -f "$SCRIPT_DIR/../kura-artemis/pom.xml" ]; then
+    echo "=== Stage 2: building kura-artemis addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-artemis/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-artemis/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-artemis (clone not found) ==="
+fi
+
+if [ -f "$SCRIPT_DIR/../kura-triton/pom.xml" ]; then
+    echo "=== Stage 2: building kura-triton addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-triton/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-triton/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-triton (clone not found) ==="
 fi
 
