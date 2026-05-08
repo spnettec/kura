@@ -22,9 +22,9 @@ MAVEN_PROPS="-B"
 
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
 
-# Stage 1: monorepo only (target-platform + base kura.deb / kura-nn.deb).
-# All three siblings (management-ui, networking, opcua) are now Path Y — they
-# self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
+# Stage 1: monorepo only (target-platform + base kura-core.deb).
+# All five siblings (management-ui, networking, opcua, position, wires/camel) are
+# now Path Y — they self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
 # Monorepo no longer pulls any sibling bundle in cross-repo.
 mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS &&
 mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS &&
@@ -36,6 +36,7 @@ SCRIPT_DIR="$(dirname "$0")"
 if [ -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" ]; then
     echo "=== Stage 2: building kura-management-ui addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-management-ui (clone not found) ==="
@@ -45,6 +46,7 @@ if [ -f "$SCRIPT_DIR/../kura-networking/pom.xml" ]; then
     echo "=== Stage 2: building kura-networking addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-networking/pom.xml" clean install $MAVEN_PROPS \
         -pl '!tests,!tests/org.eclipse.kura.core.net.test,!tests/org.eclipse.kura.linux.net.test,!tests/org.eclipse.kura.net.admin.firewall.test,!tests/org.eclipse.kura.net.configuration.test,!tests/org.eclipse.kura.network.threat.manager.test,!tests/org.eclipse.kura.nm.test,!tests/org.eclipse.kura.rest.network.configuration.provider.test,!tests/org.eclipse.kura.rest.network.status.provider.test' \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-networking/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-networking (clone not found) ==="
@@ -53,9 +55,20 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-opcua/pom.xml" ]; then
     echo "=== Stage 2: building kura-opcua addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/pom.xml" clean install $MAVEN_PROPS \
-        -pl '!tests/org.eclipse.kura.driver.opcua.test' || exit 1
+        -pl '!tests/org.eclipse.kura.driver.opcua.test' \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
 else
     echo "=== Stage 2: skipping kura-opcua (clone not found) ==="
+fi
+
+if [ -f "$SCRIPT_DIR/../kura-position/pom.xml" ]; then
+    echo "=== Stage 2: building kura-position addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-position/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-position/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-position (clone not found) ==="
 fi
 
 if [ -f "$SCRIPT_DIR/../kura-wires/bundles/pom.xml" ]; then
@@ -68,8 +81,9 @@ else
 fi
 
 if [ -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" ]; then
-    echo "=== Stage 2: building kura-camel bundles ==="
+    echo "=== Stage 2: building kura-camel addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-camel/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-camel (clone not found) ==="
