@@ -33,8 +33,7 @@
     <url>https://eclipse.dev/kura/</url>
 
     <modules>
-        <module>gateway</module>
-        <module>gateway-nn</module>
+        <module>kura-core</module>
 
         <module>docker-base</module>
         <module>docker-alpine</module>
@@ -51,8 +50,8 @@
         <!-- Gates OSGi bundle copy executions (see maven-dependency-plugin); resource layout no
              longer keys off this — the variant overlay does. -->
         <dist.network.resources.skip>true</dist.network.resources.skip>
-        <!-- Pulls variants/linux/{filtered,unfiltered} on top of base. gateway and gateway-nn
-             set this to false; docker-base leaves it true and supplies its own overlay. -->
+        <!-- Pulls variants/linux/{filtered,unfiltered} on top of base. gateway sets this to false;
+             docker-base leaves it true and supplies its own overlay. -->
         <dist.linux.family.skip>true</dist.linux.family.skip>
         <dist.dp.skip>true</dist.dp.skip>
         <dist.build.name>${target.device}</dist.build.name>
@@ -61,7 +60,7 @@
              child's context, so /.. steps up to kura/distrib/. The 5 child modules sit one
              directory below this pom. -->
         <kura.distrib.basedir>${project.basedir}/..</kura.distrib.basedir>
-        <!-- Per-variant overlay root. linux/linux-nn inherit; docker-base overrides to its own
+        <!-- Per-variant overlay root. linux inherits; docker-base overrides to its own
              src/main/resources to keep its docker-only assets self-contained. -->
         <variant.resources.dir>${kura.distrib.basedir}/src/main/resources/variants/${target.device}</variant.resources.dir>
         <buildNumber>buildNumber</buildNumber>

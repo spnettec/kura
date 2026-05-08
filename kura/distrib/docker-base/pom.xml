@@ -119,7 +119,7 @@
                         </configuration>
                     </execution>
                     <!-- The web2 bundle is split out into the kura-management-ui addon .deb for
-                         linux/linux-nn variants. Docker images don't run apt, so we re-bundle
+                         linux variant. Docker images don't run apt, so we re-bundle
                          the management-ui jar directly into the docker zip's plugins/6s/. -->
                     <execution>
                         <id>copy-management-ui-into-docker-zip</id>
