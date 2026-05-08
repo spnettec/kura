@@ -85,6 +85,16 @@
                                     <source>true</source>
 									<transitive>false</transitive>
                                 </artifact>
+								<artifact>
+									<id>junit:junit:${org.junit.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+									<override>true</override>
+									<instructions>
+										<Export-Package>junit.extensions;version="4.13.2",junit.framework;version="4.13.2",junit.runner;version="4.13.2",junit.textui;version="4.13.2",org.junit;version="4.13.2",org.junit.experimental;version="4.13.2",org.junit.experimental.categories;version="4.13.2",org.junit.experimental.max;version="4.13.2",org.junit.experimental.results;version="4.13.2",org.junit.experimental.runners;version="4.13.2",org.junit.experimental.theories;version="4.13.2",org.junit.experimental.theories.internal;version="4.13.2";x-internal:=true,org.junit.experimental.theories.suppliers;version="4.13.2",org.junit.internal;version="4.13.2";x-internal:=true,org.junit.internal.builders;version="4.13.2";x-internal:=true,org.junit.internal.matchers;version="4.13.2";x-internal:=true,org.junit.internal.requests;version="4.13.2";x-internal:=true,org.junit.internal.runners;version="4.13.2";x-internal:=true,org.junit.internal.runners.model;version="4.13.2";x-internal:=true,org.junit.internal.runners.rules;version="4.13.2";x-internal:=true,org.junit.internal.runners.statements;version="4.13.2";x-internal:=true,org.junit.matchers;version="4.13.2",org.junit.rules;version="4.13.2",org.junit.runner;version="4.13.2",org.junit.runner.manipulation;version="4.13.2",org.junit.runner.notification;version="4.13.2",org.junit.runners;version="4.13.2",org.junit.runners.model;version="4.13.2",org.junit.runners.parameterized;version="4.13.2",org.junit.validator;version="4.13.2"</Export-Package>
+										<Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
+									</instructions>
+								</artifact>
 							</artifacts>
 						</configuration>
 					</execution>
