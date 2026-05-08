@@ -26,9 +26,9 @@ MAVEN_PROPS="-B"
 # All eight siblings (management-ui, networking, opcua, position, deployment,
 # artemis, triton, wires/camel) are now Path Y — they self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
 # Monorepo no longer pulls any sibling bundle in cross-repo.
-mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS &&
-mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS &&
-mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS &&
+mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS || exit 1
+mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS || exit 1
+mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
 SCRIPT_DIR="$(dirname "$0")"

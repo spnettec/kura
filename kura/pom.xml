@@ -85,7 +85,7 @@
     <properties>
         <!-- SCM: Note that we are in the "kura" sub-dir here already -->
         <tycho.scmUrl>scm:git:ssh://github.com/eclipse/kura/kura</tycho.scmUrl>
-        <tycho-version>4.0.11</tycho-version>
+        <tycho-version>5.0.2</tycho-version>
         <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

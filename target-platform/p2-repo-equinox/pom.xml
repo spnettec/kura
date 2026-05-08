@@ -368,14 +368,6 @@
 									<transitive>false</transitive>
 								</artifact>
                                 -->
-                                <!-- Already native OSGi (BSN=org.eclipse.kura.sun.misc); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.eclipse.kura:org.eclipse.kura.sun.misc:${org.eclipse.kura.sun.misc.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
                                 <!-- Already native OSGi (BSN=org.usb4java); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
                                 <!--
                                 <artifact>

@@ -174,8 +174,6 @@
         <!--<com.gwt.user.version>2.0.0-SNAPSHOT</com.gwt.user.version>-->
         <log4j2-api-config.version>2.0.0-SNAPSHOT</log4j2-api-config.version>
         <!--<org.apache.activemq.artemis.version>3.0.0-SNAPSHOT</org.apache.activemq.artemis.version>-->
-        <!-- <org.eclipse.kura.camel.sun.misc.version>2.0.0-SNAPSHOT</org.eclipse.kura.camel.sun.misc.version> -->
-        <org.eclipse.kura.sun.misc.version>2.0.0-SNAPSHOT</org.eclipse.kura.sun.misc.version>
         <org.eclipse.soda.dk.comm.version>2.0.0-SNAPSHOT</org.eclipse.soda.dk.comm.version>
         <!--<org.moka7.version>2.0.0-SNAPSHOT</org.moka7.version>-->
         <org.usb4java.version>2.0.0-SNAPSHOT</org.usb4java.version>
@@ -205,7 +203,6 @@
     </properties>
 
     <modules>
-    	<module>org.eclipse.kura.sun.misc</module>
         <module>org.usb4java</module>
         <module>usb4java-javax</module>
         <module>log4j2-api-config</module>

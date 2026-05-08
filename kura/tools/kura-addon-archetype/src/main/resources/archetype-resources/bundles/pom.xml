@@ -35,7 +35,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <tycho-version>4.0.11</tycho-version>
+        <tycho-version>5.0.2</tycho-version>
         <bnd-version>7.1.0</bnd-version>
         <maven.jarsigner.plugin.version>1.4</maven.jarsigner.plugin.version>
         <skip.artifact.signing>true</skip.artifact.signing>

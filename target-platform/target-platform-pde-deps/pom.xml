@@ -828,12 +828,6 @@
         
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.sun.misc</artifactId>
-            <version>${org.eclipse.kura.sun.misc.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
             <artifactId>org.usb4java</artifactId>
             <version>${org.usb4java.version}</version>
         </dependency>
