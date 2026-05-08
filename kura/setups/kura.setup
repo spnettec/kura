@@ -501,18 +501,6 @@
               xsi:type="predicates:NamePredicate"
               pattern="org.eclipse.kura.*\.test.*"/>
         </operand>
-        <operand
-            xsi:type="predicates:NotPredicate">
-          <operand
-              xsi:type="predicates:NamePredicate"
-              pattern="org.eclipse.kura.example.*"/>
-        </operand>
-        <operand
-            xsi:type="predicates:NotPredicate">
-          <operand
-              xsi:type="predicates:NamePredicate"
-              pattern="org.eclipse.kura.demo.*"/>
-        </operand>
       </predicate>
     </workingSet>
     <workingSet
@@ -528,28 +516,6 @@
       </predicate>
     </workingSet>
     <workingSet
-        name="Features"
-        id="">
-      <predicate
-          xsi:type="predicates:AndPredicate">
-        <operand
-            xsi:type="predicates:OrPredicate">
-          <operand
-              xsi:type="predicates:LocationPredicate"
-              pattern=".*/features/.*"/>
-          <operand
-              xsi:type="predicates:NamePredicate"
-              pattern=".*\.feature.*"/>
-        </operand>
-        <operand
-            xsi:type="predicates:NotPredicate">
-          <operand
-              xsi:type="predicates:LocationPredicate"
-              pattern=".*\/karaf\/.*"/>
-        </operand>
-      </predicate>
-    </workingSet>
-    <workingSet
         name="Tests">
       <predicate
           xsi:type="predicates:OrPredicate">
@@ -559,21 +525,6 @@
         <operand
             xsi:type="predicates:NamePredicate"
             pattern="org.eclipse.kura.*\.test.*"/>
-      </predicate>
-    </workingSet>
-    <workingSet
-        name="Examples">
-      <predicate
-          xsi:type="predicates:OrPredicate">
-        <operand
-            xsi:type="predicates:LocationPredicate"
-            pattern=".*/examples/.*"/>
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="org.eclipse.kura.example.*"/>
-        <operand
-            xsi:type="predicates:NamePredicate"
-            pattern="org.eclipse.kura.demo.*"/>
       </predicate>
     </workingSet>
     <description>The dynamic working sets for ${scope.project.label}</description>
@@ -591,8 +542,6 @@
             rootFolder="${git.clone.location}/kura/org.eclipse.kura.api"/>
         <sourceLocator
             rootFolder="${git.clone.location}/kura/emulator/org.eclipse.kura.emulator"/>
-        <sourceLocator
-            rootFolder="${git.clone.location}/kura/examples/org.eclipse.kura.demo.heater"/>
       </setupTask>
     </setupTask>
     <setupTask
@@ -625,12 +574,6 @@
         </sourceLocator>
         <sourceLocator
             rootFolder="${git.clone.location}/karaf"/>
-        <sourceLocator
-            rootFolder="${git.clone.location}/kura/examples"
-            locateNestedProjects="true"/>
-        <sourceLocator
-            rootFolder="${git.clone.location}/kura/features"
-            locateNestedProjects="true"/>
       </setupTask>
     </setupTask>
   </setupTask>
