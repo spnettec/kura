@@ -306,7 +306,6 @@
         <setEntry value="org.eclipse.kura.test@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store.test@default:default"/>
         <setEntry value="org.eclipse.kura.useradmin.store@default:default"/>
-        <setEntry value="org.eclipse.kura.util.test.driver@default:default"/>
         <setEntry value="org.eclipse.kura.util.test@default:false"/>
         <setEntry value="org.eclipse.kura.util.wire.test@default:default"/>
         <setEntry value="org.eclipse.kura.util@default:default"/>

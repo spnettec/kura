@@ -81,6 +81,7 @@
         <module>org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider</module>
         <module>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</module>        <module>emulator</module>
         <module>tools</module>
+        <module>test-util</module>
     </modules>
 
     <properties>
@@ -218,7 +219,6 @@
         <!-- test-util -->
         <org.eclipse.kura.core.testutil.version>6.0.0-SNAPSHOT</org.eclipse.kura.core.testutil.version>
         <org.eclipse.kura.test.version>6.0.0-SNAPSHOT</org.eclipse.kura.test.version>
-        <org.eclipse.kura.util.test.driver.version>6.0.0-SNAPSHOT</org.eclipse.kura.util.test.driver.version>
         <org.eclipse.kura.util.wire.test.version>6.0.0-SNAPSHOT</org.eclipse.kura.util.wire.test.version>
     </properties>
 
@@ -584,11 +584,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.test</artifactId>
                 <version>${org.eclipse.kura.test.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.util.test.driver</artifactId>
-                <version>${org.eclipse.kura.util.test.driver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
