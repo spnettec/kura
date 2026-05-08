@@ -196,10 +196,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.linux.position</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.linux.usb</artifactId>
         </dependency>
         <dependency>
@@ -257,10 +253,6 @@
         <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.rest.keystore.provider</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.rest.position.provider</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>

@@ -47,7 +47,6 @@
         <module>org.eclipse.kura.driver.block</module>
         <module>org.eclipse.kura.driver.s7plc.provider</module>
         <module>org.eclipse.kura.linux.clock</module>
-        <module>org.eclipse.kura.linux.position</module>
         <module>org.eclipse.kura.linux.usb</module>
         <module>org.eclipse.kura.linux.usb.x86_64</module>
         <module>org.eclipse.kura.linux.usb.aarch64</module>
@@ -69,7 +68,6 @@
         <module>org.eclipse.kura.rest.configuration.provider</module>
         <module>org.eclipse.kura.rest.identity.provider</module>
         <module>org.eclipse.kura.rest.inventory.provider</module>
-        <module>org.eclipse.kura.rest.position.provider</module>
         <module>org.eclipse.kura.rest.keystore.provider</module>
         <module>org.eclipse.kura.rest.security.provider</module>
         <module>org.eclipse.kura.rest.service.listing.provider</module>
@@ -180,7 +178,6 @@
         <org.eclipse.kura.jul.to.slf4j.configuration.version>1.0.0-SNAPSHOT</org.eclipse.kura.jul.to.slf4j.configuration.version>
         <org.eclipse.kura.linux.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.clock.version>
         <org.eclipse.kura.linux.command.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.command.version>
-        <org.eclipse.kura.linux.position.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.position.version>
         <org.eclipse.kura.linux.usb.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.version>
         <org.eclipse.kura.linux.usb.aarch64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.aarch64.version>
         <org.eclipse.kura.linux.usb.x86_64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.x86_64.version>
@@ -197,7 +194,6 @@
         <org.eclipse.kura.rest.identity.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.identity.provider.version>
         <org.eclipse.kura.rest.inventory.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.inventory.provider.version>
         <org.eclipse.kura.rest.keystore.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.rest.keystore.provider.version>
-        <org.eclipse.kura.rest.position.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.position.provider.version>
         <org.eclipse.kura.rest.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.provider.version>
         <org.eclipse.kura.rest.security.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.security.provider.version>
         <org.eclipse.kura.rest.service.listing.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.service.listing.provider.version>
@@ -447,11 +443,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.linux.position</artifactId>
-                <version>${org.eclipse.kura.linux.position.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.linux.usb</artifactId>
                 <version>${org.eclipse.kura.linux.usb.version}</version>
             </dependency>
@@ -524,11 +515,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.rest.keystore.provider</artifactId>
                 <version>${org.eclipse.kura.rest.keystore.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.rest.position.provider</artifactId>
-                <version>${org.eclipse.kura.rest.position.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
