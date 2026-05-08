@@ -826,16 +826,6 @@
             <version>${log4j2-api-config.version}</version>
         </dependency>
         
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.usb4java</artifactId>
-            <version>${org.usb4java.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>usb4java-javax</artifactId>
-            <version>${usb4java-javax.version}</version>
-        </dependency>
         <!-- END Kura target platform BOM -->
         
 		<dependency>

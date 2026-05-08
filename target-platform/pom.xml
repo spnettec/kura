@@ -169,16 +169,13 @@
         <!-- END test dependencies -->
         <!-- START target platform dependencies -->
         <!--<org.apache.activemq.artemis.upstream.version>2.6.4</org.apache.activemq.artemis.upstream.version>-->
-        <usb4java.version>1.2.0</usb4java.version>
         <!-- END target platform dependencies -->
         <!--<com.gwt.user.version>2.0.0-SNAPSHOT</com.gwt.user.version>-->
         <log4j2-api-config.version>2.0.0-SNAPSHOT</log4j2-api-config.version>
         <!--<org.apache.activemq.artemis.version>3.0.0-SNAPSHOT</org.apache.activemq.artemis.version>-->
         <org.eclipse.soda.dk.comm.version>2.0.0-SNAPSHOT</org.eclipse.soda.dk.comm.version>
         <!--<org.moka7.version>2.0.0-SNAPSHOT</org.moka7.version>-->
-        <org.usb4java.version>2.0.0-SNAPSHOT</org.usb4java.version>
-        <usb4java-javax.version>2.0.0-SNAPSHOT</usb4java-javax.version>
-        
+
         <vertx.version>5.0.10</vertx.version>
         <org.apache.groovy.version>5.0.5</org.apache.groovy.version>
         <org.eclipse.milo.version>1.1.2</org.eclipse.milo.version>
@@ -203,8 +200,6 @@
     </properties>
 
     <modules>
-        <module>org.usb4java</module>
-        <module>usb4java-javax</module>
         <module>log4j2-api-config</module>
         <module>p2-repo-equinox</module>
         <module>p2-repo-common</module>

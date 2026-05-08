@@ -206,7 +206,6 @@
         <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.session@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
         <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
         <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
         <setEntry value="org.eclipse.milo.stack-core@default:default"/>

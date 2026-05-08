@@ -368,14 +368,6 @@
 									<transitive>false</transitive>
 								</artifact>
                                 -->
-                                <!-- Already native OSGi (BSN=org.usb4java); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.eclipse.kura:org.usb4java:${org.usb4java.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
                                 <!-- Already native OSGi (BSN=com.h2database); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
                                 <!--
                                 <artifact>
@@ -460,14 +452,6 @@
                                 <!--
                                 <artifact>
 									<id>org.apache.commons:commons-exec:${commons-exec.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
-                                <!-- Already native OSGi (BSN=usb4java-javax); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.eclipse.kura:usb4java-javax:${usb4java-javax.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

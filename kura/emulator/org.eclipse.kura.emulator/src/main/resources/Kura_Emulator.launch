@@ -99,9 +99,7 @@
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
         <setEntry value="org.quartz-scheduler.quartz@default:default"/>
-        <setEntry value="org.usb4java@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
-        <setEntry value="usb4java-javax@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="org.eclipse.kura.ai.triton.server.test@default:false"/>

@@ -129,25 +129,6 @@
             <artifactId>target-platform-pde-deps</artifactId>
             <version>6.0.0-SNAPSHOT</version>
             <type>pom</type>
-            <exclusions>
-                <!-- exclude Kura's usb4java transitive deps -->
-                <exclusion>
-                    <groupId>javax.usb</groupId>
-                    <artifactId>usb-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.usb4java</groupId>
-                    <artifactId>usb4java-javax</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.usb4java</groupId>
-                    <artifactId>usb4java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.usb4java</groupId>
-                    <artifactId>libusb4java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
@@ -247,9 +228,6 @@
                             <outputDirectory>${project.basedir}/target/plugins</outputDirectory>
                             <excludeTypes>pom</excludeTypes>
                             <excludeClassifiers>sources,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
-                            <excludeGroupIds>
-                            	org.usb4java
-                            </excludeGroupIds>
                         </configuration>
                     </execution>
                     <execution>
@@ -397,7 +375,7 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
                                 <includeArtifactIds>
-                                commons-lang3,.provider,org.eclipse.kura.asset.provider,org.eclipse.kura.cloud.base.provider, org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,                                org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager, org.eclipse.kura.container.orchestration.provider, org.eclipse.kura.container.provider,                                org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,                                org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore,                                org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.s7plc.provider,                                org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,                                org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,                                org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.provider,                                org.eclipse.kura.rest.security.provider, org.eclipse.kura.rest.service.listing.provider, org.eclipse.kura.rest.system.provider, org.eclipse.kura.rest.tamper.detection.provider,                                org.eclipse.kura.script.provider, org.eclipse.kura.util,.component.provider,.component.provider,                                .provider,org.usb4java, usb4java-javax
+                                commons-lang3,.provider,org.eclipse.kura.asset.provider,org.eclipse.kura.cloud.base.provider, org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,                                org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager, org.eclipse.kura.container.orchestration.provider, org.eclipse.kura.container.provider,                                org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,                                org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore,                                org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider, org.eclipse.kura.driver.s7plc.provider,                                org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,                                org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,                                org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.provider,                                org.eclipse.kura.rest.security.provider, org.eclipse.kura.rest.service.listing.provider, org.eclipse.kura.rest.system.provider, org.eclipse.kura.rest.tamper.detection.provider,                                org.eclipse.kura.script.provider, org.eclipse.kura.util,.component.provider,.component.provider,                                .provider
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
