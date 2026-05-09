@@ -13,8 +13,6 @@
 package org.eclipse.kura.linux.usb;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +30,6 @@ import org.eclipse.kura.usb.UsbTtyDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
 public class LinuxUdevNative {
 
     private static final Logger logger = LoggerFactory.getLogger(LinuxUdevNative.class);
@@ -44,19 +41,10 @@ public class LinuxUdevNative {
 
     static {
         try {
-            AccessController.doPrivileged((PrivilegedAction) LinuxUdevNative::loadUdevLibrary);
-        } catch (Exception e) {
-            logger.error(UNABLE_TO_LOAD_ERROR + LIBRARY_NAME);
-        }
-    }
-
-    private static Object loadUdevLibrary() {
-        try {
             System.loadLibrary(LIBRARY_NAME);
-        } catch (Exception e) {
-            logger.error(UNABLE_TO_LOAD_ERROR + LIBRARY_NAME);
+        } catch (UnsatisfiedLinkError | Exception e) {
+            logger.error(UNABLE_TO_LOAD_ERROR + LIBRARY_NAME, e);
         }
-        return null;
     }
 
     private boolean started;
@@ -73,6 +61,7 @@ public class LinuxUdevNative {
     private static HashMap<String, UsbNetDevice> netDevices = new HashMap<>();
     private static HashMap<String, UsbTtyDevice> ttyDevices = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     public LinuxUdevNative(LinuxUdevListener linuxUdevListener) throws IOException {
         if (!this.started) {
             this.linuxUdevNativeInstance = this;
