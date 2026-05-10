@@ -3,7 +3,7 @@
 set -e
 
 mkdir -p /tmp/.kura/configuration
-"${KURA_DIR}/bin/gen_config_ini.sh" "${KURA_DIR}"/framework/config.ini "${KURA_DIR}"/plugins > /tmp/.kura/configuration/config.ini
+"${KURA_DIR}/bin/gen_config_ini.sh" "${KURA_DIR}"/framework/config.ini "${KURA_DIR}"/plugins "${KURA_DIR}"/siblings > /tmp/.kura/configuration/config.ini
 
 JAVA_INT_OPTS="$JAVA_INT_OPTS -XX:+IgnoreUnrecognizedVMOptions"
 

@@ -68,14 +68,36 @@ function stopWatchdog {
 function postInstall {
 
     mkdir -p ${INSTALL_DIR} >> ${LOG} 2>&1
-    unzip /tmp/kura_*.zip -d ${INSTALL_DIR} >> ${LOG} 2>&1
 
-    #install KURA files
-    KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
-    sh ${KURA_VERSION_DIR}install/kura_install.sh >> ${LOG} 2>&1
+    #install KURA files — deb unpacks directly under ${INSTALL_DIR}/kura (no zip intermediate)
+    if [ -d "${INSTALL_DIR}/kura/install" ]; then
+        sh ${INSTALL_DIR}/kura/install/kura_install.sh >> ${LOG} 2>&1
+    else
+        # Fallback for legacy installations that still use zip-based layout
+        KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
+        if [ -n "${KURA_VERSION_DIR}" ]; then
+            sh ${KURA_VERSION_DIR}install/kura_install.sh >> ${LOG} 2>&1
+        else
+            echo "ERROR: No KURA installation files found" >> ${LOG} 2>&1
+            exit 1
+        fi
+    fi
 
     #clean up
     rm -rf ${INSTALL_DIR}/kura/install >> ${LOG} 2>&1
+
+    # Create siblings directory and precedence config
+    mkdir -p ${INSTALL_DIR}/kura/siblings
+    mkdir -p ${INSTALL_DIR}/kura/framework
+    if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf" ]; then
+        cat > "${INSTALL_DIR}/kura/framework/sibling-precedence.conf" << 'CONF'
+# Sibling JAR precedence configuration
+# kura-first (default): kura-core JARs take precedence, sibling duplicates are skipped
+# sibling-override: sibling JARs override kura-core duplicates
+precedence=kura-first
+CONF
+        chown -R kurad:kurad "${INSTALL_DIR}/kura/framework"
+    fi
 
     #move the log file
     mkdir -p ${INSTALL_DIR}/kura/log

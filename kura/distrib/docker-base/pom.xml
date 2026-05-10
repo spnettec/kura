@@ -220,8 +220,8 @@
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_docker-nn.zip</src>
-                                    <type>file</type>
+                                    <src>${basedir}/target/kura_${project.version}_docker-nn</src>
+                                    <type>directory</type>
                                     <mapper>
                                         <type>perm</type>
                                         <prefix>/tmp</prefix>

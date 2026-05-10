@@ -196,11 +196,11 @@
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
-                                    <src>${basedir}/target/kura_${project.version}_linux.zip</src>
-                                    <type>file</type>
+                                    <src>${basedir}/target/kura_${project.version}_linux</src>
+                                    <type>directory</type>
                                     <mapper>
                                         <type>perm</type>
-                                        <prefix>/tmp</prefix>
+                                        <prefix>/opt/eclipse/kura_${project.version}_linux</prefix>
                                     </mapper>
                                 </data>
                                 <!-- 99-kura-nm.conf moved to kura-networking sibling deb. -->

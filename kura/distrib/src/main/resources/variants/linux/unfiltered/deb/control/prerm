@@ -114,24 +114,9 @@ function preRemove {
     rm -rf /tmp/.kura
     rm -rf /tmp/kura
 
-    if [ -d "${INSTALL_DIR}/kura" ] ; then
-      ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -u
-      PARENT=`readlink -f ${INSTALL_DIR}/kura`
-      rm -rf ${INSTALL_DIR}/kura
-      rm -rf $PARENT
-    fi
-
-    # restore /etc/network/interfaces.old
-    if [ -f /etc/network/interfaces.old ]; then
-        mv /etc/network/interfaces.old /etc/network/interfaces
-    fi
-
-    # restore /etc/default/dnsmasq.old
-    if [ -f /etc/default/dnsmasq.old ]; then
-        mv /etc/default/dnsmasq.old /etc/default/dnsmasq
-    fi
-
     restore_netplan
+
+    # Directory cleanup moved to postrm (after sibling packages are purged)
 }
 ##############################################
 # END UTILITY FUNCTIONS
