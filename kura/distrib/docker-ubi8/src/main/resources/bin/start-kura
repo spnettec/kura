@@ -26,8 +26,6 @@ JAVA_INT_OPTS="$JAVA_INT_OPTS -Declipse.consoleLog=true"
 
 JAVA_INT_OPTS="$JAVA_INT_OPTS -Dkura.home=\"${KURA_DIR}/kura\""
 JAVA_INT_OPTS="$JAVA_INT_OPTS -Dkura.configuration=file:\"${KURA_DIR}/framework/kura.properties\""
-JAVA_INT_OPTS="$JAVA_INT_OPTS -Djava.security.policy=\"${KURA_DIR}/framework/jdk.dio.policy\""
-JAVA_INT_OPTS="$JAVA_INT_OPTS -Djdk.dio.registry=\"${KURA_DIR}/framework/jdk.dio.properties\""
 
 if [ -n "${PERSISTENT_DIR}" ]; then
     JAVA_INT_OPTS="$JAVA_INT_OPTS -Dkura.data=\"${PERSISTENT_DIR}/data\""

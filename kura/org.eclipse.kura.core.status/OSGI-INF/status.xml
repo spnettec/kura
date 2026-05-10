@@ -19,16 +19,10 @@
       <provide interface="org.eclipse.kura.status.CloudConnectionStatusService"/>
    </service>
    <property name="service.pid" value="org.eclipse.kura.status.CloudConnectionStatusService"/>
-   <reference name="SystemService" 
-              cardinality="1..1" 
+   <reference name="SystemService"
+              cardinality="1..1"
               policy="static"
               bind="setSystemService"
               unbind="unsetSystemService"
               interface="org.eclipse.kura.system.SystemService"/>
-   <reference name="GPIOService" 
-              cardinality="0..1" 
-              policy="static"
-              bind="setGPIOService"
-              unbind="unsetGPIOService"
-              interface="org.eclipse.kura.gpio.GPIOService"/>
 </scr:component>

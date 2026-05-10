@@ -17,7 +17,7 @@ Priority: optional
 Depends: dos2unix, unzip, 
  telnet, bluez-hcidump, 
  bluez, chrony, 
- openjdk-21-jre-headless | temurin-21-jdk | openjdk-17-jre-headless | temurin-17-jdk,
+ openjdk-21-jre-headless | temurin-21-jdk | openjdk-25-jre-headless | temurin-25-jdk,
  cron
 Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>

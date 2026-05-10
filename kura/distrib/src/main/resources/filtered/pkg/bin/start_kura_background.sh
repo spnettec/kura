@@ -30,8 +30,6 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Ddpa.configuration=${DIR}/packages/dpa.properties \
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
         -Dlog4j2.disable.jmx=true \
-        -Djava.security.policy=${DIR}/framework/jdk.dio.policy \
-        -Djdk.dio.registry=${DIR}/framework/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
         -Dosgi.console=5002 \
         -Declipse.consoleLog=true >> /var/log/kura-console.log 2>> /var/log/kura-console.log \

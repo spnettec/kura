@@ -103,8 +103,6 @@ then
     echo "Customizing installation for Raspberry PI"
 fi
 
-mv "/opt/eclipse/kura/install/jdk.dio.properties-${BOARD}" "/opt/eclipse/kura/framework/jdk.dio.properties"
-
 customize_snapshot
 customize_kura_properties "${BOARD}"
 customize_iptables

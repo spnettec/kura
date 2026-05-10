@@ -24,7 +24,6 @@ import org.eclipse.kura.core.status.runnables.HeartbeatStatusRunnable;
 import org.eclipse.kura.core.status.runnables.LogStatusRunnable;
 import org.eclipse.kura.core.status.runnables.OnOffStatusRunnable;
 import org.eclipse.kura.core.status.runnables.StatusRunnable;
-import org.eclipse.kura.gpio.GPIOService;
 import org.eclipse.kura.status.CloudConnectionStatusComponent;
 import org.eclipse.kura.status.CloudConnectionStatusEnum;
 import org.eclipse.kura.status.CloudConnectionStatusService;
@@ -40,7 +39,6 @@ public class CloudConnectionStatusServiceImpl implements CloudConnectionStatusSe
     private static final Logger logger = LoggerFactory.getLogger(CloudConnectionStatusServiceImpl.class);
 
     private SystemService systemService;
-    private GPIOService gpioService;
 
     private final ExecutorService notificationExecutor;
     private Future<?> notificationWorker;
@@ -72,14 +70,6 @@ public class CloudConnectionStatusServiceImpl implements CloudConnectionStatusSe
 
     public void unsetSystemService(SystemService systemService) {
         this.systemService = null;
-    }
-
-    public void setGPIOService(GPIOService gpioService) {
-        this.gpioService = gpioService;
-    }
-
-    public void unsetGPIOService(GPIOService gpioService) {
-        this.gpioService = null;
     }
 
     // ----------------------------------------------------------------
@@ -183,9 +173,6 @@ public class CloudConnectionStatusServiceImpl implements CloudConnectionStatusSe
             if (this.properties.get("linux_led") != null) {
                 runnable = getLinuxStatusWorker(status);
             }
-            if (runnable == null && this.properties.get("led") != null && this.gpioService != null) {
-                runnable = getGpioStatusWorker(status);
-            }
             if (runnable == null) {
                 runnable = getLogStatusWorker(status);
             }
@@ -227,14 +214,6 @@ public class CloudConnectionStatusServiceImpl implements CloudConnectionStatusSe
             runnable = createLedRunnable(status, linuxLedManager);
         }
         return runnable;
-    }
-
-    private StatusRunnable getGpioStatusWorker(CloudConnectionStatusEnum status) {
-        int gpioLed = (Integer) this.properties.get("led");
-        boolean inverted = (Boolean) this.properties.get("inverted");
-        LedManager gpioLedManager = new GpioLedManager(this.gpioService, gpioLed, inverted);
-
-        return createLedRunnable(status, gpioLedManager);
     }
 
     private StatusRunnable createLedRunnable(CloudConnectionStatusEnum status, LedManager linuxLedManager) {

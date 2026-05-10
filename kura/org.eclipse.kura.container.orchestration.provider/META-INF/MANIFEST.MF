@@ -6,7 +6,7 @@ Bundle-Version: 2.0.0.qualifier
 Bundle-Vendor: Eclipse Kura
 Automatic-Module-Name: org.eclipse.kura.container.orchestration.provider
 Bundle-ActivationPolicy: lazy
-Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=21))"
 Import-Package: com.google.common.base;version="31.0.0",
  com.google.common.collect;version="32.1.1",
  com.google.common.escape;version="32.1.1",

@@ -28,8 +28,8 @@
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
         <skip.libsocket-can>true</skip.libsocket-can>
 
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Plugins versions -->
         <exists-maven-plugin.version>0.12.0</exists-maven-plugin.version>
@@ -167,11 +167,6 @@
         <org.hamcrest.integration.version>2.2</org.hamcrest.integration.version>
         <org.hamcrest.version>2.2</org.hamcrest.version>
         <!-- END test dependencies -->
-        <!-- START target platform dependencies -->
-        <!--<org.apache.activemq.artemis.upstream.version>2.6.4</org.apache.activemq.artemis.upstream.version>-->
-        <!-- END target platform dependencies -->
-        <!--<com.gwt.user.version>2.0.0-SNAPSHOT</com.gwt.user.version>-->
-        <!--<org.apache.activemq.artemis.version>3.0.0-SNAPSHOT</org.apache.activemq.artemis.version>-->
         <org.eclipse.soda.dk.comm.version>2.0.0-SNAPSHOT</org.eclipse.soda.dk.comm.version>
         <!--<org.moka7.version>2.0.0-SNAPSHOT</org.moka7.version>-->
 

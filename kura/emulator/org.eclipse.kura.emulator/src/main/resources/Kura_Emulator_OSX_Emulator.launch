@@ -19,7 +19,6 @@
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.core.testutil.opcuaserver"/>
-        <setEntry value="org.eclipse.kura.driver.block"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
@@ -310,7 +309,6 @@
         <setEntry value="org.eclipse.kura.docs@default:default"/>
         <setEntry value="org.eclipse.kura.driver.helper.provider@default:default"/>
         <setEntry value="org.eclipse.kura.driver.opcua.provider@default:default"/>
-        <setEntry value="org.eclipse.kura.driver.s7plc.provider@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.clock@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.net@default:default"/>
         <setEntry value="org.eclipse.kura.emulator.position@default:default"/>

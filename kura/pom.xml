@@ -44,8 +44,6 @@
         <module>org.eclipse.kura.core.status</module>
         <module>org.eclipse.kura.core.system</module>
         <module>org.eclipse.kura.driver.helper.provider</module>
-        <module>org.eclipse.kura.driver.block</module>
-        <module>org.eclipse.kura.driver.s7plc.provider</module>
         <module>org.eclipse.kura.linux.clock</module>
         <module>org.eclipse.kura.linux.usb</module>
         <module>org.eclipse.kura.linux.usb.x86_64</module>
@@ -95,8 +93,8 @@
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
 
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <!-- plugins versions common to Java 8 and Java 17 builds -->
         <bnd.baseline.version>7.0.0</bnd.baseline.version>
@@ -136,8 +134,6 @@
             --add-opens=java.base/java.util=ALL-UNNAMED
         </tycho.surefire.testenv.args>
         <org.eclipse.kura.api.version>3.0.0-SNAPSHOT</org.eclipse.kura.api.version>
-        <org.eclipse.kura.asset.cloudlet.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.cloudlet.provider.version>
-        <org.eclipse.kura.asset.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.asset.helper.provider.version>
         <org.eclipse.kura.asset.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.asset.provider.version>
         <org.eclipse.kura.cloud.base.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.cloud.base.provider.version>
         <org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>
@@ -162,10 +158,7 @@
         <org.eclipse.kura.rest.tamper.detection.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.rest.tamper.detection.provider.version>
         <org.eclipse.kura.db.h2db.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.db.h2db.provider.version>
         <org.eclipse.kura.db.sqlite.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.db.sqlite.provider.version>
-        <org.eclipse.kura.driver.block.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.block.version>
         <org.eclipse.kura.driver.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.helper.provider.version>
-        <org.eclipse.kura.driver.ibeacon.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.ibeacon.provider.version>
-        <org.eclipse.kura.driver.s7plc.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.driver.s7plc.provider.version>
         <org.eclipse.kura.emulator.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.version>
         <org.eclipse.kura.emulator.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.clock.version>
         <org.eclipse.kura.emulator.net.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.net.version>
@@ -177,7 +170,6 @@
         <org.eclipse.kura.json.marshaller.unmarshaller.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.json.marshaller.unmarshaller.provider.version>
         <org.eclipse.kura.jul.to.slf4j.configuration.version>1.0.0-SNAPSHOT</org.eclipse.kura.jul.to.slf4j.configuration.version>
         <org.eclipse.kura.linux.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.clock.version>
-        <org.eclipse.kura.linux.command.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.command.version>
         <org.eclipse.kura.linux.usb.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.version>
         <org.eclipse.kura.linux.usb.aarch64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.aarch64.version>
         <org.eclipse.kura.linux.usb.x86_64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.x86_64.version>
@@ -187,7 +179,6 @@
         <org.eclipse.kura.log.filesystem.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.log.filesystem.provider.version>
         <org.eclipse.kura.misc.cloudcat.version>2.0.0-SNAPSHOT</org.eclipse.kura.misc.cloudcat.version>
         <org.eclipse.kura.request.handler.jaxrs.version>2.0.0-SNAPSHOT</org.eclipse.kura.request.handler.jaxrs.version>
-        <org.eclipse.kura.rest.asset.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.asset.provider.version>
         <org.eclipse.kura.rest.cloudconnection.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.cloudconnection.provider.version>
         <org.eclipse.kura.rest.command.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.command.provider.version>
         <org.eclipse.kura.rest.configuration.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.configuration.provider.version>
@@ -199,24 +190,14 @@
         <org.eclipse.kura.rest.service.listing.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.service.listing.provider.version>
         <org.eclipse.kura.rest.system.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.system.provider.version>
         <org.eclipse.kura.script.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.script.provider.version>
-        <org.eclipse.kura.rest.wire.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.wire.provider.version>
         <org.eclipse.kura.stress.version>2.0.0-SNAPSHOT</org.eclipse.kura.stress.version>
         <org.eclipse.kura.useradmin.store.version>2.0.0-SNAPSHOT</org.eclipse.kura.useradmin.store.version>
         <org.eclipse.kura.util.version>2.0.0-SNAPSHOT</org.eclipse.kura.util.version>
-        <org.eclipse.kura.wire.ai.component.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.ai.component.provider.version>
-        <org.eclipse.kura.wire.component.join.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.component.join.provider.version>
-        <org.eclipse.kura.wire.component.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.wire.component.provider.version>
-        <org.eclipse.kura.wire.db.component.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.db.component.provider.version>
-        <org.eclipse.kura.wire.h2db.component.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.wire.h2db.component.provider.version>
-        <org.eclipse.kura.wire.helper.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.helper.provider.version>
-        <org.eclipse.kura.wire.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.provider.version>
-        <org.eclipse.kura.wire.script.tools.version>2.0.0-SNAPSHOT</org.eclipse.kura.wire.script.tools.version>
         <org.eclipse.kura.xml.marshaller.unmarshaller.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.xml.marshaller.unmarshaller.provider.version>
         <!-- test-util -->
         <org.eclipse.kura.core.testutil.version>6.0.0-SNAPSHOT</org.eclipse.kura.core.testutil.version>
         <org.eclipse.kura.core.testutil.opcuaserver.version>6.0.0-SNAPSHOT</org.eclipse.kura.core.testutil.opcuaserver.version>
         <org.eclipse.kura.test.version>6.0.0-SNAPSHOT</org.eclipse.kura.test.version>
-        <org.eclipse.kura.util.wire.test.version>6.0.0-SNAPSHOT</org.eclipse.kura.util.wire.test.version>
     </properties>
 
     <distributionManagement>
@@ -362,24 +343,8 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.driver.block</artifactId>
-                <version>${org.eclipse.kura.driver.block.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.driver.helper.provider</artifactId>
                 <version>${org.eclipse.kura.driver.helper.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.driver.ibeacon.provider</artifactId>
-                <version>${org.eclipse.kura.driver.ibeacon.provider.version}</version>
-            </dependency>
-            
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.driver.s7plc.provider</artifactId>
-                <version>${org.eclipse.kura.driver.s7plc.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -435,11 +400,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.linux.clock</artifactId>
                 <version>${org.eclipse.kura.linux.clock.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.linux.command</artifactId>
-                <version>${org.eclipse.kura.linux.command.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -576,11 +536,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.test</artifactId>
                 <version>${org.eclipse.kura.test.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.util.wire.test</artifactId>
-                <version>${org.eclipse.kura.util.wire.test.version}</version>
             </dependency>
 
         </dependencies>

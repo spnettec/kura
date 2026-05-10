@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.eclipse.kura.script.provider
 Bundle-Version: 1.0.0.qualifier
 Require-Capability: osgi.extender;filter:="(osgi.extender=osgi.serviceloader.registrar)",
  osgi.extender;filter:="(osgi.extender=osgi.serviceloader.processor)",
- osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+ osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=21))"
 Require-Bundle: groovy
 Bundle-ActivationPolicy: lazy
 Eclipse-BuddyPolicy: ext
