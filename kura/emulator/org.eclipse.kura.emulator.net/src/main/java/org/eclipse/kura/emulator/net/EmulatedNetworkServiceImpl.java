@@ -21,8 +21,6 @@ import java.util.Optional;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.core.net.EthernetInterfaceImpl;
-import org.eclipse.kura.core.net.NetInterfaceAddressImpl;
 import org.eclipse.kura.emulator.Emulator;
 import org.eclipse.kura.net.IPAddress;
 import org.eclipse.kura.net.NetInterface;
