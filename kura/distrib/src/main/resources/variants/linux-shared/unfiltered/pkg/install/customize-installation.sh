@@ -69,27 +69,37 @@ customize_kura_properties() {
 
 customize_ram() {
     local BOARD=$1
-    
-    if [ ${BOARD} = "generic-device" ]; then    
-        # dynamic RAM assignment
+
+    if [ ${BOARD} = "generic-device" ]; then
+        # Idle Kura with all sibling addons committed ~256MB heap on aarch64;
+        # cap Xmx at 1024MB so large-RAM devices don't lock 4GB+ as JVM heap, and
+        # keep Xms small (256MB) so cold-start RSS stays close to actual usage.
         RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
         RAM_MB=$(expr $RAM_KB / 1024)
-        RAM_MB_FOR_KURA=$(expr $RAM_MB / 4)
-    
-        if [ "$RAM_MB" -lt 1024 ]; then
-            RAM_MB_FOR_KURA="256"
+        RAM_MB_XMX=$(expr $RAM_MB / 4)
+
+        if [ "$RAM_MB_XMX" -gt 1024 ]; then
+            RAM_MB_XMX=1024
         fi
-    
-        echo "Setting kura RAM to ${RAM_MB_FOR_KURA}"
+        if [ "$RAM_MB" -lt 1024 ]; then
+            RAM_MB_XMX=256
+        fi
+
+        RAM_MB_XMS=256
+        if [ "$RAM_MB_XMS" -gt "$RAM_MB_XMX" ]; then
+            RAM_MB_XMS=$RAM_MB_XMX
+        fi
+
+        echo "Setting kura RAM to -Xms${RAM_MB_XMS}m -Xmx${RAM_MB_XMX}m"
         start_scripts_to_change=("start_kura.sh" "start_kura_debug.sh" "start_kura_background.sh")
-    
-        RAM_REPLACEMENT_STRING="-Xms${RAM_MB_FOR_KURA}m -Xmx${RAM_MB_FOR_KURA}m"
+
+        RAM_REPLACEMENT_STRING="-Xms${RAM_MB_XMS}m -Xmx${RAM_MB_XMX}m"
         for installer_name in "${start_scripts_to_change[@]}"; do
             echo "Updating RAM values for $installer_name"
             sed -i "s/-Xms[0-9]*m -Xmx[0-9]*m/$RAM_REPLACEMENT_STRING/g" "/opt/eclipse/kura/bin/$installer_name"
         done
-        
-    fi    
+
+    fi
 }
 
 IS_NETWORKING_PROFILE=$1
