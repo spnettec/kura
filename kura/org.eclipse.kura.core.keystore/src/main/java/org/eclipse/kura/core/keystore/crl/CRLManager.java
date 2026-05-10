@@ -44,7 +44,7 @@ public class CRLManager implements Closeable {
 
     private final CRLStore store;
     private final ScheduledExecutorService updateExecutor = Executors.newSingleThreadScheduledExecutor();
-    private final ExecutorService downloadExecutor = Executors.newCachedThreadPool();
+    private final ExecutorService downloadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     private final List<DistributionPointState> referencedDistributionPoints = new ArrayList<>();
     private final long forceUpdateIntervalNanos;

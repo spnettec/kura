@@ -477,8 +477,15 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
     }
 
     @Override
-    public synchronized void createFactoryConfiguration(String factoryPid, String pid, Map<String, Object> properties,
+    public void createFactoryConfiguration(String factoryPid, String pid, Map<String, Object> properties,
             boolean takeSnapshot) throws KuraException {
+
+        createFactoryConfigurationInternal(factoryPid, pid,
+                ComponentUtil.encryptConfigurationProperties(properties, this.cryptoService, true), takeSnapshot);
+    }
+
+    private synchronized void createFactoryConfigurationInternal(String factoryPid, String pid,
+            Map<String, Object> properties, boolean takeSnapshot) throws KuraException {
         if (pid == null) {
             throw new KuraException(KuraErrorCode.INVALID_PARAMETER, "pid cannot be null");
         } else if (this.servicePidByPid.containsKey(pid)) {
@@ -908,7 +915,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 String pid = config.getPid();
                 logger.info("Creating configuration with pid: {} and factory pid: {}", pid, factoryPid);
                 try {
-                    createFactoryConfiguration(factoryPid, pid, properties, false);
+                    createFactoryConfigurationInternal(factoryPid, pid, properties, false);
                     configs.add(config);
                 } catch (KuraException e) {
                     logger.warn("Error creating configuration with pid: {} and factory pid: {}", pid, factoryPid, e);
@@ -1408,7 +1415,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                         String pid = config.getPid();
                         logger.info("Creating configuration with pid: {} and factory pid: {}", pid, factoryPid);
                         try {
-                            createFactoryConfiguration(factoryPid, pid, props, false);
+                            createFactoryConfigurationInternal(factoryPid, pid, props, false);
                         } catch (KuraException e) {
                             logger.warn("Error creating configuration with pid: {} and factory pid: {}", pid,
                                     factoryPid, e);

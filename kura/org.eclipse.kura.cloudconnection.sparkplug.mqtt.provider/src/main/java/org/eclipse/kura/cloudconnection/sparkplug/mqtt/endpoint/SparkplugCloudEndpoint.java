@@ -62,7 +62,7 @@ public class SparkplugCloudEndpoint
     private String kuraServicePid;
     private SeqCounter seqCounter = new SeqCounter();
     private SubscriptionsMap subscriptions = new SubscriptionsMap();
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     /*
      * Activation APIs

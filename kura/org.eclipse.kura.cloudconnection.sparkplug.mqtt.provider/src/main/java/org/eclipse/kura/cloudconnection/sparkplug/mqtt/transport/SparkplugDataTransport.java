@@ -144,7 +144,7 @@ public class SparkplugDataTransport implements ConfigurableComponent, DataTransp
         this.client.establishSession(true);
 
         stopExecutorService();
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
         logger.debug("{} - Initialized message dispatcher executor", this.kuraServicePid);
     }
 

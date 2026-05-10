@@ -407,7 +407,7 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5s</outputDirectory>
                                 <includeArtifactIds>
-                                jakarta.ws.rs-api, jetty-ee10-servlet, org.apache.felix.http.bridge,                                org.eclipse.kura.http.server.manager,                                .join.provider, org.eclipse.osgitech.rest, org.eclipse.osgitech.rest.servlet.whiteboard, org.osgi.service.jakartars
+                                jakarta.ws.rs-api, jetty-ee10-servlet, org.apache.felix.http.bridge,                                org.eclipse.kura.http.server.manager, org.eclipse.kura.event.publisher,                                .join.provider, org.eclipse.osgitech.rest, org.eclipse.osgitech.rest.servlet.whiteboard, org.osgi.service.jakartars
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -440,7 +440,7 @@
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6s</outputDirectory>
                                 <includeArtifactIds>
                                 <!-- org.eclipse.kura.web2 split out to kura-management-ui addon .deb -->
-                                jna, org.eclipse.kura.event.publisher
+                                jna
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>

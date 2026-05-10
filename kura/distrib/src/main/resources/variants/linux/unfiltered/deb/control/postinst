@@ -30,7 +30,7 @@ function runPostInstall {
         postInstall &
         PID=$!
         START=$(date +%s)
-        
+
         while [ -d "/proc/$PID" ]; do
             echo w > ${WATCHDOG_DEVICE}
             DELTA=$(($(date +%s) - $START))
@@ -45,7 +45,7 @@ function runPostInstall {
         postInstall &
         PID=$!
         START=$(date +%s)
-        
+
         while [ -d "/proc/$PID" ]; do
             DELTA=$(($(date +%s) - $START))
             if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
@@ -66,25 +66,31 @@ function stopWatchdog {
 
 # Post-install script
 function postInstall {
+
     mkdir -p ${INSTALL_DIR} >> ${LOG} 2>&1
     unzip /tmp/kura_*.zip -d ${INSTALL_DIR} >> ${LOG} 2>&1
-    
+
     #install KURA files
-    sh ${INSTALL_DIR}/kura_*/install/kura_install.sh >> ${LOG} 2>&1
-    
+    KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
+    sh ${KURA_VERSION_DIR}install/kura_install.sh >> ${LOG} 2>&1
+
     #clean up
     rm -rf ${INSTALL_DIR}/kura/install >> ${LOG} 2>&1
-    rm /tmp/kura_*.zip >> ${LOG} 2>&1
-    
+
     #move the log file
     mkdir -p ${INSTALL_DIR}/kura/log
     mv ${LOG} ${INSTALL_DIR}/kura/log/
-    
+
     #flush all cached filesystem to disk
     sync
-    
+
     echo ""
     echo "Finished. KURA has been installed to ${INSTALL_DIR}/kura and will start automatically after a reboot"
+    echo ""
+    echo "****************************************************************"
+    echo "WARNING: Set the crypto service encryption key as explained in Eclipse Kura"
+    echo "documentation before rebooting to have snapshot encryption enabled."
+    echo "****************************************************************"
 }
 ##############################################
 # END UTILITY FUNCTIONS
@@ -105,4 +111,3 @@ exit 0
 #############################################
 # END POST INSTALL SCRIPT
 ##############################################
-

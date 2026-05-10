@@ -28,7 +28,7 @@ public class ConnectionListenerManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ConnectionListenerManager.class);
 
-    private final ExecutorService dispatchThread = Executors.newSingleThreadExecutor();
+    private final ExecutorService dispatchThread = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
     private Set<ConnectionListener> listeners = new CopyOnWriteArraySet<>();
 
     public void dispatchConnected() {

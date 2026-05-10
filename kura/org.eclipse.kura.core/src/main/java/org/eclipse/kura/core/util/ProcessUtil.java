@@ -30,7 +30,7 @@ public class ProcessUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessUtil.class);
 
-    private static ExecutorService processExecutor = Executors.newSingleThreadExecutor();
+    private static ExecutorService processExecutor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
 
     private ProcessUtil() {
 

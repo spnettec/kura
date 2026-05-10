@@ -46,7 +46,7 @@ public class SparkplugSubscriber
 
     private Optional<SparkplugCloudEndpoint> sparkplugCloudEndpoint = Optional.empty();
     private SparkplugCloudEndpointTracker endpointTracker;
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
     private Set<CloudSubscriberListener> cloudSubscriberListeners = new CopyOnWriteArraySet<>();
     private Set<CloudConnectionListener> cloudConnectionListeners = new CopyOnWriteArraySet<>();
 

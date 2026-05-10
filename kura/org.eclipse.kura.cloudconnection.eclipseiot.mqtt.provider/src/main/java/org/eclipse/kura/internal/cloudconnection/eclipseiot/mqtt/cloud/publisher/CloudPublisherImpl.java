@@ -104,7 +104,7 @@ public class CloudPublisherImpl
     private CloudConnectionManagerImpl cloudConnectionImpl;
     private BundleContext bundleContext;
 
-    private final ExecutorService worker = Executors.newCachedThreadPool();
+    private final ExecutorService worker = Executors.newVirtualThreadPerTaskExecutor();
 
     protected void activate(ComponentContext componentContext, Map<String, Object> properties) {
         logger.debug("Activating Cloud Publisher...");

@@ -46,7 +46,7 @@ public class ContainerInstance implements ConfigurableComponent, ContainerOrches
 
     private static final ValidationResult FAILED_VALIDATION = new ValidationResult();
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
 
     private ContainerOrchestrationService containerOrchestrationService;
     private Set<ContainerSignatureValidationService> availableContainerSignatureValidationService = new HashSet<>();

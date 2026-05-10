@@ -15,10 +15,10 @@ package org.eclipse.kura.http.server.manager;
 import java.util.EventListener;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
@@ -45,12 +45,8 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     private String keystoreServicePid;
 
     private JettyServerHolder jettyServerHolder;
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-    public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
-        this.keystoreService = keystoreService;
-        this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
-    }
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private Future<?> restartTask = CompletableFuture.completedFuture(null);
 
     public void setDispatcherServlet(HttpServlet dispatcherServlet) {
         this.dispatcherServlet = dispatcherServlet;
@@ -64,17 +60,17 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         logger.info("Activating {}", this.getClass().getSimpleName());
 
         this.options = new HttpServiceOptions(properties);
-        if (this.keystoreService == null) {
-            startKeystoreServicenMonitorTask();
-            logger.info("Activating... Done. Wait keystoreService");
-        } else {
-            startHttpService();
-        }
 
-        logger.info("Activating... Done.");
+        if (this.keystoreService == null) {
+            startKeystoreServiceMonitor();
+            logger.info("Activating... Done. Waiting for KeystoreService");
+        } else {
+            startHttpService(this.options);
+            logger.info("Activating... Done.");
+        }
     }
 
-    public void updated(Map<String, Object> properties) {
+    public synchronized void updated(Map<String, Object> properties) {
         logger.info("Updating {}", this.getClass().getSimpleName());
 
         HttpServiceOptions updatedOptions = new HttpServiceOptions(properties);
@@ -83,29 +79,31 @@ public class HttpService implements ConfigurableComponent, EventHandler {
             logger.debug("Updating, new props");
             this.options = updatedOptions;
 
+            cancelRestartTask();
             restartHttpService();
         }
 
         logger.info("Updating... Done.");
     }
 
-    public void deactivate() {
+    public synchronized void deactivate() {
         logger.info("Deactivating {}", this.getClass().getSimpleName());
 
+        cancelRestartTask();
         stopHttpService();
         shutdownExecutor();
     }
 
     private synchronized void restartHttpService() {
         stopHttpService();
-        startHttpService();
+        startHttpService(this.options);
     }
 
-    private synchronized void startHttpService() {
+    private synchronized void startHttpService(final HttpServiceOptions options) {
         this.executorService.submit(() -> {
             try {
                 logger.info("starting Jetty instance...");
-                this.jettyServerHolder = new JettyServerHolder(this.options, Optional.ofNullable(this.keystoreService),
+                this.jettyServerHolder = new JettyServerHolder(options, Optional.ofNullable(this.keystoreService),
                         this.dispatcherServlet, this.eventListener);
                 logger.info("starting Jetty instance...done");
             } catch (final Exception e) {
@@ -139,6 +137,61 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         }
     }
 
+    private synchronized void cancelRestartTask() {
+        if (!this.restartTask.isDone()) {
+            this.restartTask.cancel(false);
+        }
+    }
+
+    private int keystoreServiceWaitCount = 0;
+
+    private synchronized void scheduleDeferredRestart() {
+        cancelRestartTask();
+
+        try {
+            this.restartTask = this.executorService.schedule(this::restartHttpService, 10, TimeUnit.SECONDS);
+        } catch (final Exception e) {
+            logger.warn("failed to schedule restart task", e);
+        }
+    }
+
+    private void startKeystoreServiceMonitor() {
+        scheduleNextKeystoreCheck(2);
+    }
+
+    private void scheduleNextKeystoreCheck(long delaySeconds) {
+        this.restartTask = this.executorService.schedule(() -> {
+            KeystoreService ks;
+            synchronized (HttpService.this) {
+                ks = HttpService.this.keystoreService;
+                if (ks != null) {
+                    logger.info("KeystoreService injected after {} checks. Starting HTTP service.",
+                            HttpService.this.keystoreServiceWaitCount);
+                    HttpService.this.startHttpService(HttpService.this.options);
+                    return;
+                }
+                if (HttpService.this.keystoreServiceWaitCount >= 10) {
+                    logger.warn("KeystoreService not available after 10 checks. Starting without HTTPS.");
+                    HttpService.this.startHttpService(HttpService.this.options);
+                    return;
+                }
+                HttpService.this.keystoreServiceWaitCount++;
+            }
+            scheduleNextKeystoreCheck(1);
+        }, delaySeconds, TimeUnit.SECONDS);
+    }
+
+    public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
+        this.keystoreService = keystoreService;
+        this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
+
+        if (this.options != null && this.jettyServerHolder == null) {
+            cancelRestartTask();
+            logger.info("KeystoreService injected before HTTP service started. Starting now.");
+            startHttpService(this.options);
+        }
+    }
+
     @Override
     public void handleEvent(final Event event) {
         if (!(event instanceof KeystoreChangedEvent)) {
@@ -148,43 +201,8 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         final KeystoreChangedEvent keystoreChangedEvent = (KeystoreChangedEvent) event;
 
         if (keystoreChangedEvent.getSenderPid().equals(keystoreServicePid)) {
-            restartHttpService();
+            scheduleDeferredRestart();
         }
-    }
-
-    private void startKeystoreServicenMonitorTask() {
-
-        new Timer("KeystoreServiceMonitor").schedule(new TimerTask() {
-
-            int autoWaitKeystoreServiceAttempt = 0;
-
-            @Override
-            public void run() {
-
-                if (HttpService.this.keystoreService != null || autoWaitKeystoreServiceAttempt > 10) {
-                    String originalName = Thread.currentThread().getName();
-                    Thread.currentThread().setName("HttpService:KeystoreServicenMonitorTask");
-                    if (HttpService.this.keystoreService != null) {
-                        logger.info(
-                                "KeystoreService injected. KeystoreServiceMonitor task will be terminated. try {} times",
-                                autoWaitKeystoreServiceAttempt);
-                    } else {
-                        logger.info(
-                                "KeystoreServiceMonitor retry 10 times. KeystoreServiceMonitor task will be terminated.");
-                    }
-                    try {
-                        startHttpService();
-                    } catch (Exception e) {
-                        logger.warn("activateHttpService error");
-                    } finally {
-                        this.cancel();
-                        Thread.currentThread().setName(originalName);
-                    }
-                }
-                autoWaitKeystoreServiceAttempt++;
-            }
-
-        }, 2000, 1000);
     }
 
 }

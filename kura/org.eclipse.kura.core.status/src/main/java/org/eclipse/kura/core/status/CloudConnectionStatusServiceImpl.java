@@ -60,7 +60,7 @@ public class CloudConnectionStatusServiceImpl implements CloudConnectionStatusSe
     // ----------------------------------------------------------------
     public CloudConnectionStatusServiceImpl() {
         super();
-        this.notificationExecutor = Executors.newSingleThreadExecutor();
+        this.notificationExecutor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
         this.idleComponent = new IdleStatusComponent();
     }
 

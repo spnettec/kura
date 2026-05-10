@@ -58,7 +58,7 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-csv.version>1.14.0</commons-csv.version>
         <commons-exec.version>1.4.0</commons-exec.version>
-        <commons-fileupload.version>2.0.0-M2</commons-fileupload.version>
+        <commons-fileupload.version>2.0.0-M4</commons-fileupload.version>
         <failureaccess.version>1.0.2</failureaccess.version>
         <guava.version>33.4.0-jre</guava.version>
         <hikaricp.version>5.1.0</hikaricp.version>

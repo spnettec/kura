@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
- * 
+ * Copyright (c) 2011, 2026 Eurotech and/or its affiliates and others
+ *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
  * which is available at https://www.eclipse.org/legal/epl-2.0/
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *  Eurotech
  *  Red Hat Inc 
@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.function.Function;
@@ -93,7 +94,6 @@ public class ComponentUtil {
                 final List<String> pids = new ArrayList<>();
                 pids.addAll(Arrays.asList(mti.getPids()));
                 pids.addAll(Arrays.asList(mti.getFactoryPids()));
-
                 for (String pid : pids) {
 
                     final Tmetadata metadata;
@@ -107,7 +107,6 @@ public class ComponentUtil {
                         logger.warn("Error loading Metadata for pid " + pid, e);
                     }
                 }
-
             }
         } finally {
             ctx.ungetService(ref);
@@ -203,10 +202,10 @@ public class ComponentUtil {
      * @return
      */
     public static ObjectClassDefinition getObjectClassDefinition(BundleContext ctx, String pid) {
-
         ServiceReference<MetaTypeService> ref = ctx.getServiceReference(MetaTypeService.class);
         MetaTypeService metaTypeService = ctx.getService(ref);
 
+        ObjectClassDefinition ocd = null;
         for (Bundle bundle : ctx.getBundles()) {
             MetaTypeInformation mti = metaTypeService.getMetaTypeInformation(bundle);
             if (mti == null) {
@@ -230,7 +229,7 @@ public class ComponentUtil {
      *
      * @param ctx
      * @param pid
-     *                ID of the service whose OCD should be loaded
+     *            ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -424,7 +423,7 @@ public class ComponentUtil {
      * contain any extra post-processing of the loaded information.
      *
      * @param resourceUrl
-     *                        Url of the MetaData XML file which needs to be loaded
+     *            Url of the MetaData XML file which needs to be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -452,7 +451,7 @@ public class ComponentUtil {
      * contain any extra post-processing of the loaded information.
      *
      * @param pid
-     *                ID of the service whose OCD should be loaded
+     *            ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -485,7 +484,7 @@ public class ComponentUtil {
      *
      * @param ctx
      * @param pid
-     *                ID of the service whose OCD should be loaded
+     *            ID of the service whose OCD should be loaded
      * @return
      * @throws IOException
      * @throws XMLStreamException
@@ -677,22 +676,45 @@ public class ComponentUtil {
      */
     public static void encryptConfigurationProperties(Map<String, Object> propertiesToUpdate,
             final CryptoService cryptoService) {
-        if (propertiesToUpdate == null) {
-            return;
+        encryptConfigurationProperties(propertiesToUpdate, cryptoService, false);
+    }
+
+    public static Map<String, Object> encryptConfigurationProperties(final Map<String, Object> original,
+            final CryptoService cryptoService, final boolean clone) {
+        if (original == null) {
+            return null;
         }
 
-        for (Entry<String, Object> property : propertiesToUpdate.entrySet()) {
+        Optional<Map<String, Object>> result = Optional.empty();
+
+        if (!clone) {
+            result = Optional.of(original);
+        }
+
+        for (Entry<String, Object> property : original.entrySet()) {
             Object configValue = property.getValue();
             if (configValue instanceof Password || configValue instanceof Password[]) {
+
+                final Map<String, Object> resultProperties;
+
+                if (result.isPresent()) {
+                    resultProperties = result.get();
+                } else {
+                    resultProperties = new HashMap<>(original);
+                    result = Optional.of(resultProperties);
+                }
+
                 try {
                     Object encryptedValue = encryptPasswordProperties(configValue, cryptoService);
-                    propertiesToUpdate.put(property.getKey(), encryptedValue);
+                    resultProperties.put(property.getKey(), encryptedValue);
                 } catch (KuraException e) {
                     logger.warn("Failed to encrypt Password property: {}", property.getKey());
-                    propertiesToUpdate.remove(property.getKey());
+                    resultProperties.remove(property.getKey());
                 }
             }
         }
+
+        return result.orElse(original);
     }
 
     private static Object encryptPasswordProperties(Object configValue, final CryptoService cryptoService)

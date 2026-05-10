@@ -57,7 +57,7 @@ public class EventPublisher
     private Set<CloudConnectionListener> cloudConnectionListeners = new HashSet<>();
 
     private EventPublisherOptions options;
-    private final ExecutorService worker = Executors.newCachedThreadPool();
+    private final ExecutorService worker = Executors.newVirtualThreadPerTaskExecutor();
 
     private CloudEndpointServiceHelper cloudHelper;
 

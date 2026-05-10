@@ -138,7 +138,7 @@ public class DataServiceImpl implements DataService, DataTransportListener, Conf
         this.dataServiceOptions = new DataServiceOptions(properties);
 
         this.connectionMonitorExecutor = Executors.newSingleThreadScheduledExecutor();
-        this.publisherExecutor = Executors.newSingleThreadExecutor();
+        this.publisherExecutor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
         this.congestionExecutor = Executors.newSingleThreadScheduledExecutor();
 
         createThrottle();

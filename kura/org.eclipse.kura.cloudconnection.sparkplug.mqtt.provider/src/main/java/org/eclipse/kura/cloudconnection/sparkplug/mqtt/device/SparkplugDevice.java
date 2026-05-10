@@ -52,7 +52,7 @@ public class SparkplugDevice
     private Optional<SparkplugCloudEndpoint> sparkplugCloudEndpoint = Optional.empty();
     private final Set<CloudConnectionListener> cloudConnectionListeners = new CopyOnWriteArraySet<>();
     private final Set<CloudDeliveryListener> cloudDeliveryListeners = new CopyOnWriteArraySet<>();
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
     private Set<String> deviceMetrics = new HashSet<>();
 
     /*
