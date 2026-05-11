@@ -48,6 +48,7 @@
         <module>org.eclipse.kura.linux.usb</module>
         <module>org.eclipse.kura.linux.usb.x86_64</module>
         <module>org.eclipse.kura.linux.usb.aarch64</module>
+        <module>org.eclipse.kura.linux.position.spi</module>
         <module>org.eclipse.kura.linux.watchdog</module>
         <module>org.eclipse.kura.localization</module>
         <module>org.eclipse.kura.localization.resources</module>
@@ -180,6 +181,7 @@
         <org.eclipse.kura.linux.usb.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.version>
         <org.eclipse.kura.linux.usb.aarch64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.aarch64.version>
         <org.eclipse.kura.linux.usb.x86_64.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.usb.x86_64.version>
+        <org.eclipse.kura.linux.position.spi.version>1.0.0-SNAPSHOT</org.eclipse.kura.linux.position.spi.version>
         <org.eclipse.kura.linux.watchdog.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.watchdog.version>
         <org.eclipse.kura.localization.version>2.0.0-SNAPSHOT</org.eclipse.kura.localization.version>
         <org.eclipse.kura.localization.resources.version>2.0.0-SNAPSHOT</org.eclipse.kura.localization.resources.version>
@@ -410,6 +412,11 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.linux.usb.x86_64</artifactId>
                 <version>${org.eclipse.kura.linux.usb.x86_64.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.kura</groupId>
+                <artifactId>org.eclipse.kura.linux.position.spi</artifactId>
+                <version>${org.eclipse.kura.linux.position.spi.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
