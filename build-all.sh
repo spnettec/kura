@@ -22,13 +22,12 @@ MAVEN_PROPS="-B"
 
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
 
-# Stage 1: monorepo only (target-platform + base kura-core.deb).
-# All eight siblings (management-ui, networking, opcua, position, deployment,
-# artemis, triton, wires/camel) are now Path Y — they self-build via their own Tycho 5.0.2 parent + target-definition + reficio.
-# Monorepo no longer pulls any sibling bundle in cross-repo.
+# Stage 1: monorepo bundles only (target-platform + kura/pom.xml).
+# kura/distrib (kura-core.deb + docker images) moves to Stage 3 because the
+# docker-base assembly pulls sibling jars (web2, ...) from ~/.m2 to bake them
+# into the self-extracting installer.sh — siblings must be installed first.
 mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS || exit 1
 mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS || exit 1
-mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
 SCRIPT_DIR="$(dirname "$0")"
@@ -119,4 +118,10 @@ if [ -f "$SCRIPT_DIR/../kura-triton/pom.xml" ]; then
 else
     echo "=== Stage 2: skipping kura-triton (clone not found) ==="
 fi
+
+# Stage 3: kura-core.deb + docker images. Runs after Stage 2 so docker-base
+# can pull sibling jars (web2 today; more later) from ~/.m2 and bake them
+# into the self-extracting installer.sh.
+echo "=== Stage 3: building kura/distrib (kura-core.deb + docker images) ==="
+mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 

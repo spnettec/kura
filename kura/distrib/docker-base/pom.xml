@@ -119,11 +119,14 @@
                         </configuration>
                     </execution>
                     <!-- The web2 bundle is split out into the kura-management-ui addon .deb for
-                         linux variant. Docker images don't run apt, so we re-bundle
-                         the management-ui jar directly into the docker zip's plugins/6s/. -->
+                         linux variant. Docker images don't run apt / dpkg, so we re-bundle
+                         the management-ui jar directly into the docker zip's plugins/6s/
+                         so it ends up inside the self-extracting installer.sh. Requires
+                         kura-management-ui sibling to have been installed to ~/.m2 first
+                         (build-all.sh moves Stage 1 distrib to run after Stage 2 siblings). -->
                     <execution>
                         <id>copy-management-ui-into-docker-zip</id>
-                        <phase>none</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>
