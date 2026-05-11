@@ -33,13 +33,17 @@ mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
 SCRIPT_DIR="$(dirname "$0")"
 
-if [ -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" ]; then
-    echo "=== Stage 2: building kura-management-ui addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/distrib/pom.xml" clean install $MAVEN_PROPS \
+# Build order respects the sibling dep chain (bottom-up):
+#   position (no sibling deps) -> networking (nm imports position SPI) -> management-ui (web2 imports net.admin)
+# Imports are optional but Tycho still resolves them at compile time, so order matters on cold m2.
+
+if [ -f "$SCRIPT_DIR/../kura-position/pom.xml" ]; then
+    echo "=== Stage 2: building kura-position addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-position/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-position/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
-    echo "=== Stage 2: skipping kura-management-ui (clone not found) ==="
+    echo "=== Stage 2: skipping kura-position (clone not found) ==="
 fi
 
 if [ -f "$SCRIPT_DIR/../kura-networking/pom.xml" ]; then
@@ -52,6 +56,15 @@ else
     echo "=== Stage 2: skipping kura-networking (clone not found) ==="
 fi
 
+if [ -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" ]; then
+    echo "=== Stage 2: building kura-management-ui addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-management-ui (clone not found) ==="
+fi
+
 if [ -f "$SCRIPT_DIR/../kura-opcua/pom.xml" ]; then
     echo "=== Stage 2: building kura-opcua addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/pom.xml" clean install $MAVEN_PROPS \
@@ -62,27 +75,18 @@ else
     echo "=== Stage 2: skipping kura-opcua (clone not found) ==="
 fi
 
-if [ -f "$SCRIPT_DIR/../kura-position/pom.xml" ]; then
-    echo "=== Stage 2: building kura-position addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-position/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-position/distrib/pom.xml" clean install $MAVEN_PROPS \
-        || exit 1
-else
-    echo "=== Stage 2: skipping kura-position (clone not found) ==="
-fi
-
-if [ -f "$SCRIPT_DIR/../kura-wires/bundles/pom.xml" ]; then
+if [ -f "$SCRIPT_DIR/../kura-wires/pom.xml" ]; then
     echo "=== Stage 2: building kura-wires addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-wires/bundles/pom.xml" clean install $MAVEN_PROPS \
+    mvn "$@" -f "$SCRIPT_DIR/../kura-wires/pom.xml" clean install $MAVEN_PROPS \
         && mvn "$@" -f "$SCRIPT_DIR/../kura-wires/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-wires (clone not found) ==="
 fi
 
-if [ -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" ]; then
+if [ -f "$SCRIPT_DIR/../kura-camel/pom.xml" ]; then
     echo "=== Stage 2: building kura-camel addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-camel/bundles/pom.xml" clean install $MAVEN_PROPS \
+    mvn "$@" -f "$SCRIPT_DIR/../kura-camel/pom.xml" clean install $MAVEN_PROPS \
         && mvn "$@" -f "$SCRIPT_DIR/../kura-camel/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else

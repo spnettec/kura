@@ -52,7 +52,7 @@ should_disable_systemd_resolved_stub() {
     [ -e /run/systemd/resolve/resolv.conf ]
 }
 
-IS_NETWORKING_PROFILE=true
+IS_NETWORKING_PROFILE=false
 INSTALL_DIR=/opt/eclipse
 
 # If ${INSTALL_DIR}/kura already exists as a real directory (e.g. an addon .deb such as

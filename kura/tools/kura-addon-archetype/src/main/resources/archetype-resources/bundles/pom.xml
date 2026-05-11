@@ -303,16 +303,6 @@
 
     <repositories>
         <repository>
-            <id>kura-releases</id>
-            <name>Eclipse Kura Repository - Releases</name>
-            <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
-        </repository>
-        <repository>
-            <id>kura-snapshots</id>
-            <name>Eclipse Kura Repository - Snapshots</name>
-            <url>https://repo.eclipse.org/content/repositories/kura-snapshots/</url>
-        </repository>
-        <repository>
             <id>central</id>
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
@@ -322,19 +312,6 @@
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>repo.eclipse.org</id>
-            <name>Kura Repository - Releases</name>
-            <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>repo.eclipse.org</id>
-            <name>Kura Repository - Snapshots</name>
-            <url>https://repo.eclipse.org/content/repositories/kura-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <modules>
         <module>${artifactId}.bundle</module>

@@ -123,7 +123,7 @@
                          the management-ui jar directly into the docker zip's plugins/6s/. -->
                     <execution>
                         <id>copy-management-ui-into-docker-zip</id>
-                        <phase>prepare-package</phase>
+                        <phase>none</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>

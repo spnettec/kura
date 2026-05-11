@@ -17,27 +17,22 @@
 <target name="Kura Target Definition" sequenceNumber="49">
     <locations>
         <!--
-            Single Maven location, no Profile location with absolute paths. All
-            bundles are resolved from ~/.m2:
-              - kura-pde-deps: kura framework bundles (org.eclipse.kura.*) by name
-              - target-platform-pde-deps: P2 third-party bundles produced by
-                target-platform/p2-repo-{equinox,common,tests} reficio runs and
-                parked under p2.osgi.bundle/* by install-to-m2.sh
+            Single Maven location, no Profile location with absolute paths.
+            Monorepo target only pulls third-party bundles via
+            target-platform-pde-deps. Intra-monorepo plugins (org.eclipse.kura.*)
+            are picked up automatically from the Tycho reactor, so kura-pde-deps
+            is NOT listed here — listing it would create a chicken-and-egg
+            (api compile -> target -> kura-pde-deps -> api JAR not yet built).
+            Sibling repos (outside this reactor) reference kura-pde-deps from
+            their own target files; they resolve it from ~/.m2 after monorepo
+            install.
             One-time setup:
                 mvn -f target-platform/pom.xml install
-                mvn -f kura/kura-pde-deps/pom.xml install
-            That populates ~/.m2 — then this target file resolves on any machine.
         -->
         <location includeDependencyDepth="direct" includeDependencyScopes="compile,test"
             missingManifest="ignore" type="Maven">
 
             <dependencies>
-                <dependency>
-                    <groupId>org.eclipse.kura</groupId>
-                    <artifactId>kura-pde-deps</artifactId>
-                    <version>6.0.0-SNAPSHOT</version>
-                    <type>pom</type>
-                </dependency>
                 <dependency>
                     <groupId>org.eclipse.kura</groupId>
                     <artifactId>target-platform-pde-deps</artifactId>
@@ -50,16 +45,7 @@
                 <repository>
                     <id>eclipse-releases</id>
                     <url>https://repo.eclipse.org/content/groups/releases/</url>
-                </repository>
-                <repository>
-                    <id>kura-releases</id>
-                    <url>https://repo.eclipse.org/content/repositories/kura-releases/</url>
-                </repository>
-                <repository>
-                    <id>kura-addons</id>
-                    <name>Kura Addons Maven Repository</name>
-                    <url>https://raw.githubusercontent.com/eurotech/kura_addons/mvn-repo</url>
-                </repository>
+                </repository>               
                 <repository>
                     <id>central</id>
                     <url>https://repo1.maven.org/maven2/</url>

@@ -37,7 +37,6 @@
 
         <module>docker-base</module>
         <module>docker-alpine</module>
-        <module>docker-ubi8</module>
     </modules>
     
     <properties>
@@ -753,6 +752,12 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>docker-ubi8</id>
+            <modules>
+                <module>docker-ubi8</module>
+            </modules>
+        </profile>
         <!-- Auto-activated by host CPU architecture; sets native.tag/kura.arch/deb.arch
              so a single source tree builds the right artifact on any Linux host. -->
         <profile>
