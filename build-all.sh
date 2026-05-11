@@ -33,9 +33,9 @@ mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
 SCRIPT_DIR="$(dirname "$0")"
 
-# Build order respects the sibling dep chain (bottom-up):
-#   position (no sibling deps) -> networking (nm imports position SPI) -> management-ui (web2 imports net.admin)
-# Imports are optional but Tycho still resolves them at compile time, so order matters on cold m2.
+# Siblings have no compile-time dependency on each other — each only consumes
+# monorepo bundles + third-party. Order here is therefore not load-bearing;
+# this listing is just a stable, predictable build sequence.
 
 if [ -f "$SCRIPT_DIR/../kura-position/pom.xml" ]; then
     echo "=== Stage 2: building kura-position addon .deb ==="
