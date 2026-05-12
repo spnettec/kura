@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurationService;
-import org.eclipse.kura.core.data.util.MqttTopicUtil;
 import org.eclipse.kura.core.testutil.service.ServiceUtil;
+import org.eclipse.paho.client.mqttv3.MqttTopic;
 import org.eclipse.kura.data.DataTransportService;
 import org.eclipse.kura.data.DataTransportToken;
 import org.eclipse.kura.data.transport.listener.DataTransportListener;
@@ -254,7 +254,7 @@ public class MqttTransport implements Transport {
 
                     final MessageLookup lookup = messageLookup.get();
 
-                    if (MqttTopicUtil.isMatched(lookup.topicFilter, topic)) {
+                    if (MqttTopic.isMatched(lookup.topicFilter, topic)) {
                         lookup.future.complete(payload);
                         messageLookup = Optional.empty();
                     }
