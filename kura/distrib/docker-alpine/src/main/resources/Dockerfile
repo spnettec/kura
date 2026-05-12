@@ -18,7 +18,8 @@ COPY --from=kura_base /kura-install/ /kura-install/
 
 ENV \
   KURA_DIR=/opt/eclipse/kura \
-  LAUNCHER_VERSION="1.7.100" 
+  LAUNCHER_VERSION="1.7.100" \
+  KURA_CRYPTO_SECRET_KEY="kura-dev-key-005" 
 
 
 
