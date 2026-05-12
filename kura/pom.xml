@@ -34,8 +34,6 @@
         <module>org.eclipse.kura.core</module>
         <module>org.eclipse.kura.core.certificates</module>
         <module>org.eclipse.kura.core.keystore</module>
-        <module>org.eclipse.kura.cloud.base.provider</module>
-        <module>org.eclipse.kura.core.cloud.factory</module>
         <module>org.eclipse.kura.core.comm</module>
         <module>org.eclipse.kura.core.configuration</module>
         <module>org.eclipse.kura.core.crypto</module>
@@ -54,19 +52,15 @@
         <module>org.eclipse.kura.localization.resources</module>
         <module>org.eclipse.kura.stress</module>
         <module>org.eclipse.kura.util</module>        
-        <module>org.eclipse.kura.rest.provider</module>        
-        <module>org.eclipse.kura.misc.cloudcat</module>
+        <module>org.eclipse.kura.rest.provider</module>
         <module>org.eclipse.kura.json.marshaller.unmarshaller.provider</module>
         <module>org.eclipse.kura.jul.to.slf4j.configuration</module>
-        <module>org.eclipse.kura.xml.marshaller.unmarshaller.provider</module>        
-        <module>org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider</module>
-        <module>org.eclipse.kura.cloudconnection.raw.mqtt.provider</module>
+        <module>org.eclipse.kura.xml.marshaller.unmarshaller.provider</module>
         <module>org.eclipse.kura.http.server.manager</module>
         <module>org.eclipse.kura.useradmin.store</module>
         <module>org.eclipse.kura.rest.tamper.detection.provider</module>
         <module>org.eclipse.kura.script.provider</module>
         <module>org.eclipse.kura.log.filesystem.provider</module>
-        <module>org.eclipse.kura.rest.cloudconnection.provider</module>
         <module>org.eclipse.kura.rest.configuration.provider</module>
         <module>org.eclipse.kura.rest.identity.provider</module>
         <module>org.eclipse.kura.rest.inventory.provider</module>
@@ -79,8 +73,6 @@
         <module>org.eclipse.kura.configuration.change.manager</module>        
         <module>org.eclipse.kura.db.sqlite.provider</module>
         <module>org.eclipse.kura.db.h2db.provider</module>
-        <module>org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider</module>
-        <module>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</module>        
         <module>emulator</module>
         <module>tools</module>
         <module>test-util</module>
@@ -141,16 +133,9 @@
         </tycho.surefire.testenv.args>
         <org.eclipse.kura.api.version>3.0.0-SNAPSHOT</org.eclipse.kura.api.version>
         <org.eclipse.kura.asset.provider.version>3.0.0-SNAPSHOT</org.eclipse.kura.asset.provider.version>
-        <org.eclipse.kura.cloud.base.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.cloud.base.provider.version>
-        <org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version>
-        <org.eclipse.kura.cloudconnection.kapua.mqtt.provider.version>1.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.kapua.mqtt.provider.version>
-        <org.eclipse.kura.cloudconnection.raw.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.raw.mqtt.provider.version>
-        <org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.version>
         <org.eclipse.kura.configuration.change.manager.version>2.0.0-SNAPSHOT</org.eclipse.kura.configuration.change.manager.version>
         <org.eclipse.kura.core.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.version>
         <org.eclipse.kura.core.certificates.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.certificates.version>
-        <org.eclipse.kura.core.cloud.command.version>1.0.0-SNAPSHOT</org.eclipse.kura.core.cloud.command.version>
-        <org.eclipse.kura.core.cloud.factory.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.cloud.factory.version>
         <org.eclipse.kura.core.comm.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.comm.version>
         <org.eclipse.kura.core.configuration.version>3.0.0-SNAPSHOT</org.eclipse.kura.core.configuration.version>
         <org.eclipse.kura.core.crypto.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.crypto.version>
@@ -182,9 +167,7 @@
         <org.eclipse.kura.localization.version>2.0.0-SNAPSHOT</org.eclipse.kura.localization.version>
         <org.eclipse.kura.localization.resources.version>2.0.0-SNAPSHOT</org.eclipse.kura.localization.resources.version>
         <org.eclipse.kura.log.filesystem.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.log.filesystem.provider.version>
-        <org.eclipse.kura.misc.cloudcat.version>2.0.0-SNAPSHOT</org.eclipse.kura.misc.cloudcat.version>
         <org.eclipse.kura.request.handler.jaxrs.version>2.0.0-SNAPSHOT</org.eclipse.kura.request.handler.jaxrs.version>
-        <org.eclipse.kura.rest.cloudconnection.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.cloudconnection.provider.version>
         <org.eclipse.kura.rest.command.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.command.provider.version>
         <org.eclipse.kura.rest.configuration.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.configuration.provider.version>
         <org.eclipse.kura.rest.identity.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.rest.identity.provider.version>
@@ -220,28 +203,18 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.cloud.base.provider</artifactId>
-                <version>${org.eclipse.kura.cloud.base.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider</artifactId>
-                <version>${org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.cloudconnection.kapua.mqtt.provider</artifactId>
-                <version>${org.eclipse.kura.cloudconnection.kapua.mqtt.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.cloudconnection.raw.mqtt.provider</artifactId>
-                <version>${org.eclipse.kura.cloudconnection.raw.mqtt.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider</artifactId>
-                <version>${org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -260,13 +233,9 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.core.cloud.command</artifactId>
-                <version>${org.eclipse.kura.core.cloud.command.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.core.cloud.factory</artifactId>
-                <version>${org.eclipse.kura.core.cloud.factory.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -426,8 +395,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.misc.cloudcat</artifactId>
-                <version>${org.eclipse.kura.misc.cloudcat.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -436,8 +403,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.rest.cloudconnection.provider</artifactId>
-                <version>${org.eclipse.kura.rest.cloudconnection.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
