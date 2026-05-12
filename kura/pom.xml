@@ -203,21 +203,6 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.configuration.change.manager</artifactId>
                 <version>${org.eclipse.kura.configuration.change.manager.version}</version>
             </dependency>
@@ -230,12 +215,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.core.certificates</artifactId>
                 <version>${org.eclipse.kura.core.certificates.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -395,14 +374,8 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.request.handler.jaxrs</artifactId>
                 <version>${org.eclipse.kura.request.handler.jaxrs.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
