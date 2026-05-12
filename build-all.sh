@@ -119,6 +119,15 @@ else
     echo "=== Stage 2: skipping kura-triton (clone not found) ==="
 fi
 
+if [ -f "$SCRIPT_DIR/../kura-container/pom.xml" ]; then
+    echo "=== Stage 2: building kura-container addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-container/pom.xml" clean install $MAVEN_PROPS \
+        && mvn "$@" -f "$SCRIPT_DIR/../kura-container/distrib/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-container (clone not found) ==="
+fi
+
 # Stage 3: kura-core.deb + docker images. Runs after Stage 2 so docker-base
 # can pull sibling jars (web2 today; more later) from ~/.m2 and bake them
 # into the self-extracting installer.sh.

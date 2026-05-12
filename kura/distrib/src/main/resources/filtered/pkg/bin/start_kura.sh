@@ -55,7 +55,7 @@ done
 
 # set up the configuration area
 mkdir -p /tmp/.kura/configuration
-\${DIR}/bin/gen_config_ini.sh \${DIR}/framework/config.ini \${DIR}/plugins > /tmp/.kura/configuration/config.ini
+\${DIR}/bin/gen_config_ini.sh \${DIR}/framework/config.ini \${DIR}/plugins \${DIR}/siblings > /tmp/.kura/configuration/config.ini
 
 if [[ -n "${KURA_DEBUG_MODE}" && "${KURA_DEBUG_MODE}" == "true" ]]; then
     IS_DEBUG_MODE="true"

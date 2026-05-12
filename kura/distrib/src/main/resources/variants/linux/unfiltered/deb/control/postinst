@@ -86,18 +86,21 @@ function postInstall {
     #clean up
     rm -rf ${INSTALL_DIR}/kura/install >> ${LOG} 2>&1
 
-    # Create siblings directory and precedence config
+    # Create siblings/ and the install-order registry. Each sibling .deb's
+    # postinst appends its own directory name to this file; the postrm deletes
+    # its line on remove|purge. gen_config_ini.sh reads this file to iterate
+    # siblings in install order (first-installed wins for duplicate JARs).
     mkdir -p ${INSTALL_DIR}/kura/siblings
     mkdir -p ${INSTALL_DIR}/kura/framework
-    if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf" ]; then
-        cat > "${INSTALL_DIR}/kura/framework/sibling-precedence.conf" << 'CONF'
-# Sibling JAR precedence configuration
-# kura-first (default): kura-core JARs take precedence, sibling duplicates are skipped
-# sibling-override: sibling JARs override kura-core duplicates
-precedence=kura-first
-CONF
-        chown -R kurad:kurad "${INSTALL_DIR}/kura/framework"
+    if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
+        : > "${INSTALL_DIR}/kura/framework/sibling-install-order"
     fi
+    chown -R kurad:kurad "${INSTALL_DIR}/kura/framework"
+    chmod 664 "${INSTALL_DIR}/kura/framework/sibling-install-order"
+
+    # Migration: drop the obsolete precedence config left by older kura-core
+    # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
+    rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
 
     #move the log file
     mkdir -p ${INSTALL_DIR}/kura/log

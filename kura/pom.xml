@@ -74,9 +74,7 @@
         <module>org.eclipse.kura.rest.security.provider</module>
         <module>org.eclipse.kura.rest.service.listing.provider</module>
         <module>org.eclipse.kura.rest.system.provider</module>
-        <module>org.eclipse.kura.request.handler.jaxrs</module>        
-        <module>org.eclipse.kura.container.orchestration.provider</module>        
-        <module>org.eclipse.kura.container.provider</module>
+        <module>org.eclipse.kura.request.handler.jaxrs</module>
         <module>org.eclipse.kura.event.publisher</module>
         <module>org.eclipse.kura.configuration.change.manager</module>        
         <module>org.eclipse.kura.db.sqlite.provider</module>
@@ -149,8 +147,6 @@
         <org.eclipse.kura.cloudconnection.raw.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.raw.mqtt.provider.version>
         <org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.version>
         <org.eclipse.kura.configuration.change.manager.version>2.0.0-SNAPSHOT</org.eclipse.kura.configuration.change.manager.version>
-        <org.eclipse.kura.container.orchestration.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.container.orchestration.provider.version>
-        <org.eclipse.kura.container.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.container.provider.version>
         <org.eclipse.kura.core.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.version>
         <org.eclipse.kura.core.certificates.version>2.0.0-SNAPSHOT</org.eclipse.kura.core.certificates.version>
         <org.eclipse.kura.core.cloud.command.version>1.0.0-SNAPSHOT</org.eclipse.kura.core.cloud.command.version>
@@ -251,16 +247,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.configuration.change.manager</artifactId>
                 <version>${org.eclipse.kura.configuration.change.manager.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.container.orchestration.provider</artifactId>
-                <version>${org.eclipse.kura.container.orchestration.provider.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.container.provider</artifactId>
-                <version>${org.eclipse.kura.container.provider.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
