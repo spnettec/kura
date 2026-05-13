@@ -27,10 +27,11 @@ function create_users {
     # add kurad to dialout group (for managing serial ports)
     gpasswd -a kurad dialout
 
-    # get polkit package version
-    POLKIT=$(apt list --installed | grep libpolkit)
-    IFS=" " POLKIT_ARRAY=($POLKIT)
-    POLKIT_VERSION=${POLKIT_ARRAY[1]}
+    # get polkit package version without using apt's interactive CLI
+    POLKIT_VERSION=$(dpkg-query -W -f='${Version}' 'libpolkit*' 2>/dev/null | head -n 1)
+    if [ -z "${POLKIT_VERSION}" ]; then
+        POLKIT_VERSION=0
+    fi
 
     # add polkit policy
     if [[ ${POLKIT_VERSION} < 0.106 ]]; then
@@ -131,8 +132,7 @@ if ((action.id == \"org.freedesktop.login1.reboot-multiple-sessions\" ||
     fi
 
     # grant kurad user the privileges to manage ble via dbus
-    grep -lR kurad /etc/dbus-1/system.d/bluetooth.conf
-    if [ $? != 0 ]; then
+    if [ -f /etc/dbus-1/system.d/bluetooth.conf ] && ! grep -q kurad /etc/dbus-1/system.d/bluetooth.conf; then
         cp /etc/dbus-1/system.d/bluetooth.conf /etc/dbus-1/system.d/bluetooth.conf.save
         awk 'done != 1 && /^<\/busconfig>/ {
             print "  <policy user=\"kurad\">"
@@ -153,7 +153,7 @@ if ((action.id == \"org.freedesktop.login1.reboot-multiple-sessions\" ||
     fi
 
     # grant kurad user the privileges to manage wpa supplicant via dbus
-    if ! grep -lR kurad /etc/dbus-1/system.d/wpa_supplicant.conf && [ $NN == "NO" ]; then
+    if [ -f /etc/dbus-1/system.d/wpa_supplicant.conf ] && ! grep -q kurad /etc/dbus-1/system.d/wpa_supplicant.conf && [ $NN == "NO" ]; then
         cp /etc/dbus-1/system.d/wpa_supplicant.conf /etc/dbus-1/system.d/wpa_supplicant.conf.save
         awk 'done != 1 && /^<\/busconfig>/ {
             print "    <policy user=\"kurad\">"
@@ -207,8 +207,12 @@ function delete_users {
     fi
 
     # recover old configs
-    mv /etc/dbus-1/system.d/bluetooth.conf.save /etc/dbus-1/system.d/bluetooth.conf
-    mv /etc/dbus-1/system.d/wpa_supplicant.conf.save /etc/dbus-1/system.d/wpa_supplicant.conf
+    if [ -f /etc/dbus-1/system.d/bluetooth.conf.save ]; then
+        mv /etc/dbus-1/system.d/bluetooth.conf.save /etc/dbus-1/system.d/bluetooth.conf
+    fi
+    if [ -f /etc/dbus-1/system.d/wpa_supplicant.conf.save ]; then
+        mv /etc/dbus-1/system.d/wpa_supplicant.conf.save /etc/dbus-1/system.d/wpa_supplicant.conf
+    fi
 }
 
 INSTALL=YES

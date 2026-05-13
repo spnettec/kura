@@ -26,6 +26,15 @@ backup_files() {
     done
 }
 
+systemctl_if_present() {
+    ACTION="$1"
+    SERVICE="$2"
+
+    if systemctl list-unit-files "${SERVICE}.service" > /dev/null 2>&1 || systemctl list-units --all "${SERVICE}.service" > /dev/null 2>&1; then
+        systemctl "${ACTION}" "${SERVICE}" > /dev/null 2>&1 || true
+    fi
+}
+
 disable_netplan() {
     # disable netplan configuration files
     backup_files kurasave /lib/netplan/*.yaml /etc/netplan/*.yaml
@@ -84,17 +93,17 @@ mkdir -p ${INSTALL_DIR}/kura/data
 
 # manage running services
 systemctl daemon-reload
-systemctl stop systemd-timesyncd
-systemctl disable systemd-timesyncd
-systemctl stop chrony
-systemctl disable chrony
-systemctl enable NetworkManager
-systemctl enable ModemManager
-systemctl stop dnsmasq
-systemctl disable dnsmasq
-systemctl stop dhcpcd
-systemctl disable dhcpcd
-systemctl disable systemd-networkd
+systemctl_if_present stop systemd-timesyncd
+systemctl_if_present disable systemd-timesyncd
+systemctl_if_present stop chrony
+systemctl_if_present disable chrony
+systemctl_if_present enable NetworkManager
+systemctl_if_present enable ModemManager
+systemctl_if_present stop dnsmasq
+systemctl_if_present disable dnsmasq
+systemctl_if_present stop dhcpcd
+systemctl_if_present disable dhcpcd
+systemctl_if_present disable systemd-networkd
 
 # set up users and grant permissions
 cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
@@ -110,8 +119,13 @@ cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/s
 if [ ! -d /etc/sysconfig ]; then
     mkdir /etc/sysconfig
 fi
-chmod 644 ${INSTALL_DIR}/kura/.data/iptables
-cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
+if [ ! -f ${INSTALL_DIR}/kura/.data/iptables ] && [ -f ${INSTALL_DIR}/kura/install/iptables/iptables ]; then
+    cp ${INSTALL_DIR}/kura/install/iptables/iptables ${INSTALL_DIR}/kura/.data/iptables
+fi
+if [ -f ${INSTALL_DIR}/kura/.data/iptables ]; then
+    chmod 644 ${INSTALL_DIR}/kura/.data/iptables
+    cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
+fi
 cp ${INSTALL_DIR}/kura/install/firewall.init ${INSTALL_DIR}/kura/bin/firewall
 chmod 755 ${INSTALL_DIR}/kura/bin/firewall
 cp ${INSTALL_DIR}/kura/install/firewall.service /lib/systemd/system/firewall.service
@@ -161,9 +175,11 @@ fi
 #set up bind/named
 mkdir -p /var/named
 chown -R bind /var/named
-cp ${INSTALL_DIR}/kura/install/named.ca /var/named/
-cp ${INSTALL_DIR}/kura/install/named.rfc1912.zones /etc/
-cp ${INSTALL_DIR}/kura/install/usr.sbin.named /etc/apparmor.d/
+cp ${INSTALL_DIR}/kura/install/named/named.ca /var/named/
+cp ${INSTALL_DIR}/kura/install/named/named.rfc1912.zones /etc/
+if [ -d /etc/apparmor.d ]; then
+    cp ${INSTALL_DIR}/kura/install/named/usr.sbin.named /etc/apparmor.d/
+fi
 if [ ! -f "/etc/bind/rndc.key" ] ; then
     rndc-confgen -r /dev/urandom -a
 fi

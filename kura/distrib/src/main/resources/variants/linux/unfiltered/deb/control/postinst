@@ -14,7 +14,7 @@
 
 INSTALL_DIR=/opt/eclipse
 TIMESTAMP=`date +%Y%m%d%H%M%S`
-LOG=/tmp/kura_install_${TIMESTAMP}.log
+LOG=/var/log/kura_core_install_${TIMESTAMP}.log
 WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
@@ -102,9 +102,9 @@ function postInstall {
     # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
     rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
 
-    #move the log file
+    # Ensure the runtime log directory exists. Install logs are kept in /var/log
+    # so they survive package removal.
     mkdir -p ${INSTALL_DIR}/kura/log
-    mv ${LOG} ${INSTALL_DIR}/kura/log/
 
     #flush all cached filesystem to disk
     sync

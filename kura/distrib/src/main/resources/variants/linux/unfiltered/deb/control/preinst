@@ -13,6 +13,8 @@
 #
 
 INSTALL_DIR=/opt/eclipse
+TIMESTAMP=`date +%Y%m%d%H%M%S`
+LOG=/var/log/kura_core_install_${TIMESTAMP}.log
 WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
@@ -64,14 +66,14 @@ function stopWatchdog {
 # Pre-install script
 function preInstall {
     #clean up old installation if present
-    rm -fr /opt/eclipse/kura* >> /tmp/kura_install.log 2>&1
-    rm -fr ${INSTALL_DIR}/kura* >> /tmp/kura_install.log 2>&1
-    rm -fr /tmp/.kura/ >> /tmp/kura_install.log 2>&1
-    rm /etc/init.d/firewall >> /tmp/kura_install.log 2>&1
-    rm /tmp/coninfo-* >> /tmp/kura_install.log 2>&1
-    rm /var/log/kura.log >> /tmp/kura_install.log 2>&1
-    rm -f kura-*.zip >> /tmp/kura_install.log 2>&1
-    rm -f kura_*.zip >> /tmp/kura_install.log 2>&1
+    rm -fr /opt/eclipse/kura* >> "${LOG}" 2>&1
+    rm -fr ${INSTALL_DIR}/kura* >> "${LOG}" 2>&1
+    rm -fr /tmp/.kura/ >> "${LOG}" 2>&1
+    rm -f /etc/init.d/firewall >> "${LOG}" 2>&1
+    rm -f /tmp/coninfo-* >> "${LOG}" 2>&1
+    rm -f /var/log/kura.log >> "${LOG}" 2>&1
+    rm -f kura-*.zip >> "${LOG}" 2>&1
+    rm -f kura_*.zip >> "${LOG}" 2>&1
     echo ""
 }
 ##############################################
@@ -85,7 +87,7 @@ PIDS=`pgrep java`
 
 echo ""
 echo "Installing Kura..."
-echo "Installing Kura..." > /tmp/kura_install.log 2>&1
+echo "Installing Kura..." > "${LOG}" 2>&1
 
 # Kill Kura for installation
 if [ -f "/var/run/kura.pid" ] ; then
@@ -94,7 +96,7 @@ if [ -f "/var/run/kura.pid" ] ; then
   for pid in "${PIDS[@]}"
   do
     if [ "$KURA_PID" == "$pid" ] ; then
-      `kill $pid` >> /tmp/kura_install.log 2>&1
+      `kill $pid` >> "${LOG}" 2>&1
     fi
   done
 fi
@@ -103,4 +105,3 @@ runPreInstall
 ##############################################
 # END PRE-INSTALL SCRIPT
 ##############################################
-
