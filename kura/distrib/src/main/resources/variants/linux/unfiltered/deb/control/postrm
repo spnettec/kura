@@ -16,6 +16,17 @@ INSTALL_DIR=/opt/eclipse
 
 case "$1" in
     purge|remove)
+        # Log uninstallation to /var/log (survives kura removal)
+        TIMESTAMP=$(date +%Y%m%d%H%M)
+        LOG=/var/log/kura_install_${TIMESTAMP}.log
+
+        {
+            echo "Uninstalling KURA..."
+            echo "  Status: $1"
+            echo "  Timestamp: $(date)"
+            echo "  Install directory: ${INSTALL_DIR}/kura"
+        } 2>&1 | tee -a $LOG | systemd-cat -t Kura
+
         # Remove kura installation tree (plugins/ + siblings/)
         if [ -d "${INSTALL_DIR}/kura" ] ; then
             ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -u 2>/dev/null || true
@@ -25,6 +36,10 @@ case "$1" in
                 rm -rf "${PARENT}"
             fi
         fi
+
+        {
+            echo "KURA uninstallation completed."
+        } 2>&1 | tee -a $LOG | systemd-cat -t Kura
 
         # Restore /etc/network/interfaces.old
         if [ -f /etc/network/interfaces.old ]; then
