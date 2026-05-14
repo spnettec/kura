@@ -41,7 +41,7 @@
 								<artifact>
 									<id>io.vertx:vertx-core:${vertx.version}</id>
 									<source>true</source>
-									<transitive>false</transitive>
+									<transitive>true</transitive>
 								</artifact>
 								<artifact>
 									<id>io.vertx:vertx-core-logging:${vertx.version}</id>

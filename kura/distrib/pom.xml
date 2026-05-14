@@ -262,7 +262,12 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/1</outputDirectory>
                                 <includeArtifactIds>
-                                asm, asm-analysis, asm-commons, asm-tree, asm-util,                                org.eclipse.equinox.console
+                                    asm,
+                                    asm-analysis,
+                                    asm-commons,
+                                    asm-tree,
+                                    asm-util,
+                                    org.eclipse.equinox.console
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -278,7 +283,20 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/1s</outputDirectory>
                                 <includeArtifactIds>
-                                jcl-over-slf4j, jul-to-slf4j, log4j-api, log4j-core, log4j-slf4j2-impl,                                org.apache.aries.spifly.dynamic.bundle, org.apache.felix.scr, org.eclipse.equinox.cm, org.eclipse.equinox.common, org.eclipse.equinox.event,                                org.eclipse.equinox.metatype, org.eclipse.equinox.registry, org.eclipse.equinox.util, slf4j-api
+                                    jcl-over-slf4j,
+                                    jul-to-slf4j,
+                                    log4j-api,
+                                    log4j-core,
+                                    log4j-slf4j2-impl,
+                                    org.apache.aries.spifly.dynamic.bundle,
+                                    org.apache.felix.scr,
+                                    org.eclipse.equinox.cm,
+                                    org.eclipse.equinox.common,
+                                    org.eclipse.equinox.event,
+                                    org.eclipse.equinox.metatype,
+                                    org.eclipse.equinox.registry,
+                                    org.eclipse.equinox.util,
+                                    slf4j-api
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -294,7 +312,29 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/2</outputDirectory>
                                 <includeArtifactIds>
-                                jakarta.activation-api, jakarta.annotation-api, jakarta.xml.bind-api, jakarta.xml.soap-api, jakarta.xml.ws-api,                                org.osgi.service.cm, org.osgi.service.component, org.osgi.service.coordinator, org.osgi.service.device,                                org.osgi.service.event, org.osgi.service.log.stream, org.osgi.service.metatype, org.osgi.service.prefs, org.osgi.service.provisioning,                                org.osgi.service.upnp, org.osgi.service.useradmin, org.osgi.service.wireadmin, org.osgi.util.function, org.osgi.util.measurement,                                org.osgi.util.position, org.osgi.util.promise, org.osgi.util.pushstream, org.osgi.util.xml
+                                    jakarta.activation-api,
+                                    jakarta.annotation-api,
+                                    jakarta.xml.bind-api,
+                                    jakarta.xml.soap-api,
+                                    jakarta.xml.ws-api,
+                                    org.osgi.service.cm,
+                                    org.osgi.service.component,
+                                    org.osgi.service.coordinator,
+                                    org.osgi.service.device,
+                                    org.osgi.service.event,
+                                    org.osgi.service.log.stream,
+                                    org.osgi.service.metatype,
+                                    org.osgi.service.prefs,
+                                    org.osgi.service.provisioning,
+                                    org.osgi.service.upnp,
+                                    org.osgi.service.useradmin,
+                                    org.osgi.service.wireadmin,
+                                    org.osgi.util.function,
+                                    org.osgi.util.measurement,
+                                    org.osgi.util.position,
+                                    org.osgi.util.promise,
+                                    org.osgi.util.pushstream,
+                                    org.osgi.util.xml
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -310,7 +350,13 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/2s</outputDirectory>
                                 <includeArtifactIds>
-                                com.sun.xml.bind.jaxb-osgi, jaxb-osgi,.tools, org.eclipse.osgi.util, org.osgi.service.http.whiteboard,                                org.osgi.service.servlet, osgi-resource-locator
+                                    com.sun.xml.bind.jaxb-osgi,
+                                    jaxb-osgi,
+                                    .tools,
+                                    org.eclipse.osgi.util,
+                                    org.osgi.service.http.whiteboard,
+                                    org.osgi.service.servlet,
+                                    osgi-resource-locator
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -326,7 +372,60 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/3</outputDirectory>
                                 <includeArtifactIds>
-                                HikariCP, aopalliance-repackaged, bcpg-jdk18on, bcpkix-jdk18on, bcprov-jdk18on,                                bctls-jdk18on, bcutil-jdk18on, commons-beanutils, commons-collections, commons-csv,                                failureaccess, geronimo-jms_2.0_spec, geronimo-json_1.0_spec, geronimo-jta_1.1_spec, gpsd4java,                                gson, guava, hk2-api, hk2-locator, hk2-utils,                                jakarta.inject-api, jakarta.validation-api, javassist, jersey-client, jersey-common,                                jersey-container-servlet, jersey-container-servlet-core, jersey-entity-filtering, jersey-hk2, jersey-media-jaxb,                                jersey-media-multipart, jersey-media-sse, jersey-server, mimepull, netty-buffer,                                netty-codec, netty-codec-base, netty-codec-compression, netty-codec-haproxy, netty-codec-http, netty-codec-mqtt,                                netty-common, netty-handler, netty-resolver, netty-transport, netty-transport-classes-epoll,                                netty-transport-classes-kqueue, netty-transport-native-epoll, netty-transport-native-kqueue, netty-transport-native-unix-common, org.apache.servicemix.bundles.c3p0,                                org.eclipse.paho.client.mqttv3, protobuf-java, quartz
+                                    HikariCP,
+                                    aopalliance-repackaged,
+                                    bcpg-jdk18on,
+                                    bcpkix-jdk18on,
+                                    bcprov-jdk18on,
+                                    bctls-jdk18on,
+                                    bcutil-jdk18on,
+                                    commons-beanutils,
+                                    commons-collections,
+                                    commons-csv,
+                                    failureaccess,
+                                    geronimo-jms_2.0_spec,
+                                    geronimo-json_1.0_spec,
+                                    geronimo-jta_1.1_spec,
+                                    gpsd4java,
+                                    gson,
+                                    guava,
+                                    hk2-api,
+                                    hk2-locator,
+                                    hk2-utils,
+                                    jakarta.inject-api,
+                                    jakarta.validation-api,
+                                    javassist,
+                                    jersey-client,
+                                    jersey-common,
+                                    jersey-container-servlet,
+                                    jersey-container-servlet-core,
+                                    jersey-entity-filtering,
+                                    jersey-hk2,
+                                    jersey-media-jaxb,
+                                    jersey-media-multipart,
+                                    jersey-media-sse,
+                                    jersey-server,
+                                    mimepull,
+                                    netty-buffer,
+                                    netty-codec,
+                                    netty-codec-base,
+                                    netty-codec-compression,
+                                    netty-codec-haproxy,
+                                    netty-codec-http,
+                                    netty-codec-mqtt,
+                                    netty-common,
+                                    netty-handler,
+                                    netty-resolver,
+                                    netty-transport,
+                                    netty-transport-classes-epoll,
+                                    netty-transport-classes-kqueue,
+                                    netty-transport-native-epoll,
+                                    netty-transport-native-kqueue,
+                                    netty-transport-native-unix-common,
+                                    org.apache.servicemix.bundles.c3p0,
+                                    org.eclipse.paho.client.mqttv3,
+                                    protobuf-java,
+                                    quartz
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -342,7 +441,29 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/3s</outputDirectory>
                                 <includeArtifactIds>
-                                commons-fileupload2-core, commons-fileupload2-jakarta-servlet5, commons-io, commons-net, h2,                                monitoradmin, org.apache.felix.dependencymanager, org.apache.felix.deploymentadmin, org.apache.felix.useradmin, org.apache.servicemix.bundles.spring-beans,                                org.apache.servicemix.bundles.spring-context, org.apache.servicemix.bundles.spring-core, org.apache.servicemix.bundles.spring-expression, org.apache.servicemix.bundles.spring-jms, org.apache.servicemix.bundles.spring-tx,                                org.eclipse.equinox.wireadmin, org.eclipse.kura.api, org.eclipse.kura.core.crypto, org.eclipse.kura.json.marshaller.unmarshaller.provider, org.eclipse.kura.useradmin.store,                                org.eclipse.kura.xml.marshaller.unmarshaller.provider, proton-j,                                org.apache.qpid.jms.client
+                                    commons-fileupload2-core,
+                                    commons-fileupload2-jakarta-servlet5,
+                                    commons-io,
+                                    commons-net,
+                                    h2,
+                                    monitoradmin,
+                                    org.apache.felix.dependencymanager,
+                                    org.apache.felix.deploymentadmin,
+                                    org.apache.felix.useradmin,
+                                    org.apache.servicemix.bundles.spring-beans,
+                                    org.apache.servicemix.bundles.spring-context,
+                                    org.apache.servicemix.bundles.spring-core,
+                                    org.apache.servicemix.bundles.spring-expression,
+                                    org.apache.servicemix.bundles.spring-jms,
+                                    org.apache.servicemix.bundles.spring-tx,
+                                    org.eclipse.equinox.wireadmin,
+                                    org.eclipse.kura.api,
+                                    org.eclipse.kura.core.crypto,
+                                    org.eclipse.kura.json.marshaller.unmarshaller.provider,
+                                    org.eclipse.kura.useradmin.store,
+                                    org.eclipse.kura.xml.marshaller.unmarshaller.provider,
+                                    proton-j,
+                                    org.apache.qpid.jms.client
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -358,7 +479,12 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4</outputDirectory>
                                 <includeArtifactIds>
-                                org.eclipse.kura.core.status, org.eclipse.kura.db.h2db.provider,                                org.eclipse.kura.linux.usb, org.eclipse.kura.linux.watchdog,                                org.eclipse.kura.request.handler.jaxrs,                                org.eclipse.kura.linux.usb.${native.tag}
+                                    org.eclipse.kura.core.status,
+                                    org.eclipse.kura.db.h2db.provider,
+                                    org.eclipse.kura.linux.usb,
+                                    org.eclipse.kura.linux.watchdog,
+                                    org.eclipse.kura.request.handler.jaxrs,
+                                    org.eclipse.kura.linux.usb.${native.tag}
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -374,7 +500,43 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/4s</outputDirectory>
                                 <includeArtifactIds>
-                                commons-lang3,.provider,org.eclipse.kura.asset.provider,org.eclipse.kura.cloud.base.provider, org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,                                org.eclipse.kura.cloudconnection.kapua.mqtt.provider, org.eclipse.kura.cloudconnection.raw.mqtt.provider, org.eclipse.kura.configuration.change.manager,                                org.eclipse.kura.core, org.eclipse.kura.core.certificates, org.eclipse.kura.core.cloud.factory, org.eclipse.kura.core.comm, org.eclipse.kura.core.configuration,                                org.eclipse.kura.core.identity, org.eclipse.kura.core.inventory, org.eclipse.kura.core.keystore,                                org.eclipse.kura.core.system, org.eclipse.kura.driver.helper.provider,                                org.eclipse.kura.jul.to.slf4j.configuration, org.eclipse.kura.localization, org.eclipse.kura.log.filesystem.provider, org.eclipse.kura.misc.cloudcat,                                org.eclipse.kura.rest.cloudconnection.provider, org.eclipse.kura.rest.configuration.provider, org.eclipse.kura.rest.identity.provider, org.eclipse.kura.rest.inventory.provider,                                org.eclipse.kura.rest.keystore.provider, org.eclipse.kura.rest.provider,                                org.eclipse.kura.rest.security.provider, org.eclipse.kura.rest.service.listing.provider, org.eclipse.kura.rest.system.provider, org.eclipse.kura.rest.tamper.detection.provider,                                org.eclipse.kura.script.provider, org.eclipse.kura.util,.component.provider,.component.provider,                                .provider
+                                    commons-lang3,
+                                    .provider,
+                                    org.eclipse.kura.asset.provider,
+                                    org.eclipse.kura.cloud.base.provider,
+                                    org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider,
+                                    org.eclipse.kura.cloudconnection.kapua.mqtt.provider,
+                                    org.eclipse.kura.cloudconnection.raw.mqtt.provider,
+                                    org.eclipse.kura.configuration.change.manager,
+                                    org.eclipse.kura.core,
+                                    org.eclipse.kura.core.certificates,
+                                    org.eclipse.kura.core.cloud.factory,
+                                    org.eclipse.kura.core.comm,
+                                    org.eclipse.kura.core.configuration,
+                                    org.eclipse.kura.core.identity,
+                                    org.eclipse.kura.core.inventory,
+                                    org.eclipse.kura.core.keystore,
+                                    org.eclipse.kura.core.system,
+                                    org.eclipse.kura.driver.helper.provider,
+                                    org.eclipse.kura.jul.to.slf4j.configuration,
+                                    org.eclipse.kura.localization,
+                                    org.eclipse.kura.log.filesystem.provider,
+                                    org.eclipse.kura.misc.cloudcat,
+                                    org.eclipse.kura.rest.cloudconnection.provider,
+                                    org.eclipse.kura.rest.configuration.provider,
+                                    org.eclipse.kura.rest.identity.provider,
+                                    org.eclipse.kura.rest.inventory.provider,
+                                    org.eclipse.kura.rest.keystore.provider,
+                                    org.eclipse.kura.rest.provider,
+                                    org.eclipse.kura.rest.security.provider,
+                                    org.eclipse.kura.rest.service.listing.provider,
+                                    org.eclipse.kura.rest.system.provider,
+                                    org.eclipse.kura.rest.tamper.detection.provider,
+                                    org.eclipse.kura.script.provider,
+                                    org.eclipse.kura.util,
+                                    .component.provider,
+                                    .component.provider,
+                                    .provider
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -390,7 +552,19 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5</outputDirectory>
                                 <includeArtifactIds>
-                                jetty-http, jetty-io, jetty-security, jetty-server, jetty-session,                                jetty-util, org.apache.felix.gogo.command, org.apache.felix.gogo.runtime, org.apache.felix.gogo.shell, org.apache.felix.http.proxy,                                org.apache.felix.http.servlet-api, org.apache.felix.http.wrappers, org.eclipse.osgitech.rest.sse
+                                    jetty-http,
+                                    jetty-io,
+                                    jetty-security,
+                                    jetty-server,
+                                    jetty-session,
+                                    jetty-util,
+                                    org.apache.felix.gogo.command,
+                                    org.apache.felix.gogo.runtime,
+                                    org.apache.felix.gogo.shell,
+                                    org.apache.felix.http.proxy,
+                                    org.apache.felix.http.servlet-api,
+                                    org.apache.felix.http.wrappers,
+                                    org.eclipse.osgitech.rest.sse
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -406,7 +580,15 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/5s</outputDirectory>
                                 <includeArtifactIds>
-                                jakarta.ws.rs-api, jetty-ee10-servlet, org.apache.felix.http.bridge,                                org.eclipse.kura.http.server.manager, org.eclipse.kura.event.publisher,                                .join.provider, org.eclipse.osgitech.rest, org.eclipse.osgitech.rest.servlet.whiteboard, org.osgi.service.jakartars
+                                    jakarta.ws.rs-api,
+                                    jetty-ee10-servlet,
+                                    org.apache.felix.http.bridge,
+                                    org.eclipse.kura.http.server.manager,
+                                    org.eclipse.kura.event.publisher,
+                                    .join.provider,
+                                    org.eclipse.osgitech.rest,
+                                    org.eclipse.osgitech.rest.servlet.whiteboard,
+                                    org.osgi.service.jakartars
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -422,7 +604,58 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6</outputDirectory>
                                 <includeArtifactIds>
-                                com.digitalpetri.fsm.strict-machine, com.digitalpetri.netty.channel-fsm, commons-codec,                                commons-configuration2, commons-exec, commons-pool2, commons-text,                                groovy, groovy-datetime, groovy-dateutil, groovy-json, groovy-sql,                                groovy-templates, groovy-xml, gson, httpcore-osgi, io.vertx.core,                                io.vertx.web-client, jSerialComm, jackson-annotations, jackson-core, jackson-databind,                                jackson-dataformat-yaml, jackson-module-jaxb-annotations, jakarta.jms-api, jspecify, minimal-json,                                milo-sdk-client, milo-sdk-core, milo-stack-core, milo-transport,                                netty-codec-dns, netty-codec-http2, netty-codec-socks, netty-handler-proxy, netty-resolver-dns,                                org.apache.felix.fileinstall, org.eclipse.kura.localization.resources, org.eclipse.paho.mqttv5.client,                                snakeyaml,                                vavr,                                com.alibaba.fastjson2, io.vertx.auth-common, io.vertx.bridge-common, io.vertx.core-logging, io.vertx.http-proxy,                                io.vertx.mqtt, io.vertx.tcp-eventbus-bridge, io.vertx.uri-template, io.vertx.web, io.vertx.web-common,                                tel.schich.javacan-core
+                                    com.digitalpetri.fsm.strict-machine,
+                                    com.digitalpetri.netty.channel-fsm,
+                                    commons-codec,
+                                    commons-configuration2,
+                                    commons-exec,
+                                    commons-pool2,
+                                    commons-text,
+                                    groovy,
+                                    groovy-datetime,
+                                    groovy-dateutil,
+                                    groovy-json,
+                                    groovy-sql,
+                                    groovy-templates,
+                                    groovy-xml,
+                                    gson,
+                                    httpcore-osgi,
+                                    io.vertx.core,
+                                    io.vertx.web-client,
+                                    jSerialComm,
+                                    jackson-annotations,
+                                    jackson-core,
+                                    jackson-databind,
+                                    jackson-dataformat-yaml,
+                                    jackson-module-jaxb-annotations,
+                                    jakarta.jms-api,
+                                    jspecify,
+                                    minimal-json,
+                                    milo-sdk-client,
+                                    milo-sdk-core,
+                                    milo-stack-core,
+                                    milo-transport,
+                                    netty-codec-dns,
+                                    netty-codec-http2,
+                                    netty-codec-socks,
+                                    netty-handler-proxy,
+                                    netty-resolver-dns,
+                                    org.apache.felix.fileinstall,
+                                    org.eclipse.kura.localization.resources,
+                                    org.eclipse.paho.mqttv5.client,
+                                    snakeyaml,
+                                    vavr,
+                                    com.alibaba.fastjson2,
+                                    io.vertx.auth-common,
+                                    io.vertx.bridge-common,
+                                    io.vertx.core-logging,
+                                    io.vertx.http-proxy,
+                                    io.vertx.mqtt,
+                                    io.vertx.tcp-eventbus-bridge,
+                                    io.vertx.uri-template,
+                                    io.vertx.web,
+                                    io.vertx.web-common,
+                                    tel.schich.javacan-core
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
