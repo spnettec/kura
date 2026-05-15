@@ -174,8 +174,10 @@
         <org.apache.groovy.version>5.0.5</org.apache.groovy.version>
         <org.eclipse.milo.version>1.1.2</org.eclipse.milo.version>
         <commons-text.version>1.13.1</commons-text.version>
+        <!-- Jackson 2.x: annotations 只发到 2.21（系列内无 patch release），core / databind 跟到 2.21.3 -->
         <com.fasterxml.jackson.annotations.version>2.21</com.fasterxml.jackson.annotations.version>
-        <com.fasterxml.jackson.core.version>2.18.6</com.fasterxml.jackson.core.version>
+        <com.fasterxml.jackson.core.version>2.21.3</com.fasterxml.jackson.core.version>
+        <com.fasterxml.jackson.databind.version>2.21.3</com.fasterxml.jackson.databind.version>
         <tools.jackson.version>3.1.2</tools.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
         <org.yaml.snakeyaml.mvn.version>2.6</org.yaml.snakeyaml.mvn.version>
