@@ -15,7 +15,7 @@ package org.eclipse.kura.internal.wire.asset;
 
 import org.eclipse.kura.channel.ChannelRecord;
 
-interface TimestampFiller {
+public interface TimestampFiller {
 
     public void processRecord(final ChannelRecord record);
 

@@ -15,7 +15,7 @@ package org.eclipse.kura.internal.wire.asset;
 
 import java.util.Map;
 
-class WireAssetOptions {
+public class WireAssetOptions {
 
     public static final String EMIT_ALL_CHANNELS_PROP_NAME = "emit.all.channels";
     public static final String TIMESTAMP_MODE_PROP_NAME = "timestamp.mode";

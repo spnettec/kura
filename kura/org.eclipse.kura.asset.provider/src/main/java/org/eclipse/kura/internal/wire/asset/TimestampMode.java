@@ -19,7 +19,7 @@ import org.eclipse.kura.channel.ChannelRecord;
 import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.type.TypedValues;
 
-enum TimestampMode {
+public enum TimestampMode {
 
     NO_TIMESTAMPS(None::new),
     PER_CHANNEL(None::new),
