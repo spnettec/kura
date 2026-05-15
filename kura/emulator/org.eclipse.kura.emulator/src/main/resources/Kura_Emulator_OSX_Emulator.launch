@@ -19,6 +19,7 @@
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.core.testutil.opcuaserver"/>
+        <setEntry value="org.eclipse.kura.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
@@ -42,6 +43,7 @@
         <setEntry value="org.eclipse.kura.rest.position.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
         <setEntry value="org.eclipse.kura.test"/>
+        <setEntry value="org.eclipse.kura.web2.test"/>
     </setAttribute>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
     <stringAttribute key="featurePluginResolution" value="workspace"/>
