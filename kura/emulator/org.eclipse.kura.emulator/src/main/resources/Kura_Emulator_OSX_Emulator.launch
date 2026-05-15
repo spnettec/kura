@@ -43,7 +43,6 @@
         <setEntry value="org.eclipse.kura.rest.position.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
         <setEntry value="org.eclipse.kura.test"/>
-        <setEntry value="org.eclipse.kura.web2.test"/>
     </setAttribute>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
     <stringAttribute key="featurePluginResolution" value="workspace"/>
