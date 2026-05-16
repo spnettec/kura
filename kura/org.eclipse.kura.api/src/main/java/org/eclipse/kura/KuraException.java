@@ -202,12 +202,15 @@ public class KuraException extends Exception {
             if (resourceBundle != null && code != null) {
                 messagePattern = resourceBundle.getString(code.name());
                 if (messagePattern == null) {
-                    logger.warn("Could not find Exception Messages for Locale {} and code {}", locale, code);
+                    logger.debug("Could not find Exception Messages for Locale {} and code {}", locale, code);
                 }
             }
         } catch (final MissingResourceException mre) {
-            // log the failure to load a message bundle
-            logger.warn("Could not load Exception Messages Bundle for Locale {}", locale);
+            // Bundle missing for this locale — falls back to a generic format below.
+            // Logged at debug because every KuraException constructor hits this when
+            // the locale bundle isn't packaged, producing one line per thrown exception
+            // (e.g. driver-down loops emit thousands per minute).
+            logger.debug("Could not load Exception Messages Bundle for Locale {}", locale);
         }
         // If no bundle or code in the bundle is found, use a generic message
         if (messagePattern == null) {
