@@ -43,15 +43,9 @@ case "$1" in
             echo "KURA uninstallation completed."
         } 2>&1 | tee -a "$LOG" | systemd-cat -t Kura
 
-        # Restore /etc/network/interfaces.old
-        if [ -f /etc/network/interfaces.old ]; then
-            mv /etc/network/interfaces.old /etc/network/interfaces
-        fi
-
-        # Restore /etc/default/dnsmasq.old
-        if [ -f /etc/default/dnsmasq.old ]; then
-            mv /etc/default/dnsmasq.old /etc/default/dnsmasq
-        fi
+        # /etc/network/interfaces, /etc/default/dnsmasq, netplan .kurasave
+        # restoration is owned by kura-networking's postrm — kura-core no
+        # longer touches the host's network configuration.
 
         rm -rf /tmp/.kura /tmp/kura
         rm -f /var/run/kura.pid

@@ -12,20 +12,6 @@
 #  Eurotech
 #
 
-backup_files() {
-    SUFFIX="${1}"
-
-    shift
-
-    for file in "${@}"
-    do
-        if [ -f "${file}" ]
-        then
-            mv "${file}" "${file}.${SUFFIX}"
-        fi
-    done
-}
-
 systemctl_if_present() {
     ACTION="$1"
     SERVICE="$2"
@@ -33,32 +19,6 @@ systemctl_if_present() {
     if systemctl list-unit-files "${SERVICE}.service" > /dev/null 2>&1 || systemctl list-units --all "${SERVICE}.service" > /dev/null 2>&1; then
         systemctl "${ACTION}" "${SERVICE}" > /dev/null 2>&1 || true
     fi
-}
-
-disable_netplan() {
-    # disable netplan configuration files
-    backup_files kurasave /lib/netplan/*.yaml /etc/netplan/*.yaml
-
-    if [ -d /etc/netplan  ]
-    then
-
-    # use NM renderer
-        cat > /etc/netplan/zz-kura-use-nm.yaml <<EOF
-network:
-  version: 2
-  renderer: NetworkManager
-EOF
-    fi
-}
-
-should_disable_systemd_resolved_stub() {
-
-    SYSTEMD_VERSION=$(systemd --version | (IFS=" " read -r _ignore SYSTEMD_VERSION _ignore; echo "${SYSTEMD_VERSION}") || true)
-
-    [ "${SYSTEMD_VERSION}" -lt 248 ] && 
-    [ -L /etc/resolv.conf ] && 
-    grep "^nameserver[ ]\+127.0.0.53" < /etc/resolv.conf > /dev/null 2>&1 && 
-    [ -e /run/systemd/resolve/resolv.conf ]
 }
 
 IS_NETWORKING_PROFILE=false
@@ -91,19 +51,15 @@ fi
 
 mkdir -p ${INSTALL_DIR}/kura/data
 
-# manage running services
+# manage running services — kura.core.clock owns NTP, so stop the system
+# time daemons. Anything network-related (NetworkManager, ModemManager,
+# dnsmasq, dhcpcd, systemd-networkd) is handled by kura-networking's own
+# install script when that sibling is installed.
 systemctl daemon-reload
 systemctl_if_present stop systemd-timesyncd
 systemctl_if_present disable systemd-timesyncd
 systemctl_if_present stop chrony
 systemctl_if_present disable chrony
-systemctl_if_present enable NetworkManager
-systemctl_if_present enable ModemManager
-systemctl_if_present stop dnsmasq
-systemctl_if_present disable dnsmasq
-systemctl_if_present stop dhcpcd
-systemctl_if_present disable dhcpcd
-systemctl_if_present disable systemd-networkd
 
 # set up users and grant permissions
 cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
@@ -115,76 +71,17 @@ bash "${INSTALL_DIR}/kura/install/customize-installation.sh" ${IS_NETWORKING_PRO
 # copy snapshot_0.xml
 cp ${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml ${INSTALL_DIR}/kura/.data/snapshot_0.xml
 
-# set up default firewall configuration
-if [ ! -d /etc/sysconfig ]; then
-    mkdir /etc/sysconfig
-fi
-if [ ! -f ${INSTALL_DIR}/kura/.data/iptables ] && [ -f ${INSTALL_DIR}/kura/install/iptables/iptables ]; then
-    cp ${INSTALL_DIR}/kura/install/iptables/iptables ${INSTALL_DIR}/kura/.data/iptables
-fi
-if [ -f ${INSTALL_DIR}/kura/.data/iptables ]; then
-    chmod 644 ${INSTALL_DIR}/kura/.data/iptables
-    cp ${INSTALL_DIR}/kura/.data/iptables /etc/sysconfig/iptables
-fi
-cp ${INSTALL_DIR}/kura/install/firewall.init ${INSTALL_DIR}/kura/bin/firewall
-chmod 755 ${INSTALL_DIR}/kura/bin/firewall
-cp ${INSTALL_DIR}/kura/install/firewall.service /lib/systemd/system/firewall.service
-chmod 644 /lib/systemd/system/firewall.service
-sed -i "s|/bin/sh KURA_DIR|/bin/bash ${INSTALL_DIR}/kura|" /lib/systemd/system/firewall.service
-systemctl daemon-reload
-systemctl enable firewall
+# Networking setup (firewall/iptables, netplan/NM renderer, cloud-init disable,
+# /etc/network/interfaces commenting, dnsmasq, bind/named, systemd-resolved
+# stub) is owned by kura-networking. kura-core no longer touches the host's
+# network configuration so a core-only install leaves netplan/NM/iptables
+# untouched.
 
-# disables cloud-init network management if exists, sets netplan network renderer to NetworkManager allowing interface management to NetworkManager
-if [ -d /etc/cloud/cloud.cfg.d ]; then
-    echo "network: {config: disabled}" | sudo tee -a /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg > /dev/null
-fi
-
-disable_netplan
-
-if should_disable_systemd_resolved_stub; then
-    ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-fi
-
-if [ -d /usr/lib/NetworkManager/conf.d/ ]; then
-    TO_REMOVE=$( find /usr/lib/NetworkManager/conf.d/ -type f -name  "*-globally-managed-devices.conf" | awk 'NR==1{print $1}' )
-
-    if [ -f "${TO_REMOVE}" ]; then
-        rm "${TO_REMOVE}"
-    fi
-fi
-# comment network interface configurations in interfaces file
-if python3 -V > /dev/null 2>&1
-then
-    python3 /opt/eclipse/kura/install/comment_interfaces_file.py
-else
-    echo "python3 not found. Please manually review the /etc/network/interfaces file and comment configured network interfaces."
-fi
-
-# install dnsmasq default configuration
-if [ -f /etc/default/dnsmasq ]; then
-    mv /etc/default/dnsmasq /etc/default/dnsmasq.old
-fi
-cp ${INSTALL_DIR}/kura/install/dnsmasq /etc/default/dnsmasq
-
-# disable NTP service
+# disable NTP service — kura.core.clock owns time, regardless of networking
 if command -v timedatectl > /dev/null ;
   then
     timedatectl set-ntp false
 fi
-
-#set up bind/named
-mkdir -p /var/named
-chown -R bind /var/named
-cp ${INSTALL_DIR}/kura/install/named/named.ca /var/named/
-cp ${INSTALL_DIR}/kura/install/named/named.rfc1912.zones /etc/
-if [ -d /etc/apparmor.d ]; then
-    cp ${INSTALL_DIR}/kura/install/named/usr.sbin.named /etc/apparmor.d/
-fi
-if [ ! -f "/etc/bind/rndc.key" ] ; then
-    rndc-confgen -r /dev/urandom -a
-fi
-chown bind:bind /etc/bind/rndc.key
-chmod 600 /etc/bind/rndc.key
 
 # set up logrotate - no need to restart as it is a cronjob
 cp ${INSTALL_DIR}/kura/install/kura.logrotate /etc/logrotate-kura.conf

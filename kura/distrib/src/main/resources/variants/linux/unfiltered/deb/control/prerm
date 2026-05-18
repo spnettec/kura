@@ -63,27 +63,6 @@ function stopWatchdog {
     fi
 }
 
-function restore_backup_files {
-    SUFFIX="${1}"
-
-    shift
-
-    for file in "${@}"
-    do
-        if [ -f "${file}" ] && expr "${file}" : ".*[.]${SUFFIX}$" > /dev/null; then
-            mv "${file}" "${file%."${SUFFIX}"}"
-        fi
-    done
-}
-
-function restore_netplan {
-  if [ -f /etc/netplan/zz-kura-use-nm.yaml ]; then
-    rm -f /etc/netplan/zz-kura-use-nm.yaml
-  fi
-
-  restore_backup_files kurasave /lib/netplan/* /etc/netplan/*
-}
-
 # Pre-remove script
 function preRemove {
     #Remove INIT scripts
@@ -95,15 +74,10 @@ function preRemove {
         systemctl disable kura
         rm /lib/systemd/system/kura.service
     fi
-    if [ -f /etc/init.d/firewall ] ; then
-        rm -f /etc/init.d/firewall
-        update-rc.d firewall remove
-    fi
-    if [ -f /lib/systemd/system/firewall.service ] ; then
-        systemctl disable firewall
-        rm /lib/systemd/system/firewall.service
-    fi
-    
+    # Firewall/iptables/netplan teardown is owned by kura-networking's prerm
+    # (it installs them in its postinst too). kura-core no longer touches the
+    # host's network configuration.
+
     #Roll-back logrotate setup
     rm -f  /var/log/logrotate-kura.status
     rm -f  /etc/logrotate-kura.conf
@@ -122,8 +96,6 @@ function preRemove {
     done
     rm -rf /tmp/.kura
     rm -rf /tmp/kura
-
-    restore_netplan
 
     # Directory cleanup moved to postrm (after sibling packages are purged)
 }
