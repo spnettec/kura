@@ -808,14 +808,6 @@
 									<transitive>false</transitive>
 								</artifact>
                                 -->
-                                <!-- Already native OSGi (BSN=com.eurotech.gpsd4java); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>com.eurotech:gpsd4java:${com.eurotech.gpsd4java.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
                                 <!-- Already native OSGi (BSN=org.apache.servicemix.bundles.c3p0); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
                                 <!--
                                 <artifact>

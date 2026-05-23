@@ -160,7 +160,6 @@
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.multipart@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
-        <setEntry value="com.eurotech.gpsd4java@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
         <setEntry value="com.github.jinahya.bit-io@default:default"/>

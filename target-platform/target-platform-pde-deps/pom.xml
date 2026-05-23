@@ -295,12 +295,7 @@
             <artifactId>bcpg-jdk18on</artifactId>
             <version>${org.bouncycastle.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.eurotech</groupId>
-            <artifactId>gpsd4java</artifactId>
-            <version>${com.eurotech.gpsd4java.version}</version>
-    	</dependency>
-        
+
         <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.c3p0</artifactId>
