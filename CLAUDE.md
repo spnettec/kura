@@ -23,7 +23,8 @@ git/
 ├── kura-opcua/            ← OPC UA 设备驱动
 ├── kura-position/         ← GPS / 定位
 ├── kura-triton/           ← 边缘 AI（Triton Server）
-└── kura-wires/            ← Wires 数据流编排 + 资产 Cloudlet + Wires REST
+├── kura-wires/            ← Wires 数据流编排 + 资产 Cloudlet + Wires REST
+└── kura-yofc-runtime/     ← yofc-iot 运行时支持库（fastjson2 + javacan + yofc-only vertx 包）
 ```
 
 Sibling 的 bundles 通过 Import-Package 从 monorepo 的 `org.eclipse.kura.api` 拉接口，**编译期只依赖本仓库构建出的 m2 artifact**，sibling 之间无相互依赖。

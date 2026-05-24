@@ -627,17 +627,7 @@
                                     org.eclipse.paho.mqttv5.client,
                                     snakeyaml,
                                     vavr,
-                                    com.alibaba.fastjson2,
-                                    io.vertx.auth-common,
-                                    io.vertx.bridge-common,
-                                    io.vertx.core-logging,
-                                    io.vertx.http-proxy,
-                                    io.vertx.mqtt,
-                                    io.vertx.tcp-eventbus-bridge,
-                                    io.vertx.uri-template,
-                                    io.vertx.web,
-                                    io.vertx.web-common,
-                                    tel.schich.javacan-core
+                                    io.vertx.web-common
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>

@@ -37,16 +37,12 @@
 						</goals>
 						<configuration>
 							<artifacts>
-							<!-- vertx  -->
+							<!-- vertx — only shared bundles (kura-camel + others Import-Package these).
+							     yofc-only Vert.x bundles + fastjson2 + javacan shipped by kura-yofc-runtime sibling. -->
 								<artifact>
 									<id>io.vertx:vertx-core:${vertx.version}</id>
 									<source>true</source>
 									<transitive>true</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-core-logging:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
 								</artifact>
 								<artifact>
 									<id>io.vertx:vertx-web-common:${vertx.version}</id>
@@ -54,42 +50,7 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
-									<id>io.vertx:vertx-web:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-http-proxy:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-bridge-common:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
 									<id>io.vertx:vertx-web-client:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-uri-template:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-tcp-eventbus-bridge:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-mqtt:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-auth-common:${vertx.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -100,16 +61,6 @@
 								</artifact>
 								<artifact>
 									<id>com.digitalpetri.netty:netty-channel-fsm:jar:${netty-channel-fsm.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>tel.schich:javacan-core:jar:${javacan.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.alibaba.fastjson2:fastjson2:jar:${fastjson2.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
