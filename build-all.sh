@@ -137,6 +137,16 @@ else
     echo "=== Stage 2: skipping kura-cloud (clone not found) ==="
 fi
 
+# Pure-library sibling: no bundles to compile, root reactor already includes
+# distrib, so a single `mvn install` builds everything (no second distrib step).
+if [ -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" ]; then
+    echo "=== Stage 2: building kura-yofc-runtime addon .deb ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2: skipping kura-yofc-runtime (clone not found) ==="
+fi
+
 # Stage 3: kura-core.deb + docker images. Runs after Stage 2 so docker-base
 # can pull sibling jars (web2 today; more later) from ~/.m2 and bake them
 # into the self-extracting installer.sh.
