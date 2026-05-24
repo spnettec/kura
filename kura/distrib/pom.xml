@@ -369,9 +369,6 @@
                                     bcprov-jdk18on,
                                     bctls-jdk18on,
                                     bcutil-jdk18on,
-                                    commons-beanutils,
-                                    commons-collections,
-                                    commons-csv,
                                     failureaccess,
                                     geronimo-jms_2.0_spec,
                                     geronimo-json_1.0_spec,
@@ -450,9 +447,7 @@
                                     org.eclipse.kura.core.crypto,
                                     org.eclipse.kura.json.marshaller.unmarshaller.provider,
                                     org.eclipse.kura.useradmin.store,
-                                    org.eclipse.kura.xml.marshaller.unmarshaller.provider,
-                                    proton-j,
-                                    org.apache.qpid.jms.client
+                                    org.eclipse.kura.xml.marshaller.unmarshaller.provider
                                 </includeArtifactIds>
                                 <excludeTypes>pom</excludeTypes>
                                 <excludeClassifiers>sources,javadoc,linux-x86_64,linux-aarch_64,osx-x86_64,osx-aarch_64</excludeClassifiers>
@@ -598,7 +593,6 @@
                                     commons-codec,
                                     commons-configuration2,
                                     commons-exec,
-                                    commons-pool2,
                                     commons-text,
                                     groovy,
                                     groovy-datetime,
@@ -608,7 +602,6 @@
                                     groovy-templates,
                                     groovy-xml,
                                     gson,
-                                    httpcore-osgi,
                                     io.vertx.core,
                                     io.vertx.web-client,
                                     jSerialComm,

@@ -54,9 +54,7 @@ This project leverages the following third party content.
 * maven/mavencentral/com.sun.xml.bind/jaxb-osgi/2.3.3, BSD-3-Clause, approved, ee4j.jaxb-impl
 * maven/mavencentral/com.vertispan.j2cl.external/org.eclipse.core.jobs/0.10.0-3c97afeac, EPL-2.0, approved, eclipse.platform
 * maven/mavencentral/com.vertispan.j2cl.external/org.eclipse.equinox.preferences/0.10.0-3c97afeac, EPL-2.0, approved, #7856
-* maven/mavencentral/commons-beanutils/commons-beanutils/1.9.3, Apache-2.0, approved, CQ12654
 * maven/mavencentral/commons-codec/commons-codec/1.16.1, Apache-2.0 AND (Apache-2.0 AND BSD-3-Clause), approved, #9157
-* maven/mavencentral/commons-collections/commons-collections/3.2.2, Apache-2.0, approved, CQ10385
 * maven/mavencentral/org.apache.commons/commons-fileupload2-core/2.0.0-M2, Apache-2.0, approved, #15738
 * maven/mavencentral/org.apache.commons/commons-fileupload2-jakarta-servlet5/2.0.0-M2, Apache-2.0, approved, #15737
 * maven/mavencentral/commons-io/commons-io/2.11.0, Apache-2.0, approved, CQ23745
@@ -99,7 +97,6 @@ This project leverages the following third party content.
 * maven/mavencentral/org.apache.camel/camel-script/2.25.3, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.camel/camel-stream/2.25.3, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.commons/commons-compress/1.26.1, Apache-2.0 AND (Apache-2.0 AND BSD-3-Clause), approved, #13288
-* maven/mavencentral/org.apache.commons/commons-csv/1.4, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.commons/commons-exec/1.3, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.commons/commons-lang3/3.12.0, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.felix/org.apache.felix.dependencymanager/3.0.0, Apache-2.0, approved, clearlydefined
@@ -112,8 +109,6 @@ This project leverages the following third party content.
 * maven/mavencentral/org.apache.logging.log4j/log4j-api/2.23.1, Apache-2.0, approved, #13368
 * maven/mavencentral/org.apache.logging.log4j/log4j-core/2.23.1, Apache-2.0 AND (Apache-2.0 AND LGPL-2.0-or-later), approved, #14737
 * maven/mavencentral/org.apache.logging.log4j/log4j-slf4j-impl/2.23.1, Apache-2.0, approved, #14736
-* maven/mavencentral/org.apache.qpid/proton-j/0.33.2, Apache-2.0, approved, clearlydefined
-* maven/mavencentral/org.apache.qpid/qpid-jms-client/0.45.0, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-beans/4.3.20.RELEASE_1, Apache-2.0, approved, CQ16239
 * maven/mavencentral/org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-context/4.3.20.RELEASE_1, , approved, CQ16240
 * maven/mavencentral/org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-core/4.3.20.RELEASE_1, Apache-2.0, approved, CQ16241

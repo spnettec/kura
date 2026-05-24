@@ -46,16 +46,11 @@
         <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
         
         <!-- START common dependencies -->
-        <apache-qpid-jms-client.version>2.10.0</apache-qpid-jms-client.version>
-        <apache-qpid-proton-j.version>0.34.1</apache-qpid-proton-j.version>
         <bluez-dbus-osgi.version>0.3.1</bluez-dbus-osgi.version>
         <com.eclipsesource.minimal-json.version>0.9.5</com.eclipsesource.minimal-json.version>
         <com.google.gson.version>2.11.0</com.google.gson.version>
         <com.google.protobuf.version>4.30.2</com.google.protobuf.version>
         <com.h2database.h2.version>2.3.232</com.h2database.h2.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
-        <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-csv.version>1.14.0</commons-csv.version>
         <commons-exec.version>1.4.0</commons-exec.version>
         <commons-fileupload.version>2.0.0-M4</commons-fileupload.version>
         <failureaccess.version>1.0.2</failureaccess.version>
@@ -180,7 +175,6 @@
         <tools.jackson.version>3.1.2</tools.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
         <org.yaml.snakeyaml.mvn.version>2.6</org.yaml.snakeyaml.mvn.version>
-        <org.apache.commons-pool2.version>2.12.1</org.apache.commons-pool2.version>
         <org.apache.felix.fileinstall.version>3.7.4</org.apache.felix.fileinstall.version>
         <strict-machine.version>1.0.0</strict-machine.version>
         <netty-channel-fsm.version>1.0.2</netty-channel-fsm.version>
@@ -190,7 +184,6 @@
         <net.java.dev.jna.version>5.17.0</net.java.dev.jna.version>
         <io.vavr.version>1.0.0</io.vavr.version>
         <org.jspecify.version>1.0.0</org.jspecify.version>
-        <org.apache.httpcomponents.httpcore-osgi.version>4.4.16</org.apache.httpcomponents.httpcore-osgi.version>
         <org.apache.commons.codec.version>1.21.0</org.apache.commons.codec.version>
         <jakarta.jms-api.version>3.1.0</jakarta.jms-api.version>
     </properties>

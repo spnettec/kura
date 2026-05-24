@@ -104,17 +104,6 @@
             <version>${org.apache.commons.lang3.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>${commons-csv.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.qpid</groupId>
-            <artifactId>proton-j</artifactId>
-            <version>${apache-qpid-proton-j.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.spring-beans</artifactId>
             <version>${spring.version}</version>
@@ -235,16 +224,6 @@
             <version>${io.netty.version}</version>
         </dependency>
        
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>${commons-beanutils.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>${commons-collections.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.geronimo.specs</groupId>
             <artifactId>geronimo-json_1.0_spec</artifactId>
@@ -851,11 +830,6 @@
 			<version>${org.apache.groovy.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpcore-osgi</artifactId>
-			<version>${org.apache.httpcomponents.httpcore-osgi.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>${org.apache.commons.codec.version}</version>
@@ -966,11 +940,6 @@
 			<version>${org.yaml.snakeyaml.mvn.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-pool2</artifactId>
-			<version>${org.apache.commons-pool2.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.fileinstall</artifactId>
 			<version>${org.apache.felix.fileinstall.version}</version>
@@ -1007,11 +976,6 @@
 		</dependency>
 		
         <!-- P2-rebundled OSGi artifacts installed by the p2-repo-* modules. -->
-        <dependency>
-            <groupId>org.apache.qpid</groupId>
-            <artifactId>qpid-jms-client</artifactId>
-            <version>${apache-qpid-jms-client.version}</version>
-        </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>
             <artifactId>com.alibaba.fastjson2</artifactId>

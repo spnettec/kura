@@ -464,14 +464,6 @@
 									<transitive>false</transitive>
 								</artifact>
                                 -->
-                                <!-- Already native OSGi (BSN=org.apache.commons.commons-csv); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.apache.commons:commons-csv:${commons-csv.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
                                 <!-- Already native OSGi (BSN=org.eclipse.soda.dk.comm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
                                 <!--
                                 <artifact>
@@ -492,14 +484,6 @@
                                 <!--
                                 <artifact>
 									<id>org.eclipse.kura:org.eclipse.soda.dk.comm.aarch64:${org.eclipse.soda.dk.comm.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
-                                <!-- Already native OSGi (BSN=org.apache.qpid.proton-j); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>org.apache.qpid:proton-j:${apache-qpid-proton-j.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -684,22 +668,6 @@
                                 <!--
                                 <artifact>
 									<id>io.netty:netty-transport-native-unix-common:${io.netty.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
-                                <!-- Already native OSGi (BSN=org.apache.commons.commons-beanutils); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>commons-beanutils:commons-beanutils:${commons-beanutils.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-                                -->
-                                <!-- Already native OSGi (BSN=org.apache.commons.collections); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-                                <!--
-                                <artifact>
-									<id>commons-collections:commons-collections:${commons-collections.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
@@ -1286,14 +1254,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								-->
-								<!-- Already native OSGi (BSN=org.apache.httpcomponents.httpcore); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-								<!--
-								<artifact>
-									<id>org.apache.httpcomponents:httpcore-osgi:${org.apache.httpcomponents.httpcore-osgi.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								-->
 								<!-- Already native OSGi (BSN=org.apache.commons.commons-codec); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
 								<!--
 								<artifact>
@@ -1455,15 +1415,6 @@
 									<transitive>false</transitive>
 								</artifact>
 								-->
-								<!-- Already native OSGi (BSN=org.apache.commons.commons-pool2); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
-								<!--
-								<artifact>
-									<id>org.apache.commons:commons-pool2:jar:${org.apache.commons-pool2.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								-->
-								
 								<!-- Already native OSGi (BSN=org.apache.felix.fileinstall); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
 								<!--
 								<artifact>

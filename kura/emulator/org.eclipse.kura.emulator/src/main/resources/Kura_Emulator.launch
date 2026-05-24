@@ -59,7 +59,6 @@
         <setEntry value="log4j2-api-config@default:false"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.activemq.artemis-mqtt-protocol@default:default"/>
-        <setEntry value="org.apache.commons.collections@default:default"/>
         <setEntry value="org.apache.commons.commons-io@default:default"/>
         <setEntry value="org.apache.commons.commons-net@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
