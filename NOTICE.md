@@ -120,10 +120,6 @@ This project leverages the following third party content.
 * maven/mavencentral/org.bouncycastle/bcprov-jdk18on/1.78.1, MIT AND CC0-1.0, approved, #14433
 * maven/mavencentral/org.bouncycastle/bctls-jdk18on/1.78.1, MIT, approved, #14676
 * maven/mavencentral/org.bouncycastle/bcutil-jdk18on/1.78.1, MIT, approved, #14435
-* maven/mavencentral/org.eclipse.milo/sdk-client/0.6.8, EPL-2.0, approved, iot.milo
-* maven/mavencentral/org.eclipse.milo/sdk-core/0.6.8, EPL-2.0, approved, iot.milo
-* maven/mavencentral/org.eclipse.milo/stack-client/0.6.8, EPL-2.0, approved, iot.milo
-* maven/mavencentral/org.eclipse.milo/stack-core/0.6.8, EPL-2.0, approved, iot.milo
 * maven/mavencentral/org.glassfish.hk2/osgi-resource-locator/1.0.3, CDDL-1.0, approved, CQ10889
 * maven/mavencentral/org.jboss.logging/jboss-logging/3.3.2.Final, Apache-2.0, approved, CQ13843
 * maven/mavencentral/org.knowhowlab.osgi/monitoradmin/1.0.3, Apache-2.0, approved, clearlydefined
@@ -165,8 +161,6 @@ This project leverages the following third party content.
 * maven/mavencentral/org.ow2.asm/asm/9.2, BSD-3-Clause, approved, CQ23635
 * maven/mavencentral/com.google.guava/guava/31.0-jre, Apache-2.0, approved, clearlydefined
 * maven/mavencentral/com.google.guava/failureaccess/1.0, Apache-2.0, approved, CQ22654
-* maven/mavencentral/com.digitalpetri.fsm/strict-machine/0.6, Apache-2.0, approved, clearlydefined
-* maven/mavencentral/com.digitalpetri.netty/netty-channel-fsm/0.8, Apache-2.0, approved, #6168
 * maven/mavencentral/jakarta.annotation/jakarta.annotation-api/2.1.1, EPL-2.0 OR GPL-2.0-only with Classpath-exception-2.0, approved, ee4j.ca
 * maven/mavencentral/org.apache.felix/org.apache.felix.http.servlet-api/3.0.0, Apache-2.0, approved, #13345
 * maven/mavencentral/org.apache.felix/org.apache.felix.http.bridge/5.1.8, Apache-2.0, approved, #18536

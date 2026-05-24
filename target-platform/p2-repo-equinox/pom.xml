@@ -1424,6 +1424,7 @@
 								</artifact>
 								-->
 								
+								<!-- Milo client kept for monorepo testutil.opcuaserver compile-time imports. Runtime delivery moved to kura-opcua.deb. -->
 								<artifact>
 									<id>org.eclipse.milo:milo-sdk-client:jar:${org.eclipse.milo.version}</id>
 									<source>true</source>
@@ -1441,16 +1442,6 @@
 								</artifact>
 								<artifact>
 									<id>org.eclipse.milo:milo-stack-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.digitalpetri.fsm:strict-machine:${strict-machine.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.digitalpetri.netty:netty-channel-fsm:${netty-channel-fsm.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

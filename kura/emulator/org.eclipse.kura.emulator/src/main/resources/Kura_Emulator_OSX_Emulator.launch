@@ -18,6 +18,12 @@
         <setEntry value="org.eclipse.kura.core.comm"/>
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
+        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
+        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
+        <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
+        <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
+        <setEntry value="org.eclipse.milo.stack-core@default:default"/>
+        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.kura.core.testutil.opcuaserver"/>
         <setEntry value="org.eclipse.kura.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
@@ -76,8 +82,6 @@
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
-        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
-        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
@@ -190,10 +194,6 @@
         <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.session@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
-        <setEntry value="org.eclipse.milo.stack-core@default:default"/>
-        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.osgitech.rest.servlet.whiteboard@default:default"/>

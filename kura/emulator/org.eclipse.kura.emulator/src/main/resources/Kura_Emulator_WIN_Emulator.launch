@@ -168,8 +168,6 @@
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
-        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
-        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.gson@default:default"/>
         <setEntry value="com.eclipsesource.jaxrs.provider.security@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
@@ -326,10 +324,6 @@
         <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
         <setEntry value="org.eclipse.kura.sun.misc@default:false"/>
-        <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
-        <setEntry value="org.eclipse.milo.transport@default:default"/>
-        <setEntry value="org.eclipse.milo.stack-core@default:default"/>
         <setEntry value="org.eclipse.osgi.services@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>

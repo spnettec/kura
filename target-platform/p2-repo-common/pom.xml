@@ -54,6 +54,7 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
+								<!-- digitalpetri kept for milo-transport compile-time Import-Package. Runtime via kura-opcua.deb + kura-yofc-runtime.deb. -->
 								<artifact>
 									<id>com.digitalpetri.fsm:strict-machine:jar:${strict-machine.version}</id>
 									<source>true</source>

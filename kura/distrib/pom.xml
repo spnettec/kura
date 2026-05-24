@@ -588,8 +588,6 @@
                                 <skip>${dist.linux.bundles.skip}</skip>
                                 <outputDirectory>${project.build.directory}/${dist.assembly.name}/plugins/6</outputDirectory>
                                 <includeArtifactIds>
-                                    com.digitalpetri.fsm.strict-machine,
-                                    com.digitalpetri.netty.channel-fsm,
                                     commons-codec,
                                     commons-configuration2,
                                     commons-exec,
@@ -613,10 +611,6 @@
                                     jakarta.jms-api,
                                     jspecify,
                                     minimal-json,
-                                    milo-sdk-client,
-                                    milo-sdk-core,
-                                    milo-stack-core,
-                                    milo-transport,
                                     netty-codec-dns,
                                     netty-codec-http2,
                                     netty-codec-socks,
