@@ -1424,27 +1424,6 @@
 								</artifact>
 								-->
 								
-								<!-- Milo client kept for monorepo testutil.opcuaserver compile-time imports. Runtime delivery moved to kura-opcua.deb. -->
-								<artifact>
-									<id>org.eclipse.milo:milo-sdk-client:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-sdk-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-transport:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.eclipse.milo:milo-stack-core:jar:${org.eclipse.milo.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
 								<!-- Already native OSGi (BSN=com.fazecast.jSerialComm); no pde-deps wrap consumer. Kept commented for future Manifest tweaks. -->
 								<!--
 								<artifact>

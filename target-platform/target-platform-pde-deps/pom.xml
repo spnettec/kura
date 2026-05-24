@@ -944,29 +944,6 @@
 			<artifactId>org.apache.felix.fileinstall</artifactId>
 			<version>${org.apache.felix.fileinstall.version}</version>
 		</dependency>
-		<!-- Milo client kept in monorepo: org.eclipse.kura.core.testutil.opcuaserver
-		     test-util bundle Import-Packages org.eclipse.milo.opcua.sdk.core.* at
-		     compile time. Runtime delivery moved to kura-opcua.deb /siblings/opcua/6/. -->
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-sdk-client</artifactId>
-			<version>${org.eclipse.milo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-sdk-core</artifactId>
-			<version>${org.eclipse.milo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-transport</artifactId>
-			<version>${org.eclipse.milo.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.milo</groupId>
-			<artifactId>milo-stack-core</artifactId>
-			<version>${org.eclipse.milo.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>com.fazecast</groupId>
 			<artifactId>jSerialComm</artifactId>
@@ -997,18 +974,6 @@
             <groupId>p2.osgi.bundle</groupId>
             <artifactId>io.vertx.web-common</artifactId>
             <version>${vertx.version}</version>
-        </dependency>
-        <!-- digitalpetri kept for milo-transport compile-time Import-Package. Runtime
-             delivery handled by kura-opcua.deb + kura-yofc-runtime.deb. -->
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.digitalpetri.fsm.strict-machine</artifactId>
-            <version>${strict-machine.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>p2.osgi.bundle</groupId>
-            <artifactId>com.digitalpetri.netty.channel-fsm</artifactId>
-            <version>${netty-channel-fsm.version}</version>
         </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>

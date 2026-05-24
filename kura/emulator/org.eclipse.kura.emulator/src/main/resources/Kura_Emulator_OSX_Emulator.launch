@@ -18,13 +18,6 @@
         <setEntry value="org.eclipse.kura.core.comm"/>
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
-        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
-        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
-        <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
-        <setEntry value="org.eclipse.milo.stack-core@default:default"/>
-        <setEntry value="org.eclipse.milo.transport@default:default"/>
-        <setEntry value="org.eclipse.kura.core.testutil.opcuaserver"/>
         <setEntry value="org.eclipse.kura.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>

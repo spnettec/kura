@@ -54,17 +54,6 @@
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>
-								<!-- digitalpetri kept for milo-transport compile-time Import-Package. Runtime via kura-opcua.deb + kura-yofc-runtime.deb. -->
-								<artifact>
-									<id>com.digitalpetri.fsm:strict-machine:jar:${strict-machine.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>com.digitalpetri.netty:netty-channel-fsm:jar:${netty-channel-fsm.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
                                 <!-- Native jar only exports org.eclipse.paho.mqttv5.client; this override
                                      widens exports to include client.persist, common and common.packet
                                      (which are physically present in the jar) for downstream apps that need them. -->

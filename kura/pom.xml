@@ -184,7 +184,6 @@
         <org.eclipse.kura.xml.marshaller.unmarshaller.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.xml.marshaller.unmarshaller.provider.version>
         <!-- test-util -->
         <org.eclipse.kura.core.testutil.version>6.0.0-SNAPSHOT</org.eclipse.kura.core.testutil.version>
-        <org.eclipse.kura.core.testutil.opcuaserver.version>6.0.0-SNAPSHOT</org.eclipse.kura.core.testutil.opcuaserver.version>
         <org.eclipse.kura.test.version>6.0.0-SNAPSHOT</org.eclipse.kura.test.version>
     </properties>
 
@@ -452,11 +451,6 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.core.testutil</artifactId>
                 <version>${org.eclipse.kura.core.testutil.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.kura</groupId>
-                <artifactId>org.eclipse.kura.core.testutil.opcuaserver</artifactId>
-                <version>${org.eclipse.kura.core.testutil.opcuaserver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>

@@ -166,12 +166,6 @@
 
         <vertx.version>5.0.12</vertx.version>
         <org.apache.groovy.version>5.0.5</org.apache.groovy.version>
-        <!-- Milo client + digitalpetri kept for monorepo testutil.opcuaserver test bundle.
-             Runtime delivery: milo + digitalpetri shipped by kura-opcua.deb;
-             digitalpetri also shipped by kura-yofc-runtime.deb (yofc-iot consumer). -->
-        <org.eclipse.milo.version>1.1.2</org.eclipse.milo.version>
-        <strict-machine.version>1.0.0</strict-machine.version>
-        <netty-channel-fsm.version>1.0.2</netty-channel-fsm.version>
         <commons-text.version>1.13.1</commons-text.version>
         <!-- Jackson 2.x: annotations 只发到 2.21（系列内无 patch release），core / databind 跟到 2.21.3 -->
         <com.fasterxml.jackson.annotations.version>2.21</com.fasterxml.jackson.annotations.version>

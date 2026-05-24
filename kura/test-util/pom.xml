@@ -32,7 +32,6 @@
 
   <modules>
     <module>org.eclipse.kura.core.testutil</module>
-    <module>org.eclipse.kura.core.testutil.opcuaserver</module>
     <module>org.eclipse.kura.test</module>
   </modules>
 </project>
