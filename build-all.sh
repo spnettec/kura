@@ -67,7 +67,6 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-opcua/pom.xml" ]; then
     echo "=== Stage 2: building kura-opcua addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/pom.xml" clean install $MAVEN_PROPS \
-        -pl '!tests/org.eclipse.kura.driver.opcua.test' \
         && mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
