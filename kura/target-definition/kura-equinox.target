@@ -14,7 +14,7 @@
 
 -->
 <?pde version="3.8"?>
-<target name="Kura Target Definition" sequenceNumber="49">
+<target name="Kura Target Definition" sequenceNumber="53">
     <locations>
         <!--
             Single Maven location, no Profile location with absolute paths.
@@ -37,6 +37,42 @@
                     <groupId>org.eclipse.kura</groupId>
                     <artifactId>target-platform-pde-deps</artifactId>
                     <version>6.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-camel-pde-deps</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-artemis-pde-deps</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-position-pde-deps</artifactId>
+                    <version>2.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-management-ui-pde-deps</artifactId>
+                    <version>3.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-opcua-pde-deps</artifactId>
+                    <version>2.0.0-SNAPSHOT</version>
+                    <type>pom</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.eclipse.kura</groupId>
+                    <artifactId>kura-yofc-runtime-pde-deps</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
                     <type>pom</type>
                 </dependency>
             </dependencies>

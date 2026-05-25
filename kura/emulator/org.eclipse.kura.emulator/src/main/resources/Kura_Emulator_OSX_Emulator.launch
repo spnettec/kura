@@ -18,7 +18,6 @@
         <setEntry value="org.eclipse.kura.core.comm"/>
         <setEntry value="org.eclipse.kura.core.net.test"/>
         <setEntry value="org.eclipse.kura.core.testutil"/>
-        <setEntry value="org.eclipse.kura.driver.opcua.test"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
@@ -75,6 +74,9 @@
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
+        <setEntry value="com.alibaba.fastjson2@default:default"/>
+        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
+        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
@@ -116,9 +118,17 @@
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
+        <setEntry value="io.vertx.auth-common@default:default"/>
+        <setEntry value="io.vertx.bridge-common@default:default"/>
+        <setEntry value="io.vertx.core-logging@default:default"/>
         <setEntry value="io.vertx.core@default:default"/>
+        <setEntry value="io.vertx.http-proxy@default:default"/>
+        <setEntry value="io.vertx.mqtt@default:default"/>
+        <setEntry value="io.vertx.tcp-eventbus-bridge@default:default"/>
+        <setEntry value="io.vertx.uri-template@default:default"/>
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
+        <setEntry value="io.vertx.web@default:default"/>
         <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
@@ -133,13 +143,17 @@
         <setEntry value="jul.to.slf4j@default:default"/>
         <setEntry value="minimal-json@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@3:default"/>
+        <setEntry value="org.apache.commons.collections@default:default"/>
+        <setEntry value="org.apache.commons.commons-beanutils@default:default"/>
         <setEntry value="org.apache.commons.commons-codec@default:default"/>
         <setEntry value="org.apache.commons.commons-configuration2@default:default"/>
+        <setEntry value="org.apache.commons.commons-csv@default:default"/>
         <setEntry value="org.apache.commons.commons-exec@default:default"/>
         <setEntry value="org.apache.commons.commons-fileupload2-core@default:default"/>
         <setEntry value="org.apache.commons.commons-fileupload2-jakarta-servlet5@default:default"/>
         <setEntry value="org.apache.commons.commons-io@default:default"/>
         <setEntry value="org.apache.commons.commons-net@default:default"/>
+        <setEntry value="org.apache.commons.commons-pool2@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.commons.text@default:default"/>
         <setEntry value="org.apache.felix.dependencymanager@default:default"/>
@@ -157,9 +171,12 @@
         <setEntry value="org.apache.geronimo.specs.geronimo-jms_2.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-json_1.0_spec@default:default"/>
         <setEntry value="org.apache.geronimo.specs.geronimo-jta_1.1_spec@default:default"/>
+        <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
         <setEntry value="org.apache.logging.log4j.api@default:default"/>
         <setEntry value="org.apache.logging.log4j.core@3:default"/>
         <setEntry value="org.apache.logging.log4j.slf4j2.impl@3:default"/>
+        <setEntry value="org.apache.qpid.jms.client@default:default"/>
+        <setEntry value="org.apache.qpid.proton-j@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.c3p0@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-beans@default:default"/>
         <setEntry value="org.apache.servicemix.bundles.spring-context@default:default"/>
@@ -187,6 +204,10 @@
         <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.session@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
+        <setEntry value="org.eclipse.milo.sdk-client@default:default"/>
+        <setEntry value="org.eclipse.milo.sdk-core@default:default"/>
+        <setEntry value="org.eclipse.milo.stack-core@default:default"/>
+        <setEntry value="org.eclipse.milo.transport@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.osgitech.rest.servlet.whiteboard@default:default"/>
@@ -240,6 +261,7 @@
         <setEntry value="org.yaml.snakeyaml@default:default"/>
         <setEntry value="quartz@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
+        <setEntry value="tel.schich.javacan-core@default:default"/>
         <setEntry value="tools.jackson.core.jackson-core@default:default"/>
         <setEntry value="tools.jackson.core.jackson-databind@default:default"/>
     </setAttribute>
@@ -250,7 +272,6 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-influxdb@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-influxdbv1@default:default"/>
         <setEntry value="com.yofc.iot.yofc-iot-apps-opcuaserver@default:default"/>
-        <setEntry value="com.yofc.iot.yofc-iot-repack-vertx-db@default:default"/>
         <setEntry value="org.eclipse.kura.api@default:default"/>
         <setEntry value="org.eclipse.kura.asset.cloudlet.provider@default:default"/>
         <setEntry value="org.eclipse.kura.asset.helper.provider@default:default"/>

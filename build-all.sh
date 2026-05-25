@@ -137,8 +137,10 @@ else
     echo "=== Stage 2: skipping kura-cloud (clone not found) ==="
 fi
 
-# Pure-library sibling: no bundles to compile, root reactor already includes
-# distrib, so a single `mvn install` builds everything (no second distrib step).
+# Library + IDE-support sibling. Root reactor: target-platform (reficio wrap
+# of 10 yofc-only jars into p2.osgi.bundle:*) -> bundles (yofc-iot-repack-vertx-db)
+# -> pde-deps (Eclipse IDE target delta) -> distrib (.deb). Single `mvn install`
+# walks all four; no second distrib step needed.
 if [ -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" ]; then
     echo "=== Stage 2: building kura-yofc-runtime addon .deb ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" clean install $MAVEN_PROPS \
