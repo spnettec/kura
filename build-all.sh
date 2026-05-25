@@ -23,9 +23,8 @@ MAVEN_PROPS="-B"
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
 
 # Stage 1: monorepo bundles only (target-platform + kura/pom.xml).
-# kura/distrib (kura-core.deb + docker images) moves to Stage 3 because the
-# docker-base assembly pulls sibling jars (web2, ...) from ~/.m2 to bake them
-# into the self-extracting installer.sh — siblings must be installed first.
+# kura/distrib (kura-core.deb) moves to Stage 3 because the docker sibling
+# (Stage 4) consumes kura-core.deb + sibling .debs from ~/.m2.
 mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS || exit 1
 mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS || exit 1
 
@@ -148,9 +147,18 @@ else
     echo "=== Stage 2: skipping kura-yofc-runtime (clone not found) ==="
 fi
 
-# Stage 3: kura-core.deb + docker images. Runs after Stage 2 so docker-base
-# can pull sibling jars (web2 today; more later) from ~/.m2 and bake them
-# into the self-extracting installer.sh.
-echo "=== Stage 3: building kura/distrib (kura-core.deb + docker images) ==="
+# Stage 3: kura-core.deb. Runs after Stage 2 so the .deb (attached as a Maven
+# artifact by jdeb) is available for downstream consumers like kura-docker.
+echo "=== Stage 3: building kura/distrib (kura-core.deb) ==="
 mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
+
+# Stage 4: Docker image (kura-docker sibling). Pulls kura-core.deb + sibling
+# .debs from ~/.m2 and installs them via dpkg -x inside the Dockerfile.
+if [ -f "$SCRIPT_DIR/../kura-docker/pom.xml" ]; then
+    echo "=== Stage 4: building kura-docker image ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 4: skipping kura-docker (clone not found) ==="
+fi
 

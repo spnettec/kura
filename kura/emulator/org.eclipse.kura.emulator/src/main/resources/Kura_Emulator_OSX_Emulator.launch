@@ -74,7 +74,6 @@
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
-        <setEntry value="com.alibaba.fastjson2@default:default"/>
         <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
         <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
@@ -87,6 +86,7 @@
         <setEntry value="com.h2database@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
         <setEntry value="com.sun.xml.bind.jaxb-osgi@default:default"/>
+        <setEntry value="com.yofc.iot.runtime@default:default"/>
         <setEntry value="com.zaxxer.HikariCP@default:default"/>
         <setEntry value="groovy-datetime@default:false"/>
         <setEntry value="groovy-dateutil@default:false"/>
@@ -118,17 +118,9 @@
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
-        <setEntry value="io.vertx.auth-common@default:default"/>
-        <setEntry value="io.vertx.bridge-common@default:default"/>
-        <setEntry value="io.vertx.core-logging@default:default"/>
         <setEntry value="io.vertx.core@default:default"/>
-        <setEntry value="io.vertx.http-proxy@default:default"/>
-        <setEntry value="io.vertx.mqtt@default:default"/>
-        <setEntry value="io.vertx.tcp-eventbus-bridge@default:default"/>
-        <setEntry value="io.vertx.uri-template@default:default"/>
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
-        <setEntry value="io.vertx.web@default:default"/>
         <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api@default:default"/>
@@ -261,7 +253,6 @@
         <setEntry value="org.yaml.snakeyaml@default:default"/>
         <setEntry value="quartz@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
-        <setEntry value="tel.schich.javacan-core@default:default"/>
         <setEntry value="tools.jackson.core.jackson-core@default:default"/>
         <setEntry value="tools.jackson.core.jackson-databind@default:default"/>
     </setAttribute>
