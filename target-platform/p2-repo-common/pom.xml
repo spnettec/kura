@@ -37,12 +37,17 @@
 						</goals>
 						<configuration>
 							<artifacts>
-							<!-- vertx — only shared bundles (kura-camel + others Import-Package these).
+							<!-- vertx — shared bundles (kura-camel + others Import-Package these).
 							     yofc-only Vert.x bundles + fastjson2 + javacan shipped by kura-yofc-runtime sibling. -->
 								<artifact>
 									<id>io.vertx:vertx-core:${vertx.version}</id>
 									<source>true</source>
 									<transitive>true</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-core-logging:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
 								</artifact>
 								<artifact>
 									<id>io.vertx:vertx-web-common:${vertx.version}</id>
@@ -51,6 +56,11 @@
 								</artifact>
 								<artifact>
 									<id>io.vertx:vertx-web-client:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
+									<id>io.vertx:vertx-uri-template:${vertx.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>
 								</artifact>

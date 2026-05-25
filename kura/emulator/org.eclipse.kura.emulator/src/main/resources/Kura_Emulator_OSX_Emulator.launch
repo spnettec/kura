@@ -119,6 +119,8 @@
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
         <setEntry value="io.vertx.core@default:default"/>
+        <setEntry value="io.vertx.core-logging@default:default"/>
+        <setEntry value="io.vertx.uri-template@default:default"/>
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
         <setEntry value="jakarta.activation-api@default:default"/>

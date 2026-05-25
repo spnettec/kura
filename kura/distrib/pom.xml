@@ -598,6 +598,8 @@
                                     groovy-xml,
                                     gson,
                                     io.vertx.core,
+                                    io.vertx.core-logging,
+                                    io.vertx.uri-template,
                                     io.vertx.web-client,
                                     jSerialComm,
                                     jackson-annotations,
