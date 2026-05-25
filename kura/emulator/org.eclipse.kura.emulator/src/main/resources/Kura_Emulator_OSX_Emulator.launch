@@ -74,8 +74,6 @@
         <setEntry value="bcprov@default:default"/>
         <setEntry value="bctls@default:default"/>
         <setEntry value="bcutil@default:default"/>
-        <setEntry value="com.digitalpetri.fsm.strict-machine@default:default"/>
-        <setEntry value="com.digitalpetri.netty.channel-fsm@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
