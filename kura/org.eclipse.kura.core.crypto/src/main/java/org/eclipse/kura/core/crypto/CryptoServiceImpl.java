@@ -72,6 +72,7 @@ public class CryptoServiceImpl implements CryptoService {
     private static final byte[] DEFAULT_SECRET_KEY = "rv;ipse329183!@#".getBytes(StandardCharsets.UTF_8);
     private static final String SECRET_KEY_CREDENTIAL_ID = "kura_encryption_key";
     private static final String SECRET_KEY_SYSTEM_PROPERTY_NAME = "org.eclipse.kura.core.crypto.secretKey";
+    private static final String SECRET_KEY_ENV_VAR_NAME = "KURA_CRYPTO_SECRET_KEY";
 
     private String keystorePasswordPath;
 
@@ -116,7 +117,12 @@ public class CryptoServiceImpl implements CryptoService {
                 .map(k -> {
                     logger.debug("using key from system properties");
                     return k.getBytes(StandardCharsets.UTF_8);
-                });
+                })
+                .or(() -> Optional.ofNullable(System.getenv(SECRET_KEY_ENV_VAR_NAME)).filter(k -> !k.isEmpty())
+                        .map(k -> {
+                            logger.debug("using key from environment variable {}", SECRET_KEY_ENV_VAR_NAME);
+                            return k.getBytes(StandardCharsets.UTF_8);
+                        }));
     }
 
     private static boolean isEncryptionKeyValid(final byte[] key) {
