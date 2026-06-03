@@ -15,6 +15,7 @@ Bundle-ClassPath: .,
  lib/js-language.jar,
  lib/js-scriptengine.jar,
  lib/truffle-runtime.jar,
+ lib/truffle-compiler.jar,
  lib/truffle-enterprise.jar,
  lib/polyglot.jar,
  lib/launcher-common.jar,
@@ -39,4 +40,7 @@ Bundle-ClassPath: .,
  lib/python-resources.jar,
  lib/wasm-language.jar
 Export-Package: org.graalvm.polyglot
+Import-Package: org.eclipse.kura.script.validation;version="[1.0,2.0)",
+ org.slf4j;version="[1.7,3)"
+Service-Component: OSGI-INF/scriptValidationService.xml
 Provide-Capability: osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory

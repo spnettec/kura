@@ -44,6 +44,15 @@
                                     <artifactId>truffle-runtime</artifactId>
                                     <version>${graalvm.version}</version>
                                 </artifactItem>
+                                <!-- Compiler SPI referenced by truffle-runtime's HotSpot runtime. Required so the
+                                     Aries SpiFly weaving hook can resolve the runtime provider class hierarchy under
+                                     Equinox; without it weaving fails with "No Common Superclass:
+                                     LibGraalTruffleCompilationSupport / TruffleCompilationSupport". -->
+                                <artifactItem>
+                                    <groupId>org.graalvm.truffle</groupId>
+                                    <artifactId>truffle-compiler</artifactId>
+                                    <version>${graalvm.version}</version>
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.graalvm.truffle</groupId>
                                     <artifactId>truffle-enterprise</artifactId>

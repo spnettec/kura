@@ -101,6 +101,7 @@ KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
     -Djava.security.policy=\${DIR}/framework/jdk.dio.policy \
     -Djdk.dio.registry=\${DIR}/framework/jdk.dio.properties \
     -Djdk.tls.trustNameService=true \
+    -Dtruffle.UseFallbackRuntime=true \
     -Declipse.consoleLog=true \
     -jar \${DIR}/plugins/org.eclipse.equinox.launcher-${org.eclipse.equinox.launcher.version}.jar \
     -configuration /tmp/.kura/configuration \

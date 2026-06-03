@@ -32,6 +32,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dlog4j.configurationFile=file:${DIR}/log4j/log4j.xml \
         -Dlog4j2.disable.jmx=true \
         -Djdk.tls.trustNameService=true \
+        -Dtruffle.UseFallbackRuntime=true \
         -Dosgi.console=5002 \
         -Declipse.consoleLog=true >> /var/log/kura-console.log 2>> /var/log/kura-console.log \
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
