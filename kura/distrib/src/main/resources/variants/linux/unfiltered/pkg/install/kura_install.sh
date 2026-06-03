@@ -102,4 +102,15 @@ chmod -R go-rwx /opt/eclipse
 chmod a+rx /opt/eclipse
 find /opt/eclipse/kura -type d -exec chmod u+x "{}" \;
 
+# Ensure UTF-8 locale is available before generating the certificate, otherwise
+# Chinese characters in the DN will be corrupted (replaced by '?' fallback chars).
+if ! locale -a 2>/dev/null | grep -qi 'en_US.utf8\|en_US.UTF-8'; then
+    if command -v locale-gen > /dev/null 2>&1; then
+        locale-gen en_US.UTF-8 2>/dev/null || true
+    elif command -v localedef > /dev/null 2>&1; then
+        localedef -i en_US -f UTF-8 en_US.UTF-8 2>/dev/null || true
+    fi
+fi
+export LC_ALL=en_US.UTF-8
+
 keytool -genkey -alias localhost -keyalg RSA -keysize 2048 -keystore /opt/eclipse/kura/user/security/httpskeystore.ks -deststoretype pkcs12 -dname "CN=YOFC, OU=信息技术部, O=长飞光纤光缆股份有限公司, L=武汉, S=湖北, C=中国" -ext ku=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,keyAgreement,keyCertSign -ext eku=serverAuth,clientAuth,codeSigning,timeStamping -validity 1000 -storepass changeit -keypass changeit
