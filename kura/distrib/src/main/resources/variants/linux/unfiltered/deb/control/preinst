@@ -85,25 +85,31 @@ function stopWatchdog {
 # Pre-install script
 function preInstall {
     # On an in-place upgrade (apt install of a newer kura-core over an existing
-    # one), preserve the user's runtime state across the wipe. Three top-level
-    # runtime trees of the current install (reached via the kura symlink) are
-    # copied out to PRESERVE_DIR here and restored by postinst after the new
-    # tree is laid down:
-    #   user/     - snapshots (config history) + security keys + kura_custom
-    #   data/     - persisted runtime state (e.g. H2 db)
-    #   packages/ - installed deployment packages (.dp) + dpa.properties registry
+    # one), preserve the user's runtime state across the wipe. The runtime trees
+    # of the current install (reached via the kura symlink) are copied out to
+    # PRESERVE_DIR here and restored by postinst after the new tree is laid down:
+    #   user/       - snapshots (config history) + security keys + kura_custom
+    #   data/       - persisted runtime state (e.g. H2 db)
+    #   packages/   - installed deployment packages (.dp) + dpa.properties registry
+    #   siblings/   - sibling bundles installed by other kura-*.deb packages
     # The security keys MUST travel with the snapshots, otherwise the (encrypted)
     # snapshots can no longer be decrypted.
     if [ "${ACTION}" = "upgrade" ] && [ -e "${INSTALL_DIR}/kura" ]; then
-        echo "Upgrade detected: preserving user/, data/ and packages/ (snapshots, keys, deployment packages)" >> "${LOG}" 2>&1
+        echo "Upgrade detected: preserving user/, data/, packages/ and siblings/ (snapshots, keys, deployment packages, sibling bundles)" >> "${LOG}" 2>&1
         rm -rf "${PRESERVE_DIR}" >> "${LOG}" 2>&1
         mkdir -p "${PRESERVE_DIR}" >> "${LOG}" 2>&1
         # cp -a follows into the symlinked kura dir and keeps perms/ownership.
-        for d in user data packages; do
+        for d in user data packages siblings; do
             if [ -d "${INSTALL_DIR}/kura/${d}" ]; then
                 cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1
             fi
         done
+        # Preserve the sibling install-order registry so gen_config_ini.sh
+        # maintains the correct bundle precedence after the upgrade.
+        if [ -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
+            mkdir -p "${PRESERVE_DIR}/framework" >> "${LOG}" 2>&1
+            cp -a "${INSTALL_DIR}/kura/framework/sibling-install-order" "${PRESERVE_DIR}/framework/sibling-install-order" >> "${LOG}" 2>&1
+        fi
     fi
 
     #clean up old installation if present

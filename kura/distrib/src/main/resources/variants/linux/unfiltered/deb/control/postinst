@@ -116,7 +116,8 @@ function postInstall {
     mkdir -p ${INSTALL_DIR}/kura/log
 
     # Restore the runtime trees preserved by preinst across an in-place upgrade
-    # (user/ snapshots + keys, data/, packages/ deployment packages + registry).
+    # (user/ snapshots + keys, data/, packages/ deployment packages + registry,
+    # siblings/ sibling bundles, framework/sibling-install-order precedence).
     # This overwrites the factory defaults just laid down by kura_install.sh with
     # the user's state. Staging is left in place if the copy-back fails, so
     # nothing is lost.
@@ -124,14 +125,19 @@ function postInstall {
     WAS_UPGRADE=0
     if [ -d "${PRESERVE_DIR}" ]; then
         WAS_UPGRADE=1
-        echo "Restoring preserved user/, data/ and packages/ from the previous installation" >> ${LOG} 2>&1
+        echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
         RESTORE_OK=1
-        for d in user data packages; do
+        for d in user data packages siblings; do
             if [ -d "${PRESERVE_DIR}/${d}" ]; then
                 mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
                 cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
             fi
         done
+        # Restore the sibling install-order registry so gen_config_ini.sh
+        # keeps the correct bundle precedence after the upgrade.
+        if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
+            cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
+        fi
         # Refresh the snapshot_0 recovery copy from the restored snapshots.
         if [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
             cp "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || true
