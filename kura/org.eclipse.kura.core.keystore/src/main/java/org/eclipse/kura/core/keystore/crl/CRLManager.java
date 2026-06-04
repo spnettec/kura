@@ -178,7 +178,7 @@ public class CRLManager implements Closeable {
             this.updateTask.get().cancel(false);
         }
 
-        logger.info("scheduling next CRL check in {} ms (nextUpdate-aligned)", scheduleDelayMs);
+        logger.debug("scheduling next CRL check in {} ms (nextUpdate-aligned)", scheduleDelayMs);
         this.updateTask = Optional.of(this.updateExecutor.schedule(() -> {
             try {
                 update();
@@ -266,7 +266,7 @@ public class CRLManager implements Closeable {
             final X509CRL stored = storedCrl.get().getCrl();
 
             if (stored.equals(newCrl)) {
-                logger.info("current CRL is up to date");
+                logger.debug("current CRL is up to date");
                 state.lastDownloadInstantNanos = OptionalLong.of(now);
                 return false;
             }
