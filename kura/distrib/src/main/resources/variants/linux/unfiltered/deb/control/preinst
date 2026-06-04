@@ -19,9 +19,28 @@ WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
 
+# dpkg passes the maintainer-script action in $1 ("install" / "upgrade").
+# Captured here at top level because preInstall() runs as a background job and
+# bash functions shadow the positional parameters.
+ACTION="$1"
+# Staging area for data preserved across an in-place upgrade. NOTE: the name
+# must NOT start with "kura" so the "rm -fr /opt/eclipse/kura*" wipe below skips
+# it (the glob only matches paths beginning literally with "kura").
+PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
+# Print the space-separated list of currently-installed Kura sibling packages
+# (every kura-* package except kura-core itself), according to dpkg. Empty when
+# no sibling is installed. Uses dpkg state, so it is accurate even though the
+# upgrade wipe is about to remove the sibling files on disk.
+function installedSiblings {
+    dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
+        | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
+        | tr '\n' ' '
+}
+
 # Run preInstall function and start watchdog if needed
 function runPreInstall {
     if [ -f "${WD_TMP_FILE}" ]; then
@@ -65,6 +84,28 @@ function stopWatchdog {
 
 # Pre-install script
 function preInstall {
+    # On an in-place upgrade (apt install of a newer kura-core over an existing
+    # one), preserve the user's runtime state across the wipe. Three top-level
+    # runtime trees of the current install (reached via the kura symlink) are
+    # copied out to PRESERVE_DIR here and restored by postinst after the new
+    # tree is laid down:
+    #   user/     - snapshots (config history) + security keys + kura_custom
+    #   data/     - persisted runtime state (e.g. H2 db)
+    #   packages/ - installed deployment packages (.dp) + dpa.properties registry
+    # The security keys MUST travel with the snapshots, otherwise the (encrypted)
+    # snapshots can no longer be decrypted.
+    if [ "${ACTION}" = "upgrade" ] && [ -e "${INSTALL_DIR}/kura" ]; then
+        echo "Upgrade detected: preserving user/, data/ and packages/ (snapshots, keys, deployment packages)" >> "${LOG}" 2>&1
+        rm -rf "${PRESERVE_DIR}" >> "${LOG}" 2>&1
+        mkdir -p "${PRESERVE_DIR}" >> "${LOG}" 2>&1
+        # cp -a follows into the symlinked kura dir and keeps perms/ownership.
+        for d in user data packages; do
+            if [ -d "${INSTALL_DIR}/kura/${d}" ]; then
+                cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1
+            fi
+        done
+    fi
+
     #clean up old installation if present
     rm -fr /opt/eclipse/kura* >> "${LOG}" 2>&1
     rm -fr ${INSTALL_DIR}/kura* >> "${LOG}" 2>&1
@@ -86,8 +127,24 @@ function preInstall {
 PIDS=`pgrep java`
 
 echo ""
+if [ "${ACTION}" = "upgrade" ]; then
+    SIBLINGS=$(installedSiblings)
+    echo "Upgrade install of kura-core (in place). Snapshots, deployment packages (.dp) and security keys are preserved."
+    echo "UPGRADE INSTALL of kura-core (in place); preserving snapshots/dp/keys" > "${LOG}" 2>&1
+    if [ -n "${SIBLINGS}" ]; then
+        echo "###################################################################################"
+        echo "#  WARNING: only kura-core is being upgraded. These already-installed sibling      #"
+        echo "#  packages stay at their current versions and may be INCOMPATIBLE with the new    #"
+        echo "#  core (changed API packages, OSGi versions, snapshot format):                    #"
+        echo "#      ${SIBLINGS}"
+        echo "#  If the gateway misbehaves after the upgrade, reinstall the matching sibling     #"
+        echo "#  .deb versions.                                                                  #"
+        echo "###################################################################################"
+        echo "Installed siblings not upgraded (possible incompatibility): ${SIBLINGS}" >> "${LOG}" 2>&1
+    fi
+fi
 echo "Installing Kura..."
-echo "Installing Kura..." > "${LOG}" 2>&1
+echo "Installing Kura..." >> "${LOG}" 2>&1
 
 # Kill Kura for installation
 if [ -f "/var/run/kura.pid" ] ; then

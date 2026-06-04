@@ -107,33 +107,9 @@ function preRemove {
 # PRE-REMOVE SCRIPT
 ##############################################
 
-# Fail if the first argument is 'upgrade' or 'failed-upgrade'
-if [ "$1" == "upgrade" ]; then
-    echo ""
-    echo "#####################################################################"
-    echo "#                                                                   #"
-    echo "#  ERROR: KURA upgrade is NOT supported!                            #"
-    echo "#  Please uninstall the existing version before upgrading.          #"
-    echo "#                                                                   #"
-    echo "#  To prevent accidental upgrades, you can hold this package with:  #"
-    echo "#      sudo apt-mark hold kura                                      #"
-    echo "#                                                                   #"
-    echo "#####################################################################"
-    echo ""
-    exit 1
-fi
-
-if [ "$1" == "failed-upgrade" ]; then
-    echo "This package cannot be upgraded. Please uninstall the existing version before installing a new one."
-    exit 1
-fi
-
-echo ""
-echo "Uninstalling KURA..."
-
+# Stop a running Kura before either an upgrade or a removal.
 PIDS=`pgrep java`
 
-# Kill Kura for installation
 if [ -f "/var/run/kura.pid" ] ; then
   KURA_PID=`cat /var/run/kura.pid`
 
@@ -144,6 +120,24 @@ if [ -f "/var/run/kura.pid" ] ; then
     fi
   done
 fi
+
+# In-place upgrade: just stop the running instance. The host integration
+# (systemd unit, logrotate cron, tmpfiles) is rebuilt by the new package's
+# kura_install.sh, and the user's data (snapshots, deployment packages, keys)
+# is carried over by the new package's preinst/postinst — so we deliberately
+# skip the teardown below, which would otherwise churn those files.
+if [ "$1" == "upgrade" ]; then
+    echo "Upgrading KURA: stopping the running instance; snapshots, deployment packages and keys are preserved."
+    exit 0
+fi
+
+# A failed upgrade is recovered by the new package's scripts; nothing to tear down.
+if [ "$1" == "failed-upgrade" ]; then
+    exit 0
+fi
+
+echo ""
+echo "Uninstalling KURA..."
 
 runPreRemove >> "$LOG" 2>&1
 

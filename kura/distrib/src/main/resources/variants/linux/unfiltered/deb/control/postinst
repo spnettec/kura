@@ -22,6 +22,15 @@ TIMEOUT_TIME=300
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
+# Print the space-separated list of currently-installed Kura sibling packages
+# (every kura-* package except kura-core itself), according to dpkg. Empty when
+# no sibling is installed.
+function installedSiblings {
+    dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
+        | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
+        | tr '\n' ' '
+}
+
 # Run postInstall function and start watchdog if needed
 function runPostInstall {
     if [ -f "${WD_TMP_FILE}" ]; then
@@ -106,11 +115,58 @@ function postInstall {
     # so they survive package removal.
     mkdir -p ${INSTALL_DIR}/kura/log
 
+    # Restore the runtime trees preserved by preinst across an in-place upgrade
+    # (user/ snapshots + keys, data/, packages/ deployment packages + registry).
+    # This overwrites the factory defaults just laid down by kura_install.sh with
+    # the user's state. Staging is left in place if the copy-back fails, so
+    # nothing is lost.
+    PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+    WAS_UPGRADE=0
+    if [ -d "${PRESERVE_DIR}" ]; then
+        WAS_UPGRADE=1
+        echo "Restoring preserved user/, data/ and packages/ from the previous installation" >> ${LOG} 2>&1
+        RESTORE_OK=1
+        for d in user data packages; do
+            if [ -d "${PRESERVE_DIR}/${d}" ]; then
+                mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
+                cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+        done
+        # Refresh the snapshot_0 recovery copy from the restored snapshots.
+        if [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
+            cp "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || true
+        fi
+        chown -R kurad:kurad "${INSTALL_DIR}/kura/user" "${INSTALL_DIR}/kura/data" "${INSTALL_DIR}/kura/packages" >> ${LOG} 2>&1 || true
+        if [ "${RESTORE_OK}" = "1" ]; then
+            rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1
+            echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
+        else
+            echo "WARNING: could not fully restore preserved data; kept at ${PRESERVE_DIR} for manual recovery" >> ${LOG} 2>&1
+        fi
+    fi
+
     #flush all cached filesystem to disk
     sync
 
     echo ""
-    echo "Finished. KURA has been installed to ${INSTALL_DIR}/kura and will start automatically after a reboot"
+    if [ "${WAS_UPGRADE}" = "1" ]; then
+        echo "Finished. KURA has been UPGRADED in place at ${INSTALL_DIR}/kura and will start automatically after a reboot"
+        echo "Snapshots, deployment packages and security keys were preserved."
+        SIBLINGS=$(installedSiblings)
+        if [ -n "${SIBLINGS}" ]; then
+            echo ""
+            echo "****************************************************************"
+            echo "UPGRADE WARNING: only kura-core was upgraded. These installed"
+            echo "sibling packages were NOT upgraded and may be incompatible with"
+            echo "the new core:"
+            echo "    ${SIBLINGS}"
+            echo "Reinstall the matching sibling .deb versions if the gateway"
+            echo "misbehaves."
+            echo "****************************************************************"
+        fi
+    else
+        echo "Finished. KURA has been installed to ${INSTALL_DIR}/kura and will start automatically after a reboot"
+    fi
     echo ""
     echo "****************************************************************"
     echo "WARNING: Set the crypto service encryption key as explained in Eclipse Kura"
