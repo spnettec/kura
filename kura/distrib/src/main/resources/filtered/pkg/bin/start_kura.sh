@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2025 Eurotech and/or its affiliates and others
+#  Copyright (c) 2025, 2026 Eurotech and/or its affiliates and others
 #
 #  This program and the accompanying materials are made
 #  available under the terms of the Eclipse Public License 2.0
@@ -55,7 +55,7 @@ done
 
 # set up the configuration area
 mkdir -p /tmp/.kura/configuration
-\${DIR}/bin/gen_config_ini.sh \${DIR}/framework/config.ini \${DIR}/plugins \${DIR}/siblings > /tmp/.kura/configuration/config.ini
+\${DIR}/bin/gen_config_ini.sh \${DIR}/framework/config.ini \${DIR}/plugins > /tmp/.kura/configuration/config.ini
 
 if [[ -n "${KURA_DEBUG_MODE}" && "${KURA_DEBUG_MODE}" == "true" ]]; then
     IS_DEBUG_MODE="true"
@@ -90,7 +90,7 @@ KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
     -Dkura.os.version=${kura.os.version} \
     -Dkura.arch=${kura.arch} \
     -Dtarget.device=${target.device} \
-    -Dorg.eclipse.kura.core.crypto.secretKey=\"$KURA_CRYPTO_SECRET_KEY\" \
+    -Dorg.eclipse.kura.core.crypto.secretKey="$KURA_CRYPTO_SECRET_KEY" \
     -Declipse.ignoreApp=true \
     -Dkura.home=\${DIR} \
     -Dkura.configuration=file:\${DIR}/framework/kura.properties \
@@ -98,10 +98,7 @@ KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
     -Ddpa.configuration=\${DIR}/packages/dpa.properties \
     -Dlog4j.configurationFile=file:\${DIR}/log4j/log4j.xml \
     -Dlog4j2.disable.jmx=true \
-    -Djava.security.policy=\${DIR}/framework/jdk.dio.policy \
-    -Djdk.dio.registry=\${DIR}/framework/jdk.dio.properties \
     -Djdk.tls.trustNameService=true \
-    -Dtruffle.UseFallbackRuntime=true \
     -Declipse.consoleLog=true \
     -jar \${DIR}/plugins/org.eclipse.equinox.launcher-${org.eclipse.equinox.launcher.version}.jar \
     -configuration /tmp/.kura/configuration \
