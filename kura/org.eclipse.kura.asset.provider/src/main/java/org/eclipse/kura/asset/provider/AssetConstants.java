@@ -30,6 +30,9 @@ public enum AssetConstants {
     /** Asset Description Property to be used in the configuration. */
     ASSET_DESC_PROP("asset.desc"),
 
+    /** Request timeout property to be used in the configuration. */
+    REQUEST_TIMEOUT_PROP("request.timeout"),
+
     /** Driver PID Property to be used in the configuration. */
     ASSET_DRIVER_PROP("driver.pid"),
 

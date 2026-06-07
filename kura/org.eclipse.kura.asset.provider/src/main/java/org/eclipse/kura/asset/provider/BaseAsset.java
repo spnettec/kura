@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -256,7 +258,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             updateChannelListenerRegistrations(this.channelListeners, this.config.getAssetConfiguration());
             newState.syncChannelListeners(this.channelListeners,
                     this.config.getAssetConfiguration().getAssetChannels());
-        }, 60, TimeUnit.SECONDS);
+        });
     }
 
     public void unsetDriver() {
@@ -269,7 +271,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                     onPreparedReadReleased(preparedRead);
                 }
                 oldState.shutdown();
-            }, 60, TimeUnit.SECONDS);
+            });
         }
     }
 
@@ -340,7 +342,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final BaseAssetConfiguration conf = this.config;
 
-        final List<ChannelRecord> channelRecords = this.executor.runIO(() -> {
+        final List<ChannelRecord> channelRecords = unwrap(this.executor.runIO(() -> {
             final List<ChannelRecord> records;
             final PreparedRead preparedRead = state.getPreparedRead();
             if (preparedRead != null) {
@@ -352,7 +354,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 }
             }
             return records;
-        }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+        }));
 
         logger.debug("Reading asset channels...Done");
         return getFinalRecords(channelRecords, this.config.getAssetConfiguration().getAssetChannels());
@@ -407,10 +409,10 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            this.executor.runIO(() -> {
+            unwrap(this.executor.runIO(() -> {
                 state.getDriver().read(validRecords);
                 return null;
-            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+            }));
         }
 
         logger.debug("Reading asset channels...Done");
@@ -575,8 +577,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             return;
         }
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels), 60,
-                TimeUnit.SECONDS);
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels));
     }
 
     /** {@inheritDoc} */
@@ -601,8 +602,7 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
         final Map<String, Channel> channels = this.config.getAssetConfiguration().getAssetChannels();
 
-        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels), 60,
-                TimeUnit.SECONDS);
+        this.executor.runConfig(() -> state.syncChannelListeners(this.channelListeners, channels));
     }
 
     protected void onPreparedReadCreated(PreparedRead preparedRead) {
@@ -664,12 +664,23 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
         }
 
         if (!validRecords.isEmpty()) {
-            this.executor.runIO(() -> {
+            unwrap(this.executor.runIO(() -> {
                 state.getDriver().write(validRecords);
                 return null;
-            }, this.config.getRequestTimeOut(), TimeUnit.SECONDS);
+            }));
         }
         logger.debug("Writing to channels...Done");
+    }
+
+    private static <T> T unwrap(final CompletableFuture<T> future) throws KuraException {
+        try {
+            return future.get();
+        } catch (final ExecutionException e) {
+            final Throwable cause = e.getCause();
+            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, cause, cause.getMessage());
+        } catch (final Exception e) {
+            throw new KuraException(KuraErrorCode.CONNECTION_FAILED, e, e.getMessage());
+        }
     }
 
     protected boolean isChannelListenerValid(final ChannelListenerHolder reg, final Channel channel) {

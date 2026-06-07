@@ -14,6 +14,7 @@ package org.eclipse.kura.asset.provider;
 
 import static org.eclipse.kura.asset.provider.AssetConstants.ASSET_DESC_PROP;
 import static org.eclipse.kura.asset.provider.AssetConstants.ASSET_DRIVER_PROP;
+import static org.eclipse.kura.asset.provider.AssetConstants.REQUEST_TIMEOUT_PROP;
 
 import org.eclipse.kura.core.configuration.metatype.Tad;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
@@ -34,6 +35,15 @@ public class BaseAssetOCD extends Tocd {
         assetDescriptionAd.setDescription("Asset Description");
         assetDescriptionAd.setRequired(false);
 
+        final Tad requestTimeoutAd = new Tad();
+        requestTimeoutAd.setId(REQUEST_TIMEOUT_PROP.value());
+        requestTimeoutAd.setName("%requestTimeout");
+        requestTimeoutAd.setCardinality(0);
+        requestTimeoutAd.setType(Tscalar.INTEGER);
+        requestTimeoutAd.setDescription("%requestTimeoutDesc");
+        requestTimeoutAd.setRequired(true);
+        requestTimeoutAd.setDefault("10");
+
         final Tad driverNameAd = new Tad();
         driverNameAd.setId(ASSET_DRIVER_PROP.value());
         driverNameAd.setName(ASSET_DRIVER_PROP.value());
@@ -43,6 +53,7 @@ public class BaseAssetOCD extends Tocd {
         driverNameAd.setRequired(true);
 
         addAD(assetDescriptionAd);
+        addAD(requestTimeoutAd);
         addAD(driverNameAd);
     }
 

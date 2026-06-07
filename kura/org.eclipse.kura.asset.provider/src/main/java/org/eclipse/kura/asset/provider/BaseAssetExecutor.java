@@ -15,17 +15,10 @@ package org.eclipse.kura.asset.provider;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.eclipse.kura.KuraErrorCode;
-import org.eclipse.kura.KuraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.SimpleTimeLimiter;
-import com.google.common.util.concurrent.TimeLimiter;
 
 public class BaseAssetExecutor {
 
@@ -36,8 +29,6 @@ public class BaseAssetExecutor {
 
     private final ExecutorService configExecutor;
     private final boolean isConfigExecutorShared;
-    private final TimeLimiter ioTimeLimiter;
-    private final TimeLimiter configTimeLimiter;
 
     private final AtomicReference<CompletableFuture<Void>> queue = new AtomicReference<>(
             CompletableFuture.completedFuture(null));
@@ -52,47 +43,36 @@ public class BaseAssetExecutor {
         this.isIoExecutorShared = isIoExecutorShared;
         this.configExecutor = configExecutor;
         this.isConfigExecutorShared = isConfigExecutorShared;
-        this.ioTimeLimiter = SimpleTimeLimiter.create(ioExecutor);
-        this.configTimeLimiter = SimpleTimeLimiter.create(configExecutor);
-
     }
 
-    public <T> T runIO(final Callable<T> task, long timeOut, TimeUnit timeUnit) throws KuraException {
-        try {
-            return ioTimeLimiter.callWithTimeout(task, timeOut, timeUnit);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo interrupt error",
-                    "call Interrupted-" + e.getMessage());
-        } catch (TimeoutException e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo timeout error", "call timeout-" + e.getMessage());
-        } catch (Exception e) {
-            throw new KuraException(KuraErrorCode.IO_ERROR, "runIo error", "call exception-" + e.getMessage());
-        }
+    public <T> CompletableFuture<T> runIO(final Callable<T> task) {
+        final CompletableFuture<T> result = new CompletableFuture<>();
 
+        this.ioExecutor.execute(() -> {
+            try {
+                result.complete(task.call());
+            } catch (Exception e) {
+                result.completeExceptionally(e);
+            }
+        });
+
+        return result;
     }
 
-    public CompletableFuture<Void> runConfig(final Runnable task, long timeOut, TimeUnit timeUnit) {
+    public CompletableFuture<Void> runConfig(final Runnable task) {
 
         final CompletableFuture<Void> next = new CompletableFuture<>();
         final CompletableFuture<Void> previous = this.queue.getAndSet(next);
 
-        previous.whenComplete((ok, err) -> {
+        previous.whenComplete((ok, err) -> this.configExecutor.execute(() -> {
             try {
-                configTimeLimiter.runWithTimeout(task, timeOut, timeUnit);
+                task.run();
                 next.complete(null);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.warn("config task run interrupt failed", e);
-                next.completeExceptionally(e);
-            } catch (TimeoutException e) {
-                logger.warn("config task run timeout failed", e);
-                next.completeExceptionally(e);
             } catch (Exception e) {
-                logger.warn("config task run failed", e);
+                logger.warn("Asset task failed", e);
                 next.completeExceptionally(e);
             }
-        });
+        }));
 
         return next;
     }
