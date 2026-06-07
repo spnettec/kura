@@ -114,7 +114,7 @@ public final class BaseAssetConfiguration {
             final Channel channel = e.getValue();
             if (channel.isEnabled()
                     && (channel.getType() == ChannelType.READ || channel.getType() == ChannelType.READ_WRITE)) {
-                readRecords.add(ChannelRecordHelper.createModifiedChannelRecord(channel));
+                readRecords.add(ChannelRecordHelper.createModifiedChannelRecord(channel, this.requestTimeOut));
             }
         }
 

@@ -28,7 +28,7 @@ public class ChannelRecordHelper {
         // Private constructor to prevent instantiation
     }
 
-    public static ChannelRecord createModifiedChannelRecord(Channel channel) {
+    public static ChannelRecord createModifiedChannelRecord(Channel channel, int requestTimeout) {
 
         DataType actualDataType = channel.getScaleOffsetType() == ScaleOffsetType.DEFINED_BY_VALUE_TYPE
                 ? channel.getValueType()
@@ -39,6 +39,7 @@ public class ChannelRecordHelper {
 
         Map<String, Object> configMap = new HashMap<>(channel.getConfiguration());
         configMap.put(AssetConstants.VALUE_TYPE.value(), actualDataType.name());
+        configMap.put("request.timeout", requestTimeout);
         channelRecord.setChannelConfig(configMap);
 
         return channelRecord;

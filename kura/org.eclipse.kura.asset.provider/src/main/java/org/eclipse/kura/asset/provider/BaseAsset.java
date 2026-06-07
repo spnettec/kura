@@ -399,7 +399,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 continue;
             }
 
-            final ChannelRecord channelRecord = ChannelRecordHelper.createModifiedChannelRecord(channel);
+            final ChannelRecord channelRecord = ChannelRecordHelper.createModifiedChannelRecord(channel,
+                    this.config.getRequestTimeOut());
             channel.createReadRecord();
             validRecords.add(channelRecord);
             channelRecords.add(channelRecord);
@@ -656,7 +657,9 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
                 continue;
             }
 
-            channelRecord.setChannelConfig(channel.getConfiguration());
+            final Map<String, Object> channelConfig = new HashMap<>(channel.getConfiguration());
+            channelConfig.put("request.timeout", this.config.getRequestTimeOut());
+            channelRecord.setChannelConfig(channelConfig);
             validRecords.add(channelRecord);
         }
 
