@@ -57,7 +57,7 @@
         <guava.version>33.4.0-jre</guava.version>
         <hikaricp.version>5.1.0</hikaricp.version>
         <hk2.version>3.1.1</hk2.version>
-        <io.netty.version>4.2.13.Final</io.netty.version>
+        <io.netty.version>4.2.15.Final</io.netty.version>
         <javassist.version>3.30.2-GA</javassist.version>
         <jersey.version>3.1.9</jersey.version>
         <log4j.version>2.25.4</log4j.version>
@@ -94,7 +94,7 @@
         <osgi-resource-locator.version>1.0.3</osgi-resource-locator.version>
         <osgi.annotation.version>8.1.0</osgi.annotation.version>
         <quartz.version>2.5.0</quartz.version>
-        <slf4j.version>2.0.17</slf4j.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <spring.version>6.0.10_1</spring.version>
         <!-- END common dependencies -->
         <!-- START Jakarta dependencies -->
@@ -164,19 +164,19 @@
         <org.eclipse.soda.dk.comm.version>2.0.0-SNAPSHOT</org.eclipse.soda.dk.comm.version>
         <!--<org.moka7.version>2.0.0-SNAPSHOT</org.moka7.version>-->
 
-        <vertx.version>5.0.12</vertx.version>
+        <vertx.version>5.1.2</vertx.version>
         <org.apache.groovy.version>5.0.5</org.apache.groovy.version>
         <commons-text.version>1.13.1</commons-text.version>
-        <!-- Jackson 2.x: annotations 只发到 2.21（系列内无 patch release），core / databind 跟到 2.21.3 -->
-        <com.fasterxml.jackson.annotations.version>2.21</com.fasterxml.jackson.annotations.version>
-        <com.fasterxml.jackson.core.version>2.21.3</com.fasterxml.jackson.core.version>
-        <com.fasterxml.jackson.databind.version>2.21.3</com.fasterxml.jackson.databind.version>
-        <tools.jackson.version>3.1.2</tools.jackson.version>
+        <!-- Jackson 2.x: annotations 只发到 2.22（系列内无 patch release），core / databind 跟到 2.22.0 -->
+        <com.fasterxml.jackson.annotations.version>2.22</com.fasterxml.jackson.annotations.version>
+        <com.fasterxml.jackson.core.version>2.22.0</com.fasterxml.jackson.core.version>
+        <com.fasterxml.jackson.databind.version>2.22.0</com.fasterxml.jackson.databind.version>
+        <tools.jackson.version>3.2.0</tools.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
         <org.yaml.snakeyaml.mvn.version>2.6</org.yaml.snakeyaml.mvn.version>
         <org.apache.felix.fileinstall.version>3.7.4</org.apache.felix.fileinstall.version>
         <jSerialComm.version>2.11.4</jSerialComm.version>
-        <net.java.dev.jna.version>5.17.0</net.java.dev.jna.version>
+        <net.java.dev.jna.version>5.19.1</net.java.dev.jna.version>
         <io.vavr.version>1.0.0</io.vavr.version>
         <org.jspecify.version>1.0.0</org.jspecify.version>
         <org.apache.commons.codec.version>1.21.0</org.apache.commons.codec.version>

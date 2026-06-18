@@ -16,31 +16,19 @@
         <setEntry value="com.yofc.iot.yofc-iot-apps-visa"/>
         <setEntry value="org.eclipse.kura.ai.triton.server"/>
         <setEntry value="org.eclipse.kura.core.comm"/>
-        <setEntry value="org.eclipse.kura.core.net.test"/>
-        <setEntry value="org.eclipse.kura.core.testutil"/>
         <setEntry value="org.eclipse.kura.emulator.usb"/>
         <setEntry value="org.eclipse.kura.linux.clock"/>
         <setEntry value="org.eclipse.kura.linux.net"/>
-        <setEntry value="org.eclipse.kura.linux.net.test"/>
         <setEntry value="org.eclipse.kura.linux.position"/>
-        <setEntry value="org.eclipse.kura.linux.position.test"/>
         <setEntry value="org.eclipse.kura.linux.systemd.provider"/>
         <setEntry value="org.eclipse.kura.linux.usb"/>
         <setEntry value="org.eclipse.kura.linux.usb.aarch64"/>
         <setEntry value="org.eclipse.kura.linux.usb.x86_64"/>
         <setEntry value="org.eclipse.kura.linux.watchdog"/>
         <setEntry value="org.eclipse.kura.net.admin.firewall"/>
-        <setEntry value="org.eclipse.kura.net.admin.firewall.test"/>
-        <setEntry value="org.eclipse.kura.net.configuration.test"/>
         <setEntry value="org.eclipse.kura.network.threat.manager"/>
-        <setEntry value="org.eclipse.kura.network.threat.manager.test"/>
         <setEntry value="org.eclipse.kura.nm"/>
-        <setEntry value="org.eclipse.kura.nm.test"/>
-        <setEntry value="org.eclipse.kura.rest.network.configuration.provider.test"/>
-        <setEntry value="org.eclipse.kura.rest.network.status.provider.test"/>
-        <setEntry value="org.eclipse.kura.rest.position.provider.test"/>
         <setEntry value="org.eclipse.kura.stress"/>
-        <setEntry value="org.eclipse.kura.test"/>
     </setAttribute>
     <stringAttribute key="featureDefaultLocation" value="workspace"/>
     <stringAttribute key="featurePluginResolution" value="workspace"/>
@@ -116,8 +104,8 @@
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
         <setEntry value="io.vavr@default:default"/>
-        <setEntry value="io.vertx.core@default:default"/>
         <setEntry value="io.vertx.core-logging@default:default"/>
+        <setEntry value="io.vertx.core@default:default"/>
         <setEntry value="io.vertx.uri-template@default:default"/>
         <setEntry value="io.vertx.web-client@default:default"/>
         <setEntry value="io.vertx.web-common@default:default"/>
