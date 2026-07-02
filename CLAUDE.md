@@ -206,6 +206,16 @@ WARN  Error creating configuration with pid: <pid> and factory pid: <factoryPid>
 
 **禁止 cherry-pick** 上游硬编码加密路径的 commit（会回退到强制加密），跟 `[[project_cloudconnection_i18n]]` 同样属于 YOFC 设计偏离区。
 
+### Snapshot XML 解析失败 — 改名而非删除
+
+`ConfigurationServiceImpl.loadLatestSnapshotConfigurations()` 加载最新快照时，如果 XML 解析失败（`DECODER_ERROR`），原逻辑是 `deleteSnapshotId(id)` 直接删除 → 递归试上一个。如果连续多个快照损坏会导致数据丢失。
+
+**已改为 `renameSnapshotToBad(id)`** — 将 `snapshot_N.xml` 重命名为 `snapshot_N.xml.bad`，保留现场。重命名失败时 fallback 到删除。
+
+### Snapshot XML 写入 — CDATA 自动包裹
+
+`XmlJavaComponentConfigurationsMapper.marshal()` 写出 `<esf:value>` 时，如果值含有 `<`、`>` 或 `&`，自动用 `<![CDATA[...]]>` 包裹。这样 `initCode`、`xml.data` 等内联代码可以直接嵌入原始源码，不会因转义问题导致快照 XML 解析失败。
+
 ## 上游同步策略
 
 - 不能用 `git merge -s ours` 来跳过单个 commit——会把 ancestor 也吞掉
