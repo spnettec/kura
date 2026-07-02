@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1472,8 +1473,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                             : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
             if (isEncrypt != null && !isEncrypt) {
                 if (e instanceof KuraException && ((KuraException) e).getCode() == KuraErrorCode.DECODER_ERROR) {
-                    logger.error("error snapshot config file, id:{}. delete it", lastestID, e);
-                    deleteSnapshotId(lastestID);
+                    logger.error("error snapshot config file, id:{}. rename to .bad", lastestID, e);
+                    renameSnapshotToBad(lastestID);
                     return loadLatestSnapshotConfigurations();
                 }
                 throw KuraException.internalError(e);
@@ -1487,8 +1488,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 }
             } catch (Exception ex) {
                 if (ex instanceof KuraException && ((KuraException) ex).getCode() == KuraErrorCode.DECODER_ERROR) {
-                    logger.error("error encrypt snapshot config file, id:{}. delete it", lastestID, e);
-                    deleteSnapshotId(lastestID);
+                    logger.error("error encrypt snapshot config file, id:{}. rename to .bad", lastestID, e);
+                    renameSnapshotToBad(lastestID);
                     return loadLatestSnapshotConfigurations();
                 }
                 throw KuraException.internalError(e);
@@ -1520,6 +1521,31 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
 
         return configs;
+    }
+
+    private void renameSnapshotToBad(long snapshotID) throws KuraException {
+        String configDir = getSnapshotsDirectory();
+
+        if (configDir == null) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND,
+                    configDir != null ? configDir : "null");
+        }
+
+        StringBuilder sbSnapshot = new StringBuilder(configDir);
+        sbSnapshot.append(File.separator).append("snapshot_").append(snapshotID).append(".xml");
+
+        File snapshot = new File(sbSnapshot.toString());
+        File badFile = new File(sbSnapshot.append(".bad").toString());
+        try {
+            Files.move(snapshot.toPath(), badFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Renamed bad snapshot {} -> {}", snapshot.getAbsolutePath(), badFile.getAbsolutePath());
+        } catch (IOException e) {
+            logger.warn("Failed to rename snapshot {}, deleting instead", snapshot.getAbsolutePath());
+            try {
+                Files.deleteIfExists(snapshot.toPath());
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     private void deleteSnapshotId(long snapshotID) throws KuraException {

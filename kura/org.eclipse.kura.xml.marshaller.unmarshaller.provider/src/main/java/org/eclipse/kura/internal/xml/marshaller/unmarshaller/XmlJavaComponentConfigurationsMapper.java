@@ -265,7 +265,11 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                     if (hasValue) {
                         for (String value : values) {
                             xml.writeStartElement("esf", "value", "");
-                            xml.writeCharacters(value);
+                            if (value.indexOf('<') >= 0 || value.indexOf('>') >= 0 || value.indexOf('&') >= 0) {
+                                xml.writeCData(value);
+                            } else {
+                                xml.writeCharacters(value);
+                            }
                             xml.writeEndElement();
                         }
                     }
