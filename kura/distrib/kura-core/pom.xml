@@ -38,23 +38,7 @@
         <target.device>linux</target.device>
         <dist.build.name>linux</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
-        <dist.empty.dpa.skip>false</dist.empty.dpa.skip>
     </properties>
-
-    <profiles>
-        <profile>
-            <id>include-dp-install-list</id>
-            <activation>
-                <property>
-                    <name>dist.dp.skip</name>
-                    <value>false</value>
-                </property>
-            </activation>
-            <properties>
-                <dist.empty.dpa.skip>true</dist.empty.dpa.skip>
-            </properties>
-        </profile>
-    </profiles>
 
    <build>
         <resources>
@@ -79,49 +63,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-yofc-dp-into-tree</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${dist.dp.skip}</skip>
-                            <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.yofc.iot</groupId>
-                                    <artifactId>yofc-iot-api-comp</artifactId>
-                                    <version>${yofc.dp.version}</version>
-                                    <type>dp</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.yofc.iot</groupId>
-                                    <artifactId>yofc-iot-apps-comp</artifactId>
-                                    <version>${yofc.dp.version}</version>
-                                    <type>dp</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.yofc.iot</groupId>
-                                    <artifactId>yofc-iot-repack-vertx-db</artifactId>
-                                    <version>${yofc.dp.version}</version>
-                                    <type>dp</type>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.yofc.iot</groupId>
-                                    <artifactId>yofc-iot-apps-opcuaserver</artifactId>
-                                    <version>${yofc.dp.version}</version>
-                                    <type>dp</type>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
@@ -141,30 +82,12 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>filter-dpa-properties</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${dist.dp.skip}</skip>
-                            <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/resources/packages</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>copy-empty-dpa-properties</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <skip>${dist.empty.dpa.skip}</skip>
                             <outputDirectory>${project.build.directory}/kura_${project.version}_linux/packages</outputDirectory>
                             <resources>
                                 <resource>
