@@ -437,7 +437,11 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
             for (String value : values) {
                 Element valueElem = this.marshallDoc
                         .createElement(ESF_NAMESPACE + ":" + CONFIGURATIONS_CONFIGURATION_PROPERTY_VALUE);
-                valueElem.setTextContent(value);
+                if (value.indexOf('<') >= 0 || value.indexOf('>') >= 0 || value.indexOf('&') >= 0) {
+                    valueElem.appendChild(this.marshallDoc.createCDATASection(value));
+                } else {
+                    valueElem.setTextContent(value);
+                }
                 property.appendChild(valueElem);
             }
             return property;
