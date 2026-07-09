@@ -147,6 +147,17 @@ else
     echo "=== Stage 2: skipping kura-yofc-runtime (clone not found) ==="
 fi
 
+# Stage 2.5: yofc-iot application dp packages. yofc-iot is NOT a Kura sibling
+# (.deb) — it produces OSGi .dp deployment packages consumed by kura-docker.
+# Depends on kura-yofc-runtime (Stage 2) and plc4x-yofc artifacts in ~/.m2.
+if [ -f "$SCRIPT_DIR/../yofc-iot/pom.xml" ]; then
+    echo "=== Stage 2.5: building yofc-iot .dp packages ==="
+    mvn "$@" -f "$SCRIPT_DIR/../yofc-iot/pom.xml" clean install $MAVEN_PROPS \
+        || exit 1
+else
+    echo "=== Stage 2.5: skipping yofc-iot (clone not found) ==="
+fi
+
 # Stage 3: kura-core.deb. Runs after Stage 2 so the .deb (attached as a Maven
 # artifact by jdeb) is available for downstream consumers like kura-docker.
 echo "=== Stage 3: building kura/distrib (kura-core.deb) ==="
@@ -154,10 +165,19 @@ mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 
 # Stage 4: Docker image (kura-docker sibling). Pulls kura-core.deb + sibling
 # .debs from ~/.m2 and installs them via dpkg -x inside the Dockerfile.
+# Builds both ARM64 (native) and AMD64 (via QEMU emulation) images.
 if [ -f "$SCRIPT_DIR/../kura-docker/pom.xml" ]; then
-    echo "=== Stage 4: building kura-docker image ==="
+    echo "=== Stage 4: building kura-docker image (arm64) ==="
     mvn "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
+    # Save arm64 image before amd64 build overwrites the tag
+    docker tag kura-alpine:latest kura-alpine:latest-arm64
+
+    echo "=== Stage 4: building kura-docker image (amd64) ==="
+    mvn "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" install $MAVEN_PROPS \
+        -Ddocker.platform=linux/amd64 \
+        || exit 1
+    docker tag kura-alpine:latest kura-alpine:latest-amd64
 else
     echo "=== Stage 4: skipping kura-docker (clone not found) ==="
 fi
