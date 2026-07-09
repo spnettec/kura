@@ -519,10 +519,24 @@ public class CryptoServiceImpl implements CryptoService {
     private Key generateKey() {
 
         if (!this.secretKey.isPresent()) {
-            logger.warn("A user defined encryption key has not been provided or is invalid."
-                    + " The default well known key is in use."
-                    + " Please reinstall Kura and provide a valid encryption key of length 16, 24, or 32 bytes (characters)"
-                    + " as explained in the Eclipse Kura documentation.");
+            boolean encryptSnapshots = true;
+            try {
+                if (this.systemService != null && this.systemService.getProperties() != null) {
+                    encryptSnapshots = Boolean.parseBoolean(
+                            this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
+                }
+            } catch (Exception e) {
+                // ignore — fall back to default (warn)
+            }
+            if (encryptSnapshots) {
+                logger.warn("A user defined encryption key has not been provided or is invalid."
+                        + " The default well known key is in use."
+                        + " Please reinstall Kura and provide a valid encryption key of length 16, 24, or 32 bytes (characters)"
+                        + " as explained in the Eclipse Kura documentation.");
+            } else {
+                logger.info("A user defined encryption key has not been provided."
+                        + " Using default key for password encryption (kura.snapshots.encrypt is disabled).");
+            }
             return new SecretKeySpec(DEFAULT_SECRET_KEY, ALGORITHM);
         }
 
