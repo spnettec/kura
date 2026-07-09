@@ -597,6 +597,7 @@
                                     groovy-templates,
                                     groovy-xml,
                                     gson,
+                                    io.vertx.auth-common,
                                     io.vertx.core,
                                     io.vertx.core-logging,
                                     io.vertx.uri-template,

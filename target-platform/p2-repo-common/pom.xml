@@ -60,6 +60,11 @@
 									<transitive>false</transitive>
 								</artifact>
 								<artifact>
+									<id>io.vertx:vertx-auth-common:${vertx.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
+								<artifact>
 									<id>io.vertx:vertx-uri-template:${vertx.version}</id>
 									<source>true</source>
 									<transitive>false</transitive>

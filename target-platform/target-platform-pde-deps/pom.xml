@@ -956,10 +956,15 @@
 		</dependency>
 		
         <!-- P2-rebundled OSGi artifacts installed by the p2-repo-* modules. -->
-        <!-- vertx-core / core-logging / web-client / web-common / uri-template stay here: kura-camel sibling imports them too.
-             yofc-only Vert.x bundles (auth-common, bridge-common, http-proxy,
+        <!-- vertx-core / core-logging / web-client / web-common / uri-template / auth-common stay here: kura-camel sibling imports them too.
+             yofc-only Vert.x bundles (bridge-common, http-proxy,
              mqtt, tcp-eventbus-bridge, web) + fastjson2 + javacan are shipped
              by kura-yofc-runtime sibling instead. -->
+        <dependency>
+            <groupId>p2.osgi.bundle</groupId>
+            <artifactId>io.vertx.auth-common</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
         <dependency>
             <groupId>p2.osgi.bundle</groupId>
             <artifactId>io.vertx.core</artifactId>
