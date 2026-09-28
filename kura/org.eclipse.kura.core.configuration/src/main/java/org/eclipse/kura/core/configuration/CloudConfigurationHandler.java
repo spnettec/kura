@@ -229,7 +229,7 @@ public class CloudConfigurationHandler implements RequestHandler {
             try {
                 sids = this.configurationService.getSnapshots();
             } catch (KuraException e) {
-                logger.error("Error listing snapshots: {}", e);
+                logger.error("Error listing snapshots", e);
                 throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_LISTING, e);
             }
             List<Long> snapshotIds = new ArrayList<>(sids);
@@ -277,7 +277,7 @@ public class CloudConfigurationHandler implements RequestHandler {
                 configs = getConfiguration(pid);
             }
         } catch (KuraException e) {
-            logger.error("Error getting component configurations: {}", e);
+            logger.error("Error getting component configurations", e);
             throw new KuraException(KuraErrorCode.BAD_REQUEST);
         }
 
@@ -371,7 +371,7 @@ public class CloudConfigurationHandler implements RequestHandler {
 
             xmlConfigs = unmarshal(s, XmlComponentConfigurations.class);
         } catch (Exception e) {
-            logger.error("Error unmarshalling the request body: {}", e);
+            logger.error("Error unmarshalling the request body", e);
             throw new KuraException(KuraErrorCode.BAD_REQUEST);
         }
 
@@ -415,7 +415,7 @@ public class CloudConfigurationHandler implements RequestHandler {
         try {
             snapshotId = this.configurationService.snapshot();
         } catch (KuraException e) {
-            logger.error("Error taking snapshot: {}", e);
+            logger.error("Error taking snapshot", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_TAKING, e);
         }
         List<Long> snapshotIds = new ArrayList<>();
@@ -437,7 +437,7 @@ public class CloudConfigurationHandler implements RequestHandler {
         try {
             result = marshal(o);
         } catch (Exception e) {
-            logger.error("Error marshalling snapshots: {}", e);
+            logger.error("Error marshalling snapshots", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_LOADING, e);
         }
 
@@ -445,7 +445,7 @@ public class CloudConfigurationHandler implements RequestHandler {
         try {
             body = result.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            logger.error("Error encoding response body: {}", e);
+            logger.error("Error encoding response body", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_LOADING, e);
         }
 
@@ -557,7 +557,7 @@ class UpdateConfigurationsCallable implements Callable<Void> {
                 }
             }
         } catch (KuraException e) {
-            logger.error("Error updating configurations: {}", e);
+            logger.error("Error updating configurations", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, e);
         }
 
@@ -591,7 +591,7 @@ class RollbackCallable implements Callable<Void> {
                 this.configurationService.rollback(this.snapshotId);
             }
         } catch (KuraException e) {
-            logger.error("Error rolling back to snapshot: {}", e);
+            logger.error("Error rolling back to snapshot", e);
             throw new KuraException(KuraErrorCode.CONFIGURATION_ROLLBACK, e);
         }
 

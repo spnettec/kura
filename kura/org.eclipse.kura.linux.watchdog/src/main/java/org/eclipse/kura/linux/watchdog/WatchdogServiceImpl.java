@@ -108,6 +108,7 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private void doUpdate(WatchdogServiceOptions newOptions) {
         if (!newOptions.isEnabled()) {
+            deleteWatchdogEnabledTemporaryFile(newOptions);
             return;
         }
 
@@ -140,6 +141,14 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
             Thread.currentThread().setName("WatchdogServiceImpl");
             checkCriticalComponents();
         }, 0, this.options.getPingInterval(), TimeUnit.MILLISECONDS);
+    }
+
+    private void deleteWatchdogEnabledTemporaryFile(WatchdogServiceOptions currentOptions) {
+        File watchdogEnabledFile = new File(currentOptions.getWatchdogEnabledTemporaryFilePath());
+        if (watchdogEnabledFile.exists() && !watchdogEnabledFile.delete()) {
+            logger.warn("Unable to delete watchdog enabled temporary file '{}'",
+                    watchdogEnabledFile.getAbsolutePath());
+        }
     }
 
     protected Writer getWatchdogDeviceWriter(String watchdogDevice) throws IOException {

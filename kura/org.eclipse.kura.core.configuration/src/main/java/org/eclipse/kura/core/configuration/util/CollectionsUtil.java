@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.kura.core.configuration.util;
 
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.configuration.metatype.AD;
@@ -28,6 +30,17 @@ import org.eclipse.kura.configuration.metatype.Scalar;
 public class CollectionsUtil {
 
     public static Map<String, Object> dictionaryToMap(Dictionary<String, Object> dictionary, OCD ocd) {
+        return dictionaryToMap(dictionary, ocd, Collections.emptySet());
+    }
+
+    /**
+     * Restores the {@link Password} type of the properties the given OCD declares as {@link Scalar#PASSWORD}.
+     * Since ConfigurationAdmin can only hold plain strings, {@code knownPasswordProperties} names the properties
+     * known to be passwords from a previous typed representation; it applies only to the properties the given OCD
+     * does not describe, which is the case as long as the metatype of the component has not been tracked.
+     */
+    public static Map<String, Object> dictionaryToMap(Dictionary<String, Object> dictionary, OCD ocd,
+            Set<String> knownPasswordProperties) {
         if (dictionary == null) {
             return null;
         }
@@ -45,7 +58,7 @@ public class CollectionsUtil {
             String key = keys.nextElement();
             Object value = dictionary.get(key);
             AD ad = ads.get(key);
-            if (ad != null && ad.getType() != null && Scalar.PASSWORD.equals(ad.getType())) {
+            if (isPasswordProperty(key, ad, knownPasswordProperties)) {
                 if (value instanceof char[]) {
                     map.put(key, new Password((char[]) value));
                 } else if (value instanceof String[]) {
@@ -58,6 +71,28 @@ public class CollectionsUtil {
             }
         }
         return map;
+    }
+
+    public static Set<String> passwordPropertyNames(Map<String, Object> properties) {
+        if (properties == null) {
+            return Collections.emptySet();
+        }
+
+        Set<String> names = new java.util.HashSet<>();
+        for (Map.Entry<String, Object> property : properties.entrySet()) {
+            Object value = property.getValue();
+            if (value instanceof Password || value instanceof Password[]) {
+                names.add(property.getKey());
+            }
+        }
+        return names;
+    }
+
+    private static boolean isPasswordProperty(String key, AD ad, Set<String> knownPasswordProperties) {
+        if (ad != null) {
+            return ad.getType() != null && Scalar.PASSWORD.equals(ad.getType());
+        }
+        return knownPasswordProperties != null && knownPasswordProperties.contains(key);
     }
 
     private static Password[] convertStringsToPasswords(String[] value) {

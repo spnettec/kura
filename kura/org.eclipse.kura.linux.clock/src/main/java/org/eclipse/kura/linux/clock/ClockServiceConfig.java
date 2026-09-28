@@ -26,7 +26,7 @@ public class ClockServiceConfig {
     private static final Property<Integer> PROPERTY_NTP_PORT = new Property<>("clock.ntp.port", 123);
     private static final Property<Integer> PROPERTY_NTP_TIMEOUT = new Property<>("clock.ntp.timeout", 10000);
     private static final Property<Integer> PROPERTY_NTP_MAX_RETRIES = new Property<>("clock.ntp.max-retry", 0);
-    private static final Property<Integer> PROPERTY_NTP_RETRY_INTERVAL = new Property<>("clock.ntp.max-retry", 5);
+    private static final Property<Integer> PROPERTY_NTP_RETRY_INTERVAL = new Property<>("clock.ntp.retry.interval", 5);
     private static final Property<Integer> PROPERTY_NTP_REFRESH_INTERVAL = new Property<>("clock.ntp.refresh-interval",
             3600);
     private static final Property<String> PROPERTY_RTC_FILENAME = new Property<>("rtc.filename", "/dev/rtc0");

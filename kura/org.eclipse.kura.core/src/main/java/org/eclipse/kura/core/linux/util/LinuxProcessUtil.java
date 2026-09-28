@@ -448,7 +448,7 @@ public class LinuxProcessUtil {
             } while (exists && now - startTime < timeout);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
-            logger.warn("Failed waiting for pid {} to exit - {}", pid, e);
+            logger.warn("Failed waiting for pid {} to exit: {}", pid, e.getMessage());
         }
 
         return exists;
@@ -460,7 +460,7 @@ public class LinuxProcessUtil {
         try {
             processID = Integer.parseInt(st.nextToken());
         } catch (NumberFormatException e) {
-            logger.warn("getPid() :: NumberFormatException reading PID - {}", e);
+            logger.warn("getPid() :: NumberFormatException reading PID: {}", e.getMessage());
         }
         return processID;
     }

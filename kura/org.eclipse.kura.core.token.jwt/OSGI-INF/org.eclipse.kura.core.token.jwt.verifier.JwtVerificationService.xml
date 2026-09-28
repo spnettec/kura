@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2026 Eurotech and/or its affiliates and others
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+    SPDX-License-Identifier: EPL-2.0
+    Contributors:
+     Eurotech
+-->
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService" immediate="true" activate="activate" modified="updated" deactivate="deactivate" configuration-policy="require" enabled="true">
+   <implementation class="org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService"/>
+   <property name="service.pid" type="String" value="org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService"/>
+   <property name="kura.service.pid" type="String" value="org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService"/>
+   <property name="event.topics" type="String">org/eclipse/kura/security/keystore/KeystoreChangedEvent/KEYSTORE_CHANGED</property>
+   <service>
+      <provide interface="org.eclipse.kura.security.token.TokenVerificationService"/>
+      <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
+      <provide interface="org.osgi.service.event.EventHandler"/>
+   </service>
+   <reference name="KeystoreService" bind="setKeystoreService" unbind="unsetKeystoreService" cardinality="0..1" policy="dynamic" interface="org.eclipse.kura.security.keystore.KeystoreService"/>
+</scr:component>

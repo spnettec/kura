@@ -56,6 +56,7 @@
         <module>org.eclipse.kura.json.marshaller.unmarshaller.provider</module>
         <module>org.eclipse.kura.jul.to.slf4j.configuration</module>
         <module>org.eclipse.kura.xml.marshaller.unmarshaller.provider</module>
+        <module>org.eclipse.kura.core.token.jwt</module>
         <module>org.eclipse.kura.http.server.manager</module>
         <module>org.eclipse.kura.useradmin.store</module>
         <module>org.eclipse.kura.rest.tamper.detection.provider</module>
@@ -156,6 +157,7 @@
         <org.eclipse.kura.emulator.watchdog.version>2.0.0-SNAPSHOT</org.eclipse.kura.emulator.watchdog.version>
         <org.eclipse.kura.event.publisher.version>2.0.0-SNAPSHOT</org.eclipse.kura.event.publisher.version>
         <org.eclipse.kura.http.server.manager.version>2.0.0-SNAPSHOT</org.eclipse.kura.http.server.manager.version>
+        <org.eclipse.kura.core.token.jwt.version>1.0.0-SNAPSHOT</org.eclipse.kura.core.token.jwt.version>
         <org.eclipse.kura.json.marshaller.unmarshaller.provider.version>2.0.0-SNAPSHOT</org.eclipse.kura.json.marshaller.unmarshaller.provider.version>
         <org.eclipse.kura.jul.to.slf4j.configuration.version>1.0.0-SNAPSHOT</org.eclipse.kura.jul.to.slf4j.configuration.version>
         <org.eclipse.kura.linux.clock.version>2.0.0-SNAPSHOT</org.eclipse.kura.linux.clock.version>
@@ -310,6 +312,11 @@
                 <groupId>org.eclipse.kura</groupId>
                 <artifactId>org.eclipse.kura.event.publisher</artifactId>
                 <version>${org.eclipse.kura.event.publisher.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.kura</groupId>
+                <artifactId>org.eclipse.kura.core.token.jwt</artifactId>
+                <version>${org.eclipse.kura.core.token.jwt.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.kura</groupId>
@@ -716,6 +723,10 @@
                     <artifactId>target-platform-configuration</artifactId>
                     <version>${tycho-version}</version>
                     <configuration>
+                        <pomDependencies>consider</pomDependencies>
+                        <!-- Compiler runs at Java 21 (maven.compiler.target=21); the resolver
+                             context must match or 21-bytecode bundles fail to resolve. -->
+                        <executionEnvironment>JavaSE-21</executionEnvironment>
                         <environments>
                             <environment>
                                 <os>win32</os>

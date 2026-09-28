@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2026 Eurotech and/or its affiliates and others
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+    SPDX-License-Identifier: EPL-2.0
+    Contributors:
+     Eurotech
+-->
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/JwtIssuingService">
+   <OCD id="org.eclipse.kura.core.token.jwt.issuer.JwtIssuingService" name="%name" description="%description">
+      <AD id="KeystoreService_target" name="%keystoreTargetFilter" type="String" cardinality="0" required="true" default="(kura.service.pid=changeme)" description="%keystoreTargetFilterDesc"/>
+      <AD id="signing_key_alias" name="%signingKeyAlias" type="String" cardinality="0" required="true" default="jwt-signing-key" description="%signingKeyAliasDesc"/>
+      <AD id="issuer" name="%issuer" type="String" cardinality="0" required="true" default="kura" description="%issuerDesc"/>
+      <AD id="maximum_lifetime_seconds" name="%maxTokenLifetime" type="Integer" cardinality="0" required="true" default="3600" min="0" description="%maxTokenLifetimeDesc"/>
+   </OCD>
+   <Designate pid="org.eclipse.kura.core.token.jwt.issuer.JwtIssuingService">
+      <Object ocdref="org.eclipse.kura.core.token.jwt.issuer.JwtIssuingService"/>
+   </Designate>
+</MetaData>

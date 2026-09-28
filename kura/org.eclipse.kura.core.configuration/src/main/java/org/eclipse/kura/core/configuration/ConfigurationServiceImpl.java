@@ -138,6 +138,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
     // maps the kura.service.pid to the associated service.pid
     private final Map<String, String> servicePidByPid;
 
+    // maps the kura.service.pid to the names of the properties known to be passwords, used to restore their type
+    // while the metatype of the component has not been tracked yet
+    private final Map<String, Set<String>> passwordPropertiesByPid;
+
     // ----------------------------------------------------------------
     //
     // Dependencies
@@ -219,6 +223,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         this.factoryPids = new HashSet<>();
         this.factoryPidByPid = new HashMap<>();
         this.servicePidByPid = new HashMap<>();
+        this.passwordPropertiesByPid = new HashMap<>();
     }
 
     // ----------------------------------------------------------------
@@ -298,52 +303,17 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
     protected void addSelfConfiguringComponent(final ServiceReference<SelfConfiguringComponent> reference) {
 
-        Object serviceIds = reference.getProperty(Constants.SERVICE_PID);
-        String servicePid = makeString(serviceIds);
-        if (serviceIds instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<String> servicePids = (List<String>) serviceIds;
-            if (!servicePids.isEmpty()) {
-                logger.error("addSelfConfiguringComponent have multiple servicePids:{}", servicePids);
-                servicePid = servicePids.get(servicePids.size() - 1);
-            } else {
-                logger.error("addSelfConfiguringComponent get null servicePids list");
-            }
-        }
-
-        if (servicePid == null) {
-            logger.error("addSelfConfiguringComponent pid is null. properties:{}", reference.getProperties());
-            return;
-        }
-
         final String kuraPid = makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID));
+        final String servicePid = makeString(reference.getProperty(Constants.SERVICE_PID));
 
-        registerSelfConfiguringComponent(kuraPid, servicePid);
+        // A SelfConfiguringComponent may not carry a service.pid at all; register it under its
+        // kura.service.pid in that case so it still shows up in the configuration (#6384).
+        registerSelfConfiguringComponent(kuraPid, servicePid != null ? servicePid : kuraPid);
     }
 
     protected void removeSelfConfiguringComponent(final ServiceReference<SelfConfiguringComponent> reference) {
 
-        Object serviceIds = reference.getProperty(Constants.SERVICE_PID);
-        String servicePid = makeString(serviceIds);
-        if (serviceIds instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<String> servicePids = (List<String>) serviceIds;
-            if (!servicePids.isEmpty()) {
-                logger.error("removeSelfConfiguringComponent have multiple servicePids:{}", servicePids);
-                servicePid = servicePids.get(servicePids.size() - 1);
-            } else {
-                logger.error("removeSelfConfiguringComponent get null servicePids list");
-            }
-        }
-
-        if (servicePid == null) {
-            logger.error("removeSelfConfiguringComponent pid is null. properties:{}", reference.getProperties());
-            return;
-        }
-
-        final String kuraPid = makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID));
-
-        unregisterComponentConfiguration(kuraPid);
+        unregisterComponentConfiguration(makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID)));
 
     }
 
@@ -512,6 +482,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
             mergeWithDefaults(ocd, mergedProperties);
 
             mergedProperties.put(ConfigurationService.KURA_SERVICE_PID, pid);
+
+            trackPasswordProperties(pid, mergedProperties);
 
             Dictionary<String, Object> dict = CollectionsUtil.mapToDictionary(mergedProperties);
             config.updateIfDifferent(dict);
@@ -813,6 +785,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         this.factoryPidByPid.remove(pid);
         this.activatedSelfConfigComponents.remove(pid);
         this.allActivatedPids.remove(pid);
+        this.passwordPropertiesByPid.remove(pid);
     }
 
     boolean mergeWithDefaults(OCD ocd, Map<String, Object> properties) {
@@ -1195,7 +1168,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
             if (servicePid != null) {
                 Configuration cfg = this.configurationAdmin.getConfiguration(servicePid, "?");
-                Map<String, Object> props = CollectionsUtil.dictionaryToMap(cfg.getProperties(), ocd);
+                Map<String, Object> props = CollectionsUtil.dictionaryToMap(cfg.getProperties(), ocd,
+                        getPasswordPropertiesForPid(pid));
 
                 cc = new ComponentConfigurationImpl(pid, ocd, props);
             }
@@ -1433,6 +1407,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                             if (!newProperties.containsKey(ConfigurationService.KURA_SERVICE_PID)) {
                                 newProperties.put(ConfigurationService.KURA_SERVICE_PID, config.getPid());
                             }
+
+                            trackPasswordProperties(config.getPid(), newProperties);
 
                             cfg.update(CollectionsUtil.mapToDictionary(newProperties));
 
@@ -1683,7 +1659,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 // get the current running configuration for the selected component
                 Configuration config = this.configurationAdmin.getConfiguration(this.servicePidByPid.get(pid), "?");
                 Map<String, Object> runningProps = CollectionsUtil.dictionaryToMap(config.getProperties(),
-                        registerdOCD);
+                        registerdOCD, getPasswordPropertiesForPid(pid));
 
                 mergedProperties.putAll(runningProps);
             } catch (IOException e) {
@@ -1726,6 +1702,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
         // Update the new properties
         // use ConfigurationAdmin to do the update
+        trackPasswordProperties(pid, mergedProperties);
+
         Configuration config = this.configurationAdmin.getConfiguration(this.servicePidByPid.get(pid), "?");
         config.update(CollectionsUtil.mapToDictionary(mergedProperties));
 
@@ -1906,7 +1884,31 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (value instanceof String) {
             return (String) value;
         }
+        if (value instanceof Collection) {
+            return makeStringFromCollection((Collection<?>) value);
+        }
+        if (value.getClass().isArray()) {
+            final int length = java.lang.reflect.Array.getLength(value);
+            final List<Object> elements = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                elements.add(java.lang.reflect.Array.get(value, i));
+            }
+            return makeStringFromCollection(elements);
+        }
         return value.toString();
+    }
+
+    private static String makeStringFromCollection(Collection<?> values) {
+        final Set<String> distinctValues = values.stream().filter(Objects::nonNull).map(Object::toString)
+                .collect(java.util.stream.Collectors.toSet());
+
+        if (distinctValues.size() == 1) {
+            return distinctValues.iterator().next();
+        }
+
+        logger.warn("Expected a single property value, found {}. Ignoring it.", values);
+
+        return null;
     }
 
     @Override
@@ -1969,6 +1971,20 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         return getServiceProviderOCDs(classNames);
     }
     
+    private synchronized void trackPasswordProperties(String pid, Map<String, Object> properties) {
+        Set<String> names = CollectionsUtil.passwordPropertyNames(properties);
+        if (names.isEmpty()) {
+            this.passwordPropertiesByPid.remove(pid);
+        } else {
+            this.passwordPropertiesByPid.put(pid, names);
+        }
+    }
+
+    private synchronized Set<String> getPasswordPropertiesForPid(String pid) {
+        Set<String> names = this.passwordPropertiesByPid.get(pid);
+        return names == null ? Collections.emptySet() : new HashSet<>(names);
+    }
+
     protected <T> T unmarshal(final InputStream input, final Class<T> clazz) throws KuraException {
         try {
             return requireNonNull(this.xmlUnmarshaller.unmarshal(input, clazz));
@@ -1984,8 +2000,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (this.xmlUnmarshaller == null) {
             throw KuraException.internalError("xmlUnmarshaller is null");
         }
-        try {
-            return requireNonNull(this.xmlUnmarshaller.unmarshal(new FileInputStream(file), clazz));
+        // The stream has to be closed also on unmarshal failures - a leaked descriptor
+        // pins the file on Windows and exhausts handles on long-running gateways (#6393).
+        try (InputStream in = new FileInputStream(file)) {
+            return requireNonNull(this.xmlUnmarshaller.unmarshal(in, clazz));
         } catch (final Exception e) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
         }
@@ -2055,6 +2073,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (ocd.isPresent()) {
             mergeWithDefaults(ocd.get(), result);
         }
+
+        trackPasswordProperties(snapshotConfig.getPid(), result);
 
         final Dictionary<String, Object> resultAsDictionary = CollectionsUtil.mapToDictionary(result);
 

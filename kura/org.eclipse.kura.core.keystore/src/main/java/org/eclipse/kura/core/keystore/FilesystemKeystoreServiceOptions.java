@@ -14,8 +14,6 @@ package org.eclipse.kura.core.keystore;
 
 import static java.util.Objects.isNull;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -68,9 +66,8 @@ public class FilesystemKeystoreServiceOptions {
         this.randomPassword = (boolean) properties.getOrDefault(KEY_RANDOMIZE_PASSWORD, DEFAULT_RANDOMIZE_PASSWORD);
     }
 
-    private String validateAndNormalize(String keystorePath) throws URISyntaxException, InvalidPathException {
-        Paths.get(keystorePath); // throw InvalidPathException if invalid
-        return new URI(keystorePath).normalize().toString();
+    private String validateAndNormalize(String keystorePath) throws InvalidPathException {
+        return Paths.get(keystorePath).normalize().toString();
     }
 
     private static Password extractPassword(final Map<String, Object> properties, final CryptoService cryptoService) {

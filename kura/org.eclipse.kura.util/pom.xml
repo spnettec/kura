@@ -31,4 +31,22 @@
 		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/*/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 
+
+	<!-- Test-only dependencies for the in-module zip tests (JUnit 4 + commons-io
+	     for filesystem assertions). Resolved via pomDependencies=consider. -->
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.21.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
 </project>

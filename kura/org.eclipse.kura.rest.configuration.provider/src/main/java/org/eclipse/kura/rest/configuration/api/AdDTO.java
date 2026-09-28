@@ -12,12 +12,14 @@
  ******************************************************************************/
 package org.eclipse.kura.rest.configuration.api;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Option;
 import org.eclipse.kura.configuration.metatype.Scalar;
+import org.eclipse.kura.core.configuration.util.ComponentUtil;
 
 public class AdDTO implements AD {
 
@@ -42,7 +44,7 @@ public class AdDTO implements AD {
         this.cardinality = ad.getCardinality();
         this.min = ad.getMin();
         this.max = ad.getMax();
-        this.defaultValue = ad.getDefault();
+        this.defaultValue = unescapeDefault(ad);
         this.isRequired = ad.isRequired();
     }
 
@@ -96,4 +98,17 @@ public class AdDTO implements AD {
         return isRequired;
     }
 
+    private static String unescapeDefault(final AD ad) {
+        final String[] values = ComponentUtil.getDefaultValues(ad);
+
+        if (values == null) {
+            return ad.getDefault();
+        }
+
+        if (ComponentUtil.isSingleValued(ad)) {
+            return values[0];
+        }
+
+        return Arrays.stream(values).map(value -> value.replace(",", "\\,")).collect(Collectors.joining(","));
+    }
 }

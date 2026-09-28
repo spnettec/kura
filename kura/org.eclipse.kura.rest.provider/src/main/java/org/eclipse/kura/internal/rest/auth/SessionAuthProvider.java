@@ -85,7 +85,11 @@ public class SessionAuthProvider implements AuthenticationProvider {
 
         auditContext.getProperties().put(AuditConstants.KEY_IDENTITY.getValue(), result.get().getName());
 
-        if (!isXsrfTokenValid(request, requestContext)) {
+        final RestSessionHelper.XsrfTokenStatus xsrfTokenStatus = getXsrfTokenStatus(request, requestContext);
+        if (xsrfTokenStatus == RestSessionHelper.XsrfTokenStatus.MISSING) {
+            return Optional.empty();
+        }
+        if (xsrfTokenStatus == RestSessionHelper.XsrfTokenStatus.INVALID) {
             auditLogger.warn("{} Rest - Failure - Session authentication failed, invalid XSRF token", auditContext);
             return Optional.empty();
         }
@@ -124,12 +128,13 @@ public class SessionAuthProvider implements AuthenticationProvider {
         return this.sessionHelper.isSessionLocked(session);
     }
 
-    private boolean isXsrfTokenValid(final HttpServletRequest request, final ContainerRequestContext context) {
+    private RestSessionHelper.XsrfTokenStatus getXsrfTokenStatus(final HttpServletRequest request,
+            final ContainerRequestContext context) {
         if (containsPath(allowNoXsrfTokenPaths, context)) {
-            return true;
+            return RestSessionHelper.XsrfTokenStatus.VALID;
         }
 
-        return this.sessionHelper.isXsrfTokenValid(request);
+        return this.sessionHelper.getXsrfTokenStatus(request);
     }
 
     private boolean containsPath(final Set<String> paths, final ContainerRequestContext requestContext) {

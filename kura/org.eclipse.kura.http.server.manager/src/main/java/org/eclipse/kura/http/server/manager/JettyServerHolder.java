@@ -180,9 +180,14 @@ public class JettyServerHolder {
 
     }
 
+    // on a restart the new instance can try to bind its ports before the stopping instance has
+    // released them: give it a few attempts instead of running without the connector
+    private static final int CONNECTOR_OPEN_ATTEMPTS = 5;
+    private static final long CONNECTOR_OPEN_RETRY_DELAY_MS = 200;
+
     private void addConnector(ServerConnector httpConnector) {
         try {
-            httpConnector.open();
+            ConnectorOpener.open(httpConnector, CONNECTOR_OPEN_ATTEMPTS, CONNECTOR_OPEN_RETRY_DELAY_MS);
             this.server.addConnector(httpConnector);
         } catch (IOException e) {
             logger.error("Unable to start a connector {}", httpConnector, e);
