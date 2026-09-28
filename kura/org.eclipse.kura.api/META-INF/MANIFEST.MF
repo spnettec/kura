@@ -97,3 +97,4 @@ Import-Package: com.google.common.net;version="32.1.0",
  org.osgi.util.measurement;version="1.0.1",
  org.osgi.util.position;version="1.0.1"
 Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-21

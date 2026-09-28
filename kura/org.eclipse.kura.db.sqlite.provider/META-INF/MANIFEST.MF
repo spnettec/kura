@@ -37,3 +37,4 @@ Import-Package: com.zaxxer.hikari;version="2.7.9",
  org.sqlite.jdbc4;version="3.39.3.0",
  org.sqlite.util;version="3.39.3.0",
  javax.sql
+Bundle-RequiredExecutionEnvironment: JavaSE-21

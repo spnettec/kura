@@ -30,3 +30,4 @@ Import-Package: jakarta.servlet;version="5.0.0",
  org.slf4j;version="1.7.21",
  javax.net.ssl
 Require-Bundle: org.apache.felix.http.bridge;bundle-version="5.1.8"
+Bundle-RequiredExecutionEnvironment: JavaSE-21

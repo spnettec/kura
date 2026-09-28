@@ -53,3 +53,4 @@ Import-Package: javax.crypto,
  org.quartz;version="2.3.2",
  org.slf4j;version="1.6.4"
 Bundle-ClassPath: .
+Bundle-RequiredExecutionEnvironment: JavaSE-21

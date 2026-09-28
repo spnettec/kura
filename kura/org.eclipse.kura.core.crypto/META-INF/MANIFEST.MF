@@ -15,3 +15,4 @@ Import-Package: javax.crypto,
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.kura.core.crypto
+Bundle-RequiredExecutionEnvironment: JavaSE-21

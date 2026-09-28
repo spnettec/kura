@@ -10,3 +10,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.kura.jul.to.slf4j.configuration.Activator
 Import-Package: org.osgi.framework;version="1.10.0",
  org.slf4j.bridge;version="1.7.21"
+Bundle-RequiredExecutionEnvironment: JavaSE-21
