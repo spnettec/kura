@@ -498,6 +498,7 @@
                                     org.eclipse.kura.core.inventory,
                                     org.eclipse.kura.core.keystore,
                                     org.eclipse.kura.core.system,
+                                    org.eclipse.kura.core.token.jwt,
                                     org.eclipse.kura.driver.helper.provider,
                                     org.eclipse.kura.jul.to.slf4j.configuration,
                                     org.eclipse.kura.localization,
