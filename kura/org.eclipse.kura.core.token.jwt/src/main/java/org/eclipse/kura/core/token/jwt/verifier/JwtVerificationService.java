@@ -34,28 +34,12 @@ import org.eclipse.kura.security.keystore.KeystoreService;
 import org.eclipse.kura.security.token.TokenVerificationService;
 import org.eclipse.kura.security.token.TokenVerifyRequest;
 import org.eclipse.kura.security.token.VerificationProof;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(immediate = true, //
-        name = "org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService", //
-        configurationPolicy = ConfigurationPolicy.REQUIRE, //
-        property = { //
-                "kura.service.pid=org.eclipse.kura.core.token.jwt.verifier.JwtVerificationService", //
-                EventConstants.EVENT_TOPIC + "=" + KeystoreChangedEvent.EVENT_TOPIC })
-@Designate(ocd = JwtVerificationServiceOCD.class)
 public class JwtVerificationService implements TokenVerificationService, ConfigurableComponent, EventHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtVerificationService.class);
@@ -65,7 +49,6 @@ public class JwtVerificationService implements TokenVerificationService, Configu
 
     private final AtomicReference<JwtVerifier> verifier = new AtomicReference<>();
 
-    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL)
     public synchronized void setKeystoreService(final KeystoreService keystoreService,
             final Map<String, Object> properties) {
         this.keystoreTracker.bind(keystoreService, properties);
@@ -86,18 +69,15 @@ public class JwtVerificationService implements TokenVerificationService, Configu
         }
     }
 
-    @Activate
-    public synchronized void activate(final JwtVerificationServiceOCD config) {
-        updated(config);
+    public synchronized void activate(final ComponentContext context, final Map<String, Object> properties) {
+        updated(properties);
     }
 
-    @Modified
-    public synchronized void updated(final JwtVerificationServiceOCD config) {
-        this.serviceOptions = Optional.of(new JwtVerificationServiceOptions(config));
+    public synchronized void updated(final Map<String, Object> properties) {
+        this.serviceOptions = Optional.of(new JwtVerificationServiceOptions(properties));
         rebuildVerifier();
     }
 
-    @Deactivate
     public synchronized void deactivate() {
         this.serviceOptions = Optional.empty();
         this.keystoreTracker.release();

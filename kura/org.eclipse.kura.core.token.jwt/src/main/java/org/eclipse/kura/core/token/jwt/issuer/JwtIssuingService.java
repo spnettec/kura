@@ -29,28 +29,12 @@ import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
 import org.eclipse.kura.security.token.TokenIssueRequest;
 import org.eclipse.kura.security.token.TokenIssuingService;
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(immediate = true, //
-        name = "org.eclipse.kura.core.token.jwt.issuer.JwtIssuingService", //
-        configurationPolicy = ConfigurationPolicy.REQUIRE, //
-        property = { //
-                "kura.service.pid=org.eclipse.kura.core.token.jwt.issuer.JwtIssuingService", //
-                EventConstants.EVENT_TOPIC + "=" + KeystoreChangedEvent.EVENT_TOPIC })
-@Designate(ocd = JwtIssuingServiceOCD.class)
 public class JwtIssuingService implements TokenIssuingService, ConfigurableComponent, EventHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuingService.class);
@@ -71,7 +55,6 @@ public class JwtIssuingService implements TokenIssuingService, ConfigurableCompo
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>(ServiceState.unconfigured());
 
-    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL)
     public synchronized void setKeystoreService(final KeystoreService keystoreService,
             final Map<String, Object> properties) {
         this.keystoreTracker.bind(keystoreService, properties);
@@ -92,18 +75,15 @@ public class JwtIssuingService implements TokenIssuingService, ConfigurableCompo
         }
     }
 
-    @Activate
-    public synchronized void activate(final JwtIssuingServiceOCD config) {
-        updated(config);
+    public synchronized void activate(final ComponentContext context, final Map<String, Object> properties) {
+        updated(properties);
     }
 
-    @Modified
-    public synchronized void updated(final JwtIssuingServiceOCD config) {
-        this.serviceOptions = Optional.of(new JwtIssuingServiceOptions(config));
+    public synchronized void updated(final Map<String, Object> properties) {
+        this.serviceOptions = Optional.of(new JwtIssuingServiceOptions(properties));
         rebuildServiceState();
     }
 
-    @Deactivate
     public synchronized void deactivate() {
         this.serviceOptions = Optional.empty();
         this.keystoreTracker.release();

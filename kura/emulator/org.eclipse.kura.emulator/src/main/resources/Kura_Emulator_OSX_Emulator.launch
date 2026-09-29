@@ -64,6 +64,7 @@
         <setEntry value="bcutil@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
+        <setEntry value="com.fasterxml.jackson.core.jackson-databind@default:default"/>
         <setEntry value="com.fazecast.jSerialComm@default:default"/>
         <setEntry value="com.google.gson@default:default"/>
         <setEntry value="com.google.guava.failureaccess@default:default"/>
@@ -281,6 +282,7 @@
         <setEntry value="org.eclipse.kura.core.net@default:default"/>
         <setEntry value="org.eclipse.kura.core.status@default:default"/>
         <setEntry value="org.eclipse.kura.core.system@default:default"/>
+        <setEntry value="org.eclipse.kura.core.token.jwt@default:default"/>
         <setEntry value="org.eclipse.kura.core@default:default"/>
         <setEntry value="org.eclipse.kura.db.h2db.provider@default:default"/>
         <setEntry value="org.eclipse.kura.db.sqlite.provider@default:default"/>
