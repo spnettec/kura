@@ -18,6 +18,17 @@
 
 MAVEN_PROPS="-B"
 
+# Use the pinned Maven 3.9.x for Tycho modules. Maven 3.10.0's stricter
+# resolver validator rejects Tycho 5.0.2 collect requests for bundles with
+# system-scope embedded-jar dependencies ("Invalid Collect Request: null"
+# on org.eclipse.kura.core.token.jwt / kura-triton / kura-deployment).
+# Plain-Maven repos (plc4x-yofc) are unaffected and may use any Maven.
+if [ -x "$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn" ]; then
+    MVN="$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn"
+else
+    MVN="mvn"
+fi
+
 # allow running tests
 
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
@@ -25,8 +36,8 @@ MAVEN_PROPS="-B"
 # Stage 1: monorepo bundles only (target-platform + kura/pom.xml).
 # kura/distrib (kura-core.deb) moves to Stage 3 because the docker sibling
 # (Stage 4) consumes kura-core.deb + sibling .debs from ~/.m2.
-mvn "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS || exit 1
-mvn "$@" -f kura/pom.xml clean install $MAVEN_PROPS || exit 1
+$MVN "$@" -f target-platform/pom.xml clean install $MAVEN_PROPS || exit 1
+$MVN "$@" -f kura/pom.xml clean install $MAVEN_PROPS || exit 1
 
 # Stage 2: each sibling produces its bundle(s) + addon .deb.
 SCRIPT_DIR="$(dirname "$0")"
@@ -37,8 +48,8 @@ SCRIPT_DIR="$(dirname "$0")"
 
 if [ -f "$SCRIPT_DIR/../kura-position/pom.xml" ]; then
     echo "=== Stage 2: building kura-position addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-position/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-position/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-position/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-position/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-position (clone not found) ==="
@@ -46,9 +57,9 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-networking/pom.xml" ]; then
     echo "=== Stage 2: building kura-networking addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-networking/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-networking/pom.xml" clean install $MAVEN_PROPS \
         -pl '!tests,!tests/org.eclipse.kura.core.net.test,!tests/org.eclipse.kura.linux.net.test,!tests/org.eclipse.kura.net.admin.firewall.test,!tests/org.eclipse.kura.net.configuration.test,!tests/org.eclipse.kura.network.threat.manager.test,!tests/org.eclipse.kura.nm.test,!tests/org.eclipse.kura.rest.network.configuration.provider.test,!tests/org.eclipse.kura.rest.network.status.provider.test' \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-networking/distrib/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-networking/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-networking (clone not found) ==="
@@ -56,8 +67,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" ]; then
     echo "=== Stage 2: building kura-management-ui addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-management-ui/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-management-ui/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-management-ui/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-management-ui (clone not found) ==="
@@ -65,8 +76,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-opcua/pom.xml" ]; then
     echo "=== Stage 2: building kura-opcua addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-opcua/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-opcua/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-opcua/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-opcua (clone not found) ==="
@@ -74,8 +85,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-wires/pom.xml" ]; then
     echo "=== Stage 2: building kura-wires addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-wires/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-wires/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-wires/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-wires/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-wires (clone not found) ==="
@@ -83,8 +94,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-camel/pom.xml" ]; then
     echo "=== Stage 2: building kura-camel addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-camel/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-camel/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-camel/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-camel/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-camel (clone not found) ==="
@@ -92,8 +103,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-deployment/pom.xml" ]; then
     echo "=== Stage 2: building kura-deployment addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-deployment/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-deployment/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-deployment (clone not found) ==="
@@ -101,8 +112,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-artemis/pom.xml" ]; then
     echo "=== Stage 2: building kura-artemis addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-artemis/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-artemis/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-artemis/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-artemis/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-artemis (clone not found) ==="
@@ -110,8 +121,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-triton/pom.xml" ]; then
     echo "=== Stage 2: building kura-triton addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-triton/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-triton/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-triton (clone not found) ==="
@@ -119,8 +130,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-container/pom.xml" ]; then
     echo "=== Stage 2: building kura-container addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-container/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-container/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-container/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-container/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-container (clone not found) ==="
@@ -128,8 +139,8 @@ fi
 
 if [ -f "$SCRIPT_DIR/../kura-cloud/pom.xml" ]; then
     echo "=== Stage 2: building kura-cloud addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-cloud/pom.xml" clean install $MAVEN_PROPS \
-        && mvn "$@" -f "$SCRIPT_DIR/../kura-cloud/distrib/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-cloud/pom.xml" clean install $MAVEN_PROPS \
+        && $MVN "$@" -f "$SCRIPT_DIR/../kura-cloud/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-cloud (clone not found) ==="
@@ -141,7 +152,7 @@ fi
 # walks all four; no second distrib step needed.
 if [ -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" ]; then
     echo "=== Stage 2: building kura-yofc-runtime addon .deb ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-yofc-runtime/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2: skipping kura-yofc-runtime (clone not found) ==="
@@ -152,7 +163,7 @@ fi
 # Depends on kura-yofc-runtime (Stage 2) and plc4x-yofc artifacts in ~/.m2.
 if [ -f "$SCRIPT_DIR/../yofc-iot/pom.xml" ]; then
     echo "=== Stage 2.5: building yofc-iot .dp packages ==="
-    mvn "$@" -f "$SCRIPT_DIR/../yofc-iot/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../yofc-iot/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
     echo "=== Stage 2.5: skipping yofc-iot (clone not found) ==="
@@ -161,20 +172,20 @@ fi
 # Stage 3: kura-core.deb. Runs after Stage 2 so the .deb (attached as a Maven
 # artifact by jdeb) is available for downstream consumers like kura-docker.
 echo "=== Stage 3: building kura/distrib (kura-core.deb) ==="
-mvn "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
+$MVN "$@" -f kura/distrib/pom.xml clean install $MAVEN_PROPS || exit 1
 
 # Stage 4: Docker image (kura-docker sibling). Pulls kura-core.deb + sibling
 # .debs from ~/.m2 and installs them via dpkg -x inside the Dockerfile.
 # Builds both ARM64 (native) and AMD64 (via QEMU emulation) images.
 if [ -f "$SCRIPT_DIR/../kura-docker/pom.xml" ]; then
     echo "=== Stage 4: building kura-docker image (arm64) ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" clean install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
     # Save arm64 image before amd64 build overwrites the tag
     docker tag kura-alpine:latest kura-alpine:latest-arm64
 
     echo "=== Stage 4: building kura-docker image (amd64) ==="
-    mvn "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" install $MAVEN_PROPS \
+    $MVN "$@" -f "$SCRIPT_DIR/../kura-docker/pom.xml" install $MAVEN_PROPS \
         -Ddocker.platform=linux/amd64 \
         || exit 1
     docker tag kura-alpine:latest kura-alpine:latest-amd64
