@@ -61,6 +61,41 @@
 			min="1"
         	description="%sessionInactivityIntervalDesc">
         </AD>
+        <AD 
+        	id="auth.jwt.enabled" 
+        	name="%authJwtEnabled" 
+        	type="Boolean" 
+        	required="true" 
+        	default="false"
+        	description="%authJwtEnabledDesc">
+        </AD>
+        <AD 
+        	id="auth.jwt.access.token.duration" 
+        	name="%authJwtAccessTokenDuration" 
+        	type="Integer" 
+        	required="true" 
+        	default="60"
+			min="1"
+        	description="%authJwtAccessTokenDurationDesc">
+        </AD>
+        <AD 
+        	id="auth.jwt.refresh.token.duration" 
+        	name="%authJwtRefreshTokenDuration" 
+        	type="Integer" 
+        	required="true" 
+        	default="900"
+			min="1"
+        	description="%authJwtRefreshTokenDurationDesc">
+        </AD>
+        <AD 
+        	id="auth.jwt.used.refresh.token.retention" 
+        	name="%authJwtUsedRefreshTokenRetention" 
+        	type="Integer" 
+        	required="true" 
+        	default="300"
+			min="0"
+        	description="%authJwtUsedRefreshTokenRetentionDesc">
+        </AD>
         
         <AD 
         	id="auth.basic.enabled" 

@@ -27,17 +27,24 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.crypto.CryptoService;
+import org.eclipse.kura.identity.IdentityService;
 import org.eclipse.kura.identity.LoginBannerService;
 import org.eclipse.kura.identity.PasswordStrengthVerificationService;
 import org.eclipse.kura.internal.rest.auth.BasicAuthenticationProvider;
 import org.eclipse.kura.internal.rest.auth.CertificateAuthenticationProvider;
+import org.eclipse.kura.internal.rest.auth.RestIdentityHelper;
 import org.eclipse.kura.internal.rest.auth.RestSessionHelper;
 import org.eclipse.kura.internal.rest.auth.SessionAuthProvider;
 import org.eclipse.kura.internal.rest.auth.SessionRestService;
+import org.eclipse.kura.internal.rest.auth.jwt.JwtAuthenticationProvider;
+import org.eclipse.kura.internal.rest.auth.jwt.JwtRestService;
 import org.eclipse.kura.rest.auth.AuthenticationProvider;
+import org.eclipse.kura.security.token.TokenIssuingService;
+import org.eclipse.kura.security.token.TokenVerificationService;
 import org.eclipse.kura.util.useradmin.UserAdminHelper;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -65,6 +72,7 @@ public class RestService implements ConfigurableComponent {
     private CryptoService cryptoService;
     private UserAdmin userAdmin;
     private ConfigurationAdmin configurationAdmin;
+    private IdentityService identityService;
 
     private RestServiceOptions options;
 
@@ -75,6 +83,11 @@ public class RestService implements ConfigurableComponent {
 
     private SessionAuthProvider sessionAuthenticationProvider;
     private SessionRestService authRestService;
+
+    private JwtAuthenticationProvider jwtAuthProvider;
+    private JwtRestService jwtRestService;
+    private Optional<TokenIssuingService> tokenIssuingService = Optional.empty();
+    private Optional<TokenVerificationService> tokenVerificationService = Optional.empty();
 
     private final IncomingPortCheckFilter incomingPortCheckFilter = new IncomingPortCheckFilter();
     private final AuthenticationFilter authenticationFilter = new AuthenticationFilter();
@@ -92,6 +105,51 @@ public class RestService implements ConfigurableComponent {
 
     public void setConfigurationAdmin(final ConfigurationAdmin configurationAdmin) {
         this.configurationAdmin = configurationAdmin;
+    }
+
+    public void setIdentityService(final IdentityService identityService) {
+        this.identityService = identityService;
+    }
+
+    public synchronized void bindTokenIssuingService(final TokenIssuingService tokenIssuingService) {
+        this.tokenIssuingService = Optional.of(tokenIssuingService);
+
+        if (this.jwtRestService != null) {
+            this.jwtRestService.setTokenIssuingService(tokenIssuingService);
+        }
+    }
+
+    public synchronized void unbindTokenIssuingService(final TokenIssuingService tokenIssuingService) {
+        this.tokenIssuingService = this.tokenIssuingService.filter(current -> current != tokenIssuingService);
+
+        if (this.jwtRestService != null) {
+            this.jwtRestService.unsetTokenIssuingService(tokenIssuingService);
+        }
+    }
+
+    public synchronized void bindTokenVerificationService(final TokenVerificationService tokenVerificationService) {
+        this.tokenVerificationService = Optional.of(tokenVerificationService);
+
+        if (this.jwtAuthProvider != null) {
+            this.jwtAuthProvider.setTokenVerificationService(tokenVerificationService);
+        }
+
+        if (this.jwtRestService != null) {
+            this.jwtRestService.setTokenVerificationService(tokenVerificationService);
+        }
+    }
+
+    public synchronized void unbindTokenVerificationService(final TokenVerificationService tokenVerificationService) {
+        this.tokenVerificationService = this.tokenVerificationService
+                .filter(current -> current != tokenVerificationService);
+
+        if (this.jwtAuthProvider != null) {
+            this.jwtAuthProvider.unsetTokenVerificationService(tokenVerificationService);
+        }
+
+        if (this.jwtRestService != null) {
+            this.jwtRestService.unsetTokenVerificationService(tokenVerificationService);
+        }
     }
 
     public void setPasswordStrengthVerificationService(
@@ -151,6 +209,12 @@ public class RestService implements ConfigurableComponent {
         this.registeredServices.add(
                 bundleContext.registerService(ExceptionMapper.class, new RestExceptionMapper(), serviceProperties));
 
+        if (this.identityService != null) {
+            createJwtComponents(new RestIdentityHelper(this.identityService));
+            this.registeredServices.add(bundleContext.registerService(JwtRestService.class, this.jwtRestService,
+                    RestServiceUtils.resourceProperties()));
+        }
+
         update(properties);
 
         try {
@@ -193,10 +257,22 @@ public class RestService implements ConfigurableComponent {
             this.sessionAuthenticationProvider.setOptions(newOptions);
             this.incomingPortCheckFilter.setAllowedPorts(newOptions.getAllowedPorts());
 
+            if (this.jwtRestService != null) {
+                this.jwtRestService.setOptions(newOptions);
+            }
+
             updateBuiltinAuthenticationProviders(newOptions);
         }
 
         logger.info("updating...done");
+    }
+
+    private synchronized void createJwtComponents(final RestIdentityHelper identityHelper) {
+        this.jwtRestService = new JwtRestService(identityHelper);
+        this.jwtAuthProvider = new JwtAuthenticationProvider(identityHelper);
+
+        this.tokenIssuingService.ifPresent(this::bindTokenIssuingService);
+        this.tokenVerificationService.ifPresent(this::bindTokenVerificationService);
     }
 
     public void deactivate() {
@@ -226,6 +302,14 @@ public class RestService implements ConfigurableComponent {
 
         if (options.isSessionManagementEnabled()) {
             bindAuthenticationProvider(this.sessionAuthenticationProvider);
+        }
+
+        if (this.jwtAuthProvider != null) {
+            if (options.isJwtAuthEnabled()) {
+                bindAuthenticationProvider(this.jwtAuthProvider);
+            } else {
+                unbindAuthenticationProvider(this.jwtAuthProvider);
+            }
         }
     }
 

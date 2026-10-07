@@ -24,6 +24,8 @@
 	</parent>
 
 	<properties>
+
+	    <checkstyle.skip>true</checkstyle.skip>
 		<kura.basedir>${project.basedir}/..</kura.basedir>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/*/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>

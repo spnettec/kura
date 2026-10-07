@@ -42,6 +42,17 @@
   <reference name="UserAdmin" 
   		interface="org.osgi.service.useradmin.UserAdmin" 
   		bind="setUserAdmin"/>
+  <reference name="IdentityService" cardinality="0..1" policy="dynamic"
+  		interface="org.eclipse.kura.identity.IdentityService"
+  		bind="setIdentityService"/>
+  <reference name="TokenIssuingService" cardinality="0..1" policy="dynamic"
+  		interface="org.eclipse.kura.security.token.TokenIssuingService"
+  		bind="bindTokenIssuingService"
+  		unbind="unbindTokenIssuingService"/>
+  <reference name="TokenVerificationService" cardinality="0..1" policy="dynamic"
+  		interface="org.eclipse.kura.security.token.TokenVerificationService"
+  		bind="bindTokenVerificationService"
+  		unbind="unbindTokenVerificationService"/>
   <implementation class="org.eclipse.kura.internal.rest.provider.RestService"/>
 </scr:component>
 
