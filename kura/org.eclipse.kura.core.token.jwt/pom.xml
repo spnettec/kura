@@ -30,15 +30,10 @@
 		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../test/*/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 
-	<!-- java-jwt is a plain (non OSGi) jar: resolved via pomDependencies=consider for
-	     compilation and shipped embedded on the Bundle-ClassPath (lib/java-jwt.jar),
-	     the same layout upstream uses for its bnd build. -->
-	<dependencies>
-		<dependency>
-			<groupId>com.auth0</groupId>
-			<artifactId>java-jwt</artifactId>
-			<version>4.6.0</version>
-		</dependency>
-	</dependencies>
+	<!-- java-jwt is a plain (non OSGi) jar shipped embedded on the Bundle-ClassPath
+	     (lib/java-jwt.jar). It is deliberately NOT declared as a maven dependency:
+	     pomDependencies=consider would feed it (and its bouncycastle/jackson
+	     transitive closure) to the p2 collector, which rejects the mixed request
+	     ("Invalid Collect Request"). Compilation resolves it from the bundle itself. -->
 
 </project>
