@@ -8,9 +8,10 @@ Bundle-License: Eclipse Public License v2.0
 Bundle-Category: Localization
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=21))"
 Export-Package: org.eclipse.kura.localization;version="1.0.0"
-Import-Package: org.eclipse.kura;version="[1.2,2.0)"
+Import-Package: com.github.rodionmoiseev.c10n,
+ com.github.rodionmoiseev.c10n.annotations,
+ org.eclipse.kura;version="[1.2,2.0)"
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: lib/c10n-core-1.2.jar,
  .
 Eclipse-ExtensibleAPI: true
 

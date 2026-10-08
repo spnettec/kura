@@ -36,4 +36,38 @@
 	     transitive closure) to the p2 collector, which rejects the mixed request
 	     ("Invalid Collect Request"). Compilation resolves it from the bundle itself. -->
 
+    <build>
+        <plugins>
+            <!-- Fetch the plain java-jwt jar into lib/ at generate-sources time (triton.server
+                 pattern): no maven <dependencies> are declared, so pomDependencies=consider has
+                 nothing to feed to the p2 collector, while the bundle embeds lib/java-jwt.jar
+                 on its Bundle-ClassPath for both compilation and runtime. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-embedded-jars</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/lib</outputDirectory>
+                            <stripVersion>true</stripVersion>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.auth0</groupId>
+                                    <artifactId>java-jwt</artifactId>
+                                    <version>4.6.0</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

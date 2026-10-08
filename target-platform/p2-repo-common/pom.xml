@@ -44,6 +44,50 @@
 									<source>true</source>
 									<transitive>true</transitive>
 								</artifact>
+								<!-- java-jwt wrapped as a real OSGi bundle so
+								     org.eclipse.kura.core.token.jwt can Import-Package it instead of
+								     embedding on Bundle-ClassPath (embed jars make Tycho emit a
+								     classifier-with-slash maven coordinate that Maven 3.10's
+								     resolver validator rejects). -->
+								<artifact>
+									<id>com.yofc.thirdparty:js-language-repack:24.2.1</id>
+									<source>false</source>
+									<transitive>false</transitive>
+									<instructions>
+										<Import-Package>!*</Import-Package>
+										<Bundle-SymbolicName>js-language-repack</Bundle-SymbolicName>
+										<Export-Package>com.oracle.js.parser.*,com.oracle.truffle.js.*</Export-Package>
+									</instructions>
+								</artifact>
+								<artifact>
+									<id>com.yofc.thirdparty:js-scriptengine-repack:24.2.1</id>
+									<source>false</source>
+									<transitive>false</transitive>
+									<instructions>
+										<Import-Package>!*</Import-Package>
+										<Bundle-SymbolicName>js-scriptengine-repack</Bundle-SymbolicName>
+										<Export-Package>com.oracle.truffle.js.scriptengine.*</Export-Package>
+									</instructions>
+								</artifact>
+								<artifact>
+									<id>com.yofc.thirdparty:c10n-repack:1.2</id>
+									<source>false</source>
+									<transitive>false</transitive>
+									<instructions>
+										<Import-Package>!*</Import-Package>
+										<Export-Package>com.github.rodionmoiseev.c10n,com.github.rodionmoiseev.c10n.annotations,com.github.rodionmoiseev.c10n.share,com.github.rodionmoiseev.c10n.share.utils</Export-Package>
+										<Bundle-SymbolicName>c10n-repack</Bundle-SymbolicName>
+									</instructions>
+								</artifact>
+								<artifact>
+									<id>com.auth0:java-jwt:4.6.0</id>
+									<source>false</source>
+									<transitive>false</transitive>
+									<instructions>
+										<Import-Package>!*</Import-Package>
+										<Export-Package>com.auth0.jwt.*</Export-Package>
+									</instructions>
+								</artifact>
 								<artifact>
 									<id>io.vertx:vertx-core-logging:${vertx.version}</id>
 									<source>true</source>

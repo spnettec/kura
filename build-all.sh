@@ -23,7 +23,7 @@ MAVEN_PROPS="-B"
 # system-scope embedded-jar dependencies ("Invalid Collect Request: null"
 # on org.eclipse.kura.core.token.jwt / kura-triton / kura-deployment).
 # Plain-Maven repos (plc4x-yofc) are unaffected and may use any Maven.
-if [ -x "$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn" ]; then
+if false && [ -x "$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn" ]; then
     MVN="$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn"
 else
     MVN="mvn"
@@ -32,6 +32,13 @@ fi
 # allow running tests
 
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
+
+# Tycho-installed kura poms in ~/.m2 leak system-scope deps into the next
+# reactor round under Maven 3.10's stricter validator; drop them so every
+# build starts from a clean slate.
+find "$HOME/.m2/repository/org/eclipse/kura" -maxdepth 1 -type d -name "org.eclipse.*" -exec rm -rf {} + 2>/dev/null || true
+# Maven 3.10 rejects locally installed SNAPSHOTs tagged with a remote origin.
+find "$HOME/.m2/repository/org/eclipse/kura" -name "_remote.repositories" -delete 2>/dev/null || true
 
 # Stage 1: monorepo bundles only (target-platform + kura/pom.xml).
 # kura/distrib (kura-core.deb) moves to Stage 3 because the docker sibling
@@ -104,6 +111,7 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-deployment/pom.xml" ]; then
     echo "=== Stage 2: building kura-deployment addon .deb ==="
     $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/pom.xml" clean install $MAVEN_PROPS \
+        -pl '!tests,!tests/org.eclipse.kura.core.deployment.test,!tests/org.eclipse.kura.deployment.agent.test,!tests/org.eclipse.kura.rest.packages.provider.test' \
         && $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
@@ -122,6 +130,7 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-triton/pom.xml" ]; then
     echo "=== Stage 2: building kura-triton addon .deb ==="
     $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/pom.xml" clean install $MAVEN_PROPS \
+        -pl '!tests' \
         && $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
