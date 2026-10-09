@@ -50,3 +50,5 @@ javaConfig.json
 .tmp-*
 .tmp-handoff/
 .gitnexus
+__pycache__/
+*.pyc
