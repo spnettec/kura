@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.eclipse.kura</groupId><artifactId>kura-build-parent</artifactId><version>6.0.0-SNAPSHOT</version><relativePath>../kura-build-parent/pom.xml</relativePath></parent>
+  <artifactId>kura-osgi-test-support</artifactId>
+  <name>Kura JUnit 5 real Equinox test support</name>
+  <dependencies>
+    <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.osgi</artifactId></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId></dependency>
+  </dependencies>
+</project>

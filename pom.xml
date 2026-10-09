@@ -20,6 +20,7 @@
         <module>kura/org.eclipse.kura.localization</module>
         <module>kura/org.eclipse.kura.localization.resources</module>
         <module>kura/emulator/org.eclipse.kura.emulator</module>
+        <module>kura-osgi-tests</module>
       </modules>
     </profile>
   </profiles>

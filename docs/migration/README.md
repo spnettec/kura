@@ -18,7 +18,7 @@
 | P0 基线 | 已记录 16 仓库 SHA，保存 109 个现有 bundle 副本及元数据；docs 已通过旧 Tycho 链补齐。已通过独立启动补充运行基线。 |
 | P1 构建基础 | parent/BOM 已在独立缓存由 Maven 3.10 安装成功，无 MILD；封装映射和测试组合仍在验证。 |
 | P2 IDEA 启动试点 | macOS 试点通过：完整运行集解析、管理页 HTTP 200、激活与配置读取断点/单步、停止后重启通过；仍使用旧构建产物。 |
-| P3 代表模块 | 进行中；转换 API、JWT、localization/fragment、emulator。 |
+| P3 代表模块 | 试点通过：5 个 bundle 语义对比、14 项普通测试、6 项真实容器测试，以及替换新 JAR 后的完整运行验证。 |
 | P4 核心迁移 | 待 P3 验收。 |
 | P5 Sibling / YOFC | 待 P4 验收。 |
 | P6 交付与平台回归 | 待迁移；包括空缓存、双架构容器运行及双平台断点。 |
@@ -63,3 +63,25 @@ python3 tools/migration/bundle_audit.py /path/to/new.jar --baseline /path/to/old
 - Linux GUI、Docker 双架构运行、冷 Maven 仓库尚未验收。
 
 旧 Gogo `close` 命令可停止 framework 并释放端口，但旧 bundle 的工作线程使 JVM 未退出；IDEA Stop / SIGTERM 可以正常退出。线程现场留在本机基线目录。该行为不是新构建已修复的项目。
+
+## P3 代表模块（2026-10-09）
+
+已转换 API、JWT、localization、localization.resources fragment、emulator。业务源码、原 MANIFEST、DS 和 metatype XML 均未修改。嵌入依赖进入 target/classes/lib，打包路径与基线一致。
+
+- Maven 3.10 / JDK 21 / MBP 6.0.0，无 MILD，固定 qualifier `20261009pilot`。
+- 5 个 JAR 的所有业务 headers、非 class 资源和命名类清单与冻结基线一致。允许包声明排序/空白、默认 Bundle-ClassPath `.` 的等价表示，以及构建标识变化。
+- 每次打包在 target/osgi 中生成带统一 qualifier 的 MANIFEST 副本；源 MANIFEST 保持不变。
+- JUnit 5.14.4、Mockito 5.24.0、Sling OSGi Mock 3.5.8、Surefire/Failsafe 3.6.0 已实际运行：14 项普通测试、6 项真实 Equinox 测试通过。
+- 真实测试覆盖 configuration-policy=require、配置更新、注册 PID、实际 API 包提供者、动态 keystore 绑定/解绑、嵌入类加载和 localization fragment 附着。
+- 四类负向 fixture 均能被发现：错误导入范围、缺少嵌入 JAR、缺少 DS 描述符、缺少必需引用。
+- 本地化中文缺少注解时返回 `AssetMessages.activating`，已用冻结旧 JAR 单独复现，测试保留该行为，不改变 i18n 设计。
+- 完整仿真加载这 5 个新 JAR，版本和 SHA 清单已核对：269 ACTIVE、8 RESOLVED、框架 STARTING，无 INSTALLED；管理页 HTTP 200。Ctrl-C 正常退出并释放端口。
+
+测试当前入口：
+
+```sh
+mvn -Pmigration-pilot -pl :org.eclipse.kura.core.token.jwt -am test
+mvn -Pmigration-pilot,osgi-it -pl :kura-osgi-tests -am verify
+```
+
+迁移验证另传 `-Dmaven.repo.local=/absolute/path/to/migration-m2`。该缓存有已记录的旧 runtime 产物，仍不是冷构建证明。P4/P5 尚未执行，生产脚本和其余模块仍处于混合构建期。

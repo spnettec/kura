@@ -8,5 +8,6 @@
   <modules>
     <module>kura-build-bom</module>
     <module>kura-build-parent</module>
+    <module>kura-osgi-test-support</module>
   </modules>
 </project>
