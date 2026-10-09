@@ -14,13 +14,15 @@
 package org.eclipse.kura.internal.db.sqlite.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 
@@ -96,7 +98,23 @@ public class SqliteProviderActivatorTest {
 
     private final BundleContext bundleContext = Mockito.mock(BundleContext.class);
     private Optional<Exception> exception = Optional.empty();
-    private Optional<String> temporaryDirectoryPath = Optional.empty();
+    @TempDir
+    Path temporaryDirectory;
+    private String originalTemporaryDirectory;
+
+    @BeforeEach
+    void rememberSqliteDirectory() {
+        this.originalTemporaryDirectory = System.getProperty("org.sqlite.tmpdir");
+    }
+
+    @AfterEach
+    void restoreSqliteDirectory() {
+        if (this.originalTemporaryDirectory == null) {
+            System.clearProperty("org.sqlite.tmpdir");
+        } else {
+            System.setProperty("org.sqlite.tmpdir", this.originalTemporaryDirectory);
+        }
+    }
     private SqliteProviderActivator activator = new SqliteProviderActivator();
 
     private void givenBundleStorageAreaPath(String path) {
@@ -151,17 +169,6 @@ public class SqliteProviderActivatorTest {
     }
 
     private String temporaryDirectoryPath() {
-        if (temporaryDirectoryPath.isPresent()) {
-            return temporaryDirectoryPath.get();
-        }
-
-        try {
-            final String newPath = Files.createTempDirectory(null).toFile().getAbsolutePath();
-            this.temporaryDirectoryPath = Optional.of(newPath);
-            return newPath;
-        } catch (final Exception e) {
-            fail("Cannot create temporary directory");
-            throw new IllegalStateException("unreachable");
-        }
+        return this.temporaryDirectory.toAbsolutePath().toString();
     }
 }
