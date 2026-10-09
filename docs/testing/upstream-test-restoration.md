@@ -497,3 +497,12 @@ require absent local APIs and are explicitly not applicable. No production chang
 See [Container audit](container-test-restoration.md). Inventory: 295 restored sources,
 32 helpers, 19 exclusions/replaced harness entries and **119 unreviewed**. Three
 Container sources and the remaining core-origin/OPC UA/runtime/IDEA work remain.
+
+### Container orchestration service continuation
+
+Twenty-one service scenarios pass after correcting obsolete keys and weak fixtures;
+the orchestration module passes 53 cases without daemon access or production changes.
+See [Container audit](container-test-restoration.md). Inventory: 296 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **118 unreviewed**. Two
+Container sources remain; other core-origin, official OPC UA and runtime/IDEA work
+continue to be open.

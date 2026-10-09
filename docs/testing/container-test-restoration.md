@@ -52,3 +52,24 @@ by those scenarios; associated container.identity.enabled and container.permissi
 metadata is absent too. This source is explicitly not applicable, not silently
 skipped, and no identity integration is imported. Three Container sources remain:
 service behavior, instance options and instance lifecycle. Runtime/DS/IDEA work open.
+
+## Orchestration service behavior continuation
+
+All 21 upstream service scenarios pass, bringing orchestration to 53 passing
+Jupiter cases, zero failures/errors/skips with Maven 3.10.0/JDK 21. Production and
+private connect visibility remain unchanged. Scoped Docker configuration/factory
+and HTTP transport-construction mocks let the real local connect method run while
+preventing daemon access and personal Docker configuration reads. Enabled cases
+verify transport construction/host; disabled cases verify no transport construction.
+
+Fixtures now use the actual enabled/container.engine.host keys. The update case
+calls updated, deactivation follows activation and verifies client closure. Creation
+uses no existing matching container and verifies create/start commands; stopping
+verifies the actual stop command. Descriptor assertions compare complete values
+(including local empty version for an untagged image); port checks require all three
+TCP/UDP/SCTP entries. Legacy repository-property scenarios are named accordingly,
+not claimed as registry authentication integration. Generic device fixtures use ttyUSB.
+All static/construction mocks are closed; test teardown deactivates the service.
+
+Two Container sources remain: ContainerInstanceOptionsTest and ContainerInstanceTest.
+Real Docker containers, SCR and IDEA acceptance remain open.
