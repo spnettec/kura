@@ -284,3 +284,13 @@ Maven 3.10.0/JDK 21 reports 14 tests, zero failures/errors/skips. Production unc
 The original HTTP/MQTT transport matrix, authenticated HTTP roles and real SCR/factory/
 ConfigurationService assembly remain explicitly deferred, not counted twice as mock
 transport runs.
+
+## Separate REST bridge service-reference repair
+
+Eight regression cases failed before the fix: connect/disconnect/status and connection
+failure retained acquired DataService or CloudConnectionManager references. The bridge
+now releases each acquired service in finally, including exception paths. It no longer
+ungets CloudService metadata references or unmatched managers that were never acquired.
+Local suffix matching, legacy priority, disconnect timeout and error translation remain
+unchanged. All 22 REST cases and isolated installation pass on Maven 3.10.0/JDK 21.
+This production repair is committed separately; no OSGi metadata changes.

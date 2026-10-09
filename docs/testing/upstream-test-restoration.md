@@ -668,3 +668,10 @@ service lookup logic; all pass. Original transport/authentication/runtime assemb
 remains deferred. See [Cloud audit](cloud-test-restoration.md). Inventory: 332 restored
 sources, 34 helpers, 20 exclusions/replaced harness entries and **79 unreviewed**.
 Source/runtime/IDEA acceptance continues.
+
+### Separate cloud REST reference repair
+
+Eight negative-confirmed regressions cover acquired service release on normal calls
+and connection failures across both manager routes. All 22 REST tests and isolated
+installation pass. See [Cloud audit](cloud-test-restoration.md). Inventory remains
+**79 unreviewed**; source/runtime/IDEA acceptance continues.
