@@ -4213,9 +4213,22 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/jwt/AccessTokenAuthenticationTest.java"
+    ],
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/jwt/IssueTokenPairTest.java",
@@ -4224,9 +4237,22 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/jwt/IssueTokenPairTest.java"
+    ],
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/jwt/JwtAuthenticationConfigurationTest.java",
@@ -4235,9 +4261,22 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/jwt/JwtAuthenticationConfigurationTest.java"
+    ],
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/jwt/RefreshTokenPairTest.java",
@@ -4246,9 +4285,22 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/jwt/RefreshTokenPairTest.java"
+    ],
+    "validation": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/jwt/RefreshTokenReplayTest.java",
@@ -4257,9 +4309,22 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/jwt/RefreshTokenReplayTest.java"
+    ],
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/util/AbstractJwtRestScenario.java",
@@ -4268,9 +4333,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/util/AbstractJwtRestScenario.java"
+    ],
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/util/IdentityFixture.java",
@@ -4279,9 +4349,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/util/IdentityFixture.java"
+    ],
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/util/Jwt.java",
@@ -4290,9 +4365,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/util/Jwt.java"
+    ],
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/util/ProtectedResource.java",
@@ -4301,9 +4381,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/util/ProtectedResource.java"
+    ],
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/util/TokenServicesFixture.java",
@@ -4312,9 +4397,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.rest.provider/src/test/java/org/eclipse/kura/rest/provider/test/util/TokenServicesFixture.java"
+    ],
+    "reason": "Real loopback Jetty/Jersey HTTP with activated RestService filters, current IdentityService/Felix roles, actual CryptoService hashing, RSA issuer and verifier. Per-test cleanup, random port, real expiry/replay check. SCR target matching is emulated through binding callbacks; file-keystore/whiteboard/IDEA acceptance remains separate. See rest-jwt-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV1Test.java",

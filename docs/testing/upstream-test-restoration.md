@@ -792,3 +792,15 @@ metadata changes. See `identity-test-restoration.md` for fixture boundaries.
 Inventory: 347 restored, 38 helpers, eight replaced harnesses, seven current-API
 exclusions, six removed-functionality exclusions and **59 unreviewed** out of 465.
 Actual runtime, authentication and IDEA acceptance remain open.
+
+## REST JWT HTTP continuation (2026-10-10)
+
+Five scenario sources and five helpers restore 32 real loopback HTTP cases across
+Jetty/Jersey, REST filters, identity/role logic and RSA token issuance/verification.
+Full REST provider module: 54 passing tests. Replay checks also prove that the
+expired token is still independently verifiable within clock-skew tolerance.
+See `rest-jwt-test-restoration.md` for remaining SCR/storage/whiteboard boundaries.
+
+Inventory: 352 restored, 43 helpers, eight replaced harnesses, seven current-API
+exclusions, six removed-functionality exclusions and **49 unreviewed** out of 465.
+Other sources, actual Kura runtime and IDEA acceptance remain open.
