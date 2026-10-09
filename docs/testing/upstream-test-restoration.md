@@ -736,3 +736,7 @@ be handled separately; see `osgi-util-test-restoration.md`.
 Current inventory: 465 entries, 340 restored, 37 restored helpers, eight replaced
 legacy harnesses, six current-API exclusions, six removed-functionality exclusions
 and **68 unreviewed**. Kura SCR/IDEA acceptance is still open.
+
+The OSGi tracker leak is now repaired in a separate production commit. Three
+negative-confirmed Equinox lifecycle cases pass, as do all 136 util tests and isolated
+installation. No metadata or ranking semantics changed; inventory remains 68 unreviewed.

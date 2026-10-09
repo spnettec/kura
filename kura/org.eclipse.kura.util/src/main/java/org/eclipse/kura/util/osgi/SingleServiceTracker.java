@@ -197,17 +197,20 @@ public class SingleServiceTracker<T> {
             return;
         }
 
-        if (this.currentEntry == null || this.currentEntry.service != service) {
-            return;
-        }
+        try {
+            if (this.currentEntry == null || this.currentEntry.service != service) {
+                return;
+            }
 
-        // set next best entry
-
-        if (this.entries.isEmpty()) {
-            setBestEntry(null);
-        } else {
-            // the next best entry already is the first one in the list
-            setBestEntry(this.entries.peekFirst());
+            // set next best entry
+            if (this.entries.isEmpty()) {
+                setBestEntry(null);
+            } else {
+                // the next best entry already is the first one in the list
+                setBestEntry(this.entries.peekFirst());
+            }
+        } finally {
+            this.context.ungetService(reference);
         }
     }
 

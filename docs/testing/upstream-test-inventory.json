@@ -4424,17 +4424,18 @@
     "execution": "surefire",
     "localSources": [
       "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/SingleServiceTrackerTest.java",
-      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/EquinoxTestBase.java"
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/EquinoxTestBase.java",
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/SingleServiceTrackerLifecycleTest.java"
     ],
     "validation": {
-      "tests": 9,
+      "tests": 12,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "All nine ranking/add/remove/update scenarios run against actual isolated Equinox registrations. Trackers close even after assertion failure; framework stop is bounded and asserted. Source review exposed missing ungetService cleanup, tracked separately. See osgi-util-test-restoration.md."
+    "reason": "Nine upstream ranking/add/remove/update cases plus three negative-confirmed lifecycle regressions on real isolated Equinox. Separate production fix releases selected and nonselected references when closing or leaving a filter. Tracker/framework cleanup is bounded. See osgi-util-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.util.test/src/main/java/org/eclipse/kura/util/FilterUtilTest.java",

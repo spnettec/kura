@@ -19,3 +19,16 @@ assembly and IDEA execution are separate pending acceptance items.
 Source review found SingleServiceTracker obtains services without releasing them in
 its customizer removal path. A separate regression/fix will verify real framework
 service usage cleanup; the passing upstream ranking tests alone do not cover it.
+
+## Separate service-reference cleanup repair
+
+Three new regression executions failed before the fix, using real Equinox
+ServiceFactory acquisition/release counts and ServiceReference.getUsingBundles().
+Both selected and nonselected references leaked on tracker close or when modified
+properties no longer matched the tracker filter. The removal path now releases each
+successfully removed reference in finally, including the nonselected early return.
+Repeated close does not release twice. Ranking and notification behavior are unchanged.
+
+All 136 util tests and isolated bundle installation pass on Maven 3.10.0/JDK 21,
+zero failures/errors/skips. No OSGi metadata changes; production repair is a separate
+commit from the upstream test restoration. Source inventory remains 68 unreviewed.
