@@ -159,3 +159,26 @@ iteration order. No production or handwritten OSGi metadata changed.
 Inventory: 194 restored sources, 18 restored helpers, 14 exclusions/replaced harness
 entries and **239 unreviewed**, out of 465. The two Wires REST graph sources still
 need review, as do remaining core/sibling suites and real OSGi/IDEA acceptance.
+
+### Wires REST graph continuation
+
+All 49 upstream endpoint scenarios now pass through the real JaxRsRequestHandlerProxy,
+JSON codec and WireGraphServiceImpl. The configuration service and registry/SCR
+boundaries are controlled doubles. Tests check graph CRUD, validation, configuration
+requests, PID filtering and metadata DTOs; original service-arrival checks are
+replaced by assertions on requested configurations. No HTTP server, MQTT broker or
+Equinox DS lifecycle is claimed. Those transport/container acceptance checks remain
+open and are explicitly listed on the inventory entry.
+
+Expected asset metadata keeps the fork's localization keys, description field and
+existing DataType options. The old malformed trailing comma was removed from the
+not-in-graph update request so its 400 assertion exercises membership validation.
+Upstream JsonProjection and ChannelDescriptorTestDriver test utilities are adapted
+locally with their licenses; driver/definition inputs are independent of expected
+response JSON. No production or handwritten OSGi metadata changed.
+
+Maven 3.10.0 / JDK 21: 49 passing REST cases and six previously restored graph
+cases, zero failures/errors/skips. Inventory: 195 restored sources, 19 restored
+helpers, 14 exclusions/replaced harness entries and **237 unreviewed** of 465.
+All Wires snapshot source entries have now been reviewed at the documented layers;
+remaining repositories and real-container/transport/IDEA acceptance are still open.

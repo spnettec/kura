@@ -6064,7 +6064,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.rest.wire.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.rest.wire.provider/src/test/java/org/eclipse/kura/rest/wire/provider/test/Snippets.java"
+    ],
+    "execution": "JUnit Jupiter, real JaxRsRequestHandlerProxy/JSON/WireGraphServiceImpl with configuration and registry doubles",
+    "reason": "Restore 49 endpoint scenarios at the request-handler/component layer. Legacy HTTP/MQTT transport and DS service-arrival assertions are not claimed; creation/deletion configuration requests are checked. Expected descriptor JSON preserves local localization keys, description field and existing DataType options."
   },
   {
     "source": "tests/org.eclipse.kura.rest.wire.provider.test/src/main/java/org/eclipse/kura/rest/wire/provider/test/WireGraphRestServiceTest.java",
@@ -6075,7 +6080,25 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.rest.wire.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.rest.wire.provider/src/test/java/org/eclipse/kura/rest/wire/provider/test/WireGraphRestServiceTest.java"
+    ],
+    "execution": "JUnit Jupiter, real JaxRsRequestHandlerProxy/JSON/WireGraphServiceImpl with configuration and registry doubles",
+    "reason": "Restore 49 endpoint scenarios at the request-handler/component layer. Legacy HTTP/MQTT transport and DS service-arrival assertions are not claimed; creation/deletion configuration requests are checked. Expected descriptor JSON preserves local localization keys, description field and existing DataType options.",
+    "validation": {
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "remainingIntegrationCoverage": [
+      "HTTP REST transport",
+      "MQTT request transport",
+      "Equinox DS creation/deletion and service arrival"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentOptionsTest.java",
