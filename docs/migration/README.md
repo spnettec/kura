@@ -19,8 +19,8 @@
 | P1 构建基础 | parent/BOM 已在独立缓存由 Maven 3.10 安装成功，无 MILD；封装映射和测试组合仍在验证。 |
 | P2 IDEA 启动试点 | macOS 试点通过：完整运行集解析、管理页 HTTP 200、激活与配置读取断点/单步、停止后重启通过；仍使用旧构建产物。 |
 | P3 代表模块 | 试点通过：5 个 bundle 语义对比、14 项普通测试、6 项真实容器测试，以及替换新 JAR 后的完整运行验证。 |
-| P4 核心迁移 | 待 P3 验收。 |
-| P5 Sibling / YOFC | 待 P4 验收。 |
+| P4 核心迁移 | 已通过：51 个默认 bundle + docs；22 项普通测试、6 项真实容器测试及新核心运行验证。 |
+| P5 Sibling / YOFC | 47 个原 Tycho sibling bundle 与 YOFC runtime 的构建、语义对比通过；YOFC / workspace 联调中。 |
 | P6 交付与平台回归 | 待迁移；包括空缓存、双架构容器运行及双平台断点。 |
 | P7 清理切换 | 最后执行；目前不删除旧 `.target`、`.launch` 或 Tycho 配置。 |
 
@@ -106,3 +106,15 @@ mvn -Pjavadocs,osgi-it install
 ```
 
 本阶段仍使用有记录的迁移缓存；冷仓库、发行包、Linux GUI 与 Docker 验收不包含在上述结果中。
+
+## P5 Sibling 转换（2026-10-09）
+
+四批共 47 个 bundle 已由 Maven 3.10 / JDK 21 / MBP 6.0.0 构建通过，未使用 MILD。每个产物与冻结基线比较：包范围、服务声明、嵌入 JAR、许可资源、命名类清单一致；各仓库 `.deb` / 已有 `.dp` 中直接业务 bundle 的 SHA256 与本次产物一致。此项是包内容检查，尚不等于安装/卸载或容器运行验收。
+
+- position/opcua/deployment：7 个；GPSD 沿用 kura-addons 的原 Maven 坐标。
+- networking/wires/cloud：29 个；保留 NM 根目录及 lib 双份嵌入布局，少数已有注解组件单独生成 XML，禁止覆盖手写描述符。Sparkplug 生成源码统一留在 target。
+- camel/artemis/container：9 个；保留 Camel/Artemis 根目录及 lib 布局、Container docker-java 3.2.12 和私有依赖。Artemis 使用处理后的原 MANIFEST 控制最终导出，防止嵌入 JAR 注解扩大导出面。
+- triton/management-ui：2 个；Triton 保留 protobuf/gRPC 及 9 个 lib 依赖。Web2 使用 Java 11 编译、JDK 21 构建，GWT 两个模块显式列出，生成页面资源逐字节一致；5 个 Console 测试转为普通 JUnit 5 后通过。旧产物额外包含的 JakartaServlet 6 contract 由构建步骤明确保留。
+- `kura-yofc-runtime` 继续自动 MANIFEST 模式，独立构建与产物对比通过。显式保留原 Jackson `[2.21,3)` 可选导入范围，公共 BOM 不收紧其运行兼容范围。
+
+所有下载和生成内容均位于 target；手写源 MANIFEST、DS/metatype、生产 Java 未因以上转换改写。YOFC 的统一入口、完整 workspace 增量运行集仍在验证，不能据此宣布 P5 完成。

@@ -17,6 +17,7 @@
     <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
   </properties>
   <repositories>
+    <repository><id>central</id><url>https://repo.maven.apache.org/maven2</url></repository>
     <repository><id>kura-addons</id><url>https://raw.githubusercontent.com/eurotech/kura_addons/mvn-repo</url></repository>
   </repositories>
   <dependencyManagement>
