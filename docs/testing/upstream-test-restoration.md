@@ -57,6 +57,7 @@ Validation commands use the migration local repository configured for this works
 - OPC UA sibling: nine basic driver/descriptor cases pass against Milo 1.1.2, adapted from upstream 0.6.16 APIs. Stable IDs and localized names are checked separately. YOFC's independent PLC4J OPC UA integration is outside this restoration; old server/OSGi test fixtures are not claimed as passing or compatible.
 - Deployment sibling: 61 options, hook, download, marketplace and REST cases pass. A separate fix configures the Kura SSL factory before requesting an HTTPS response; a negative test run confirms the old order fails the assertion.
 - Networking sibling: 988 parameterized enum/property/status cases pass. Jupiter method sources and nested suites replace the old JUnit 4 runners. Upstream-only modem APIs are recorded explicitly, and the fork's existing unmanaged/disabled interface behavior is preserved.
+- Wires sibling: 129 asset/cloudlet/REST, AI, publisher/subscriber, regex, database and script cases pass; three further channel-record cases run in the retained core asset module. Service trackers and Graal contexts are closed, H2 databases are isolated, and upstream optional/dynamic position scenarios are explicitly excluded from the fork's mandatory/static DS contract. No production source or descriptor was changed in this batch.
 
 Every batch uses Maven 3.10 and JDK 21. These counts are separate module reports and are not added to repeated dependency-module runs as a claimed workspace-wide total.
 
@@ -70,3 +71,5 @@ Every batch uses Maven 3.10 and JDK 21. These counts are separate module reports
 ## Still in progress
 
 The 13 CRL HTTP/download/refresh cases additionally pass through Failsafe with `-Posgi-it`, local random ports, isolated temporary files and bounded timeouts. The fixture waits for all CRL executors to terminate before removing its directory. Remaining real OSGi scenarios, sibling suites, IDEA JUnit invocation and full workspace acceptance are still to be completed.
+
+At the requested session pause on 2026-10-09, the source inventory has 465 entries: 181 restored sources, 11 restored helpers, six removed-functionality exclusions, six replaced legacy harness entries, one upstream-only API entry and 260 unreviewed sources. These are source-file audit counts, not test invocation counts. No entry is left in an in-flight adapting state.

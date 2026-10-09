@@ -5900,7 +5900,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.asset.helper.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.asset.helper.provider/src/test/java/org/eclipse/kura/internal/asset/AssetServiceImplTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/helper/test/ChannelRecordHelperTest.java",
@@ -5911,7 +5924,20 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.asset.provider/src/test/java/org/eclipse/kura/asset/provider/helper/test/ChannelRecordHelperTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/AssetTest.java",
@@ -5966,7 +5992,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.asset.cloudlet.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.asset.cloudlet.provider/src/test/java/org/eclipse/kura/internal/asset/cloudlet/AssetCloudletTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.rest.asset.provider.test/src/test/java/org/eclipse/kura/internal/rest/asset/AssetRestServiceTest.java",
@@ -5977,7 +6016,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.rest.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.rest.asset.provider/src/test/java/org/eclipse/kura/internal/rest/asset/AssetRestServiceTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.rest.wire.provider.test/src/main/java/org/eclipse/kura/rest/wire/provider/test/Snippets.java",
@@ -6010,7 +6062,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentTest.java",
@@ -6021,7 +6086,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/InferenceEngineServiceMock.java",
@@ -6032,7 +6110,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider/src/test/java/org/eclipse/kura/wire/ai/component/provider/InferenceEngineServiceMock.java"
+    ],
+    "execution": "JUnit 5 fixture",
+    "reason": "Test-only fixture consumed by the restored unit suites."
   },
   {
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/TensorListAdapterTest.java",
@@ -6043,7 +6126,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider/src/test/java/org/eclipse/kura/wire/ai/component/provider/TensorListAdapterTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/AssetErrorTest.java",
@@ -6142,7 +6238,25 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/publisher/CloudPublisherTest.java"
+    ],
+    "excludedMethods": [
+      "testOnWireReceiveWithBasicPositionWithNoPositionService",
+      "testOnWireReceiveWithFullPositionWithNoPositionService",
+      "testPayloadHasNotPositionIfPositionServiceIsUnset"
+    ],
+    "reason": "Current hand-written DS contract requires static PositionService cardinality 1..1. Upstream optional dynamic reference/unbind scenarios are not part of this fork; retain current contract and do not introduce production changes for test restoration.",
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    }
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/regexfilter/RegexFilterTest.java",
@@ -6153,7 +6267,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/regexfilter/RegexFilterTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/subscriber/CloudSubscriberTest.java",
@@ -6164,7 +6291,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/subscriber/CloudSubscriberTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/store/test/DbWireRecordStoreTest.java",
@@ -6263,7 +6403,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/filter/DbWireRecordFilterTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/db/store/DbWireRecordStoreTest.java",
@@ -6274,7 +6427,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/store/DbWireRecordStoreTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.provider.test/src/test/java/org/eclipse/kura/internal/wire/WireGraphServiceImplTest.java",
@@ -6296,7 +6462,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/EngineProviderTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/TestScripts.java",
@@ -6307,7 +6486,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/TestScripts.java"
+    ],
+    "execution": "JUnit 5 fixture",
+    "reason": "Test-only fixture consumed by the restored unit suites."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentOptionsTest.java",
@@ -6318,7 +6502,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentTest.java",
@@ -6329,7 +6526,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/FilterComponentOptionsTest.java",
@@ -6340,7 +6550,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/FilterComponentOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/IOScriptBindingsTest.java",
@@ -6351,7 +6574,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/IOScriptBindingsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/ScriptContextDropTest.java",
@@ -6362,7 +6598,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.script.tools"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.script.tools/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/ScriptContextDropTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current APIs, isolated in-memory database and service mocks; Graal contexts and service trackers are closed after tests."
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/AssumingIsNotJenkins.java",
