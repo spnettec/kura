@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1118,7 +1119,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
                         : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
         if (isEncrypt != null && !isEncrypt) {
-            try (FileOutputStream outputfile = new FileOutputStream(fSnapshot)) {
+            try (FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
                 marshal(outputfile, xmlConfigs);
             } catch (IOException e) {
                 throw KuraException.internalError(e);
@@ -1144,7 +1145,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         }
 
         try (FileInputStream temInputFile = new FileInputStream(tempFile);
-                FileOutputStream outputfile = new FileOutputStream(fSnapshot)) {
+                FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
             this.cryptoService.encryptAes(temInputFile, outputfile);
 
         } catch (IOException e) {
@@ -1156,6 +1157,27 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
                 logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
             }
         }
+    }
+
+    private static FileOutputStream openPrivateSnapshotOutput(File snapshot) throws IOException {
+        Path path = snapshot.toPath();
+        boolean posix = path.getFileSystem().supportedFileAttributeViews().contains("posix");
+        if (!Files.exists(path)) {
+            if (posix) {
+                Files.createFile(path, PosixFilePermissions.asFileAttribute(
+                        PosixFilePermissions.fromString("rw-------")));
+            } else {
+                Files.createFile(path);
+            }
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new IOException("Snapshot path is not a regular file: " + path);
+        }
+        if (posix) {
+            Files.setPosixFilePermissions(path,
+                    PosixFilePermissions.fromString("rw-------"));
+        }
+        return new FileOutputStream(snapshot);
     }
 
     private ComponentConfiguration getConfigurableComponentConfiguration(String pid) {

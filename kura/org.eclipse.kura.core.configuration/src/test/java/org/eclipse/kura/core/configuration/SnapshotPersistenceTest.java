@@ -73,10 +73,18 @@ class SnapshotPersistenceTest {
         configs.setConfigurations(List.of(new ComponentConfigurationImpl("pid", null, Map.of("value", "x"))));
         invoke(service(properties, crypto), "writeSnapshot", new Class<?>[] {long.class, XmlComponentConfigurations.class},
                 7L, configs);
+        Path snapshot = directory.resolve("snapshot_7.xml");
+        var privatePermissions = java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
+        assertEquals(privatePermissions, Files.getPosixFilePermissions(snapshot));
+        Files.setPosixFilePermissions(snapshot,
+                java.nio.file.attribute.PosixFilePermissions.fromString("rw-r--r--"));
+        invoke(service(properties, crypto), "writeSnapshot", new Class<?>[] {long.class, XmlComponentConfigurations.class},
+                7L, configs);
+        assertEquals(privatePermissions, Files.getPosixFilePermissions(snapshot));
         assertEquals(setting.equals("false") ? XML : "ENCRYPTED:" + XML,
                 Files.readString(directory.resolve("snapshot_7.xml")));
         if (setting.equals("false")) verifyNoInteractions(crypto);
-        else verify(crypto).encryptAes(any(InputStream.class), any(OutputStream.class));
+        else verify(crypto, times(2)).encryptAes(any(InputStream.class), any(OutputStream.class));
     }
 
     @Test
