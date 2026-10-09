@@ -590,3 +590,12 @@ lifecycle fixtures; all 146 Kapua tests pass. See [Cloud audit](cloud-test-resto
 Inventory: 317 restored sources, 32 helpers, 19 exclusions/replaced harness entries
 and **97 unreviewed**. Kapua's remaining CloudService integration source and other
 source/runtime/IDEA work remain open.
+
+### Kapua birth metrics and connection facade continuation
+
+The final Kapua source adds 12 business cases using actual JSON encoding and current
+modem/tamper DTOs; the original real MQTT/DS pipeline is explicitly deferred. All
+158 Kapua cases pass and all 16 source files are reviewed. See
+[Cloud audit](cloud-test-restoration.md). Inventory: 318 restored sources, 32 helpers,
+19 exclusions/replaced harness entries and **96 unreviewed**. Other source audit,
+real runtime and IDEA acceptance remain open.

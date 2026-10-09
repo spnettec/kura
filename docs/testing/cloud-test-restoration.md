@@ -124,3 +124,21 @@ inspection; publication topic/priority, subscriptions, queue IDs and callback
 arguments remain covered. Fresh service activation/deactivation replaces static
 shared fixtures and releases its scheduler. Configuration retrieval now verifies
 the configured prefix in addition to object presence.
+
+## CloudService legacy integration-source audit
+
+All 13 upstream scenarios audited. Twelve business scenarios now pass as ordinary
+Jupiter tests: connect failure propagation, 10-second disconnect delegation, info
+forwarding, notification PID, CPU/extended properties, tamper absence/state/event
+republishing and single/multiple-modem selection. Actual CloudService publication
+uses the existing shared JSON encoder via a test-scope bundle dependency; assertions
+parse real encoded bytes and verify MQTT topic/QoS/retain/priority at the mocked
+DataService boundary. Tamper events use controlled 30-second scheduling and actual
+acknowledgement callbacks with owned executor termination. Current modem/SIM DTOs
+are used; no D-Bus imports or network implementation changes.
+
+The original service-existence assertion and real Moquette/MQTT, CryptoService,
+ConfigurationService and EventAdmin/DS pipeline remain explicitly deferred. No
+fixed-port broker is launched by these tests. Full Kapua module passes 158 cases
+with zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. All 16 Kapua source
+files have now been reviewed; real MQTT/Equinox/IDEA acceptance remains open.
