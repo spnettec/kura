@@ -145,15 +145,15 @@ public class DriverState {
         logger.debug("Unregistering Asset Listener...");
 
         try {
-            Collection<ChannelListener> listeners = registrations.stream()
-                    .map(ChannelListenerHolder::getChannelListener).collect(Collectors.toSet());
+            // The driver holds the wrapper used by attach(), not its delegated listener.
+            Collection<ChannelListener> listeners = new HashSet<>(registrations);
             this.driver.unregisterChannelListeners(listeners);
             this.attachedListeners.removeAll(registrations);
         } catch (KuraRuntimeException kuraError) {
             if (kuraError.getCode() == KuraErrorCode.OPERATION_NOT_SUPPORTED) {
                 for (ChannelListenerHolder registration : registrations) {
                     try {
-                        this.driver.unregisterChannelListener(registration.getChannelListener());
+                        this.driver.unregisterChannelListener(registration);
                         this.attachedListeners.remove(registration);
                     } catch (Exception regError) {
                         logger.warn("Failed to unregister channel listener", regError);
