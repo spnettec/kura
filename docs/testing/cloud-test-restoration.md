@@ -294,3 +294,32 @@ ungets CloudService metadata references or unmatched managers that were never ac
 Local suffix matching, legacy priority, disconnect timeout and error translation remain
 unchanged. All 22 REST cases and isolated installation pass on Maven 3.10.0/JDK 21.
 This production repair is committed separately; no OSGi metadata changes.
+
+## MQTT TLS restoration and separate hostname-policy repair
+
+Seventeen upstream scenarios now use real Paho, Moquette 0.18.0, TLS/WSS sockets,
+Kura SSL manager and PKIX validation with temporary in-memory certificates. Both
+brokers bind loopback port zero. The fixture reads Moquette's actual bound WSS port
+(no public accessor) instead of reserving and releasing a port. It closes broker,
+SSL trackers and retained Paho resources. KeystoreService is the mocked boundary,
+supplying real KeyStore, KeyManager and CertStore objects.
+
+Both formerly ignored missing-client-key cases now run against a broker requiring
+mutual TLS with the client CA configured. Wrong-truststore cases retain a valid client
+key so they exercise server trust. Unbinding a separate truststore is tested after a
+successful connection. Revocation first connects with a valid CRL, then rejects the
+revoked broker after actual SSL cache invalidation. The upstream unknown-revocation
+test name contradicted its success-only body; it now checks rejection with no CRL.
+Filesystem CRL download/refresh, EventAdmin delivery and SCR/factory assembly remain
+explicitly deferred, not represented as integration coverage by mocked registration.
+
+Eight positive TLS cases failed before repair because Paho 1.2.5 replaced the Kura
+factory's hostname policy with its default HTTPS check. A separate production commit
+disables that override only for SSLSocketFactoryWrapper; its own socket policy remains
+active. Enabled hostname verification still rejects a mismatch, and an added custom
+factory case confirms Paho's default verification remains enabled for other factories.
+The handwritten manifest adds only the required core.ssl package import.
+
+All 18 MQTT cases and 48 Cloud Base cases pass with zero failures/errors/skips on
+Maven 3.10.0/JDK 21; isolated installation succeeds. Remaining legacy cloud harness,
+DataService/CloudService end-to-end assembly and IDEA/Equinox acceptance stay open.

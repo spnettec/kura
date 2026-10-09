@@ -675,3 +675,13 @@ Eight negative-confirmed regressions cover acquired service release on normal ca
 and connection failures across both manager routes. All 22 REST tests and isolated
 installation pass. See [Cloud audit](cloud-test-restoration.md). Inventory remains
 **79 unreviewed**; source/runtime/IDEA acceptance continues.
+
+### Cloud Base real MQTT/TLS continuation
+
+One source restores 17 scenarios plus one custom-factory regression using actual
+TLS/WSS/mutual authentication and revocation validation. Eight failures exposed a Paho
+hostname-policy override, fixed in a separate production commit. All 48 Cloud Base
+tests and isolated installation pass. See [Cloud audit](cloud-test-restoration.md)
+for service/runtime boundaries. Inventory: 333 restored sources, 34 helpers,
+20 exclusions/replaced harness entries and **78 unreviewed**. Source/runtime/IDEA
+acceptance continues.
