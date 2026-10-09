@@ -84,3 +84,17 @@ executor is untouched. No real MQTT/Equinox or wall-clock timing claim.
 Source audit found that deactivate leaves the per-instance birth scheduler/pending
 task alive. Test cleanup currently owns its fake scheduler explicitly. This
 production lifecycle defect will be verified and repaired in a separate commit.
+
+## Separate delayed-publisher deactivation repair
+
+Three new regression scenarios failed before the fix: pending cancellation and
+scheduler shutdown were absent, and an already-dequeued task accessed cleared
+SystemAdminService and threw NPE. Deactivation now serializes cancellation/shutdown
+with delayed publishing before clearing bindings. Both scheduling and queued-task
+execution check scheduler shutdown; existing immediate disconnect publication,
+30-second coalescing, QoS and the shared callback executor are unchanged.
+
+All 18 BirthMessages cases and 110 Kapua module cases pass, zero failures/errors/skips
+on Maven 3.10.0/JDK 21/Jupiter. The repaired bundle is packaged/installed into the
+isolated migration-m2 repository. Production fix is committed separately from
+restoration. Runtime DS/MQTT acceptance remains open.

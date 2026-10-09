@@ -566,3 +566,11 @@ message acknowledgements; all 107 Kapua cases pass. See [Cloud audit](cloud-test
 Inventory: 312 restored sources, 32 helpers, 19 exclusions/replaced harness entries
 and **102 unreviewed**. A scheduler deactivation defect is isolated for separate
 regression/fix; remaining source/runtime/IDEA work is still open.
+
+### Separate Kapua delayed-publisher lifecycle repair
+
+Three negative-confirmed deactivation regressions now pass: timer cancellation,
+executor shutdown and queued-task guards prevent work against cleared bindings.
+All 110 Kapua cases and isolated bundle installation pass. See
+[Cloud audit](cloud-test-restoration.md). Source inventory remains **102 unreviewed**;
+this repair does not stand in for remaining source/runtime/IDEA work.

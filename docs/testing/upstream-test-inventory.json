@@ -2194,9 +2194,9 @@
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/BirthMessagesTest.java"
     ],
     "execution": "surefire",
-    "reason": "All upstream lifecycle publication/device profile cases restored. Exact 30-second captured schedule, no premature publish, real callback acknowledgements on an owned virtual-thread executor, activation before update, and actual handler removal replace weak timing fixtures. Production unchanged; per-instance scheduler deactivation defect tracked separately. See cloud-test-restoration.md.",
+    "reason": "All 15 upstream scenarios plus three negative-confirmed deactivation regressions: pending task cancellation, scheduler shutdown and no queued task access to cleared service bindings. Separate production fix preserves scheduling/QoS and shared callbacks. See cloud-test-restoration.md.",
     "validation": {
-      "tests": 15,
+      "tests": 18,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
