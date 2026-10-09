@@ -4345,7 +4345,23 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider/src/test/java/org/eclipse/kura/rest/packages/provider/test/PackagesRestServiceTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "All 12 upstream endpoint scenarios through actual localhost Jersey HTTP, production GsonSerializer and multipart EntityPart parsing. Only deployment-agent/admin service boundaries mocked. See deployment-test-restoration.md.",
+    "deferredValidation": [
+      "OSGi whiteboard registration and runtime authentication/filter integration"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/test/java/org/eclipse/kura/internal/rest/deployment/agent/test/DeploymentRestServiceUnitTest.java",

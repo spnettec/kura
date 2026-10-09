@@ -88,3 +88,23 @@ OS-selected port and a generated CA/localhost certificate, then parse the origin
 upstream XML. SSL service and deployment admin remain boundary mocks. Missing
 updateurl must fail for that specific cause, not merely any IllegalStateException.
 Server executors are stopped and awaited. Two deployment sources remain unreviewed.
+
+## Deployment packages REST continuation
+
+All 12 PackagesRestServiceTest scenarios run through actual localhost HTTP with
+Jersey 3.1.9, the production DeploymentRestService and core GsonSerializer. The
+full REST package module passes 31 cases, zero failures/errors/skips. GET listing,
+install/uninstall status, request validation, Marketplace URL conversion/error
+mapping and actual multipart upload use the real routing and serialization path.
+DeploymentAgentService and DeploymentAdmin are boundary mocks.
+
+The multipart scenarios send an actual form-data body and validate the file URI,
+isolated destination and complete bytes handed to the agent, including its failure
+case. Dynamic ports replace shared port 8080. HTTP clients, servers and their owned
+executors close after each test; java.io.tmpdir is restored. The original hardcoded
+admin credentials/DS registrations are omitted: actual runtime authentication and
+OSGi whiteboard wiring remain explicitly deferred. The test does not claim auth
+acceptance. Jersey HTTP/multipart/HK2 and the core serializer artifact are test-only
+dependencies; production code and handwritten OSGi metadata are unchanged.
+
+Only CloudDeploymentHandlerV2Test remains unreviewed in deployment's source inventory.

@@ -413,3 +413,11 @@ actual local Marketplace HTTPS parsing; the complete agent module passes 28 case
 See [deployment audit](deployment-test-restoration.md). No production changes.
 Current inventory is 280 restored sources, 32 helpers, 16 exclusions/replaced
 harness entries and **137 unreviewed** of 465. Deployment has two sources left.
+
+### Deployment packages HTTP REST continuation
+
+All 12 upstream REST scenarios now execute real Jersey HTTP and multipart parsing;
+the complete packages REST module passes 31 cases. Runtime auth/OSGi remain open.
+See [deployment audit](deployment-test-restoration.md). No production changes.
+Current inventory is 281 restored sources, 32 helpers, 16 exclusions/replaced
+harness entries and **136 unreviewed** of 465. Deployment has one source left.
