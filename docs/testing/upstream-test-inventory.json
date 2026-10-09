@@ -6180,7 +6180,24 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider/src/test/java/org/eclipse/kura/rest/network/configuration/provider/test/NetworkConfigurationRestServiceTest.java"
+    ],
+    "execution": "JUnit Jupiter endpoint/DTO component scenarios through the real JaxRsRequestHandlerProxy",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Retain local metadata API, JSON DTOs, exception mapping and network configuration update behavior. See networking-rest-test-restoration.md. Real transports and authentication remain pending.",
+    "deferredValidation": [
+      "HTTP authentication: shouldReturnUnauthorizedStatusWhenNoRestPermissionIsGiven",
+      "Real HTTP transport and OSGi DS acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/MockComponentConfiguration.java",
@@ -6191,7 +6208,11 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider/src/test/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/MockComponentConfiguration.java"
+    ],
+    "reason": "Used by 12 validated configuration endpoint scenarios; implement local getLocalizedDefinition API and use valid JSON request keys. See networking-rest-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/RestNetworkConfigurationJson.java",
@@ -6202,7 +6223,11 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider/src/test/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/RestNetworkConfigurationJson.java"
+    ],
+    "reason": "Used by 12 validated configuration endpoint scenarios; implement local getLocalizedDefinition API and use valid JSON request keys. See networking-rest-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.rest.network.status.provider.test/src/main/java/org/eclipse/kura/rest/network/status/provider/test/NetworkStatusRestServiceImplTest.java",
@@ -6213,7 +6238,23 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.rest.network.status.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.rest.network.status.provider/src/test/java/org/eclipse/kura/rest/network/status/provider/test/NetworkStatusRestServiceImplTest.java"
+    ],
+    "execution": "JUnit Jupiter endpoint/DTO component scenarios through the real JaxRsRequestHandlerProxy",
+    "validation": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Retain local metadata API, JSON DTOs, exception mapping and network configuration update behavior. See networking-rest-test-restoration.md. Real transports and authentication remain pending.",
+    "deferredValidation": [
+      "Real HTTP/MQTT transport and OSGi DS acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/CertificateAuthTest.java",

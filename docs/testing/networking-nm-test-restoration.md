@@ -152,3 +152,8 @@ module invocations pass with zero failures/errors/skips (Maven 3.10.0 / JDK 21 /
 Jupiter). Logs: /tmp/kura-networking-nm-lock-negative.log and
 /tmp/kura-networking-nm-lock-fixed-full.log. This repair concerns temporary state
 listeners; it does not claim complete real-bus lifecycle acceptance.
+
+The repaired NM bundle also packages and installs successfully into the isolated
+migration-m2 cache (/tmp/kura-networking-nm-lock-install.log). Follow-up lifecycle
+acceptance still needs to exercise failures before waiting in DeviceCreationLock
+and WPAScanLock, in addition to the completed state-listener regressions.

@@ -308,3 +308,17 @@ scopes DeviceStateLock cleanup independently of whether waiting starts. All 1,49
 NM invocations now pass, including 54 connector cases. The five failure cases
 failed on the original production code and pass after the repair. Source inventory
 counts remain unchanged at **175 unreviewed**. See the [NM audit](networking-nm-test-restoration.md).
+
+### Networking REST component continuation
+
+The four remaining networking sources (two suites and two helpers) were reviewed.
+47 component scenarios pass: configuration 12 and status 35, using the actual
+request proxy, JSON conversion and exception mapping with mocked service boundaries.
+The original HTTP authorization scenario and HTTP/MQTT/DS transport matrix remain
+explicitly deferred in the inventory. See [networking REST audit](networking-rest-test-restoration.md).
+
+Current inventory: 251 restored sources, 27 restored helpers, 16 exclusions/replaced
+harness entries and **171 unreviewed** of 465. Networking has no unreviewed source
+entries, but its real D-Bus/Linux/HTTP/MQTT/DS/IDEA acceptance is unfinished. Core
+125, Triton 15, Camel 14, deployment 7, management UI 7 and official OPC UA 3 remain
+unreviewed; official OPC UA stays unchanged as requested.
