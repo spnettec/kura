@@ -5468,7 +5468,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/configuration/NMSettingsConverterTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests against current dbus-java 5.2.0 types",
+    "reason": "Preserve local conversion and crypto behavior; correct masked negative-branch fixtures for WAN priority, inner authentication and null passwords. See networking-nm-test-restoration.md.",
+    "validation": {
+      "tests": 153,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/monitor/DhcpServerMonitorTest.java",

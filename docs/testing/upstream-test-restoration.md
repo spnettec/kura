@@ -274,3 +274,15 @@ No production source or handwritten OSGi metadata changed.
 Current inventory: 247 restored sources, 25 restored helpers, 16 exclusions/replaced
 harness entries and **177 unreviewed** of 465. Networking still has two NM sources
 and four REST sources; the broader sibling/core and runtime/IDEA work remains open.
+
+### NetworkManager settings converter continuation
+
+One fully reviewed source adds 153 passing cases. The complete NM module passes
+1,441 invocations under Maven 3.10.0 / JDK 21 / Jupiter, without failures, errors
+or skips. See [NetworkManager audit](networking-nm-test-restoration.md) for corrected
+negative-branch fixtures and preserved local D-Bus/conversion behavior.
+
+Current inventory: 248 restored sources, 25 restored helpers, 16 exclusions/replaced
+harness entries and **176 unreviewed** of 465. Networking still has its connector
+and four REST sources; remaining sibling/core and real runtime/IDEA acceptance
+are open. No production source or handwritten OSGi metadata changed in this batch.

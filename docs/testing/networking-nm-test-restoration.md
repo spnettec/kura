@@ -72,5 +72,26 @@ status service 14 and configuration service 17. The full NM module now passes
   source searches. They are recorded as exclusions, not passing/skipped suites;
   neither new production feature is imported.
 
-The NM connector and settings-converter sources still need review. This is not
+The NM connector source still needs review. This is not
 real system D-Bus, monitor-thread concurrency, DS or IDEA acceptance.
+
+## Settings converter continuation
+
+The fully reviewed NMSettingsConverterTest adds 153 passing invocations for
+IPv4/IPv6, WAN priority, Ethernet, Wi-Fi/WPA/802.1X, modem/PPP and VLAN conversion.
+It uses the current dbus-java 5.2.0 Variant and numeric types, including actual
+certificate encoding and encryption/decryption of the public test key fixture.
+No host network services are invoked. The full current NM module passes 1,441
+invocations, with zero failures/errors/skips under Maven 3.10.0 / JDK 21 / Jupiter.
+Log: /tmp/kura-networking-nm-settings-full.log.
+
+Upstream fixtures are corrected so invalid inner authentication is tested with a
+valid EAP method, negative WAN priority is actually tested in WAN mode, and null
+Wi-Fi passwords are tested with a valid radio mode. IPv4/IPv6 status constants and
+Ethernet property prefixes use the intended interface/family. These changes avoid
+passing for an unrelated invalid input. Production behavior, dependency versions
+and handwritten metadata are unchanged.
+
+YOFC's upgraded networking implementation remains authoritative. Connector tests
+must be checked against its D-Bus 5.2.0 API and virtual-thread lifecycle; upstream
+Reapply assumptions must not be imported into the current update/activate path.
