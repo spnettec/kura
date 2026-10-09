@@ -117,3 +117,27 @@ The component module now reports 81 passing invocations (10 newly restored). The
 inventory is now 188 restored sources, 13 restored helpers, 13 exclusions/replaced
 harness entries, and **251 unreviewed** out of 465. Remaining Wires database, asset
 and REST graph sources, other repositories and IDEA acceptance are still open.
+
+### Database continuation
+
+Eight upstream database sources (five suites and three helpers) are now reviewed.
+The database component module passes 148 invocations: 130 newly restored and 18
+previous cases, with zero failures/errors/skips under Maven 3.10.0 / JDK 21.
+H2 and SQLite exercise WireRecordStore/Query; H2 additionally exercises the legacy
+DbStore/Filter. Each invocation starts an isolated database, closes connections,
+and terminates the database executors. Configuration, column-type transitions,
+null/unsupported values, cache expiry, record limits, ID monotonicity and the legacy
+1200-to-1104 cleanup sequence retain their functional assertions.
+
+The old MEDIAN unsupported-type assumption conflicts with this fork's intentional
+BigDecimal-to-Double conversion. Timestamp now exercises unsupported values and
+explicit casting; a separate assertion protects the existing MEDIAN result.
+The legacy receive scenario checks the actual TIMESTAMP column instead of column 1
+(which is ID). Cache expiry keeps SQL unchanged and checks record counts before
+and after aging the cache, avoiding both fixed sleeps and configuration-driven
+cache invalidation. The old registration-only `testSvcs` check is replaced by
+fixture startup checks; this batch does not claim new Equinox coverage.
+
+Current source inventory: 193 restored, 16 restored helpers, 13 exclusions/replaced
+harness entries and **243 unreviewed**, out of 465. Wires asset/REST graph sources,
+other sibling/core suites, real-container scenarios and IDEA acceptance remain open.

@@ -6403,7 +6403,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/DbWireRecordStoreLifecycleTest.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures. Restore receive and 1200-to-1104 cleanup scenarios. Legacy testSvcs registration-only assertion is replaced by fixture startup checks, not claimed as OSGi coverage. Check TIMESTAMP by column name rather than upstream positional ID."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/ColumnTypeChangeTest.java",
@@ -6414,7 +6427,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/ColumnTypeChangeTest.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "validation": {
+      "tests": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/DbComponentsTestBase.java",
@@ -6425,7 +6451,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/DbComponentsTestBase.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/DbWireComponentsTest.java",
@@ -6436,7 +6467,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/DbWireComponentsTest.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "validation": {
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/MultipleValueStoreTest.java",
@@ -6447,7 +6491,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/MultipleValueStoreTest.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "validation": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/StoreTestTarget.java",
@@ -6458,7 +6515,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/StoreTestTarget.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/UnsuppotredTypeTest.java",
@@ -6469,7 +6531,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/UnsuppotredTypeTest.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures. Local BigDecimal conversion is supported; use Timestamp for unsupported/cast assertions and separately retain MEDIAN-to-Double coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/WireComponentTestTarget.java",
@@ -6480,7 +6555,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/src/test/java/org/eclipse/kura/internal/wire/db/test/WireComponentTestTarget.java"
+    ],
+    "execution": "JUnit Jupiter component tests with real isolated H2/SQLite databases; no service-registry/Equinox claim",
+    "reason": "Preserve upstream component/database assertions with per-invocation databases, bounded executor cleanup and direct lifecycle callbacks instead of legacy DS fixtures."
   },
   {
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/db/filter/DbWireRecordFilterTest.java",
