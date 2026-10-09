@@ -574,3 +574,11 @@ executor shutdown and queued-task guards prevent work against cleared bindings.
 All 110 Kapua cases and isolated bundle installation pass. See
 [Cloud audit](cloud-test-restoration.md). Source inventory remains **102 unreviewed**;
 this repair does not stand in for remaining source/runtime/IDEA work.
+
+### Kapua publisher continuation
+
+Three sources add nine passing message/registry contract tests; all 119 Kapua cases
+pass. The DS service-existence scenario remains explicitly deferred in the inventory.
+See [Cloud audit](cloud-test-restoration.md). Inventory: 315 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **99 unreviewed**. Real
+DS/MQTT/IDEA acceptance remains open alongside remaining source audit.

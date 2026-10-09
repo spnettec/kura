@@ -98,3 +98,18 @@ All 18 BirthMessages cases and 110 Kapua module cases pass, zero failures/errors
 on Maven 3.10.0/JDK 21/Jupiter. The repaired bundle is packaged/installed into the
 isolated migration-m2 repository. Production fix is committed separately from
 restoration. Runtime DS/MQTT acceptance remains open.
+
+## Publisher and notification continuation
+
+Three sources add nine passing cases (publisher registry/business four, absent-cloud
+one, notification four); full Kapua module passes 119 cases, zero failures/errors/skips
+on Maven 3.10.0/JDK 21/Jupiter. Test-only Log4j API supplies KuraException's existing
+provided dependency. Production unchanged.
+
+Real ServiceTracker runs against a mocked BundleContext with real LDAP filters.
+Activation, update and close exercise the actual customizer and current virtual-thread
+worker lifecycle. QoS 0/1 forwarding asserts complete message properties and payload
+identity; notification checks the exact topic/control/priority map. Failure checks
+use scoped assertions and SERVICE_UNAVAILABLE codes. The old static DS/latch service
+existence assertion is explicitly deferred for real Equinox/SCR validation; ordinary
+JVM tracking does not claim actual factory/configuration/MQTT integration.
