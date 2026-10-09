@@ -550,3 +550,11 @@ tamper enumeration are corrected without production changes. See
 [Cloud audit](cloud-test-restoration.md). Inventory: 307 restored sources, 32 helpers,
 19 exclusions/replaced harness entries and **107 unreviewed**. Source/runtime/IDEA
 work remains open; official OPC UA unchanged.
+
+### Kapua Protobuf builder continuation
+
+Three sources restore 37 upstream cases plus one binary Unicode round-trip;
+all 90 current Kapua cases pass without production or dependency-version changes.
+See [Cloud audit](cloud-test-restoration.md). Inventory: 310 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **104 unreviewed**.
+Remaining source audit, real runtime and IDEA acceptance remain open.

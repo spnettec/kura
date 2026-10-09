@@ -54,3 +54,14 @@ assertThrows replaces JUnit 4 expected. Jupiter Nested/EnumSource replaces Enclo
 and Parameterized runners, covering all three tamper values including NOT_TAMPERED
 (previously omitted in favor of duplicate UNSUPPORTED). Lifecycle defaults, position,
 JDK metadata, rendering and disconnect body copy are verified.
+
+## Protobuf builder continuation
+
+Three sources restore all 37 upstream payload/metric/position builder cases plus
+one Unicode binary round-trip, 38 passing cases. Null failures use scoped
+assertThrows; metric and position merges now compare complete merged values as
+well as presence bits. Payload merge ordering, scalar types, clearing and required
+fields are covered. Existing Protobuf 4.29.3-generated source and 4.30.2 runtime are
+unchanged. Generated-file graph parse coverage is absent; targeted source reads
+confirmed the concrete builders. The complete Kapua module passes 90 cases on
+Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. No production changes.
