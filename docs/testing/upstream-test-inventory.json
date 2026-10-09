@@ -4468,7 +4468,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/server/util/GwtComponentServiceInternalTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "All upstream scenarios restored, plus localized-default rendering regression. Private local API and getLocalizedDefinition path preserved. Six failures before separate production default decoding/copy repair. See management-ui-test-restoration.md.",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilDefaultValueTest.java",
@@ -4479,7 +4492,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilDefaultValueTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "All upstream scenarios restored, plus localized-default rendering regression. Private local API and getLocalizedDefinition path preserved. Six failures before separate production default decoding/copy repair. See management-ui-test-restoration.md.",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilPasswordTest.java",

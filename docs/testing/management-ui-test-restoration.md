@@ -47,3 +47,19 @@ private component-service method stays private and is exercised through reflecti
 Full Web2/GWT production build passes with release 11; test module passes 29 cases
 (including 12 in this class), zero failures/errors/skips on Maven 3.10.0/JDK 21.
 Three UI sources remain unreviewed; runtime/browser/IDEA acceptance remains open.
+
+## Metatype default rendering repair
+
+Nine upstream scenarios and one additional localized rendering case pass. Six
+failed before the separate production repair: escaped scalar/array defaults leaked
+into UI values and the component-service conversion omitted defaults entirely.
+The existing StringUtil metatype decoder now serves all three parameter conversion
+paths. Arrays retain escaped comma separators; null/empty defaults and explicit
+configured values retain their behavior. No metatype XML or OSGi metadata changes.
+
+The local getLocalizedDefinition path remains in place. Tests reject accidental
+getDefinition use in the component-service path and verify explicit zh labels and
+descriptions in the locale-aware server conversion. Private methods remain private.
+Full Web2/GWT production build passes with release 11; test module passes 39 cases
+(7 default decoder/localization, 3 component defaults), zero failures/errors/skips.
+One UI source remains unreviewed; browser/OSGi/IDEA acceptance remains open.

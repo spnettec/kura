@@ -459,3 +459,12 @@ explicit clearing, stored secrets and local metadata/lookup conventions remain.
 Web2/GWT build and 29 cases pass. See [management UI audit](management-ui-test-restoration.md).
 Inventory: 286 restored sources, 32 helpers, 16 exclusions/replaced harness entries
 and **131 unreviewed**. Three UI sources remain; runtime/IDEA work remains open.
+
+### Separate Web2 metatype default rendering repair
+
+Two restored sources and a localized rendering regression add 10 passing cases;
+six failed before the separate default decoding/copy repair. All 39 UI cases and
+Web2/GWT build pass, retaining the local locale-aware path and Java 11 production
+target. See [management UI audit](management-ui-test-restoration.md). Inventory:
+288 restored sources, 32 helpers, 16 exclusions/replaced harness entries and
+**129 unreviewed**. LogServlet is the final UI source pending audit.
