@@ -26,3 +26,16 @@ EventPublisher source review found that update replaces its endpoint helper with
 closing the previous tracker, and deactivate does not shut down its owned virtual-thread
 executor. The restoration fixture explicitly cleans up that executor pending a separate
 production regression/fix.
+
+## Separate event publisher lifecycle repair
+
+Three new regression cases failed before repair: update retained the old endpoint
+helper, normal deactivation left the worker accepting tasks, and a helper cleanup
+exception also retained it. Update now closes the previous helper. Deactivation
+shuts down the owned executor in finally, preserving virtual-thread callback delivery
+and helper cleanup exception propagation. The restoration fixture now asserts shutdown
+instead of doing it on behalf of production.
+
+All 27 event-publisher tests and isolated bundle installation pass on Maven 3.10.0/
+JDK 21, zero failures/errors/skips. This production repair is committed separately;
+message defaults, i18n and handwritten OSGi metadata are unchanged.

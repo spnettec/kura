@@ -55,9 +55,8 @@ class EventPublisherTest {
             this.publisher.deactivate(this.context);
             verify(this.endpoint).close();
         } finally {
-            // The current production lifecycle does not close this owned executor yet.
             ExecutorService worker = (ExecutorService) TestUtil.getFieldValue(this.publisher, "worker");
-            worker.shutdown();
+            assertTrue(worker.isShutdown());
             assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS));
             this.helpers.close();
         }

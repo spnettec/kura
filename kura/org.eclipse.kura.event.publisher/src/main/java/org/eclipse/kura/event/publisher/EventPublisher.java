@@ -79,6 +79,9 @@ public class EventPublisher
         logger.debug("Updating ConfigurationChangePublisher...");
         
         this.options = new EventPublisherOptions(properties);
+        if (this.cloudHelper != null) {
+            this.cloudHelper.close();
+        }
         this.cloudHelper = new CloudEndpointServiceHelper(this.bundleContext, this.options.getCloudEndpointPid());
 
         logger.debug("Updating ConfigurationChangePublisher... Done.");
@@ -86,7 +89,13 @@ public class EventPublisher
 
     public void deactivate(ComponentContext componentContext) {
         logger.debug("Deactivating ConfigurationChangePublisher...");
-        this.cloudHelper.close();
+        try {
+            if (this.cloudHelper != null) {
+                this.cloudHelper.close();
+            }
+        } finally {
+            this.worker.shutdown();
+        }
         logger.debug("Deactivating ConfigurationChangePublisher... Done.");
     }
 

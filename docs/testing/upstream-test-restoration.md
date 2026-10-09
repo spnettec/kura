@@ -751,3 +751,7 @@ lifecycle defects will be repaired separately. See `event-useradmin-test-restora
 Current inventory: 465 entries, 342 restored, 37 restored helpers, eight replaced
 legacy harnesses, six current-API exclusions, six removed-functionality exclusions
 and **66 unreviewed**. Runtime SCR and IDEA acceptance remain open.
+
+Event publisher lifecycle repair is now validated separately: three negative-confirmed
+regressions plus the full 27-test suite and isolated installation pass. Replaced helpers
+and deactivated virtual-thread executors close correctly. Inventory remains 66 unreviewed.
