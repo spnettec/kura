@@ -542,3 +542,11 @@ real address parsing, with no direct D-Bus or production changes. See
 [Cloud audit](cloud-test-restoration.md). Inventory: 303 restored sources, 32 helpers,
 19 exclusions/replaced harness entries and **111 unreviewed**. Source audit and
 real runtime/IDEA acceptance continue; official OPC UA unchanged.
+
+### Kapua options and lifecycle payload continuation
+
+Four sources add 49 cases; all 52 current Kapua tests pass. Weak/shared fixtures and
+tamper enumeration are corrected without production changes. See
+[Cloud audit](cloud-test-restoration.md). Inventory: 307 restored sources, 32 helpers,
+19 exclusions/replaced harness entries and **107 unreviewed**. Source/runtime/IDEA
+work remains open; official OPC UA unchanged.

@@ -39,3 +39,18 @@ supplies the API's non-transitive provided address-parsing dependency. No direct
 D-Bus calls, old NetworkManager interfaces, network changes or production changes.
 Six cases pass on Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. This checks
 profile construction, not real modem/D-Bus/OSGi connectivity.
+
+## Kapua options and lifecycle payload continuation
+
+Four sources add 49 passing cases: CloudServiceOptions 28, CloudPublisherOptions 9,
+KuraBirthPayload 10 and KuraDisconnectPayload 2. The complete current Kapua module
+passes 52 cases, zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. Production
+unchanged. Birth/disconnect payload tests consume the existing shared API artifact.
+
+Per-test option fixtures replace mutable BeforeClass state. The non-string encoding
+case now writes payload.encoding rather than topic.control-prefix; the primitive
+QoS default is asserted exactly instead of a vacuous not-null assertion. Scoped
+assertThrows replaces JUnit 4 expected. Jupiter Nested/EnumSource replaces Enclosed
+and Parameterized runners, covering all three tamper values including NOT_TAMPERED
+(previously omitted in favor of duplicate UNSUPPORTED). Lifecycle defaults, position,
+JDK metadata, rendering and disconnect body copy are verified.
