@@ -101,3 +101,19 @@ removed-functionality exclusions, six replaced legacy harness entries, one
 upstream-only API entry, and **252 unreviewed**. Timer, database/REST graph and
 remaining real-container fixtures still need review; IDEA and final migration
 acceptance remain open.
+
+### Timer continuation
+
+The ten upstream Timer scenarios also pass. Deterministic scheduling captures verify
+initial delay, 10/100 ms intervals, fixed-rate selection, old-worker shutdown on
+update, no immediate default tick and custom first-tick delay. Real executor ticks
+and receiver exceptions run through `WireHelperServiceImpl`; valid Cron and recovery
+from invalid Cron use the real RAM-backed Quartz scheduler with only the service
+registry boundary mocked. Cleanup joins the captured Quartz threads, waits for
+simple executors, and verifies clock-event service unregistration. This is component
+coverage, not an Equinox/ConfigurationAdmin test.
+
+The component module now reports 81 passing invocations (10 newly restored). The
+inventory is now 188 restored sources, 13 restored helpers, 13 exclusions/replaced
+harness entries, and **251 unreviewed** out of 465. Remaining Wires database, asset
+and REST graph sources, other repositories and IDEA acceptance are still open.
