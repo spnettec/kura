@@ -525,3 +525,12 @@ no production changes. See [Container audit](container-test-restoration.md).
 Inventory: 298 restored sources, 32 helpers, 19 exclusions/replaced harness entries
 and **116 unreviewed** (113 core-origin and three official OPC UA). All 12 Container
 sources have been audited; real runtime/IDEA acceptance and other sources remain.
+
+### Cloud options, schedule and factory continuation
+
+Three sources pass 19 cases with no production changes. Scheduling tests now
+exercise the disconnect race deterministically; factory fixtures preserve local
+PID/reference/i18n behavior and explicitly exclude three wrong-prefix assumptions.
+See [Cloud audit](cloud-test-restoration.md). Inventory: 301 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **113 unreviewed**. Other
+Cloud/core sources, official OPC UA and runtime/IDEA acceptance remain open.
