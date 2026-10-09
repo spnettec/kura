@@ -210,3 +210,30 @@ timestamp and sequence is checked, replacing the original three-field matcher.
 
 All 125 Sparkplug tests pass, zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter.
 Production unchanged; real MQTT/DS/IDEA acceptance remains open.
+
+## Sparkplug real loopback MQTT continuation
+
+Sixteen transport and seven device scenarios now pass through actual Moquette 0.18.0
+and Paho sockets on a random loopback port. The old static JUnit 4/SCR harness is
+replaced by Jupiter fixtures; broker persistence and telemetry are disabled. Client,
+broker and owned virtual-thread dispatchers are closed. Random reconnect jitter is
+controlled while production transport, protocol state machine and wire payloads run.
+
+Negative STATE/NCMD cases explicitly subscribe the otherwise unmatched topic, ensuring
+messages reach the production handler. Dispatcher barriers precede negative assertions.
+Connection failure uses loopback port zero rather than external DNS. Device tests use
+real endpoint/device/ServiceTracker with a forwarding mock only at the DataService
+persistence boundary. Changed-metric and reconnect tests now require the second DBIRTH
+with correct sequences and payload; the upstream atLeastOnce matcher could pass on the
+first message alone.
+
+Moquette's getPort races its asynchronous bind-listener HashMap update, observed as
+ConcurrentModificationException on the second test class. A bounded startup-readiness
+wait handles only this third-party port-reporting race; failed test assertions are not
+retried. Full Sparkplug module passes 148 cases, zero failures/errors/skips on Maven
+3.10.0/JDK 21/Jupiter. Production and handwritten OSGi metadata unchanged. Test-only
+Moquette uses the upstream version/repository and excludes its old logging backend.
+
+All 15 Sparkplug source files are reviewed. The original shouldBeSetup SCR/factory
+service-discovery assertion, complete DataService persistence pipeline, TLS/authentication
+and actual IDEA/Equinox runtime acceptance remain explicitly deferred.

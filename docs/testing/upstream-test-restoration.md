@@ -637,3 +637,11 @@ One source restores six cases with exact asynchronous delivery and complete payl
 checks; all 125 Sparkplug tests pass. See [Cloud audit](cloud-test-restoration.md).
 Inventory: 328 restored sources, 34 helpers, 19 exclusions/replaced harness entries
 and **84 unreviewed**. Source/runtime/IDEA acceptance continues.
+
+### Sparkplug real MQTT continuation
+
+Two test sources restore 23 loopback MQTT cases and replace one legacy fixture source.
+All 148 Sparkplug tests pass; all 15 Sparkplug source files are reviewed. See
+[Cloud audit](cloud-test-restoration.md) for the real-broker boundary and deferred SCR/
+persistence/TLS/IDEA work. Inventory: 330 restored sources, 34 helpers, 20 exclusions/
+replaced harness entries and **81 unreviewed**. Overall restoration is still ongoing.
