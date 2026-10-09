@@ -40,6 +40,7 @@ def pom():
           <configuration>
             <outputDirectory>${project.build.directory}/bundle-cache</outputDirectory>
             <overWriteSnapshots>true</overWriteSnapshots>
+            <overWriteReleases>true</overWriteReleases>
             <artifactItems>
 ''' + '\n'.join(items) + '''
             </artifactItems>

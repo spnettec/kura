@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: org.eclipse.paho.mqttv5.client
+Bundle-SymbolicName: org.eclipse.paho.mqttv5.client
+Bundle-Version: 1.2.5
+Export-Package: org.eclipse.paho.mqttv5.client;version="1.2.5";uses:="
+ javax.net,javax.net.ssl,org.eclipse.paho.mqttv5.common,org.eclipse.pa
+ ho.mqttv5.common.packet",org.eclipse.paho.mqttv5.client.persist;versi
+ on="1.2.5";uses:="org.eclipse.paho.mqttv5.client,org.eclipse.paho.mqt
+ tv5.common",org.eclipse.paho.mqttv5.common;version="1.2.5";uses:="org
+ .eclipse.paho.mqttv5.common.packet",org.eclipse.paho.mqttv5.common.pa
+ cket;version="1.2.5";uses:="org.eclipse.paho.mqttv5.common"
+Import-Package: javax.net;resolution:=optional;version=!,javax.net.ssl
+ ;resolution:=optional;version=!,org.eclipse.paho.mqttv5.common;resolu
+ tion:=optional;version="[1.2,2)"
+Private-Package: org.eclipse.paho.mqttv5.client.internal,org.eclipse.p
+ aho.mqttv5.client.internal.nls,org.eclipse.paho.mqttv5.client.logging
+ ,org.eclipse.paho.mqttv5.client.security,org.eclipse.paho.mqttv5.clie
+ nt.spi,org.eclipse.paho.mqttv5.client.util,org.eclipse.paho.mqttv5.cl
+ ient.websocket,org.eclipse.paho.mqttv5.client.wire,org.eclipse.paho.m
+ qttv5.common.nls,org.eclipse.paho.mqttv5.common.packet.util,org.eclip
+ se.paho.mqttv5.common.util
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+

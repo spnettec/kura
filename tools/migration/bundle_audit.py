@@ -42,7 +42,7 @@ def inspect(path):
 
 
 BUILD_HEADERS = {'Build-Jdk', 'Build-Jdk-Spec', 'Built-By', 'Created-By', 'Bnd-LastModified',
-                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By', 'Java-Version'}
+                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By', 'Java-Version', 'Private-Package'}
 
 
 def clauses(value, delimiter=','):

@@ -1,0 +1,56 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Export-Package: groovy.text;version="5.0.5",groovy.text.markup;version
+ ="5.0.5"
+Import-Package: groovy.lang;resolution:=optional;version="[5.0,6)",gro
+ ovy.namespace;resolution:=optional;version="[5.0,6)",groovy.text;reso
+ lution:=optional;version="[5.0,6)",groovy.transform;resolution:=optio
+ nal;version="[5.0,6)",groovy.util;resolution:=optional;version="[5.0,
+ 6)",groovy.xml;resolution:=optional;version=!,java.beans;resolution:=
+ optional;version=!,java.io;resolution:=optional;version=!,java.lang;r
+ esolution:=optional;version=!,java.lang.invoke;resolution:=optional;v
+ ersion=!,java.lang.ref;resolution:=optional;version=!,java.lang.refle
+ ct;resolution:=optional;version=!,java.net;resolution:=optional;versi
+ on=!,java.nio.charset;resolution:=optional;version=!,java.nio.file;re
+ solution:=optional;version=!,java.security;resolution:=optional;versi
+ on=!,java.util;resolution:=optional;version=!,java.util.concurrent;re
+ solution:=optional;version=!,java.util.concurrent.atomic;resolution:=
+ optional;version=!,java.util.regex;resolution:=optional;version=!,jav
+ ax.xml.parsers;resolution:=optional;version=!,org.apache.groovy.inter
+ nal.util;resolution:=optional;version="[5.0,6)",org.apache.groovy.io;
+ resolution:=optional;version="[5.0,6)",org.apache.groovy.util;resolut
+ ion:=optional;version="[5.0,6)",org.codehaus.groovy.ast;resolution:=o
+ ptional;version="[5.0,6)",org.codehaus.groovy.ast.expr;resolution:=op
+ tional;version="[5.0,6)",org.codehaus.groovy.ast.stmt;resolution:=opt
+ ional;version="[5.0,6)",org.codehaus.groovy.classgen;resolution:=opti
+ onal;version="[5.0,6)",org.codehaus.groovy.classgen.asm;resolution:=o
+ ptional;version="[5.0,6)",org.codehaus.groovy.control;resolution:=opt
+ ional;version="[5.0,6)",org.codehaus.groovy.control.customizers;resol
+ ution:=optional;version="[5.0,6)",org.codehaus.groovy.control.io;reso
+ lution:=optional;version="[5.0,6)",org.codehaus.groovy.control.messag
+ es;resolution:=optional;version="[5.0,6)",org.codehaus.groovy.reflect
+ ion;resolution:=optional;version="[5.0,6)",org.codehaus.groovy.runtim
+ e;resolution:=optional;version="[5.0,6)",org.codehaus.groovy.runtime.
+ typehandling;resolution:=optional;version="[5.0,6)",org.codehaus.groo
+ vy.syntax;resolution:=optional;version="[5.0,6)",org.codehaus.groovy.
+ transform.stc;resolution:=optional;version="[5.0,6)",org.codehaus.gro
+ ovy.vmplugin.v8;resolution:=optional;version="[5.0,6)",org.xml.sax;re
+ solution:=optional;version=!
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+Bundle-SymbolicName: groovy-templates
+Bundle-Version: 5.0.5
+Automatic-Module-Name: org.apache.groovy.templates
+Bundle-Name: Groovy module: groovy-templates
+Fragment-Host: groovy
+Bundle-Description: Groovy Runtime
+Bundle-Vendor: The Apache Software Foundation
+Bundle-License: Apache-2.0
+Specification-Title: Groovy: a powerful, multi-faceted language for th
+ e JVM
+Specification-Vendor: The Apache Software Foundation
+Specification-Version: 5.0.5
+Implementation-Title: Groovy: a powerful, multi-faceted language for t
+ he JVM
+Implementation-Vendor: The Apache Software Foundation
+Implementation-Version: 5.0.5
+

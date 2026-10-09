@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: com.digitalpetri.fsm.strict-machine
+Bundle-SymbolicName: com.digitalpetri.fsm.strict-machine
+Bundle-Version: 1.0.0
+Export-Package: com.digitalpetri.fsm;uses:="com.digitalpetri.fsm.dsl",
+ com.digitalpetri.fsm.dsl;uses:="com.digitalpetri.fsm"
+Import-Package: com.digitalpetri.fsm;resolution:=optional;version=!,co
+ m.digitalpetri.fsm.dsl;resolution:=optional;version=!,java.lang;resol
+ ution:=optional;version=!,java.lang.invoke;resolution:=optional;versi
+ on=!,java.util;resolution:=optional;version=!,java.util.concurrent;re
+ solution:=optional;version=!,java.util.concurrent.atomic;resolution:=
+ optional;version=!,java.util.concurrent.locks;resolution:=optional;ve
+ rsion=!,java.util.function;resolution:=optional;version=!,org.slf4j;r
+ esolution:=optional;version=!
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+

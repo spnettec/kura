@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: io.vertx.uri-template
+Bundle-SymbolicName: io.vertx.uri-template
+Bundle-Version: 5.1.4
+Export-Package: io.vertx.uritemplate;uses:="io.vertx.codegen.annotatio
+ ns,io.vertx.core.json",io.vertx.uritemplate.impl;uses:="io.vertx.core
+ .json,io.vertx.uritemplate"
+Import-Package: io.netty.util.collection;resolution:=optional;version=
+ !,io.vertx.codegen.annotations;resolution:=optional;version=!,io.vert
+ x.core.json;resolution:=optional;version=!,io.vertx.uritemplate;resol
+ ution:=optional;version=!,io.vertx.uritemplate.impl;resolution:=optio
+ nal;version=!,java.lang;resolution:=optional;version=!,java.lang.invo
+ ke;resolution:=optional;version=!,java.nio;resolution:=optional;versi
+ on=!,java.nio.charset;resolution:=optional;version=!,java.util;resolu
+ tion:=optional;version=!,java.util.function;resolution:=optional;vers
+ ion=!,java.util.stream;resolution:=optional;version=!
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+

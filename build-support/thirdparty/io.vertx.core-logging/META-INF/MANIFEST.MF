@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: io.vertx.core-logging
+Bundle-SymbolicName: io.vertx.core-logging
+Bundle-Version: 5.1.4
+Export-Package: io.vertx.core.internal.logging;uses:="io.vertx.core.sp
+ i.logging",io.vertx.core.logging;uses:="io.vertx.core.spi.logging",io
+ .vertx.core.spi.logging
+Import-Package: io.vertx.core.internal.logging;resolution:=optional;ve
+ rsion=!,io.vertx.core.logging;resolution:=optional;version=!,io.vertx
+ .core.spi.logging;resolution:=optional;version=!,java.io;resolution:=
+ optional;version=!,java.lang;resolution:=optional;version=!,java.lang
+ .invoke;resolution:=optional;version=!,java.lang.reflect;resolution:=
+ optional;version=!,java.net;resolution:=optional;version=!,java.time;
+ resolution:=optional;version=!,java.time.format;resolution:=optional;
+ version=!,java.util;resolution:=optional;version=!,java.util.function
+ ;resolution:=optional;version=!,java.util.logging;resolution:=optiona
+ l;version=!,org.apache.logging.log4j;resolution:=optional;version=!,o
+ rg.apache.logging.log4j.message;resolution:=optional;version=!,org.ap
+ ache.logging.log4j.spi;resolution:=optional;version=!,org.slf4j;resol
+ ution:=optional;version=!,org.slf4j.helpers;resolution:=optional;vers
+ ion=!
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+

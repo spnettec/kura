@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: com.digitalpetri.netty.channel-fsm
+Bundle-SymbolicName: com.digitalpetri.netty.channel-fsm
+Bundle-Version: 1.0.2
+Export-Package: com.digitalpetri.netty.fsm;uses:="com.digitalpetri.fsm
+ ,io.netty.channel"
+Import-Package: com.digitalpetri.fsm;resolution:=optional;version=!,co
+ m.digitalpetri.fsm.dsl;resolution:=optional;version=!,io.netty.channe
+ l;resolution:=optional;version=!,io.netty.handler.timeout;resolution:
+ =optional;version=!,java.lang;resolution:=optional;version=!,java.lan
+ g.invoke;resolution:=optional;version=!,java.net;resolution:=optional
+ ;version=!,java.util;resolution:=optional;version=!,java.util.concurr
+ ent;resolution:=optional;version=!,java.util.function;resolution:=opt
+ ional;version=!,org.slf4j;resolution:=optional;version=!
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+

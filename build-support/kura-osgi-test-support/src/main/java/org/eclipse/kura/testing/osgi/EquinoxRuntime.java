@@ -47,6 +47,7 @@ public final class EquinoxRuntime implements AutoCloseable {
         properties.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
         properties.put(Constants.FRAMEWORK_BUNDLE_PARENT, Constants.FRAMEWORK_BUNDLE_PARENT_FRAMEWORK);
         properties.put("osgi.console.enable.builtin", "false");
+        properties.put("osgi.framework.useSystemProperties", "false");
         this.framework = ServiceLoader.load(FrameworkFactory.class).findFirst().orElseThrow().newFramework(properties);
         this.framework.init();
         this.framework.start();

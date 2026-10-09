@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.eclipse.kura</groupId>
+    <artifactId>kura-build-parent</artifactId>
+    <version>6.0.0-SNAPSHOT</version>
+    <relativePath>../kura-build-parent/pom.xml</relativePath>
+  </parent>
+  <artifactId>kura-thirdparty-bundles</artifactId>
+  <packaging>pom</packaging>
+  <modules>
+    <module>groovy-templates</module>
+    <module>io.vertx.auth-common</module>
+    <module>io.vertx.core</module>
+    <module>io.vertx.core-logging</module>
+    <module>io.vertx.uri-template</module>
+    <module>io.vertx.web-client</module>
+    <module>io.vertx.web-common</module>
+    <module>org.eclipse.milo.sdk-client</module>
+    <module>org.eclipse.milo.sdk-core</module>
+    <module>org.eclipse.milo.stack-core</module>
+    <module>org.eclipse.milo.transport</module>
+    <module>org.eclipse.paho.mqttv5.client</module>
+    <module>com.digitalpetri.fsm.strict-machine</module>
+    <module>com.digitalpetri.netty.channel-fsm</module>
+  </modules>
+</project>

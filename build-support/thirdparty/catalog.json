@@ -1,0 +1,72 @@
+[
+  {
+    "coordinates": "p2.osgi.bundle:groovy-templates:5.0.5",
+    "source": "org.apache.groovy:groovy-templates:5.0.5",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.auth-common:5.1.4",
+    "source": "io.vertx:vertx-auth-common:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.core:5.1.4",
+    "source": "io.vertx:vertx-core:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.core-logging:5.1.4",
+    "source": "io.vertx:vertx-core-logging:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.uri-template:5.1.4",
+    "source": "io.vertx:vertx-uri-template:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.web-client:5.1.4",
+    "source": "io.vertx:vertx-web-client:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:io.vertx.web-common:5.1.4",
+    "source": "io.vertx:vertx-web-common:5.1.4",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:org.eclipse.milo.sdk-client:1.1.2",
+    "source": "org.eclipse.milo:milo-sdk-client:1.1.2",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:org.eclipse.milo.sdk-core:1.1.2",
+    "source": "org.eclipse.milo:milo-sdk-core:1.1.2",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:org.eclipse.milo.stack-core:1.1.2",
+    "source": "org.eclipse.milo:milo-stack-core:1.1.2",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:org.eclipse.milo.transport:1.1.2",
+    "source": "org.eclipse.milo:milo-transport:1.1.2",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:org.eclipse.paho.mqttv5.client:1.2.5",
+    "source": "org.eclipse.paho:org.eclipse.paho.mqttv5.client:1.2.5",
+    "reason": "existing desktop runtime"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:com.digitalpetri.fsm.strict-machine:1.0.0",
+    "source": "com.digitalpetri.fsm:strict-machine:1.0.0",
+    "reason": "existing external consumers; preserve compatibility artifact"
+  },
+  {
+    "coordinates": "p2.osgi.bundle:com.digitalpetri.netty.channel-fsm:1.0.2",
+    "source": "com.digitalpetri.netty:netty-channel-fsm:1.0.2",
+    "reason": "existing external consumers; preserve compatibility artifact"
+  }
+]

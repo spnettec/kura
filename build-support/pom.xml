@@ -9,5 +9,6 @@
     <module>kura-build-bom</module>
     <module>kura-build-parent</module>
     <module>kura-osgi-test-support</module>
+    <module>thirdparty</module>
   </modules>
 </project>

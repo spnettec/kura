@@ -1,0 +1,52 @@
+Manifest-Version: 1.0
+Implementation-Title: Milo :: SDK Core
+Implementation-Version: 1.1.2
+Automatic-Module-Name: org.eclipse.milo.opcua.sdk.core
+X-SDK-Version: 1.1.2
+Bundle-Description: An open source implementation of OPC UA (IEC 62541
+ ).
+Bundle-License: https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.
+ html
+Bundle-ManifestVersion: 2
+Bundle-Name: Milo :: SDK Core
+Bundle-SymbolicName: org.eclipse.milo.sdk-core
+Bundle-Version: 1.1.2
+Export-Package: org.eclipse.milo.opcua.sdk.core;uses:="org.eclipse.mil
+ o.opcua.stack.core,org.eclipse.milo.opcua.stack.core.types.builtin,or
+ g.eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.mi
+ lo.opcua.stack.core.types.structured,org.jspecify.annotations";versio
+ n="1.1.2",org.eclipse.milo.opcua.sdk.core.nodes;uses:="org.eclipse.mi
+ lo.opcua.sdk.core,org.eclipse.milo.opcua.stack.core.types.builtin,org
+ .eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.eclipse.mil
+ o.opcua.stack.core.types.enumerated,org.eclipse.milo.opcua.stack.core
+ .types.structured";version="1.1.2",org.eclipse.milo.opcua.sdk.core.ty
+ pes;uses:="org.eclipse.milo.opcua.sdk.core.typetree,org.eclipse.milo.
+ opcua.stack.core.types,org.eclipse.milo.opcua.stack.core.types.builti
+ n,org.eclipse.milo.opcua.stack.core.types.structured,org.jspecify.ann
+ otations";version="1.1.2",org.eclipse.milo.opcua.sdk.core.types.codec
+ ;uses:="org.eclipse.milo.opcua.sdk.core.types,org.eclipse.milo.opcua.
+ sdk.core.typetree,org.eclipse.milo.opcua.stack.core,org.eclipse.milo.
+ opcua.stack.core.encoding,org.eclipse.milo.opcua.stack.core.types";ve
+ rsion="1.1.2",org.eclipse.milo.opcua.sdk.core.typetree;uses:="org.ecl
+ ipse.milo.opcua.stack.core,org.eclipse.milo.opcua.stack.core.types.bu
+ iltin,org.eclipse.milo.opcua.stack.core.types.builtin.unsigned,org.ec
+ lipse.milo.opcua.stack.core.types.structured,org.eclipse.milo.opcua.s
+ tack.core.util,org.jspecify.annotations";version="1.1.2",org.eclipse.
+ milo.opcua.sdk.core.util;version="1.1.2"
+Import-Package: com.google.common.base;version="[33.4,34)",java.lang;v
+ ersion=!,java.lang.invoke;version=!,java.lang.reflect;version=!,java.
+ lang.runtime;version=!,java.util;version=!,java.util.concurrent;versi
+ on=!,java.util.function;version=!,java.util.stream;version=!,org.ecli
+ pse.milo.opcua.sdk.core;version=!,org.eclipse.milo.opcua.sdk.core.typ
+ es;version=!,org.eclipse.milo.opcua.sdk.core.typetree;version=!,org.e
+ clipse.milo.opcua.stack.core;version="[1.1,2)",org.eclipse.milo.opcua
+ .stack.core.encoding;version="[1.1,2)",org.eclipse.milo.opcua.stack.c
+ ore.types;version="[1.1,2)",org.eclipse.milo.opcua.stack.core.types.b
+ uiltin;version="[1.1,2)",org.eclipse.milo.opcua.stack.core.types.buil
+ tin.unsigned;version="[1.1,2)",org.eclipse.milo.opcua.stack.core.type
+ s.enumerated;version="[1.1,2)",org.eclipse.milo.opcua.stack.core.type
+ s.structured;version="[1.1,2)",org.eclipse.milo.opcua.stack.core.util
+ ;version="[1.1,2)",org.jspecify.annotations;version="[1.0,2)",org.slf
+ 4j;version="[2.0,3)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+
