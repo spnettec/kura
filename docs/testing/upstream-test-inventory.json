@@ -4641,7 +4641,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/NetworkServiceImplTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/DhcpServerManagerTest.java",
@@ -4652,7 +4665,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/dhcp/DhcpServerManagerTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqConfigConverterTest.java",
@@ -4663,7 +4689,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqConfigConverterTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqToolTest.java",
@@ -4674,7 +4713,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqToolTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dns/LinuxDnsTest.java",
@@ -4685,7 +4737,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/dns/LinuxDnsTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/AbstractLinuxFirewallTest.java",
@@ -4696,7 +4761,26 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/AbstractLinuxFirewallTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "excludedScenarios": [
+      {
+        "scenario": "replacingRulesReplacesLocalPortForwardAndNatRules",
+        "reason": "Upstream-only AbstractLinuxFirewall.replace(List,List,List) API is absent locally. Do not add production API to restore a test."
+      }
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/FilterForwardChainRuleTest.java",
@@ -4707,7 +4791,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/FilterForwardChainRuleTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/FirewallTestUtils.java",
@@ -4718,7 +4815,11 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/FirewallTestUtils.java"
+    ],
+    "reason": "Test-only command/file fixtures; per-case filesystem paths and command mocks replace host-dependent upstream scaffolding."
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/IpTablesConfigTest.java",
@@ -4729,7 +4830,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/IpTablesConfigTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/IptablesConfigIPv6Test.java",
@@ -4740,7 +4854,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/IptablesConfigIPv6Test.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/LinuxFirewallTest.java",
@@ -4751,7 +4878,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/LinuxFirewallTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/LocalRuleTest.java",
@@ -4762,7 +4902,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/LocalRuleTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/NatPostroutingChainRuleTest.java",
@@ -4773,7 +4926,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/NatPostroutingChainRuleTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/NatPreroutingChainRuleTest.java",
@@ -4784,7 +4950,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/iptables/NatPreroutingChainRuleTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/ppp/PppLinuxTest.java",
@@ -4795,7 +4974,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/ppp/PppLinuxTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/CommandExecutorServiceStub.java",
@@ -4806,7 +4998,11 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/CommandExecutorServiceStub.java"
+    ],
+    "reason": "Test-only command/file fixtures; per-case filesystem paths and command mocks replace host-dependent upstream scaffolding."
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/DhcpLeaseToolTest.java",
@@ -4817,7 +5013,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/DhcpLeaseToolTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/ExtractWiFiCapabilitiesTest.java",
@@ -4828,7 +5037,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/ExtractWiFiCapabilitiesTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/IwCapabilityToolTest.java",
@@ -4839,7 +5061,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/IwCapabilityToolTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/LinuxNetworkUtilTest.java",
@@ -4850,7 +5085,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/LinuxNetworkUtilTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/ParseIwScanOutputTest.java",
@@ -4861,7 +5109,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.linux.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/util/ParseIwScanOutputTest.java"
+    ],
+    "execution": "JUnit Jupiter component/unit tests with isolated filesystem and command boundaries",
+    "reason": "See docs/testing/networking-linux-test-restoration.md for host isolation and preserved fork behavior.",
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.net.admin.firewall.test/src/test/java/org/eclipse/kura/net/admin/FirewallConfigurationServiceImplTest.java",

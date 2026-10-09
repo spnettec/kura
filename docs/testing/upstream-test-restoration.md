@@ -202,3 +202,22 @@ Current inventory: 210 restored sources, 23 restored helpers, 14 exclusions/repl
 harness entries and **218 unreviewed** out of 465. Networking still has 47 unreviewed
 sources; Camel, Triton, management UI, deployment, remaining core tests and
 real-container/transport/IDEA acceptance remain open.
+
+### Networking Linux continuation
+
+Twenty-one Linux network sources (19 suites and two helpers) are reviewed, with
+132 restored invocations and five independently committed production regressions
+passing under Maven 3.10.0 / JDK 21 / Jupiter. The regressions fix IPv6 save/restore
+command selection and manual NAT removal during firewall reset. Temporary paths,
+mocked commands, isolated lock files and bounded owned processes replace host
+dependencies. Real serializer output and requested Wi-Fi capabilities are now
+asserted, removing false-positive fallback logic from upstream tests.
+
+See [Linux network audit](networking-linux-test-restoration.md) for validation,
+preserved local ICMP/command/unblock behavior and the one excluded upstream-only
+bulk-replace API scenario. Handwritten OSGi metadata is unchanged.
+
+Current inventory: 229 restored sources, 25 restored helpers, 14 exclusions/replaced
+harness entries and **197 unreviewed** out of 465. Networking has 26 sources still
+unreviewed. This is not completion of the overall upstream restoration or IDEA /
+real Equinox / Linux integration acceptance.
