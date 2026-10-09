@@ -3136,9 +3136,26 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core.identity"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.core.identity/src/test/java/org/eclipse/kura/core/identity/test/IdentityServiceImplTest.java"
+    ],
+    "validation": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "excludedMethods": [
+      "shouldCreateIdentityFromConfiguration",
+      "shouldReportIdentityAlreadyExistingOnConfigurationCreationWhenTemporaryExists"
+    ],
+    "reason": "Seventy-one applicable identity/permission/password/extension scenarios run with actual IdentityServiceImpl, password policy and Felix UserAdmin/roles. Two scenarios require absent createIdentity(configuration)/temporary identity APIs. Fix upstream overlong-name input; preserve local localized definition API. Actual SCR/configuration persistence deferred. See identity-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.core.identity.test/src/main/java/org/eclipse/kura/core/identity/test/IdentityServiceTestBase.java",
@@ -3147,9 +3164,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core.identity"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.core.identity/src/test/java/org/eclipse/kura/core/identity/test/IdentityServiceTestBase.java"
+    ],
+    "reason": "Per-test actual Felix UserAdmin and identity/password services; in-memory role persistence and deterministic JDK SHA-256 crypto boundary. Replaces global service lookup/cleanup without touching live identities. See identity-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.core.identity.test/src/main/java/org/eclipse/kura/core/identity/test/PasswordStrengthVerificationServiceImplTest.java",
@@ -3158,7 +3180,7 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core.identity"
     ],
-    "status": "restored",
+    "status": "not-applicable-current-api",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "excludedMethods": {
@@ -3177,7 +3199,7 @@
       "maven": "3.10.0",
       "jdk": 21
     },
-    "reason": "Adapted to current APIs and isolated plain Maven fixtures; retained fork behavior."
+    "reason": "Temporary identity source targets createTemporaryIdentity(name, Duration), absent from local IdentityService API and implementation. No temporary-identity functionality imported. Its ordinary missing-identity deletion expectation is covered by restored IdentityServiceImplTest.shouldReportIdentityNotExistingOnDeletion. See identity-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.core.identity.test/src/main/java/org/eclipse/kura/core/identity/test/TemporaryIdentityServiceTest.java",
@@ -3186,9 +3208,10 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core.identity"
     ],
-    "status": "unreviewed",
+    "status": "not-applicable-current-api",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "reason": "Temporary identity source targets createTemporaryIdentity(name, Duration), absent from local IdentityService API and implementation. No temporary-identity functionality imported. Its ordinary missing-identity deletion expectation is covered by restored IdentityServiceImplTest.shouldReportIdentityNotExistingOnDeletion. See identity-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.core.inventory.test/src/test/java/org/eclipse/kura/core/inventory/DeploymentPackagesMarshallingFailureTest.java",

@@ -781,3 +781,14 @@ unreviewed** out of 465 source entries. Runtime and IDEA acceptance remain open.
 The macOS uptime mismatch is now repaired separately. One negative-confirmed
 regression plus all 33 system tests and isolated installation pass. No network,
 API or metadata changes; inventory remains 62 unreviewed.
+
+## Identity continuation (2026-10-10)
+
+One test source and one fixture restore 71 identity/permission/password/extension
+scenarios; the full module passes 87 tests. A temporary-identity source and two
+methods requiring absent local APIs are explicitly excluded. No production or
+metadata changes. See `identity-test-restoration.md` for fixture boundaries.
+
+Inventory: 347 restored, 38 helpers, eight replaced harnesses, seven current-API
+exclusions, six removed-functionality exclusions and **59 unreviewed** out of 465.
+Actual runtime, authentication and IDEA acceptance remain open.
