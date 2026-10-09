@@ -88,3 +88,19 @@ The explicit upstream hello-world fixture stays explicit; truly empty properties
 retain local nginx/disabled defaults and absent optional CPU/GPU/registry values.
 Only test-scope Jupiter is added to container.provider; production unchanged.
 ContainerInstanceTest is the only Container source still unreviewed.
+
+## Instance lifecycle and signature continuation
+
+All 20 upstream lifecycle/signature scenarios pass using local kura.service.pid.
+The real production virtual-thread executor stays intact. Queued Future barriers
+wait for each start operation and its final state update; shutdown cases and
+teardown assert executor termination. No sleeps or timing polling are required.
+Signature updates verify ConfigurationService persistence with the actual PID and
+updated properties; deterministic digests replace random fixtures. Docker calls
+are mocked and no daemon is contacted. Mockito, Log4j API and OSGi core 8.0.0 are
+test-only dependencies; production and OSGi metadata are unchanged.
+
+The complete bundles reactor passes 131 tests (53 orchestration + 78 provider),
+zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. All 12 Container sources
+are now reviewed: nine restored and three not applicable to current local APIs.
+Real Docker, DS/Equinox and IDEA acceptance remain open.

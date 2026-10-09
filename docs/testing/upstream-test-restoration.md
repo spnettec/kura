@@ -516,3 +516,12 @@ ConfigurationService binding from absent identity/Token APIs. See
 [Container audit](container-test-restoration.md). Inventory: 297 restored sources,
 32 helpers, 19 exclusions/replaced harness entries and **117 unreviewed**. Container
 lifecycle, other core-origin sources, official OPC UA and runtime/IDEA work remain.
+
+### Container instance lifecycle continuation
+
+Twenty lifecycle/signature scenarios pass with executor barriers and signature
+persistence assertions. The full Container bundles reactor passes 131 cases with
+no production changes. See [Container audit](container-test-restoration.md).
+Inventory: 298 restored sources, 32 helpers, 19 exclusions/replaced harness entries
+and **116 unreviewed** (113 core-origin and three official OPC UA). All 12 Container
+sources have been audited; real runtime/IDEA acceptance and other sources remain.
