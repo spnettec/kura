@@ -702,3 +702,15 @@ pollution was fixed. Their inventory entries were already restored. Full modules
 pass 41 H2 and 59 SQLite cases. See [Database audit](database-test-restoration.md).
 Inventory: 334 restored sources, 35 helpers, 20 exclusions/replaced harness entries
 and **76 unreviewed**. The three separate SQLite runtime test sources remain pending. Source/runtime/IDEA acceptance continues.
+
+## Cloud SQL/MQTT continuation (2026-10-10)
+
+The last three Cloud source entries now have audit dispositions: shared fixture,
+seven DataService scenarios and one CloudService workflow using real SQL/MQTT/Protobuf.
+Cloud Base 57 tests/install and Kapua 159 tests pass with zero failures/errors/skips.
+See `cloud-test-restoration.md` for mocked boundaries and the Moquette `$`-prefix limit.
+Actual SCR/Equinox and IDEA acceptance remain open.
+
+Current inventory: 465 entries, 336 restored, 36 restored helpers, eight replaced
+legacy harnesses, six current-API exclusions, six removed-functionality exclusions
+and **73 unreviewed**. These are source-file dispositions, not invocation counts.

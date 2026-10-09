@@ -332,3 +332,34 @@ client in finally and clears its callback/reference. Repeated deactivation relea
 exactly once. The real TLS fixture no longer needs private cleanup. All 50 Cloud Base
 cases and isolated installation pass on Maven 3.10.0/JDK 21. This production fix is
 separate from test restoration; source inventory remains 78 unreviewed.
+
+## Real SQL and MQTT pipeline continuation (2026-10-10)
+
+Three final Cloud Base source entries are audited: DataServiceTest, the shared
+BaseCloudTests fixture and the legacy CloudServiceTest now hosted in Kapua, where
+its production implementation resides. Seven DataService executions and one complete
+CloudClient workflow pass. Full Cloud Base reports 57 tests and successful isolated
+installation; full Kapua reports 159 tests, zero failures/errors/skips, on Maven
+3.10.0/JDK 21/Jupiter. No production or handwritten metadata changes in this batch.
+
+The shared fixture runs real H2DbServiceImpl, SQL message storage, DataService publisher,
+Paho and Moquette on a random loopback port. Registry/status/watchdog, password decoding
+and system services remain controlled boundaries. Each fixture closes its stores,
+service trackers, Paho client, broker and owned executors. An explicit test-only H2
+2.3.232 dependency and exclusion of Moquette's old h2-mvstore avoid mixed H2 classes;
+broker persistence is disabled. No production database or broker version changes.
+
+DataService checks 100 messages for each QoS, persisted publication/confirmation
+state, 200 offline messages ordered by priority, exact confirmed-ID sets, reconnect
+and Unicode topic-placeholder round trips. Both ignored upstream workflows now run.
+CloudService checks normal and control publish/confirm/receive callbacks through real
+Protobuf encoding, including body, metric, timestamp, topic, device, QoS and retain.
+Callback queues remove the upstream returned-ID race; waits are bounded and client
+release occurs in finally.
+
+Moquette 0.18 unconditionally rejects client publications beginning with `$`; this
+fixture uses Kura's existing configurable `EDC` prefix. The production `$EDC` default
+is unchanged, and its broker interoperability is not claimed by this fixture.
+The source's old service-existence assertion, actual ConfigurationService/SCR/Equinox
+assembly, authentication and IDEA acceptance remain open. All Cloud source entries
+are now audited; this does not mean runtime acceptance or the overall task is complete.
