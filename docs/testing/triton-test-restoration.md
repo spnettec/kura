@@ -42,3 +42,19 @@ mvn -f bundles/org.eclipse.kura.ai.triton.server/pom.xml \
 
 80 invocations, zero failures/errors/skips. Service integration, real Triton/gRPC,
 OSGi/DS and IDEA acceptance remain open.
+
+## Separate production repair: resource-option value equality
+
+Three new regression invocations showed that reconstructing options from the same
+properties with a CPU, memory or GPU setting produced unequal options. Each getter
+wraps its value in a new Optional, but equals compared those wrappers by reference.
+TritonServerServiceAbs.updated uses this result to decide whether to restart the
+managed instance, so this defect can cause an unnecessary restart.
+
+The repair compares these three Optional values with Objects.equals; existing
+property-map comparison and other local configuration behavior are unchanged.
+Regressions cover equal values in both directions, equal hash codes and changed
+values remaining unequal. All three failed on the original implementation and pass
+after the repair. The full restored module now passes 83 tests, zero failures,
+errors or skips. The production change and its regressions are committed separately
+from the upstream restoration. Inventory source counts remain unchanged.

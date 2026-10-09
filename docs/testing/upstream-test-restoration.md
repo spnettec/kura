@@ -346,3 +346,11 @@ Current inventory: 269 restored sources, 29 restored helpers, 16 exclusions/repl
 harness entries and **151 unreviewed** of 465. Triton still has nine source entries;
 core, deployment, management UI and runtime/IDEA work remain open. Official OPC UA
 remains unchanged. No production or handwritten metadata changed in this batch.
+
+### Separate Triton resource-option equality repair
+
+Three regressions reproduced CPU/memory/GPU Optional reference comparisons that
+made repeated configuration values unequal. Value comparisons now preserve the
+existing no-change update guard. The original three cases failed; the fixed full
+module passes 83 tests. See [Triton audit](triton-test-restoration.md). This is a
+separate production fix; the source inventory remains **151 unreviewed**.
