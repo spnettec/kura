@@ -2817,9 +2817,22 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/subscriber/test/SparkplugSubscriberTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "All six upstream routing/subscription/connection scenarios restored with real virtual-thread executors, ordered dispatch draining and termination assertions. Payload assertions now cover every decoded metric as well as body, timestamp and seq; real ServiceTracker uses an empty mocked registry. See cloud-test-restoration.md.",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/transport/test/ConfigurationUpdateTest.java",

@@ -630,3 +630,10 @@ Factory tests preserve local PID/i18n behavior; Protobuf cases now assert actual
 encoded types. See [Cloud audit](cloud-test-restoration.md). Inventory: 327 restored
 sources, 34 helpers, 19 exclusions/replaced harness entries and **85 unreviewed**.
 Remaining source audit, runtime and IDEA acceptance continue.
+
+### Sparkplug subscriber continuation
+
+One source restores six cases with exact asynchronous delivery and complete payload
+checks; all 125 Sparkplug tests pass. See [Cloud audit](cloud-test-restoration.md).
+Inventory: 328 restored sources, 34 helpers, 19 exclusions/replaced harness entries
+and **84 unreviewed**. Source/runtime/IDEA acceptance continues.

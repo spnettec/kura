@@ -198,3 +198,15 @@ assert the encoded type and value, including unsigned upper limits. All 38 upstr
 scenarios are retained, with 13 additions for DateTime, eleven inferred Java types
 and an actual binary/Unicode serialization round trip. Generated protobuf sources
 and library versions are unchanged. Real MQTT/DS/IDEA acceptance remains open.
+
+## Sparkplug subscriber continuation
+
+All six upstream scenarios pass: wildcard routing, unsubscription, reconnect
+subscriptions and three connection callbacks. Fixtures activate/deactivate real
+subscriber trackers against an empty mocked registry and retain actual virtual-thread
+executors. Graceful endpoint-then-subscriber draining makes message counts exact;
+teardown asserts executor termination. Every decoded scalar/binary metric, body,
+timestamp and sequence is checked, replacing the original three-field matcher.
+
+All 125 Sparkplug tests pass, zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter.
+Production unchanged; real MQTT/DS/IDEA acceptance remains open.
