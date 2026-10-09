@@ -9,6 +9,10 @@
   <name>Kura plain Maven test fixtures</name>
   <description>Test-only reflection and local certificate fixtures; no Eclipse workspace or test extender.</description>
   <dependencies>
+    <!-- Service/API mocks need the OSGi API present on the plain test classpath. -->
+    <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.osgi</artifactId></dependency>
+    <!-- Kura API exception paths use Log4j; provided OSGi imports are not transitive in plain tests. -->
+    <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId></dependency>
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId></dependency>
