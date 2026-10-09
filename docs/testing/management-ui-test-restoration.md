@@ -30,3 +30,20 @@ is a separate commit. The full production Web2/GWT build passes with Java 11 tar
 all 17 test-module cases pass on Maven 3.10.0/JDK 21, zero failures/errors/skips.
 OSGi configuration wiring, real networking/D-Bus and browser acceptance remain open.
 Four UI sources remain unreviewed.
+
+## General configuration password placeholder repair
+
+Eight upstream password cases and four additional caller/local-behavior cases pass.
+Seven failed before the separate production repair. An unchanged scalar password
+with no stored value now remains unset instead of persisting the UI placeholder or
+inventing a default in the UI layer. All three callers omit only that unset
+placeholder. Unlike a broad omission of every null password, explicit empty/null
+input retains the local clearing behavior. Array conversion is unchanged.
+
+Regression coverage preserves existing/empty passwords, real replacement values,
+legacy name-based lookup in fillPropertiesFromConfiguration, ID-based lookup in the
+other conversions, and local service PID/Chinese name/description metadata. The
+private component-service method stays private and is exercised through reflection.
+Full Web2/GWT production build passes with release 11; test module passes 29 cases
+(including 12 in this class), zero failures/errors/skips on Maven 3.10.0/JDK 21.
+Three UI sources remain unreviewed; runtime/browser/IDEA acceptance remains open.

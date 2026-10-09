@@ -450,3 +450,12 @@ configuration lookup and YOFC networking; full Web2/GWT build and 17 test cases 
 See [management UI audit](management-ui-test-restoration.md). Inventory: 285 restored
 sources, 32 helpers, 16 exclusions/replaced harness entries and **132 unreviewed**.
 Four UI sources remain; official OPC UA and runtime/IDEA acceptance remain unchanged.
+
+### Separate Web2 configuration password placeholder repair
+
+Eight upstream scenarios and four caller/local-behavior checks pass after seven
+negative regressions. All configuration conversion callers preserve unset passwords;
+explicit clearing, stored secrets and local metadata/lookup conventions remain.
+Web2/GWT build and 29 cases pass. See [management UI audit](management-ui-test-restoration.md).
+Inventory: 286 restored sources, 32 helpers, 16 exclusions/replaced harness entries
+and **131 unreviewed**. Three UI sources remain; runtime/IDEA work remains open.

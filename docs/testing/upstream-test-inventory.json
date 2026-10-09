@@ -4490,7 +4490,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilPasswordTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Eight upstream scenarios plus four caller/local-behavior regressions. Seven failed before separate production repair. Preserve explicit clearing, current password, metadata and name/ID lookup conventions. See management-ui-test-restoration.md.",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/shared/ScaleOffsetTypeTest.java",
