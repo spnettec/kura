@@ -421,3 +421,15 @@ the complete packages REST module passes 31 cases. Runtime auth/OSGi remain open
 See [deployment audit](deployment-test-restoration.md). No production changes.
 Current inventory is 281 restored sources, 32 helpers, 16 exclusions/replaced
 harness entries and **136 unreviewed** of 465. Deployment has one source left.
+
+### Cloud deployment handler continuation
+
+All 53 annotated scenarios (including three formerly ignored configuration tests)
+now pass; core.deployment passes 112 cases. Static state/executor ownership and
+actual Future completion replace shared-state/sleep assumptions. See
+[deployment audit](deployment-test-restoration.md). No production changes.
+
+Current inventory: 282 restored sources, 32 helpers, 16 exclusions/replaced harness
+entries and **135 unreviewed** of 465. Deployment has no unreviewed sources; remaining
+origins are core 125, management UI 7 and official OPC UA 3. Official OPC UA remains
+unchanged. Source auditing and runtime/IDEA acceptance are still not complete.

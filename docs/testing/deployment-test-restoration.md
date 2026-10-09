@@ -108,3 +108,25 @@ acceptance. Jersey HTTP/multipart/HK2 and the core serializer artifact are test-
 dependencies; production code and handwritten OSGi metadata are unchanged.
 
 Only CloudDeploymentHandlerV2Test remains unreviewed in deployment's source inventory.
+
+## Cloud deployment handler continuation
+
+CloudDeploymentHandlerV2Test restores all 53 annotated scenarios. The three upstream
+ignored activation/configuration checks now execute, with valid preceding dependencies
+and isolated properties; exact missing-key messages are required. The missing-hook
+manager case reaches updated() rather than failing first on an absent SystemService.
+Two unannotated, unfinished fail("Not yet implemented") placeholders are omitted.
+
+Each case owns a real single virtual-thread executor matching the fork and saves,
+resets, then restores static download/uninstall fields and executor. All handlers
+are deactivated; the executor is shut down and awaited before state restoration.
+DPA/download/data/verification paths use TempDir and system properties are restored.
+Expected exceptions surround only the operation so subsequent Mockito verifications
+execute. Installation/download tests await their actual Future instead of 500 ms
+sleeps and verify the worker call; hook-abort cases verify the hook was reached.
+Inventory marshalling and deployment/download services remain explicit boundaries.
+No production, i18n, OSGi metadata or external cloud transport changes.
+
+Full core.deployment now passes 112 cases, zero failures/errors/skips. Deployment's
+source inventory has no unreviewed entries; this is source-audit completion only.
+Real OSGi/IDEA and runtime authentication acceptance remain unfinished.
