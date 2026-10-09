@@ -48,6 +48,16 @@ class BundleAuditTest(unittest.TestCase):
         new = inspect(self.jar('new.jar', resources={'A.class': b'javac'}))
         self.assertEqual({}, compare(old, new)['resources'])
 
+    def test_named_classes_cannot_silently_disappear(self):
+        old = inspect(self.jar('old.jar', resources={'Api.class': b'ecj', 'Api$Builder.class': b'ecj'}))
+        new = inspect(self.jar('new.jar', resources={'Api.class': b'javac'}))
+        self.assertEqual(['Api$Builder.class'], compare(old, new)['classes']['removed'])
+
+    def test_header_order_spacing_and_default_classpath_are_semantic(self):
+        old = inspect(self.jar('old.jar', 'Import-Package: a; version="[1,2)",b\r\nBundle-ClassPath: .\r\n'))
+        new = inspect(self.jar('new.jar', 'Import-Package: b,a;version="[1,2)"\r\n'))
+        self.assertEqual({}, compare(old, new)['headers'])
+
 
 if __name__ == '__main__':
     unittest.main()

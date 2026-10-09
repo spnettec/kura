@@ -1,33 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Copyright (c) 2016, 2024 Eurotech and/or its affiliates and others
-  
-    This program and the accompanying materials are made
-    available under the terms of the Eclipse Public License 2.0
-    which is available at https://www.eclipse.org/legal/epl-2.0/
- 
-	SPDX-License-Identifier: EPL-2.0
-	
-	Contributors:
-	 Eurotech
-	 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-
-	<parent>
-		<groupId>org.eclipse.kura</groupId>
-		<artifactId>kura</artifactId>
-		<version>6.0.0-SNAPSHOT</version>
-	</parent>
-
-	<artifactId>org.eclipse.kura.localization</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
-	<packaging>eclipse-plugin</packaging>
-	
-	<properties>
-		<kura.basedir>${project.basedir}/..</kura.basedir>
-	</properties>
-
+<!-- Handwritten OSGi metadata remains authoritative; private dependencies retain their original paths. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.eclipse.kura</groupId>
+    <artifactId>kura-build-parent</artifactId>
+    <version>6.0.0-SNAPSHOT</version>
+    <relativePath>../../build-support/kura-build-parent/pom.xml</relativePath>
+  </parent>
+  <artifactId>org.eclipse.kura.localization</artifactId>
+  <version>2.0.0-SNAPSHOT</version>
+  <packaging>bundle</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.kura</groupId>
+      <artifactId>org.eclipse.kura.api</artifactId>
+      <version>3.0.0-SNAPSHOT</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.github.rodionmoiseev.c10n</groupId>
+      <artifactId>c10n-core</artifactId>
+      <version>1.2</version>
+      <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>src/main/java</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-antrun-plugin</artifactId></plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-private-embedded-jars</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.github.rodionmoiseev.c10n</groupId>
+                  <artifactId>c10n-core</artifactId>
+                  <version>1.2</version>
+                  <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  <destFileName>c10n-core-1.2.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <_include>${project.build.directory}/osgi/MANIFEST.MF</_include>
+            <Bundle-Version>2.0.0.${kura.build.qualifier}</Bundle-Version>
+            <Private-Package>!*</Private-Package>
+            <Include-Resource>${project.build.outputDirectory}</Include-Resource>
+          </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

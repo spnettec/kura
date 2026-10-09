@@ -11,4 +11,16 @@
     <module>build-support</module>
     <module>kura-dev-runtime</module>
   </modules>
+  <profiles>
+    <profile>
+      <id>migration-pilot</id>
+      <modules>
+        <module>kura/org.eclipse.kura.api</module>
+        <module>kura/org.eclipse.kura.core.token.jwt</module>
+        <module>kura/org.eclipse.kura.localization</module>
+        <module>kura/org.eclipse.kura.localization.resources</module>
+        <module>kura/emulator/org.eclipse.kura.emulator</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>

@@ -42,13 +42,23 @@ def inspect(path):
 
 
 BUILD_HEADERS = {'Build-Jdk', 'Build-Jdk-Spec', 'Built-By', 'Created-By', 'Bnd-LastModified',
-                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By'}
+                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By', 'Java-Version'}
+
+
+def clauses(value, delimiter=','):
+    return re.split(delimiter + r'(?=(?:[^"]*"[^"]*")*[^"]*$)', value)
 
 
 def semantic_headers(headers):
     result = {k: v for k, v in headers.items() if k not in BUILD_HEADERS}
     if 'Bundle-Version' in result:
         result['Bundle-Version'] = '.'.join(result['Bundle-Version'].split('.')[:3])
+    if result.get('Bundle-ClassPath', '.') == '.':
+        result.pop('Bundle-ClassPath', None)
+    for header in ('Import-Package', 'Export-Package'):
+        if header in result:
+            result[header] = ','.join(sorted(';'.join(part.strip() for part in clauses(item, ';'))
+                                              for item in clauses(result[header])))
     return result
 
 
@@ -64,6 +74,14 @@ def compare(before, after):
     a, b = resources(before), resources(after)
     changes['resources'] = {key: [a.get(key), b.get(key)] for key in sorted(a.keys() | b.keys())
                             if a.get(key) != b.get(key)}
+    def named_classes(item):
+        # javac and ECJ number anonymous implementation classes differently.
+        return {name for name in item['entries'] if name.endswith('.class')
+                and not re.search(r'\$\d+', name)}
+    old_classes, new_classes = named_classes(before), named_classes(after)
+    changes['classes'] = {'removed': sorted(old_classes - new_classes), 'added': sorted(new_classes - old_classes)}
+    if not any(changes['classes'].values()):
+        changes['classes'] = {}
     changes['errors'] = after['errors']
     return changes
 
@@ -73,8 +91,11 @@ def main():
     parser.add_argument('jar', type=Path)
     parser.add_argument('--baseline', type=Path)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--qualifier', help='Require this exact qualifier in the packaged Bundle-Version')
     args = parser.parse_args()
     result = inspect(args.jar)
+    if args.qualifier and result['manifest'].get('Bundle-Version', '').split('.', 3)[-1] != args.qualifier:
+        result['errors'].append('Unexpected Bundle-Version qualifier: ' + result['manifest'].get('Bundle-Version', '<missing>'))
     if args.baseline:
         result = compare(inspect(args.baseline), result)
     text = json.dumps(result, indent=2, ensure_ascii=False) + '\n'
@@ -82,7 +103,7 @@ def main():
         args.output.write_text(text)
     else:
         print(text, end='')
-    if result.get('errors') or result.get('headers') or result.get('resources'):
+    if result.get('errors') or result.get('headers') or result.get('resources') or result.get('classes'):
         raise SystemExit(1)
 
 
