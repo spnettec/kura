@@ -335,3 +335,14 @@ Current inventory: 263 restored sources, 29 restored helpers, 16 exclusions/repl
 harness entries and **157 unreviewed** of 465. No production source or handwritten
 OSGi metadata changed. Core 125, Triton 15, deployment 7, management UI 7 and
 official OPC UA 3 remain unreviewed; official OPC UA stays unchanged as requested.
+
+### Triton managers, configuration and encryption continuation
+
+Six more sources add 80 passing Jupiter cases against current production APIs.
+The fixtures own their schedulers and temporary files, and mock only the external
+command/container boundary. See [Triton audit](triton-test-restoration.md).
+
+Current inventory: 269 restored sources, 29 restored helpers, 16 exclusions/replaced
+harness entries and **151 unreviewed** of 465. Triton still has nine source entries;
+core, deployment, management UI and runtime/IDEA work remain open. Official OPC UA
+remains unchanged. No production or handwritten metadata changed in this batch.
