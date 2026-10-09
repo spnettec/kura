@@ -49,6 +49,15 @@ Validation commands use the migration local repository configured for this works
 - NTP retry tests capture scheduler ticks instead of sleeping. Position and status tests clean up their schedulers. Linux executor tests cover both privilege variants using mocks only.
 - GPIO methods and the deleted block driver/DriverServiceImpl tests are excluded entirely. Retained DriverDescriptorService, Linux LED/log notifications and process executor tests remain.
 
+## Further validated batches
+
+- Core identity: 16 password-policy cases now run against the service directly, including configuration updates. Two upstream username-aware password cases require a public API this fork does not contain; they are recorded as excluded methods rather than silently enabled against different semantics or introducing a business API during test restoration.
+- XML inventory/configuration serialization: eight cases run in the cross-module consumer. Both previously disabled OCD scenarios now use an explicit descriptor fixture, preserving the fork's snapshot behavior of omitting the descriptor while retaining properties. The consumer now reports 127 cases.
+- Position sibling: 67 serial/GPSd/parser/tracker/service cases and eight REST cases pass. Fixtures use the current `CommConnectionFactory` contract, classpath resources and explicit thread/provider cleanup; all hardware endpoints are mocked.
+- OPC UA sibling: nine basic driver/descriptor cases pass against Milo 1.1.2, adapted from upstream 0.6.16 APIs. Stable IDs and localized names are checked separately. YOFC's independent PLC4J OPC UA integration is outside this restoration; old server/OSGi test fixtures are not claimed as passing or compatible.
+
+Every batch uses Maven 3.10 and JDK 21. These counts are separate module reports and are not added to repeated dependency-module runs as a claimed workspace-wide total.
+
 ## Separate production fixes
 
 - `ssl-default-keystore-fix.md`: historical null-file-path defect; upstream does not have it.
