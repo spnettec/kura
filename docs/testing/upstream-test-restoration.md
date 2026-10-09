@@ -221,3 +221,30 @@ Current inventory: 229 restored sources, 25 restored helpers, 14 exclusions/repl
 harness entries and **197 unreviewed** out of 465. Networking has 26 sources still
 unreviewed. This is not completion of the overall upstream restoration or IDEA /
 real Equinox / Linux integration acceptance.
+
+### Networking configuration and flooding protection continuation
+
+Four more sources pass 42 invocations: firewall administration 13, network
+configuration metadata 14, and flooding protection 15. All use Maven 3.10.0 /
+JDK 21 / Jupiter, with zero failures/errors/skips. No production changes were
+needed for this batch.
+
+Firewall administration tests verify the fork's separate delete/add calls for
+each rule family and continued event delivery after a family fails. They do not
+introduce upstream's bulk-replace API; local IPv4 SSH/HTTPS safety defaults remain.
+Rule lookup is by identity rather than HashSet iteration order. Flooding rules
+retain the local additional IPv6 echo-reply DROP rule. Every fragment-threshold
+path is redirected into a temporary directory, including configuration-only
+scenarios that would otherwise probe `/proc`. The metadata test uses the actual
+English/Chinese resource URLs through a mocked OSGi bundle and asserts the local
+`%name` metadata key and two attributes.
+
+The network definition has 189 attributes and 50 Wi-Fi attributes for the fixture.
+It does not declare upstream's extra 802.1X password attribute. Existing modem and
+Wi-Fi passphrase wrapping remains covered; an undeclared 802.1X property is
+asserted to pass through unchanged, without adding that upstream feature.
+
+Current inventory: 233 restored sources, 25 restored helpers, 14 exclusions/replaced
+harness entries and **193 unreviewed** of 465. Networking has 22 remaining sources
+(18 NetworkManager and four REST sources). Other siblings, remaining core sources,
+and real-container/transport/IDEA acceptance are still open.
