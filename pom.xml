@@ -7,5 +7,8 @@
   <packaging>pom</packaging>
   <name>Kura development workspace</name>
   <!-- Migration bootstrap. Core/workspace modules join after their phase gates pass. -->
-  <modules><module>build-support</module></modules>
+  <modules>
+    <module>build-support</module>
+    <module>kura-dev-runtime</module>
+  </modules>
 </project>

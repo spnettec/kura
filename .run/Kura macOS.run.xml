@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kura macOS" type="JarApplication" factoryName="JAR Application">
+    <option name="JAR_PATH" value="$PROJECT_DIR$/kura-dev-runtime/target/runtime/launcher.jar" />
+    <option name="VM_PARAMETERS" value="@&quot;$PROJECT_DIR$/kura-dev-runtime/target/runtime/jvm.args&quot;" />
+    <option name="PROGRAM_PARAMETERS" value="-configuration &quot;$PROJECT_DIR$/kura-dev-runtime/target/runtime/configuration&quot; -consoleLog -console" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kura-dev-runtime/target/runtime" />
+    <option name="ALTERNATIVE_JRE_PATH" value="21" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/kura-dev-runtime/pom.xml" goal="package -Dkura.dev.profile=macos -Dmaven.repo.local=$PROJECT_DIR$/../../migration-m2" />
+    </method>
+  </configuration>
+</component>

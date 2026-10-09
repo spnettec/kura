@@ -1,0 +1,1761 @@
+{
+  "schemaVersion": 1,
+  "framework": "org.eclipse.platform:org.eclipse.osgi:3.24.100",
+  "launcher": "org.eclipse.platform:org.eclipse.equinox.launcher:1.7.100",
+  "defaultStartLevel": 5,
+  "frameworkStartLevel": 6,
+  "bundles": [
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.bouncycastle:bcpg-jdk18on:1.86",
+      "symbolicName": "bcpg"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.bouncycastle:bcpkix-jdk18on:1.86",
+      "symbolicName": "bcpkix"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.bouncycastle:bcprov-jdk18on:1.86",
+      "symbolicName": "bcprov"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.bouncycastle:bctls-jdk18on:1.86",
+      "symbolicName": "bctls"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.bouncycastle:bcutil-jdk18on:1.86",
+      "symbolicName": "bcutil"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.fasterxml.jackson.core:jackson-annotations:2.22",
+      "symbolicName": "com.fasterxml.jackson.core.jackson-annotations"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.fasterxml.jackson.core:jackson-core:2.22.0",
+      "symbolicName": "com.fasterxml.jackson.core.jackson-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.fasterxml.jackson.core:jackson-databind:2.22.0",
+      "symbolicName": "com.fasterxml.jackson.core.jackson-databind"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.fazecast:jSerialComm:2.11.4",
+      "symbolicName": "com.fazecast.jSerialComm"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.google.code.gson:gson:2.11.0",
+      "symbolicName": "com.google.gson"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.google.guava:guava:33.4.0-jre",
+      "symbolicName": "com.google.guava"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.google.guava:failureaccess:1.0.2",
+      "symbolicName": "com.google.guava.failureaccess"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.google.protobuf:protobuf-java:4.30.2",
+      "symbolicName": "com.google.protobuf"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.h2database:h2:2.3.232",
+      "symbolicName": "com.h2database"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "net.java.dev.jna:jna:5.19.1",
+      "symbolicName": "com.sun.jna"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.sun.xml.bind:jaxb-osgi:4.0.2",
+      "symbolicName": "com.sun.xml.bind.jaxb-osgi"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-runtime:0.0.1-SNAPSHOT",
+      "symbolicName": "com.yofc.iot.runtime"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-api-comp:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp",
+      "symbolicName": "com.yofc.iot.yofc-iot-api-comp"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-apps-abplc:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.abplc",
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-abplc"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-apps-comp:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp",
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-comp"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-apps-influxdb:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb",
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-influxdb"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-apps-influxdbv1:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1",
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-influxdbv1"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.yofc.iot:yofc-iot-apps-opcuaserver:0.0.1-SNAPSHOT",
+      "module": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver",
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-opcuaserver"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.zaxxer:HikariCP:5.1.0",
+      "symbolicName": "com.zaxxer.HikariCP"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.groovy:groovy:5.0.5",
+      "symbolicName": "groovy"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.apache.groovy:groovy-datetime:5.0.5",
+      "symbolicName": "groovy-datetime"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.apache.groovy:groovy-dateutil:5.0.5",
+      "symbolicName": "groovy-dateutil"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.apache.groovy:groovy-json:5.0.5",
+      "symbolicName": "groovy-json"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.apache.groovy:groovy-sql:5.0.5",
+      "symbolicName": "groovy-sql"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "p2.osgi.bundle:groovy-templates:5.0.5",
+      "symbolicName": "groovy-templates"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.apache.groovy:groovy-xml:5.0.5",
+      "symbolicName": "groovy-xml"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-buffer:4.2.16.Final",
+      "symbolicName": "io.netty.buffer"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec:4.2.16.Final",
+      "symbolicName": "io.netty.codec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-base:4.2.16.Final",
+      "symbolicName": "io.netty.codec-base"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-compression:4.2.16.Final",
+      "symbolicName": "io.netty.codec-compression"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-dns:4.2.16.Final",
+      "symbolicName": "io.netty.codec-dns"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-haproxy:4.2.16.Final",
+      "symbolicName": "io.netty.codec-haproxy"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-http:4.2.16.Final",
+      "symbolicName": "io.netty.codec-http"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-http2:4.2.16.Final",
+      "symbolicName": "io.netty.codec-http2"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-mqtt:4.2.16.Final",
+      "symbolicName": "io.netty.codec-mqtt"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-codec-socks:4.2.16.Final",
+      "symbolicName": "io.netty.codec-socks"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-common:4.2.16.Final",
+      "symbolicName": "io.netty.common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-handler:4.2.16.Final",
+      "symbolicName": "io.netty.handler"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-handler-proxy:4.2.16.Final",
+      "symbolicName": "io.netty.handler-proxy"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-resolver:4.2.16.Final",
+      "symbolicName": "io.netty.resolver"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-resolver-dns:4.2.16.Final",
+      "symbolicName": "io.netty.resolver-dns"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-resolver-dns-native-macos:4.2.16.Final",
+      "symbolicName": "io.netty.resolver-dns-native-macos"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport:4.2.16.Final",
+      "symbolicName": "io.netty.transport"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport-classes-epoll:4.2.16.Final",
+      "symbolicName": "io.netty.transport-classes-epoll"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport-classes-kqueue:4.2.16.Final",
+      "symbolicName": "io.netty.transport-classes-kqueue"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport-native-epoll:4.2.16.Final",
+      "symbolicName": "io.netty.transport-native-epoll"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport-native-kqueue:4.2.16.Final",
+      "symbolicName": "io.netty.transport-native-kqueue"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.netty:netty-transport-native-unix-common:4.2.16.Final",
+      "symbolicName": "io.netty.transport-native-unix-common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "io.vavr:vavr:1.0.0",
+      "symbolicName": "io.vavr"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.auth-common:5.1.4",
+      "symbolicName": "io.vertx.auth-common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.core:5.1.4",
+      "symbolicName": "io.vertx.core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.core-logging:5.1.4",
+      "symbolicName": "io.vertx.core-logging"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.uri-template:5.1.4",
+      "symbolicName": "io.vertx.uri-template"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.web-client:5.1.4",
+      "symbolicName": "io.vertx.web-client"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:io.vertx.web-common:5.1.4",
+      "symbolicName": "io.vertx.web-common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.activation:jakarta.activation-api:2.1.2",
+      "symbolicName": "jakarta.activation-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.annotation:jakarta.annotation-api:2.1.1",
+      "symbolicName": "jakarta.annotation-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.inject:jakarta.inject-api:2.0.1",
+      "symbolicName": "jakarta.inject.jakarta.inject-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.jms:jakarta.jms-api:3.1.0",
+      "symbolicName": "jakarta.jms-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.validation:jakarta.validation-api:3.0.2",
+      "symbolicName": "jakarta.validation.jakarta.validation-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.ws.rs:jakarta.ws.rs-api:3.1.0",
+      "symbolicName": "jakarta.ws.rs-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.xml.bind:jakarta.xml.bind-api:4.0.2",
+      "symbolicName": "jakarta.xml.bind-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.xml.soap:jakarta.xml.soap-api:3.0.2",
+      "symbolicName": "jakarta.xml.soap-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "jakarta.xml.ws:jakarta.xml.ws-api:4.0.2",
+      "symbolicName": "jakarta.xml.ws-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.javassist:javassist:3.30.2-GA",
+      "symbolicName": "javassist"
+    },
+    {
+      "startLevel": 3,
+      "start": true,
+      "coordinates": "org.slf4j:jcl-over-slf4j:2.0.18",
+      "symbolicName": "jcl.over.slf4j"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.slf4j:jul-to-slf4j:2.0.18",
+      "symbolicName": "jul.to.slf4j"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "com.eclipsesource.minimal-json:minimal-json:0.9.5",
+      "symbolicName": "minimal-json"
+    },
+    {
+      "startLevel": 3,
+      "start": true,
+      "coordinates": "org.apache.aries.spifly:org.apache.aries.spifly.dynamic.bundle:1.3.7",
+      "symbolicName": "org.apache.aries.spifly.dynamic.bundle"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "commons-collections:commons-collections:3.2.2",
+      "symbolicName": "org.apache.commons.collections"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "commons-beanutils:commons-beanutils:1.9.4",
+      "symbolicName": "org.apache.commons.commons-beanutils"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "commons-codec:commons-codec:1.21.0",
+      "symbolicName": "org.apache.commons.commons-codec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-configuration2:2.12.0",
+      "symbolicName": "org.apache.commons.commons-configuration2"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-csv:1.14.0",
+      "symbolicName": "org.apache.commons.commons-csv"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-exec:1.4.0",
+      "symbolicName": "org.apache.commons.commons-exec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-fileupload2-core:2.0.0-M5",
+      "symbolicName": "org.apache.commons.commons-fileupload2-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-fileupload2-jakarta-servlet5:2.0.0-M5",
+      "symbolicName": "org.apache.commons.commons-fileupload2-jakarta-servlet5"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "commons-io:commons-io:2.21.0",
+      "symbolicName": "org.apache.commons.commons-io"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "commons-net:commons-net:3.12.0",
+      "symbolicName": "org.apache.commons.commons-net"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-pool2:2.12.1",
+      "symbolicName": "org.apache.commons.commons-pool2"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-lang3:3.20.0",
+      "symbolicName": "org.apache.commons.lang3"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.commons:commons-text:1.13.1",
+      "symbolicName": "org.apache.commons.text"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.dependencymanager:4.6.1",
+      "symbolicName": "org.apache.felix.dependencymanager"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.deploymentadmin:0.9.10",
+      "symbolicName": "org.apache.felix.deploymentadmin"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.fileinstall:3.7.4",
+      "symbolicName": "org.apache.felix.fileinstall"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.gogo.command:1.1.2",
+      "symbolicName": "org.apache.felix.gogo.command"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.gogo.runtime:1.1.6",
+      "symbolicName": "org.apache.felix.gogo.runtime"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.gogo.shell:1.1.4",
+      "symbolicName": "org.apache.felix.gogo.shell"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.http.bridge:5.1.8",
+      "symbolicName": "org.apache.felix.http.bridge"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.http.proxy:4.0.0",
+      "symbolicName": "org.apache.felix.http.proxy"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.http.servlet-api:3.0.0",
+      "symbolicName": "org.apache.felix.http.servlet-api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.http.wrappers:1.1.2",
+      "symbolicName": "org.apache.felix.http.wrappers"
+    },
+    {
+      "startLevel": 1,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.scr:2.2.14",
+      "symbolicName": "org.apache.felix.scr"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.felix:org.apache.felix.useradmin:1.0.4",
+      "symbolicName": "org.apache.felix.useradmin"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.geronimo.specs:geronimo-jms_2.0_spec:1.0-alpha-2",
+      "symbolicName": "org.apache.geronimo.specs.geronimo-jms_2.0_spec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.geronimo.specs:geronimo-json_1.0_spec:1.0-alpha-1",
+      "symbolicName": "org.apache.geronimo.specs.geronimo-json_1.0_spec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.geronimo.specs:geronimo-jta_1.1_spec:1.1.1",
+      "symbolicName": "org.apache.geronimo.specs.geronimo-jta_1.1_spec"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.httpcomponents:httpcore-osgi:4.4.16",
+      "symbolicName": "org.apache.httpcomponents.httpcore"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.logging.log4j:log4j-api:2.26.0",
+      "symbolicName": "org.apache.logging.log4j.api"
+    },
+    {
+      "startLevel": 3,
+      "start": true,
+      "coordinates": "org.apache.logging.log4j:log4j-core:2.26.0",
+      "symbolicName": "org.apache.logging.log4j.core"
+    },
+    {
+      "startLevel": 3,
+      "start": true,
+      "coordinates": "org.apache.logging.log4j:log4j-slf4j2-impl:2.26.0",
+      "symbolicName": "org.apache.logging.log4j.slf4j2.impl"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.qpid:qpid-jms-client:2.10.0",
+      "symbolicName": "org.apache.qpid.jms.client"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.qpid:proton-j:0.34.1",
+      "symbolicName": "org.apache.qpid.proton-j"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.c3p0:0.9.5.5_1",
+      "symbolicName": "org.apache.servicemix.bundles.c3p0"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-beans:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-beans"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-context:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-context"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-core:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-expression:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-expression"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-jms:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-jms"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-tx:6.0.10_1",
+      "symbolicName": "org.apache.servicemix.bundles.spring-tx"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.core.contenttype:3.9.800",
+      "symbolicName": "org.eclipse.core.contenttype"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.core.jobs:3.15.700",
+      "symbolicName": "org.eclipse.core.jobs"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.app:1.7.600",
+      "symbolicName": "org.eclipse.equinox.app"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.cm:1.6.400",
+      "symbolicName": "org.eclipse.equinox.cm"
+    },
+    {
+      "startLevel": 2,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.common:3.20.300",
+      "symbolicName": "org.eclipse.equinox.common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.console:1.4.1100",
+      "symbolicName": "org.eclipse.equinox.console"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.event:1.7.300",
+      "symbolicName": "org.eclipse.equinox.event"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.launcher:1.7.100",
+      "symbolicName": "org.eclipse.equinox.launcher"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.metatype:1.6.900",
+      "symbolicName": "org.eclipse.equinox.metatype"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.preferences:3.12.100",
+      "symbolicName": "org.eclipse.equinox.preferences"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.registry:3.12.600",
+      "symbolicName": "org.eclipse.equinox.registry"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.util:1.1.300",
+      "symbolicName": "org.eclipse.equinox.util"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.equinox.wireadmin:1.0.800",
+      "symbolicName": "org.eclipse.equinox.wireadmin"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty.ee10:jetty-ee10-servlet:12.1.8",
+      "symbolicName": "org.eclipse.jetty.ee10.servlet"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-http:12.1.8",
+      "symbolicName": "org.eclipse.jetty.http"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-io:12.1.8",
+      "symbolicName": "org.eclipse.jetty.io"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-security:12.1.8",
+      "symbolicName": "org.eclipse.jetty.security"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-server:12.1.8",
+      "symbolicName": "org.eclipse.jetty.server"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-session:12.1.8",
+      "symbolicName": "org.eclipse.jetty.session"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.jetty:jetty-util:12.1.8",
+      "symbolicName": "org.eclipse.jetty.util"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.api:3.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.api",
+      "symbolicName": "org.eclipse.kura.api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.asset.cloudlet.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.asset.cloudlet.provider",
+      "symbolicName": "org.eclipse.kura.asset.cloudlet.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.asset.helper.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.asset.helper.provider",
+      "symbolicName": "org.eclipse.kura.asset.helper.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.asset.provider:3.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.asset.provider",
+      "symbolicName": "org.eclipse.kura.asset.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.broker.artemis.core:2.0.0-SNAPSHOT",
+      "module": "kura-artemis/bundles/org.eclipse.kura.broker.artemis.core",
+      "symbolicName": "org.eclipse.kura.broker.artemis.core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.broker.artemis.simple.mqtt:2.0.0-SNAPSHOT",
+      "module": "kura-artemis/bundles/org.eclipse.kura.broker.artemis.simple.mqtt",
+      "symbolicName": "org.eclipse.kura.broker.artemis.simple.mqtt"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.broker.artemis.xml:2.0.0-SNAPSHOT",
+      "module": "kura-artemis/bundles/org.eclipse.kura.broker.artemis.xml",
+      "symbolicName": "org.eclipse.kura.broker.artemis.xml"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.camel:2.0.0-SNAPSHOT",
+      "module": "kura-camel/bundles/org.eclipse.kura.camel",
+      "symbolicName": "org.eclipse.kura.camel"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.camel.cloud.factory:2.0.0-SNAPSHOT",
+      "module": "kura-camel/bundles/org.eclipse.kura.camel.cloud.factory",
+      "symbolicName": "org.eclipse.kura.camel.cloud.factory"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.camel.xml:2.0.0-SNAPSHOT",
+      "module": "kura-camel/bundles/org.eclipse.kura.camel.xml",
+      "symbolicName": "org.eclipse.kura.camel.xml"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.cloud.base.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider",
+      "symbolicName": "org.eclipse.kura.cloud.base.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider",
+      "symbolicName": "org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.cloudconnection.kapua.mqtt.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider",
+      "symbolicName": "org.eclipse.kura.cloudconnection.kapua.mqtt.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.cloudconnection.raw.mqtt.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.cloudconnection.raw.mqtt.provider",
+      "symbolicName": "org.eclipse.kura.cloudconnection.raw.mqtt.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider",
+      "symbolicName": "org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.configuration.change.manager:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.configuration.change.manager",
+      "symbolicName": "org.eclipse.kura.configuration.change.manager"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.container.orchestration.provider:3.0.0-SNAPSHOT",
+      "module": "kura-container/bundles/org.eclipse.kura.container.orchestration.provider",
+      "symbolicName": "org.eclipse.kura.container.orchestration.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.container.provider:3.0.0-SNAPSHOT",
+      "module": "kura-container/bundles/org.eclipse.kura.container.provider",
+      "symbolicName": "org.eclipse.kura.container.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core",
+      "symbolicName": "org.eclipse.kura.core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.certificates:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.certificates",
+      "symbolicName": "org.eclipse.kura.core.certificates"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.cloud.factory:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.core.cloud.factory",
+      "symbolicName": "org.eclipse.kura.core.cloud.factory"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.configuration:3.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.configuration",
+      "symbolicName": "org.eclipse.kura.core.configuration"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.crypto:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.crypto",
+      "symbolicName": "org.eclipse.kura.core.crypto"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.deployment:2.0.0-SNAPSHOT",
+      "module": "kura-deployment/bundles/org.eclipse.kura.core.deployment",
+      "symbolicName": "org.eclipse.kura.core.deployment"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.identity:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.identity",
+      "symbolicName": "org.eclipse.kura.core.identity"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.inventory:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.inventory",
+      "symbolicName": "org.eclipse.kura.core.inventory"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.keystore:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.keystore",
+      "symbolicName": "org.eclipse.kura.core.keystore"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.net:3.0.0-SNAPSHOT",
+      "module": "kura-networking/bundles/org.eclipse.kura.core.net",
+      "symbolicName": "org.eclipse.kura.core.net"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.status:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.status",
+      "symbolicName": "org.eclipse.kura.core.status"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.system:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.system",
+      "symbolicName": "org.eclipse.kura.core.system"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.core.token.jwt:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.core.token.jwt",
+      "symbolicName": "org.eclipse.kura.core.token.jwt"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.db.h2db.provider:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.db.h2db.provider",
+      "symbolicName": "org.eclipse.kura.db.h2db.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.db.sqlite.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.db.sqlite.provider",
+      "symbolicName": "org.eclipse.kura.db.sqlite.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.deployment.agent:2.0.0-SNAPSHOT",
+      "module": "kura-deployment/bundles/org.eclipse.kura.deployment.agent",
+      "symbolicName": "org.eclipse.kura.deployment.agent"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.docs:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.docs",
+      "symbolicName": "org.eclipse.kura.docs"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.driver.helper.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.driver.helper.provider",
+      "symbolicName": "org.eclipse.kura.driver.helper.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.driver.opcua.provider:2.0.0-SNAPSHOT",
+      "module": "kura-opcua/bundles/org.eclipse.kura.driver.opcua.provider",
+      "symbolicName": "org.eclipse.kura.driver.opcua.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.emulator:2.0.0-SNAPSHOT",
+      "module": "kura/kura/emulator/org.eclipse.kura.emulator",
+      "symbolicName": "org.eclipse.kura.emulator"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.emulator.clock:2.0.0-SNAPSHOT",
+      "module": "kura/kura/emulator/org.eclipse.kura.emulator.clock",
+      "symbolicName": "org.eclipse.kura.emulator.clock"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.emulator.net:2.0.0-SNAPSHOT",
+      "module": "kura/kura/emulator/org.eclipse.kura.emulator.net",
+      "symbolicName": "org.eclipse.kura.emulator.net"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.emulator.position:2.0.0-SNAPSHOT",
+      "module": "kura/kura/emulator/org.eclipse.kura.emulator.position",
+      "symbolicName": "org.eclipse.kura.emulator.position"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.emulator.watchdog:2.0.0-SNAPSHOT",
+      "module": "kura/kura/emulator/org.eclipse.kura.emulator.watchdog",
+      "symbolicName": "org.eclipse.kura.emulator.watchdog"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.event.publisher:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.event.publisher",
+      "symbolicName": "org.eclipse.kura.event.publisher"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.hook.file.move.provider:2.0.0-SNAPSHOT",
+      "module": "kura-deployment/bundles/org.eclipse.kura.hook.file.move.provider",
+      "symbolicName": "org.eclipse.kura.hook.file.move.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.http.server.manager:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.http.server.manager",
+      "symbolicName": "org.eclipse.kura.http.server.manager"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.json.marshaller.unmarshaller.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.json.marshaller.unmarshaller.provider",
+      "symbolicName": "org.eclipse.kura.json.marshaller.unmarshaller.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.jul.to.slf4j.configuration:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.jul.to.slf4j.configuration",
+      "symbolicName": "org.eclipse.kura.jul.to.slf4j.configuration"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.linux.position.spi:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.linux.position.spi",
+      "symbolicName": "org.eclipse.kura.linux.position.spi"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.localization:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.localization",
+      "symbolicName": "org.eclipse.kura.localization"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.localization.resources:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.localization.resources",
+      "symbolicName": "org.eclipse.kura.localization.resources"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.log.filesystem.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.log.filesystem.provider",
+      "symbolicName": "org.eclipse.kura.log.filesystem.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.misc.cloudcat:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.misc.cloudcat",
+      "symbolicName": "org.eclipse.kura.misc.cloudcat"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.net.configuration:3.0.0-SNAPSHOT",
+      "module": "kura-networking/bundles/org.eclipse.kura.net.configuration",
+      "symbolicName": "org.eclipse.kura.net.configuration"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.request.handler.jaxrs:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.request.handler.jaxrs",
+      "symbolicName": "org.eclipse.kura.request.handler.jaxrs"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.asset.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.rest.asset.provider",
+      "symbolicName": "org.eclipse.kura.rest.asset.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.cloudconnection.provider:3.0.0-SNAPSHOT",
+      "module": "kura-cloud/bundles/org.eclipse.kura.rest.cloudconnection.provider",
+      "symbolicName": "org.eclipse.kura.rest.cloudconnection.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.configuration.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.configuration.provider",
+      "symbolicName": "org.eclipse.kura.rest.configuration.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.identity.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.identity.provider",
+      "symbolicName": "org.eclipse.kura.rest.identity.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.inventory.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.inventory.provider",
+      "symbolicName": "org.eclipse.kura.rest.inventory.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.keystore.provider:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.keystore.provider",
+      "symbolicName": "org.eclipse.kura.rest.keystore.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.network.configuration.provider:3.0.0-SNAPSHOT",
+      "module": "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider",
+      "symbolicName": "org.eclipse.kura.rest.network.configuration.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.network.status.provider:3.0.0-SNAPSHOT",
+      "module": "kura-networking/bundles/org.eclipse.kura.rest.network.status.provider",
+      "symbolicName": "org.eclipse.kura.rest.network.status.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.packages.provider:2.0.0-SNAPSHOT",
+      "module": "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider",
+      "symbolicName": "org.eclipse.kura.rest.packages.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.position.provider:2.0.0-SNAPSHOT",
+      "module": "kura-position/bundles/org.eclipse.kura.rest.position.provider",
+      "symbolicName": "org.eclipse.kura.rest.position.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.provider",
+      "symbolicName": "org.eclipse.kura.rest.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.security.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.security.provider",
+      "symbolicName": "org.eclipse.kura.rest.security.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.service.listing.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.service.listing.provider",
+      "symbolicName": "org.eclipse.kura.rest.service.listing.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.system.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.system.provider",
+      "symbolicName": "org.eclipse.kura.rest.system.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.tamper.detection.provider:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.rest.tamper.detection.provider",
+      "symbolicName": "org.eclipse.kura.rest.tamper.detection.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.rest.wire.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.rest.wire.provider",
+      "symbolicName": "org.eclipse.kura.rest.wire.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.script.provider:1.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.script.provider",
+      "symbolicName": "org.eclipse.kura.script.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.useradmin.store:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.useradmin.store",
+      "symbolicName": "org.eclipse.kura.useradmin.store"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.util:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.util",
+      "symbolicName": "org.eclipse.kura.util"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.web2:3.0.0-SNAPSHOT",
+      "module": "kura-management-ui/bundles/org.eclipse.kura.web2",
+      "symbolicName": "org.eclipse.kura.web2"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.ai.component.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider",
+      "symbolicName": "org.eclipse.kura.wire.ai.component.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.camel:2.0.0-SNAPSHOT",
+      "module": "kura-camel/bundles/org.eclipse.kura.wire.camel",
+      "symbolicName": "org.eclipse.kura.wire.camel"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.component.join.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.component.join.provider",
+      "symbolicName": "org.eclipse.kura.wire.component.join.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.component.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.component.provider",
+      "symbolicName": "org.eclipse.kura.wire.component.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.db.component.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider",
+      "symbolicName": "org.eclipse.kura.wire.db.component.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.h2db.component.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.h2db.component.provider",
+      "symbolicName": "org.eclipse.kura.wire.h2db.component.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.helper.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.helper.provider",
+      "symbolicName": "org.eclipse.kura.wire.helper.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.provider:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.provider",
+      "symbolicName": "org.eclipse.kura.wire.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.wire.script.tools:3.0.0-SNAPSHOT",
+      "module": "kura-wires/bundles/org.eclipse.kura.wire.script.tools",
+      "symbolicName": "org.eclipse.kura.wire.script.tools"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.kura:org.eclipse.kura.xml.marshaller.unmarshaller.provider:2.0.0-SNAPSHOT",
+      "module": "kura/kura/org.eclipse.kura.xml.marshaller.unmarshaller.provider",
+      "symbolicName": "org.eclipse.kura.xml.marshaller.unmarshaller.provider"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:org.eclipse.milo.sdk-client:1.1.2",
+      "symbolicName": "org.eclipse.milo.sdk-client"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:org.eclipse.milo.sdk-core:1.1.2",
+      "symbolicName": "org.eclipse.milo.sdk-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:org.eclipse.milo.stack-core:1.1.2",
+      "symbolicName": "org.eclipse.milo.stack-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:org.eclipse.milo.transport:1.1.2",
+      "symbolicName": "org.eclipse.milo.transport"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.platform:org.eclipse.osgi.util:3.7.400",
+      "symbolicName": "org.eclipse.osgi.util"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest:1.2.3",
+      "symbolicName": "org.eclipse.osgitech.rest"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.servlet.whiteboard:1.2.3",
+      "symbolicName": "org.eclipse.osgitech.rest.servlet.whiteboard"
+    },
+    {
+      "startLevel": 5,
+      "start": false,
+      "coordinates": "org.eclipse.osgi-technology.rest:org.eclipse.osgitech.rest.sse:1.2.3",
+      "symbolicName": "org.eclipse.osgitech.rest.sse"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5",
+      "symbolicName": "org.eclipse.paho.client.mqttv3"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "p2.osgi.bundle:org.eclipse.paho.mqttv5.client:1.2.5",
+      "symbolicName": "org.eclipse.paho.mqttv5.client"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.hk2:hk2-api:3.1.1",
+      "symbolicName": "org.glassfish.hk2.api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.hk2.external:aopalliance-repackaged:3.1.1",
+      "symbolicName": "org.glassfish.hk2.external.aopalliance-repackaged"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.hk2:hk2-locator:3.1.1",
+      "symbolicName": "org.glassfish.hk2.locator"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.hk2:osgi-resource-locator:1.0.3",
+      "symbolicName": "org.glassfish.hk2.osgi-resource-locator"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.hk2:hk2-utils:3.1.1",
+      "symbolicName": "org.glassfish.hk2.utils"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.containers:jersey-container-servlet:3.1.9",
+      "symbolicName": "org.glassfish.jersey.containers.jersey-container-servlet"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.containers:jersey-container-servlet-core:3.1.9",
+      "symbolicName": "org.glassfish.jersey.containers.jersey-container-servlet-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.core:jersey-client:3.1.9",
+      "symbolicName": "org.glassfish.jersey.core.jersey-client"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.core:jersey-common:3.1.9",
+      "symbolicName": "org.glassfish.jersey.core.jersey-common"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.core:jersey-server:3.1.9",
+      "symbolicName": "org.glassfish.jersey.core.jersey-server"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.ext:jersey-entity-filtering:3.1.9",
+      "symbolicName": "org.glassfish.jersey.ext.jersey-entity-filtering"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.inject:jersey-hk2:3.1.9",
+      "symbolicName": "org.glassfish.jersey.inject.jersey-hk2"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.media:jersey-media-jaxb:3.1.9",
+      "symbolicName": "org.glassfish.jersey.media.jersey-media-jaxb"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.media:jersey-media-multipart:3.1.9",
+      "symbolicName": "org.glassfish.jersey.media.jersey-media-multipart"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.glassfish.jersey.media:jersey-media-sse:3.1.9",
+      "symbolicName": "org.glassfish.jersey.media.jersey-media-sse"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.jspecify:jspecify:1.0.0",
+      "symbolicName": "org.jspecify.jspecify"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.jvnet.mimepull:mimepull:1.10.0",
+      "symbolicName": "org.jvnet.mimepull"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.ow2.asm:asm:9.7.1",
+      "symbolicName": "org.objectweb.asm"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.ow2.asm:asm-commons:9.7.1",
+      "symbolicName": "org.objectweb.asm.commons"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.ow2.asm:asm-tree:9.7.1",
+      "symbolicName": "org.objectweb.asm.tree"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.ow2.asm:asm-analysis:9.7.1",
+      "symbolicName": "org.objectweb.asm.tree.analysis"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.ow2.asm:asm-util:9.7.1",
+      "symbolicName": "org.objectweb.asm.util"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.cm:1.6.1",
+      "symbolicName": "org.osgi.service.cm"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.component:1.5.1",
+      "symbolicName": "org.osgi.service.component"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.coordinator:1.0.2",
+      "symbolicName": "org.osgi.service.coordinator"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.device:1.1.1",
+      "symbolicName": "org.osgi.service.device"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.event:1.4.1",
+      "symbolicName": "org.osgi.service.event"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.http.whiteboard:1.1.1",
+      "symbolicName": "org.osgi.service.http.whiteboard"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.jakartars:2.0.0",
+      "symbolicName": "org.osgi.service.jakartars"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.metatype:1.4.1",
+      "symbolicName": "org.osgi.service.metatype"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.prefs:1.1.2",
+      "symbolicName": "org.osgi.service.prefs"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.provisioning:1.2.0",
+      "symbolicName": "org.osgi.service.provisioning"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.servlet:2.0.0",
+      "symbolicName": "org.osgi.service.servlet"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.upnp:1.2.1",
+      "symbolicName": "org.osgi.service.upnp"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.useradmin:1.1.1",
+      "symbolicName": "org.osgi.service.useradmin"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.service.wireadmin:1.0.2",
+      "symbolicName": "org.osgi.service.wireadmin"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.function:1.2.0",
+      "symbolicName": "org.osgi.util.function"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.measurement:1.0.2",
+      "symbolicName": "org.osgi.util.measurement"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.position:1.0.1",
+      "symbolicName": "org.osgi.util.position"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.promise:1.3.0",
+      "symbolicName": "org.osgi.util.promise"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.pushstream:1.1.0",
+      "symbolicName": "org.osgi.util.pushstream"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.osgi:org.osgi.util.xml:1.0.2",
+      "symbolicName": "org.osgi.util.xml"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.xerial:sqlite-jdbc:3.47.1.0",
+      "symbolicName": "org.xerial.sqlite-jdbc"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.yaml:snakeyaml:2.6",
+      "symbolicName": "org.yaml.snakeyaml"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.quartz-scheduler:quartz:2.5.0",
+      "symbolicName": "quartz"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "org.slf4j:slf4j-api:2.0.18",
+      "symbolicName": "slf4j.api"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "tools.jackson.core:jackson-core:3.2.0",
+      "symbolicName": "tools.jackson.core.jackson-core"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
+      "coordinates": "tools.jackson.core:jackson-databind:3.2.0",
+      "symbolicName": "tools.jackson.core.jackson-databind"
+    }
+  ]
+}
