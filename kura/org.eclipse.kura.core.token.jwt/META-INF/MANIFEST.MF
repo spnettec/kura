@@ -4,11 +4,9 @@ Bundle-Vendor: Eclipse Kura
 Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: org.eclipse.kura.core.token.jwt;singleton:=true
 Bundle-ActivationPolicy: lazy
-Import-Package: com.auth0.jwt,
- com.auth0.jwt.algorithms,
- com.auth0.jwt.exceptions,
- com.auth0.jwt.interfaces,
- com.fasterxml.jackson.annotation;version="[2.19,3.0)",
+Bundle-ClassPath: .,
+ lib/java-jwt.jar
+Import-Package: com.fasterxml.jackson.annotation;version="[2.19,3.0)",
  com.fasterxml.jackson.core;version="[2.19,3.0)",
  com.fasterxml.jackson.core.type;version="[2.19,3.0)",
  com.fasterxml.jackson.databind;version="[2.19,3.0)",
