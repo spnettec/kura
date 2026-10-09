@@ -1,6 +1,6 @@
 # Maven Bundle Plugin / IDEA 迁移实施记录
 
-本分支按 P0–P7 分阶段迁移。**默认构建和开发启动已切换普通 Maven，正在执行 P6 完整回归，尚未完成最终验收。** 不将构建支持安装成功当作完整迁移完成。
+本分支按 P0–P7 分阶段迁移。**默认构建和开发启动已切换普通 Maven；macOS IDEA、Linux CLI、冷构建、双架构 Docker 和 deb 安装回归已通过。Linux GUI 调试及 P7 清理尚未完成。** 不将构建支持安装成功当作完整迁移完成。
 
 ## 已冻结的约束
 
@@ -16,12 +16,12 @@
 | 阶段 | 状态 / 门槛 |
 |---|---|
 | P0 基线 | 已记录 16 仓库 SHA，保存 109 个现有 bundle 副本及元数据；docs 已通过旧 Tycho 链补齐。已通过独立启动补充运行基线。 |
-| P1 构建基础 | parent/BOM 已在独立缓存由 Maven 3.10 安装成功，无 MILD；封装映射和测试组合仍在验证。 |
+| P1 构建基础 | parent/BOM、14 个封装和测试组合已通过独立缓存及冷构建验证，无 MILD。 |
 | P2 IDEA 启动试点 | macOS 试点通过：完整运行集解析、管理页 HTTP 200、激活与配置读取断点/单步、停止后重启通过；仍使用旧构建产物。 |
 | P3 代表模块 | 试点通过：5 个 bundle 语义对比、14 项普通测试、6 项真实容器测试，以及替换新 JAR 后的完整运行验证。 |
 | P4 核心迁移 | 已通过：51 个默认 bundle + docs；22 项普通测试、6 项真实容器测试及新核心运行验证。 |
-| P5 Sibling / YOFC | 47 个原 Tycho sibling bundle、YOFC 及 runtime 构建/产物检查通过；完整新运行集 CLI 验证通过，最终 IDEA 联调中。 |
-| P6 交付与平台回归 | 待迁移；包括空缓存、双架构容器运行及双平台断点。 |
+| P5 Sibling / YOFC | 47 个原 Tycho sibling bundle、YOFC 及 runtime 构建/产物检查通过；完整新运行集 CLI 和 IDEA 增量构建、Debug、控制台登录通过。 |
+| P6 交付与平台回归 | 空缓存、ARM64/AMD64 Docker 运行及重启、Linux deb 安装/升级/卸载、macOS IDEA 与 Linux CLI 通过；Linux GUI 断点未验收。 |
 | P7 清理切换 | 最后执行；目前不删除旧 `.target`、`.launch` 或 Tycho 配置。 |
 
 ## 基线与回退
@@ -135,4 +135,19 @@ mvn -Pjavadocs,osgi-it install
 - 18 个 DP / 64 个 bundle 条目与旧 DP 的集合和身份一致；构建 qualifier 由统一参数控制。未使用的旧 Tycho feature traversal 不进入新插件。
 - 核心发行包直接声明 Maven 运行依赖，移除对两个 PDE 依赖聚合 POM 的引用。216 个 JAR 的安装相对路径与旧包完全相同，所有 SHA 对应本次 Maven 产物；未将新的传递依赖混入安装目录。
 - build-all 按公共构建支持、核心、sibling/runtime、YOFC、发行包/开发环境、Docker 六段执行；缺少约定仓库时明确失败。`RUN_IT=1` 同时启用普通测试，`BUILD_DOCKER=0` 跳过镜像。PLC4X 始终为显式前置条件。
-- 空缓存验证已启动，独立目录 `migration-cold-m2-20261009` 从 PLC4X clean install 开始；结果待完成后填写，不能引用试点缓存的结果代替。
+- 空缓存验证已完成，见下文 P6 记录；使用独立目录从 PLC4X 源码开始，没有借用试点缓存。
+
+
+## P6 本机验收记录（2026-10-09）
+
+- 独立空缓存 `migration-cold-m2-20261009`：先从 PLC4X 源码构建 97 个模块（2567 个 goal，7 分 7 秒），再执行 `RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0 ./build-all.sh`。14:51:38 全部成功，统一 qualifier `20261009cold`，Maven 3.10 / JDK 21，无 MILD。
+- 75 项普通测试、6 项真实 Equinox 集成测试通过；6 项既有硬件/外部数据库测试保持禁用。另以 Maven 3.9.16 验证公共入口和代表性 JWT 模块。
+- 冷构建核心 ZIP 的 216 个 JAR 安装路径保持原样，每个文件 SHA256 均对应该独立 Maven 缓存的明确坐标。
+- 从冷构建产物分别生成 ARM64 和 AMD64 核心 deb 及 Alpine Docker 镜像。两个容器均实际启动，HTTP 健康检查通过，ConfigurationService / WireGraphService 已注册，重启后再次通过；不是只验证镜像构建。测试容器已停止。
+- 在独立 Ubuntu 24.04 ARM64 VM 中先安装迁移前 deb，再升级新 deb；快照、密钥、用户配置、数据及 sibling 注册表标记保留。安装 12 个 sibling/runtime 包，检查 networking 与 firewall-only 的互斥关系、切换 firewall-only、卸载 position/networking/wires、移除其注册记录，最后 purge 全部测试包；dpkg audit 无残留问题。
+- Linux 独立 CLI 在 JDK 21 下启动完整 277 个 bundle 清单，HTTP 200，核心服务注册，无未解析 bundle 或类加载错误；停止释放端口，再次启动成功。
+- macOS IDEA 从根 workspace 导入，启动前通过 Maven 3.10 构建完整 122 模块 reactor；项目使用 JDK 21。新产物下激活断点及真实 ConfigurationService 调用栈可见，用户已登录管理控制台。修改仿真器日志后再次 Debug，运行目录中的 bundle SHA 和 class 内容确实更新；该临时改动随后恢复。
+
+发行包中两个独立的 Jackson YAML / JAXB 模块在原包中已有未解析依赖；新旧 JAR 字节相同，原包也在真实 Equinox resolver 中复现。没有为此改变共享依赖边界。OPC UA bundle 内的 YAMLFactory 和 SnakeYAML Engine 均通过自身真实 bundle classloader 加载，详见 [Jackson/YAML 原包对照](jackson-yaml-boundary.md)。桌面仿真清单不含这两个多余的独立模块，全部条目可以解析。
+
+Linux VM 没有图形界面和 IDEA，**Linux GUI Run/Debug 断点未验收**；Linux CLI 和 Docker 结果不替代此项。真实硬件功能仍按原独立流程验收。P7 尚未删除旧 Eclipse/PDE 配置，也尚未完成模板及 CI 切换。
