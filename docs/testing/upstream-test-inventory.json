@@ -4078,7 +4078,20 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/download/impl/DownloadImplITTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Actual local HTTPS server, real SslManagerService and generated certificates. JDK 21 rejects mismatched hostnames with either SSL manager flag; upstream disable-verification success expectation adapted to preserve current behavior. DS/JAX-RS configuration wiring remains deferred; see deployment-test-restoration.md.",
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/main/java/org/eclipse/kura/core/deployment/download/impl/test/DownloadTestRestService.java",
@@ -4089,7 +4102,12 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/download/impl/DownloadTestRestService.java"
+    ],
+    "execution": "test-support",
+    "reason": "Actual local HTTPS server, real SslManagerService and generated certificates. JDK 21 rejects mismatched hostnames with either SSL manager flag; upstream disable-verification success expectation adapted to preserve current behavior. DS/JAX-RS configuration wiring remains deferred; see deployment-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/CloudDeploymentHandlerV2Test.java",

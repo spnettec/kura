@@ -40,3 +40,30 @@ Both failed on the original code and pass after the one-line production repair;
 the complete module passes 55 tests, zero failures/errors/skips. Existing package
 cleanup and deployment-admin behavior are unchanged. This does not add rollback
 for a persistence failure after deployment admin has installed a package.
+
+## HTTPS download continuation
+
+DownloadImplITTest and DownloadTestRestService are reviewed and restored as four
+Jupiter transport cases and one helper. The full core.deployment module passes 59
+cases, zero failures/errors/skips. Certificates, keys and the truststore are built
+in memory; downloads use TempDir; the server binds localhost on an OS-selected port.
+The production downloader, SSLSocketFactoryWrapper and SslManagerServiceImpl perform
+the actual handshake. Only the OSGi/keystore service boundaries are mocks. The
+fixture owns and stops its server/executor, cancels the completed download worker
+for cleanup, and restores the downloader's global redirect setting afterward.
+
+Two cases download the complete upstream text fixture (trailing whitespace normalized) with a trusted localhost certificate,
+with the SSL manager hostname flag both true and false. Two reject a trusted
+certificate whose name does not match localhost, requiring a hostname-specific
+failure notification, no completed notification, no HTTP request and no install.
+The upstream test expected the false flag to permit a mismatched certificate.
+That expectation fails under the current JDK 21 HttpsURLConnection, which retains
+its own hostname verification. Current behavior is preserved; no permissive
+HostnameVerifier or production TLS changes were introduced.
+
+The first attempt exposed a stale core artifact in migration-m2 containing the
+already-fixed default-keystore bug. Installing the current core bundle resolved
+that setup issue; the earlier repair was not duplicated. The helper serves the
+fixture bytes via an owned JDK HTTPS server instead of a DS/JAX-RS registration.
+Actual configuration-service updates, REST routing and OSGi service wiring remain
+runtime acceptance work. Three deployment source entries remain unreviewed.

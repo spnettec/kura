@@ -394,3 +394,14 @@ artifact persistence. IOException now reaches the existing FAILED notification
 path. Both failed before the fix; the complete core.deployment module passes 55
 cases afterward. See [deployment audit](deployment-test-restoration.md). Source
 inventory remains **140 unreviewed**.
+
+### Deployment HTTPS continuation
+
+Four real TLS scenarios and the adapted download resource bring core.deployment
+to 59 passing cases. JDK 21 hostname rejection is preserved even when the SSL
+manager flag is false; the contrary upstream expectation is explicitly adapted.
+See [deployment audit](deployment-test-restoration.md). No production TLS changes.
+
+Current inventory: 279 restored sources, 32 restored helpers, 16 exclusions/replaced
+harness entries and **138 unreviewed** of 465. Deployment has three sources left;
+core-origin, management UI, official OPC UA and runtime/IDEA work remain open.
