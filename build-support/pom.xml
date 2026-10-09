@@ -10,6 +10,7 @@
     <module>kura-build-parent</module>
     <module>kura-dp-maven-plugin</module>
     <module>kura-osgi-test-support</module>
+    <module>kura-test-support</module>
     <module>thirdparty</module>
   </modules>
 </project>
