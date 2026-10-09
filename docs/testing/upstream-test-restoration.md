@@ -696,8 +696,9 @@ remains **78 unreviewed**; source/runtime/IDEA acceptance continues.
 ### H2/SQLite message-store and SQLite source audit
 
 The 28 upstream store contracts run against each actual database; one shared source
-and two provider fixtures replace the old OSGi test target. Three existing SQLite
-Jupiter sources are now audited, with temporary-property pollution fixed. Full modules
+and two provider fixtures replace the old OSGi test target. The existing SQLite
+Jupiter sources were checked for full-suite compatibility, and temporary-property
+pollution was fixed. Their inventory entries were already restored. Full modules
 pass 41 H2 and 59 SQLite cases. See [Database audit](database-test-restoration.md).
-Inventory: 337 restored sources, 35 helpers, 20 exclusions/replaced harness entries
-and **73 unreviewed**. Source/runtime/IDEA acceptance continues.
+Inventory: 334 restored sources, 35 helpers, 20 exclusions/replaced harness entries
+and **76 unreviewed**. The three separate SQLite runtime test sources remain pending. Source/runtime/IDEA acceptance continues.

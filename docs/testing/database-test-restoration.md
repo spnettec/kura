@@ -13,9 +13,9 @@ The upstream topic assertion now respects its requested message index. Productio
 identity behavior and handwritten OSGi metadata are unchanged. Real SCR/factory
 registration, runtime persistence/restart behavior and IDEA acceptance remain open.
 
-Three SQLite test sources already converted to Jupiter were compared with their
+Three SQLite test sources already marked restored were compared with their
 upstream originals and reviewed against the current implementation: loader 21,
-options 4, activator 6 cases. The activator suite left org.sqlite.tmpdir pointing at
+options 4, activator 6 cases. They are not counted as newly restored sources. The activator suite left org.sqlite.tmpdir pointing at
 an unavailable directory; the first full run then failed all 28 new SQLite contracts
 with database initialization/JNI errors. Each case now restores the original property,
 and Jupiter owns the temporary directory. The full suite passes with all 59 SQLite
