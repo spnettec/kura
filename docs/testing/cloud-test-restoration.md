@@ -29,3 +29,13 @@ three local cases cover that behavior instead. Six applicable upstream scenarios
 remain covered. No upstream suffix-derived PID or marker-property behavior imported.
 
 Remaining Cloud source audit, real MQTT/DS/Equinox and IDEA acceptance remain open.
+
+## EclipseIoT and Kapua modem profile continuation
+
+Both upstream sources pass all three scenarios each: Ethernet + modem IP, absent
+NetworkStatusService and modem without an address. Real current API status builders
+and IPAddress parsing are used with mocked service boundaries. Test-only Guava
+supplies the API's non-transitive provided address-parsing dependency. No direct
+D-Bus calls, old NetworkManager interfaces, network changes or production changes.
+Six cases pass on Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. This checks
+profile construction, not real modem/D-Bus/OSGi connectivity.

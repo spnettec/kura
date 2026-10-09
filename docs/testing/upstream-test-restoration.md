@@ -534,3 +534,11 @@ PID/reference/i18n behavior and explicitly exclude three wrong-prefix assumption
 See [Cloud audit](cloud-test-restoration.md). Inventory: 301 restored sources,
 32 helpers, 19 exclusions/replaced harness entries and **113 unreviewed**. Other
 Cloud/core sources, official OPC UA and runtime/IDEA acceptance remain open.
+
+### Cloud modem device-profile continuation
+
+Two sources add six passing cases against current NetworkStatusService DTOs and
+real address parsing, with no direct D-Bus or production changes. See
+[Cloud audit](cloud-test-restoration.md). Inventory: 303 restored sources, 32 helpers,
+19 exclusions/replaced harness entries and **111 unreviewed**. Source audit and
+real runtime/IDEA acceptance continue; official OPC UA unchanged.
