@@ -488,3 +488,12 @@ and are explicitly not applicable; no features imported. See
 32 helpers, 18 exclusions/replaced harness entries and **122 unreviewed**. Six
 Container sources, other core-origin sources, official OPC UA and runtime/IDEA work
 remain open.
+
+### Container command failure and allowlist continuation
+
+Two restored sources add 11 passing cases (including local digest fallback);
+all 32 orchestration tests pass. The identity-integration source's 19 scenarios
+require absent local APIs and are explicitly not applicable. No production changes.
+See [Container audit](container-test-restoration.md). Inventory: 295 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **119 unreviewed**. Three
+Container sources and the remaining core-origin/OPC UA/runtime/IDEA work remain.

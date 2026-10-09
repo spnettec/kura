@@ -34,3 +34,21 @@ Graph searches and fallback source/metadata checks confirm both APIs are absent.
 These are explicit not-applicable inventory entries, not skipped passing tests.
 Six Container source files remain unreviewed. Docker daemon/real container, DS and
 IDEA acceptance remain open; the 21 cases do not connect to Docker.
+
+## Docker failure and digest enforcement continuation
+
+Four command-failure and six allowlist scenarios restore the upstream coverage.
+An extra case verifies the local per-container digest allowlist fallback through
+the actual stored digest map. Seven enforcement cases check accepted/whitespace
+allowlists, rejected digests, running/stopped state actions and local fallback.
+Mockito and Log4j API are test-only dependencies; Docker commands are mocked and
+no daemon connections or event subscriptions are opened. All 32 orchestration cases
+pass on Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. Production unchanged.
+
+All 19 ContainerIdentityIntegrationTest scenarios and helpers were also audited.
+The local ContainerInstance has none of the identity/password-strength/network/
+configuration service bindings, temporary-password state or token lifecycle used
+by those scenarios; associated container.identity.enabled and container.permissions
+metadata is absent too. This source is explicitly not applicable, not silently
+skipped, and no identity integration is imported. Three Container sources remain:
+service behavior, instance options and instance lifecycle. Runtime/DS/IDEA work open.
