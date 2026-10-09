@@ -714,3 +714,14 @@ Actual SCR/Equinox and IDEA acceptance remain open.
 Current inventory: 465 entries, 336 restored, 36 restored helpers, eight replaced
 legacy harnesses, six current-API exclusions, six removed-functionality exclusions
 and **73 unreviewed**. These are source-file dispositions, not invocation counts.
+
+## SQLite persistence continuation (2026-10-10)
+
+Sixteen actual SQLite persistence/maintenance cases and six debug-query cases pass;
+the complete module reports 81 tests with zero failures/errors/skips. Three upstream
+sources are audited, including their shared fixture. Native extraction in actual OSGi
+and Gogo command assembly remain deferred; see `database-test-restoration.md`.
+
+Current inventory: 465 entries, 338 restored, 37 restored helpers, eight replaced
+legacy harnesses, six current-API exclusions, six removed-functionality exclusions
+and **70 unreviewed**. Source audit is not runtime or IDEA acceptance.
