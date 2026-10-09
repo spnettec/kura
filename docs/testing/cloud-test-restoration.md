@@ -323,3 +323,12 @@ The handwritten manifest adds only the required core.ssl package import.
 All 18 MQTT cases and 48 Cloud Base cases pass with zero failures/errors/skips on
 Maven 3.10.0/JDK 21; isolated installation succeeds. Remaining legacy cloud harness,
 DataService/CloudService end-to-end assembly and IDEA/Equinox acceptance stay open.
+
+## Separate MQTT client lifecycle repair
+
+Two regression cases failed before repair: deactivation retained the Paho client
+both while connected and after explicit disconnect. Deactivation now closes its owned
+client in finally and clears its callback/reference. Repeated deactivation releases it
+exactly once. The real TLS fixture no longer needs private cleanup. All 50 Cloud Base
+cases and isolated installation pass on Maven 3.10.0/JDK 21. This production fix is
+separate from test restoration; source inventory remains 78 unreviewed.

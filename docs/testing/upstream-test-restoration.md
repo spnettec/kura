@@ -685,3 +685,10 @@ tests and isolated installation pass. See [Cloud audit](cloud-test-restoration.m
 for service/runtime boundaries. Inventory: 333 restored sources, 34 helpers,
 20 exclusions/replaced harness entries and **78 unreviewed**. Source/runtime/IDEA
 acceptance continues.
+
+### Separate MQTT lifecycle repair
+
+Two negative-confirmed cases verify exactly-once client release on repeated
+deactivation, with and without a preceding disconnect. All 50 Cloud Base tests and
+isolated installation pass. See [Cloud audit](cloud-test-restoration.md). Inventory
+remains **78 unreviewed**; source/runtime/IDEA acceptance continues.
