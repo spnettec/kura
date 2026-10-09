@@ -14,31 +14,18 @@
 #     Eurotech
 #
 
-# activate batch mode by default
+# Tycho 5 uses embedded Bundle-ClassPath entries (e.g. lib/java-jwt.jar)
+# as system dependency classifiers. Maven 3.10's default Resolver validation
+# rejects the slash. MILD allows these coordinates while still checking for
+# unresolved property placeholders. Maven 3.10 requires the uppercase value.
+MAVEN_PROPS="-B -Dmaven.resolver.validation=MILD"
 
-MAVEN_PROPS="-B"
-
-# Use the pinned Maven 3.9.x for Tycho modules. Maven 3.10.0's stricter
-# resolver validator rejects Tycho 5.0.2 collect requests for bundles with
-# system-scope embedded-jar dependencies ("Invalid Collect Request: null"
-# on org.eclipse.kura.core.token.jwt / kura-triton / kura-deployment).
-# Plain-Maven repos (plc4x-yofc) are unaffected and may use any Maven.
-if false && [ -x "$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn" ]; then
-    MVN="$HOME/iot-kura-develop/tools/apache-maven-3.9.11/bin/mvn"
-else
-    MVN="mvn"
-fi
+# Use Maven from PATH, including Maven 3.10; no separate 3.9 installation needed.
+MVN="mvn"
 
 # allow running tests
 
 [ -z "$RUN_TESTS" ] && MAVEN_PROPS="$MAVEN_PROPS -Dmaven.test.skip=true"
-
-# Tycho-installed kura poms in ~/.m2 leak system-scope deps into the next
-# reactor round under Maven 3.10's stricter validator; drop them so every
-# build starts from a clean slate.
-find "$HOME/.m2/repository/org/eclipse/kura" -maxdepth 1 -type d -name "org.eclipse.*" -exec rm -rf {} + 2>/dev/null || true
-# Maven 3.10 rejects locally installed SNAPSHOTs tagged with a remote origin.
-find "$HOME/.m2/repository/org/eclipse/kura" -name "_remote.repositories" -delete 2>/dev/null || true
 
 # Stage 1: monorepo bundles only (target-platform + kura/pom.xml).
 # kura/distrib (kura-core.deb) moves to Stage 3 because the docker sibling
