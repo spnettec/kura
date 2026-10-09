@@ -42,8 +42,8 @@ PORT_PROPERTIES = {'KURA_HTTP_PORT': 'http.ports', 'KURA_HTTPS_PORT': 'https.por
                    'KURA_CLIENT_AUTH_PORT': 'https.client.auth.ports'}
 
 
-def snapshot(home):
-    candidates = sorted((p for p in (home / 'user/snapshots').glob('snapshot_*.xml')
+def snapshot(home, directory='user/snapshots'):
+    candidates = sorted((p for p in (home / directory).glob('snapshot_*.xml')
                          if re.fullmatch(r'snapshot_\d+\.xml', p.name)),
                         key=lambda p: int(p.stem.split('_')[1]), reverse=True)
     for path in candidates:
@@ -173,24 +173,35 @@ def import_data(profile, source, old_home=None):
         raise ValueError(f'Import requires an empty KURA_DEV_HOME: {home}')
     if source == home or source in home.parents or home in source.parents:
         raise ValueError('Import source and destination must be separate directories')
-    if not (source / 'user/snapshots').is_dir():
-        raise ValueError('Import source must be a Kura data home containing user/snapshots')
-    _, document = snapshot(source)
+    snapshot_directories = [name for name in ('user/snapshots', 'snapshots') if (source / name).is_dir()]
+    if len(snapshot_directories) != 1:
+        raise ValueError('Import source must contain exactly one snapshot directory: user/snapshots or snapshots')
+    snapshot_directory = snapshot_directories[0]
+    _, document = snapshot(source, snapshot_directory)
     if document is None:
         raise ValueError('Import source has no readable development snapshot')
     home.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix='.kura-import-', dir=home.parent))
     try:
         # Do not import the old framework cache, PDE workspace or executable bundles.
-        for name in ('user', 'data'):
+        for name in ('user', 'data', 'camel'):
             directory = source / name
             if directory.exists():
                 if directory.is_symlink() or any(p.is_symlink() for p in directory.rglob('*')):
                     raise ValueError(f'Import source contains symlinks: {directory}')
                 shutil.copytree(directory, staging / name)
+        if snapshot_directory == 'snapshots':
+            directory = source / snapshot_directory
+            if directory.is_symlink() or any(p.is_symlink() for p in directory.rglob('*')):
+                raise ValueError(f'Import source contains symlinks: {directory}')
+            (staging / 'user').mkdir(exist_ok=True)
+            shutil.copytree(directory, staging / 'user/snapshots')
         replacements = {str(source): str(home), str(source_argument): str(home)}
         if old_home:
             replacements[str(Path(old_home).expanduser())] = str(home)
+        if snapshot_directory == 'snapshots':
+            replacements.update({old + '/snapshots': str(home / 'user/snapshots')
+                                 for old in tuple(replacements)})
         for path in (staging / 'user/snapshots').glob('snapshot_*.xml'):
             try:
                 text = path.read_text()
@@ -201,7 +212,25 @@ def import_data(profile, source, old_home=None):
                 text = text.replace(escape(old), escape(new))
             path.write_text(text)
             path.chmod(0o600)
-        (staging / 'import.json').write_text(json.dumps({'source': str(source), 'oldHome': old_home}, indent=2) + '\n')
+        # Routes and initialization scripts are user data referenced by snapshots.
+        # Relocate their own file references as well, without rewriting binary assets.
+        for path in (staging / 'camel').rglob('*'):
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text()
+            except UnicodeError:
+                continue
+            if '\0' in text:
+                continue
+            for old, new in sorted(replacements.items(), key=lambda item: -len(item[0])):
+                text = text.replace(old, new)
+            path.write_text(text)
+        for path in (staging / 'user/security').rglob('*'):
+            path.chmod(0o700 if path.is_dir() else 0o600)
+        (staging / 'import.json').write_text(json.dumps({
+            'source': str(source), 'oldHome': old_home, 'snapshotDirectory': snapshot_directory,
+        }, indent=2) + '\n')
         if home.exists():
             home.rmdir()  # Already checked empty; fail if it changed during import.
         staging.rename(home)

@@ -109,6 +109,39 @@ class RuntimeDataTest(unittest.TestCase):
         self.assertTrue(str(destination.resolve()) in (destination / 'user/snapshots/snapshot_0.xml').read_text())
         self.assertFalse((destination / 'configuration').exists())
 
+    def test_eclipse_layout_imports_snapshots_keystores_and_camel_scripts(self):
+        (self.home / 'user/snapshots').rename(self.home / 'snapshots')
+        scripts = self.home / 'camel/scripts'
+        scripts.mkdir(parents=True)
+        script = scripts / 'init.groovy'
+        script.write_text(f'new File("{self.home}/camel/routes/example.xml")')
+        key = self.home / 'user/security/https.ks'
+        key.write_bytes(b'private-key-store')
+        source_files = {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob('*') if p.is_file()}
+        destination = self.home.parent / 'imported'
+        with patch.dict(os.environ, {'KURA_DEV_HOME': str(destination)}), patch.object(runtime, 'guard'):
+            runtime.import_data('macos', self.home)
+        self.assertEqual(source_files, {p.relative_to(self.home): p.read_bytes()
+                                      for p in self.home.rglob('*') if p.is_file()})
+        self.assertIsNotNone(runtime.snapshot(destination)[1])
+        self.assertIn(str(destination), (destination / 'camel/scripts/init.groovy').read_text())
+        self.assertNotIn(str(self.home), (destination / 'camel/scripts/init.groovy').read_text())
+        self.assertEqual(b'private-key-store', (destination / 'user/security/https.ks').read_bytes())
+        self.assertEqual(0o600, (destination / 'user/security/https.ks').stat().st_mode & 0o777)
+
+    def test_import_rejects_ambiguous_snapshot_layout_and_linked_scripts(self):
+        destination = self.home.parent / 'imported'
+        (self.home / 'snapshots').mkdir()
+        with patch.dict(os.environ, {'KURA_DEV_HOME': str(destination)}), patch.object(runtime, 'guard'):
+            with self.assertRaisesRegex(ValueError, 'exactly one snapshot directory'):
+                runtime.import_data('macos', self.home)
+            (self.home / 'snapshots').rmdir()
+            (self.home / 'camel').mkdir()
+            (self.home / 'camel/external').symlink_to(self.home / 'user/security', target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, 'symlinks'):
+                runtime.import_data('macos', self.home)
+        self.assertFalse(destination.exists())
+
 
 
 if __name__ == '__main__':

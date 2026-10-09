@@ -1,6 +1,6 @@
 # 独立 Equinox 开发运行目录
 
-此模块提供独立开发运行目录，完整 workspace 联调仍在 P5 验证中。`runtime.json` 固定现有桌面仿真的 bundle、Maven 坐标和启动级别，Maven 只从仓库收集明确列出的 JAR。它不读取 Eclipse、PDE workspace 或 `.target`。`workspace` profile 聚合约定的所有 sibling 与 YOFC；缺少仓库时 Maven 明确失败。
+此模块提供完整 workspace 的独立开发运行目录。`runtime.json` 固定现有桌面仿真的 bundle、Maven 坐标和启动级别，Maven 只从仓库收集明确列出的 JAR。它不读取 Eclipse、PDE workspace 或 `.target`。`workspace` profile 聚合约定的所有 sibling 与 YOFC；缺少仓库时 Maven 明确失败。
 
 要求 JDK 21、Maven 3.10（公共入口兼容 3.9）、Python 3.9+。`.run` 沿用 IDEA 当前项目的 Maven 设置；使用隔离仓库时，在 Maven 设置中指定 Local repository，CLI 对应设置 `KURA_MAVEN_REPO`。
 
@@ -26,7 +26,7 @@ IDEA 从仓库根 POM 导入，在 Maven 面板启用 `workspace` profile，配�
 
 CLI 调试可以运行 `python3 kura-dev-runtime/tools/runtime.py run --debug-port 5005`，仅监听本机，等待调试器连接。正常停止使用 Ctrl-C；Gogo `close` 只停框架，旧组件线程可能仍存活。
 
-显式导入旧仿真数据时，先停止旧运行进程，并指定包含 `user/snapshots` 的 Kura 数据根目录。目标必须为空；只复制 user/data，不复制框架缓存、旧 bundle 或 PDE 元数据。快照须为可读 XML；加密快照须先用原环境导出。绝对路径按原数据根目录重定位；从另一台电脑拷贝的目录可额外指定 `--old-home /原电脑/数据目录`。
+显式导入旧仿真数据时，先停止旧运行进程。支持包含 `user/snapshots` 的标准 Kura 数据目录，以及 Eclipse 仿真器的 `snapshots/`、`user/security/`、`camel/` 布局。目标必须为空；只复制 user/data、快照及 Camel 路由和脚本，不复制框架缓存、旧 bundle 或 PDE 元数据。旧目录保留不动。快照须为可读 XML；加密快照须先用原环境导出。快照和 Camel 文本中的绝对路径按原数据根目录重定位；从另一台电脑拷贝的目录可额外指定 `--old-home /原电脑/数据目录`。
 
 ```sh
 KURA_DEV_HOME=/new/isolated/data python3 kura-dev-runtime/tools/runtime.py import-data \
@@ -34,3 +34,20 @@ KURA_DEV_HOME=/new/isolated/data python3 kura-dev-runtime/tools/runtime.py impor
 ```
 
 导入是显式操作，不会在正常构建中自动读取旧 Eclipse 数据。导入后保留原业务配置，启动前请核对连接目标；自动测试和默认全新 profile 使用本地模拟端点。
+
+导入到默认 profile 前，先把已有 `~/.kura-dev/macos` 整体改名备份，再以该路径为目标导入。导入后的布局为：
+
+| 内容 | macOS 默认路径 |
+|---|---|
+| 配置快照、账户和 Wires 配置 | `~/.kura-dev/macos/user/snapshots/` |
+| HTTPS / SSL 密钥库 | `~/.kura-dev/macos/user/security/` |
+| Camel 路由和初始化脚本 | `~/.kura-dev/macos/camel/` |
+| 数据库及其他运行数据 | `~/.kura-dev/macos/data/` |
+| 日志 | `~/.kura-dev/macos/logs/` |
+
+共享的 `Kura macOS` IDEA 配置默认读取此目录，无需修改 `.run`。旧配置若使用 443/4443，可在首次 prepare 时显式映射到开发端口；会生成新快照，不覆盖导入的原快照：
+
+```sh
+KURA_HTTP_PORT=8080 KURA_HTTPS_PORT=8443 KURA_CLIENT_AUTH_PORT=8444 \
+  python3 kura-dev-runtime/tools/runtime.py prepare --profile macos
+```
