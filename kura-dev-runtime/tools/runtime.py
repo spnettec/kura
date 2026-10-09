@@ -15,6 +15,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 from generate_pom import filename
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,12 +38,74 @@ def data_home(profile):
     return path
 
 
-def ports():
-    result = {key: int(os.environ.get(key, default)) for key, default in
+PORT_PROPERTIES = {'KURA_HTTP_PORT': 'http.ports', 'KURA_HTTPS_PORT': 'https.ports',
+                   'KURA_CLIENT_AUTH_PORT': 'https.client.auth.ports'}
+
+
+def snapshot(home):
+    candidates = sorted((p for p in (home / 'user/snapshots').glob('snapshot_*.xml')
+                         if re.fullmatch(r'snapshot_\d+\.xml', p.name)),
+                        key=lambda p: int(p.stem.split('_')[1]), reverse=True)
+    for path in candidates:
+        try:
+            return path, minidom.parse(str(path))
+        except (ExpatError, UnicodeError):
+            continue  # Kura retains malformed snapshots as .bad and falls back itself.
+    if candidates:
+        raise ValueError('No readable plaintext development snapshot; export/decrypt it before importing')
+    return None, None
+
+
+def http_properties(document):
+    if document is None:
+        return {}
+    for node in document.getElementsByTagName('*'):
+        if node.localName == 'configuration' and node.getAttribute('pid') == 'org.eclipse.kura.http.server.manager.HttpService':
+            return {prop.getAttribute('name'): prop for prop in node.getElementsByTagName('*')
+                    if prop.localName == 'property'}
+    return {}
+
+
+def ports(home=None):
+    result = {key: int(default) for key, default in
               [('KURA_HTTP_PORT', '8080'), ('KURA_HTTPS_PORT', '8443'), ('KURA_CLIENT_AUTH_PORT', '8444')]}
+    if home:
+        _, document = snapshot(home)
+        properties = http_properties(document)
+        for key, name in PORT_PROPERTIES.items():
+            if name in properties:
+                nodes = [n for n in properties[name].getElementsByTagName('*') if n.localName == 'value']
+                if len(nodes) != 1:
+                    raise ValueError(f'Development runtime requires one {name} entry; found {len(nodes)}')
+                result[key] = int(nodes[0].firstChild.nodeValue)
+    result.update({key: int(os.environ[key]) for key in result if key in os.environ})
     if any(port < 1 or port > 65535 for port in result.values()) or len(set(result.values())) != 3:
         raise ValueError('HTTP, HTTPS and client-auth ports must be distinct integers in 1..65535')
     return result
+
+
+def apply_port_overrides(home, values):
+    if not any(key in os.environ for key in PORT_PROPERTIES):
+        return
+    path, document = snapshot(home)
+    properties = http_properties(document)
+    changed = False
+    for key, name in PORT_PROPERTIES.items():
+        if key not in os.environ:
+            continue
+        if name not in properties:
+            raise ValueError(f'Cannot override {key}: snapshot has no HttpService {name}')
+        node = next(n for n in properties[name].getElementsByTagName('*') if n.localName == 'value')
+        if node.firstChild.nodeValue != str(values[key]):
+            node.firstChild.nodeValue = str(values[key])
+            changed = True
+    if changed:
+        # Preserve the original snapshot and CDATA; Kura selects the highest ID.
+        ids = [int(m.group(1)) for p in path.parent.iterdir()
+               if (m := re.fullmatch(r'snapshot_(\d+)\.xml(?:\.bad)?', p.name))]
+        destination = path.parent / f'snapshot_{max(ids) + 1}.xml'
+        with os.fdopen(os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'wb') as stream:
+            stream.write(document.toxml(encoding='utf-8'))
 
 
 def check_ports(values):
@@ -100,6 +164,53 @@ def initialize(home, values):
             stream.write(text)
 
 
+def import_data(profile, source, old_home=None):
+    guard(profile)
+    home = data_home(profile)
+    source_argument = Path(source).expanduser().absolute()
+    source = source_argument.resolve()
+    if home.exists() and any(home.iterdir()):
+        raise ValueError(f'Import requires an empty KURA_DEV_HOME: {home}')
+    if source == home or source in home.parents or home in source.parents:
+        raise ValueError('Import source and destination must be separate directories')
+    if not (source / 'user/snapshots').is_dir():
+        raise ValueError('Import source must be a Kura data home containing user/snapshots')
+    _, document = snapshot(source)
+    if document is None:
+        raise ValueError('Import source has no readable development snapshot')
+    home.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix='.kura-import-', dir=home.parent))
+    try:
+        # Do not import the old framework cache, PDE workspace or executable bundles.
+        for name in ('user', 'data'):
+            directory = source / name
+            if directory.exists():
+                if directory.is_symlink() or any(p.is_symlink() for p in directory.rglob('*')):
+                    raise ValueError(f'Import source contains symlinks: {directory}')
+                shutil.copytree(directory, staging / name)
+        replacements = {str(source): str(home), str(source_argument): str(home)}
+        if old_home:
+            replacements[str(Path(old_home).expanduser())] = str(home)
+        for path in (staging / 'user/snapshots').glob('snapshot_*.xml'):
+            try:
+                text = path.read_text()
+                minidom.parseString(text)
+            except (ExpatError, UnicodeError):
+                continue  # Preserve malformed historical snapshots verbatim.
+            for old, new in sorted(replacements.items(), key=lambda item: -len(item[0])):
+                text = text.replace(escape(old), escape(new))
+            path.write_text(text)
+            path.chmod(0o600)
+        (staging / 'import.json').write_text(json.dumps({'source': str(source), 'oldHome': old_home}, indent=2) + '\n')
+        if home.exists():
+            home.rmdir()  # Already checked empty; fail if it changed during import.
+        staging.rename(home)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+    print(f'Imported data into {home}; the original data was not modified')
+
+
 def properties_escape(value):
     return str(value).replace('\\', '\\\\').replace(':', '\\:')
 
@@ -107,9 +218,10 @@ def properties_escape(value):
 def prepare(profile):
     guard(profile)
     home = data_home(profile)
-    values = ports()
+    values = ports(home)
     check_ports(values)
     initialize(home, values)
+    apply_port_overrides(home, values)
     configuration = RUNTIME / 'configuration'
     configuration.mkdir(exist_ok=True)
     template = (ROOT / 'src/main/resources/kura.properties').read_text()
@@ -135,7 +247,7 @@ def prepare(profile):
 
 def assemble(profile):
     guard(profile)
-    check_ports(ports())
+    check_ports(ports(data_home(profile)))
     spec = json.loads((ROOT / 'runtime.json').read_text())
     sources = {coordinate: ROOT / 'target/bundle-cache' / filename(coordinate) for coordinate in
                {x['coordinates'] for x in spec['bundles']} | {spec['framework'], spec['launcher']}}
@@ -201,13 +313,19 @@ def run(profile, debug_port):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['assemble', 'prepare', 'run', 'guard'])
+    parser.add_argument('command', choices=['assemble', 'prepare', 'run', 'guard', 'import-data'])
     parser.add_argument('--profile', default='auto')
     parser.add_argument('--debug-port', type=int)
+    parser.add_argument('--source', help='Explicit old Kura data home, used only by import-data')
+    parser.add_argument('--old-home', help='Previous absolute data-home prefix to relocate during import')
     args = parser.parse_args()
     try:
         profile = profile_name(args.profile)
-        if args.command == 'run':
+        if args.command == 'import-data':
+            if not args.source:
+                raise ValueError('import-data requires --source')
+            import_data(profile, args.source, args.old_home)
+        elif args.command == 'run':
             run(profile, args.debug_port)
         else:
             globals()[args.command](profile)

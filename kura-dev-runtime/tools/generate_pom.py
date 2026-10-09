@@ -14,6 +14,14 @@ def filename(coordinates):
 def pom():
     spec = json.loads((ROOT / 'runtime.json').read_text())
     coordinates = {item['coordinates'] for item in spec['bundles']} | {spec['framework'], spec['launcher']}
+    # Explicit POM dependencies impose reactor order without importing transitive
+    # runtime artifacts or flattening the OSGi classloader boundary.
+    reactor_coordinates = {item['coordinates'] for item in spec['bundles']
+                           if item.get('module') or item['coordinates'].startswith('p2.osgi.bundle:')}
+    dependencies = []
+    for coordinate in sorted(reactor_coordinates):
+        group, artifact, version = coordinate.split(':')[:3]
+        dependencies.append(f'    <dependency><groupId>{group}</groupId><artifactId>{artifact}</artifactId><version>{version}</version><type>pom</type><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>')
     items = []
     for coordinate in sorted(coordinates):
         parts = coordinate.split(':')
@@ -31,6 +39,9 @@ def pom():
   <packaging>pom</packaging>
   <name>Kura standalone development runtime</name>
   <properties><kura.dev.profile>auto</kura.dev.profile></properties>
+  <dependencies>
+''' + '\n'.join(dependencies) + '''
+  </dependencies>
   <build>
     <plugins>
       <plugin>

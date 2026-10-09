@@ -42,7 +42,9 @@ def inspect(path):
 
 
 BUILD_HEADERS = {'Build-Jdk', 'Build-Jdk-Spec', 'Built-By', 'Created-By', 'Bnd-LastModified',
-                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By', 'Java-Version', 'Private-Package'}
+                 'Tool', 'Eclipse-SourceReferences', 'Originally-Created-By', 'Java-Version', 'Private-Package',
+                 # bnd build instruction leaks absolute Maven cache paths; packaged resources are checked below.
+                 'Include-Resource'}
 
 
 def clauses(value, delimiter=','):

@@ -12,6 +12,26 @@
   </modules>
   <profiles>
     <profile>
+      <id>workspace</id>
+      <!-- A complete checkout is required: Maven fails with the missing repository path. -->
+      <modules>
+        <module>../kura-position</module>
+        <module>../kura-opcua</module>
+        <module>../kura-deployment</module>
+        <module>../kura-networking</module>
+        <module>../kura-wires</module>
+        <module>../kura-cloud</module>
+        <module>../kura-camel</module>
+        <module>../kura-artemis</module>
+        <module>../kura-container</module>
+        <module>../kura-triton</module>
+        <module>../kura-management-ui</module>
+        <module>../kura-yofc-runtime</module>
+        <module>../yofc-iot</module>
+        <module>kura-dev-runtime</module>
+      </modules>
+    </profile>
+    <profile>
       <id>dev-runtime</id>
       <modules>
         <module>kura-dev-runtime</module>

@@ -70,6 +70,14 @@ class BundleAuditTest(unittest.TestCase):
         new = inspect(self.jar('new.jar', 'Import-Package: a;version="1.0";resolution:=optional\r\n'))
         self.assertIn('Import-Package', compare(old, new)['headers'])
 
+    def test_resource_source_paths_may_change_but_packaged_bytes_may_not(self):
+        old = inspect(self.jar('old.jar', 'Include-Resource: lib/a.jar=/old/cache/a.jar\r\n',
+                               {'lib/a.jar': b'old'}))
+        new = inspect(self.jar('new.jar', 'Include-Resource: lib/a.jar=/new/cache/a.jar\r\n',
+                               {'lib/a.jar': b'new'}))
+        self.assertEqual({}, compare(old, new)['headers'])
+        self.assertIn('lib/a.jar', compare(old, new)['resources'])
+
 
 if __name__ == '__main__':
     unittest.main()

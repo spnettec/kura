@@ -1,6 +1,6 @@
 # Maven Bundle Plugin / IDEA 迁移实施记录
 
-本分支按 P0–P7 分阶段迁移。**目前默认生产构建仍由 `build-all.sh` 的旧链执行，根 POM 是迁移入口，尚未完成切换。** 不将构建支持安装成功当作完整迁移完成。
+本分支按 P0–P7 分阶段迁移。**默认构建和开发启动已切换普通 Maven，正在执行 P6 完整回归，尚未完成最终验收。** 不将构建支持安装成功当作完整迁移完成。
 
 ## 已冻结的约束
 
@@ -20,7 +20,7 @@
 | P2 IDEA 启动试点 | macOS 试点通过：完整运行集解析、管理页 HTTP 200、激活与配置读取断点/单步、停止后重启通过；仍使用旧构建产物。 |
 | P3 代表模块 | 试点通过：5 个 bundle 语义对比、14 项普通测试、6 项真实容器测试，以及替换新 JAR 后的完整运行验证。 |
 | P4 核心迁移 | 已通过：51 个默认 bundle + docs；22 项普通测试、6 项真实容器测试及新核心运行验证。 |
-| P5 Sibling / YOFC | 47 个原 Tycho sibling bundle 与 YOFC runtime 的构建、语义对比通过；YOFC / workspace 联调中。 |
+| P5 Sibling / YOFC | 47 个原 Tycho sibling bundle、YOFC 及 runtime 构建/产物检查通过；完整新运行集 CLI 验证通过，最终 IDEA 联调中。 |
 | P6 交付与平台回归 | 待迁移；包括空缓存、双架构容器运行及双平台断点。 |
 | P7 清理切换 | 最后执行；目前不删除旧 `.target`、`.launch` 或 Tycho 配置。 |
 
@@ -118,3 +118,21 @@ mvn -Pjavadocs,osgi-it install
 - `kura-yofc-runtime` 继续自动 MANIFEST 模式，独立构建与产物对比通过。显式保留原 Jackson `[2.21,3)` 可选导入范围，公共 BOM 不收紧其运行兼容范围。
 
 所有下载和生成内容均位于 target；手写源 MANIFEST、DS/metatype、生产 Java 未因以上转换改写。YOFC 的统一入口、完整 workspace 增量运行集仍在验证，不能据此宣布 P5 完成。
+
+## P5 YOFC 与完整 workspace（2026-10-09）
+
+- YOFC 43 项本地回归通过；6 项原有硬件/外部数据库测试继续禁用。测试不依赖 Docker 镜像或个人 Data 目录。
+- EventBusBridge 的 WebSocketClient 生命周期缺陷已单独复现、修复并提交：SSL 连接在 GC 后曾被关闭，新回归覆盖该路径。业务修复与构建转换分开。
+- 8 个 YOFC bundle 加 runtime 的外层 MANIFEST、DS、资源、嵌入布局均保持。共享 BOM 影响到的私有 Gson/error-prone 版本和导入范围已显式固定。
+- 独立 PLC4X 从源码构建，不加入 Kura reactor，仓库未修改。重建的 35 个私有 PLC4X JAR 只有内部 MANIFEST 变化（含自身导出包的 substitution imports）；类、服务、许可及其他资源字节一致。真正控制 OSGi 解析的外层 OPC UA bundle 头部不变，所有差异保存在本机逐项报告。
+- 根 workspace profile 明确列出全部必需仓库。IDEA/CLI 启动前执行根 reactor 的 `-pl :kura-workspace,:kura-dev-runtime -am install`。docs 已纳入默认核心模块，避免混用旧缓存。
+- 完整新运行集 CLI 启动：277 个条目全部解析；框架 ACTIVE，业务中 268 ACTIVE、8 RESOLVED、event.publisher 按 lazy 策略 STARTING。ConfigurationService/WireGraphService 已注册，HTTP 200，无 ERROR/CNFE，Ctrl-C 后端口释放。
+- 开发数据显式导入、已有快照端口持久化、CDATA 保留及缓存保护共 8 项 Python 测试通过；bundle 审计 11 项测试通过。
+
+## 交付链退出 Tycho（2026-10-09，P6 回归中）
+
+- 新 `kura-dp-maven-plugin` 只用普通 Maven API 打包，5 项测试覆盖精确字节、重现性、缺少嵌入库、重复 BSN、非 bundle 和非法元数据。
+- 18 个 DP / 64 个 bundle 条目与旧 DP 的集合和身份一致；构建 qualifier 由统一参数控制。未使用的旧 Tycho feature traversal 不进入新插件。
+- 核心发行包直接声明 Maven 运行依赖，移除对两个 PDE 依赖聚合 POM 的引用。216 个 JAR 的安装相对路径与旧包完全相同，所有 SHA 对应本次 Maven 产物；未将新的传递依赖混入安装目录。
+- build-all 按公共构建支持、核心、sibling/runtime、YOFC、发行包/开发环境、Docker 六段执行；缺少约定仓库时明确失败。`RUN_IT=1` 同时启用普通测试，`BUILD_DOCKER=0` 跳过镜像。PLC4X 始终为显式前置条件。
+- 空缓存验证已启动，独立目录 `migration-cold-m2-20261009` 从 PLC4X clean install 开始；结果待完成后填写，不能引用试点缓存的结果代替。

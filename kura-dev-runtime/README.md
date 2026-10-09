@@ -1,12 +1,12 @@
 # 独立 Equinox 开发运行目录
 
-此模块处于 P2/P3 迁移试点。`runtime.json` 固定现有桌面仿真的 bundle、Maven 坐标和启动级别，Maven 只从仓库收集明确列出的 JAR。它不读取 Eclipse、PDE workspace 或 `.target`。尚未迁移的 bundle 仍须先由原构建安装。
+此模块提供独立开发运行目录，完整 workspace 联调仍在 P5 验证中。`runtime.json` 固定现有桌面仿真的 bundle、Maven 坐标和启动级别，Maven 只从仓库收集明确列出的 JAR。它不读取 Eclipse、PDE workspace 或 `.target`。`workspace` profile 聚合约定的所有 sibling 与 YOFC；缺少仓库时 Maven 明确失败。
 
-要求 JDK 21、Maven 3.10（公共入口兼容 3.9）、Python 3.9+。当前试点的 `.run` 使用工作空间外 `../../migration-m2`；它明确包含旧产物，不能用作 P6 冷构建证据。
+要求 JDK 21、Maven 3.10（公共入口兼容 3.9）、Python 3.9+。`.run` 沿用 IDEA 当前项目的 Maven 设置；使用隔离仓库时，在 Maven 设置中指定 Local repository，CLI 对应设置 `KURA_MAVEN_REPO`。
 
 ```sh
 mvn -f build-support/pom.xml install
-mvn -f kura-dev-runtime/pom.xml package
+mvn -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests
 kura-dev-runtime/run.sh --no-build
 ```
 
@@ -16,12 +16,21 @@ kura-dev-runtime/run.sh --no-build
 KURA_MAVEN_REPO=/absolute/path/to/repository kura-dev-runtime/run.sh
 ```
 
-IDEA 从仓库根 POM 导入，配置项目 JDK 21，选择共享的 `Kura macOS` 或 `Kura Linux`，点击 Run/Debug。启动前 Maven 组装失败会阻止启动。业务代码由 bundle 自己的类加载器加载，可在激活和业务方法设断点。
+IDEA 从仓库根 POM 导入，在 Maven 面板启用 `workspace` profile，配置项目 JDK 21，选择共享的 `Kura macOS` 或 `Kura Linux`，点击 Run/Debug。启动前 Maven 组装失败会阻止启动。业务代码由 bundle 自己的类加载器加载，可在激活和业务方法设断点。
 
 `target/runtime/` 内包含 launcher、framework、plugins、生成配置与 `inventory.json`（坐标、bundle 版本、SHA256）。可直接比对清单确认加载来源。停止 Run/Debug 后再执行 package/clean；即使 JVM 暂停在 Jetty 启动之前，工具也拒绝替换正在使用的目录。
 
 用户数据默认保存在 `~/.kura-dev/macos` 或 `~/.kura-dev/linux`，可以设置 `KURA_DEV_HOME`；不允许放在本模块的 target 内。已有 snapshot/密钥不会因初始化或 Maven clean 被覆盖。日志位于数据目录的 `logs/`。
 
-首次初始化支持 `KURA_HTTP_PORT`、`KURA_HTTPS_PORT`、`KURA_CLIENT_AUTH_PORT`（默认 8080/8443/8444）。已有配置的端口调整和显式 Eclipse 数据导入尚在实现中；此试点请使用新 profile 数据目录验证其他端口。端口占用会直接报错。初始模板禁止自动连接外部 MQTT，并禁用桌面不具备的时钟、看门狗和 GPS。
+支持 `KURA_HTTP_PORT`、`KURA_HTTPS_PORT`、`KURA_CLIENT_AUTH_PORT`（首次默认 8080/8443/8444）。已有 profile 默认沿用快照端口；显式环境变量覆盖会写入编号更大的快照，保留原文件、密钥及其他配置。端口占用会直接报错。初始模板禁止自动连接外部 MQTT，并禁用桌面不具备的时钟、看门狗和 GPS。
 
 CLI 调试可以运行 `python3 kura-dev-runtime/tools/runtime.py run --debug-port 5005`，仅监听本机，等待调试器连接。正常停止使用 Ctrl-C；Gogo `close` 只停框架，旧组件线程可能仍存活。
+
+显式导入旧仿真数据时，先停止旧运行进程，并指定包含 `user/snapshots` 的 Kura 数据根目录。目标必须为空；只复制 user/data，不复制框架缓存、旧 bundle 或 PDE 元数据。快照须为可读 XML；加密快照须先用原环境导出。绝对路径按原数据根目录重定位；从另一台电脑拷贝的目录可额外指定 `--old-home /原电脑/数据目录`。
+
+```sh
+KURA_DEV_HOME=/new/isolated/data python3 kura-dev-runtime/tools/runtime.py import-data \
+  --source /old/kura-data --old-home /previous/machine/kura-data
+```
+
+导入是显式操作，不会在正常构建中自动读取旧 Eclipse 数据。导入后保留原业务配置，启动前请核对连接目标；自动测试和默认全新 profile 使用本地模拟端点。

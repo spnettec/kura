@@ -58,5 +58,58 @@ class RuntimeSafetyTest(unittest.TestCase):
                 runtime.read_manifest(path)
 
 
+class RuntimeDataTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.home = Path(self.temporary.name) / 'home'
+        self.environment = patch.dict(os.environ, {}, clear=True)
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
+        runtime.initialize(self.home, runtime.ports())
+
+    def test_existing_snapshot_ports_are_used_without_overwriting_data(self):
+        seed = self.home / 'user/snapshots/snapshot_0.xml'
+        original = seed.read_bytes()
+        with patch.dict(os.environ, {'KURA_HTTP_PORT': '18080'}):
+            values = runtime.ports(self.home)
+            runtime.apply_port_overrides(self.home, values)
+        self.assertEqual(18080, runtime.ports(self.home)['KURA_HTTP_PORT'])
+        self.assertEqual(original, seed.read_bytes())
+        runtime.initialize(self.home, runtime.ports())
+        self.assertEqual(original, seed.read_bytes())
+        self.assertEqual(2, len(list(seed.parent.glob('snapshot_*.xml'))))
+
+    def test_port_override_preserves_cdata_and_malformed_snapshot(self):
+        seed = self.home / 'user/snapshots/snapshot_0.xml'
+        text = seed.read_text()
+        # Add CDATA to a known value without depending on the root element name.
+        text = text.replace('<esf:value>8080</esf:value>', '<esf:value><![CDATA[8080]]></esf:value>')
+        seed.write_text(text)
+        bad = seed.parent / 'snapshot_1.xml'
+        bad.write_text('<malformed')
+        with patch.dict(os.environ, {'KURA_HTTPS_PORT': '18443'}):
+            runtime.apply_port_overrides(self.home, runtime.ports(self.home))
+        self.assertEqual('<malformed', bad.read_text())
+        self.assertIn('<![CDATA[8080]]>', (seed.parent / 'snapshot_2.xml').read_text())
+
+    def test_explicit_import_relocates_paths_and_leaves_source_unchanged(self):
+        destination = self.home.parent / 'imported'
+        secret = self.home / 'user/security/test.ks'
+        secret.write_bytes(b'test-keystore')
+        (self.home / 'data/example.db').write_bytes(b'test-db')
+        before = (self.home / 'user/snapshots/snapshot_0.xml').read_bytes()
+        with patch.dict(os.environ, {'KURA_DEV_HOME': str(destination)}), patch.object(runtime, 'guard'):
+            runtime.import_data('macos', self.home)
+            with self.assertRaisesRegex(ValueError, 'empty KURA_DEV_HOME'):
+                runtime.import_data('macos', self.home)
+        self.assertEqual(before, (self.home / 'user/snapshots/snapshot_0.xml').read_bytes())
+        self.assertEqual(b'test-keystore', (destination / 'user/security/test.ks').read_bytes())
+        self.assertEqual(b'test-db', (destination / 'data/example.db').read_bytes())
+        self.assertTrue(str(destination.resolve()) in (destination / 'user/snapshots/snapshot_0.xml').read_text())
+        self.assertFalse((destination / 'configuration').exists())
+
+
+
 if __name__ == '__main__':
     unittest.main()
