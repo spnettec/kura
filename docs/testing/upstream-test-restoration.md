@@ -405,3 +405,11 @@ See [deployment audit](deployment-test-restoration.md). No production TLS change
 Current inventory: 279 restored sources, 32 restored helpers, 16 exclusions/replaced
 harness entries and **138 unreviewed** of 465. Deployment has three sources left;
 core-origin, management UI, official OPC UA and runtime/IDEA work remain open.
+
+### Deployment agent continuation
+
+Seventeen restored scenarios pass on current executor-based install/uninstall and
+actual local Marketplace HTTPS parsing; the complete agent module passes 28 cases.
+See [deployment audit](deployment-test-restoration.md). No production changes.
+Current inventory is 280 restored sources, 32 helpers, 16 exclusions/replaced
+harness entries and **137 unreviewed** of 465. Deployment has two sources left.

@@ -4297,7 +4297,20 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.deployment.agent"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.deployment.agent/src/test/java/org/eclipse/kura/deployment/agent/impl/DeploymentAgentTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against current executor-based installation/uninstallation. Actual asynchronous entry points, bounded event futures, TempDir and local HTTPS replace legacy loops, sleeps and MockServer. The activation spy is now the actual receiver; see deployment-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.deployment.agent.test/src/test/java/org/eclipse/kura/deployment/agent/impl/MarketplacePackageDescriptorTest.java",

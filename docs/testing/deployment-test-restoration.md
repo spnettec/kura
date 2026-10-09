@@ -67,3 +67,24 @@ that setup issue; the earlier repair was not duplicated. The helper serves the
 fixture bytes via an owned JDK HTTPS server instead of a DS/JAX-RS registration.
 Actual configuration-service updates, REST routing and OSGi service wiring remain
 runtime acceptance work. Three deployment source entries remain unreviewed.
+
+## Deployment agent continuation
+
+DeploymentAgentTest adds 17 passing Jupiter scenarios. The full agent module now
+passes 28 cases, zero failures/errors/skips. No production or dependency changes.
+The fork's executor tasks have replaced upstream installer/uninstaller loops;
+restored tests call the public asynchronous APIs and await actual EventAdmin
+notifications through bounded futures. They assert event results, pending-set
+removal and actual deployment-admin uninstallation. Every service is deactivated.
+
+All touched files and activation package directories use TempDir. The DPA system
+property is restored afterward. Config activation now runs on the same spy that
+is verified; the upstream test verified an unused spy. Installation verifies the
+moved artifact and parses the persisted Properties rather than relying on a shared
+relative target path. Duplicate submissions must throw the expected error.
+
+Marketplace cases perform real HTTPS against an owned localhost server with an
+OS-selected port and a generated CA/localhost certificate, then parse the original
+upstream XML. SSL service and deployment admin remain boundary mocks. Missing
+updateurl must fail for that specific cause, not merely any IllegalStateException.
+Server executors are stopped and awaited. Two deployment sources remain unreviewed.
