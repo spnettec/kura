@@ -31,3 +31,15 @@ assembly. `testDummy` and `testGetProductVersion` only assert `true` upstream an
 are explicitly excluded. This suite does not validate real package commands,
 network access, hardware MAC discovery, service registration or IDEA execution.
 Source audit completion does not imply these acceptance checks are complete.
+
+## Core platform continuation
+
+The older core `NetUtilTest` primary MAC scenario now runs twice, for `eth0` and
+`en0`, with controlled Java network-interface enumeration and exact output checks.
+Full core module: 111 passing tests. No NetworkManager/D-Bus implementation changes.
+
+The older `SystemAdminServiceTest` positive uptime case runs against the actual
+macOS parser with controlled `sysctl` output. Full system module: 32 passing tests.
+Its real SCR service-existence case remains deferred. Source inspection identifies
+an apparent seconds/milliseconds mismatch in this parser; that will be confirmed
+and repaired separately rather than folded into this restoration commit.

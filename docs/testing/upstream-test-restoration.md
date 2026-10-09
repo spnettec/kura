@@ -766,3 +766,14 @@ See `system-service-test-restoration.md`. No production changes.
 Current inventory: 465 entries, 344 restored, 37 restored helpers, eight replaced
 legacy harnesses, six current-API exclusions, six removed-functionality exclusions
 and **64 unreviewed**. Deferred methods, runtime and IDEA acceptance remain open.
+
+## Core platform continuation (2026-10-10)
+
+Two more core sources restore three invocations: primary MAC discovery for `eth0`
+and `en0`, and positive uptime parsing. Full core/system suites pass 111 and 32
+cases respectively. Actual service registration and host hardware remain deferred.
+See `system-service-test-restoration.md`; a suspected uptime units defect is isolated
+for separate confirmation and repair.
+
+Inventory: 346 restored, 37 helpers, 20 exclusions/replaced harnesses and **62
+unreviewed** out of 465 source entries. Runtime and IDEA acceptance remain open.
