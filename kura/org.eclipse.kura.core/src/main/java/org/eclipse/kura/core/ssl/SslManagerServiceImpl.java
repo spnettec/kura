@@ -336,12 +336,20 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
         if (context == null) {
             String alias = options.getAlias();
             alias = alias == null ? "" : alias;
-            KeyStore ks = getKeyStore(options.getKeyStore(), options.getKeyStorePassword(), alias);
-            if (!alias.equals("") && !ks.aliases().hasMoreElements()) {
-                options.setAlias("");
-                context = this.sslContexts.get(options);
-                if (context != null) {
-                    return context;
+            if (!alias.equals("")) {
+                KeyStore ks;
+                try {
+                    ks = options.getKeyStore() == null ? this.keystoreService.getKeyStore()
+                            : getKeyStore(options.getKeyStore(), options.getKeyStorePassword(), alias);
+                } catch (KuraException e) {
+                    throw new KeyStoreException("Failed to load the service keystore", e);
+                }
+                if (!ks.aliases().hasMoreElements()) {
+                    options.setAlias("");
+                    context = this.sslContexts.get(options);
+                    if (context != null) {
+                        return context;
+                    }
                 }
             }
             logger.info("Creating a new SSLSocketFactory instance");
