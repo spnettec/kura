@@ -142,3 +142,18 @@ ConfigurationService and EventAdmin/DS pipeline remain explicitly deferred. No
 fixed-port broker is launched by these tests. Full Kapua module passes 158 cases
 with zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. All 16 Kapua source
 files have now been reviewed; real MQTT/Equinox/IDEA acceptance remains open.
+
+## Sparkplug endpoint and subscription continuation
+
+Five test sources and their shared StepsCollection restore all 25 upstream cases:
+record equality six, subscription matching/removal seven, delivery callbacks two,
+connection/event callbacks six and DataService facade four. All pass with zero
+failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. Jupiter/Mockito are test-only
+dependencies; production/OSGi metadata unchanged.
+
+Symmetric equality now checks both directions; invalid assumptions requiring
+different hashes for unequal objects are removed. Connected state assertions now
+check returned false/true values. Fixtures deactivate every endpoint and close the
+current virtual-thread executor; activation exceptions no longer disappear into an
+unasserted field. MQTT wildcard/QoS matching uses the actual local Paho matcher.
+Real MQTT/DS/IDEA acceptance remains open.

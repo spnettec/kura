@@ -599,3 +599,11 @@ modem/tamper DTOs; the original real MQTT/DS pipeline is explicitly deferred. Al
 [Cloud audit](cloud-test-restoration.md). Inventory: 318 restored sources, 32 helpers,
 19 exclusions/replaced harness entries and **96 unreviewed**. Other source audit,
 real runtime and IDEA acceptance remain open.
+
+### Sparkplug endpoint and subscription continuation
+
+Five sources plus a shared helper restore 25 passing cases, preserving local
+virtual-thread behavior and correcting weak equality/connection fixtures. See
+[Cloud audit](cloud-test-restoration.md). Inventory: 323 restored sources, 33 helpers,
+19 exclusions/replaced harness entries and **90 unreviewed**. Remaining source
+audit, runtime and IDEA acceptance are still open.
