@@ -49,5 +49,6 @@ boundary. Persistent keystore factories, the deployed OSGi HTTP whiteboard, TLS,
 full Kura runtime assembly and IDEA execution remain separate acceptance work.
 
 Validation: Maven 3.10.0 / Temurin 21, **54 module tests, zero failures/errors/skips**,
-including 22 existing cases. The two non-JWT upstream REST provider sources remain
-unreviewed; this is not a declaration that REST restoration is complete.
+including 22 existing cases. The password-change source was subsequently restored with a separately committed
+production fix; see `rest-password-session-fix.md`. The larger `RestServiceTest`
+source remains unreviewed; REST restoration is not complete.

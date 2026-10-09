@@ -789,7 +789,7 @@ scenarios; the full module passes 87 tests. A temporary-identity source and two
 methods requiring absent local APIs are explicitly excluded. No production or
 metadata changes. See `identity-test-restoration.md` for fixture boundaries.
 
-Inventory: 347 restored, 38 helpers, eight replaced harnesses, seven current-API
+Inventory: 346 restored, 38 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **59 unreviewed** out of 465.
 Actual runtime, authentication and IDEA acceptance remain open.
 
@@ -801,6 +801,19 @@ Full REST provider module: 54 passing tests. Replay checks also prove that the
 expired token is still independently verifiable within clock-skew tolerance.
 See `rest-jwt-test-restoration.md` for remaining SCR/storage/whiteboard boundaries.
 
-Inventory: 352 restored, 43 helpers, eight replaced harnesses, seven current-API
+Inventory: 351 restored, 43 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **49 unreviewed** out of 465.
 Other sources, actual Kura runtime and IDEA acceptance remain open.
+
+## REST password-change continuation (2026-10-10)
+
+The upstream session-continuity scenario and an additional identity-collision
+regression both reproduced a production defect. Separate fix `bdd42b9f6a` keeps
+the replacement session bound to its authenticated username. All 56 REST provider
+tests and isolated installation pass; see `rest-password-session-fix.md`.
+
+Inventory (recounted from JSON): 352 restored, 43 helpers, eight replaced harnesses,
+eight current-API exclusions, six removed-functionality exclusions and **48
+unreviewed** out of 465. The preceding identity/JWT prose counts are corrected to
+match their JSON entries; no previous disposition changes. Actual Kura runtime and
+IDEA acceptance remain open.
