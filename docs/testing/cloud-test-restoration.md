@@ -249,3 +249,21 @@ This production change is separate from restoration. All 150 Sparkplug cases pas
 including the 23 real loopback MQTT cases, and isolated bundle installation succeeds
 on Maven 3.10.0/JDK 21. No OSGi metadata or i18n changes. Real SCR/persistence/TLS/IDEA
 acceptance remains open.
+
+## DataService implementation continuation
+
+All 20 upstream cases pass through actual activation, updates and public callbacks.
+Captured scheduling replaces the old 3/8/20-second sleeps, and a controlled publisher
+boundary keeps storage assertions deterministic. Every fixture deactivates and checks
+executor shutdown; the production one-second shutdown wait is retained.
+
+In-flight restoration is checked by confirming the restored transport token and
+observing the original stored ID/topic, replacing private-field reflection. Cases
+cover payload thresholds, negative priority, new-session drop/republish failures,
+configuration changes, message-store connection events and queue-specific regexes.
+The watchdog test executes ten connection failures explicitly and verifies exactly
+eight checkins (initial + three authentication + four ordinary failures), preserving
+local recovery behavior. Test-only Log4j API supplies the existing KuraException
+provided dependency. All 30 Cloud Base cases pass with zero failures/errors/skips
+on Maven 3.10.0/JDK 21/Jupiter. Production unchanged; real persistence/runtime/IDEA
+acceptance remains open.

@@ -2084,9 +2084,22 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/src/test/java/org/eclipse/kura/core/data/DataServiceImplTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "All 20 upstream storage/connection/confirmation/queue cases run through real activation and public callbacks, with controlled scheduler/publisher boundaries. In-flight restoration is asserted through confirmation behavior rather than private reflection; reconnect/watchdog failure limits are deterministic, with no 3/8/20-second test sleeps. Production shutdown delay is preserved. See cloud-test-restoration.md.",
+    "validation": {
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloud.base.provider.test/src/main/java/org/eclipse/kura/core/data/DataServiceOptionsTest.java",

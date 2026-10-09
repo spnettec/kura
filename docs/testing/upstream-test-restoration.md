@@ -652,3 +652,11 @@ Two negative-confirmed regressions verify release on tracker close and service
 unregistration. All 150 Sparkplug cases and isolated installation pass. See
 [Cloud audit](cloud-test-restoration.md). Inventory remains **81 unreviewed**;
 remaining source/runtime/IDEA work continues.
+
+### DataService storage and reconnect continuation
+
+One source restores all 20 scenarios with observable in-flight/queue behavior and
+controlled reconnect scheduling. All 30 Cloud Base tests pass. See
+[Cloud audit](cloud-test-restoration.md). Inventory: 331 restored sources, 34 helpers,
+20 exclusions/replaced harness entries and **80 unreviewed**. Source, runtime and
+IDEA work remains open.
