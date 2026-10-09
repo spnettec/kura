@@ -2,13 +2,13 @@
 <!--
 
     Copyright (c) 2011, 2024 Eurotech and/or its affiliates and others
-  
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
+
 	SPDX-License-Identifier: EPL-2.0
-	
+
 	Contributors:
 	 Eurotech
      Red Hat Inc
@@ -145,6 +145,8 @@
       <scope>test</scope>
     </dependency>
     <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>kura-test-support</artifactId><version>6.0.0-SNAPSHOT</version><scope>test</scope></dependency>
+    <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><scope>test</scope></dependency>
   </dependencies>
   <build>
     <resources>

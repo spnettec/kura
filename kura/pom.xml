@@ -77,6 +77,7 @@
     <module>org.eclipse.kura.db.h2db.provider</module>
     <module>emulator</module>
     <module>tools</module>
+    <module>../kura-unit-tests</module>
   </modules>
   <properties>
     <osgi-dp-plugin-version>0.5.2</osgi-dp-plugin-version>
