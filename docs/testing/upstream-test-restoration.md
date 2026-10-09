@@ -582,3 +582,11 @@ pass. The DS service-existence scenario remains explicitly deferred in the inven
 See [Cloud audit](cloud-test-restoration.md). Inventory: 315 restored sources,
 32 helpers, 19 exclusions/replaced harness entries and **99 unreviewed**. Real
 DS/MQTT/IDEA acceptance remains open alongside remaining source audit.
+
+### Kapua client and service API continuation
+
+Two sources restore 27 cases with observable listener/binding checks and isolated
+lifecycle fixtures; all 146 Kapua tests pass. See [Cloud audit](cloud-test-restoration.md).
+Inventory: 317 restored sources, 32 helpers, 19 exclusions/replaced harness entries
+and **97 unreviewed**. Kapua's remaining CloudService integration source and other
+source/runtime/IDEA work remain open.

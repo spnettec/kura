@@ -113,3 +113,14 @@ identity; notification checks the exact topic/control/priority map. Failure chec
 use scoped assertions and SERVICE_UNAVAILABLE codes. The old static DS/latch service
 existence assertion is explicitly deferred for real Equinox/SCR validation; ordinary
 JVM tracking does not claim actual factory/configuration/MQTT integration.
+
+## CloudClient and CloudService API continuation
+
+Two sources restore all 27 upstream cases (22 client + 5 service); the complete
+Kapua module passes 146 tests, zero failures/errors/skips on Maven 3.10.0/JDK 21/
+Jupiter. No production modifications. Client binding and listener add/remove are
+asserted through actual forwarding/callback behavior rather than private-field
+inspection; publication topic/priority, subscriptions, queue IDs and callback
+arguments remain covered. Fresh service activation/deactivation replaces static
+shared fixtures and releases its scheduler. Configuration retrieval now verifies
+the configured prefix in addition to object presence.
