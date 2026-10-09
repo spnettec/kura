@@ -386,3 +386,11 @@ Current inventory: 278 restored sources, 31 restored helpers, 16 exclusions/repl
 harness entries and **140 unreviewed** of 465. Deployment still has five sources;
 core-origin, management UI, official OPC UA and runtime/IDEA work remain open.
 Official OPC UA remains unchanged.
+
+### Separate deployment I/O failure notification repair
+
+Two regressions reproduced COMPLETED notifications after missing input or failed
+artifact persistence. IOException now reaches the existing FAILED notification
+path. Both failed before the fix; the complete core.deployment module passes 55
+cases afterward. See [deployment audit](deployment-test-restoration.md). Source
+inventory remains **140 unreviewed**.

@@ -25,3 +25,18 @@ readers are closed. Only Log4j API was added to test scope.
 Five deployment source entries remain unreviewed, including actual HTTP download
 and REST integration, the cloud handler and deployment agent. Runtime/OSGi/IDEA
 acceptance remains open.
+
+## Separate production repair: do not report file I/O failure as completed
+
+Two regressions reproduced COMPLETED notifications when the input artifact did
+not exist and when the installed artifact could not be moved to its persistence
+path. installDeploymentPackageInternal logged IOException and returned normally,
+so installDp sent a completion message even if deployment admin was never called.
+
+The caught IOException now propagates to installDp's existing failure notification
+path. The tests assert FAILED, zero progress and a nonempty error, distinguishing
+missing-input/no-admin-call from a persistence failure after admin installation.
+Both failed on the original code and pass after the one-line production repair;
+the complete module passes 55 tests, zero failures/errors/skips. Existing package
+cleanup and deployment-admin behavior are unchanged. This does not add rollback
+for a persistence failure after deployment admin has installed a package.
