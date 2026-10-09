@@ -94,3 +94,17 @@ Additional upstream fixture corrections:
 Only grpc-inprocess 1.71.0 and Guava failureaccess 1.0.3 were added to test scope in
 this continuation. Real Triton/GPU inference, container runtime, Equinox/DS and IDEA
 acceptance remain open. No production or handwritten metadata change in this batch.
+
+## Separate production repair: close replaced gRPC channels
+
+Two regressions using actual in-process ManagedChannels reproduced retained
+connections after changing to another valid configuration or to an invalid one.
+A third control confirms unchanged configuration retains its live channel.
+
+The update path now closes and awaits the old channel after stopping the managed
+instance, before creating a replacement or leaving the service unconfigured.
+Deactivation shares the existing shutdown/await implementation. The unchanged
+configuration guard, manager lifecycle and transport settings remain intact.
+The two failures were observed before the fix; all three lifecycle cases and all
+116 module tests pass after it, with zero failures/errors/skips. This production
+repair is a separate commit; source inventory counts do not change.

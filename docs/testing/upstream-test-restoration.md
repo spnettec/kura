@@ -367,3 +367,11 @@ harness entries and **142 unreviewed** of 465. The remaining source revisions ar
 core 125, deployment 7, management UI 7 and official OPC UA 3. Core-origin sources
 include tests now owned by cloud/container siblings. Official OPC UA remains
 unchanged, and runtime/IDEA acceptance is still unfinished.
+
+### Separate Triton gRPC lifecycle repair
+
+Actual-channel regressions showed configuration updates retained the old gRPC
+connection, including updates to invalid configuration. The old channel now closes
+and terminates before reconfiguration; unchanged configuration keeps its channel.
+Two negative regressions failed before the fix. The complete module passes 116
+cases after it. Source inventory remains **142 unreviewed**. See [Triton audit](triton-test-restoration.md).
