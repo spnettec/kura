@@ -4457,7 +4457,50 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/server/servlet/LogServletTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Eight applicable ZIP/name scenarios run through the local private byte-array API; two extra regressions verify generated-name collision and fixed reply name/bytes. Six failures before separate production ZIP repair. Seven upstream-only archive naming/temp directory scenarios not applicable; see management-ui-test-restoration.md.",
+    "validation": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "excludedScenarios": [
+      {
+        "scenario": "shouldNameTheArchiveAfterTheDeviceAndTheMoment",
+        "reason": "Local download intentionally retains Kura_Logs.zip; no buildArchiveName API."
+      },
+      {
+        "scenario": "shouldOmitTheDeviceNameWhenItIsMissing",
+        "reason": "No device/timestamp archive naming in local implementation."
+      },
+      {
+        "scenario": "shouldKeepTheArchiveNameSafeForAFileSystemAndForTheHeader",
+        "reason": "Local fixed archive filename does not include device input."
+      },
+      {
+        "scenario": "shouldCapAVeryLongDeviceName",
+        "reason": "No sanitizeForFileName API or device input in local archive name."
+      },
+      {
+        "scenario": "shouldCreateDistinctPrivateTemporaryDirectories",
+        "reason": "Local journal collection uses existing fixed paths; no createPrivateTempDirectory API."
+      },
+      {
+        "scenario": "shouldDeleteTheTemporaryDirectoryWithItsContent",
+        "reason": "Local implementation does not create private archive directories."
+      },
+      {
+        "scenario": "shouldTolerateANullOrAlreadyDeletedTemporaryDirectory",
+        "reason": "No deleteTempDirectory API; journal lifecycle redesign remains outside this restoration."
+      }
+    ]
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtComponentServiceInternalTest.java",

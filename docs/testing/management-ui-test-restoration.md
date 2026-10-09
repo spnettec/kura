@@ -63,3 +63,28 @@ descriptions in the locale-aware server conversion. Private methods remain priva
 Full Web2/GWT production build passes with release 11; test module passes 39 cases
 (7 default decoder/localization, 3 component defaults), zero failures/errors/skips.
 One UI source remains unreviewed; browser/OSGi/IDEA acceptance remains open.
+
+## Log ZIP restoration and separate production repair
+
+All 15 upstream scenarios were reviewed. Eight ZIP/entry-name scenarios execute
+through the existing private byte-array zipFiles method; no streaming API is
+introduced. Two extra cases check a suffix colliding with an existing entry and
+actual createReply bytes plus the local fixed Kura_Logs.zip header. A multi-buffer
+Unicode fixture checks complete contents. TempDir owns every test file.
+
+Six cases failed before the separate repair: duplicate names raised ZipException,
+and a disappeared rotated log raised FileNotFoundException, aborting the entire
+archive. A per-archive set now suffixes colliding names while retaining extensions;
+files unavailable at open are logged and skipped. Other read/write errors still
+propagate. Existing authorization, journal commands/paths and fixed archive name
+remain unchanged. No servlet authorization or real journald acceptance is claimed.
+
+Seven upstream-only scenarios are explicitly excluded, not disabled passing tests:
+four device/timestamp archive-name/sanitization cases and three private temporary
+directory lifecycle cases. Those APIs do not exist locally; importing them would
+change the local download/journal design. The existing fixed journal temp paths
+and concurrent-download lifecycle remain an open runtime/design limitation.
+
+Full Web2/GWT build passes with Java 11 target; all 49 Jupiter cases pass on Maven
+3.10.0/JDK 21, zero failures/errors/skips. All seven UI sources are audited; browser,
+servlet authorization, OSGi and real IDEA JUnit acceptance remain open.

@@ -468,3 +468,13 @@ Web2/GWT build pass, retaining the local locale-aware path and Java 11 productio
 target. See [management UI audit](management-ui-test-restoration.md). Inventory:
 288 restored sources, 32 helpers, 16 exclusions/replaced harness entries and
 **129 unreviewed**. LogServlet is the final UI source pending audit.
+
+### Web2 log ZIP continuation and separate repair
+
+Eight applicable upstream ZIP/name scenarios plus two local regressions pass after
+six negative failures. Seven upstream-only archive-name/private-temp-directory
+scenarios are explicitly excluded to preserve local behavior. All 49 UI tests and
+Web2/GWT build pass. See [management UI audit](management-ui-test-restoration.md).
+Inventory: 289 restored sources, 32 helpers, 16 exclusions/replaced harness entries
+and **128 unreviewed**: 125 core-origin and 3 official OPC UA. UI source audit is
+complete; runtime, authorization and IDEA acceptance remain open. OPC UA unchanged.
