@@ -141,3 +141,21 @@ fixture startup checks; this batch does not claim new Equinox coverage.
 Current source inventory: 193 restored, 16 restored helpers, 13 exclusions/replaced
 harness entries and **243 unreviewed**, out of 465. Wires asset/REST graph sources,
 other sibling/core suites, real-container scenarios and IDEA acceptance remain open.
+
+### Core Asset continuation
+
+The Wires upstream AssetTest now runs in the retained core asset bundle: all 27
+scenarios pass, with both driver/descriptor helpers restored and the JUnit 4 suite
+wrapper replaced by Jupiter discovery. The module reports 32 passing invocations
+including five previous regression/helper cases; zero failures/errors/skips.
+
+The fixture uses real BaseAsset executors and logic, explicit driver arrival/removal
+at the registry boundary, five-second configuration barriers, propagated callback
+assertion failures and executor termination checks. Metadata assertions preserve
+this fork's request.timeout and channel description/unit fields (123 attributes),
+and the read-all assertion addresses a named channel rather than relying on map
+iteration order. No production or handwritten OSGi metadata changed.
+
+Inventory: 194 restored sources, 18 restored helpers, 14 exclusions/replaced harness
+entries and **239 unreviewed**, out of 465. The two Wires REST graph sources still
+need review, as do remaining core/sibling suites and real OSGi/IDEA acceptance.

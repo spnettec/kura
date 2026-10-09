@@ -5948,7 +5948,20 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.asset.provider/src/test/java/org/eclipse/kura/asset/provider/test/AssetTest.java"
+    ],
+    "execution": "JUnit Jupiter BaseAsset component fixture; explicit driver attach/detach, not Equinox service discovery",
+    "reason": "Preserve upstream asset read/write, listener, defaults and scale/offset assertions; use bounded configuration barriers, propagate callback assertion failures and terminate owned executors. Metadata assertions include local request.timeout and channel description/unit fields.",
+    "validation": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/AssetTestsSuite.java",
@@ -5959,7 +5972,8 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "replaced-legacy-harness",
+    "reason": "JUnit Jupiter/Surefire discovers AssetTest directly; JUnit 4 Suite runner is unnecessary."
   },
   {
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/StubChannelDescriptor.java",
@@ -5970,7 +5984,12 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.asset.provider/src/test/java/org/eclipse/kura/asset/provider/test/StubChannelDescriptor.java"
+    ],
+    "execution": "JUnit Jupiter BaseAsset component fixture; explicit driver attach/detach, not Equinox service discovery",
+    "reason": "Preserve upstream asset read/write, listener, defaults and scale/offset assertions; use bounded configuration barriers, propagate callback assertion failures and terminate owned executors. Metadata assertions include local request.timeout and channel description/unit fields."
   },
   {
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/StubDriver.java",
@@ -5981,7 +6000,12 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.asset.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.asset.provider/src/test/java/org/eclipse/kura/asset/provider/test/StubDriver.java"
+    ],
+    "execution": "JUnit Jupiter BaseAsset component fixture; explicit driver attach/detach, not Equinox service discovery",
+    "reason": "Preserve upstream asset read/write, listener, defaults and scale/offset assertions; use bounded configuration barriers, propagate callback assertion failures and terminate owned executors. Metadata assertions include local request.timeout and channel description/unit fields."
   },
   {
     "source": "tests/org.eclipse.kura.internal.asset.cloudlet.test/src/test/java/org/eclipse/kura/internal/asset/cloudlet/AssetCloudletTest.java",
