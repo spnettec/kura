@@ -248,3 +248,17 @@ Current inventory: 233 restored sources, 25 restored helpers, 14 exclusions/repl
 harness entries and **193 unreviewed** of 465. Networking has 22 remaining sources
 (18 NetworkManager and four REST sources). Other siblings, remaining core sources,
 and real-container/transport/IDEA acceptance are still open.
+
+### NetworkManager lifecycle continuation
+
+Ten additional upstream suites pass 47 new invocations. The complete current NM
+module reports 1,035 passing invocations, including its 988 prior cases, under
+Maven 3.10.0 / JDK 21 / Jupiter. Zero failures/errors/skips. See
+[NetworkManager audit](networking-nm-test-restoration.md) for the controlled
+scheduler, temporary-file, NMEA and D-Bus boundaries. No production or handwritten
+OSGi metadata changed.
+
+Current inventory: 243 restored sources, 25 restored helpers, 14 exclusions/replaced
+harness entries and **183 unreviewed** of 465. Networking has eight NM and four REST
+sources remaining. Other siblings, remaining core sources and real-container /
+transport / IDEA acceptance are still open.
