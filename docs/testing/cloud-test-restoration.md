@@ -165,3 +165,17 @@ its DataService listener. A separate production fix unregisters the endpoint aft
 disconnect and before its existing virtual-thread executor shutdown. Ordering is
 asserted. All 26 current Sparkplug cases pass and isolated bundle installation
 succeeds on Maven 3.10.0/JDK 21; no metadata changes. Real DS/MQTT remains open.
+
+## Sparkplug transport options and configuration continuation
+
+Two sources add 33 cases: all 29 parameter scenarios plus four meaningful lifecycle
+scenarios. The upstream `test()` containing only `assertTrue(true)` is explicitly
+excluded. All 59 Sparkplug tests pass with zero failures/errors/skips on Maven
+3.10.0/JDK 21/Jupiter. Production unchanged; test-only Log4j API supplies the existing
+KuraException provided dependency.
+
+Nested/parameterized fixtures assert exact ordered server lists, mandatory option
+errors and the current String password/CryptoService path. Real unconnected MQTT
+client objects exercise SSL-manager rebinding and ordered updating/updated callbacks;
+teardown deactivates the transport. No broker or network connection is opened.
+Real MQTT/DS/IDEA acceptance remains open.

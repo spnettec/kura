@@ -614,3 +614,11 @@ A negative-confirmed regression now verifies listener removal after disconnect o
 endpoint deactivation. All 26 Sparkplug tests and isolated bundle installation pass.
 See [Cloud audit](cloud-test-restoration.md). Inventory remains **90 unreviewed**;
 source/runtime/IDEA work continues.
+
+### Sparkplug transport options and configuration continuation
+
+Two sources add 33 passing cases; all 59 Sparkplug tests pass. An upstream no-op
+assertion is explicitly excluded. Local password and lifecycle behavior is retained.
+See [Cloud audit](cloud-test-restoration.md). Inventory: 325 restored sources,
+33 helpers, 19 exclusions/replaced harness entries and **88 unreviewed**. Source,
+real runtime and IDEA acceptance remain open.

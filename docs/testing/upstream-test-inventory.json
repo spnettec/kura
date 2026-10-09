@@ -2791,9 +2791,28 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/transport/test/ConfigurationUpdateTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Four meaningful upstream lifecycle cases restored with ordered updating/updated callbacks and real unconnected-client lifecycle cleanup. No broker is started. The assertion-only placeholder is explicitly excluded. See cloud-test-restoration.md.",
+    "excludedScenarios": [
+      {
+        "scenario": "test",
+        "reason": "Upstream body only asserts assertTrue(true); it exercises no behavior."
+      }
+    ],
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/transport/test/SparkplugDataTransportOptionsTest.java",
@@ -2802,9 +2821,22 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/transport/test/SparkplugDataTransportOptionsTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "All 29 upstream cases use Jupiter nested/parameterized fixtures, exact ordered server lists and scoped INVALID_PARAMETER assertions. Preserves local String password option and CryptoService decryption. See cloud-test-restoration.md.",
+    "validation": {
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestComponent.java",
