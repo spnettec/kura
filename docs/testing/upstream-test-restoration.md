@@ -506,3 +506,13 @@ See [Container audit](container-test-restoration.md). Inventory: 296 restored so
 32 helpers, 19 exclusions/replaced harness entries and **118 unreviewed**. Two
 Container sources remain; other core-origin, official OPC UA and runtime/IDEA work
 continue to be open.
+
+### Container instance options continuation
+
+All 57 upstream scenarios plus a local empty-properties case pass (58 total).
+Typed CPU fixtures and equality/hash checks are corrected without production changes.
+Identity exclusion wording now distinguishes the existing signature-digest
+ConfigurationService binding from absent identity/Token APIs. See
+[Container audit](container-test-restoration.md). Inventory: 297 restored sources,
+32 helpers, 19 exclusions/replaced harness entries and **117 unreviewed**. Container
+lifecycle, other core-origin sources, official OPC UA and runtime/IDEA work remain.

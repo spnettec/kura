@@ -46,9 +46,9 @@ no daemon connections or event subscriptions are opened. All 32 orchestration ca
 pass on Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. Production unchanged.
 
 All 19 ContainerIdentityIntegrationTest scenarios and helpers were also audited.
-The local ContainerInstance has none of the identity/password-strength/network/
-configuration service bindings, temporary-password state or token lifecycle used
-by those scenarios; associated container.identity.enabled and container.permissions
+The local ContainerInstance lacks the identity/password-strength/network bindings,
+temporary-password state and token lifecycle used by those scenarios. Its existing
+ConfigurationService binding persists signature digests, not container identities; associated container.identity.enabled and container.permissions
 metadata is absent too. This source is explicitly not applicable, not silently
 skipped, and no identity integration is imported. Three Container sources remain:
 service behavior, instance options and instance lifecycle. Runtime/DS/IDEA work open.
@@ -73,3 +73,18 @@ All static/construction mocks are closed; test teardown deactivates the service.
 
 Two Container sources remain: ContainerInstanceOptionsTest and ContainerInstanceTest.
 Real Docker containers, SCR and IDEA acceptance remain open.
+
+## Instance options continuation
+
+All 57 upstream option scenarios and one local empty-properties regression pass,
+58 cases with zero failures/errors/skips on Maven 3.10.0/JDK 21/Jupiter. They cover
+registry credentials, environment/volume/device/port parsing, retry limits,
+entrypoint normalization, memory units, CPU/GPU/runtime and enforcement digest.
+
+CPU fixtures use Float values instead of ignored string values. Equal distinct
+options now require equal hashes; the upstream check compared against an
+uninitialized zero field. Other hash comparisons now use the compared object.
+The explicit upstream hello-world fixture stays explicit; truly empty properties
+retain local nginx/disabled defaults and absent optional CPU/GPU/registry values.
+Only test-scope Jupiter is added to container.provider; production unchanged.
+ContainerInstanceTest is the only Container source still unreviewed.
