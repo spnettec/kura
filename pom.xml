@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse.kura</groupId>
   <artifactId>kura-workspace</artifactId>
   <version>6.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Kura development workspace</name>
-  <!-- Migration bootstrap. Core/workspace modules join after their phase gates pass. -->
   <modules>
     <module>build-support</module>
-    <module>kura-dev-runtime</module>
+    <module>kura</module>
   </modules>
   <profiles>
     <profile>
-      <id>migration-pilot</id>
+      <id>dev-runtime</id>
       <modules>
-        <module>kura/org.eclipse.kura.api</module>
-        <module>kura/org.eclipse.kura.core.token.jwt</module>
-        <module>kura/org.eclipse.kura.localization</module>
-        <module>kura/org.eclipse.kura.localization.resources</module>
-        <module>kura/emulator/org.eclipse.kura.emulator</module>
+        <module>kura-dev-runtime</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>osgi-it</id>
+      <modules>
         <module>kura-osgi-tests</module>
       </modules>
     </profile>

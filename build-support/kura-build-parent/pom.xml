@@ -110,6 +110,9 @@
               <_noextraheaders>true</_noextraheaders>
               <_nouses>true</_nouses>
               <_noee>true</_noee>
+              <_contract>!*</_contract>
+              <_consumer-policy>!</_consumer-policy>
+              <_provider-policy>!</_provider-policy>
             </instructions>
           </configuration>
         </plugin>
