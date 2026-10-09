@@ -41,3 +41,36 @@ errors or skips. Logs: /tmp/kura-networking-nm-lifecycle.log and
 - DnsServerService follows this fork's public API package. Guava and Log4j API are
   test-only classpath dependencies. Production code, manifest and DS metadata are
   unchanged; no real D-Bus/Linux/OSGi/IDEA acceptance is claimed.
+
+## Status and configuration continuation
+
+Four more suites pass 253 invocations: signal conversion 202, status conversion 20,
+status service 14 and configuration service 17. The full NM module now passes
+1,288 invocations with no failures/errors/skips. Log:
+/tmp/kura-networking-nm-status-config-full.log.
+
+- Signal conversion retains all 202 upstream input/expected pairs in Jupiter
+  method sources; expected values are not computed from production formulas.
+- Status tests retain IPv4/IPv6, VLAN, modem, SIM, bearer-byte and D-Bus exception
+  assertions. A fixture typo setting signal quality twice now supplies quality
+  100 and strength -53 separately, with explicit checks for both.
+- Configuration service tests mock only the monitor and NAT-writer construction
+  boundaries, plus existing D-Bus/command/keystore services. Real activation,
+  update, metadata, PPP-name migration, DHCP eligibility and certificate lookup
+  logic runs; the separately restored writer/monitor suites cover those doubles.
+  Teardown deactivates the service and closes all construction mocks.
+- The update scenario now calls update() after activation and clears its recorded
+  event first. The upstream scenario accidentally called activate() twice instead.
+  Local event delivery is synchronous, so the old six-second sleep is unnecessary.
+- Local metadata has 155 attributes for this fixture; the upstream additional
+  802.1X password attribute remains absent. PPP interface-list assertions compare
+  membership instead of depending on HashSet iteration order. Enterprise Wi-Fi
+  checks the certificate/private-key objects actually placed in the event.
+- NMSettingsComparatorTest (24 cases) and ModemManagerDbusWrapperTest (22 cases)
+  are not applicable to the current API. Their required comparator and
+  setModemModes API are absent in the current source, confirmed by graph and
+  source searches. They are recorded as exclusions, not passing/skipped suites;
+  neither new production feature is imported.
+
+The NM connector and settings-converter sources still need review. This is not
+real system D-Bus, monitor-thread concurrency, DS or IDEA acceptance.
