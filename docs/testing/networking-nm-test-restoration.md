@@ -1,8 +1,8 @@
 # NetworkManager test restoration — 2026-10-09
 
 Upstream snapshot: kura-networking 20da91a3c21532d0d0cfa9c796b79068c61d16b1.
-This audit covers ten suites restored beside org.eclipse.kura.nm. Remaining NM
-sources are still unreviewed in the authoritative inventory.
+This audit records successive batches restored beside org.eclipse.kura.nm.
+The source-review inventory and real runtime acceptance are tracked separately.
 
 | Suite | Passing invocations |
 | --- | ---: |
@@ -72,8 +72,8 @@ status service 14 and configuration service 17. The full NM module now passes
   source searches. They are recorded as exclusions, not passing/skipped suites;
   neither new production feature is imported.
 
-The NM connector source still needs review. This is not
-real system D-Bus, monitor-thread concurrency, DS or IDEA acceptance.
+At this batch boundary the NM connector still needed review; its continuation
+appears below. This is not real system D-Bus, DS or IDEA acceptance.
 
 ## Settings converter continuation
 
@@ -95,3 +95,40 @@ and handwritten metadata are unchanged.
 YOFC's upgraded networking implementation remains authoritative. Connector tests
 must be checked against its D-Bus 5.2.0 API and virtual-thread lifecycle; upstream
 Reapply assumptions must not be imported into the current update/activate path.
+
+## D-Bus connector continuation
+
+All 53 upstream scenarios were reviewed against the fork's current connector,
+wrappers, signal locks and dbus-java core/transport 5.2.0 dependencies. 49 applicable
+scenarios pass. The full NM module passes 1,490 invocations with zero failures,
+errors or skips under Maven 3.10.0 / JDK 21 / Jupiter. Log:
+/tmp/kura-networking-nm-connector-full.log.
+
+The local connection path uses Update plus ActivateConnection. It deliberately
+does not use upstream UpdateUnsaved/Reapply. Connection identities, object paths,
+version-property bus names, IPv6 constants and Ethernet fixture keys were corrected
+to exercise that local path. Activation assertions match the actual target device.
+These four upstream-only scenarios are excluded, not passing/skipped cases:
+
+- activateShouldNotBeCalledWhenReapplySucceeds
+- applyShouldWorkWithEnabledModemWhenReapplySucceeds
+- configurationEnforcementShouldUseReapplyWithExternalChangeSignal
+- shouldStartModemTaskHandlerEvenIfReapplyFails
+
+A mocked bus records real signal-handler registration and routes real D-Bus 5.2.0
+StateChanged, DeviceAdded and ScanDone objects. Actual device/wireless locks and
+connector/wrapper logic run. VLAN creation now asserts activation, replacing an
+upstream unattached lock mock that could pass without creating the device. The
+modem manager remains real; its scheduler construction is isolated because retry
+scheduling has separate restored coverage.
+
+Each case owns a fresh connector created through its constructor, preserving the
+process singleton and avoiding system-bus access. The asynchronous case uses the
+actual connector executor, waits for its CompletableFuture and asserts a virtual
+activation thread. Teardown terminates the owned executor, stops modem handlers
+and closes the scheduler construction mock. The old fixed twenty-second sleep is
+removed. Production source and handwritten OSGi metadata are unchanged.
+
+All NM source entries have now been reviewed; real system-bus/transport behavior,
+monitor-thread races, full DS and IDEA acceptance remain open. Networking has four
+REST sources left in the inventory, and the wider restoration is unfinished.

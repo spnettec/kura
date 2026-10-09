@@ -286,3 +286,16 @@ Current inventory: 248 restored sources, 25 restored helpers, 16 exclusions/repl
 harness entries and **176 unreviewed** of 465. Networking still has its connector
 and four REST sources; remaining sibling/core and real runtime/IDEA acceptance
 are open. No production source or handwritten OSGi metadata changed in this batch.
+
+### NetworkManager connector continuation
+
+The connector adds 49 applicable passing invocations; four upstream-only Reapply
+scenarios are excluded explicitly. The complete NM module passes 1,490 with no
+failures/errors/skips under Maven 3.10.0 / JDK 21 / Jupiter. Current D-Bus 5.2.0,
+Update/ActivateConnection and virtual-thread behavior are preserved. See
+[NetworkManager audit](networking-nm-test-restoration.md) for the bus boundary and
+remaining runtime acceptance. No production source or handwritten metadata changed.
+
+Current inventory: 249 restored sources, 25 restored helpers, 16 exclusions/replaced
+harness entries and **175 unreviewed** of 465. Networking has four REST sources
+remaining; other sibling/core sources and real runtime/IDEA acceptance remain open.
