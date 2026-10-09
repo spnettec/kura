@@ -755,3 +755,14 @@ and **66 unreviewed**. Runtime SCR and IDEA acceptance remain open.
 Event publisher lifecycle repair is now validated separately: three negative-confirmed
 regressions plus the full 27-test suite and isolated installation pass. Replaced helpers
 and deactivated virtual-thread executors close correctly. Inventory remains 66 unreviewed.
+
+## System service continuation (2026-10-10)
+
+Both upstream sources are audited: five configuration/package cases and 26 runtime
+property cases pass on Maven 3.10/JDK 21/Jupiter. Two hardcoded legacy-path cases and
+actual SCR registration remain explicitly deferred; two no-op cases are excluded.
+See `system-service-test-restoration.md`. No production changes.
+
+Current inventory: 465 entries, 344 restored, 37 restored helpers, eight replaced
+legacy harnesses, six current-API exclusions, six removed-functionality exclusions
+and **64 unreviewed**. Deferred methods, runtime and IDEA acceptance remain open.
