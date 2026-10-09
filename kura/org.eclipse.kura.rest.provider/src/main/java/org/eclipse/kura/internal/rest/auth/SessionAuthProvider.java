@@ -83,12 +83,12 @@ public class SessionAuthProvider implements AuthenticationProvider {
             return Optional.empty();
         }
 
-        auditContext.getProperties().put(AuditConstants.KEY_IDENTITY.getValue(), result.get().getName());
-
         final RestSessionHelper.XsrfTokenStatus xsrfTokenStatus = getXsrfTokenStatus(request, requestContext);
         if (xsrfTokenStatus == RestSessionHelper.XsrfTokenStatus.MISSING) {
             return Optional.empty();
         }
+        auditContext.getProperties().put(AuditConstants.KEY_IDENTITY.getValue(), result.get().getName());
+
         if (xsrfTokenStatus == RestSessionHelper.XsrfTokenStatus.INVALID) {
             auditLogger.warn("{} Rest - Failure - Session authentication failed, invalid XSRF token", auditContext);
             return Optional.empty();
