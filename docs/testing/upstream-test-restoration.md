@@ -777,3 +777,7 @@ for separate confirmation and repair.
 
 Inventory: 346 restored, 37 helpers, 20 exclusions/replaced harnesses and **62
 unreviewed** out of 465 source entries. Runtime and IDEA acceptance remain open.
+
+The macOS uptime mismatch is now repaired separately. One negative-confirmed
+regression plus all 33 system tests and isolated installation pass. No network,
+API or metadata changes; inventory remains 62 unreviewed.

@@ -43,3 +43,17 @@ macOS parser with controlled `sysctl` output. Full system module: 32 passing tes
 Its real SCR service-existence case remains deferred. Source inspection identifies
 an apparent seconds/milliseconds mismatch in this parser; that will be confirmed
 and repaired separately rather than folded into this restoration commit.
+
+## Separate macOS uptime repair
+
+A bounded uptime assertion reproduced the defect: a boot time 30 seconds earlier
+returned roughly 1.79 trillion milliseconds rather than 30,000. The `sysctl` `sec`
+field is now converted to milliseconds before subtraction, matching the existing
+Linux/Windows API units. Actual read-only macOS `sysctl` output confirmed the format.
+The fix leaves other platform branches, API and metadata unchanged.
+
+The new regression fails before the one-line fix and passes afterward. All **33
+system tests and isolated bundle installation** pass on Maven 3.10/JDK 21. Cloud
+birth/disconnect/device-profile and management UI callers consume the same string;
+no caller API adaptation is required. Networking has no matching call in its index.
+The suspected defect above is resolved; inventory remains 62 unreviewed.

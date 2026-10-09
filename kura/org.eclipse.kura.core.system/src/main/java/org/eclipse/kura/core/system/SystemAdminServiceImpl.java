@@ -136,7 +136,7 @@ public class SystemAdminServiceImpl extends SuperSystemService implements System
                     String[] uptimePairs = lastBootupSysCmd.substring(1, lastBootupSysCmd.indexOf("}")).replace(" ", "")
                             .split(",");
                     String[] uptimeSeconds = uptimePairs[0].split("=");
-                    uptime = System.currentTimeMillis() - (long) (Double.parseDouble(uptimeSeconds[1]));
+                    uptime = System.currentTimeMillis() - (long) (Double.parseDouble(uptimeSeconds[1]) * 1000);
                     uptimeStr = Long.toString(uptime);
                 }
             } catch (Exception e) {

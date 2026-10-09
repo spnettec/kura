@@ -59,6 +59,19 @@ class SystemAdminServiceTest {
         assertTrue(Long.parseLong(this.service.getUptime()) > 0);
     }
 
+    @Test
+    void macUptimeConvertsBootSecondsToMilliseconds() throws Exception {
+        long before = System.currentTimeMillis();
+        long bootSeconds = before / 1000 - 30;
+        bootTime(bootSeconds);
+        long uptime = Long.parseLong(this.service.getUptime());
+        long after = System.currentTimeMillis();
+        long earliest = before - bootSeconds * 1000;
+        long latest = after - bootSeconds * 1000;
+        assertTrue(uptime >= earliest && uptime <= latest,
+                () -> "Expected uptime between " + earliest + " and " + latest + " ms, got " + uptime);
+    }
+
     private void bootTime(long seconds) throws Exception {
         ExitStatus exit = mock(ExitStatus.class);
         when(exit.isSuccessful()).thenReturn(true);

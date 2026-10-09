@@ -3675,14 +3675,14 @@
       "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemAdminServiceTest.java"
     ],
     "validation": {
-      "tests": 1,
+      "tests": 2,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "One upstream positive uptime scenario uses real parser with controlled sysctl output. Actual SCR registration deferred. See system-service-test-restoration.md.",
+    "reason": "Upstream positive uptime scenario plus one negative-confirmed macOS units regression. Separate production repair converts sysctl boot seconds to milliseconds before subtracting from the wall clock. Actual SCR registration deferred. See system-service-test-restoration.md.",
     "deferredMethods": [
       "testServiceExists"
     ]
