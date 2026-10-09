@@ -740,3 +740,14 @@ and **68 unreviewed**. Kura SCR/IDEA acceptance is still open.
 The OSGi tracker leak is now repaired in a separate production commit. Three
 negative-confirmed Equinox lifecycle cases pass, as do all 136 util tests and isolated
 installation. No metadata or ranking semantics changed; inventory remains 68 unreviewed.
+
+## Event and role-store continuation (2026-10-10)
+
+Two event publication scenarios and all ten role-store methods pass; current module
+reports are 24 and ten tests, zero failures/errors/skips. Role storage uses real Felix
+roles with controlled scheduler/event/configuration boundaries. Event helper/worker
+lifecycle defects will be repaired separately. See `event-useradmin-test-restoration.md`.
+
+Current inventory: 465 entries, 342 restored, 37 restored helpers, eight replaced
+legacy harnesses, six current-API exclusions, six removed-functionality exclusions
+and **66 unreviewed**. Runtime SCR and IDEA acceptance remain open.
