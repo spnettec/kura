@@ -74,7 +74,7 @@
           <artifactId>maven-antrun-plugin</artifactId>
           <version>3.1.0</version>
           <executions><execution>
-            <id>prepare-handwritten-manifest</id><phase>generate-resources</phase><goals><goal>run</goal></goals>
+            <id>prepare-handwritten-manifest</id><phase>none</phase><goals><goal>run</goal></goals>
             <configuration><target>
               <mkdir dir="${project.build.directory}/osgi"/>
               <delete file="${project.build.outputDirectory}/META-INF/MANIFEST.MF"/>
@@ -110,8 +110,8 @@
             <manifestLocation>${project.build.directory}/osgi/generated</manifestLocation>
             <instructions>
               <!-- Modules explicitly supply resources and embedded jars; never embed the classpath. -->
-              <_dsannotations></_dsannotations>
-              <_metatypeannotations></_metatypeannotations>
+              <_dsannotations>!*</_dsannotations>
+              <_metatypeannotations>!*</_metatypeannotations>
               <_noextraheaders>true</_noextraheaders>
               <_nouses>true</_nouses>
               <_noee>true</_noee>
