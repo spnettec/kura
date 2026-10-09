@@ -58,6 +58,18 @@ class BundleAuditTest(unittest.TestCase):
         new = inspect(self.jar('new.jar', 'Import-Package: b,a;version="[1,2)"\r\n'))
         self.assertEqual({}, compare(old, new)['headers'])
 
+    def test_attribute_order_and_token_quoting_preserve_capabilities(self):
+        old = inspect(self.jar('old.jar', 'Import-Package: a;version="1.0";resolution:=optional\r\n'
+                               'Provide-Capability: osgi.serviceloader;osgi.serviceloader=javax.script.ScriptEngineFactory\r\n'))
+        new = inspect(self.jar('new.jar', 'Import-Package: a;resolution:=optional;version="1.0"\r\n'
+                               'Provide-Capability: osgi.serviceloader;osgi.serviceloader="javax.script.ScriptEngineFactory"\r\n'))
+        self.assertEqual({}, compare(old, new)['headers'])
+
+    def test_optional_cannot_replace_mandatory_import(self):
+        old = inspect(self.jar('old.jar', 'Import-Package: a;version="1.0"\r\n'))
+        new = inspect(self.jar('new.jar', 'Import-Package: a;version="1.0";resolution:=optional\r\n'))
+        self.assertIn('Import-Package', compare(old, new)['headers'])
+
 
 if __name__ == '__main__':
     unittest.main()

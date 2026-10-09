@@ -80,8 +80,29 @@ python3 tools/migration/bundle_audit.py /path/to/new.jar --baseline /path/to/old
 测试当前入口：
 
 ```sh
-mvn -Pmigration-pilot -pl :org.eclipse.kura.core.token.jwt -am test
-mvn -Pmigration-pilot,osgi-it -pl :kura-osgi-tests -am verify
+mvn -pl :org.eclipse.kura.core.token.jwt -am test
+mvn -Posgi-it -pl :kura-osgi-tests -am verify
 ```
 
-迁移验证另传 `-Dmaven.repo.local=/absolute/path/to/migration-m2`。该缓存有已记录的旧 runtime 产物，仍不是冷构建证明。P4/P5 尚未执行，生产脚本和其余模块仍处于混合构建期。
+迁移验证另传 `-Dmaven.repo.local=/absolute/path/to/migration-m2`。该缓存有已记录的旧 runtime 产物，仍不是冷构建证明。P4 已完成，P5 正在推进；生产脚本和 sibling 仍处于混合构建期。
+
+
+## P4 核心普通 Maven 构建（2026-10-09）
+
+默认根 POM 聚合公共构建支持与核心。`-Posgi-it` 加入容器测试；`-Pdev-runtime` 暂时组装已安装的完整运行集，P5 完成后由 workspace profile 取代。
+
+- 51 个默认 bundle 与可选 docs bundle 全部转换，52 个产物的语义对比通过。生产 Java、源 MANIFEST、DS/metatype XML 没有改动。
+- 保留 script.provider 的 27 个私有嵌入依赖（包括原 Graal/私有 Bouncy Castle 版本）、根目录路径及 SPI 声明；Linux native fragment 内容不变。
+- 关闭 MBP 的自动导入版本范围、contract 和默认导出版本推导；保留手写声明。属性顺序及 token 引号的等价表示由审计工具规范化，版本范围和 mandatory/optional 变化仍会失败。
+- Maven 3.10 / JDK 21、无 MILD：22 项普通测试（JWT 14、快照 4、XML 4），6 项真实 Equinox 测试通过。
+- 快照测试检查默认加密、显式开关、损坏最新快照保留为 `.bad` 并回退旧快照；XML 测试检查 DOM/流式 CDATA 与数组类型往返。
+- 固定 qualifier `20261009core`；完整仿真实际加载 44 个新核心产物，其余硬件 bundle 不在桌面清单中。269 ACTIVE、8 RESOLVED，无 INSTALLED、ERROR 或类加载异常；管理页面 HTTP 200，Ctrl-C 后退出。
+- 文档 bundle 的冻结旧产物只有 MANIFEST 和许可文件；新构建保留相同内容，没有把原本未进入 JAR 的 javadoc 当作已有资源。
+- 14 个第三方封装均可从原始 Maven JAR 重新构建，保留 p2.osgi.bundle 坐标及 Milo/DigitalPetri 外部兼容输出，产物语义对比通过。
+
+```sh
+mvn clean install
+mvn -Pjavadocs,osgi-it install
+```
+
+本阶段仍使用有记录的迁移缓存；冷仓库、发行包、Linux GUI 与 Docker 验收不包含在上述结果中。

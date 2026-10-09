@@ -55,10 +55,24 @@ def semantic_headers(headers):
         result['Bundle-Version'] = '.'.join(result['Bundle-Version'].split('.')[:3])
     if result.get('Bundle-ClassPath', '.') == '.':
         result.pop('Bundle-ClassPath', None)
-    for header in ('Import-Package', 'Export-Package'):
+    for header in ('Import-Package', 'Export-Package', 'Provide-Capability', 'Require-Capability',
+                   'Require-Bundle', 'Fragment-Host'):
         if header in result:
-            result[header] = ','.join(sorted(';'.join(part.strip() for part in clauses(item, ';'))
-                                              for item in clauses(result[header])))
+            normalized = []
+            for item in clauses(result[header]):
+                parts = [part.strip() for part in clauses(item, ';')]
+                attributes = []
+                for part in parts[1:]:
+                    if '=' in part:
+                        key, value = part.split('=', 1)
+                        # OSGi permits token values with or without quotes, and attribute order is immaterial.
+                        value = value.strip()
+                        if value.startswith('"') and value.endswith('"'):
+                            value = value[1:-1]
+                        part = key.strip() + '=' + repr(value)
+                    attributes.append(part)
+                normalized.append(';'.join([parts[0], *sorted(attributes)]))
+            result[header] = ','.join(sorted(normalized))
     return result
 
 

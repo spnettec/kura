@@ -1,7 +1,7 @@
 # JUnit 5 真正的 Equinox 容器测试
 
 ```sh
-mvn -Pmigration-pilot,osgi-it -pl :kura-osgi-tests -am verify
+mvn -Posgi-it -pl :kura-osgi-tests -am verify
 ```
 
 `process-test-resources` 将固定清单中的真实 JAR 收集到 `target/it-bundles`。准备好后 IDEA 可直接运行 `BundleRuntimeIT`（工作目录为本模块）。普通 `mvn test` 不启动容器集成测试。
