@@ -56,6 +56,7 @@ public class CloudConnectionStatusURL {
     private static Properties parseUrlType(String urlImage) {
         Properties props = new Properties();
         String urlLowerCase = urlImage.toLowerCase(Locale.ENGLISH);
+        props.put(NOTIFICATION_TYPE, StatusNotificationTypeEnum.NONE);
         if (urlLowerCase.startsWith(LINUX_LED)) {
             String ledPath = urlImage.substring(LINUX_LED.length());
             props.put(NOTIFICATION_TYPE, StatusNotificationTypeEnum.LED);
