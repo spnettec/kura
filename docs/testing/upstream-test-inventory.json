@@ -5354,9 +5354,9 @@
       "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/NMDbusConnectorTest.java"
     ],
     "execution": "JUnit Jupiter component tests with dbus-java 5.2.0 signal objects and mocked bus; real owned virtual-thread executor",
-    "reason": "49 applicable scenarios preserve local Update/ActivateConnection; four upstream-only Reapply scenarios excluded. No system-bus or DS acceptance. See networking-nm-test-restoration.md.",
+    "reason": "49 applicable scenarios preserve local Update/ActivateConnection; four upstream-only Reapply scenarios excluded. No system-bus or DS acceptance. See networking-nm-test-restoration.md. Five additional state-listener failure regressions validate a separate production repair.",
     "validation": {
-      "tests": 49,
+      "tests": 54,
       "failures": 0,
       "errors": 0,
       "skipped": 0,

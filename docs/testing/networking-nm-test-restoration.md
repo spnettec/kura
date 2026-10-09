@@ -132,3 +132,23 @@ removed. Production source and handwritten OSGi metadata are unchanged.
 All NM source entries have now been reviewed; real system-bus/transport behavior,
 monitor-thread races, full DS and IDEA acceptance remain open. Networking has four
 REST sources left in the inventory, and the wider restoration is unfinished.
+
+## Separate production repair: failed-operation state listeners
+
+Five added regression cases reproduced leaked NMDeviceStateChangeHandler instances
+when Update, AddConnection, ActivateConnection (physical or VLAN) or Disconnect
+threw before waitForSignal(). On the unmodified production source all five fail
+with one registered waiter remaining; none fail from a fixture error.
+
+DeviceStateLock now has idempotent close(), and the connector scopes each state
+waiter around the D-Bus operation as well as the subsequent wait. Existing signal,
+timeout and interruption cleanup remains. Update/ActivateConnection selection,
+modem monitoring, carrier-error handling and handwritten metadata are retained.
+The fake bus also rejects duplicate removal, checking the successful path when
+both waitForSignal() and try-with-resources close the waiter.
+
+After the separate production repair all 54 connector cases and all 1,495 NM
+module invocations pass with zero failures/errors/skips (Maven 3.10.0 / JDK 21 /
+Jupiter). Logs: /tmp/kura-networking-nm-lock-negative.log and
+/tmp/kura-networking-nm-lock-fixed-full.log. This repair concerns temporary state
+listeners; it does not claim complete real-bus lifecycle acceptance.

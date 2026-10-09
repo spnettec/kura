@@ -299,3 +299,12 @@ remaining runtime acceptance. No production source or handwritten metadata chang
 Current inventory: 249 restored sources, 25 restored helpers, 16 exclusions/replaced
 harness entries and **175 unreviewed** of 465. Networking has four REST sources
 remaining; other sibling/core sources and real runtime/IDEA acceptance remain open.
+
+### Separate NetworkManager failure-path repair
+
+Five new regressions reproduced state-listener leaks in failed connection update,
+creation, physical/VLAN activation and disconnect operations. The production fix
+scopes DeviceStateLock cleanup independently of whether waiting starts. All 1,495
+NM invocations now pass, including 54 connector cases. The five failure cases
+failed on the original production code and pass after the repair. Source inventory
+counts remain unchanged at **175 unreviewed**. See the [NM audit](networking-nm-test-restoration.md).
