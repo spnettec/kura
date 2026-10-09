@@ -151,3 +151,12 @@ mvn -Pjavadocs,osgi-it install
 发行包中两个独立的 Jackson YAML / JAXB 模块在原包中已有未解析依赖；新旧 JAR 字节相同，原包也在真实 Equinox resolver 中复现。没有为此改变共享依赖边界。OPC UA bundle 内的 YAMLFactory 和 SnakeYAML Engine 均通过自身真实 bundle classloader 加载，详见 [Jackson/YAML 原包对照](jackson-yaml-boundary.md)。桌面仿真清单不含这两个多余的独立模块，全部条目可以解析。
 
 Linux VM 没有图形界面和 IDEA，**Linux GUI Run/Debug 断点未验收**；Linux CLI 和 Docker 结果不替代此项。真实硬件功能仍按原独立流程验收。P7 尚未删除旧 Eclipse/PDE 配置，也尚未完成模板及 CI 切换。
+
+
+## 调试数据导入和当前版本组合
+
+2026-10-09 将旧 Eclipse 仿真数据复制到独立 macOS profile：10 份原始快照、2 个密钥库、4 个 Camel 路由/初始化文件。旧目录文件 SHA256 保持不变，原 IDEA 数据目录整体改名备份。45 个配置项在重定位路径和显式调整 HTTPS 开发端口后保持一致；IDEA 实际加载两组 Camel 路由和脚本，HTTPS 启动正常，HTTP 200，启动日志无 ERROR / ClassNotFoundException / NoClassDefFoundError。个人配置、脚本和密钥不进入 Git。
+
+导入工具新增 Eclipse 根 `snapshots/` 布局和 Camel 文件支持；10 项数据保护/运行目录测试通过。日常启动仍使用原有 Maven 增量打包任务，用户已确认保留这一行为。Eclipse 安装及旧 workspace 暂时保留，由用户稳定使用后决定卸载。
+
+[当前验收提交组合](accepted-revisions-20261009.json) 固定各仓库的源码版本。核心 revision 为记录此清单之前已验收的提交；此清单及后续文档提交不改变 bundle。回退时使用 `baseline-20261009.json` 的整组 revision 与已保存基线产物重新组装，开发数据目录先独立备份，不能靠已被覆盖的默认 snapshot 缓存回退。

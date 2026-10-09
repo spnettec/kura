@@ -1,0 +1,105 @@
+{
+  "stage": "P6 local acceptance with Linux GUI and P7 pending",
+  "date": "2026-10-09",
+  "java": 21,
+  "maven": "3.10.0",
+  "qualifier": "20261009cold",
+  "repositories": [
+    {
+      "name": "kura",
+      "revision": "2d5c155ff855b93a28e43b980be2a79479d58672",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura.git"
+    },
+    {
+      "name": "kura-artemis",
+      "revision": "617117ff3f27413a8480cc0e2935494acac758ee",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-artemis.git"
+    },
+    {
+      "name": "kura-camel",
+      "revision": "b2632c7cb411541dca4f461a8c86037a1e587afa",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-camel.git"
+    },
+    {
+      "name": "kura-cloud",
+      "revision": "d0f9d9d26a57fa5925b1af1ad243165a89a8a149",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-cloud.git"
+    },
+    {
+      "name": "kura-container",
+      "revision": "5bf9422681e16e5330798f51c66edb41673bf9c2",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-container.git"
+    },
+    {
+      "name": "kura-deployment",
+      "revision": "f01b58b339badd3db70d49797c5b132518a1fd01",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-deployment.git"
+    },
+    {
+      "name": "kura-management-ui",
+      "revision": "8d1f6be96ecd0e7b7803cd0f7ed03d5426fd76aa",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-management-ui.git"
+    },
+    {
+      "name": "kura-networking",
+      "revision": "7b334964569594c26d5ad2bb6587d09c91fb24b2",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-networking.git"
+    },
+    {
+      "name": "kura-opcua",
+      "revision": "fb38d2ff11c0d7c5a9ba3e2a146e1fc717d6809f",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-opcua.git"
+    },
+    {
+      "name": "kura-position",
+      "revision": "463873572f412f43a086ab1c47a65952c62422d3",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-position.git"
+    },
+    {
+      "name": "kura-triton",
+      "revision": "e2e307a0fbd19a00037d7c0a5436b92c84e7e83b",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-triton.git"
+    },
+    {
+      "name": "kura-wires",
+      "revision": "da45b61b9b13058e6df516c902da516605a3ce01",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-wires.git"
+    },
+    {
+      "name": "kura-yofc-runtime",
+      "revision": "1852b4789087c16b8fd67922e6c34f500853b865",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-yofc-runtime.git"
+    },
+    {
+      "name": "yofc-iot",
+      "revision": "a5f61ec06f40b7b99583f422679e9d8ae994e2b8",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://gitee.com/heyoulin/yofc-iot.git"
+    },
+    {
+      "name": "kura-docker",
+      "revision": "971d6d6e010a0845d0af7253e3b552a1d621d6fa",
+      "branch": "codex/maven-bundle-idea",
+      "remote": "https://github.com/spnettec/kura-docker.git"
+    },
+    {
+      "name": "plc4x-yofc",
+      "revision": "2cb69312fbd76ab34c878e86b4e9efe72a4a210d",
+      "branch": "heyoulin",
+      "remote": "https://github.com/spnettec/plc4x.git"
+    }
+  ]
+}
