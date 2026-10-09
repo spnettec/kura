@@ -4409,7 +4409,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/ConsoleTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed all upstream scenarios. Reused existing Jupiter ConsoleTest; restored scale/offset enum scenarios in existing Java 21 test module. Production Web2/GWT remains Java 11. See management-ui-test-restoration.md."
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/net2/configuration/PreventModemPasswordPlaceholderTest.java",
@@ -4475,7 +4488,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/shared/ScaleOffsetTypeTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed all upstream scenarios. Reused existing Jupiter ConsoleTest; restored scale/offset enum scenarios in existing Java 21 test module. Production Web2/GWT remains Java 11. See management-ui-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/EthernetInterfaceConfigImplTest.java",

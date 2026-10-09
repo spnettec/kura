@@ -433,3 +433,11 @@ Current inventory: 282 restored sources, 32 helpers, 16 exclusions/replaced harn
 entries and **135 unreviewed** of 465. Deployment has no unreviewed sources; remaining
 origins are core 125, management UI 7 and official OPC UA 3. Official OPC UA remains
 unchanged. Source auditing and runtime/IDEA acceptance are still not complete.
+
+### Management UI audit context and enum continuation
+
+Reused and reviewed the existing ConsoleTest; restored ScaleOffsetTypeTest in the
+existing Java 21 test module. All 13 cases pass while production Web2/GWT remain
+Java 11. See [management UI audit](management-ui-test-restoration.md).
+Current inventory: 284 restored sources, 32 helpers, 16 exclusions/replaced harness
+entries and **133 unreviewed** of 465. Five UI sources remain.
