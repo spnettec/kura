@@ -237,3 +237,15 @@ Moquette uses the upstream version/repository and excludes its old logging backe
 All 15 Sparkplug source files are reviewed. The original shouldBeSetup SCR/factory
 service-discovery assertion, complete DataService persistence pipeline, TLS/authentication
 and actual IDEA/Equinox runtime acceptance remain explicitly deferred.
+
+## Separate Sparkplug tracker reference repair
+
+Two regression cases failed before the fix: closing the tracker and receiving an
+UNREGISTERING event both retained the acquired endpoint service reference. The
+customizer now releases it in a finally block after the removal callback. Actual
+ServiceTracker tests verify exactly one release even after subsequent close.
+
+This production change is separate from restoration. All 150 Sparkplug cases pass,
+including the 23 real loopback MQTT cases, and isolated bundle installation succeeds
+on Maven 3.10.0/JDK 21. No OSGi metadata or i18n changes. Real SCR/persistence/TLS/IDEA
+acceptance remains open.

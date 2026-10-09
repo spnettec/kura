@@ -645,3 +645,10 @@ All 148 Sparkplug tests pass; all 15 Sparkplug source files are reviewed. See
 [Cloud audit](cloud-test-restoration.md) for the real-broker boundary and deferred SCR/
 persistence/TLS/IDEA work. Inventory: 330 restored sources, 34 helpers, 20 exclusions/
 replaced harness entries and **81 unreviewed**. Overall restoration is still ongoing.
+
+### Separate Sparkplug service-reference repair
+
+Two negative-confirmed regressions verify release on tracker close and service
+unregistration. All 150 Sparkplug cases and isolated installation pass. See
+[Cloud audit](cloud-test-restoration.md). Inventory remains **81 unreviewed**;
+remaining source/runtime/IDEA work continues.
