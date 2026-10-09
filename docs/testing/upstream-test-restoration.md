@@ -58,4 +58,4 @@ Validation commands use the migration local repository configured for this works
 
 ## Still in progress
 
-The 13 CRL HTTP/download/refresh cases run through Failsafe with `-Posgi-it`, local random ports, isolated temporary files and bounded timeouts; acceptance is pending. Remaining real OSGi scenarios, sibling suites, IDEA JUnit invocation and full workspace acceptance are still to be completed.
+The 13 CRL HTTP/download/refresh cases additionally pass through Failsafe with `-Posgi-it`, local random ports, isolated temporary files and bounded timeouts. The fixture waits for all CRL executors to terminate before removing its directory. Remaining real OSGi scenarios, sibling suites, IDEA JUnit invocation and full workspace acceptance are still to be completed.

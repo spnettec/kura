@@ -13,4 +13,15 @@ mvn -pl :org.eclipse.kura.core.keystore -am test \
   -Dtest=StoredCRLLazyDecodeTest -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
-Broader local HTTP/download integration scenarios are separate Failsafe tests; their acceptance is recorded with the upstream restoration inventory after they pass.
+The 13 HTTP/download integration scenarios also pass through Failsafe under Maven 3.10/JDK 21. They cover configuration URLs, certificate distribution points, merging/loading, refresh scheduling, certificate removal, issuer/signature validation, verification configuration changes, and nonblocking reads during a stalled download. The HTTP server binds a random loopback port; files live under `@TempDir` and all waits are bounded.
+
+Upstream's `CRLManager.close()` uses asynchronous `shutdownNow()` without waiting for termination. The JUnit 5 fixture records executors, including managers replaced by configuration updates, and waits for their termination before temporary-directory cleanup. This prevents a final background cache write racing with cleanup, without changing the production shutdown contract.
+
+```sh
+mvn -pl :org.eclipse.kura.core.keystore -am verify -Posgi-it \
+  -Dtest=StoredCRLLazyDecodeTest -Dsurefire.failIfNoSpecifiedTests=false \
+  -Dit.test=FilesystemKeystoreServiceImplCrlIT \
+  -Dfailsafe.failIfNoSpecifiedTests=false
+```
+
+These are HTTP/service integration tests, not a substitute for the separate real Equinox lifecycle tests.
