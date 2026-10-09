@@ -267,3 +267,20 @@ local recovery behavior. Test-only Log4j API supplies the existing KuraException
 provided dependency. All 30 Cloud Base cases pass with zero failures/errors/skips
 on Maven 3.10.0/JDK 21/Jupiter. Production unchanged; real persistence/runtime/IDEA
 acceptance remains open.
+
+## Cloud connection REST continuation
+
+All 14 distinct upstream endpoint scenarios pass once through the actual request
+proxy, JSON request/response mapping, CloudConnectionService/manager bridge and real
+LDAP matching against a mocked OSGi registry. Assertions check exact PID sets,
+configuration contents, factory/pubsub mutations and both connection states, replacing
+non-empty-only checks. Fixtures use arbitrary local PIDs and explicit linked children,
+without assuming upstream suffix-derived identifiers.
+
+Jupiter, Mockito, Gson, Jersey runtime delegate, Log4j API and OSGi Promise are
+scope-test dependencies. Promise supplies the SCR interface's previously excluded
+transitive type; the initial missing-class failure was only a test classpath issue.
+Maven 3.10.0/JDK 21 reports 14 tests, zero failures/errors/skips. Production unchanged.
+The original HTTP/MQTT transport matrix, authenticated HTTP roles and real SCR/factory/
+ConfigurationService assembly remain explicitly deferred, not counted twice as mock
+transport runs.

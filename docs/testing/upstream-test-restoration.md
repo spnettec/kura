@@ -660,3 +660,11 @@ controlled reconnect scheduling. All 30 Cloud Base tests pass. See
 [Cloud audit](cloud-test-restoration.md). Inventory: 331 restored sources, 34 helpers,
 20 exclusions/replaced harness entries and **80 unreviewed**. Source, runtime and
 IDEA work remains open.
+
+### Cloud connection REST continuation
+
+One source restores 14 distinct endpoint scenarios through actual routing, JSON and
+service lookup logic; all pass. Original transport/authentication/runtime assembly
+remains deferred. See [Cloud audit](cloud-test-restoration.md). Inventory: 332 restored
+sources, 34 helpers, 20 exclusions/replaced harness entries and **79 unreviewed**.
+Source/runtime/IDEA acceptance continues.
