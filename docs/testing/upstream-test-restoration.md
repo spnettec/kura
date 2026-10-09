@@ -725,3 +725,14 @@ and Gogo command assembly remain deferred; see `database-test-restoration.md`.
 Current inventory: 465 entries, 338 restored, 37 restored helpers, eight replaced
 legacy harnesses, six current-API exclusions, six removed-functionality exclusions
 and **70 unreviewed**. Source audit is not runtime or IDEA acceptance.
+
+## OSGi utility continuation (2026-10-10)
+
+Nine tracker and three generic bundle-filter tests run on an actual isolated Equinox
+framework. Full util suite: 133 passing tests, zero failures/errors/skips. Four
+GPIO-specific cases are excluded. A newly identified tracker service-usage leak will
+be handled separately; see `osgi-util-test-restoration.md`.
+
+Current inventory: 465 entries, 340 restored, 37 restored helpers, eight replaced
+legacy harnesses, six current-API exclusions, six removed-functionality exclusions
+and **68 unreviewed**. Kura SCR/IDEA acceptance is still open.

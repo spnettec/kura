@@ -4387,9 +4387,29 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.util"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/BundleUtilTest.java",
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/EquinoxTestBase.java"
+    ],
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "excludedMethods": [
+      "shouldReturnGPIOBundle",
+      "shouldReturnWatchdogAndGPIOBundles",
+      "shouldReturnGPIOBundleBySingleHeader",
+      "shouldReturnGPIOBundleByMultipleHeaders"
+    ],
+    "reason": "Three generic bundle filter scenarios run on two temporary actual Equinox bundles with bootstrap Runnable/Callable services. GPIO-specific cases excluded; no removed API/bundle restored. Exact bundle-set equality fixes the upstream containsAll-self assertion. See osgi-util-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.util.test/src/main/java/org/eclipse/kura/osgi/SingleServiceTrackerTest.java",
@@ -4398,9 +4418,23 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.util"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/SingleServiceTrackerTest.java",
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/osgi/EquinoxTestBase.java"
+    ],
+    "validation": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "All nine ranking/add/remove/update scenarios run against actual isolated Equinox registrations. Trackers close even after assertion failure; framework stop is bounded and asserted. Source review exposed missing ungetService cleanup, tracked separately. See osgi-util-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.util.test/src/main/java/org/eclipse/kura/util/FilterUtilTest.java",
