@@ -4433,7 +4433,20 @@
     "destinations": [
       "kura-management-ui/bundles/org.eclipse.kura.web2"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-management-ui/bundles/org.eclipse.kura.web2.test/src/test/java/org/eclipse/kura/web/server/net2/configuration/PreventModemPasswordPlaceholderTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Four upstream scenarios adapted to the local one-argument constructor; scoped construction mock isolates the OSGi configuration adapter. One regression failed before a separate production repair. YOFC networking and D-Bus paths unchanged. See management-ui-test-restoration.md.",
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/servlet/LogServletTest.java",

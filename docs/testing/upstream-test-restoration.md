@@ -441,3 +441,12 @@ existing Java 21 test module. All 13 cases pass while production Web2/GWT remain
 Java 11. See [management UI audit](management-ui-test-restoration.md).
 Current inventory: 284 restored sources, 32 helpers, 16 exclusions/replaced harness
 entries and **133 unreviewed** of 465. Five UI sources remain.
+
+### Separate Web2 Modem password placeholder repair
+
+One of four restored upstream scenarios exposed a literal placeholder being stored
+when the previous interface was not a Modem. The separate repair preserves local
+configuration lookup and YOFC networking; full Web2/GWT build and 17 test cases pass.
+See [management UI audit](management-ui-test-restoration.md). Inventory: 285 restored
+sources, 32 helpers, 16 exclusions/replaced harness entries and **132 unreviewed**.
+Four UI sources remain; official OPC UA and runtime/IDEA acceptance remain unchanged.
