@@ -6150,7 +6150,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/AssetErrorTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Upstream error/cache/scale assertions retained as component-level tests using WireAsset and recording driver. Explicit OCD defaults replace ConfigurationAdmin defaults; read/listen paths have bounded setup and listener/executor cleanup. This does not claim real OSGi graph coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/MockDriver.java",
@@ -6161,7 +6174,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/MockDriver.java"
+    ],
+    "execution": "JUnit 5 component fixture",
+    "reason": "Upstream error/cache/scale assertions retained as component-level tests using WireAsset and recording driver. Explicit OCD defaults replace ConfigurationAdmin defaults; read/listen paths have bounded setup and listener/executor cleanup. This does not claim real OSGi graph coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/OnChangeCacheTest.java",
@@ -6172,7 +6190,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/OnChangeCacheTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Upstream error/cache/scale assertions retained as component-level tests using WireAsset and recording driver. Explicit OCD defaults replace ConfigurationAdmin defaults; read/listen paths have bounded setup and listener/executor cleanup. This does not claim real OSGi graph coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/ScaleOffsetTest.java",
@@ -6183,7 +6214,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/ScaleOffsetTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Upstream error/cache/scale assertions retained as component-level tests using WireAsset and recording driver. Explicit OCD defaults replace ConfigurationAdmin defaults; read/listen paths have bounded setup and listener/executor cleanup. This does not claim real OSGi graph coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/WireAssetTestBase.java",
@@ -6194,7 +6238,12 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/WireAssetTestBase.java"
+    ],
+    "execution": "JUnit 5 component fixture",
+    "reason": "Upstream error/cache/scale assertions retained as component-level tests using WireAsset and recording driver. Explicit OCD defaults replace ConfigurationAdmin defaults; read/listen paths have bounded setup and listener/executor cleanup. This does not claim real OSGi graph coverage."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/timer/test/TimerTest.java",
@@ -6216,7 +6265,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/asset/component/WireAssetTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Read/write and all five timestamp modes retained against current asset.component package and single-WireRecord output; request.timeout propagated, bounded config waits and executor cleanup."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/fifo/FifoTest.java",
@@ -6227,7 +6289,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.component.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.component.provider/src/test/java/org/eclipse/kura/internal/wire/fifo/FifoTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Both upstream queue modes retained. Latches hold emission while filling the queue; sequence envelopes prove order/discard behavior without sleeps or clock assumptions. Bounded joins stop the real emitter thread."
   },
   {
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/publisher/CloudPublisherTest.java",
@@ -6451,7 +6526,20 @@
     "destinations": [
       "kura-wires/bundles/org.eclipse.kura.wire.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-wires/bundles/org.eclipse.kura.wire.provider/src/test/java/org/eclipse/kura/internal/wire/WireGraphServiceImplTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Six graph CRUD/wire creation cases; real JSON codec with mocked service registry, filtered current ConfigurationService API, tracked component cleanup and explicit delete/persisted-property assertions."
   },
   {
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/EngineProviderTest.java",

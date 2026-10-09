@@ -73,3 +73,31 @@ Every batch uses Maven 3.10 and JDK 21. These counts are separate module reports
 The 13 CRL HTTP/download/refresh cases additionally pass through Failsafe with `-Posgi-it`, local random ports, isolated temporary files and bounded timeouts. The fixture waits for all CRL executors to terminate before removing its directory. Remaining real OSGi scenarios, sibling suites, IDEA JUnit invocation and full workspace acceptance are still to be completed.
 
 At the requested session pause on 2026-10-09, the source inventory has 465 entries: 181 restored sources, 11 restored helpers, six removed-functionality exclusions, six replaced legacy harness entries, one upstream-only API entry and 260 unreviewed sources. These are source-file audit counts, not test invocation counts. No entry is left in an in-flight adapting state.
+
+## Wires continuation: graph, asset and FIFO (2026-10-09)
+
+Eight more upstream source entries have been reviewed: six test sources and two
+component fixtures. They add 62 passing invocations: graph CRUD/wire creation 6,
+WireAsset read/write and timestamp modes 6, FIFO 2, asset errors 6, change cache 6,
+and scale/offset across read and event modes 36. The two selected modules report
+77 passing invocations including 15 previously restored cases; those 15 are not
+counted again as new coverage. Maven 3.10.0 / JDK 21, zero failures/errors/skips.
+
+- Asset fixtures use the current `asset.component` class, explicit OCD defaults,
+  local `request.timeout` and the single-`WireRecord` normal-output contract.
+- Error/cache/scale assertions run against real component logic with a recording
+  driver and mocked WireSupport. They replace the old graph/OSGi harness at the
+  component layer and do not claim new Equinox integration coverage.
+- FIFO tests hold the consumer while filling the queue, use ordered sequence
+  envelopes, and join the emitter after deactivation. Asset configuration waits
+  and executor termination are bounded; fixed sleeps and permanent latch waits
+  are removed. Graph tests close the service tracker after each case.
+- The cleanup assertions exposed a separate production defect, fixed in
+  `a0e23034ce`: [asset listener unregistration](asset-listener-unregistration.md).
+  Its two core regression cases are separate from the 62 restored invocations.
+
+Current inventory: 465 entries, 187 restored, 13 restored helpers, six
+removed-functionality exclusions, six replaced legacy harness entries, one
+upstream-only API entry, and **252 unreviewed**. Timer, database/REST graph and
+remaining real-container fixtures still need review; IDEA and final migration
+acceptance remain open.
