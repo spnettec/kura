@@ -235,14 +235,6 @@
             <artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId>
         </dependency>
         <!-- test-util -->
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.core.testutil</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.kura</groupId>
-            <artifactId>org.eclipse.kura.test</artifactId>
-        </dependency>
     </dependencies>
     
 </project>

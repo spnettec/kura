@@ -76,7 +76,6 @@
         <module>org.eclipse.kura.db.h2db.provider</module>
         <module>emulator</module>
         <module>tools</module>
-        <module>test-util</module>
     </modules>
 
     <properties>

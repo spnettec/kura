@@ -65,7 +65,6 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-networking/pom.xml" ]; then
     echo "=== Stage 2: building kura-networking addon .deb ==="
     $MVN "$@" -f "$SCRIPT_DIR/../kura-networking/pom.xml" clean install $MAVEN_PROPS \
-        -pl '!tests,!tests/org.eclipse.kura.core.net.test,!tests/org.eclipse.kura.linux.net.test,!tests/org.eclipse.kura.net.admin.firewall.test,!tests/org.eclipse.kura.net.configuration.test,!tests/org.eclipse.kura.network.threat.manager.test,!tests/org.eclipse.kura.nm.test,!tests/org.eclipse.kura.rest.network.configuration.provider.test,!tests/org.eclipse.kura.rest.network.status.provider.test' \
         && $MVN "$@" -f "$SCRIPT_DIR/../kura-networking/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
@@ -111,7 +110,6 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-deployment/pom.xml" ]; then
     echo "=== Stage 2: building kura-deployment addon .deb ==="
     $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/pom.xml" clean install $MAVEN_PROPS \
-        -pl '!tests,!tests/org.eclipse.kura.core.deployment.test,!tests/org.eclipse.kura.deployment.agent.test,!tests/org.eclipse.kura.rest.packages.provider.test' \
         && $MVN "$@" -f "$SCRIPT_DIR/../kura-deployment/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else
@@ -130,7 +128,6 @@ fi
 if [ -f "$SCRIPT_DIR/../kura-triton/pom.xml" ]; then
     echo "=== Stage 2: building kura-triton addon .deb ==="
     $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/pom.xml" clean install $MAVEN_PROPS \
-        -pl '!tests' \
         && $MVN "$@" -f "$SCRIPT_DIR/../kura-triton/distrib/pom.xml" clean install $MAVEN_PROPS \
         || exit 1
 else

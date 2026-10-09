@@ -12,6 +12,6 @@ Import-Package: com.github.rodionmoiseev.c10n,
  com.github.rodionmoiseev.c10n.annotations,
  org.eclipse.kura;version="[1.2,2.0)"
 Bundle-ActivationPolicy: lazy
- .
+Bundle-ClassPath: .
 Eclipse-ExtensibleAPI: true
 
