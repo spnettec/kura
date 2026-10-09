@@ -607,3 +607,10 @@ virtual-thread behavior and correcting weak equality/connection fixtures. See
 [Cloud audit](cloud-test-restoration.md). Inventory: 323 restored sources, 33 helpers,
 19 exclusions/replaced harness entries and **90 unreviewed**. Remaining source
 audit, runtime and IDEA acceptance are still open.
+
+### Separate Sparkplug listener cleanup
+
+A negative-confirmed regression now verifies listener removal after disconnect on
+endpoint deactivation. All 26 Sparkplug tests and isolated bundle installation pass.
+See [Cloud audit](cloud-test-restoration.md). Inventory remains **90 unreviewed**;
+source/runtime/IDEA work continues.

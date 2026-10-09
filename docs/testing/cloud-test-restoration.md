@@ -157,3 +157,11 @@ check returned false/true values. Fixtures deactivate every endpoint and close t
 current virtual-thread executor; activation exceptions no longer disappear into an
 unasserted field. MQTT wildcard/QoS matching uses the actual local Paho matcher.
 Real MQTT/DS/IDEA acceptance remains open.
+
+## Separate Sparkplug endpoint listener cleanup
+
+A new negative regression confirms that endpoint deactivation previously retained
+its DataService listener. A separate production fix unregisters the endpoint after
+disconnect and before its existing virtual-thread executor shutdown. Ordering is
+asserted. All 26 current Sparkplug cases pass and isolated bundle installation
+succeeds on Maven 3.10.0/JDK 21; no metadata changes. Real DS/MQTT remains open.

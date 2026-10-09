@@ -2633,9 +2633,9 @@
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/endpoint/test/DataServiceTest.java"
     ],
     "execution": "surefire",
-    "reason": "All upstream endpoint/subscription cases. Symmetric equality and valid hash contract; connected result values checked; per-test endpoint shutdown retains local virtual-thread executor. No production changes. See cloud-test-restoration.md.",
+    "reason": "Four upstream DataService facade cases plus a negative-confirmed listener-unregistration regression. Separate production fix unregisters the endpoint after disconnecting; virtual-thread shutdown remains. See cloud-test-restoration.md.",
     "validation": {
-      "tests": 4,
+      "tests": 5,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
