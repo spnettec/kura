@@ -65,3 +65,22 @@ fields are covered. Existing Protobuf 4.29.3-generated source and 4.30.2 runtime
 unchanged. Generated-file graph parse coverage is absent; targeted source reads
 confirmed the concrete builders. The complete Kapua module passes 90 cases on
 Maven 3.10.0/JDK 21/Jupiter, zero failures/errors/skips. No production changes.
+
+## Birth/APPS/DC publishing and device-profile continuation
+
+Two sources restore 17 cases: 15 lifecycle publication scenarios and two position
+profile scenarios. The full Kapua module passes 107 cases, zero failures/errors/skips
+on Maven 3.10.0/JDK 21/Jupiter. Production unchanged in this restoration commit.
+
+A scoped scheduler-factory mock captures the actual 30-second request; assertions
+check no early publication before explicitly running its task, then verify topic,
+QoS, retain and priority. The old 25-second/no-QoS-0 check was ineffective. Immediate
+messages use actual onMessagePublished acknowledgements on an owned virtual-thread
+executor with termination assertions. Updates follow activation, unregister cases
+remove a real registered handler, and teardown deactivates the service. Position
+radians-to-degrees and absent service remain covered. Shared production callback
+executor is untouched. No real MQTT/Equinox or wall-clock timing claim.
+
+Source audit found that deactivate leaves the per-instance birth scheduler/pending
+task alive. Test cleanup currently owns its fake scheduler explicitly. This
+production lifecycle defect will be verified and repaired in a separate commit.

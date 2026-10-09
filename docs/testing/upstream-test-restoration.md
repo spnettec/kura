@@ -558,3 +558,11 @@ all 90 current Kapua cases pass without production or dependency-version changes
 See [Cloud audit](cloud-test-restoration.md). Inventory: 310 restored sources,
 32 helpers, 19 exclusions/replaced harness entries and **104 unreviewed**.
 Remaining source audit, real runtime and IDEA acceptance remain open.
+
+### Kapua lifecycle publication continuation
+
+Two sources restore 17 scenarios with controlled 30-second scheduling and actual
+message acknowledgements; all 107 Kapua cases pass. See [Cloud audit](cloud-test-restoration.md).
+Inventory: 312 restored sources, 32 helpers, 19 exclusions/replaced harness entries
+and **102 unreviewed**. A scheduler deactivation defect is isolated for separate
+regression/fix; remaining source/runtime/IDEA work is still open.
