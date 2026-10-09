@@ -322,3 +322,16 @@ harness entries and **171 unreviewed** of 465. Networking has no unreviewed sour
 entries, but its real D-Bus/Linux/HTTP/MQTT/DS/IDEA acceptance is unfinished. Core
 125, Triton 15, Camel 14, deployment 7, management UI 7 and official OPC UA 3 remain
 unreviewed; official OPC UA stays unchanged as requested.
+
+### Camel continuation
+
+All 14 Camel source entries were reviewed and restored: 12 suites plus two helpers.
+52 Jupiter cases pass under Maven 3.10.0 / JDK 21, including real XML routes and
+registered type conversion on the existing Camel 4.20.0. See the
+[Camel audit](camel-test-restoration.md) for lifecycle, Future and assertion
+adaptations and the remaining OSGi/runtime acceptance.
+
+Current inventory: 263 restored sources, 29 restored helpers, 16 exclusions/replaced
+harness entries and **157 unreviewed** of 465. No production source or handwritten
+OSGi metadata changed. Core 125, Triton 15, deployment 7, management UI 7 and
+official OPC UA 3 remain unreviewed; official OPC UA stays unchanged as requested.

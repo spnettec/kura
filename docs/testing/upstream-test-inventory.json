@@ -3741,7 +3741,16 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/test/component/AbstractRouterTest.java"
+    ],
+    "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
+    "kind": "helper",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "deferredValidation": [
+      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/PayloadTest.java",
@@ -3752,7 +3761,23 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/test/component/PayloadTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "deferredValidation": [
+      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/RouterTest.java",
@@ -3763,7 +3788,23 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/test/component/RouterTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "deferredValidation": [
+      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java",
@@ -3774,7 +3815,16 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java"
+    ],
+    "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
+    "kind": "helper",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "deferredValidation": [
+      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java",
@@ -3785,7 +3835,23 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "deferredValidation": [
+      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+    ]
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/DependencyRunnerTest.java",
@@ -3796,7 +3862,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/DependencyRunnerTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/bean/PayloadFactoryTest.java",
@@ -3807,7 +3886,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/bean/PayloadFactoryTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/camelcloud/DefaultCamelCloudServiceTest.java",
@@ -3818,7 +3910,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/camelcloud/DefaultCamelCloudServiceTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentResolverTest.java",
@@ -3829,7 +3934,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentResolverTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentTest.java",
@@ -3840,7 +3958,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudProducerTest.java",
@@ -3851,7 +3982,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudProducerTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/component/ConfigurationTest.java",
@@ -3862,7 +4006,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/component/ConfigurationTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/internal/camelcloud/CamelCloudClientTest.java",
@@ -3873,7 +4030,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/internal/camelcloud/CamelCloudClientTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/internal/utils/KuraServiceFactoryTest.java",
@@ -3884,7 +4054,20 @@
     "destinations": [
       "kura-camel/bundles/org.eclipse.kura.camel"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-camel/bundles/org.eclipse.kura.camel/src/test/java/org/eclipse/kura/camel/internal/utils/KuraServiceFactoryTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/main/java/org/eclipse/kura/core/deployment/download/impl/test/DownloadImplITTest.java",
