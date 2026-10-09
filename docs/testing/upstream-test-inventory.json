@@ -3736,7 +3736,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/AbstractRouterTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3748,7 +3747,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/PayloadTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3760,7 +3758,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/RouterTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3772,7 +3769,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3784,7 +3780,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3796,7 +3791,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/DependencyRunnerTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3808,7 +3802,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/bean/PayloadFactoryTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3820,7 +3813,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/camelcloud/DefaultCamelCloudServiceTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3832,7 +3824,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentResolverTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3844,7 +3835,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudComponentTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3856,7 +3846,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/cloud/KuraCloudProducerTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3868,7 +3857,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/component/ConfigurationTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3880,7 +3868,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/internal/camelcloud/CamelCloudClientTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3892,7 +3879,6 @@
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/internal/utils/KuraServiceFactoryTest.java",
     "upstreamRepository": "kura-camel",
     "upstreamRevision": "b51b9dd0c840b1b84cd288099965a91624fb7e81",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-camel-b51b9dd0",
     "upstreamModule": "org.eclipse.kura.camel.test",
     "productionModule": "org.eclipse.kura.camel",
     "destinations": [
@@ -3904,7 +3890,6 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/main/java/org/eclipse/kura/core/deployment/download/impl/test/DownloadImplITTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
@@ -3916,7 +3901,6 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/main/java/org/eclipse/kura/core/deployment/download/impl/test/DownloadTestRestService.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
@@ -3928,7 +3912,6 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/CloudDeploymentHandlerV2Test.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
@@ -3940,19 +3923,30 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/download/impl/DeploymentPackageDownloadOptionsTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/download/impl/DeploymentPackageDownloadOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/download/impl/DownloadImplTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
@@ -3964,31 +3958,54 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/download/impl/HttpDownloadCountingOutputStreamTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/download/impl/HttpDownloadCountingOutputStreamTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/install/DeploymentPackageInstallOptionsTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/install/DeploymentPackageInstallOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/install/InstallImplTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
@@ -4000,31 +4017,54 @@
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/uninstall/DeploymentPackageUninstallOptionsTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/uninstall/DeploymentPackageUninstallOptionsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/download/hook/DownloadHookManagerTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.core.deployment.test",
     "productionModule": "org.eclipse.kura.core.deployment",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/download/hook/DownloadHookManagerTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.deployment.agent.test/src/test/java/org/eclipse/kura/deployment/agent/impl/DeploymentAgentTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.deployment.agent.test",
     "productionModule": "org.eclipse.kura.deployment.agent",
     "destinations": [
@@ -4036,19 +4076,30 @@
     "source": "tests/org.eclipse.kura.deployment.agent.test/src/test/java/org/eclipse/kura/deployment/agent/impl/MarketplacePackageDescriptorTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.deployment.agent.test",
     "productionModule": "org.eclipse.kura.deployment.agent",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.deployment.agent"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.deployment.agent/src/test/java/org/eclipse/kura/deployment/agent/impl/MarketplacePackageDescriptorTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/main/java/org/eclipse/kura/rest/packages/provider/test/PackagesRestServiceTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.rest.packages.provider.test",
     "productionModule": "org.eclipse.kura.rest.packages.provider",
     "destinations": [
@@ -4060,19 +4111,30 @@
     "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/test/java/org/eclipse/kura/internal/rest/deployment/agent/test/DeploymentRestServiceUnitTest.java",
     "upstreamRepository": "kura-deployment",
     "upstreamRevision": "6b403dbd8bdd7e6b6a466181c10a6b875eac5e23",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-deployment-6b403dbd",
     "upstreamModule": "org.eclipse.kura.rest.packages.provider.test",
     "productionModule": "org.eclipse.kura.rest.packages.provider",
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider/src/test/java/org/eclipse/kura/internal/rest/deployment/agent/test/DeploymentRestServiceUnitTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Adapted to current deployment APIs, isolated mock fixtures and explicit test runtime dependencies."
   },
   {
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/ConsoleTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4084,7 +4146,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/net2/configuration/PreventModemPasswordPlaceholderTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4096,7 +4157,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/servlet/LogServletTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4108,7 +4168,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtComponentServiceInternalTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4120,7 +4179,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilDefaultValueTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4132,7 +4190,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/server/util/GwtServerUtilPasswordTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4144,7 +4201,6 @@
     "source": "org.eclipse.kura.web2/src/test/java/org/eclipse/kura/web/shared/ScaleOffsetTypeTest.java",
     "upstreamRepository": "kura-management-ui",
     "upstreamRevision": "3518ad6ebcafa79f91000045a908d80d4f001563",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-management-ui-3518ad6e",
     "upstreamModule": "org.eclipse.kura.web2",
     "productionModule": "org.eclipse.kura.web2",
     "destinations": [
@@ -4156,7 +4212,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/EthernetInterfaceConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4168,7 +4223,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/FirewallConfigurationTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4180,7 +4234,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/IpConfigurationInterpreterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4192,7 +4245,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/LoopbackInterfaceConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4204,7 +4256,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockConfig.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4216,7 +4267,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterface.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4228,7 +4278,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterfaceConfigImpl.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4240,7 +4289,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterfaceImpl.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4252,7 +4300,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/ModemConfigurationInterpreterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4264,7 +4311,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/NetInterfaceAddressConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4276,7 +4322,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/NetworkConfigurationTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4288,7 +4333,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiAccessPointImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4300,7 +4344,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiConfigurationInterpreterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4312,7 +4355,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiInterfaceAddressConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4324,7 +4366,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiInterfaceConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4336,7 +4377,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceAddressConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4348,7 +4388,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceConfigImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4360,7 +4399,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/util/NetworkUtilTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4372,7 +4410,6 @@
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/net/dhcp/DhcpServerConfigIP4Test.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.core.net.test",
     "productionModule": "org.eclipse.kura.core.net",
     "destinations": [
@@ -4384,7 +4421,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/NetworkServiceImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4396,7 +4432,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/DhcpServerManagerTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4408,7 +4443,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqConfigConverterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4420,7 +4454,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dhcp/server/DnsmasqToolTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4432,7 +4465,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/dns/LinuxDnsTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4444,7 +4476,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/AbstractLinuxFirewallTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4456,7 +4487,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/FilterForwardChainRuleTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4468,7 +4498,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/FirewallTestUtils.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4480,7 +4509,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/IpTablesConfigTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4492,7 +4520,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/IptablesConfigIPv6Test.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4504,7 +4531,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/LinuxFirewallTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4516,7 +4542,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/LocalRuleTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4528,7 +4553,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/NatPostroutingChainRuleTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4540,7 +4564,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/iptables/NatPreroutingChainRuleTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4552,7 +4575,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/ppp/PppLinuxTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4564,7 +4586,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/CommandExecutorServiceStub.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4576,7 +4597,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/DhcpLeaseToolTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4588,7 +4608,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/ExtractWiFiCapabilitiesTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4600,7 +4619,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/IwCapabilityToolTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4612,7 +4630,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/LinuxNetworkUtilTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4624,7 +4641,6 @@
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/util/ParseIwScanOutputTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.linux.net.test",
     "productionModule": "org.eclipse.kura.linux.net",
     "destinations": [
@@ -4636,7 +4652,6 @@
     "source": "tests/org.eclipse.kura.net.admin.firewall.test/src/test/java/org/eclipse/kura/net/admin/FirewallConfigurationServiceImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.net.admin.firewall.test",
     "productionModule": "org.eclipse.kura.net.admin.firewall",
     "destinations": [
@@ -4648,7 +4663,6 @@
     "source": "tests/org.eclipse.kura.net.admin.firewall.test/src/test/java/org/eclipse/kura/net/admin/FirewallFloodingProtectionTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.net.admin.firewall.test",
     "productionModule": "org.eclipse.kura.net.admin.firewall",
     "destinations": [
@@ -4660,7 +4674,6 @@
     "source": "tests/org.eclipse.kura.net.configuration.test/src/test/java/org/eclipse/kura/net/configuration/NetworkConfigurationServiceCommonTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.net.configuration.test",
     "productionModule": "org.eclipse.kura.net.configuration",
     "destinations": [
@@ -4672,7 +4685,6 @@
     "source": "tests/org.eclipse.kura.network.threat.manager.test/src/test/java/org/eclipse/kura/network/threat/manager/FloodingProtectionConfiguratorTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.network.threat.manager.test",
     "productionModule": "org.eclipse.kura.network.threat.manager",
     "destinations": [
@@ -4684,43 +4696,66 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/KuraInterfaceStatusTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/KuraInterfaceStatusTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/KuraModemModeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "not-applicable-current-api",
+    "reason": "Upstream KuraModemMode facade is absent from this fork. Current MMModemMode conversions are retained and tested; no modem functionality or production API is removed/restored."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/KuraWifiSecurityTypeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/KuraWifiSecurityTypeTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/ModemManagerDbusWrapperTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4732,7 +4767,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/ModemTaskManagerTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4744,7 +4778,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/ModemTaskSchedulerTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4756,7 +4789,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/NMDbusConnectorTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4768,31 +4800,54 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/NetworkPropertiesTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/NetworkPropertiesTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/SemanticVersionTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/SemanticVersionTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/WpaSupplicantDbusWrapperTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4804,7 +4859,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/NMConfigurationServiceImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4816,7 +4870,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/NMSettingsComparatorTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4828,7 +4881,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/NMSettingsConverterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4840,7 +4892,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/monitor/DhcpServerMonitorTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4852,7 +4903,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/monitor/DnsServerMonitorTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4864,7 +4914,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/writer/DhcpServerConfigWriterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4876,7 +4925,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/configuration/writer/FirewallNatConfigWriterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -4888,223 +4936,441 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMBearerIpFamilyTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMBearerIpFamilyTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModem3gppRegistrationStateTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModem3gppRegistrationStateTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemAccessTechnologyTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemAccessTechnologyTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemBandTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemBandTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 369,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemCapabilityTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemCapabilityTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemLocationSourceTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemLocationSourceTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemModeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemModeTest.java"
+    ],
+    "excludedNestedClasses": {
+      "MMModemModeToBitMaskFromModemModeSetTest": "Upstream-only toBitMask(Set) method is absent in the current API; retained inbound bitmask conversion is tested."
+    },
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemPortTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemPortTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMModemPowerStateTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMModemPowerStateTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMSimESimStatusTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMSimESimStatusTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/MMSimTypeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/MMSimTypeTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NM80211ApFlagsTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NM80211ApFlagsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NM80211ApSecurityFlagsTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NM80211ApSecurityFlagsTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NM80211ModeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NM80211ModeTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NMDeviceStateReasonTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NMDeviceStateReasonTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 69,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NMDeviceStateTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NMDeviceStateTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NMDeviceTypeTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NMDeviceTypeTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/enums/NMDeviceWifiCapabilitiesTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.nm"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.nm/src/test/java/org/eclipse/kura/nm/enums/NMDeviceWifiCapabilitiesTest.java"
+    ],
+    "execution": "JUnit 5/Surefire",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": 21
+    },
+    "reason": "Constructor/field parameterization and enclosed suites converted to JUnit 5 MethodSource and Nested; current fork semantics retained without D-Bus or device access."
   },
   {
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/position/MMPositionProviderTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5116,7 +5382,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/signal/handlers/NMModemTaskHandlerTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5128,7 +5393,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/signal/handlers/WpaScanDoneHandlerTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5140,7 +5404,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/status/NMStatusConverterSignalConverterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5152,7 +5415,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/status/NMStatusConverterTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5164,7 +5426,6 @@
     "source": "tests/org.eclipse.kura.nm.test/src/test/java/org/eclipse/kura/nm/status/NMStatusServiceImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.nm.test",
     "productionModule": "org.eclipse.kura.nm",
     "destinations": [
@@ -5176,7 +5437,6 @@
     "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/NetworkConfigurationRestServiceTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.rest.network.configuration.provider.test",
     "productionModule": "org.eclipse.kura.rest.network.configuration.provider",
     "destinations": [
@@ -5188,7 +5448,6 @@
     "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/MockComponentConfiguration.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.rest.network.configuration.provider.test",
     "productionModule": "org.eclipse.kura.rest.network.configuration.provider",
     "destinations": [
@@ -5200,7 +5459,6 @@
     "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/responses/RestNetworkConfigurationJson.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.rest.network.configuration.provider.test",
     "productionModule": "org.eclipse.kura.rest.network.configuration.provider",
     "destinations": [
@@ -5212,7 +5470,6 @@
     "source": "tests/org.eclipse.kura.rest.network.status.provider.test/src/main/java/org/eclipse/kura/rest/network/status/provider/test/NetworkStatusRestServiceImplTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-networking-20da91a3",
     "upstreamModule": "org.eclipse.kura.rest.network.status.provider.test",
     "productionModule": "org.eclipse.kura.rest.network.status.provider",
     "destinations": [
@@ -5224,7 +5481,6 @@
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/CertificateAuthTest.java",
     "upstreamRepository": "kura-opcua",
     "upstreamRevision": "aee29e9fbb9f7059db3b0280169c411493c87f60",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-opcua-aee29e9f",
     "upstreamModule": "org.eclipse.kura.driver.opcua.test",
     "productionModule": "org.eclipse.kura.driver.opcua.provider",
     "destinations": [
@@ -5236,7 +5492,6 @@
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/OpcUaDriverTest.java",
     "upstreamRepository": "kura-opcua",
     "upstreamRevision": "aee29e9fbb9f7059db3b0280169c411493c87f60",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-opcua-aee29e9f",
     "upstreamModule": "org.eclipse.kura.driver.opcua.test",
     "productionModule": "org.eclipse.kura.driver.opcua.provider",
     "destinations": [
@@ -5248,7 +5503,6 @@
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/TestNamespace.java",
     "upstreamRepository": "kura-opcua",
     "upstreamRevision": "aee29e9fbb9f7059db3b0280169c411493c87f60",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-opcua-aee29e9f",
     "upstreamModule": "org.eclipse.kura.driver.opcua.test",
     "productionModule": "org.eclipse.kura.driver.opcua.provider",
     "destinations": [
@@ -5260,7 +5514,6 @@
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/test/java/org/eclipse/kura/driver/opcua/OpcUaChannelDescriptorTest.java",
     "upstreamRepository": "kura-opcua",
     "upstreamRevision": "aee29e9fbb9f7059db3b0280169c411493c87f60",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-opcua-aee29e9f",
     "upstreamModule": "org.eclipse.kura.driver.opcua.test",
     "productionModule": "org.eclipse.kura.driver.opcua.provider",
     "destinations": [
@@ -5285,7 +5538,6 @@
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/test/java/org/eclipse/kura/driver/opcua/OpcUaDriverTest.java",
     "upstreamRepository": "kura-opcua",
     "upstreamRevision": "aee29e9fbb9f7059db3b0280169c411493c87f60",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-opcua-aee29e9f",
     "upstreamModule": "org.eclipse.kura.driver.opcua.test",
     "productionModule": "org.eclipse.kura.driver.opcua.provider",
     "destinations": [
@@ -5310,7 +5562,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/GpsDeviceTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5335,7 +5586,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/GpsDeviceTrackerTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5360,7 +5610,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/ModemGpsStatusTrackerTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5385,7 +5634,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/NMEAParserTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5410,7 +5658,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/PositionServiceTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5435,7 +5682,6 @@
     "source": "tests/org.eclipse.kura.linux.position.test/src/test/java/org/eclipse/kura/linux/position/UseGpsdPositionProviderTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.linux.position.test",
     "productionModule": "org.eclipse.kura.linux.position",
     "destinations": [
@@ -5460,7 +5706,6 @@
     "source": "tests/org.eclipse.kura.rest.position.provider.test/src/test/java/org/eclipse/kura/rest/position/provider/test/PositionRestServiceTest.java",
     "upstreamRepository": "kura-position",
     "upstreamRevision": "6ff954e24f7774f25decedcbb0a7b9b5427584b8",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-position-6ff954e2",
     "upstreamModule": "org.eclipse.kura.rest.position.provider.test",
     "productionModule": "org.eclipse.kura.rest.position.provider",
     "destinations": [
@@ -5485,7 +5730,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/GpuMetricsParserTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5497,7 +5741,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerContainerManagerTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5509,7 +5752,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerEncryptionUtilsTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5521,7 +5763,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerNativeManagerTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5533,7 +5774,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerRemoteManagerTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5545,7 +5785,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5557,7 +5796,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5569,7 +5807,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5581,7 +5818,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5593,7 +5829,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5605,7 +5840,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5617,7 +5851,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5629,7 +5862,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceOptionsTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5641,7 +5873,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5653,7 +5884,6 @@
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
     "upstreamRepository": "kura-triton",
     "upstreamRevision": "13d23a95d89bdb0cebc5bb5e0762239f6a26b133",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-triton-13d23a95",
     "upstreamModule": "org.eclipse.kura.ai.triton.server.test",
     "productionModule": "org.eclipse.kura.ai.triton.server",
     "destinations": [
@@ -5665,7 +5895,6 @@
     "source": "tests/org.eclipse.kura.asset.helper.provider.test/src/test/java/org/eclipse/kura/internal/asset/AssetServiceImplTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.helper.provider.test",
     "productionModule": "org.eclipse.kura.asset.helper.provider",
     "destinations": [
@@ -5677,7 +5906,6 @@
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/helper/test/ChannelRecordHelperTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.provider.test",
     "productionModule": "org.eclipse.kura.asset.provider",
     "destinations": [
@@ -5689,7 +5917,6 @@
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/AssetTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.provider.test",
     "productionModule": "org.eclipse.kura.asset.provider",
     "destinations": [
@@ -5701,7 +5928,6 @@
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/AssetTestsSuite.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.provider.test",
     "productionModule": "org.eclipse.kura.asset.provider",
     "destinations": [
@@ -5713,7 +5939,6 @@
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/StubChannelDescriptor.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.provider.test",
     "productionModule": "org.eclipse.kura.asset.provider",
     "destinations": [
@@ -5725,7 +5950,6 @@
     "source": "tests/org.eclipse.kura.asset.provider.test/src/main/java/org/eclipse/kura/asset/provider/test/StubDriver.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.asset.provider.test",
     "productionModule": "org.eclipse.kura.asset.provider",
     "destinations": [
@@ -5737,7 +5961,6 @@
     "source": "tests/org.eclipse.kura.internal.asset.cloudlet.test/src/test/java/org/eclipse/kura/internal/asset/cloudlet/AssetCloudletTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.internal.asset.cloudlet.test",
     "productionModule": "org.eclipse.kura.asset.cloudlet.provider",
     "destinations": [
@@ -5749,7 +5972,6 @@
     "source": "tests/org.eclipse.kura.rest.asset.provider.test/src/test/java/org/eclipse/kura/internal/rest/asset/AssetRestServiceTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.rest.asset.provider.test",
     "productionModule": "org.eclipse.kura.rest.asset.provider",
     "destinations": [
@@ -5761,7 +5983,6 @@
     "source": "tests/org.eclipse.kura.rest.wire.provider.test/src/main/java/org/eclipse/kura/rest/wire/provider/test/Snippets.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.rest.wire.provider.test",
     "productionModule": "org.eclipse.kura.rest.wire.provider",
     "destinations": [
@@ -5773,7 +5994,6 @@
     "source": "tests/org.eclipse.kura.rest.wire.provider.test/src/main/java/org/eclipse/kura/rest/wire/provider/test/WireGraphRestServiceTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.rest.wire.provider.test",
     "productionModule": "org.eclipse.kura.rest.wire.provider",
     "destinations": [
@@ -5785,7 +6005,6 @@
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentOptionsTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.ai.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.ai.component.provider",
     "destinations": [
@@ -5797,7 +6016,6 @@
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/AIComponentTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.ai.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.ai.component.provider",
     "destinations": [
@@ -5809,7 +6027,6 @@
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/InferenceEngineServiceMock.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.ai.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.ai.component.provider",
     "destinations": [
@@ -5821,7 +6038,6 @@
     "source": "tests/org.eclipse.kura.wire.ai.component.provider.test/src/test/java/org/eclipse/kura/wire/ai/component/provider/TensorListAdapterTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.ai.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.ai.component.provider",
     "destinations": [
@@ -5833,7 +6049,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/AssetErrorTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5845,7 +6060,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/MockDriver.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5857,7 +6071,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/OnChangeCacheTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5869,7 +6082,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/ScaleOffsetTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5881,7 +6093,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/asset/test/WireAssetTestBase.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5893,7 +6104,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/timer/test/TimerTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5905,7 +6115,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/asset/WireAssetTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5917,7 +6126,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/fifo/FifoTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5929,7 +6137,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/publisher/CloudPublisherTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5941,7 +6148,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/regexfilter/RegexFilterTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5953,7 +6159,6 @@
     "source": "tests/org.eclipse.kura.wire.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/subscriber/CloudSubscriberTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.component.provider",
     "destinations": [
@@ -5965,7 +6170,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/store/test/DbWireRecordStoreTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -5977,7 +6181,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/ColumnTypeChangeTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -5989,7 +6192,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/DbComponentsTestBase.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6001,7 +6203,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/DbWireComponentsTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6013,7 +6214,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/MultipleValueStoreTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6025,7 +6225,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/StoreTestTarget.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6037,7 +6236,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/UnsuppotredTypeTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6049,7 +6247,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/main/java/org/eclipse/kura/internal/wire/db/test/WireComponentTestTarget.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6061,7 +6258,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/db/filter/DbWireRecordFilterTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6073,7 +6269,6 @@
     "source": "tests/org.eclipse.kura.wire.db.component.provider.test/src/test/java/org/eclipse/kura/internal/wire/db/store/DbWireRecordStoreTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.db.component.provider.test",
     "productionModule": "org.eclipse.kura.wire.db.component.provider",
     "destinations": [
@@ -6085,7 +6280,6 @@
     "source": "tests/org.eclipse.kura.wire.provider.test/src/test/java/org/eclipse/kura/internal/wire/WireGraphServiceImplTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.provider.test",
     "productionModule": "org.eclipse.kura.wire.provider",
     "destinations": [
@@ -6097,7 +6291,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/EngineProviderTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6109,7 +6302,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/TestScripts.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6121,7 +6313,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentOptionsTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6133,7 +6324,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/conditional/component/ConditionalComponentTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6145,7 +6335,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/FilterComponentOptionsTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6157,7 +6346,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/IOScriptBindingsTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [
@@ -6169,7 +6357,6 @@
     "source": "tests/org.eclipse.kura.wire.script.tools.test/src/test/java/org/eclipse/kura/wire/script/tools/filter/component/ScriptContextDropTest.java",
     "upstreamRepository": "kura-wires",
     "upstreamRevision": "ac6d6159fb8262cc02e83dd23b2d1cb11f74a3d1",
-    "upstreamSnapshot": "/Users/heyoulin/iot-kura-develop/test-restoration/upstream-kura-wires-ac6d6159",
     "upstreamModule": "org.eclipse.kura.wire.script.tools.test",
     "productionModule": "org.eclipse.kura.wire.script.tools",
     "destinations": [

@@ -55,6 +55,8 @@ Validation commands use the migration local repository configured for this works
 - XML inventory/configuration serialization: eight cases run in the cross-module consumer. Both previously disabled OCD scenarios now use an explicit descriptor fixture, preserving the fork's snapshot behavior of omitting the descriptor while retaining properties. The consumer now reports 127 cases.
 - Position sibling: 67 serial/GPSd/parser/tracker/service cases and eight REST cases pass. Fixtures use the current `CommConnectionFactory` contract, classpath resources and explicit thread/provider cleanup; all hardware endpoints are mocked.
 - OPC UA sibling: nine basic driver/descriptor cases pass against Milo 1.1.2, adapted from upstream 0.6.16 APIs. Stable IDs and localized names are checked separately. YOFC's independent PLC4J OPC UA integration is outside this restoration; old server/OSGi test fixtures are not claimed as passing or compatible.
+- Deployment sibling: 61 options, hook, download, marketplace and REST cases pass. A separate fix configures the Kura SSL factory before requesting an HTTPS response; a negative test run confirms the old order fails the assertion.
+- Networking sibling: 988 parameterized enum/property/status cases pass. Jupiter method sources and nested suites replace the old JUnit 4 runners. Upstream-only modem APIs are recorded explicitly, and the fork's existing unmanaged/disabled interface behavior is preserved.
 
 Every batch uses Maven 3.10 and JDK 21. These counts are separate module reports and are not added to repeated dependency-module runs as a claimed workspace-wide total.
 
