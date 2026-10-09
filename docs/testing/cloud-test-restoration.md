@@ -179,3 +179,22 @@ errors and the current String password/CryptoService path. Real unconnected MQTT
 client objects exercise SSL-manager rebinding and ordered updating/updated callbacks;
 teardown deactivates the transport. No broker or network connection is opened.
 Real MQTT/DS/IDEA acceptance remains open.
+
+## Sparkplug factory and Protobuf type continuation
+
+Two test sources and one shared helper add 60 passing cases: factory nine, Protobuf
+51. Full Sparkplug module passes 119 cases, zero failures/errors/skips, on Maven
+3.10.0/JDK 21/Jupiter. Production and handwritten OSGi metadata unchanged.
+
+Factory scenarios preserve arbitrary endpoint PIDs, timestamp child PIDs, Chinese
+name/description fields, target-based lookup excluding the endpoint, and one final
+snapshot. Six upstream cases remain applicable; the wrong-prefix rejection case is
+explicitly excluded. Three added cases cover custom metadata and null/empty generated
+endpoint PIDs. No upstream suffix-derived IDs or factory marker is imported.
+
+The upstream type tests called inference rather than the explicit-type overload and
+never checked encoded datatype. Fixtures now use Byte/Short/BigInteger correctly and
+assert the encoded type and value, including unsigned upper limits. All 38 upstream
+scenarios are retained, with 13 additions for DateTime, eleven inferred Java types
+and an actual binary/Unicode serialization round trip. Generated protobuf sources
+and library versions are unchanged. Real MQTT/DS/IDEA acceptance remains open.

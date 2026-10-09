@@ -622,3 +622,11 @@ assertion is explicitly excluded. Local password and lifecycle behavior is retai
 See [Cloud audit](cloud-test-restoration.md). Inventory: 325 restored sources,
 33 helpers, 19 exclusions/replaced harness entries and **88 unreviewed**. Source,
 real runtime and IDEA acceptance remain open.
+
+### Sparkplug factory and Protobuf continuation
+
+Two sources plus a helper add 60 passing cases; full Sparkplug module passes 119.
+Factory tests preserve local PID/i18n behavior; Protobuf cases now assert actual
+encoded types. See [Cloud audit](cloud-test-restoration.md). Inventory: 327 restored
+sources, 34 helpers, 19 exclusions/replaced harness entries and **85 unreviewed**.
+Remaining source audit, runtime and IDEA acceptance continue.

@@ -2714,9 +2714,28 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/factory/test/SparkplugCloudConnectionFactoryTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Six applicable upstream scenarios plus three local generated/custom PID cases. Preserves timestamp child PIDs, target-based lookup excluding endpoint, snapshot ordering and localized metadata. See cloud-test-restoration.md.",
+    "excludedScenarios": [
+      {
+        "scenario": "shouldFailWithOtherComponentPid",
+        "reason": "Local factory intentionally accepts custom PIDs; rejecting non-prefix names would revert YOFC behavior."
+      }
+    ]
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/message/test/SparkplugBProtobufPayloadBuilderTest.java",
@@ -2725,9 +2744,22 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/message/test/SparkplugBProtobufPayloadBuilderTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "All 38 upstream scenarios strengthened to invoke explicit data types and assert encoded datatype; adds DateTime, 11 actual Java-type inference cases and a serialized round trip. Correct Byte/Short/BigInteger fixtures exercise the current API, including unsigned upper boundaries. See cloud-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/message/test/TypeMapperCase.java",
@@ -2736,9 +2768,14 @@
     "destinations": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/message/test/TypeMapperCase.java"
+    ],
+    "execution": "surefire",
+    "reason": "Shared parameter fixture supports explicit and inferred Sparkplug protobuf type coverage. See cloud-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDataTransportTest.java",
