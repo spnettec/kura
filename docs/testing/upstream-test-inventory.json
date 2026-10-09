@@ -152,9 +152,22 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.orchestration.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-container/bundles/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerConfigurationTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Upstream configuration/descriptor scenarios adapted to local enforcement.* keys and disabled empty-map default, with two explicit local-behavior regressions. Test-only changes; no Docker connection. See container-test-restoration.md.",
+    "validation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "kura/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerInstanceDescriptorTest.java",
@@ -163,9 +176,22 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.orchestration.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-container/bundles/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerInstanceDescriptorTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Upstream configuration/descriptor scenarios adapted to local enforcement.* keys and disabled empty-map default, with two explicit local-behavior regressions. Test-only changes; no Docker connection. See container-test-restoration.md.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "kura/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerOrchestrationActivatorTest.java",
@@ -174,9 +200,10 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.orchestration.provider"
     ],
-    "status": "unreviewed",
+    "status": "not-applicable-current-api",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "reason": "All three Docker reachability/SCR enablement scenarios require ContainerOrchestrationActivator, absent locally and from handwritten DS metadata. Local service keeps its existing configuration activation path. Graph and source/metadata fallback checked; do not import new production functionality. See container-test-restoration.md."
   },
   {
     "source": "kura/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerOrchestrationServiceImplFailureTest.java",
@@ -207,9 +234,22 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.orchestration.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-container/bundles/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ContainerOrchestrationServiceOptionsTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Upstream configuration/descriptor scenarios adapted to local enforcement.* keys and disabled empty-map default, with two explicit local-behavior regressions. Test-only changes; no Docker connection. See container-test-restoration.md.",
+    "validation": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "kura/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/EnforcementSecurityTest.java",
@@ -229,9 +269,22 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.orchestration.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-container/bundles/org.eclipse.kura.container.orchestration.provider/src/test/java/org/eclipse/kura/container/orchestration/provider/ImageInstanceDescriptorTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Upstream configuration/descriptor scenarios adapted to local enforcement.* keys and disabled empty-map default, with two explicit local-behavior regressions. Test-only changes; no Docker connection. See container-test-restoration.md.",
+    "validation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "kura/org.eclipse.kura.container.provider/src/test/java/org/eclipse/kura/container/provider/ContainerIdentityIntegrationTest.java",
@@ -273,9 +326,10 @@
     "destinations": [
       "kura-container/bundles/org.eclipse.kura.container.provider"
     ],
-    "status": "unreviewed",
+    "status": "not-applicable-current-api",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "reason": "All eight token-file lifecycle/permissions scenarios require TokenFileManager, absent locally along with token-file configuration and identity binding. Graph and source/metadata fallback checked; do not import new production functionality. See container-test-restoration.md."
   },
   {
     "source": "kura/org.eclipse.kura.core.certificates/src/test/java/org/eclipse/kura/core/certificates/CertificatesManagerTest.java",

@@ -478,3 +478,13 @@ Web2/GWT build pass. See [management UI audit](management-ui-test-restoration.md
 Inventory: 289 restored sources, 32 helpers, 16 exclusions/replaced harness entries
 and **128 unreviewed**: 125 core-origin and 3 official OPC UA. UI source audit is
 complete; runtime, authorization and IDEA acceptance remain open. OPC UA unchanged.
+
+### Container configuration/descriptor continuation
+
+Four restored sources pass 21 cases, preserving local disabled defaults and
+enforcement keys. Two sources require absent token-file/automatic-activator APIs
+and are explicitly not applicable; no features imported. See
+[Container audit](container-test-restoration.md). Inventory: 293 restored sources,
+32 helpers, 18 exclusions/replaced harness entries and **122 unreviewed**. Six
+Container sources, other core-origin sources, official OPC UA and runtime/IDEA work
+remain open.
