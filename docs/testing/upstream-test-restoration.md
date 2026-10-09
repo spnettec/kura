@@ -354,3 +354,16 @@ made repeated configuration values unequal. Value comparisons now preserve the
 existing no-change update guard. The original three cases failed; the fixed full
 module passes 83 tests. See [Triton audit](triton-test-restoration.md). This is a
 separate production fix; the source inventory remains **151 unreviewed**.
+
+### Triton service and gRPC continuation
+
+Nine remaining Triton sources (seven suites/two helpers) add 30 passing scenarios.
+The complete module passes 113 including the three separate equality regressions.
+Actual in-process gRPC and localhost HTTP verify serialization, inference values and
+metrics; external command/container services are mocked. See [Triton audit](triton-test-restoration.md).
+
+Current inventory: 276 restored sources, 31 restored helpers, 16 exclusions/replaced
+harness entries and **142 unreviewed** of 465. The remaining source revisions are
+core 125, deployment 7, management UI 7 and official OPC UA 3. Core-origin sources
+include tests now owned by cloud/container siblings. Official OPC UA remains
+unchanged, and runtime/IDEA acceptance is still unfinished.

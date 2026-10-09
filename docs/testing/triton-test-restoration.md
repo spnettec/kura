@@ -58,3 +58,39 @@ values remaining unequal. All three failed on the original implementation and pa
 after the repair. The full restored module now passes 83 tests, zero failures,
 errors or skips. The production change and its regressions are committed separately
 from the upstream restoration. Inventory source counts remain unchanged.
+
+## Service and gRPC continuation
+
+The remaining nine sources (seven suites and two helpers) add 30 passing scenarios:
+Bundle lifecycle 4, engine 1, inference 1, model 7, native configuration 5, remote
+configuration 3 and container configuration/metrics 9. All 15 inventory sources
+are now reviewed. Including the separate three equality regressions, the complete
+module passes 113 tests with zero failures/errors/skips.
+
+GrpcCleanupRule was replaced with Jupiter teardown that deactivates the service,
+shuts down and awaits every owned channel/server, and closes its scoped factory
+mock even after an assertion fails. Production ManagedChannelBuilder.forAddress
+is routed to actual in-process gRPC channels; real generated stubs, server handlers
+and serialization still execute. No production TCP endpoint is contacted. Cases
+that explicitly invoke inference APIs on an invalid/unactivated native configuration
+retain an injected in-process stub; they are component tests, not activation proof.
+
+The HTTP metrics tests bind a real localhost server on an OS-assigned port before
+building options and close it immediately in teardown. Disabled metrics, HTTP 500,
+GPU metrics and model statistics are checked; JSON values compare structurally.
+Native startup uses bounded command verification instead of a fixed wait.
+
+Additional upstream fixture corrections:
+
+- The container-not-running helper stubs listContainerDescriptors; previously it
+  accidentally erased the available-image fixture and prevented real manager startup.
+- The invalid-model-repository native case now supplies a valid backend path,
+  ensuring it reaches the repository validation instead of repeating the backend case.
+- Inference input shape/data and output descriptors agree. Raw responses use the
+  current decoder's little-endian numbers and length-prefixed BYTES. Assertions
+  inspect the transmitted input and all eight returned values/types and shapes;
+  the old nonempty-list check concealed corrupt numeric values and empty BYTES.
+
+Only grpc-inprocess 1.71.0 and Guava failureaccess 1.0.3 were added to test scope in
+this continuation. Real Triton/GPU inference, container runtime, Equinox/DS and IDEA
+acceptance remain open. No production or handwritten metadata change in this batch.

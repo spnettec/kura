@@ -6817,7 +6817,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
@@ -6828,7 +6844,16 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java"
+    ],
+    "execution": "Jupiter fixture with owned in-process gRPC resources",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "kind": "helper"
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
@@ -6839,7 +6864,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
@@ -6850,7 +6891,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
@@ -6861,7 +6918,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
@@ -6872,7 +6945,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
@@ -6883,7 +6972,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceOptionsTest.java",
@@ -6918,7 +7023,23 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java"
+    ],
+    "execution": "surefire",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "validation": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
@@ -6929,7 +7050,16 @@
     "destinations": [
       "kura-triton/bundles/org.eclipse.kura.ai.triton.server"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-triton/bundles/org.eclipse.kura.ai.triton.server/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java"
+    ],
+    "execution": "Jupiter fixture with owned in-process gRPC resources",
+    "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
+    "deferredValidation": [
+      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+    ],
+    "kind": "helper"
   },
   {
     "source": "tests/org.eclipse.kura.asset.helper.provider.test/src/test/java/org/eclipse/kura/internal/asset/AssetServiceImplTest.java",
