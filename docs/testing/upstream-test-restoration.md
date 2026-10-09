@@ -182,3 +182,23 @@ cases, zero failures/errors/skips. Inventory: 195 restored sources, 19 restored
 helpers, 14 exclusions/replaced harness entries and **237 unreviewed** of 465.
 All Wires snapshot source entries have now been reviewed at the documented layers;
 remaining repositories and real-container/transport/IDEA acceptance are still open.
+
+### Networking core configuration continuation
+
+Nineteen upstream core-network sources (15 suites and four fixtures) are reviewed.
+The new suites pass 331 invocations: networking core.net 236, the core API firewall
+configuration 21 and core util NetworkUtil 74. Core util reports 121 including 47
+previous tests, which are not counted again. All runs use Maven 3.10.0 / JDK 21,
+with zero failures/errors/skips and no host network changes.
+
+Tests cover interface/address configuration, Wi-Fi/modem/IP interpreters, DHCP,
+firewall serialization and address/MAC utilities. JUnit 4 expected exceptions and
+method ordering become Jupiter assertions/order annotations. NetworkUtil and
+FirewallConfiguration are intentionally retained in the local core util and API
+modules; their inventory destinations and test packages now follow those actual
+implementations. No production code, bundle manifest or DS metadata changed.
+
+Current inventory: 210 restored sources, 23 restored helpers, 14 exclusions/replaced
+harness entries and **218 unreviewed** out of 465. Networking still has 47 unreviewed
+sources; Camel, Triton, management UI, deployment, remaining core tests and
+real-container/transport/IDEA acceptance remain open.

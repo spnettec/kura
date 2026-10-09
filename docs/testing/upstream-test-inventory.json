@@ -4217,18 +4217,44 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/EthernetInterfaceConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/FirewallConfigurationTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
     "upstreamModule": "org.eclipse.kura.core.net.test",
-    "productionModule": "org.eclipse.kura.core.net",
+    "productionModule": "org.eclipse.kura.api",
     "destinations": [
-      "kura-networking/bundles/org.eclipse.kura.core.net"
+      "kura/kura/org.eclipse.kura.api"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.api/src/test/java/org/eclipse/kura/net/firewall/FirewallConfigurationTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed. Inventory destination corrected to the production class in the local core repository.",
+    "validation": {
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/IpConfigurationInterpreterTest.java",
@@ -4239,7 +4265,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/IpConfigurationInterpreterTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/LoopbackInterfaceConfigImplTest.java",
@@ -4250,7 +4289,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/LoopbackInterfaceConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockConfig.java",
@@ -4261,7 +4313,12 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/MockConfig.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed."
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterface.java",
@@ -4272,7 +4329,12 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/MockInterface.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed."
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterfaceConfigImpl.java",
@@ -4283,7 +4345,12 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/MockInterfaceConfigImpl.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed."
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/MockInterfaceImpl.java",
@@ -4294,7 +4361,12 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored-helper",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/MockInterfaceImpl.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed."
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/ModemConfigurationInterpreterTest.java",
@@ -4305,7 +4377,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/ModemConfigurationInterpreterTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/NetInterfaceAddressConfigImplTest.java",
@@ -4316,7 +4401,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/NetInterfaceAddressConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/NetworkConfigurationTest.java",
@@ -4327,7 +4425,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/NetworkConfigurationTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 63,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiAccessPointImplTest.java",
@@ -4338,7 +4449,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/WifiAccessPointImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiConfigurationInterpreterTest.java",
@@ -4349,7 +4473,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/WifiConfigurationInterpreterTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiInterfaceAddressConfigImplTest.java",
@@ -4360,7 +4497,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/WifiInterfaceAddressConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/WifiInterfaceConfigImplTest.java",
@@ -4371,7 +4521,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/WifiInterfaceConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceAddressConfigImplTest.java",
@@ -4382,7 +4545,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceAddressConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceConfigImplTest.java",
@@ -4393,18 +4569,44 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/core/net/modem/ModemInterfaceConfigImplTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/core/net/util/NetworkUtilTest.java",
     "upstreamRepository": "kura-networking",
     "upstreamRevision": "20da91a3c21532d0d0cfa9c796b79068c61d16b1",
     "upstreamModule": "org.eclipse.kura.core.net.test",
-    "productionModule": "org.eclipse.kura.core.net",
+    "productionModule": "org.eclipse.kura.util",
     "destinations": [
-      "kura-networking/bundles/org.eclipse.kura.core.net"
+      "kura/kura/org.eclipse.kura.util"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura/kura/org.eclipse.kura.util/src/test/java/org/eclipse/kura/util/net/NetworkUtilTest.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed. Inventory destination corrected to the production class in the local core repository.",
+    "validation": {
+      "tests": 74,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.core.net.test/src/test/java/org/eclipse/kura/net/dhcp/DhcpServerConfigIP4Test.java",
@@ -4415,7 +4617,20 @@
     "destinations": [
       "kura-networking/bundles/org.eclipse.kura.core.net"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-networking/bundles/org.eclipse.kura.core.net/src/test/java/org/eclipse/kura/net/dhcp/DhcpServerConfigIP4Test.java"
+    ],
+    "execution": "JUnit Jupiter unit tests; network configuration objects only",
+    "reason": "Preserve upstream assertions with Jupiter exception assertions and method ordering. NetworkUtil imports follow its local core util package; no host networking is changed.",
+    "validation": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.linux.net.test/src/test/java/org/eclipse/kura/linux/net/NetworkServiceImplTest.java",
