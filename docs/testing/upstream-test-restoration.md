@@ -375,3 +375,14 @@ connection, including updates to invalid configuration. The old channel now clos
 and terminates before reconfiguration; unchanged configuration keeps its channel.
 Two negative regressions failed before the fix. The complete module passes 116
 cases after it. Source inventory remains **142 unreviewed**. See [Triton audit](triton-test-restoration.md).
+
+### Deployment download and install continuation
+
+Two more sources add 22 passing Jupiter cases; core.deployment passes 53 in total.
+Fixtures use isolated files and require actual checksum failures and package
+installation work. See [deployment audit](deployment-test-restoration.md).
+
+Current inventory: 278 restored sources, 31 restored helpers, 16 exclusions/replaced
+harness entries and **140 unreviewed** of 465. Deployment still has five sources;
+core-origin, management UI, official OPC UA and runtime/IDEA work remain open.
+Official OPC UA remains unchanged.

@@ -4135,7 +4135,20 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/download/impl/DownloadImplTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local download/install paths; isolated files, required checksum exceptions and actual successful install fixture. See deployment-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/download/impl/HttpDownloadCountingOutputStreamTest.java",
@@ -4194,7 +4207,20 @@
     "destinations": [
       "kura-deployment/bundles/org.eclipse.kura.core.deployment"
     ],
-    "status": "unreviewed"
+    "status": "restored",
+    "localSources": [
+      "kura-deployment/bundles/org.eclipse.kura.core.deployment/src/test/java/org/eclipse/kura/core/deployment/install/InstallImplTest.java"
+    ],
+    "execution": "surefire",
+    "validation": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "Reviewed against local download/install paths; isolated files, required checksum exceptions and actual successful install fixture. See deployment-test-restoration.md."
   },
   {
     "source": "tests/org.eclipse.kura.core.deployment.test/src/test/java/org/eclipse/kura/core/deployment/uninstall/DeploymentPackageUninstallOptionsTest.java",
