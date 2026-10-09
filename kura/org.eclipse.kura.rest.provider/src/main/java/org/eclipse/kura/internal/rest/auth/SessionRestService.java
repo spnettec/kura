@@ -212,7 +212,7 @@ public class SessionRestService {
 
             this.userAdminHelper.changeUserPassword(username.get(), passwordUpdate.getNewPassword());
 
-            final HttpSession session = this.restSessionHelper.createNewAuthenticatedSession(request, newPassword);
+            final HttpSession session = this.restSessionHelper.createNewAuthenticatedSession(request, username.get());
             this.restSessionHelper.unlockSession(session);
 
         } catch (final AuthenticationException e) {

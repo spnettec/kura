@@ -143,7 +143,8 @@ public abstract class AbstractJwtRestScenario {
         this.server.setHandler(servlet);
         this.server.start();
         this.baseUrl = "http://127.0.0.1:" + connector.getLocalPort() + "/services/";
-        this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
+                .cookieHandler(new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL)).build();
         assertEquals(200, request("GET", ProtectedResource.PATH + ProtectedResource.PING_PATH,
                 NO_AUTHORIZATION, null).statusCode());
     }
@@ -236,11 +237,19 @@ public abstract class AbstractJwtRestScenario {
         if (this.response.statusCode() == 200) { this.exchangedRefreshTokens.add(body.trim()); }
     }
 
+    protected IdentityFixture identities() { return this.identities; }
+
     private HttpResponse<String> request(String method, String path, Optional<String> authorization, String body) {
+        Map<String, String> headers = new HashMap<>();
+        authorization.ifPresent(value -> headers.put("Authorization", value));
+        if (body != null) { headers.put("Content-Type", "text/plain"); }
+        return sendRequest(method, path, headers, body);
+    }
+
+    protected HttpResponse<String> sendRequest(String method, String path, Map<String, String> headers, String body) {
         HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(this.baseUrl + path))
                 .timeout(Duration.ofSeconds(5));
-        authorization.ifPresent(value -> request.header("Authorization", value));
-        if (body != null) { request.header("Content-Type", "text/plain"); }
+        headers.forEach(request::header);
         request.method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body));
         try {
             return this.client.send(request.build(), HttpResponse.BodyHandlers.ofString());
