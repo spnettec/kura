@@ -58,3 +58,7 @@ or later; its private broker limit is bounded at 8 MiB only for that test class.
 Keystore V2 scenarios use actual temporary filesystem PKCS12 stores, certificates
 and private Equinox trackers. CryptoService is controlled; tracker uses and password
 updater shutdown are checked before cleanup. See the keystore endpoint audit.
+
+Configuration scenarios retain all 102 upstream cases for both transports. Their
+ConfigurationService and CryptoService boundaries are controlled; local metadata,
+property projection and updates are preserved. See the configuration endpoint audit.

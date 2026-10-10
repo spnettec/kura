@@ -927,3 +927,14 @@ is counted; see legacy-core-harness-audit.md.
 Inventory: 363 restored, 56 helpers, fifteen replaced harnesses, nine not-applicable
 sources, six removed-functionality exclusions and **16 unreviewed** out of 465.
 Pending legacy configuration/inventory/network and runtime/IDEA acceptance remain open.
+
+## Configuration endpoint continuation (2026-10-10)
+
+All 102 upstream configuration endpoint scenarios now execute over both actual
+HTTP and MQTT: **204 passed**, zero failures/errors/skips. ConfigurationUtil also
+retains the local localized metadata contract. ConfigurationService and
+CryptoService are controlled boundaries; persistent CM/SCR/master-key and IDEA
+acceptance remain separate. See `configuration-endpoint-test-restoration.md`.
+
+Inventory: 364 restored, 57 helpers, fifteen replaced harnesses, nine not-applicable
+sources, six removed-functionality exclusions and **14 unreviewed** out of 465.
