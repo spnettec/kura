@@ -55,7 +55,7 @@ Worker 回退当作完整 Java21 支持通过。
 ## 证据与剩余边界
 
 [JSON 证据](mac-complete-camel-custom-dsl-browser-validation-20261011.json)
-记录六次独立运行的结果、源码/产物哈希及截图；失败 fixture 和生产问题的
+记录各次独立运行的结果、源码/产物哈希及截图；失败 fixture 和生产问题的
 原始日志保留在归档中。[升级记录](camel-vertx-upgrade-validation-20261011.md)
 说明官方版本依据、公共封装及兼容修复。
 
@@ -63,3 +63,11 @@ inventory 248–252 的 JavaScript 和 ACE 子边界已关闭，只保留 instal
 Debian sibling package 验收。当前仍为 **465 条 reviewed、0 unreviewed、
 0 deferredScenarios、31 条 deferredValidation**。外部 SecurityService provider、
 Linux/NetworkManager、硬件/GPU 和部署网关边界保持未验证，整体恢复仍在进行。
+
+## 最终组装与直接 IDEA 跟进
+
+[新组装运行集](mac-packaged-camel-vertx-validation-20261011.md) 从干净
+checkout 生成，未使用生产 overlay/额外 Engine；再次通过 16 MQTT / 7 HTTP、
+公共 Engine 及真实 YOFC 虚拟线程。[IDEA](mac-idea-camel-dsl-validation-20261011.md)
+直接 Run XML/Java/YAML 为 3/3。[完整 CI](current-workspace-ci-validation-20261011.md)
+为 5,521 次调用，0 失败/错误，9 跳过；提交范围与后续修复分别记录。

@@ -61,7 +61,19 @@
   },
   "securityScope": "Camel 4.20.0 is affected by CVE-2026-42527 under the documented Java serialization conditions; upgrade includes the fix. This is not an assertion that the application has no vulnerabilities.",
   "unrelatedDependencies": "Groovy, Jackson, official OPC UA, PLC4X and removed features unchanged",
-  "fullWorkspaceGate": "Running in pinned clean clones at the main dependency-upgrade revisions; the later manifest-only repair and opt-in probe assertion have separate actual runtime evidence. Final test-source/artifact reconciliation will state the exact scope.",
+  "fullWorkspaceGate": {
+    "status": "passed",
+    "evidence": "docs/testing/current-workspace-ci-validation-20261011.json",
+    "totals": {
+      "tests": 5521,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 9
+    },
+    "reportCount": 409,
+    "sourceOrReportMismatches": 0,
+    "scope": "The CI run uses its recorded fourteen clean pinned clones. All 409 test source hashes and original/published report hashes match. Later changes are the public Vertx Multi-Release manifest and matching Reficio instruction, opt-in acceptance helper/assertions/profile relocation, and documentation. They were separately verified by the freshly assembled macOS runtime and direct IDEA Run; the CI is not claimed to have run these later HEADs. Remote Jenkins, Docker images, legacy P2 publication and installed Debian/hardware acceptance are not covered."
+  },
   "retainedConsumerCompilePins": {
     "kura-artemis": "Netty 4.2.16 provided compile dependencies unchanged; common runtime uses 4.2.19",
     "kura-opcua": "Netty 4.2.16 provided compile dependencies unchanged per official OPC UA scope",
@@ -84,5 +96,8 @@
     },
     "publicApiAndClassContents": "unchanged",
     "officialSource": "https://raw.githubusercontent.com/eclipse-vertx/vert.x/5.2.1/vertx-core/src/main/java21/io/vertx/core/impl/JdkDependent.java"
-  }
+  },
+  "packagedRuntimeEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+  "directIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+  "acceptanceHelperRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b"
 }

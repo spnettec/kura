@@ -1,5 +1,19 @@
 # Camel upstream test restoration
 
+## 2026-10-11 完整门禁、新组装运行集及 IDEA 三种 DSL
+
+- 完整 workspace CI：**5,521 次调用，0 失败/错误，9 跳过**；409 份报告与
+  当前对应测试源码 SHA256 全部匹配。固定 CI 提交与后续清单/helper 修复分别记录。
+- 新组装 Mac 运行集直接加载产物，0 生产 overlay；XML/Java/YAML、独立
+  JSR-223、公共 Engine 和实际 YOFC 虚拟线程 HTTP 通过，16 MQTT / 7 HTTP。
+- 用户解锁后直接 IDEA Run 自有 DSL 参数测试 **3/3**，JDK21、JUnit5、
+  Camel4.22.1 / Engine3.0.1 的 classpath 已核对。无新增 Debug 结论。
+- 315 保护文件及 33 个人配置文件未变；仍是 465 reviewed、0 unreviewed、
+  0 deferredScenarios、31 deferredValidation。未验证边界保持，整体恢复未完成。
+- 见 [本轮 CI](current-workspace-ci-validation-20261011.md)、
+  [新组装运行集](mac-packaged-camel-vertx-validation-20261011.md) 和
+  [IDEA 三种 DSL](mac-idea-camel-dsl-validation-20261011.md)。这些结果不相加。
+
 ## Latest customized fork acceptance — 2026-10-11
 
 Camel is now **4.22.1**, with wrapped shared and YOFC-only Vertx **5.2.1** and

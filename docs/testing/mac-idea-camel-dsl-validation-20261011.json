@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-11",
+  "platform": "macOS",
+  "kind": "Direct IntelliJ IDEA JUnit Run; not Maven or a shell test launcher",
+  "sourceRevision": "8c82b117f1639206c77917fa28a50fd8fa8fd69a",
+  "class": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+  "method": "loadsAndExecutesConfiguredDsl(String)",
+  "parameters": [
+    "xml",
+    "java",
+    "yaml"
+  ],
+  "tests": 3,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "elapsedSeconds": 1.283,
+  "exitCode": 0,
+  "java": "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java",
+  "camelVersion": "4.22.1",
+  "snakeYamlEngine": "3.0.1",
+  "junit5Verified": true,
+  "sourceSha256": "53e333a04b04c53da4dad9fa7d3066734ca6c0bed8a29e558245c5ad1add6450",
+  "artifacts": {
+    "idea-run.ax.txt": "55f3b03d8126256d39e2bbddb14c5eea07ea7d6373af4587c7baa0a8cbacfa49",
+    "ForkDslRoutesProviderTest.java": "53e333a04b04c53da4dad9fa7d3066734ca6c0bed8a29e558245c5ad1add6450",
+    "idea-run.png": "12384c9939a1b5fc5202146c926a0b54f59a9ccaaa81b70f19d2b7b041dd5876"
+  },
+  "debug": "No new DSL Debug run claimed; previous direct Sparkplug/application Run/Debug evidence is separate.",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-camel-dsl-20261011",
+  "latestHelperRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+  "currentTestSourceMatches": true,
+  "coverage": "Direct IDEA Run of the three customized DSL parameters after Maven project sync; no new DSL Debug claim."
+}

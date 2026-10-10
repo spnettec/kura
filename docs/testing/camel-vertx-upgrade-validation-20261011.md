@@ -57,7 +57,14 @@ Vertx 5.2 删除 `VirtualThreadSupport`，使 YOFC 首次编译失败。
 
 见[实际运行证据](mac-complete-camel-custom-dsl-browser-validation-20261011.md)
 和 [JSON companion](camel-vertx-upgrade-validation-20261011.json)。完整 workspace
-门禁在主要依赖升级固定版本的 14 个隔离 clone 中运行，后续 manifest-only
-修复和 opt-in 验收断言有独立证据，最终记录会明确源码与产物匹配范围。
+门禁已通过：5,521 次调用，0 失败/错误，9 跳过，409 份报告与测试源码
+匹配。14 个隔离 clone 使用主要升级的固定提交，后续 manifest-only
+修复和 opt-in helper 有独立的新组装运行集证据，见
+[本轮 CI 范围](current-workspace-ci-validation-20261011.md)。
 2026-10-10 的
 5515 次调用保留为历史证据。Groovy、Jackson、官方 OPC UA 和 PLC4X 保持原范围。
+
+最新 [新组装运行集](mac-packaged-camel-vertx-validation-20261011.md) 直接加载
+升级产物，0 生产 overlay、0 额外生产 bundle：16 MQTT / 7 HTTP 及实际
+YOFC 虚拟线程通过。[直接 IDEA DSL Run](mac-idea-camel-dsl-validation-20261011.md)
+为 XML、Java、YAML 3/3，JUnit5 / JDK21。两者不累加到 workspace 总数。

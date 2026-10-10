@@ -359,6 +359,42 @@
         "README.md": "619a4271d033c848db216cbbea5e7be3b463355bc6c28aad85c42263f068c8f4",
         "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java": "11a39c24e2ae081c8dfcd7e4b69372fbe061df3e43754d34b4db0f3aba43b873"
       }
+    },
+    "packagedNoOverlay": {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-relocated-20261011",
+      "resultSha256": "e38ce003295c121ecd0a1d299c2158b15e9b252ddec13272a35f1f2db75a13fa",
+      "camelVersion": "4.22.1",
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "javascript": true,
+      "javaDsl": true,
+      "yamlDsl": true,
+      "sharedEngine": {
+        "symbolicName": "org.snakeyaml.engine",
+        "yofcYamlRoundTripPassed": true,
+        "sameClassIdentity": true,
+        "version": "3.0.1"
+      },
+      "yofcVertx": {
+        "actualThreadingModelPassed": true,
+        "actualHttpPassed": true,
+        "eventBusRoundTripPassed": true,
+        "version": "5.2.1",
+        "virtualThreadAvailable": true
+      },
+      "browserSavedScriptExecuted": false,
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true,
+      "productionOverlays": [],
+      "additionalProductionBundles": [],
+      "sources": {
+        "run.py": "1013f6dcb773c1d88e40a88b10a8e7a2b6eb8fd07455311a663584e94af858a9",
+        "pom.xml": "89d163048cfff6fa5f83b2814840e4e1459d5d38151a6a8d4940d91f47001907",
+        "README.md": "e2df9268ab578aec761ae6ae414573f50034fed4294ee8b545caddaaf75557ce",
+        "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java": "11a39c24e2ae081c8dfcd7e4b69372fbe061df3e43754d34b4db0f3aba43b873"
+      },
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json"
     }
   },
   "browserEvidenceSha256": {
@@ -385,5 +421,9 @@
   "unitEvidenceArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-production-upgrade-20261011",
   "remaining": "Installed Debian package, external SecurityService provider, NetworkManager/kernel, hardware/GPU and deployed gateway boundaries remain; no additional Linux acceptance",
   "counting": "Runtime MQTT/HTTP assertions and overlapping runs are not added to JUnit totals or to each other",
-  "multiReleaseRepairEvidence": "docs/testing/camel-vertx-upgrade-validation-20261011.json"
+  "multiReleaseRepairEvidence": "docs/testing/camel-vertx-upgrade-validation-20261011.json",
+  "packagedRuntimeEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+  "directIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+  "currentWorkspaceCiEvidence": "docs/testing/current-workspace-ci-validation-20261011.json",
+  "acceptanceHelperRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b"
 }

@@ -5591,7 +5591,7 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified. A fresh runtime assembled without production overlays additionally passed all three DSLs, separate JSR-223, shared Engine and real YOFC virtual-thread HTTP (16 MQTT / 7 HTTP). Direct Mac IDEA Run of the customized XML/Java/YAML class passed 3/3 on 4.22.1 with JUnit5/JDK21. These separate results are not summed.",
     "deferredValidation": [
       "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
@@ -5633,6 +5633,23 @@
       "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
       "virtualThreadHttpPassed": true,
       "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
+    },
+    "packagedRuntimeValidation": {
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+      "overlays": 0,
+      "additionalProductionBundles": 0,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "virtualThreadHttpPassed": true
+    },
+    "forkDslIdeaValidation": {
+      "evidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+      "testClass": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "scope": "Supplemental fork DSL class; earlier direct upstream-derived class evidence remains dated."
     }
   },
   {
@@ -5657,7 +5674,7 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified. A fresh runtime assembled without production overlays additionally passed all three DSLs, separate JSR-223, shared Engine and real YOFC virtual-thread HTTP (16 MQTT / 7 HTTP). Direct Mac IDEA Run of the customized XML/Java/YAML class passed 3/3 on 4.22.1 with JUnit5/JDK21. These separate results are not summed.",
     "deferredValidation": [
       "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
@@ -5699,6 +5716,23 @@
       "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
       "virtualThreadHttpPassed": true,
       "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
+    },
+    "packagedRuntimeValidation": {
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+      "overlays": 0,
+      "additionalProductionBundles": 0,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "virtualThreadHttpPassed": true
+    },
+    "forkDslIdeaValidation": {
+      "evidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+      "testClass": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "scope": "Supplemental fork DSL class; earlier direct upstream-derived class evidence remains dated."
     }
   },
   {
@@ -5723,7 +5757,7 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified. A fresh runtime assembled without production overlays additionally passed all three DSLs, separate JSR-223, shared Engine and real YOFC virtual-thread HTTP (16 MQTT / 7 HTTP). Direct Mac IDEA Run of the customized XML/Java/YAML class passed 3/3 on 4.22.1 with JUnit5/JDK21. These separate results are not summed.",
     "deferredValidation": [
       "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
@@ -5765,6 +5799,23 @@
       "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
       "virtualThreadHttpPassed": true,
       "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
+    },
+    "packagedRuntimeValidation": {
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+      "overlays": 0,
+      "additionalProductionBundles": 0,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "virtualThreadHttpPassed": true
+    },
+    "forkDslIdeaValidation": {
+      "evidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+      "testClass": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "scope": "Supplemental fork DSL class; earlier direct upstream-derived class evidence remains dated."
     }
   },
   {
@@ -5782,7 +5833,7 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified. A fresh runtime assembled without production overlays additionally passed all three DSLs, separate JSR-223, shared Engine and real YOFC virtual-thread HTTP (16 MQTT / 7 HTTP). Direct Mac IDEA Run of the customized XML/Java/YAML class passed 3/3 on 4.22.1 with JUnit5/JDK21. These separate results are not summed.",
     "deferredValidation": [
       "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
@@ -5824,6 +5875,23 @@
       "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
       "virtualThreadHttpPassed": true,
       "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
+    },
+    "packagedRuntimeValidation": {
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+      "overlays": 0,
+      "additionalProductionBundles": 0,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "virtualThreadHttpPassed": true
+    },
+    "forkDslIdeaValidation": {
+      "evidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+      "testClass": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "scope": "Supplemental fork DSL class; earlier direct upstream-derived class evidence remains dated."
     }
   },
   {
@@ -5848,7 +5916,7 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified. A fresh runtime assembled without production overlays additionally passed all three DSLs, separate JSR-223, shared Engine and real YOFC virtual-thread HTTP (16 MQTT / 7 HTTP). Direct Mac IDEA Run of the customized XML/Java/YAML class passed 3/3 on 4.22.1 with JUnit5/JDK21. These separate results are not summed.",
     "deferredValidation": [
       "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
@@ -5890,6 +5958,23 @@
       "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
       "virtualThreadHttpPassed": true,
       "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
+    },
+    "packagedRuntimeValidation": {
+      "evidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+      "overlays": 0,
+      "additionalProductionBundles": 0,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "virtualThreadHttpPassed": true
+    },
+    "forkDslIdeaValidation": {
+      "evidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+      "testClass": "org.eclipse.kura.camel.runner.ForkDslRoutesProviderTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "scope": "Supplemental fork DSL class; earlier direct upstream-derived class evidence remains dated."
     }
   },
   {

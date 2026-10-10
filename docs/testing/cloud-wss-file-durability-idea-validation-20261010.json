@@ -83,5 +83,14 @@
     "kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468"
   },
   "cloudValidationCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c",
-  "crossJvmFollowup": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json"
+  "crossJvmFollowup": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json",
+  "currentRuntimeFollowup": {
+    "evidence": "docs/testing/current-workspace-ci-validation-20261011.json",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sourceAudit": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-workspace-20261011/current-cloud-runtime-report-audit.json",
+    "scope": "Current seven related helper/configuration files match the 2026-10-11 report. Historical 12-case result and its hashes remain dated; cross-JVM and IDEA evidence remain separate."
+  }
 }

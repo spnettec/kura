@@ -1,0 +1,364 @@
+{
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-workspace-20261011",
+  "environment": {
+    "JAVA_HOME": "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
+    "KURA_MAVEN_REPO": "/Users/heyoulin/iot-kura-develop/migration-m2",
+    "MVN": "/opt/homebrew/Cellar/maven/3.10.0/libexec/bin/mvn",
+    "BUILD_DOCKER": "0",
+    "RUN_TESTS": "1",
+    "RUN_IT": "1"
+  },
+  "exitCode": 0,
+  "totals": {
+    "tests": 5521,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 9
+  },
+  "reportCount": 409,
+  "excludedReportCount": 0,
+  "sourceOrReportMismatches": [],
+  "sourceRevisions": [
+    {
+      "repository": "kura",
+      "revision": "578b32b17084b9800adc3b20fed88b81b67b5e41",
+      "dirty": false
+    },
+    {
+      "repository": "kura-position",
+      "revision": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-opcua",
+      "revision": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+      "dirty": false
+    },
+    {
+      "repository": "kura-deployment",
+      "revision": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+      "dirty": false
+    },
+    {
+      "repository": "kura-networking",
+      "revision": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+      "dirty": false
+    },
+    {
+      "repository": "kura-wires",
+      "revision": "0886a09e0b9dcb7e14491a825c7016d0cef8882e",
+      "dirty": false
+    },
+    {
+      "repository": "kura-cloud",
+      "revision": "aab00ff9643da835e71bd32ab025a96e99e1f7a0",
+      "dirty": false
+    },
+    {
+      "repository": "kura-camel",
+      "revision": "ae9ece56188a7cb71296431996b7d7eef045a457",
+      "dirty": false
+    },
+    {
+      "repository": "kura-artemis",
+      "revision": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+      "dirty": false
+    },
+    {
+      "repository": "kura-container",
+      "revision": "6483d04ad610b5046c53442378bcadeea44695d7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-triton",
+      "revision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-management-ui",
+      "revision": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-yofc-runtime",
+      "revision": "45472f0e9157e5c8fa1d1208ddbad26945c76dcb",
+      "dirty": false
+    },
+    {
+      "repository": "yofc-iot",
+      "revision": "74fe3d54dcd1687cf6daa9879b001a976b544fa4",
+      "dirty": false
+    }
+  ],
+  "currentWorkspaceAtReconciliation": [
+    {
+      "repository": "kura",
+      "revision": "9ea9354692523aa5d32a3eef64ca4a796e86cf90",
+      "status": "",
+      "deltaFromCi": [
+        "M\tbuild-support/thirdparty/io.vertx.core/META-INF/MANIFEST.MF",
+        "M\tdocs/testing/camel-test-restoration.md",
+        "A\tdocs/testing/camel-vertx-upgrade-validation-20261011.json",
+        "A\tdocs/testing/camel-vertx-upgrade-validation-20261011.md",
+        "M\tdocs/testing/deferred-validation-reconciliation-20261010.json",
+        "A\tdocs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "A\tdocs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.md",
+        "M\tdocs/testing/mac-complete-camel-fork-validation-20261011.md",
+        "M\tdocs/testing/upstream-test-inventory.json",
+        "M\tdocs/testing/upstream-test-restoration.md",
+        "M\ttarget-platform/p2-repo-common/pom.xml"
+      ]
+    },
+    {
+      "repository": "kura-position",
+      "revision": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-opcua",
+      "revision": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-deployment",
+      "revision": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-networking",
+      "revision": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-wires",
+      "revision": "0886a09e0b9dcb7e14491a825c7016d0cef8882e",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-cloud",
+      "revision": "aab00ff9643da835e71bd32ab025a96e99e1f7a0",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-camel",
+      "revision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+      "status": "",
+      "deltaFromCi": [
+        "M\tacceptance/full-runtime-fork-probe/README.md",
+        "M\tacceptance/full-runtime-fork-probe/run.py",
+        "M\tacceptance/full-runtime-fork-probe/src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java"
+      ]
+    },
+    {
+      "repository": "kura-artemis",
+      "revision": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-container",
+      "revision": "6483d04ad610b5046c53442378bcadeea44695d7",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-triton",
+      "revision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-management-ui",
+      "revision": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "kura-yofc-runtime",
+      "revision": "45472f0e9157e5c8fa1d1208ddbad26945c76dcb",
+      "status": "",
+      "deltaFromCi": []
+    },
+    {
+      "repository": "yofc-iot",
+      "revision": "74fe3d54dcd1687cf6daa9879b001a976b544fa4",
+      "status": "",
+      "deltaFromCi": []
+    }
+  ],
+  "scope": "The CI run uses its recorded fourteen clean pinned clones. All 409 test source hashes and original/published report hashes match. Later changes are the public Vertx Multi-Release manifest and matching Reficio instruction, opt-in acceptance helper/assertions/profile relocation, and documentation. They were separately verified by the freshly assembled macOS runtime and direct IDEA Run; the CI is not claimed to have run these later HEADs. Remote Jenkins, Docker images, legacy P2 publication and installed Debian/hardware acceptance are not covered.",
+  "reportCountByRepository": {
+    "kura": 178,
+    "kura-camel": 14,
+    "kura-cloud": 42,
+    "kura-container": 9,
+    "kura-deployment": 14,
+    "kura-management-ui": 7,
+    "kura-networking": 79,
+    "kura-opcua": 2,
+    "kura-position": 7,
+    "kura-triton": 15,
+    "kura-wires": 30,
+    "yofc-iot": 12
+  },
+  "skippedCases": [
+    {
+      "report": "kura/kura/org.eclipse.kura.core.system/target/surefire-reports/TEST-org.eclipse.kura.core.system.SystemServiceTest.xml",
+      "class": "org.eclipse.kura.core.system.SystemServiceTest",
+      "case": "testActivateWithUpdatedDefaults",
+      "message": "Environment variable [KURA_SYSTEM_PATH_FIXTURE] does not exist",
+      "text": null
+    },
+    {
+      "report": "kura/kura/org.eclipse.kura.core.system/target/surefire-reports/TEST-org.eclipse.kura.core.system.SystemServiceTest.xml",
+      "class": "org.eclipse.kura.core.system.SystemServiceTest",
+      "case": "testActivateRelativeConfigFilePathsUpdate",
+      "message": "Environment variable [KURA_SYSTEM_PATH_FIXTURE] does not exist",
+      "text": null
+    },
+    {
+      "report": "kura/kura/org.eclipse.kura.linux.clock/target/surefire-reports/TEST-org.eclipse.kura.linux.clock.ClockServiceImplTest.xml",
+      "class": "org.eclipse.kura.linux.clock.ClockServiceImplTest",
+      "case": "testClockUpdateLinux",
+      "message": null,
+      "text": "org.opentest4j.TestAbortedException: Assumption failed: Only run this test on Linux\n\tat org.junit.jupiter.api.Assumptions.throwAssumptionFailed(Assumptions.java:321)\n\tat org.junit.jupiter.api.Assumptions.assumeTrue(Assumptions.java:120)\n\tat org.eclipse.kura.linux.clock.ClockServiceImplTest.testClockUpdateLinux(ClockServiceImplTest.java:246)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:580)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1596)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1596)\n"
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.abplc/target/surefire-reports/TEST-etherip.AppTest.xml",
+      "class": "etherip.AppTest",
+      "case": "testLogixWrite(Vertx, VertxTestContext)",
+      "message": "Requires a physical AB PLC at 192.168.50.36; replace with a mock/Docker-backed test later.",
+      "text": null
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb/target/surefire-reports/TEST-com.yofc.iot.apps.influxdb.test.TestDb.xml",
+      "class": "com.yofc.iot.apps.influxdb.test.TestDb",
+      "case": "test",
+      "message": "Requires an external InfluxDB at 10.100.60.200:8086; replace with a Docker-backed test later.",
+      "text": null
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1/target/surefire-reports/TEST-com.yofc.iot.apps.influxdb.test.TestDb.xml",
+      "class": "com.yofc.iot.apps.influxdb.test.TestDb",
+      "case": "test",
+      "message": "Requires an external InfluxDB at 10.100.60.200:8086; replace with a Docker-backed test later.",
+      "text": null
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.ot3001/target/surefire-reports/TEST-com.yofc.iot.apps.test.ot3001.TestSearial.xml",
+      "class": "com.yofc.iot.apps.test.ot3001.TestSearial",
+      "case": "testLogixRead(Vertx, VertxTestContext)",
+      "message": "Requires a physical serial device at /dev/cu.usbserial-EHACb11A920; replace with a mock/Docker-backed test later.",
+      "text": null
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.ot3001/target/surefire-reports/TEST-com.yofc.iot.apps.test.ot3001.VerxSocketTest.xml",
+      "class": "com.yofc.iot.apps.test.ot3001.VerxSocketTest",
+      "case": "testMyApplication(Vertx, VertxTestContext)",
+      "message": "Requires a physical OT3001 device at 192.168.0.220:8000; replace with a mock/Docker-backed test later.",
+      "text": null
+    },
+    {
+      "report": "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.visa/target/surefire-reports/TEST-com.yofc.iot.visa.TestVisa.xml",
+      "class": "com.yofc.iot.visa.TestVisa",
+      "case": "test",
+      "message": "Requires a VISA TCP device; replace with a mock/Docker-backed test later.",
+      "text": null
+    }
+  ],
+  "cloudRuntime": {
+    "report": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-workspace-20261011/source/kura-cloud/runtime-tests/target/failsafe-reports/TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml",
+    "sha256": "61add45ef117cada832bd6a1d4736936073dd4d3b443f11191480d0fc3085bdc",
+    "result": {
+      "tests": "13",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "time": "225.466"
+    },
+    "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+    "sourceSha256": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+    "currentSourceSha256": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+    "cases": [
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]",
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]",
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]",
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]",
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]",
+      "sparkplugFileStoreRestart(EquinoxRuntime)",
+      "restFactoryPipeline(EquinoxRuntime)",
+      "sparkplugFactoryPipeline(EquinoxRuntime)",
+      "tlsFilesystemPipeline(EquinoxRuntime)",
+      "restInitialStartup(EquinoxRuntime)",
+      "wssFilesystemPipeline(EquinoxRuntime)",
+      "coreHandlersOverMqtt(EquinoxRuntime)",
+      "sparkplugTlsFilesystemPipeline(EquinoxRuntime)"
+    ],
+    "helperSourceChecks": [
+      {
+        "source": "kura-cloud/runtime-tests/pom.xml",
+        "cloneSha256": "8897cbe4a1b8e4a6cb6fa118a11befaf40dc34a64bed0928225b674663d87910",
+        "currentSha256": "8897cbe4a1b8e4a6cb6fa118a11befaf40dc34a64bed0928225b674663d87910",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+        "cloneSha256": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+        "currentSha256": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+        "cloneSha256": "56ed3a226efd6d3a75239a1d82c06bc8461330d68053dac8737ecf7b2f50f885",
+        "currentSha256": "56ed3a226efd6d3a75239a1d82c06bc8461330d68053dac8737ecf7b2f50f885",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java",
+        "cloneSha256": "d7298e7e0324a29721d5fdfda7e47422249db40faf760cb26dc6062ffed6c60f",
+        "currentSha256": "d7298e7e0324a29721d5fdfda7e47422249db40faf760cb26dc6062ffed6c60f",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java",
+        "cloneSha256": "18cc643313ca246a13d1189c3dff0d518ac3d98a01a48a64868fccafd4f30e3a",
+        "currentSha256": "18cc643313ca246a13d1189c3dff0d518ac3d98a01a48a64868fccafd4f30e3a",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
+        "cloneSha256": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
+        "currentSha256": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
+        "matchesCurrent": true
+      },
+      {
+        "source": "kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml",
+        "cloneSha256": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468",
+        "currentSha256": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468",
+        "matchesCurrent": true
+      }
+    ],
+    "scope": "This new 13-case real Equinox/SCR run supersedes the old 12-case Java report for current helper sources; previous exact-hash cross-JVM restart and direct IDEA Run/Debug evidence remain separate."
+  },
+  "reconciledReportManifest": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-workspace-20261011/source-reconciled-summary.json",
+    "sha256": "03246afe35af8f409b0b3c1c49ecc9423494da3592db741b7acbaeacd542874b"
+  },
+  "buildLogSha256": "ef14a2fd6ada556b6b17a1fcb09ecd25be08f1f9e6806a196ab00579eeb4d4e4",
+  "originalSummarySha256": "cc9e2b1c59b182d0c084d50966c3d9b113fb47386039af2fbe32cf3dec842e85",
+  "auditScript": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-workspace-20261011/audit-final-reports.py",
+    "sha256": "924c9490d7372b29a4ba2f30c91f69c0178072db672fe6034151cae8b7386440"
+  },
+  "laterPackagedRuntimeEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
+  "laterIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
+  "counting": "5521 is the workspace JUnit invocation total. Separate IDEA and MQTT/HTTP acceptance results are not added to it."
+}

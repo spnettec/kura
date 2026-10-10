@@ -1,0 +1,568 @@
+{
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "assemblyArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011",
+  "runtime": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/source/kura/kura-dev-runtime/target/runtime",
+  "assemblySource": {
+    "repository": "kura",
+    "revision": "9ea9354692523aa5d32a3eef64ca4a796e86cf90",
+    "dirty": false,
+    "inputSha256": {
+      "build-support/thirdparty/io.vertx.core/META-INF/MANIFEST.MF": "e401908310ab43b5a9560c88904c130427172cffd38995959aa7ea081adcb027",
+      "target-platform/p2-repo-common/pom.xml": "798a920eadd72e99705695022fa900fd068f3f44d299f07a342021a56c4536da",
+      "kura-dev-runtime/runtime.json": "cf017059f098c02547b82b1674ea527ddcc840b5b49f67c9602b8eb75273a50d",
+      "kura-dev-runtime/pom.xml": "a9b0f1ec42cd467d4fc94e957e426713e3cc427cb9aafaa5d3946ba86863e854"
+    },
+    "scope": "Fresh owned checkout for installing only the repaired Vertx core wrapper and assembling runtime after the active CI ends"
+  },
+  "buildResults": [
+    {
+      "step": 1,
+      "command": [
+        "/opt/homebrew/Cellar/maven/3.10.0/libexec/bin/mvn",
+        "-f",
+        "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/source/kura/build-support/thirdparty/io.vertx.core/pom.xml",
+        "-Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+        "-DskipTests",
+        "-DskipITs",
+        "install"
+      ],
+      "startedAt": "2026-10-11T02:04:03.598825",
+      "completedAt": "2026-10-11T02:04:09.905791",
+      "exitCode": 0,
+      "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/build-1.log"
+    },
+    {
+      "step": 2,
+      "command": [
+        "/opt/homebrew/Cellar/maven/3.10.0/libexec/bin/mvn",
+        "-f",
+        "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/source/kura/kura-dev-runtime/pom.xml",
+        "-Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+        "-DskipTests",
+        "-DskipITs",
+        "-Dkura.dev.profile=macos",
+        "package"
+      ],
+      "startedAt": "2026-10-11T02:04:09.906176",
+      "completedAt": "2026-10-11T02:04:16.852600",
+      "exitCode": 0,
+      "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/build-2.log"
+    }
+  ],
+  "probeArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-relocated-20261011",
+  "probeCommand": [
+    "python3",
+    "/Users/heyoulin/iot-kura-develop/git/kura-camel/acceptance/full-runtime-fork-probe/run.py",
+    "--runtime",
+    "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/source/kura/kura-dev-runtime/target/runtime",
+    "--template-profile",
+    "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-full-assembly-20261010/profile",
+    "--archive",
+    "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-relocated-20261011",
+    "--java",
+    "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java",
+    "--broker-module",
+    "/Users/heyoulin/iot-kura-develop/git/kura-cloud/acceptance/full-runtime-protocol-probe",
+    "--dsl",
+    "both",
+    "--javascript",
+    "--shared-yaml",
+    "--vertx"
+  ],
+  "productionOverlays": [],
+  "additionalProductionBundles": [],
+  "inventoryEntries": 280,
+  "productionPluginJars": 278,
+  "dependencyCounts": {
+    "io.vertx.": 6,
+    "io.netty.": 22,
+    "org.snakeyaml.engine": 1
+  },
+  "dependencyAudit": [
+    {
+      "symbolicName": "io.netty.resolver",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-resolver-4.2.19.Final.jar",
+      "sha256": "3ded47536faeb3c4c544a84871d82f461511589afb2a892a180ca425f281363e",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport-native-unix-common",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-native-unix-common-4.2.19.Final.jar",
+      "sha256": "341e91b8e69e6b7d92c353c845ffd91f34e921b7186254c176a64c7089b3e721",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-4.2.19.Final.jar",
+      "sha256": "d82d4e200456b8c5d8a1647a3724603f80616e5b35b9ada6e7a20d048f175075",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport-native-kqueue",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-native-kqueue-4.2.19.Final.jar",
+      "sha256": "ed9bbfb4df084cd707916173c21add2f6e26c611f05b0ee2c110c0acbcff22f9",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.buffer",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-buffer-4.2.19.Final.jar",
+      "sha256": "863f09b46cfe7d83872c9499086b9681cd9878c30a319d9f1f3a681bbfb0b12f",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-dns",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-dns-4.2.19.Final.jar",
+      "sha256": "d8177c55f0864807f6ab02d0af7c72a6b88dd6bfd1a39f3a17e5954e0942fcad",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "com.yofc.iot.yofc-iot-apps-opcuaserver",
+      "version": "0.0.1.SNAPSHOT",
+      "path": "plugins/com.yofc.iot-yofc-iot-apps-opcuaserver-0.0.1-SNAPSHOT.jar",
+      "sha256": "ab6d379900c143d6563e3c2df31ea381cbefe3114ae5766921bd7173d2eb16fe",
+      "multiRelease": null,
+      "embeddedEngineEntries": []
+    },
+    {
+      "symbolicName": "io.netty.resolver-dns",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-resolver-dns-4.2.19.Final.jar",
+      "sha256": "417aaf5cf25cd07865ea91d2e08916b6974995c54aa83730264fc0e06dd4ea90",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport-classes-kqueue",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-classes-kqueue-4.2.19.Final.jar",
+      "sha256": "e1decb5bf69a45118dd8b7fa7ac815462275c5055f75959b7a8d5383196b9ae9",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-base",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-base-4.2.19.Final.jar",
+      "sha256": "5702c8097cc81e939dd12e5b39ac2e81f83737c320f6f4d88553577842f9ceb6",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.vertx.uri-template",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.uri-template-5.2.1.jar",
+      "sha256": "5f16dedbe7ae71b62f78adb2094f247807a643bc9f1d151290aa3ed453a54096",
+      "multiRelease": null
+    },
+    {
+      "symbolicName": "io.netty.codec-http2",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-http2-4.2.19.Final.jar",
+      "sha256": "f45756b12a75b907e98cd0158dc947308ca463cd3d27b9035d11a025a4fdbc4d",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-haproxy",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-haproxy-4.2.19.Final.jar",
+      "sha256": "a9050a26e34019c204ab40e6ae44e555433c7f1164a8990ebbfe3d8ed3f917dc",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.handler-proxy",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-handler-proxy-4.2.19.Final.jar",
+      "sha256": "6a46fb5716c8b2a227e3d5e4533ab67abaccc6cb3a4f431ff0ed0859ae8a6993",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.vertx.core",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.core-5.2.1.jar",
+      "sha256": "17c8c9f0922a55e15ea9836ff9f6bdfb9aa1b612d7e9fafb244edc00e22971f3",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.common",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-common-4.2.19.Final.jar",
+      "sha256": "22fa74761f6e35c8c88972f35cf65664566b922dd73d3424528e97c34278fa79",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.vertx.web-common",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.web-common-5.2.1.jar",
+      "sha256": "668a0948a847966f168c9601280f7dda9a523476dff5d8bfeaabed75a35a966a",
+      "multiRelease": null
+    },
+    {
+      "symbolicName": "io.netty.codec-mqtt",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-mqtt-4.2.19.Final.jar",
+      "sha256": "c08f7fce3ceade5db70dbab979872bf7f87ef00dadb406071e35024eac3f91aa",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport-native-epoll",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-native-epoll-4.2.19.Final.jar",
+      "sha256": "ccf6f55ad2af1611eb0b45e2771e99efc8450f72466bef89b4f00abe99e29c97",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.transport-classes-epoll",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-transport-classes-epoll-4.2.19.Final.jar",
+      "sha256": "4d96ba8dd98ace998f6ae7bfe53ae9e581bd92ad2f7ebe5bd994d1a24306db7e",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-http",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-http-4.2.19.Final.jar",
+      "sha256": "7c28809a4f527746fbce2369f5ac5d5fcef45cfe9da21aa3dd9d3f6bdf00cbe0",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "org.snakeyaml.engine",
+      "version": "3.0.1",
+      "path": "plugins/org.snakeyaml-snakeyaml-engine-3.0.1.jar",
+      "sha256": "0b638c8806112215e02e58e95cbd9e9a69d4bd540991f47553d053919994cc94",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.resolver-dns-native-macos",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-resolver-dns-native-macos-4.2.19.Final.jar",
+      "sha256": "13f401b37ce80d42ae1ba007de653c590170e1040f75f52eceb8c1d8145ba913",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-compression",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-compression-4.2.19.Final.jar",
+      "sha256": "8935c51c7217780ae56d178c938b50ea5729b1e088cf3c2568674e331665554c",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-4.2.19.Final.jar",
+      "sha256": "9da978357522895ed6141e14c81f776173206f6cdd72e92b637c60e6e624735b",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.codec-socks",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-codec-socks-4.2.19.Final.jar",
+      "sha256": "b837044e8edbd977bafe4e643c13958a45cf0caefd1338b7e6660e716a769624",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.netty.handler",
+      "version": "4.2.19.Final",
+      "path": "plugins/io.netty-netty-handler-4.2.19.Final.jar",
+      "sha256": "8b469cf23ddf21ba84291f4dff470d2277a28deac95e7084b0ff2ce853e58276",
+      "multiRelease": "true"
+    },
+    {
+      "symbolicName": "io.vertx.core-logging",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.core-logging-5.2.1.jar",
+      "sha256": "8097db1c60d854194b32385463e8bcffd4485099c099bc418816ee1775eea5af",
+      "multiRelease": null
+    },
+    {
+      "symbolicName": "io.vertx.web-client",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.web-client-5.2.1.jar",
+      "sha256": "64c370a0b4b9fc190c5517f1f2ca1ca7de9d6216912bf92369527a8950945561",
+      "multiRelease": null
+    },
+    {
+      "symbolicName": "io.vertx.auth-common",
+      "version": "5.2.1",
+      "path": "plugins/p2.osgi.bundle-io.vertx.auth-common-5.2.1.jar",
+      "sha256": "ebc2a0dd013d905a2b6e5653ac1bfd3f0cf2bb46a0c038c8120da3745c02da0c",
+      "multiRelease": null
+    }
+  ],
+  "result": {
+    "securityServiceProviderCount": 0,
+    "camelVersion": "4.22.1",
+    "filePrecedencePassed": true,
+    "sharedYamlEngine": {
+      "symbolicName": "org.snakeyaml.engine",
+      "yofcYamlRoundTripPassed": true,
+      "sameClassIdentity": true,
+      "version": "3.0.1"
+    },
+    "yofcVertx": {
+      "actualThreadingModelPassed": true,
+      "actualHttpPassed": true,
+      "eventBusRoundTripPassed": true,
+      "version": "5.2.1",
+      "virtualThreadAvailable": true
+    },
+    "fileHotUpdateSameContext": true,
+    "unchangedConfigurationSameContext": true,
+    "inlineScriptUpdatedViaConfiguration": true,
+    "changedXmlContextLifecyclePassed": true,
+    "javascriptInitAndVertxPassed": true,
+    "dslUnderTest": "yaml",
+    "javaDslConfigurationAndDeliveryPassed": true,
+    "yamlDslConfigurationAndDeliveryPassed": true,
+    "routerPid": "acceptance.mac.camel.08478f08-5a41-4f42-a7a1-193b70b767ac",
+    "cloudPid": "acceptance.mac.camel.08478f08-5a41-4f42-a7a1-193b70b767ac.cloud",
+    "clientId": "camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac",
+    "observerId": "camel-observer-08478f08-5a41-4f42-a7a1-193b70b767ac",
+    "bundleCount": 280,
+    "packets": [
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/out",
+        "case": "KuraPayload producer",
+        "payloadSha256": "69c04fbaf0ae49af0bd20cebccd6aeda9ca6bc2a6a5a37801d6d45d03b57e4de"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/out",
+        "case": "String producer",
+        "payloadSha256": "cdcd2ab85c91a375f10c0d5da2f310452c710b800b0b71011e846f999c309231"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/out",
+        "case": "Binary producer",
+        "payloadSha256": "bf9db3a68c5581a29124da2de7df171d0c8642960324fe0dbd2433df57e690fd"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/echo",
+        "case": "Real cloud consumer callback",
+        "payloadSha256": "a22bcca559067ee5fd9c43e454086df3b4fdffd315b20855e4d2c3cc76b004c8"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-v1",
+        "payloadSha256": "6cd83377c09cfc371f2133ce25eb6b855f0bb2651e4104037f76e58436c5f424"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-v2",
+        "payloadSha256": "8cf4e7563bb1e9c3890cb33ccfbf305253d823b35ecdc33f6bdc79caa929d68f"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-inline-v3",
+        "payloadSha256": "6195cfe132c641e63914749a1687e1c640af370b55fefdef1ad354e8acc337d5"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script-next",
+        "case": "Vertx WebClient groovy-inline-v3-next",
+        "payloadSha256": "6195cfe132c641e63914749a1687e1c640af370b55fefdef1ad354e8acc337d5"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/echo-next",
+        "case": "Real cloud consumer callback-next",
+        "payloadSha256": "a43b9d29b9f8ba7e8cecd3acd665efa31bb9a4c8dafa0386181371f892901035"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script-next",
+        "case": "Vertx WebClient javascript-v4-next",
+        "payloadSha256": "922689298eb8130ebea8393695b7f54317cdfed663a4a148e8097b8bbc50da6d"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/out-java",
+        "case": "Actual java DSL producer",
+        "payloadSha256": "f05439eee714fc3a1abbeed78364f0248785b1868b122ca8f2d8999ddbe0933c"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script-java",
+        "case": "Vertx WebClient groovy-dsl-java-java",
+        "payloadSha256": "8f81f461a52fbc22093d266743f748d9f066d92c13b980fc66878934709644ab"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/echo-java",
+        "case": "Real cloud consumer callback-java",
+        "payloadSha256": "7d74b8128f076fcecdc8d6806c451541a9475b9c4d23f55106c1c3f27d4fe56a"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/out-yaml",
+        "case": "Actual yaml DSL producer",
+        "payloadSha256": "8c24e162712d26e1349a2bb8aa56fbef6a00dbb8d701fa4259fe8a225df65fd3"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/script-yaml",
+        "case": "Vertx WebClient groovy-dsl-yaml-yaml",
+        "payloadSha256": "a64c255bf4c0b2b95e85f6633b35e6907b2881227fa567e62777f530c1ae6c02"
+      },
+      {
+        "qos": 1,
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac/FULL_CAMEL/echo-yaml",
+        "case": "Real cloud consumer callback-yaml",
+        "payloadSha256": "035ce3a907223b60ef232bdd83879c66b00ab85c54f2b8e29de0e284ca3c5761"
+      }
+    ],
+    "browserEditorSaveExecuted": false,
+    "cleanupPassed": true,
+    "passed": true,
+    "elapsedSeconds": 30.054,
+    "pids": [
+      38856,
+      38877
+    ],
+    "exitCodes": [
+      0,
+      143
+    ],
+    "forcedShutdown": false,
+    "portsReleased": true,
+    "independentHttpRequests": [
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-v1",
+        "status": 200,
+        "bodySha256": "8ef823cf1ece2a463bdf860f1cee5341441a6201856efd1ab4c19ef88e40c130"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-v2",
+        "status": 200,
+        "bodySha256": "7c1d607a623055f61af2bc6e4367c627be7ecc557b87e7b13a0d1e0d36978b08"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-inline-v3",
+        "status": 200,
+        "bodySha256": "93161af196aac057beff6ae8e596a2e611f4159636b4d85eccabb9d4104a6faf"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-inline-v3",
+        "status": 200,
+        "bodySha256": "93161af196aac057beff6ae8e596a2e611f4159636b4d85eccabb9d4104a6faf"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/javascript-v4",
+        "status": 200,
+        "bodySha256": "03b7b67e2cf8e73d9ed22cc769139d7e0915019dd0a04e68bd299695917025cd"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-dsl-java",
+        "status": 200,
+        "bodySha256": "23281fd1daf3cf62ae0c90d81a7d070be8147df855deac3ebc95d125f1a3d497"
+      },
+      {
+        "path": "/08478f08-5a41-4f42-a7a1-193b70b767ac/groovy-dsl-yaml",
+        "status": 200,
+        "bodySha256": "769e63e93f39ad1f1458d555b4d708a62da8695bf8eb530ec40b886acb11cf47"
+      }
+    ],
+    "broker": {
+      "authenticatedClients": [
+        "camel-cloud-08478f08-5a41-4f42-a7a1-193b70b767ac",
+        "camel-observer-08478f08-5a41-4f42-a7a1-193b70b767ac"
+      ],
+      "stopped": true
+    },
+    "helperSha256": "1ab0d60bd7a130988c08119823e517440af53235d45d0ae33910e944fbf32562",
+    "sources": {
+      "run.py": "1013f6dcb773c1d88e40a88b10a8e7a2b6eb8fd07455311a663584e94af858a9",
+      "pom.xml": "89d163048cfff6fa5f83b2814840e4e1459d5d38151a6a8d4940d91f47001907",
+      "README.md": "e2df9268ab578aec761ae6ae414573f50034fed4294ee8b545caddaaf75557ce",
+      "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java": "11a39c24e2ae081c8dfcd7e4b69372fbe061df3e43754d34b4db0f3aba43b873"
+    },
+    "brokerSourceSha256": "3908776bd702a174a2df69cc994a197a6570de8df236c8a19da843f8f05fb175",
+    "logs": {
+      "console.log": "ca44dd6a9da5d7a68a2f3e0588157166cf9bf98fb6e49c290e404be9c948e8b1",
+      "broker.log": "2c58b87a0350a39bb1c3b5f4891defeeb9a785e84aa11a466dc9ddb21253bf58",
+      "profile/logs/kura.log": "30074cb7b1794f90ad79eecef8bb4e647d6f2b5f7f75fd1a8b989a3487687b56"
+    }
+  },
+  "resultSha256": "e38ce003295c121ecd0a1d299c2158b15e9b252ddec13272a35f1f2db75a13fa",
+  "helperSourceAudit": {
+    "sourceRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+    "checks": [
+      {
+        "source": "run.py",
+        "sha256": "1013f6dcb773c1d88e40a88b10a8e7a2b6eb8fd07455311a663584e94af858a9",
+        "matchesCurrent": true,
+        "archived": "sources/run.py"
+      },
+      {
+        "source": "pom.xml",
+        "sha256": "89d163048cfff6fa5f83b2814840e4e1459d5d38151a6a8d4940d91f47001907",
+        "matchesCurrent": true,
+        "archived": "sources/pom.xml"
+      },
+      {
+        "source": "README.md",
+        "sha256": "e2df9268ab578aec761ae6ae414573f50034fed4294ee8b545caddaaf75557ce",
+        "matchesCurrent": true,
+        "archived": "sources/README.md"
+      },
+      {
+        "source": "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java",
+        "sha256": "11a39c24e2ae081c8dfcd7e4b69372fbe061df3e43754d34b4db0f3aba43b873",
+        "matchesCurrent": true,
+        "archived": "sources/src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java"
+      }
+    ]
+  },
+  "runtimeHomeRelocation": {
+    "runtimeProfile": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/profile",
+    "templateProfile": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-full-assembly-20261010/profile",
+    "ownedProfile": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-relocated-20261011/profile"
+  },
+  "helperRepairRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+  "retainedFailedAttempt": {
+    "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-20261011",
+    "cause": "The opt-in helper relocated only the template home rather than the assembled runtime declared kura.home. Its ownership marker guard rejected the mismatch.",
+    "repair": "Resolve the single absolute declared kura.home, relocate that home and the template/configuration paths, assert owned profile before launch; retain the guard.",
+    "productionPackagingDefect": false
+  },
+  "protected": {
+    "protectedFiles": 315,
+    "changedProtectedFiles": [],
+    "personal": {
+      "checked": 33,
+      "currentFiles": 33,
+      "changed": [],
+      "removed": [],
+      "added": []
+    }
+  },
+  "protectedAuditSha256": "59a0ec93b64024752bcebd287848956097221b7c46d95cb1701f2d4cd54caede",
+  "inventorySha256": "f478ee7b4f92fc6ab0cf156dbdef28dd23a2fb6318eecb88d396b1e12f7fede6",
+  "browserEvidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+  "limits": "This packaged run does not repeat ACE browser save. Its separate upgraded browser run remains 17 MQTT / 8 HTTP. Installed Debian, external policy provider, NetworkManager/kernel, hardware/GPU and deployed gateway boundaries remain."
+}
