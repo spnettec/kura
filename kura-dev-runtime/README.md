@@ -6,7 +6,7 @@
 
 ```sh
 mvn -f build-support/pom.xml install
-mvn -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests
+mvn -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests -DskipITs
 kura-dev-runtime/run.sh --no-build
 ```
 
@@ -17,6 +17,10 @@ KURA_MAVEN_REPO=/absolute/path/to/repository kura-dev-runtime/run.sh
 ```
 
 IDEA 从仓库根 POM 导入，在 Maven 面板启用 `workspace` profile，配置项目 JDK 21，选择共享的 `Kura macOS` 或 `Kura Linux`，点击 Run/Debug。启动前 Maven 组装失败会阻止启动。业务代码由 bundle 自己的类加载器加载，可在激活和业务方法设断点。
+
+共享应用启动配置同时传入 `-DskipTests -DskipITs`：Surefire 和 Failsafe 3.6 分别使用
+这两个开关。即使 Maven 面板同时选中了 `osgi-it`，启动前仍只做增量打包。
+测试验收另外执行 `mvn -Posgi-it verify` 或 `RUN_TESTS=1 RUN_IT=1 ./build-all.sh`。
 
 `target/runtime/` 内包含 launcher、framework、plugins、生成配置与 `inventory.json`（坐标、bundle 版本、SHA256）。可直接比对清单确认加载来源。停止 Run/Debug 后再执行 package/clean；即使 JVM 暂停在 Jetty 启动之前，工具也拒绝替换正在使用的目录。
 

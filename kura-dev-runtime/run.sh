@@ -5,7 +5,7 @@ PROFILE="${KURA_DEV_PROFILE:-auto}"
 if [[ "${1:-}" == "--no-build" ]]; then
   shift
 else
-  args=(-B -f "$MODULE_DIR/../pom.xml" -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests "-Dkura.dev.profile=$PROFILE")
+  args=(-B -f "$MODULE_DIR/../pom.xml" -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests -DskipITs "-Dkura.dev.profile=$PROFILE")
   if [[ -n "${KURA_MAVEN_REPO:-}" ]]; then
     args+=("-Dmaven.repo.local=$KURA_MAVEN_REPO")
   fi
