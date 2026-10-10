@@ -515,3 +515,35 @@ are recorded in [the validation report](sparkplug-runtime-validation-20261010.js
 Earlier failing and passing trial runs are not added to the final count. TLS,
 filesystem keystore/CRL, durable restart and Sparkplug-specific IDEA execution remain
 unverified. No additional Linux or full-workspace validation is claimed.
+
+## Actual cloud REST service assembly (2026-10-10)
+
+`CloudFactoryRuntimeIT.restFactoryPipeline` now installs the REST resource into the
+real Equinox framework after the actual Felix UserAdmin / Kura role store is ready.
+SCR registers the real `CLD-V1` request handler with a controlled ingress registry.
+Requests cross its real JAX-RS proxy, JSON/DTO conversion, cloud service lookup,
+ConfigurationService, factory and SCR; no static FrameworkUtil or registry mocks
+participate in those business paths. Jersey RuntimeDelegate discovery uses the
+container Jersey bundle classloader for this ingress and restores the previous TCCL.
+Business APIs remain absent from the controller classpath.
+
+Checks cover the REST permission role, Kapua/Sparkplug factory discovery, publisher
+and subscriber SCR descriptions, cloud creation under a custom PID, disconnected
+status, three stack PIDs, both pub/sub instances and bindings, configuration reads,
+partial configuration updates preserving independent Chinese name/description/PID,
+and removal of the endpoint, all child services and pub/sub instances. This is an
+actual SCR/service-arrival test; network HTTP/MQTT authorization evidence remains
+in the earlier separate transport suite. It is not a new end-to-end HTTP server run.
+
+Draft setup findings are not counted as passing tests. Installing REST with all
+initial bundles allowed it to become active before the intended explicit start and
+left its permission role absent; this test covers late service arrival with the role
+store already available. The exact initial-start activation chain and role recovery
+remain an open check, not a production fix or proof of arbitrary startup ordering.
+The direct GET response was not a valid unchanged PUT input in the trial; the final
+test sends the documented update DTO containing only changed properties. Full DTO
+round-trip behavior has not been established by this test.
+
+See [final counts, revisions and checksums](cloud-rest-runtime-validation-20261010.json).
+No production code or handwritten metadata changed in this batch. No additional
+Linux or full-workspace validation is claimed.

@@ -1,0 +1,53 @@
+{
+  "tests": 7,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "newRestInvocations": 1,
+  "previousCloudInvocations": 6,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "execution": "JUnit 5 / Failsafe / real Equinox SCR, ConfigurationService, UserAdmin, Kura role store, cloud factory, request handler and Jersey RuntimeDelegate",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-rest-runtime-20261010",
+  "cloudRevision": "704f9bebef4269d59dadc971159658bfb491f784",
+  "coreBaseRevision": "282e8c2e42ec9d89fa6ef6abf07541af45b5b231",
+  "reportSha256": "e932bac1c68ee7f30512283c93bc4c7bd826fd2c1b8efb4f752c36b946ae7af0",
+  "sources": {
+    "kura-cloud/runtime-tests/pom.xml": "4747edc9c95563e14f6040f716a3419e55f22c41cd67cad66f4dbbf04076a31b",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "d28a84543fd826ef23a2b1f50c7eb59fd05ac3d3d520e448b32088fde427334d",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudRestRuntimeScenario.java": "9d6105b0a17f5ee9b8b33d0a32174eaacb893b70a97929866836a10d27534bca"
+  },
+  "caseDurationsSeconds": {
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.848,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.58,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.688,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.693,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.61,
+    "restFactoryPipeline(EquinoxRuntime)": 1.617,
+    "sparkplugFactoryPipeline(EquinoxRuntime)": 11.266
+  },
+  "ciReportReplay": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "verified": [
+    "REST bundle installed after role store is available; real role creation and SCR handler registration",
+    "Kapua and Sparkplug factory discovery through the real registry",
+    "Publisher and subscriber factory discovery through SCR descriptions",
+    "Custom cloud PID creation and disconnected status",
+    "Stack PID discovery, publisher and subscriber creation with actual binding",
+    "Configuration read and partial update of independent Chinese name and description",
+    "Deletion removes endpoint, child services, publisher and subscriber"
+  ],
+  "boundaries": [
+    "Controlled RequestHandlerRegistry ingress; this case does not open an HTTP server or broker connection",
+    "Actual Jersey bundle TCCL used for RuntimeDelegate and restored afterward; Kura APIs absent from controller",
+    "Startup with REST present before role store readiness and role recovery remain open",
+    "Whole GET DTO replay as PUT remains unverified; changed-property update is verified",
+    "No new Linux or full-workspace run"
+  ],
+  "counting": "Seven final invocations include six previous scenarios. Historical full-workspace totals unchanged."
+}

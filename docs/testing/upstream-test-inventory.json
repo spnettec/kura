@@ -4378,12 +4378,14 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.rest.cloudconnection.provider/src/test/java/org/eclipse/kura/internal/rest/cloudconnection/provider/test/CloudConnectionEndpointsTest.java",
-      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/CloudConnectionEndpointsIT.java"
+      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/CloudConnectionEndpointsIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudRestRuntimeScenario.java"
     ],
     "execution": "Surefire component scenarios and Failsafe Jupiter HTTP/MQTT transport matrix",
-    "reason": "All 14 distinct upstream endpoint scenarios retain exact component assertions and additionally execute over actual HTTP and MQTT through CloudConnectionService/manager bridge and a real Equinox service registry. Four extra HTTP credential/role cases verify 401, 403 and endpoint-only permission. SCR, factories and ConfigurationService remain controlled service boundaries. See cloud-test-restoration.md.",
+    "reason": "All 14 distinct upstream endpoint scenarios retain exact component assertions and additionally execute over actual HTTP and MQTT through CloudConnectionService/manager bridge and a real Equinox service registry. Four extra HTTP credential/role cases verify 401, 403 and endpoint-only permission. SCR, factories and ConfigurationService remain controlled service boundaries. See cloud-test-restoration.md. Actual SCR/factory/ConfigurationService service arrival and create/read/update/delete path now pass with both pub/sub services; see cloud-rest-runtime-validation-20261010.json. Earlier HTTP/MQTT transport results remain separate.",
     "deferredScenarios": [
-      "Real SCR/factory/ConfigurationService assembly and service arrival; transport and HTTP authorization are now verified separately."
+      "Initial startup with REST present before role store readiness: trace early activation and verify permission-role recovery. Late REST arrival with actual SCR/factory/ConfigurationService and role storage is now verified."
     ],
     "validation": {
       "tests": 14,
@@ -4404,6 +4406,14 @@
       "jdk": "21",
       "date": "2026-10-10",
       "reportSha256": "591d057072ae0ad7aded5d639b301ce1ad22d7aac6c7783fef09c786bebe92d9"
+    },
+    "runtimeValidation": {
+      "report": "docs/testing/cloud-rest-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.restFactoryPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
     }
   },
   {
