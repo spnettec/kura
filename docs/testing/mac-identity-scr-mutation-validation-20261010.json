@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-10",
+  "scope": "macOS isolated Equinox/SCR identity V1 and V2 mutation, permission assignment, cross-version reads and cleanup over authenticated HTTPS",
+  "platform": "macOS-27.0.1-arm64",
+  "jdk": "21.0.12.1",
+  "maven": "3.10.0",
+  "runtime": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "configuration": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/equinox-config-postfix",
+    "httpsPort": 18443,
+    "tls": "Generated localhost certificate validated with the isolated certificate authority file",
+    "authentication": "Basic isolated development admin identity; credential omitted",
+    "masterKey": "External KURA_CRYPTO_SECRET_KEY from the isolated profile; value omitted",
+    "stoppedAfterProbe": true
+  },
+  "http": {
+    "requests": 14,
+    "status": 200,
+    "v2CreatePermission": true,
+    "v2CreateIdentity": true,
+    "v2AssignPermission": true,
+    "v2ReadAssignedPermission": true,
+    "v1CrossReadV2Identity": true,
+    "v1CreateIdentity": true,
+    "v1AssignPermission": true,
+    "v2CrossReadV1Identity": true,
+    "v1DeleteIdentity": true,
+    "v2DeleteIdentity": true,
+    "v2DeletePermission": true,
+    "identityListMatchedBeforeAfter": true,
+    "permissionAbsentAfterCleanup": true
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/identity-scr-mutation-20261010",
+  "archiveResult": {
+    "file": "result.json",
+    "sha256": "02cc93b35b05269194c165a07dc9e3c4352e5df579c6acef41ed5e409843cdb2"
+  },
+  "limits": [
+    "This exercised the isolated macOS development assembly, not an installed Debian package",
+    "No new Linux, hardware, YOFC, PLC4X or official OPC UA validation was added"
+  ]
+}

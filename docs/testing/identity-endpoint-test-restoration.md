@@ -36,10 +36,13 @@ root `endpoint-it` profile exposes it for IDEA/Maven import. See its README for
 standalone commands and prerequisite artifacts.
 
 Service activation/registry/configuration boundaries are explicit fixtures. Mac
-IDEA class Run passed V1 18/18 and V2 32/32; an isolated Equinox/SCR runtime also
-returned authenticated HTTPS 200 for identity and permission lists. Mutating
-identity/permission flows under the complete SCR/configuration assembly and
-deployed runtime remain separate acceptance work. See
-`mac-idea-rest-endpoints-validation-20261010.json` and
-`mac-rest-scr-endpoint-validation-20261010.json`. No production logic,
+IDEA class Run passed V1 18/18 and V2 32/32. In the isolated Mac Equinox/SCR
+runtime, certificate-validated authenticated HTTPS passed 14/14 requests:
+V1 and V2 identity creation, permission assignment, cross-version reads,
+deletion, and final identity/permission cleanup. This validates the real
+configuration-backed write path in the development assembly. See
+`mac-idea-rest-endpoints-validation-20261010.json`,
+`mac-rest-scr-endpoint-validation-20261010.json` and
+`mac-identity-scr-mutation-validation-20261010.json`. Installed Debian package
+acceptance remains separate. No production logic,
 handwritten OSGi metadata, YOFC/PLC4X or official OPC UA behavior changed.

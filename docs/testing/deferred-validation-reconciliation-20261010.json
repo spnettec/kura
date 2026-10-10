@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 41,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 41 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "count": 39,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 39 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -182,38 +182,6 @@
       "remaining": "Installed Debian package SCR/Felix servlet bridge/configuration wiring remains unverified; the macOS development runtime evidence does not cover package installation.",
       "originalDeferredValidation": [
         "Full deployed SCR/Felix servlet bridge/configuration wiring",
-        "IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 215,
-      "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV1EndpointsTest.java",
-      "group": "rest-identity",
-      "evidence": [
-        "docs/testing/identity-endpoint-test-restoration.md",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
-      ],
-      "covered": "IDEA Identity V1 18/18; isolated Equinox/SCR authenticated HTTPS identity V1 and defined-permission GET returned 200.",
-      "remaining": "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe.",
-      "originalDeferredValidation": [
-        "Kura Equinox SCR/configuration assembly",
-        "IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 216,
-      "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV2EndpointsTest.java",
-      "group": "rest-identity",
-      "evidence": [
-        "docs/testing/identity-endpoint-test-restoration.md",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
-      ],
-      "covered": "IDEA Identity V2 32/32; isolated Equinox/SCR authenticated HTTPS identity V2 and defined-permission GET returned 200.",
-      "remaining": "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe.",
-      "originalDeferredValidation": [
-        "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
       ]
     },
@@ -619,6 +587,17 @@
       "inventoryIndex": 241,
       "report": "docs/testing/mac-tamper-scr-event-reset-validation-20261010.json",
       "resolution": "Actual Mac Equinox/SCR dynamic service binding, EventAdmin trigger/reset delivery and authenticated HTTPS status/reset/unbind passed; physical hardware and Debian installation are separate scopes."
+    },
+    {
+      "inventoryIndex": 215,
+      "report": "docs/testing/mac-identity-scr-mutation-validation-20261010.json",
+      "resolution": "Isolated Mac Equinox/SCR authenticated, certificate-validated HTTPS V1/V2 identity and permission create/update/read/delete passed with cleanup; installed Debian acceptance is separate."
+    },
+    {
+      "inventoryIndex": 216,
+      "report": "docs/testing/mac-identity-scr-mutation-validation-20261010.json",
+      "resolution": "Isolated Mac Equinox/SCR authenticated, certificate-validated HTTPS V1/V2 identity and permission create/update/read/delete passed with cleanup; installed Debian acceptance is separate."
     }
-  ]
+  ],
+  "macIdentityScrMutationEvidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json"
 }

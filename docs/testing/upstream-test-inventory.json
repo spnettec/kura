@@ -4710,10 +4710,15 @@
         "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       }
     },
-    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
-    "deferredValidation": [
-      "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe"
-    ]
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed; isolated Equinox/SCR certificate-validated HTTPS identity/permission mutation, cross-version reads and cleanup passed 14/14; see mac-idea-rest-endpoints-validation-20261010.json and mac-identity-scr-mutation-validation-20261010.json.",
+    "deferredValidation": [],
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "httpsRequests": 14,
+      "result": "passed",
+      "evidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json"
+    }
   },
   {
     "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV2EndpointsTest.java",
@@ -4744,10 +4749,15 @@
         "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       }
     },
-    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
-    "deferredValidation": [
-      "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe"
-    ]
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed; isolated Equinox/SCR certificate-validated HTTPS identity/permission mutation, cross-version reads and cleanup passed 14/14; see mac-idea-rest-endpoints-validation-20261010.json and mac-identity-scr-mutation-validation-20261010.json.",
+    "deferredValidation": [],
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "httpsRequests": 14,
+      "result": "passed",
+      "evidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json"
+    }
   },
   {
     "source": "test/org.eclipse.kura.rest.keystore.provider.test/src/main/java/org/eclipse/kura/rest/keystore/provider/KeystoreRequestHandlerV2Test.java",
