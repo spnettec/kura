@@ -1410,6 +1410,12 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
         if (configs == null) {
             return;
         }
+        final Configuration[] persistedFactoryConfigs;
+        try {
+            persistedFactoryConfigs = this.configurationAdmin.listConfigurations("(" + KURA_SERVICE_PID + "=*)");
+        } catch (IOException | InvalidSyntaxException e) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
+        }
         for (ComponentConfiguration config : configs) {
             if (config != null) {
                 Map<String, Object> props = config.getConfigurationProperties();
@@ -1418,10 +1424,33 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
                     if (factoryPid != null) {
                         String pid = config.getPid();
-                        logger.info("Creating configuration with pid: {} and factory pid: {}", pid, factoryPid);
+                        Configuration persisted = null;
+                        if (persistedFactoryConfigs != null) {
+                            for (Configuration candidate : persistedFactoryConfigs) {
+                                Dictionary<String, Object> candidateProps = candidate.getProperties();
+                                if (factoryPid.equals(candidate.getFactoryPid()) && candidateProps != null
+                                        && pid.equals(candidateProps.get(KURA_SERVICE_PID))) {
+                                    persisted = candidate;
+                                    break;
+                                }
+                            }
+                        }
                         try {
-                            createFactoryConfigurationInternal(factoryPid, pid, props, false);
-                        } catch (KuraException e) {
+                            if (persisted == null) {
+                                logger.info("Creating configuration with pid: {} and factory pid: {}", pid, factoryPid);
+                                createFactoryConfigurationInternal(factoryPid, pid, props, false);
+                            } else {
+                                Map<String, Object> restoredProperties = new HashMap<>(props);
+                                restoredProperties.put(KURA_SERVICE_PID, pid);
+                                trackPasswordProperties(pid, restoredProperties);
+                                persisted.updateIfDifferent(CollectionsUtil.mapToDictionary(restoredProperties));
+                                if (!this.allActivatedPids.contains(pid)) {
+                                    this.servicePidByPid.put(pid, persisted.getPid());
+                                    this.factoryPidByPid.put(pid, factoryPid);
+                                    this.waittingForActivatedPids.add(pid);
+                                }
+                            }
+                        } catch (KuraException | IOException e) {
                             logger.warn("Error creating configuration with pid: {} and factory pid: {}", pid,
                                     factoryPid, e);
                         }
