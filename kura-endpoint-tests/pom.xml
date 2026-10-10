@@ -511,6 +511,14 @@
       <artifactId>org.eclipse.kura.rest.security.provider</artifactId>
       <version>2.0.0-SNAPSHOT</version><scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.rest.keystore.provider</artifactId>
+      <version>1.0.0-SNAPSHOT</version><scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.keystore</artifactId>
+      <version>2.0.0-SNAPSHOT</version><scope>test</scope>
+    </dependency>
   </dependencies>
   <repositories>
     <repository>

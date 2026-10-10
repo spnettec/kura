@@ -884,3 +884,13 @@ SecurityService is called. See `security-endpoint-test-restoration.md`.
 Inventory: 360 restored, 53 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **30 unreviewed** out of 465.
 Actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## Keystore endpoint continuation (2026-10-10)
+
+All eight V2 private-key scenarios pass over HTTP and MQTT: 16 invocations using
+real temporary PKCS12 stores, certificates and Equinox service trackers. Cleanup
+checks cover service references and executors; see keystore-endpoint-test-restoration.md.
+
+Inventory: 361 restored, 53 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **29 unreviewed** out of 465.
+Actual Kura SCR/runtime and IDEA acceptance remain open.

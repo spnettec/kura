@@ -38,7 +38,7 @@ test compilation. No fixture artifact is included in a runtime distribution.
 
 OSGi registry/configuration boundaries are controlled and services are activated
 explicitly. This tests real transport and component interaction; full SCR, persistent
-configuration/keystore storage, deployed runtime and IDEA execution remain separate
+configuration/master-key assembly, deployed runtime and IDEA execution remain separate
 acceptance work. The `kura-cloud` checkout and its matching installed artifacts are
 required; YOFC/PLC4X and official OPC UA are not extended by this module.
 
@@ -54,3 +54,7 @@ Security V1/V2 scenarios exercise authentication, reload/application boundary ca
 and error mapping. Their SecurityService is controlled, so live host policy files
 are not modified. The V2 oversized-request fixture requires kura-cloud `591fea6`
 or later; its private broker limit is bounded at 8 MiB only for that test class.
+
+Keystore V2 scenarios use actual temporary filesystem PKCS12 stores, certificates
+and private Equinox trackers. CryptoService is controlled; tracker uses and password
+updater shutdown are checked before cleanup. See the keystore endpoint audit.
