@@ -23,8 +23,12 @@ password-updater and tracker cleanup; they are not folded into this test commit.
 Validation selected KeystoreEndpointsV2IT using Failsafe verify in the isolated
 migration repository. Mac IDEA class Run passed 16/16. An isolated Equinox/SCR
 runtime with real JKS and external master key returned authenticated HTTPS 200
-for keystore and entry lists. Installed Debian SCR/configuration and private-key
-mutation with the runtime master key remain open. See
+for keystore and entry lists. In that isolated Mac assembly, the SCR registered
+PKCS12 service also accepted a new private key and certificate chain through
+the V2 HTTPS endpoint (204), returned the new private-key entry (200), and
+deleted it (204); entry lists matched before and after cleanup. Temporary key
+material was removed. Installed Debian package acceptance remains open. See
 `mac-idea-rest-endpoints-validation-20261010.json` and
-`mac-rest-scr-endpoint-validation-20261010.json`. Handwritten OSGi metadata and
+`mac-rest-scr-endpoint-validation-20261010.json` and
+`mac-keystore-privatekey-scr-validation-20261010.json`. Handwritten OSGi metadata and
 fork behavior are unchanged.

@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 39 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 39 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -193,10 +193,11 @@
         "docs/testing/keystore-endpoint-test-restoration.md",
         "docs/testing/cloud-tls-runtime-validation-20261010.json",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json",
+        "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json"
       ],
-      "covered": "IDEA Keystore V2 16/16; isolated Equinox/SCR authenticated HTTPS keystore and entry lists returned 200 with real JKS and external master key.",
-      "remaining": "Installed Debian REST/SCR/configuration and private-key mutation with actual CryptoService master-key assembly.",
+      "covered": "IDEA Keystore V2 16/16; isolated Mac Equinox/SCR HTTPS read-only lists and actual private-key upload/lookup/delete against PKCS12 passed 6/6 with external runtime master key and cleanup.",
+      "remaining": "Installed Debian REST/SCR/configuration package acceptance remains unverified; no new Linux validation requested.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and actual CryptoService master-key assembly",
         "IDEA execution"
@@ -599,5 +600,6 @@
       "resolution": "Isolated Mac Equinox/SCR authenticated, certificate-validated HTTPS V1/V2 identity and permission create/update/read/delete passed with cleanup; installed Debian acceptance is separate."
     }
   ],
-  "macIdentityScrMutationEvidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json"
+  "macIdentityScrMutationEvidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json",
+  "macKeystorePrivateKeyEvidence": "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json"
 }

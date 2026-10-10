@@ -4788,10 +4788,17 @@
         "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       }
     },
-    "reason": "All eight upstream private-key upload/update and invalid-request scenarios run over both transports with real filesystem PKCS12 stores and Equinox trackers. See keystore-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
+    "reason": "All eight upstream private-key upload/update and invalid-request scenarios run over both transports with real filesystem PKCS12 stores and Equinox trackers. See keystore-endpoint-test-restoration.md. Direct macOS IDEA class Run passed; isolated Equinox/SCR HTTPS with external master key passed private-key upload, lookup and deletion against a real PKCS12 service; see mac-idea-rest-endpoints-validation-20261010.json and mac-keystore-privatekey-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Installed Debian REST/SCR/configuration and private-key mutation with actual CryptoService master-key assembly"
-    ]
+      "Installed Debian REST/SCR/configuration package acceptance"
+    ],
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly with external master key",
+      "httpsRequests": 6,
+      "result": "passed",
+      "evidence": "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json"
+    }
   },
   {
     "source": "test/org.eclipse.kura.rest.provider.test/src/main/java/org/eclipse/kura/rest/provider/test/PasswordChangeSessionTest.java",
