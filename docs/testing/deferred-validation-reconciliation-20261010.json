@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -58,10 +58,11 @@
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
         "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/core-protocol-mqtt-validation-20261010.json"
+        "docs/testing/core-protocol-mqtt-validation-20261010.json",
+        "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
-      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0. Later targeted Maven Failsafe 1/1 and direct Mac IDEA JUnit 1/1 additionally verify authenticated MQTT INVENTORY-V1 deploymentPackages, bundles, systemPackages and merged inventory GET; Felix deployment lifecycle and controlled DEB type/version are asserted.",
+      "remaining": "Full deployed assembly remains unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
@@ -109,10 +110,11 @@
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
         "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/core-protocol-mqtt-validation-20261010.json"
+        "docs/testing/core-protocol-mqtt-validation-20261010.json",
+        "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
-      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified. Linux system package-manager enumeration remains outside this Mac acceptance scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0. Later targeted Maven Failsafe 1/1 and direct Mac IDEA JUnit 1/1 additionally verify authenticated MQTT INVENTORY-V1 deploymentPackages, bundles, systemPackages and merged inventory GET; Felix deployment lifecycle and controlled DEB type/version are asserted.",
+      "remaining": "Full deployed assembly remains unverified. Linux system package-manager enumeration remains outside this Mac acceptance scope.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution",
@@ -143,10 +145,11 @@
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
         "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/core-protocol-mqtt-validation-20261010.json"
+        "docs/testing/core-protocol-mqtt-validation-20261010.json",
+        "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
-      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0. Later targeted Maven Failsafe 1/1 and direct Mac IDEA JUnit 1/1 additionally verify authenticated MQTT INVENTORY-V1 deploymentPackages, bundles, systemPackages and merged inventory GET; Felix deployment lifecycle and controlled DEB type/version are asserted.",
+      "remaining": "Full deployed assembly remains unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"

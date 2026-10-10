@@ -3850,8 +3850,9 @@
       "kura/build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyCoreScenarios.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java"
     ],
-    "reason": "Existing lifecycle-managed MqttTransport supplies actual request/reply correlation, bounded waits, observer cleanup and pending-request cleanup for endpoint suites. New real-OSGi backend scenarios explicitly use the registry boundary. Old listener-owning singleton/global test helper is replaced, not counted as additional transport coverage. See legacy-core-protocol-restoration.md. Companion CloudFactoryRuntimeIT now verifies an MQTT request/reply through the actual SCR configuration and inventory handlers.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "reason": "Existing lifecycle-managed MqttTransport supplies actual request/reply correlation, bounded waits, observer cleanup and pending-request cleanup for endpoint suites. New real-OSGi backend scenarios explicitly use the registry boundary. Old listener-owning singleton/global test helper is replaced, not counted as additional transport coverage. See legacy-core-protocol-restoration.md. Companion CloudFactoryRuntimeIT now verifies an MQTT request/reply through the actual SCR configuration and inventory handlers. A later authenticated MQTT run also covers INVENTORY-V1 deploymentPackages, bundles, systemPackages and merged inventory GET with real Felix deployment and a controlled OS package fixture; see core-protocol-deployment-mqtt-validation-20261010.json.",
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/CommURITest.java",
@@ -3993,8 +3994,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Four upstream scenarios retained with actual Felix DeploymentAdmin, SCR InventoryHandlerV1 and JSON services. An in-memory deployment package supplies a real installed bundle; JSON fields and actual uninstall are asserted. OS package enumeration is controlled. Companion MQTT GET evidence is in core-protocol-mqtt-validation-20261010.json; see also legacy-core-protocol-restoration.md.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "reason": "Four upstream scenarios retained with actual Felix DeploymentAdmin, SCR InventoryHandlerV1 and JSON services. An in-memory deployment package supplies a real installed bundle; JSON fields and actual uninstall are asserted. OS package enumeration is controlled. Companion MQTT GET evidence is in core-protocol-mqtt-validation-20261010.json; see also legacy-core-protocol-restoration.md. The later authenticated MQTT run checks deployed bundle/package details and controlled DEB type/version in both systemPackages and merged inventory; see core-protocol-deployment-mqtt-validation-20261010.json.",
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/KuraExceptionMessageTest.java",
@@ -4095,8 +4097,9 @@
       "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/core/testutil/requesthandler/MqttTransport.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java"
     ],
-    "reason": "The existing MQTT observer uses fresh UUID request IDs and an independent observer ID instead of the legacy timestamp/random singleton. Direct registry scenarios need no wire request ID. No standalone test count. See legacy-core-protocol-restoration.md.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "reason": "The existing MQTT observer uses fresh UUID request IDs and an independent observer ID instead of the legacy timestamp/random singleton. Direct registry scenarios need no wire request ID. No standalone test count. See legacy-core-protocol-restoration.md. The same independent observer correlates all four INVENTORY-V1 GET responses with unique IDs over MQTT; see core-protocol-deployment-mqtt-validation-20261010.json.",
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/SystemAdminServiceTest.java",

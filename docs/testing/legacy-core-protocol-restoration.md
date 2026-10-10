@@ -70,8 +70,19 @@ send CONF-V2 snapshot write/read requests over the same authenticated MQTT route
 It checks an encrypted file and same-process readback through the real
 CryptoService; see `configuration-rest-mqtt-validation-20261010.json`.
 
-Snapshot PUT/rollback and deployment package operations remain verified at the
-direct registry boundary. A deployed Debian assembly and its host services
+The companion also installs a manifest-only package with Felix DeploymentAdmin
+inside the disposable Equinox framework. Its independent MQTT client requests
+INVENTORY-V1 `deploymentPackages` and `inventory` through the Kapua CloudService
+and actual SCR handler. A controlled `SystemService` supplies one DEB fixture; the
+MQTT responses check its type and version in both `systemPackages` and merged
+`inventory`, alongside package/bundle identity, version and state. The test then
+uninstalls the package and checks the bundle is UNINSTALLED. The revised method
+passed Maven Failsafe and direct Mac IDEA JUnit (1/1 each); see
+`core-protocol-deployment-mqtt-validation-20261010.json`.
+
+CONF-V1 configuration PUT/rollback remain verified at the direct registry
+boundary; deployment package inventory GET also traverses MQTT.
+A deployed Debian assembly and its host services
 remain a separate acceptance boundary. Linux package-manager enumeration is
 outside this Mac acceptance scope.
 

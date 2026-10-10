@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 aarch64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "5.14.4",
+  "scenario": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+  "inventoryIndices": [
+    180,
+    186,
+    190
+  ],
+  "verified": [
+    "Felix DeploymentAdmin installs a manifest-only deployment package and starts its bundle inside the isolated Equinox framework",
+    "An authenticated independent Paho client sends INVENTORY-V1 deploymentPackages and inventory GET requests through the actual Kapua CloudService, MQTT broker and SCR-bound InventoryHandlerV1",
+    "The deploymentPackages response identifies the test package version 1.0.0, unsigned status and active bundle version 1.0.0.test",
+    "A controlled SystemService DEB fixture is returned with name, version and type through INVENTORY-V1 systemPackages GET and the merged inventory GET",
+    "The merged inventory response includes both the deployment package with DP type and the installed bundle with version 1.0.0.test",
+    "Cleanup uninstalls the deployment package and verifies the bundle reaches UNINSTALLED"
+  ],
+  "mavenTargeted": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dit.test=CloudFactoryRuntimeIT#coreHandlersOverMqtt -DfailIfNoTests=false -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 8.949
+  },
+  "idea": {
+    "project": "/Users/heyoulin/iot-kura-develop/git/kura-cloud",
+    "configuration": ".run/Kura cloud core protocol runtime.run.xml",
+    "runner": "IDEA JUnitStarter",
+    "case": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+    "passed": 1,
+    "total": 1,
+    "exitCode": 0,
+    "elapsedSeconds": 9.771
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/core-protocol-deployment-mqtt-20261010",
+  "artifacts": {
+    "TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml": "260862921938fa1cbdbcec3cc3f949e8ce2ea5bdfabd027a1662a218c3395231"
+  },
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java": "66b866d56bce4b8df3cdaaa05452c0a02fcbeb95729e8c6e374f823cc0c9ffe6",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b"
+  },
+  "limits": [
+    "This covers inventory GET over MQTT; legacy CONF-V1 PUT and rollback remain verified at the direct registry boundary",
+    "The package is generated and installed inside the disposable framework; no installed Debian Kura assembly was exercised",
+    "System package enumeration remains a controlled SystemService boundary; no Linux validation was added",
+    "No production source, handwritten OSGi metadata, YOFC/PLC4X or official OPC UA behavior changed"
+  ],
+  "cloudValidationCommits": [
+    "2e770ca",
+    "61ed3a8"
+  ]
+}
