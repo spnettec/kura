@@ -2,6 +2,22 @@
 
 This is an in-progress audit, not a declaration that restoration is complete. Upstream snapshots and every reviewed/excluded source are recorded in `upstream-test-inventory.json`. YOFC and PLC4X test restoration is outside this task.
 
+## Complete Mac configuration scenario closure (2026-10-10)
+
+The unchanged 47-case configuration assertion set now passed in **47 fresh
+complete Mac applications**, using production host `SystemServiceImpl`, actual
+configuration/OCD/ConfigAdmin/SCR and owned snapshot paths. Encryption, plaintext
+CDATA, rollback and password type/value paths passed. Every owned JVM exited and
+released its ports, without forced shutdown. See
+[complete configuration evidence](mac-complete-configuration-validation-20261010.md).
+
+Configuration rows 154, 155 and 158 now meet their complete Mac host acceptance.
+The current inventory is **465 reviewed, zero unreviewed, zero deferred scenarios,
+36 rows / 37 strings of deferred validation**. These executable assertions are
+separate from the workspace's 5515 JUnit invocations and existing IDEA evidence.
+Installed Debian, hardware and additional Linux acceptance remain unclaimed;
+restoration remains in progress.
+
 ## Current workspace gate and complete Mac application (2026-10-10)
 
 The actual CI wrapper passed in pinned dedicated checkouts: **5515 invocations,

@@ -1,58 +1,10 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified.",
+  "count": 36,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. At that stage, the 39 retained rows stated remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified. The subsequent unchanged 47-case configuration assertion set passed in 47 complete Mac applications with production host SystemService, resolving rows 154, 155 and 158 within the requested Mac scope. There are now 36 retained rows / 37 strings; no installed Debian or hardware validation is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
-    {
-      "inventoryIndex": 154,
-      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestComponent.java",
-      "group": "configuration",
-      "evidence": [
-        "docs/testing/configuration-runtime-test-restoration.md",
-        "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/idea-configuration-validation-20261010.json",
-        "docs/testing/mac-full-runtime-business-validation-20261010.json"
-      ],
-      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed. Complete Mac development application now verifies production host SystemService, singleton/self reads, actual factory create/update/delete and snapshot CDATA, EventAdmin delivery and three Timer-to-Logger envelopes with cleanup.",
-      "remaining": "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed",
-      "originalDeferredValidation": [
-        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 155,
-      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestSelfComponent.java",
-      "group": "configuration",
-      "evidence": [
-        "docs/testing/configuration-runtime-test-restoration.md",
-        "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/idea-configuration-validation-20261010.json",
-        "docs/testing/mac-full-runtime-business-validation-20261010.json"
-      ],
-      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed. Complete Mac development application now verifies production host SystemService, singleton/self reads, actual factory create/update/delete and snapshot CDATA, EventAdmin delivery and three Timer-to-Logger envelopes with cleanup.",
-      "remaining": "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed",
-      "originalDeferredValidation": [
-        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 158,
-      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/ConfigurationServiceTest.java",
-      "group": "configuration",
-      "evidence": [
-        "docs/testing/configuration-runtime-test-restoration.md",
-        "docs/testing/idea-junit-acceptance.md",
-        "docs/testing/idea-configuration-validation-20261010.json",
-        "docs/testing/mac-full-runtime-business-validation-20261010.json"
-      ],
-      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed. Complete Mac development application now verifies production host SystemService, singleton/self reads, actual factory create/update/delete and snapshot CDATA, EventAdmin delivery and three Timer-to-Logger envelopes with cleanup.",
-      "remaining": "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed",
-      "originalDeferredValidation": [
-        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-      ]
-    },
     {
       "inventoryIndex": 180,
       "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/CloudEndpointPublisher.java",
@@ -634,5 +586,36 @@
   "macWireRouteScrEvidence": "docs/testing/mac-wire-route-scr-validation-20261010.json",
   "completeMacRuntimeEvidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
   "currentWorkspaceCiEvidence": "docs/testing/current-workspace-ci-validation-20261010.json",
-  "latestReconciliationCoreRevision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52"
+  "latestReconciliationCoreRevision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+  "deferredValidationStrings": 37,
+  "closedConfigurationRows": [
+    {
+      "inventoryIndex": 154,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestComponent.java",
+      "previousDeferredValidation": [
+        "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
+      ],
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "closureScope": "All 47 current configuration scenario assertions executed against the production host services in complete Mac assemblies, within the requested macOS acceptance scope; installed Debian/hardware acceptance is not claimed."
+    },
+    {
+      "inventoryIndex": 155,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestSelfComponent.java",
+      "previousDeferredValidation": [
+        "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
+      ],
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "closureScope": "All 47 current configuration scenario assertions executed against the production host services in complete Mac assemblies, within the requested macOS acceptance scope; installed Debian/hardware acceptance is not claimed."
+    },
+    {
+      "inventoryIndex": 158,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/ConfigurationServiceTest.java",
+      "previousDeferredValidation": [
+        "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
+      ],
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "closureScope": "All 47 current configuration scenario assertions executed against the production host services in complete Mac assemblies, within the requested macOS acceptance scope; installed Debian/hardware acceptance is not claimed."
+    }
+  ],
+  "completeConfigurationEvidence": "docs/testing/mac-complete-configuration-validation-20261010.json"
 }

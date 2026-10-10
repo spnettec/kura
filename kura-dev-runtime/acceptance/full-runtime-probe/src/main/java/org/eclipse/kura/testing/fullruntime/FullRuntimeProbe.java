@@ -37,6 +37,11 @@ public final class FullRuntimeProbe implements BundleActivator {
 
     @Override
     public void start(BundleContext context) throws Exception {
+        String scenario = System.getProperty("kura.acceptance.configuration.scenario");
+        if (scenario != null) {
+            new ConfigurationScenarioProbe().run(context, scenario);
+            return;
+        }
         Path home = Path.of(System.getProperty("kura.home")).toAbsolutePath().normalize();
         Path result = home.resolve("full-runtime-probe-result.json");
         String pid = "acceptance.mac.full." + UUID.randomUUID();

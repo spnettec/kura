@@ -3246,9 +3246,6 @@
     ],
     "execution": "JUnit 5 parameterized controller invokes scenarios inside an installed real Equinox test bundle",
     "reason": "All 46 upstream scenarios execute with actual ConfigAdmin, SCR, metatype, XML and CryptoService bundles; one added fork plaintext/CDATA scenario. Temp system paths are controlled. See configuration-runtime-test-restoration.md.",
-    "deferredValidation": [
-      "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
-    ],
     "ideaValidation": {
       "report": "docs/testing/idea-configuration-validation-20261010.json",
       "suite": "ConfigurationServiceRuntimeIT",
@@ -3259,10 +3256,17 @@
       "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
     },
     "completeMacRuntimeValidation": {
-      "evidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
-      "representativeProbePassed": true,
-      "counting": "Shared executable business probe, not additional JUnit invocations"
-    }
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "scenarios": 47,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Three source rows share the same 47-case executable acceptance; do not sum or add to workspace JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven macOS development application; installed Debian and hardware acceptance were not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestSelfComponent.java",
@@ -3279,9 +3283,6 @@
     ],
     "execution": "JUnit 5 parameterized controller invokes scenarios inside an installed real Equinox test bundle",
     "reason": "All 46 upstream scenarios execute with actual ConfigAdmin, SCR, metatype, XML and CryptoService bundles; one added fork plaintext/CDATA scenario. Temp system paths are controlled. See configuration-runtime-test-restoration.md.",
-    "deferredValidation": [
-      "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
-    ],
     "ideaValidation": {
       "report": "docs/testing/idea-configuration-validation-20261010.json",
       "suite": "ConfigurationServiceRuntimeIT",
@@ -3292,10 +3293,17 @@
       "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
     },
     "completeMacRuntimeValidation": {
-      "evidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
-      "representativeProbePassed": true,
-      "counting": "Shared executable business probe, not additional JUnit invocations"
-    }
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "scenarios": 47,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Three source rows share the same 47-case executable acceptance; do not sum or add to workspace JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven macOS development application; installed Debian and hardware acceptance were not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CloudConfigurationHandlerFailureTest.java",
@@ -3364,9 +3372,6 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredValidation": [
-      "Complete upstream configuration scenario set in deployed gateway assembly; representative complete Mac host SystemService paths passed"
-    ],
     "ideaValidation": {
       "report": "docs/testing/idea-configuration-validation-20261010.json",
       "suite": "ConfigurationServiceRuntimeIT",
@@ -3377,10 +3382,17 @@
       "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
     },
     "completeMacRuntimeValidation": {
-      "evidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
-      "representativeProbePassed": true,
-      "counting": "Shared executable business probe, not additional JUnit invocations"
-    }
+      "evidence": "docs/testing/mac-complete-configuration-validation-20261010.json",
+      "scenarios": 47,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Three source rows share the same 47-case executable acceptance; do not sum or add to workspace JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven macOS development application; installed Debian and hardware acceptance were not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/PasswordTypePreservationTest.java",
