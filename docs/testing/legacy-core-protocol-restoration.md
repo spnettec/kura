@@ -65,6 +65,11 @@ The cloud runtime suite passed 13/13 with Maven 3.10/JDK 21, and the new method
 passed directly in Mac IDEA JUnitStarter (1/1, exit code 0). See
 `core-protocol-mqtt-validation-20261010.json`.
 
+The companion was later extended to start the SCR configuration REST bundle and
+send CONF-V2 snapshot write/read requests over the same authenticated MQTT route.
+It checks an encrypted file and same-process readback through the real
+CryptoService; see `configuration-rest-mqtt-validation-20261010.json`.
+
 Snapshot PUT/rollback and deployment package operations remain verified at the
 direct registry boundary. A deployed Debian assembly and its host services
 remain a separate acceptance boundary. Linux package-manager enumeration is

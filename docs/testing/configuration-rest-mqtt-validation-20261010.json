@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 aarch64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "5.14.4",
+  "coreBaseRevision": "3ea2e6cb2999a53357281550f256936719db69b3",
+  "cloudBaseRevision": "3cad1e6a327d26f15eaea98d3a02c20175fc137f",
+  "scenario": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+  "inventoryIndices": [
+    210,
+    211
+  ],
+  "verified": [
+    "Authenticated independent MQTT client reaches the actual SCR ConfigurationRestService registered as CONF-V2 in the Kapua CloudService request pipeline",
+    "The REST configuration service is provided by org.eclipse.kura.rest.configuration.provider; actual ConfigurationService and CryptoService are SCR-bound",
+    "CONF-V2 EXEC snapshots/_write returns an ID and creates a snapshot_N.xml file in isolated temporary storage",
+    "With kura.snapshots.encrypt=true, the file does not begin with plaintext XML and CONF-V2 POST snapshots/byId reads its configuration through the same real master-key CryptoService",
+    "The restored configuration contains fixture.custom.connection; surrounding cloud scenario retains YOFC PID, Chinese name and description assertions"
+  ],
+  "mavenTargeted": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dit.test=CloudFactoryRuntimeIT#coreHandlersOverMqtt -DfailIfNoTests=false -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 8.764
+  },
+  "mavenFullCloudRuntime": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 227.069
+  },
+  "idea": {
+    "project": "/Users/heyoulin/iot-kura-develop/git/kura-cloud",
+    "configuration": ".run/Kura cloud core protocol runtime.run.xml",
+    "runner": "IDEA JUnitStarter",
+    "case": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+    "passed": 1,
+    "total": 1,
+    "exitCode": 0
+  },
+  "limits": [
+    "Encrypted snapshot was written and read in the same Equinox process; recovery after a new process loads the master key remains unverified",
+    "This scenario uses MQTT and the actual SCR REST configuration resource; authenticated HTTP routing to this real backend remains unverified",
+    "Equinox test runtime is not the installed Debian package assembly; no new Linux or hardware validation",
+    "No production source or handwritten OSGi metadata changed"
+  ],
+  "diagnostics": [
+    "The first draft used MQTT POST for snapshots/_write, but its @EXEC annotation takes precedence in JaxRsRequestHandlerProxy; using EXEC passed",
+    "Draft variable name collisions were corrected before the passing targeted and full runs"
+  ],
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-mqtt-20261010",
+  "artifacts": {
+    "targeted.log": "f566b70ac4e6b4caa8b0c3abe3d5ff483153febc417adbb6f02b28ff6ed675cf",
+    "full-runtime.log": "df20d89b68d07b7ed3469c96904ab85b0957ccd2d06c1d9c0508600222989e17",
+    "TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml": "c5d563a848540663c8b02e4dbf54d69a51e5761b6bae8899c4dbf1347aa24cc0"
+  },
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "cd7c5733fcc52af14edbd948388a9f1d84fd2697cd52fcd0b6e9d71f832bf99e",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java": "c373c5499b61ec9b537ec8704fa404b4e0489d1d958472976b6399c95f761165",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java": "33914ea4c83f05aaf1cbe59c68b11b72bd558a9d9262471ccf45cb48ea47d9ae",
+    "kura-cloud/.run/Kura cloud core protocol runtime.run.xml": "6ad385be2963c6447c6ffe0ec7e9db4670fb24fe0bbf5627fda48c9972ea8514"
+  },
+  "cloudValidationCommit": "f735ec303f5b19547265e1a50ec92be190c993e2"
+}

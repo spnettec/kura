@@ -4535,10 +4535,11 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/ConfigurationEndpointsIT.java"
+      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/ConfigurationEndpointsIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java"
     ],
     "execution": "JUnit Jupiter parameterized HTTP/MQTT endpoint scenarios with Failsafe verify",
-    "reason": "All 102 upstream scenarios retained for both actual transports. Local localized metadata API and property update behavior preserved; ConfigurationService and CryptoService are controlled boundaries. See configuration-endpoint-test-restoration.md.",
+    "reason": "All 102 upstream scenarios retained for both actual transports. Local localized metadata API and property update behavior preserved; The 204 endpoint invocations use controlled ConfigurationService and CryptoService boundaries; the companion CONF-V2 MQTT scenario exercises both real SCR services and encrypted snapshot I/O. See configuration-endpoint-test-restoration.md and configuration-rest-mqtt-validation-20261010.json.",
     "validation": {
       "tests": 204,
       "failures": 0,
@@ -4548,9 +4549,11 @@
       "jdk": "21"
     },
     "deferredValidation": [
-      "Actual SCR/persistent ConfigurationService/master-key assembly"
+      "Authenticated HTTP through real SCR ConfigurationRestService and persistent ConfigurationService",
+      "Encrypted snapshot and master-key recovery across an Equinox process restart"
     ],
-    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
+    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json",
+    "combinedMqttEvidence": "docs/testing/configuration-rest-mqtt-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationUtil.java",
@@ -4566,11 +4569,13 @@
       "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationUtil.java"
     ],
     "execution": "JUnit Jupiter parameterized HTTP/MQTT endpoint scenarios with Failsafe verify",
-    "reason": "All 102 upstream scenarios retained for both actual transports. Local localized metadata API and property update behavior preserved; ConfigurationService and CryptoService are controlled boundaries. See configuration-endpoint-test-restoration.md.",
+    "reason": "All 102 upstream scenarios retained for both actual transports. Local localized metadata API and property update behavior preserved; The 204 endpoint invocations use controlled ConfigurationService and CryptoService boundaries; the companion CONF-V2 MQTT scenario exercises both real SCR services and encrypted snapshot I/O. See configuration-endpoint-test-restoration.md and configuration-rest-mqtt-validation-20261010.json.",
     "deferredValidation": [
-      "Actual SCR/persistent ConfigurationService/master-key assembly"
+      "Authenticated HTTP through real SCR ConfigurationRestService and persistent ConfigurationService",
+      "Encrypted snapshot and master-key recovery across an Equinox process restart"
     ],
-    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
+    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json",
+    "combinedMqttEvidence": "docs/testing/configuration-rest-mqtt-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityRestServiceV1DependenciesTest.java",
