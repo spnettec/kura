@@ -829,3 +829,14 @@ Inventory: 353 restored, 43 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **47 unreviewed** out of 465.
 All REST provider source entries are audited; actual Kura runtime and IDEA acceptance
 remain open.
+
+## Shared request fixture continuation (2026-10-10)
+
+Five request/JSON helper sources are migrated to the plain Maven test-support
+artifact. Six real-HTTP/JSON checks and isolated installation pass. Assertions now
+reject 3xx success and missing-current-cookie rotation false positives. See
+`request-test-support-restoration.md`; concrete MQTT and OSGi discovery remain open.
+
+Inventory: 353 restored, 48 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **42 unreviewed** out of 465.
+Endpoint integration, actual Kura runtime and IDEA acceptance remain open.

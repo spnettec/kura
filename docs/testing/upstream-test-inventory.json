@@ -9271,11 +9271,15 @@
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Jupiter/plain-Maven helper restored with explicit lifecycle and HTTP address, bounded IO, UTF-8 and cookie isolation. Six shared real-HTTP/JSON fixture checks plus install pass. No standalone upstream scenarios; concrete MQTT and OSGi service discovery remain separate pending entries. See request-test-support-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire-fixture",
+    "localSources": [
+      "kura/build-support/kura-test-support/src/main/java/org/eclipse/kura/core/testutil/json/JsonProjection.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/pki/TestCA.java",
@@ -9295,11 +9299,15 @@
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Jupiter/plain-Maven helper restored with explicit lifecycle and HTTP address, bounded IO, UTF-8 and cookie isolation. Six shared real-HTTP/JSON fixture checks plus install pass. No standalone upstream scenarios; concrete MQTT and OSGi service discovery remain separate pending entries. See request-test-support-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire-fixture",
+    "localSources": [
+      "kura/build-support/kura-test-support/src/main/java/org/eclipse/kura/core/testutil/requesthandler/AbstractRequestHandlerTest.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/requesthandler/MqttTransport.java",
@@ -9317,33 +9325,45 @@
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Jupiter/plain-Maven helper restored with explicit lifecycle and HTTP address, bounded IO, UTF-8 and cookie isolation. Six shared real-HTTP/JSON fixture checks plus install pass. No standalone upstream scenarios; concrete MQTT and OSGi service discovery remain separate pending entries. See request-test-support-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire-fixture",
+    "localSources": [
+      "kura/build-support/kura-test-support/src/main/java/org/eclipse/kura/core/testutil/requesthandler/RestTransport.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/requesthandler/Transport.java",
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Jupiter/plain-Maven helper restored with explicit lifecycle and HTTP address, bounded IO, UTF-8 and cookie isolation. Six shared real-HTTP/JSON fixture checks plus install pass. No standalone upstream scenarios; concrete MQTT and OSGi service discovery remain separate pending entries. See request-test-support-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire-fixture",
+    "localSources": [
+      "kura/build-support/kura-test-support/src/main/java/org/eclipse/kura/core/testutil/requesthandler/Transport.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/requesthandler/TransportType.java",
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Jupiter/plain-Maven helper restored with explicit lifecycle and HTTP address, bounded IO, UTF-8 and cookie isolation. Six shared real-HTTP/JSON fixture checks plus install pass. No standalone upstream scenarios; concrete MQTT and OSGi service discovery remain separate pending entries. See request-test-support-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "surefire-fixture",
+    "localSources": [
+      "kura/build-support/kura-test-support/src/main/java/org/eclipse/kura/core/testutil/requesthandler/TransportType.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/service/ServiceUtil.java",

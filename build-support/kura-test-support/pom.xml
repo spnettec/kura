@@ -7,7 +7,7 @@
   </parent>
   <artifactId>kura-test-support</artifactId>
   <name>Kura plain Maven test fixtures</name>
-  <description>Test-only reflection and local certificate fixtures; no Eclipse workspace or test extender.</description>
+  <description>Test-only reflection, certificates and request assertions; no Eclipse workspace or test extender.</description>
   <dependencies>
     <!-- Service/API mocks need the OSGi API present on the plain test classpath. -->
     <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.osgi</artifactId></dependency>
@@ -17,5 +17,8 @@
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId></dependency>
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId></dependency>
     <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId></dependency>
+    <dependency><groupId>com.eclipsesource.minimal-json</groupId><artifactId>minimal-json</artifactId></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId><scope>test</scope></dependency>
   </dependencies>
 </project>
