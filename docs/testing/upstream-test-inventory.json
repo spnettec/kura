@@ -2178,9 +2178,10 @@
     "execution": "surefire",
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceMqttTest.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
     ],
-    "reason": "Real SQL/MQTT/Protobuf normal and control round trips verify all six delivery callbacks, IDs, topics, device, body, metric, timestamp and QoS. Uses configured EDC prefix because Moquette 0.18 rejects client publications starting with $. Production default unchanged. Original service-existence assertion now also passes through the shared actual Equinox/SCR cloud factory fixture, preserving local custom PID/name/description. Full broker/SQL and SCR assembly together remains deferred. See cloud-test-restoration.md.",
+    "reason": "Real SQL/MQTT/Protobuf normal and control round trips verify all six delivery callbacks, IDs, topics, device, body, metric, timestamp and QoS. Uses configured EDC prefix because Moquette 0.18 rejects client publications starting with $. Production default unchanged. Original service-existence assertion now also passes through the shared actual Equinox/SCR cloud factory fixture, preserving local custom PID/name/description. The same normal/control callbacks now also pass through actual factory/SCR/ConfigurationService/CryptoService/H2/Paho/Moquette assembly in both JSON and Protobuf modes; in-memory SQL does not claim file durability or TLS. See cloud-test-restoration.md.",
     "validation": {
       "tests": 1,
       "failures": 0,
@@ -2200,6 +2201,18 @@
       "sharedReport": "cloud-factory-runtime-validation-20261010.json",
       "sharedSuiteTests": 2,
       "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
+    },
+    "pipelineValidation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual SCR ConfigurationService CryptoService H2 MQTT",
+      "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
+      "sharedSuiteTests": 4,
+      "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
     }
   },
   {
@@ -2237,7 +2250,9 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/src/test/java/org/eclipse/kura/core/data/transport/mqtt/MqttDataTransportTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/src/test/java/org/eclipse/kura/core/data/transport/mqtt/MqttDataTransportTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
     ],
     "execution": "surefire",
     "reason": "Seventeen upstream scenarios use real Paho/Moquette/SSL-manager TLS, WSS, mutual authentication and PKIX revocation; two formerly ignored missing-client-key cases now use a broker requiring client certificates. The contradictory unknown-revocation case now asserts rejection. One added custom-factory case preserves Paho default verification. Separate production commit fixes Paho overriding the Kura hostname policy. See cloud-test-restoration.md.",
@@ -2250,8 +2265,20 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "Actual SCR/factory/ConfigurationService wiring and filesystem keystore/HTTP CRL refresh plus EventAdmin delivery remain runtime acceptance. KeystoreService supplies actual KeyStore/KeyManager/CertStore values at a mocked service boundary."
-    ]
+      "Actual TLS through SCR, filesystem keystore/HTTP CRL refresh and EventAdmin delivery remain runtime acceptance. Plain MQTT factory/configuration/crypto credentials and H2 queue assembly now pass; existing TLS tests still supply KeyStore/KeyManager/CertStore at a mocked KeystoreService boundary."
+    ],
+    "pipelineValidation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual SCR ConfigurationService CryptoService H2 MQTT",
+      "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
+      "sharedSuiteTests": 4,
+      "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.kapua.mqtt.provider.test/src/main/java/org/eclipse/kura/core/cloud/BirthMessagesTest.java",
@@ -2337,7 +2364,8 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudPublisherImplTest.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
     ],
     "execution": "surefire",
     "reason": "Publisher failure and forwarding contracts remain covered by ordinary tests. testServiceExists now also passes through actual Equinox/SCR/ConfigurationService, factory-created CloudService and publisher, including real ServiceTracker binding by custom PID. See cloud-test-restoration.md.",
@@ -2360,6 +2388,18 @@
       "sharedReport": "cloud-factory-runtime-validation-20261010.json",
       "sharedSuiteTests": 2,
       "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
+    },
+    "pipelineValidation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual SCR ConfigurationService CryptoService H2 MQTT",
+      "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
+      "sharedSuiteTests": 4,
+      "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
     }
   },
   {
@@ -2422,10 +2462,11 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceTest.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
     ],
     "execution": "surefire",
-    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence and factory-created stack now also pass through actual Equinox/SCR/ConfigurationService, preserving local custom PID/name/description. Full MQTT/SQL/TLS/tamper transport assembly remains deferred. See cloud-test-restoration.md.",
+    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence and factory-created stack now also pass through actual Equinox/SCR/ConfigurationService, preserving local custom PID/name/description. Actual configuration/crypto credentials and in-memory SQL/MQTT assembly now also pass in JSON and Protobuf modes; TLS and the EventAdmin/DS tamper pipeline remain deferred. See cloud-test-restoration.md.",
     "validation": {
       "tests": 12,
       "failures": 0,
@@ -2435,7 +2476,7 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "Original Moquette/MQTT transport, CryptoService credentials, ConfigurationService updates and EventAdmin/DS tamper registration pipeline: current tests validate facade delegation and encoded published bytes at mocked DataService boundary, not broker delivery"
+      "Actual EventAdmin/DS tamper registration and birth republishing pipeline remains deferred; actual configuration/crypto credentials, H2 queue and bidirectional JSON/Protobuf MQTT assembly now pass."
     ],
     "runtimeValidation": {
       "tests": 1,
@@ -2448,6 +2489,18 @@
       "sharedReport": "cloud-factory-runtime-validation-20261010.json",
       "sharedSuiteTests": 2,
       "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
+    },
+    "pipelineValidation": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual SCR ConfigurationService CryptoService H2 MQTT",
+      "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
+      "sharedSuiteTests": 4,
+      "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
     }
   },
   {

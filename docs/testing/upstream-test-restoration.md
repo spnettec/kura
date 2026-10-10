@@ -1094,3 +1094,14 @@ and service removal. See [cloud restoration](cloud-test-restoration.md). Three
 upstream source entries share this two-invocation report. Full broker/SQL/TLS/tamper
 assembly remains deferred; inventory source counts and historical full-build totals
 are unchanged. Production behavior and handwritten metadata are preserved.
+
+### Cloud factory MQTT pipeline (2026-10-10)
+
+The same actual Equinox suite now has four passing variants: stack, publisher,
+JSON MQTT and Protobuf MQTT. The two transport variants verify actual encrypted
+configuration credentials, H2 offline queuing, authenticated broker delivery and
+normal/control CloudClient round trips with all six callbacks. See
+[cloud pipeline evidence](cloud-factory-mqtt-validation-20261010.json). These are
+two added variants, not four additional tests on top of the preceding two. Runtime
+TLS/keystore/CRL, tamper, Sparkplug and REST assembly gaps remain explicit. No new
+Linux or full workspace run is claimed; source disposition counts remain unchanged.

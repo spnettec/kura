@@ -423,3 +423,39 @@ Final `clean verify`, selected workspace reactor validation, shell syntax and CI
 preflight pass. Earlier preliminary runs and a checked-exception compile error are
 excluded from the final evidence. No additional Linux or full workspace rerun is
 claimed; the historical 5280 total is unchanged.
+
+## Factory-created JSON/Protobuf MQTT pipeline (2026-10-10)
+
+The runtime suite now passes **four invocations**: the two existing stack/publisher
+variants plus JSON and Protobuf MQTT variants. All pass on macOS Maven 3.10/JDK 21/
+Jupiter with zero failures/errors/skips. The report collector independently returns
+four current-source executions. See [checksums and evidence](cloud-factory-mqtt-validation-20261010.json).
+
+Actual ConfigurationService updates the factory-created transport, CloudService
+and publisher. ConfigurationAdmin's stored password differs from plaintext and
+the actual CryptoService decrypts it correctly; the loopback broker authenticates
+the actual Kura client with those credentials. The disconnected publisher places
+a message in the actual H2-backed DataService queue. After connecting, an external
+Paho subscriber receives the expected topic/QoS/retain and payload, and the publisher
+reports the matching message ID. No private field replacement or mocked database,
+transport, crypto, configuration or cloud service participates in this path.
+
+Both encodings also run the legacy CloudClient normal/control round trip through
+the real container: publication, confirmation and arrival callbacks are checked
+for both routes, including IDs, app topics, client/device identity, Unicode bodies,
+timestamp, metric, QoS and retain. Local cloud PID/name/description survive updates.
+The H2 metadata regression from the preceding separate production fix remains.
+
+System/status/watchdog boundaries remain controlled. H2 is in-memory; file durability
+and restart are not claimed. Moquette requires credentials, binds a random loopback
+port and disables persistence/telemetry. Its `$` publication restriction is handled
+by configuring only these test instances with `EDC`; production defaults remain.
+Real TLS/keystore/CRL and EventAdmin/DS tamper assembly remain deferred. Listener/client
+release, explicit disconnect, factory deletion and broker/framework shutdown are
+owned by the fixture. Kura APIs remain absent from the controller classpath.
+
+Two draft failures were fixture reflection errors (KuraMessage package and the
+CloudConnectionManager connection contract); the final report excludes them.
+Production code and metadata are unchanged in this batch. This report supersedes
+the runtime suite's two-invocation count for its current source; it does not add
+four new distinct scenarios to the previous two or rewrite the archived full build.

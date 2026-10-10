@@ -1,0 +1,49 @@
+{
+  "tests": 4,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "execution": "JUnit 5 / Failsafe / actual Equinox SCR, ConfigurationAdmin, H2, Moquette and Paho",
+  "newTransportInvocations": 2,
+  "existingFactoryInvocations": 2,
+  "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-factory-mqtt-20261010",
+  "coreRevision": "d9ae1535f9f78f2eec955198cb85ab46a7505bed",
+  "cloudBaseRevision": "ec038c38f8a8ad79906baccdf4d0b97af1184ee8",
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java": "7a8bded56181eb868ecc87f4f1dc2068e033596a60442bba85375aaa0da755dc",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "383bed1fdbde73cf6d89d446e43e74b511b3941ddbf3a4aa595892fac0c7323b"
+  },
+  "verified": [
+    "Real configuration updates preserve YOFC PID, Chinese name and description",
+    "ConfigurationAdmin encrypted password decrypted by actual CryptoService and accepted by broker authenticator",
+    "Offline publisher queues in actual H2-backed DataService then receives MQTT QoS 1 delivery confirmation",
+    "JSON and Protobuf publisher bytes decoded through actual bundle services",
+    "CloudClient normal/control publication, confirmation and arrival callbacks with body, timestamp, metric, device, topic, QoS and retain",
+    "CloudClient listener removal/release, publisher/factory deletion, broker/client/framework closure"
+  ],
+  "boundaries": [
+    "Controlled SystemService, SystemAdminService, WatchdogService and CloudConnectionStatusService",
+    "H2 uses an in-memory database: no file durability/restart assertion",
+    "Configured EDC control prefix because Moquette rejects $-prefixed client publications; production default unchanged",
+    "TLS, filesystem keystore/CRL and tamper EventAdmin pipeline remain deferred",
+    "No new full workspace or Linux validation"
+  ],
+  "draftFailures": [
+    "Wrong KuraMessage package in controller reflection",
+    "Connect called through CloudService rather than CloudConnectionManager contract"
+  ],
+  "counting": "Four final invocations include the two prior factory variants; shared inventory references are not additional executions. Historical full-workspace totals remain unchanged.",
+  "cloudRevision": "20cc3bc47366f17a4bcdfe6cc6502d357fc8e4a3",
+  "reactorValidateLogSha256": "04b2a6c4bf213bd8f7f12f60269d62e470bc2f2238de2a2713e0c35cab53c89f",
+  "ciReportReplay": {
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "directory": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-factory-mqtt-20261010/ci-report-replay"
+  }
+}
