@@ -1057,3 +1057,20 @@ and ACTIVE state were checked; Debug exited with code 0. An earlier VM memory-li
 termination is recorded separately and is not counted as passing. See
 [IDEA JUnit acceptance](idea-junit-acceptance.md). Full Linux application lifecycle,
 deferred runtime scenarios and P7 work remain open.
+
+### Linux GUI closure and validation scope (2026-10-10)
+
+The complete Linux IDEA application Debug/Run lifecycle also passed, including real
+SCR activation breakpoint/step, HTTP 200, no unresolved bundles, port release and
+snapshot/keystore retention. See [application acceptance](linux-idea-application-acceptance.md).
+The user subsequently requested no further Linux validation; subsequent restoration
+uses macOS Maven/JUnit/IDEA evidence. Unexecuted hardware or system D-Bus scenarios
+remain explicitly unverified rather than being inferred from macOS results.
+
+### Cloud connection transport continuation (2026-10-10)
+
+The 14 CloudConnection endpoint scenarios now pass on real HTTP and MQTT, plus
+four HTTP authentication/role cases: 32 executions, zero failures/errors/skips.
+See [cloud restoration](cloud-test-restoration.md). Real registry lookup is covered;
+SCR/factory/configuration assembly remains deferred. Inventory source disposition
+counts are unchanged; this is additional evidence after the archived full build.

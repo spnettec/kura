@@ -85,6 +85,7 @@ abstract class EndpointTestBase extends BaseCloudTests {
 
     protected void givenBasicCredentials(Optional<String> credentials) { this.assertions.credentials(credentials); }
     protected com.eclipsesource.json.JsonObject expectJsonResponse() { return this.assertions.responseJson(); }
+    protected Transport.Response expectResponse() { return this.assertions.currentResponse(); }
 
     protected Transport.Response runRequest(String path, MethodSpec method) { return this.assertions.rawRequest(path, method); }
 
@@ -134,6 +135,7 @@ abstract class EndpointTestBase extends BaseCloudTests {
             if (this.transport instanceof RestTransport rest) { rest.setBasicCredentials(credentials); }
         }
         com.eclipsesource.json.JsonObject responseJson() { return expectJsonResponse(); }
+        Transport.Response currentResponse() { return expectResponse(); }
         Transport.Response rawRequest(String path, MethodSpec method) { return this.transport.runRequest(path, method); }
         void success() { thenRequestSucceeds(); }
         void status(int value) { thenResponseCodeIs(value); }

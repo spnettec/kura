@@ -10,6 +10,7 @@
 - JUnit 5 单测、Sling Mock 组件测试、真实 Equinox 集成测试分层执行。
 - macOS/Linux 独立运行；开发数据置于 `~/.kura-dev/<profile>`，与 `target` 分离。
 - 构建转换不改变 YOFC 的 i18n、已删除功能、Jackson/Milo 外部消费者边界。
+- 2026-10-10 用户要求后续不再追加 Linux 验证；继续以 macOS Maven/JUnit/IDEA 为验收环境，未执行的硬件/系统 D-Bus 项不推定为通过。
 
 ## 阶段状态
 

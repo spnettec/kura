@@ -363,3 +363,31 @@ is unchanged, and its broker interoperability is not claimed by this fixture.
 The source's old service-existence assertion, actual ConfigurationService/SCR/Equinox
 assembly, authentication and IDEA acceptance remain open. All Cloud source entries
 are now audited; this does not mean runtime acceptance or the overall task is complete.
+
+## Cloud connection real HTTP/MQTT continuation (2026-10-10)
+
+All 14 upstream scenarios now also run on both actual loopback transports: 28
+executions plus four HTTP credential/authorization cases, **32 passed**, zero
+failures/errors/skips under macOS Maven 3.10.0/JDK 21/Jupiter. Existing component
+assertions retain exact IDs, properties, mutation calls and disconnected/connected
+state. Arbitrary local PIDs and linked child configurations remain unchanged.
+
+HTTP uses real Jetty/Jersey/IdentityService/UserAdmin. Missing credentials and bad
+password return 401, an identity without permission returns 403, and only
+`rest.cloudconnection` permission suffices without `kura.admin`. MQTT uses the
+existing actual Moquette/Paho/SQL-backed DataService/CloudService pipeline.
+
+Service discovery uses an isolated Equinox registry. A scoped FrameworkUtil mock
+only supplies BundleContext while the endpoint constructs its helpers; it closes
+before HTTP/MQTT worker requests. Factory, ConfigurationService and SCR metadata
+are controlled objects registered in that real registry. This does not claim DS
+factory creation or full configuration assembly. Registrations are unregistered,
+framework shutdown is awaited, and existing transport/provider cleanup remains.
+
+The first run exposed fixture reuse under BaseCloudTests' class lifecycle and an
+incorrectly prefixed permission name. Fresh mocks per invocation and the public
+IdentityService permission name fix those test issues; all exact-once assertions
+remain. No production or OSGi metadata changes. Original report and build log are
+archived in `migration-baseline/cloud-endpoint-20261010`; the inventory records the
+report SHA-256. These 32 executions are additional to the prior archived full
+workspace build; the old 5280 total is not rewritten.
