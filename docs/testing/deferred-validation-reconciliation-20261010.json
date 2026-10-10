@@ -81,10 +81,11 @@
       "group": "rest-security",
       "evidence": [
         "docs/testing/security-endpoint-test-restoration.md",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/security-service-upstream-audit-20261011.json"
       ],
       "covered": "Restored HTTP/MQTT endpoint scenarios and direct Mac IDEA JUnit class Run passed 16/16 with controlled SecurityService boundary.",
-      "remaining": "Deployed SCR/configuration with actual security policy file application remains unverified.",
+      "remaining": "Actual deployed policy-file application is unverified and requires an external SecurityService provider. Official Kura HEAD contains API/optional REST consumer and mock tests, without a production policy provider.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and real security policy file application",
         "IDEA execution"
@@ -96,10 +97,11 @@
       "group": "rest-security",
       "evidence": [
         "docs/testing/security-endpoint-test-restoration.md",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/security-service-upstream-audit-20261011.json"
       ],
       "covered": "Restored HTTP/MQTT endpoint scenarios and direct Mac IDEA JUnit class Run passed 14/14 with controlled SecurityService boundary.",
-      "remaining": "Deployed SCR/configuration with actual security policy file application remains unverified.",
+      "remaining": "Actual deployed policy-file application is unverified and requires an external SecurityService provider. Official Kura HEAD contains API/optional REST consumer and mock tests, without a production policy provider.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and real security policy file application",
         "IDEA execution"
@@ -141,12 +143,19 @@
       "group": "camel",
       "evidence": [
         "docs/testing/camel-test-restoration.md",
-        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json",
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
-      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
+      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ],
+      "forkAcceptanceRequirements": [
+        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
+        "Actual JavaScript init execution",
+        "Modified console ACE language selection and browser edit/save",
+        "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
     {
@@ -155,12 +164,19 @@
       "group": "camel",
       "evidence": [
         "docs/testing/camel-test-restoration.md",
-        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json",
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
-      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
+      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ],
+      "forkAcceptanceRequirements": [
+        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
+        "Actual JavaScript init execution",
+        "Modified console ACE language selection and browser edit/save",
+        "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
     {
@@ -169,12 +185,19 @@
       "group": "camel",
       "evidence": [
         "docs/testing/camel-test-restoration.md",
-        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json",
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
-      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
+      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ],
+      "forkAcceptanceRequirements": [
+        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
+        "Actual JavaScript init execution",
+        "Modified console ACE language selection and browser edit/save",
+        "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
     {
@@ -183,12 +206,19 @@
       "group": "camel",
       "evidence": [
         "docs/testing/camel-test-restoration.md",
-        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json",
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
-      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
+      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ],
+      "forkAcceptanceRequirements": [
+        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
+        "Actual JavaScript init execution",
+        "Modified console ACE language selection and browser edit/save",
+        "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
     {
@@ -197,12 +227,19 @@
       "group": "camel",
       "evidence": [
         "docs/testing/camel-test-restoration.md",
-        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json",
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
-      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
+      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ],
+      "forkAcceptanceRequirements": [
+        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
+        "Actual JavaScript init execution",
+        "Modified console ACE language selection and browser edit/save",
+        "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
     {
@@ -504,7 +541,7 @@
   "macWireRouteScrEvidence": "docs/testing/mac-wire-route-scr-validation-20261010.json",
   "completeMacRuntimeEvidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
   "currentWorkspaceCiEvidence": "docs/testing/current-workspace-ci-validation-20261010.json",
-  "latestReconciliationCoreRevision": "314dc472519d88adc36ce503385279d76aa0f6a9",
+  "latestReconciliationCoreRevision": "d8e7c0b3d28726cb9645b834908e654a90c95eb4",
   "deferredValidationStrings": 31,
   "closedConfigurationRows": [
     {
@@ -590,5 +627,7 @@
     460,
     462,
     463
-  ]
+  ],
+  "completeMacCamelForkEvidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+  "latestReconciliationDate": "2026-10-11"
 }

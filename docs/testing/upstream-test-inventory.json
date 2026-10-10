@@ -5157,8 +5157,9 @@
     },
     "reason": "All upstream security endpoint scenarios execute over both transports with real authentication/routing and controlled SecurityService. Policy/reload invocations and invalid-input non-invocation are checked. See security-endpoint-test-restoration.md. Direct Mac IDEA class Run passed; see mac-idea-rest-endpoints-validation-20261010.json.",
     "deferredValidation": [
-      "Deployed SCR/configuration with actual security policy file application"
-    ]
+      "Actual deployed SCR/configuration and policy-file application require an external SecurityService provider; official Kura HEAD has API/REST and mock tests only"
+    ],
+    "providerBoundaryEvidence": "docs/testing/security-service-upstream-audit-20261011.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV2Test.java",
@@ -5191,8 +5192,9 @@
     },
     "reason": "All upstream security endpoint scenarios execute over both transports with real authentication/routing and controlled SecurityService. Policy/reload invocations and invalid-input non-invocation are checked. See security-endpoint-test-restoration.md. Direct Mac IDEA class Run passed; see mac-idea-rest-endpoints-validation-20261010.json.",
     "deferredValidation": [
-      "Deployed SCR/configuration with actual security policy file application"
-    ]
+      "Actual deployed SCR/configuration and policy-file application require an external SecurityService provider; official Kura HEAD has API/REST and mock tests only"
+    ],
+    "providerBoundaryEvidence": "docs/testing/security-service-upstream-audit-20261011.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityServiceTest.java",
@@ -5589,9 +5591,9 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
     "deferredValidation": [
-      "Installed Debian sibling package and external cloud transport acceptance"
+      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5606,6 +5608,16 @@
       "serviceDiscovery": "passed",
       "xmlRouterLifecycle": "create, start, delete, stop passed",
       "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "completeMacRuntimeValidation": {
+      "platform": "macOS",
+      "assembly": "complete application with production Camel 4.20.0 and actual Kapua cloud stack",
+      "mqttDeliveries": 9,
+      "vertxHttpCalls": 4,
+      "groovyScripts": "file precedence, same-context hot rebind and inline configuration update passed",
+      "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
+      "browserEditorSaveExecuted": false,
+      "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
     }
   },
   {
@@ -5630,9 +5642,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
     "deferredValidation": [
-      "Installed Debian sibling package and external cloud transport acceptance"
+      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5647,6 +5659,16 @@
       "serviceDiscovery": "passed",
       "xmlRouterLifecycle": "create, start, delete, stop passed",
       "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "completeMacRuntimeValidation": {
+      "platform": "macOS",
+      "assembly": "complete application with production Camel 4.20.0 and actual Kapua cloud stack",
+      "mqttDeliveries": 9,
+      "vertxHttpCalls": 4,
+      "groovyScripts": "file precedence, same-context hot rebind and inline configuration update passed",
+      "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
+      "browserEditorSaveExecuted": false,
+      "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
     }
   },
   {
@@ -5671,9 +5693,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
     "deferredValidation": [
-      "Installed Debian sibling package and external cloud transport acceptance"
+      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5688,6 +5710,16 @@
       "serviceDiscovery": "passed",
       "xmlRouterLifecycle": "create, start, delete, stop passed",
       "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "completeMacRuntimeValidation": {
+      "platform": "macOS",
+      "assembly": "complete application with production Camel 4.20.0 and actual Kapua cloud stack",
+      "mqttDeliveries": 9,
+      "vertxHttpCalls": 4,
+      "groovyScripts": "file precedence, same-context hot rebind and inline configuration update passed",
+      "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
+      "browserEditorSaveExecuted": false,
+      "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
     }
   },
   {
@@ -5705,9 +5737,9 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
     "deferredValidation": [
-      "Installed Debian sibling package and external cloud transport acceptance"
+      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5722,6 +5754,16 @@
       "serviceDiscovery": "passed",
       "xmlRouterLifecycle": "create, start, delete, stop passed",
       "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "completeMacRuntimeValidation": {
+      "platform": "macOS",
+      "assembly": "complete application with production Camel 4.20.0 and actual Kapua cloud stack",
+      "mqttDeliveries": 9,
+      "vertxHttpCalls": 4,
+      "groovyScripts": "file precedence, same-context hot rebind and inline configuration update passed",
+      "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
+      "browserEditorSaveExecuted": false,
+      "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
     }
   },
   {
@@ -5746,9 +5788,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
     "deferredValidation": [
-      "Installed Debian sibling package and external cloud transport acceptance"
+      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5763,6 +5805,16 @@
       "serviceDiscovery": "passed",
       "xmlRouterLifecycle": "create, start, delete, stop passed",
       "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "completeMacRuntimeValidation": {
+      "platform": "macOS",
+      "assembly": "complete application with production Camel 4.20.0 and actual Kapua cloud stack",
+      "mqttDeliveries": 9,
+      "vertxHttpCalls": 4,
+      "groovyScripts": "file precedence, same-context hot rebind and inline configuration update passed",
+      "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
+      "browserEditorSaveExecuted": false,
+      "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
     }
   },
   {

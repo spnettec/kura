@@ -1,5 +1,16 @@
 # Upstream test restoration progress
 
+## 2026-10-11 SecurityService 上游边界及 Camel fork 验收
+
+- 官方 HEAD e500a68d7b 核实为 API、optional REST 和 mock 测试，无策略文件 provider；
+  完整 Mac 应用实际 provider 数量为 0。两条策略文件验收需要外部实现，保持未验证。
+- Camel 按实际 fork 的 4.20.0、Groovy/Vertx/rebind、文件热更新和内联/XML 更新验收；
+  完整应用通过 9 条真实 MQTT 消息及 4 次 HTTP 调用，名称描述/PID、清理和保护文件哈希均通过。
+- JavaScript init、修改后的 ACE 浏览器编辑保存和 installed Debian 包仍待验收；
+  仍有 31 条 deferredValidation，不新增 Linux 验证，不宣告整体完成。
+- 见 [SecurityService 核查](security-service-upstream-audit-20261011.md) 和
+  [Camel fork 验收](mac-complete-camel-fork-validation-20261011.md)。生产代码及手写 OSGi 元数据未变。
+
 ## 2026-10-10 完整 Mac 历史 Wires fixture 到达与回调验收
 
 - 实际完整应用中 driver 和两个 emitter/receiver 工厂 SCR ACTIVE，真实 OCD/default/修改、8 个描述符最小值及 3 次 WireAdmin 回调通过。

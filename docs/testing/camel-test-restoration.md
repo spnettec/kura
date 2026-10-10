@@ -6,6 +6,27 @@ suites and two helpers now live under the production bundle's `src/test`.
 Production sources, dependency scopes for production, and handwritten OSGi
 metadata are unchanged.
 
+## Fork acceptance scope (2026-10-11)
+
+Camel upstream is a reference for retained assertions. Current fork behavior is
+authoritative: Camel 4.20.0, Groovy/JavaScript init scripts with injected
+camelContext/logger/webClient/vertx/rebind, file-backed scripts and hot rebind on
+the same context, plus the modified management console ACE editors. XML editor
+mode follows file.extension; initCode editor mode follows scriptEngineName.
+An ordinary direct-to-log route does not cover these paths. Runtime acceptance
+must include actual script execution, Vertx HTTP calls, file/inline updates,
+context lifecycle and the production cloud transport. Browser editor/save
+acceptance is separate from a ConfigurationService API update.
+
+The opt-in `kura-camel/acceptance/full-runtime-fork-probe` helper exercises these
+runtime paths without entering the default reactor or production packages.
+Its build/run alone does not count as a successful result; accepted evidence
+is now linked in `mac-complete-camel-fork-validation-20261011.json`: nine actual
+MQTT deliveries and four Vertx HTTP calls passed with Groovy file/inline updates
+and context lifecycle. JavaScript init execution and browser editor/save remain
+explicitly unverified. No upstream router, dependency downgrade or
+replacement of the fork script/editor behavior is proposed.
+
 | Suites | Passing cases |
 | --- | ---: |
 | DependencyRunner / Configuration / PayloadFactory | 14 |

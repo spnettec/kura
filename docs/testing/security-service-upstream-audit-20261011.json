@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-11",
+  "upstreamRemote": "https://github.com/eclipse/kura.git",
+  "remoteHead": "e500a68d7b3f4a970aca3e13c038947269278827",
+  "localOriginDevelop": "e500a68d7b3f4a970aca3e13c038947269278827",
+  "headMatched": true,
+  "shallow": false,
+  "findings": {
+    "productionPolicyFileProviderFound": false,
+    "available": "SecurityService API, optional REST reference and mock endpoint tests",
+    "historicalUiGuardCommit": "a4757d07efff3f40c353d67293ee000023347dce",
+    "policyApplicationApiAndRestCommit": "98aa189b0a13d5da84d25fcf7081a26107a2d06b",
+    "historyClaim": "2015 UI explicitly required a service implementor in the environment; 2024 commit added API and REST, not a policy provider."
+  },
+  "sources": {
+    "kura/org.eclipse.kura.api/src/main/java/org/eclipse/kura/security/SecurityService.java": "793a9b1e9b272175bfc1098c7aa381bfd8eafa1618afea0344c41ef09a1e7991",
+    "kura/org.eclipse.kura.rest.security.provider/src/main/java/org/eclipse/kura/internal/rest/security/provider/AbstractRestSecurityService.java": "724d6705e99079f6fe4c903d6e3df03a3dd368b80e99d0cd186f35b84a435531",
+    "kura/org.eclipse.kura.rest.security.provider/src/main/java/org/eclipse/kura/internal/rest/security/provider/SecurityRestServiceV2.java": "a65cc6f6725d6435b424a1cdb6c22ec52d9ca6facf29dd2ad99469b11e81f65b",
+    "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV2Test.java": "6d9c56c85f6255a4031adc05a9f939a252ae6b8eb7621a0ad66100188d9aee2b"
+  },
+  "referenceAudit": {
+    "file": "/Users/heyoulin/iot-kura-develop/migration-baseline/security-upstream-audit-20261011/upstream-security-service-references.txt",
+    "sha256": "67510d28ceba9784088b79517f73faa78fae8c2add655ebc819ab1a295aa9141"
+  },
+  "officialReferences": [
+    "https://github.com/eclipse-kura/kura/blob/e500a68d7b3f4a970aca3e13c038947269278827/kura/org.eclipse.kura.api/src/main/java/org/eclipse/kura/security/SecurityService.java",
+    "https://github.com/eclipse-kura/kura/blob/e500a68d7b3f4a970aca3e13c038947269278827/kura/org.eclipse.kura.rest.security.provider/src/main/java/org/eclipse/kura/internal/rest/security/provider/AbstractRestSecurityService.java",
+    "https://github.com/eclipse-kura/kura/blob/e500a68d7b3f4a970aca3e13c038947269278827/kura/org.eclipse.kura.rest.security.provider/src/main/java/org/eclipse/kura/internal/rest/security/provider/SecurityRestServiceV2.java",
+    "https://github.com/eclipse-kura/kura/blob/e500a68d7b3f4a970aca3e13c038947269278827/test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV2Test.java",
+    "https://github.com/eclipse-kura/kura/commit/a4757d07efff3f40c353d67293ee000023347dce",
+    "https://github.com/eclipse-kura/kura/pull/5230",
+    "https://esf.eurotech.com/docs/security-policy-file"
+  ],
+  "boundary": "Actual policy-file application requires an externally supplied provider. Existing mock-backed tests do not prove this behavior. ESF documentation describes its own mechanism, without providing an implementation in the checked Kura tree.",
+  "completeMacApplicationEvidence": {
+    "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+    "securityServiceProviderCount": 0,
+    "policyFileApplicationPerformed": false
+  }
+}

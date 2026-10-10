@@ -1,0 +1,307 @@
+{
+  "date": "2026-10-11",
+  "scope": "Complete Mac application: current Camel fork script/Vertx/cloud lifecycle acceptance",
+  "maven": "3.10.0",
+  "jdk": "21",
+  "platform": "macOS aarch64",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-fork-dynamic-20261011",
+  "runtimeSourceRevisions": [
+    {
+      "repository": "kura",
+      "revision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+      "dirty": false
+    },
+    {
+      "repository": "kura-position",
+      "revision": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-opcua",
+      "revision": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+      "dirty": false
+    },
+    {
+      "repository": "kura-deployment",
+      "revision": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+      "dirty": false
+    },
+    {
+      "repository": "kura-networking",
+      "revision": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+      "dirty": false
+    },
+    {
+      "repository": "kura-wires",
+      "revision": "4774dd56f72680d5ada622c8d3345214d7060521",
+      "dirty": false
+    },
+    {
+      "repository": "kura-cloud",
+      "revision": "d2da9b137fd711d2aa70befd4c9c229c72224696",
+      "dirty": false
+    },
+    {
+      "repository": "kura-camel",
+      "revision": "30f158b0d6b6df12ca872b4bef2dd897489b1f79",
+      "dirty": false
+    },
+    {
+      "repository": "kura-artemis",
+      "revision": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+      "dirty": false
+    },
+    {
+      "repository": "kura-container",
+      "revision": "6483d04ad610b5046c53442378bcadeea44695d7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-triton",
+      "revision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-management-ui",
+      "revision": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-yofc-runtime",
+      "revision": "1852b4789087c16b8fd67922e6c34f500853b865",
+      "dirty": false
+    },
+    {
+      "repository": "yofc-iot",
+      "revision": "a5f61ec06f40b7b99583f422679e9d8ae994e2b8",
+      "dirty": false
+    }
+  ],
+  "helperBaseRevision": "30f158b0d6b6df12ca872b4bef2dd897489b1f79",
+  "helperSourceHashes": {
+    "run.py": "68835df4f464399017bdd63f57ea4292ddcd65cd22c86dbac1b50e125071b166",
+    "pom.xml": "6e1ef71428c0bb8a1d810e57cfcd164da4f90d1ce2bf150eff358bd2e782ece1",
+    "README.md": "8acefc1ffe4fdb80346590bee4ad14ca1418d1f0db06abb60c6376e7e5bbc60f",
+    "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java": "360cfd39912c0a07788089c78755be47ed6f377a56b1b7ea1aaf8b022ec6ece0"
+  },
+  "result": {
+    "securityServiceProviderCount": 0,
+    "camelVersion": "4.20.0",
+    "filePrecedencePassed": true,
+    "fileHotUpdateSameContext": true,
+    "unchangedConfigurationSameContext": true,
+    "inlineScriptUpdatedViaConfiguration": true,
+    "changedXmlContextLifecyclePassed": true,
+    "routerPid": "acceptance.mac.camel.d34fa9df-b0ed-4314-8bf3-85d0e8957189",
+    "cloudPid": "acceptance.mac.camel.d34fa9df-b0ed-4314-8bf3-85d0e8957189.cloud",
+    "clientId": "camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189",
+    "observerId": "camel-observer-d34fa9df-b0ed-4314-8bf3-85d0e8957189",
+    "bundleCount": 279,
+    "packets": [
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/out",
+        "case": "KuraPayload producer",
+        "payloadSha256": "a5e9a10206ec24a8b86fc53c8d76608c5db10dbc66ea44fed270124668d562ce",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/out",
+        "case": "String producer",
+        "payloadSha256": "2cfc9219471e28844739ad492b07a9eda5b8c05af1be78003a269ce1ff1ee5e1",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/out",
+        "case": "Binary producer",
+        "payloadSha256": "bf9db3a68c5581a29124da2de7df171d0c8642960324fe0dbd2433df57e690fd",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/echo",
+        "case": "Real cloud consumer callback",
+        "payloadSha256": "a7e87689faa8765b67fa2d40f2965867f562f2bfd2f073ebaa97f447050db625",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-v1",
+        "payloadSha256": "df072648c4cf7c30a16b7cbf58f7118a2d6c1e943ea61375911da14ed4dee1ad",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-v2",
+        "payloadSha256": "9555782e13feabeb238786d6993b0db18ff5d5ecfeb8a64765fb86f0b5f1359a",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/script",
+        "case": "Vertx WebClient groovy-inline-v3",
+        "payloadSha256": "c2f70d202365ba9618fb3876dad564caea9baff404770c7db77178c62e5a95ac",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/script-next",
+        "case": "Vertx WebClient groovy-inline-v3-next",
+        "payloadSha256": "c2f70d202365ba9618fb3876dad564caea9baff404770c7db77178c62e5a95ac",
+        "qos": 1
+      },
+      {
+        "retained": false,
+        "topic": "complete-mac-account/camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189/FULL_CAMEL/echo-next",
+        "case": "Real cloud consumer callback-next",
+        "payloadSha256": "e8580f9d6e588d4ddde8106ab66a8113afc1f22816338a657ed6f2aabcea64c1",
+        "qos": 1
+      }
+    ],
+    "browserEditorSaveExecuted": false,
+    "cleanupPassed": true,
+    "passed": true,
+    "elapsedSeconds": 20.393,
+    "pids": [
+      56310,
+      56317
+    ],
+    "exitCodes": [
+      0,
+      143
+    ],
+    "forcedShutdown": false,
+    "portsReleased": true,
+    "independentHttpRequests": [
+      {
+        "path": "/d34fa9df-b0ed-4314-8bf3-85d0e8957189/groovy-v1",
+        "status": 200,
+        "bodySha256": "9e92c25214c64f99f7a4352394d8b89e6c372966e90e0e1a538f79ad33a8825d"
+      },
+      {
+        "path": "/d34fa9df-b0ed-4314-8bf3-85d0e8957189/groovy-v2",
+        "status": 200,
+        "bodySha256": "649eba73cc74aee4bb14aa672a110dbcc297546cab084d59b358d716dca2c612"
+      },
+      {
+        "path": "/d34fa9df-b0ed-4314-8bf3-85d0e8957189/groovy-inline-v3",
+        "status": 200,
+        "bodySha256": "17e94b0e79eea8f65fcbdcc17666879241083ab881556109f0f59f7d0a70b3cb"
+      },
+      {
+        "path": "/d34fa9df-b0ed-4314-8bf3-85d0e8957189/groovy-inline-v3",
+        "status": 200,
+        "bodySha256": "17e94b0e79eea8f65fcbdcc17666879241083ab881556109f0f59f7d0a70b3cb"
+      }
+    ],
+    "broker": {
+      "stopped": true,
+      "authenticatedClients": [
+        "camel-cloud-d34fa9df-b0ed-4314-8bf3-85d0e8957189",
+        "camel-observer-d34fa9df-b0ed-4314-8bf3-85d0e8957189"
+      ]
+    },
+    "helperSha256": "7acf03eb9f9116b90e5977903e8c6e25811bbcae05149b87724d991773291997",
+    "sources": {
+      "run.py": "68835df4f464399017bdd63f57ea4292ddcd65cd22c86dbac1b50e125071b166",
+      "pom.xml": "6e1ef71428c0bb8a1d810e57cfcd164da4f90d1ce2bf150eff358bd2e782ece1",
+      "README.md": "8acefc1ffe4fdb80346590bee4ad14ca1418d1f0db06abb60c6376e7e5bbc60f",
+      "src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java": "360cfd39912c0a07788089c78755be47ed6f377a56b1b7ea1aaf8b022ec6ece0"
+    },
+    "brokerSourceSha256": "3908776bd702a174a2df69cc994a197a6570de8df236c8a19da843f8f05fb175",
+    "logs": {
+      "console.log": "2105e969851c8c7dac2892d4d0405ec265c6fdb8e20cbe789198274f6cd1a2e2",
+      "broker.log": "2c58b87a0350a39bb1c3b5f4891defeeb9a785e84aa11a466dc9ddb21253bf58",
+      "profile/logs/kura.log": "e8acddd03d8cc1a5b86a05e6d12a5dc283a3a0f5472ba150ae9ede0b5952f8f6"
+    }
+  },
+  "isolation": {
+    "runtimeArtifactHashesMatched": 279,
+    "protectedPersonalFilesMatched": 33,
+    "templateKeystoresAndLogUnchanged": true,
+    "protectedFileCount": 315
+  },
+  "artifacts": [
+    {
+      "file": "result.json",
+      "sha256": "a2d4395a83b1169360eb2707a1000915976cb1cfff9119f65dc72f3ec544bc3f"
+    },
+    {
+      "file": "console.log",
+      "sha256": "2105e969851c8c7dac2892d4d0405ec265c6fdb8e20cbe789198274f6cd1a2e2"
+    },
+    {
+      "file": "relocated-profile-files.json",
+      "sha256": "c272003982ddf3238053b91b31f503b18ec9b19582a25f5091d1b3d60a3da6a4"
+    },
+    {
+      "file": "camel-probe-result.json",
+      "sha256": "43b6ab46376be29f3415a07ee594deb70d2a27916cf404294413af8e0695d5f8"
+    },
+    {
+      "file": "command.json",
+      "sha256": "4bcdfffe61a3c6f41c0626989f920199de5ddd7449700b791f53a65032515c90"
+    },
+    {
+      "file": "broker.log",
+      "sha256": "2c58b87a0350a39bb1c3b5f4891defeeb9a785e84aa11a466dc9ddb21253bf58"
+    },
+    {
+      "file": "broker-final.json",
+      "sha256": "2d85716bba5658d90d0d01a517558338907ab23210e1c4f8421c9f7fd70722cb"
+    },
+    {
+      "file": "isolation-reconciliation.json",
+      "sha256": "fc64969cf3aede2ae25999cb9503fe174a94132583f7aa6f48275ffd17459b94"
+    },
+    {
+      "file": "broker.json",
+      "sha256": "d9b4e42a7a5ebb98da9abb3d178fd610cfe17bd58369cef39071041790e48e5c"
+    },
+    {
+      "file": "camel-fork-probe.jar",
+      "sha256": "7acf03eb9f9116b90e5977903e8c6e25811bbcae05149b87724d991773291997"
+    },
+    {
+      "file": "helper-source/run.py",
+      "sha256": "68835df4f464399017bdd63f57ea4292ddcd65cd22c86dbac1b50e125071b166"
+    },
+    {
+      "file": "helper-source/pom.xml",
+      "sha256": "6e1ef71428c0bb8a1d810e57cfcd164da4f90d1ce2bf150eff358bd2e782ece1"
+    },
+    {
+      "file": "helper-source/README.md",
+      "sha256": "8acefc1ffe4fdb80346590bee4ad14ca1418d1f0db06abb60c6376e7e5bbc60f"
+    },
+    {
+      "file": "helper-source/src/main/java/org/eclipse/kura/camel/testing/fullruntime/ForkProbe.java",
+      "sha256": "360cfd39912c0a07788089c78755be47ed6f377a56b1b7ea1aaf8b022ec6ece0"
+    },
+    {
+      "file": "profile/logs/kura.log",
+      "sha256": "e8acddd03d8cc1a5b86a05e6d12a5dc283a3a0f5472ba150ae9ede0b5952f8f6"
+    }
+  ],
+  "failedAttempts": [
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-fork-first-20261011",
+      "error": "Fixture used static process ref, which retains the original processor after registry rebind. The accepted fixture dispatches through the current registry on each exchange.",
+      "productionChange": false,
+      "forcedShutdown": false,
+      "portsReleased": true
+    }
+  ],
+  "counting": "Nine actual MQTT deliveries and four HTTP calls; not added to the historical 5515 JUnit invocations.",
+  "limits": [
+    "Actual JavaScript init execution remains unverified.",
+    "Modified console ACE browser editing/save remains unverified; inline update here used ConfigurationService.",
+    "Installed Debian sibling package acceptance remains unverified; no additional Linux verification.",
+    "No production source, dependency or handwritten OSGi metadata changes."
+  ],
+  "helperRevision": "237d7a271f0124c95f085739851f35b16229a5de"
+}
