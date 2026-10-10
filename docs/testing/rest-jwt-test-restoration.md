@@ -51,4 +51,6 @@ full Kura runtime assembly and IDEA execution remain separate acceptance work.
 Validation: Maven 3.10.0 / Temurin 21, **54 module tests, zero failures/errors/skips**,
 including 22 existing cases. The password-change source was subsequently restored with a separately committed
 production fix; see `rest-password-session-fix.md`. The larger `RestServiceTest`
-source remains unreviewed; REST restoration is not complete.
+source was subsequently restored with 63 scenarios, including real mutual TLS; see
+`rest-authentication-test-restoration.md`. Runtime assembly and IDEA acceptance
+remain open.

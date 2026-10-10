@@ -817,3 +817,15 @@ eight current-API exclusions, six removed-functionality exclusions and **48
 unreviewed** out of 465. The preceding identity/JWT prose counts are corrected to
 match their JSON entries; no previous disposition changes. Actual Kura runtime and
 IDEA acceptance remain open.
+
+## REST authentication continuation (2026-10-10)
+
+All 63 methods in `RestServiceTest` pass over actual loopback HTTP and mutual TLS.
+They exercise authentication, permissions, session/XSRF/cookie behavior, password
+policy, banners, audit IP and errors. Full module: 119 passing tests. See
+`rest-authentication-test-restoration.md` for lifecycle and assembly boundaries.
+
+Inventory: 353 restored, 43 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **47 unreviewed** out of 465.
+All REST provider source entries are audited; actual Kura runtime and IDEA acceptance
+remain open.

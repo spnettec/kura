@@ -31,7 +31,7 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.kura.internal.rest.provider.RestService;
-import org.eclipse.kura.identity.LoginBannerService;
+import org.eclipse.kura.core.identity.LoginBannerServiceImpl;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.junit.jupiter.api.AfterEach;
@@ -85,14 +85,25 @@ public abstract class AbstractJwtRestScenario {
 
 
     private final IdentityFixture identities = new IdentityFixture();
-    private final RestService rest = new RestService();
+    protected final RestService rest = new RestService();
+    protected final LoginBannerServiceImpl banner = new LoginBannerServiceImpl();
     private final List<ServiceRegistration<?>> registrations = new ArrayList<>();
     private TokenServicesFixture tokenServices;
-    private Server server;
-    private HttpClient client;
-    private String baseUrl;
+    protected Server server;
+    protected HttpClient client;
+    protected String baseUrl;
     private HttpResponse<String> response;
     private boolean activated;
+    protected final java.net.CookieManager cookies = new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL);
+    private final Set<Object> components = new LinkedHashSet<>();
+    private ServletContainer container;
+
+    protected void addResource(Object resource) {
+        this.components.add(resource);
+        this.container.reload(new ResourceConfig().property("jersey.config.server.wadl.disableWadl", true)
+                .registerInstances(this.components));
+    }
+
 
     @BeforeEach
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -102,7 +113,8 @@ public abstract class AbstractJwtRestScenario {
         this.rest.setIdentityService(this.identities.service);
         this.rest.setCryptoService(this.identities.crypto);
         this.rest.setPasswordStrengthVerificationService(this.identities.passwordStrength);
-        this.rest.setLoginBannerService(mock(LoginBannerService.class));
+        this.banner.activate(Map.of());
+        this.rest.setLoginBannerService(this.banner);
         ConfigurationAdmin configuration = mock(ConfigurationAdmin.class);
         when(configuration.listConfigurations(anyString())).thenReturn(new Configuration[0]);
         this.rest.setConfigurationAdmin(configuration);
@@ -111,7 +123,6 @@ public abstract class AbstractJwtRestScenario {
         Bundle bundle = mock(Bundle.class);
         BundleContext context = mock(BundleContext.class);
         when(bundle.getBundleContext()).thenReturn(context);
-        Set<Object> components = new LinkedHashSet<>();
         org.mockito.stubbing.Answer<Object> register = invocation -> {
             components.add(invocation.getArgument(1));
             ServiceRegistration<?> registration = mock(ServiceRegistration.class);
@@ -139,12 +150,13 @@ public abstract class AbstractJwtRestScenario {
         this.server.addConnector(connector);
         ServletContextHandler servlet = new ServletContextHandler(ServletContextHandler.SESSIONS);
         servlet.setContextPath("/services");
-        servlet.addServlet(new ServletHolder(new ServletContainer(resources)), "/*");
+        this.container = new ServletContainer(resources);
+        servlet.addServlet(new ServletHolder(this.container), "/*");
         this.server.setHandler(servlet);
         this.server.start();
         this.baseUrl = "http://127.0.0.1:" + connector.getLocalPort() + "/services/";
         this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
-                .cookieHandler(new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL)).build();
+                .cookieHandler(this.cookies).build();
         assertEquals(200, request("GET", ProtectedResource.PATH + ProtectedResource.PING_PATH,
                 NO_AUTHORIZATION, null).statusCode());
     }
