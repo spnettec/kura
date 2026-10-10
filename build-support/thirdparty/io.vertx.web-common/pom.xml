@@ -9,13 +9,13 @@
   </parent>
   <groupId>p2.osgi.bundle</groupId>
   <artifactId>io.vertx.web-common</artifactId>
-  <version>5.1.4</version>
+  <version>5.2.1</version>
   <packaging>bundle</packaging>
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-common</artifactId>
-      <version>5.1.4</version>
+      <version>5.2.1</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
@@ -48,7 +48,7 @@
                 <artifactItem>
                   <groupId>io.vertx</groupId>
                   <artifactId>vertx-web-common</artifactId>
-                  <version>5.1.4</version>
+                  <version>5.2.1</version>
                 </artifactItem>
               </artifactItems>
             </configuration>

@@ -96,122 +96,122 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-buffer</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-base</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-compression</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-dns</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-haproxy</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-http</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-http2</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-marshalling</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-mqtt</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-protobuf</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec-socks</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-common</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-handler</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-handler-proxy</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-resolver</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-resolver-dns</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-resolver-dns-native-macos</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-classes-epoll</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-classes-kqueue</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-native-epoll</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-native-kqueue</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-transport-native-unix-common</artifactId>
-        <version>4.2.16.Final</version>
+        <version>4.2.19.Final</version>
       </dependency>
       <dependency>
         <groupId>io.vavr</groupId>
@@ -1208,32 +1208,32 @@
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.auth-common</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.core</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.core-logging</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.uri-template</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.web-client</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>
         <artifactId>io.vertx.web-common</artifactId>
-        <version>5.1.4</version>
+        <version>5.2.1</version>
       </dependency>
       <dependency>
         <groupId>p2.osgi.bundle</groupId>

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.vertx.auth-common
 Bundle-SymbolicName: io.vertx.auth-common
-Bundle-Version: 5.1.4
+Bundle-Version: 5.2.1
 Export-Package: io.vertx.ext.auth;uses:="io.vertx.codegen.annotations,
  io.vertx.core.buffer,io.vertx.core.json,io.vertx.ext.auth.authenticat
  ion,io.vertx.ext.auth.authorization",io.vertx.ext.auth.audit;uses:="i

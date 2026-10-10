@@ -200,133 +200,133 @@
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-buffer:4.2.16.Final",
+      "coordinates": "io.netty:netty-buffer:4.2.19.Final",
       "symbolicName": "io.netty.buffer"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec:4.2.19.Final",
       "symbolicName": "io.netty.codec"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-base:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-base:4.2.19.Final",
       "symbolicName": "io.netty.codec-base"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-compression:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-compression:4.2.19.Final",
       "symbolicName": "io.netty.codec-compression"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-dns:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-dns:4.2.19.Final",
       "symbolicName": "io.netty.codec-dns"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-haproxy:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-haproxy:4.2.19.Final",
       "symbolicName": "io.netty.codec-haproxy"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-http:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-http:4.2.19.Final",
       "symbolicName": "io.netty.codec-http"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-http2:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-http2:4.2.19.Final",
       "symbolicName": "io.netty.codec-http2"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-mqtt:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-mqtt:4.2.19.Final",
       "symbolicName": "io.netty.codec-mqtt"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-codec-socks:4.2.16.Final",
+      "coordinates": "io.netty:netty-codec-socks:4.2.19.Final",
       "symbolicName": "io.netty.codec-socks"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-common:4.2.16.Final",
+      "coordinates": "io.netty:netty-common:4.2.19.Final",
       "symbolicName": "io.netty.common"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-handler:4.2.16.Final",
+      "coordinates": "io.netty:netty-handler:4.2.19.Final",
       "symbolicName": "io.netty.handler"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-handler-proxy:4.2.16.Final",
+      "coordinates": "io.netty:netty-handler-proxy:4.2.19.Final",
       "symbolicName": "io.netty.handler-proxy"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-resolver:4.2.16.Final",
+      "coordinates": "io.netty:netty-resolver:4.2.19.Final",
       "symbolicName": "io.netty.resolver"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-resolver-dns:4.2.16.Final",
+      "coordinates": "io.netty:netty-resolver-dns:4.2.19.Final",
       "symbolicName": "io.netty.resolver-dns"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-resolver-dns-native-macos:4.2.16.Final",
+      "coordinates": "io.netty:netty-resolver-dns-native-macos:4.2.19.Final",
       "symbolicName": "io.netty.resolver-dns-native-macos"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport:4.2.19.Final",
       "symbolicName": "io.netty.transport"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport-classes-epoll:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport-classes-epoll:4.2.19.Final",
       "symbolicName": "io.netty.transport-classes-epoll"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport-classes-kqueue:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport-classes-kqueue:4.2.19.Final",
       "symbolicName": "io.netty.transport-classes-kqueue"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport-native-epoll:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport-native-epoll:4.2.19.Final",
       "symbolicName": "io.netty.transport-native-epoll"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport-native-kqueue:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport-native-kqueue:4.2.19.Final",
       "symbolicName": "io.netty.transport-native-kqueue"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "io.netty:netty-transport-native-unix-common:4.2.16.Final",
+      "coordinates": "io.netty:netty-transport-native-unix-common:4.2.19.Final",
       "symbolicName": "io.netty.transport-native-unix-common"
     },
     {
@@ -338,37 +338,37 @@
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.auth-common:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.auth-common:5.2.1",
       "symbolicName": "io.vertx.auth-common"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.core:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.core:5.2.1",
       "symbolicName": "io.vertx.core"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.core-logging:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.core-logging:5.2.1",
       "symbolicName": "io.vertx.core-logging"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.uri-template:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.uri-template:5.2.1",
       "symbolicName": "io.vertx.uri-template"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.web-client:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.web-client:5.2.1",
       "symbolicName": "io.vertx.web-client"
     },
     {
       "startLevel": 5,
       "start": true,
-      "coordinates": "p2.osgi.bundle:io.vertx.web-common:5.1.4",
+      "coordinates": "p2.osgi.bundle:io.vertx.web-common:5.2.1",
       "symbolicName": "io.vertx.web-common"
     },
     {

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.vertx.web-client
 Bundle-SymbolicName: io.vertx.web-client
-Bundle-Version: 5.1.4
+Bundle-Version: 5.2.1
 Export-Package: io.vertx.ext.web.client;uses:="io.vertx.codegen.annota
  tions,io.vertx.core,io.vertx.core.buffer,io.vertx.core.http,io.vertx.
  core.json,io.vertx.core.net,io.vertx.core.streams,io.vertx.core.traci

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.vertx.core
 Bundle-SymbolicName: io.vertx.core
-Bundle-Version: 5.1.4
+Bundle-Version: 5.2.1
 Export-Package: io.vertx.core;uses:="io.vertx.codegen.annotations,io.v
  ertx.core.datagram,io.vertx.core.dns,io.vertx.core.eventbus,io.vertx.
  core.file,io.vertx.core.http,io.vertx.core.json,io.vertx.core.metrics

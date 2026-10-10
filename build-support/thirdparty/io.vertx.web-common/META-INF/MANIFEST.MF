@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.vertx.web-common
 Bundle-SymbolicName: io.vertx.web-common
-Bundle-Version: 5.1.4
+Bundle-Version: 5.2.1
 Export-Package: io.vertx.ext.web.codec;uses:="io.vertx.codegen.annotat
  ions,io.vertx.core,io.vertx.core.buffer,io.vertx.core.json,io.vertx.c
  ore.parsetools,io.vertx.core.streams,io.vertx.ext.web.codec.spi",io.v

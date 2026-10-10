@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.vertx.uri-template
 Bundle-SymbolicName: io.vertx.uri-template
-Bundle-Version: 5.1.4
+Bundle-Version: 5.2.1
 Export-Package: io.vertx.uritemplate;uses:="io.vertx.codegen.annotatio
  ns,io.vertx.core.json",io.vertx.uritemplate.impl;uses:="io.vertx.core
  .json,io.vertx.uritemplate"
