@@ -79,9 +79,45 @@
       "processExitCode": 0,
       "sourceSha256": "989a3036ac5d07138f5d3fdf578b8f006564def8584426ed85ccbb7bed88b4aa",
       "configurationSha256": "279a98f75dfecc6c8ab1ed117c132596213770cc591e39a664d0df0d00f2cdbb"
+    },
+    {
+      "class": "SecurityEndpointsV1IT",
+      "configuration": ".run/Kura security V1 endpoints JUnit.run.xml",
+      "passed": 16,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "b548267e9d82eb880dee901c833619a570ec41d9822e37dc2fef963799db2df6",
+      "configurationSha256": "2a779d166532f9383e6233fa62ce30d8e8958fa02d59c7f8fd9176b554cd8d56"
+    },
+    {
+      "class": "SecurityEndpointsV2IT",
+      "configuration": ".run/Kura security V2 endpoints JUnit.run.xml",
+      "passed": 14,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "1b282195890bd0e31b0bc876caf1d8abe7c224cc5225a70bed2c8ea8b492844e",
+      "configurationSha256": "fd373e6592ceb19510a10781d7019651f6de685db0a4614a688bd87fb2f9a6b7"
+    },
+    {
+      "class": "WireGraphEndpointsIT",
+      "configuration": ".run/Kura wire graph endpoints JUnit.run.xml",
+      "passed": 98,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "completionUi": "IDEA tree marked class Passed with 98 tests passed; no JUnitStarter process remained",
+      "sourceSha256": "694d85c69a2beac3c8dba0ab98c4f5b0c33e08803aab392627ca827047312d59",
+      "configurationSha256": "5db35cb8303c2dcbf7d5ad2f7a9e76b922c4fae713d0576be7aa5d8708bd5519"
     }
   ],
-  "totalPassed": 163,
+  "totalPassed": 291,
   "totalFailed": 0,
   "limits": [
     "These are direct IDEA class runs against exported fixture jars, not a single complete deployed SCR endpoint run.",

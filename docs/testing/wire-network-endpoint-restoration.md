@@ -67,3 +67,8 @@ REST provider. The network-status routes returned 404 in this macOS runtime, so
 their DS service-arrival boundary remains open. No network settings were changed
 and no additional Linux, D-Bus or hardware validation was performed. Evidence:
 `mac-deployment-network-rest-scr-validation-20261010.json`.
+
+The complete `WireGraphEndpointsIT` class also passed direct Mac IDEA JUnit Run,
+98/98 over HTTP and MQTT. This exercises the scoped wire helper mappings in the
+IDEA module; deployed SCR service arrival and end-to-end event/wire routing remain
+separate. See `mac-idea-rest-endpoints-validation-20261010.json`.

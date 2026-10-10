@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "runtime": "isolated Equinox/SCR development assembly over certificate-validated HTTPS with Basic isolated admin authentication",
+  "system": {
+    "beforeFix": "GET framework and POST framework/filter for kuraHaveNetAdmin returned 500 with String-to-Boolean cast error under -Dkura.have.net.admin=false",
+    "afterFix": "All three GET property routes and four POST filter requests returned 200; filtered kuraHaveNetAdmin was boolean false",
+    "requests": 7,
+    "artifact": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/system-rest-postfix-scr-20261010.json",
+      "sha256": "24595d720ff96ee8c75c6af0773487fc223330629096ad64357090c9855e724c"
+    },
+    "productionFix": "docs/testing/system-framework-boolean-fix-20261010.json"
+  },
+  "serviceListing": {
+    "requests": 4,
+    "allHttpStatus": 200,
+    "serviceByInterfaceCount": 1,
+    "serviceByPropertyCount": 1,
+    "factoryByInterfaceCount": 32,
+    "factoryByPropertyCount": 32,
+    "artifact": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/service-listing-filtered-scr-20261010.json",
+      "sha256": "1362f92e176378110efab5173cc202fd31fa478fbab11522d212d9004539bb90"
+    }
+  },
+  "limits": [
+    "Success paths were exercised under actual SCR; controlled provider failure mappings remain covered by endpoint fixture tests.",
+    "This was a macOS development assembly, not an installed Debian package or Linux hardware validation."
+  ]
+}

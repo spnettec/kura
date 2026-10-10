@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kura security V2 endpoints JUnit" type="JUnit" factoryName="JUnit">
+    <module name="kura-endpoint-tests" />
+    <option name="PACKAGE_NAME" value="org.eclipse.kura.endpoint" />
+    <option name="MAIN_CLASS_NAME" value="org.eclipse.kura.endpoint.SecurityEndpointsV2IT" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kura-endpoint-tests" />
+    <option name="VM_PARAMETERS" value="-ea -Djunit.jupiter.execution.timeout.mode=disabled_on_debug" />
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

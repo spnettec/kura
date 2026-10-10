@@ -23,6 +23,8 @@ The upstream Windows-only assumption on oversized input is retained; on this mac
 run both transport invocations executed and passed.
 
 Validation: Maven 3.10.0 / Temurin 21, isolated repository, Failsafe `verify` selecting
-the two security classes. Full Kura SCR/configuration assembly, actual policy file
-application and IDEA execution remain acceptance work. No production security
-behavior, handwritten metadata, YOFC/PLC4X, D-Bus or OPC UA changed.
+the two security classes. Mac IDEA direct class Run also passed V1 16/16 and V2
+14/14; see `mac-idea-rest-endpoints-validation-20261010.json`. Full deployed Kura
+SCR/configuration assembly and actual security-policy file application remain
+acceptance work. No production security behavior, handwritten metadata,
+YOFC/PLC4X, D-Bus or OPC UA changed.

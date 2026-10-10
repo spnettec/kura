@@ -28,8 +28,9 @@ checks from the shared fixture.
 
 Mac IDEA class Run passed System 24/24 and Tamper 18/18. Isolated Equinox/SCR
 authenticated HTTPS returned 200 for Kura properties and an empty tamper list.
-System operations beyond the read-only probe and tamper event/reset flows with
-a registered service remain open under actual SCR/configuration assembly. See
+All six system property routes then passed actual SCR authenticated HTTPS after
+a separately committed Boolean-override production fix. Tamper event/reset flows
+with a registered service remain open under actual SCR assembly. See
 `mac-idea-rest-endpoints-validation-20261010.json` and
-`mac-rest-scr-endpoint-validation-20261010.json`. No production code,
-handwritten metadata, D-Bus, YOFC/PLC4X or OPC UA changed.
+`mac-system-listing-scr-validation-20261010.json`. This acceptance batch did
+not change handwritten metadata, D-Bus, YOFC/PLC4X or OPC UA behavior.

@@ -25,6 +25,9 @@ Maven 3.10.0 / Temurin 21: a five-invocation fixture smoke check and the complet
 55-invocation run pass, zero failures/errors/skips. The earlier classpath-incomplete
 run was terminated and is not counted. Mac IDEA class Run also passed 55/55;
 isolated Equinox/SCR HTTPS servicePids and factoryPids returned 42 and 67 PIDs.
-Installed Debian SCR/metatype factory discovery and filtered queries under that
-assembly remain open. See `mac-idea-rest-endpoints-validation-20261010.json` and
-`mac-rest-scr-endpoint-validation-20261010.json`.
+Four filtered service/factory queries also returned 200 under actual Mac
+Equinox/SCR, including factory descriptor lookup with 32 matching WireComponent
+PIDs. Installed Debian SCR/metatype factory discovery remains open. See
+`mac-idea-rest-endpoints-validation-20261010.json`,
+`mac-rest-scr-endpoint-validation-20261010.json` and
+`mac-system-listing-scr-validation-20261010.json`.

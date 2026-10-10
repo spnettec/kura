@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 43,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Six REST endpoint classes passed direct Mac IDEA JUnit (163/163), and isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 43 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "count": 42,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 42 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -238,10 +238,11 @@
       "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV1Test.java",
       "group": "rest-security",
       "evidence": [
-        "docs/testing/security-endpoint-test-restoration.md"
+        "docs/testing/security-endpoint-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Combined deployed SCR/configuration and real security policy application plus direct IDEA execution remain unverified.",
+      "covered": "Restored HTTP/MQTT endpoint scenarios and direct Mac IDEA JUnit class Run passed 16/16 with controlled SecurityService boundary.",
+      "remaining": "Deployed SCR/configuration with actual security policy file application remains unverified.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and real security policy file application",
         "IDEA execution"
@@ -252,10 +253,11 @@
       "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV2Test.java",
       "group": "rest-security",
       "evidence": [
-        "docs/testing/security-endpoint-test-restoration.md"
+        "docs/testing/security-endpoint-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Combined deployed SCR/configuration and real security policy application plus direct IDEA execution remain unverified.",
+      "covered": "Restored HTTP/MQTT endpoint scenarios and direct Mac IDEA JUnit class Run passed 14/14 with controlled SecurityService boundary.",
+      "remaining": "Deployed SCR/configuration with actual security policy file application remains unverified.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and real security policy file application",
         "IDEA execution"
@@ -268,28 +270,13 @@
       "evidence": [
         "docs/testing/service-listing-endpoint-test-restoration.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json",
+        "docs/testing/mac-system-listing-scr-validation-20261010.json"
       ],
-      "covered": "IDEA ServiceListing 55/55; isolated Equinox/SCR authenticated HTTPS servicePids and factoryPids returned 200 with 42 and 67 PIDs.",
-      "remaining": "Installed Debian SCR/metatype/configuration factory discovery and filtered service queries.",
+      "covered": "IDEA ServiceListing 55/55; isolated Mac Equinox/SCR HTTPS servicePids/factoryPids and four filtered service/factory queries all returned 200, with actual factory descriptor lookup.",
+      "remaining": "Installed Debian SCR/metatype/configuration factory discovery remains unverified.",
       "originalDeferredValidation": [
         "Deployed SCR/metatype/configuration factory discovery",
-        "IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 239,
-      "source": "test/org.eclipse.kura.rest.system.provider.test/src/main/java/org/eclipse/kura/rest/system/provider/test/EndpointsTest.java",
-      "group": "rest-system",
-      "evidence": [
-        "docs/testing/system-service-test-restoration.md",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
-      ],
-      "covered": "IDEA System 24/24; isolated Equinox/SCR authenticated HTTPS Kura properties GET returned 200.",
-      "remaining": "Equinox SCR/configuration-backed system operations beyond the read-only HTTPS properties probe.",
-      "originalDeferredValidation": [
-        "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
       ]
     },
@@ -553,10 +540,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.test.driver/src/main/java/org/eclipse/kura/util/test/driver/ChannelDescriptorTestDriver.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -567,10 +555,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.test.driver/src/main/java/org/eclipse/kura/util/test/driver/ChannelDescriptorTestDriverOptions.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -581,10 +570,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/GraphBuilder.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -595,10 +585,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/TestEmitterReceiver.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -609,10 +600,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/TestEmitterReceiverOptions.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -623,10 +615,11 @@
       "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/WireTestUtil.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -635,5 +628,6 @@
   ],
   "macIdeaRestEndpointEvidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
   "macRestScrEvidence": "docs/testing/mac-rest-scr-endpoint-validation-20261010.json",
-  "macDeploymentNetworkRestEvidence": "docs/testing/mac-deployment-network-rest-scr-validation-20261010.json"
+  "macDeploymentNetworkRestEvidence": "docs/testing/mac-deployment-network-rest-scr-validation-20261010.json",
+  "macSystemListingScrEvidence": "docs/testing/mac-system-listing-scr-validation-20261010.json"
 }
