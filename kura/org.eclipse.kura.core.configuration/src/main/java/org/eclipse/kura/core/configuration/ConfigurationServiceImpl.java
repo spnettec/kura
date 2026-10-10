@@ -2132,10 +2132,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
 
         if (!CollectionsUtil.equals(resultAsDictionary, currentProperties)) {
             logger.info("Updating configuration for pid {}", snapshotConfig.getPid());
-            target.update(resultAsDictionary);
-            if (factoryPid.isPresent()) {
-                registerComponentConfiguration(snapshotConfig.getPid(), target.getPid(), factoryPid.get());
+            if (factoryPid.isPresent() && !this.allActivatedPids.contains(snapshotConfig.getPid())) {
+                // Creating/updating a CM configuration is not a service registration. Track it until SCR binds it.
+                this.servicePidByPid.put(snapshotConfig.getPid(), target.getPid());
+                this.factoryPidByPid.put(snapshotConfig.getPid(), factoryPid.get());
+                this.waittingForActivatedPids.add(snapshotConfig.getPid());
             }
+            target.update(resultAsDictionary);
         } else {
             logger.info("No need to update configuration for pid {}", snapshotConfig.getPid());
         }
