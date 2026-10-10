@@ -1047,3 +1047,13 @@ See [full workspace validation](full-workspace-validation-20261010.md) for repor
 checksums, repository revisions, skip reasons and the archive made before Linux
 IDEA rewrites shared targets. Deferred runtime scenarios, Linux GUI and P7 remain
 open; source disposition counts are unchanged.
+
+### Linux IDEA JUnit continuation (2026-10-10)
+
+IDEA in the isolated Linux VM directly opened the mounted host repository and ran
+the shared ordinary JUnit configuration (7 passed) and real Equinox configuration
+(8 passed in Run and 8 in Debug). Breakpoint, step-over, real fixture bundle identity
+and ACTIVE state were checked; Debug exited with code 0. An earlier VM memory-limit
+termination is recorded separately and is not counted as passing. See
+[IDEA JUnit acceptance](idea-junit-acceptance.md). Full Linux application lifecycle,
+deferred runtime scenarios and P7 work remain open.

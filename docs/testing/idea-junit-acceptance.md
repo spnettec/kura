@@ -45,3 +45,39 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 本记录只覆盖表中的实际 GUI 入口。其余配置/通信容器测试、HTTP/MQTT 端点套件、
 Linux GUI IDEA、全工作空间回归和 P7 清理仍需各自验收；此前 Maven 的 62 项通过
 不能作为所有测试已经在 IDEA GUI 运行的证明。
+
+## Linux IDEA JUnit 验收（2026-10-10）
+
+在隔离 Ubuntu 24.04 ARM64 VM 的 IDEA 2026.2.3 中，直接打开宿主仓库的挂载路径：
+`/home/heyoulin/kura-gui-acceptance/host-git/kura`。该路径解析到
+`/mnt/mac/Users/heyoulin/iot-kura-develop/git/kura`，并非先前复制到 VM 的源码。
+项目 SDK 为 Ubuntu OpenJDK 21.0.12.1，Maven home 为独立的 Maven 3.10.0，
+本地缓存为 VM 内的 `kura-gui-acceptance/m2`。
+
+| 共享入口 | 测试数 | 实际 GUI 结果 |
+| --- | ---: | --- |
+| `Kura plain JUnit` | 7 | Run 全通过，exit code 0 |
+| `Kura Equinox JUnit` | 8 | Run 全通过，约 20 秒 |
+| `Kura Equinox JUnit` | 8 | Debug 全通过，exit code 0，包含断点暂停 |
+
+Debug 在 `LegacyCoreRuntimeIT.java:92` 命中；此时实际 SCR 组件激活检查已经通过，
+变量中可见 60 个已安装 bundle 以及 `testServiceExists` 场景。单步跨过该场景到
+第 93 行后，调试器求值 `runtime.bundle(FIXTURE).getSymbolicName()` 返回
+`org.eclipse.kura.testing.configuration.fixtures`，`getState()` 返回 32（ACTIVE）。
+移除本次断点并恢复运行后，八项场景全部完成；没有遗留测试 JVM。
+
+右侧 Maven Profiles 启用了 `workspace`、`dev-runtime`、`osgi-it`、`endpoint-it`
+和 `javadocs`。Maven 3.10 的 effective POM 确认前两者合并后 runtime 模块只出现
+一次。sibling 导入后另行显示的 `releaseBuild` 和 `sign-artifacts` 未启用：前者
+拒绝当前 SNAPSHOT 版本，后者需要签名密钥；`test-debug` 是旧 Tycho 配置。
+
+首次 Equinox GUI 运行在完成全部场景前，IDEA 被 VM 的 4 GB cgroup 限额触发
+OOM kill，该次运行不计为通过。`free` 显示的全局内存不能替代 cgroup 限额。
+随后仅为 VM 的 IDEA 启动创建独立 VM options：堆 1 GB、代码缓存 256 MB、
+`ActiveProcessorCount=4`。实际 JVM flags 已核实；以上通过结果来自调整后的完整
+Equinox Run/Debug，未改变被测代码、超时、OSGi 元数据或 Kura 运行参数。
+
+截图和校验和保存在本地
+`/Users/heyoulin/iot-kura-develop/migration-baseline/linux-idea-gui-20261010`。
+这些 GUI 执行不重复加入全工作区 Maven 报告总数。本节只完成 Linux 的 JUnit
+入口验收；完整 `Kura Linux` 应用启动/断点/停止重启、其他延后场景及 P7 仍需完成。
