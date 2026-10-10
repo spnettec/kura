@@ -1,0 +1,60 @@
+{
+  "tests": 10,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "newTlsInvocations": 2,
+  "previousInvocations": 8,
+  "pathsPerTlsInvocation": 5,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "cloudRevision": "6837ca91d255f78b38d1f3931bf3e3e820e8b4b3",
+  "coreBaseRevision": "b62562f748cb5c6575886ef432c88df3adf8184b",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-tls-runtime-20261010",
+  "reportSha256": "de0e5b37bccf0bbfb3fc17783d0028ee33a7b72d67daa531b61a14120d857271",
+  "logSha256": "596bff8962850f51dcec2be7a2262d8758a9e97ff6efe451f5fdf5d5e5abefa1",
+  "sources": {
+    "kura-cloud/runtime-tests/pom.xml": "8897cbe4a1b8e4a6cb6fa118a11befaf40dc34a64bed0928225b674663d87910",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "58c9ece65be9bc0edcf256487fce3a9a694e964d50e16349a07a6bed7a067420",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java": "a2d5bbb3b8a6ebe94abaa0175339ceab1b1fb4508f1257b5cc881fd52e10a5b2",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java": "d7298e7e0324a29721d5fdfda7e47422249db40faf760cb26dc6062ffed6c60f"
+  },
+  "caseDurationsSeconds": {
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.892,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.562,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.596,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.648,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.602,
+    "restFactoryPipeline(EquinoxRuntime)": 1.625,
+    "sparkplugFactoryPipeline(EquinoxRuntime)": 5.878,
+    "tlsFilesystemPipeline(EquinoxRuntime)": 51.388,
+    "restInitialStartup(EquinoxRuntime)": 1.558,
+    "sparkplugTlsFilesystemPipeline(EquinoxRuntime)": 51.827
+  },
+  "ciReportReplay": {
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "verified": [
+    "Actual ConfigurationService, SCR FilesystemKeystoreService and SslManagerService with encrypted configuration passwords and isolated JKS files",
+    "Base MQTTS and Sparkplug MQTT over TLS: missing key, wrong trust anchor and hostname mismatch reject connection",
+    "Both transports publish unique Unicode bodies over mutual TLS; observer verifies payload, QoS 1 and non-retained delivery",
+    "Actual HTTP CRL refresh updates CertStore, emits sender-specific KeystoreChangedEvent and notifies SslServiceListener",
+    "CRL cache metadata persisted and reconnection with revoked broker certificate rejected",
+    "Production 30-second CRL minimum reschedule delay preserved; no manual EventAdmin injection or private-field replacement"
+  ],
+  "limitations": [
+    "Actual filesystem/SCR WSS acceptance remains pending; existing WSS unit tests use a mocked keystore boundary",
+    "File-backed DataService restart durability and Sparkplug-specific IDEA acceptance remain pending",
+    "No new Linux or full-workspace run; historical suite totals must not be added to this overlapping suite",
+    "Final run logs two Sparkplug NDEATH publish errors on disconnect (Paho 32104); graceful NDEATH delivery is not asserted and remains under investigation"
+  ],
+  "trial": {
+    "correctedCrlTrialTests": 2,
+    "correctedCrlTrialFailures": 0,
+    "initialFixtureIssue": "15-second CRL wait was shorter than the production 30-second minimum; fixed to 45 seconds without production changes"
+  }
+}

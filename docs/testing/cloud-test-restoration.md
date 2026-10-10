@@ -577,3 +577,39 @@ creation attempt; automatic repair of that non-default state is not claimed or a
 No production permission logic, roles, snapshot templates or metadata changed.
 The failed empty-snapshot report and startup stack are archived separately from the
 final passing report. See [validation evidence](cloud-rest-startup-validation-20261010.json).
+
+## Filesystem TLS and CRL runtime acceptance (2026-10-10)
+
+The cloud runtime fixture now creates temporary JKS files with generated test CA,
+server and client certificates. Actual ConfigurationService creates and configures
+FilesystemKeystoreService, SslManagerService and each MQTT transport through SCR.
+Passwords travel through actual configuration encryption/decryption. Keystore contents,
+provider bundles and target filters are checked; business APIs remain absent from the
+controller. Certificate generation reuses the plain Maven test-support fixture.
+
+Each transport rejects missing client private keys, wrong trust anchors and hostname
+mismatch, then publishes a Unicode body over mutual TLS with hostname verification
+still enabled. An external subscriber checks payload, QoS and retain. CRL acceptance
+starts with a valid server certificate, then a local HTTP source publishes its
+revocation. The test waits for the real cache to contain the revoked certificate,
+actual KeystoreChangedEvent delivery for the correct service PID and actual
+SslServiceListener notification before asserting reconnection is rejected. It also
+checks CRL cache metadata is written. Neither cache/private fields nor production
+executors are replaced, and no manual EventAdmin event is injected in this path.
+
+The first CRL trial used a 15-second wait and failed because local CRLManager retains
+a 30-second minimum reschedule delay. The wait now honors that behavior; the production
+interval and virtual-thread downloader are unchanged. All network endpoints bind random
+loopback ports. Key/CRL paths, broker, HTTP source, service registrations, configurations
+and framework state belong to the test's isolated lifecycle.
+
+Final protocols, counts and checksums are in
+[the validation report](cloud-tls-runtime-validation-20261010.json). These checks do not
+claim filesystem DataService restart durability or a new IDEA/Linux/full-workspace run.
+
+The final shared suite passes 10 invocations (two new TLS invocations, each with five
+certificate paths). This covers base MQTTS and Sparkplug TLS, not the remaining actual
+filesystem/SCR WSS path. Two Sparkplug NDEATH publish errors (Paho 32104) appear during
+disconnect despite successful preceding application publication. Graceful NDEATH
+delivery is not asserted here and remains a separate investigation; this batch changes
+only tests and evidence.

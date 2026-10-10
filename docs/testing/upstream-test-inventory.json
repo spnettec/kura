@@ -2252,7 +2252,9 @@
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/src/test/java/org/eclipse/kura/core/data/transport/mqtt/MqttDataTransportTest.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
     ],
     "execution": "surefire",
     "reason": "Seventeen upstream scenarios use real Paho/Moquette/SSL-manager TLS, WSS, mutual authentication and PKIX revocation; two formerly ignored missing-client-key cases now use a broker requiring client certificates. The contradictory unknown-revocation case now asserts rejection. One added custom-factory case preserves Paho default verification. Separate production commit fixes Paho overriding the Kura hostname policy. See cloud-test-restoration.md.",
@@ -2265,7 +2267,7 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "Actual TLS through SCR, filesystem keystore/HTTP CRL refresh and EventAdmin delivery remain runtime acceptance. Plain MQTT factory/configuration/crypto credentials and H2 queue assembly now pass; existing TLS tests still supply KeyStore/KeyManager/CertStore at a mocked KeystoreService boundary."
+      "Actual filesystem-keystore/SCR WSS acceptance; MQTTS filesystem keys, HTTP CRL refresh and EventAdmin delivery now pass."
     ],
     "pipelineValidation": {
       "tests": 2,
@@ -2278,6 +2280,15 @@
       "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
       "sharedSuiteTests": 4,
       "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
+    },
+    "tlsRuntimeValidation": {
+      "report": "docs/testing/cloud-tls-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.tlsFilesystemPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
     }
   },
   {
@@ -2948,7 +2959,9 @@
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDataTransportTest.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
     ],
     "execution": "surefire",
     "reason": "All 16 upstream protocol cases use actual loopback Moquette/Paho and transport dispatch. Explicit negative subscriptions and dispatch completion barriers prevent vacuous asynchronous assertions. No remote DNS or fixed port; only random delay is controlled. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
@@ -2961,7 +2974,8 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance.",
+      "Investigate two Paho 32104 NDEATH publish errors during TLS disconnect; graceful death delivery is not asserted by the TLS acceptance."
     ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
@@ -2971,6 +2985,15 @@
       "errors": 0,
       "skipped": 0,
       "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    },
+    "tlsRuntimeValidation": {
+      "report": "docs/testing/cloud-tls-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugTlsFilesystemPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
     }
   },
   {
@@ -2986,7 +3009,9 @@
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDeviceTest.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
     ],
     "execution": "surefire",
     "reason": "All seven upstream device cases exercise real device/endpoint/Paho/broker with a forwarding mock at the DataService persistence boundary and real ServiceTracker against a mocked registry. Changed-metric and reconnect checks require the second DBIRTH, exact sequence and payload. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
@@ -2999,7 +3024,7 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
     ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
@@ -3009,6 +3034,15 @@
       "errors": 0,
       "skipped": 0,
       "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    },
+    "tlsRuntimeValidation": {
+      "report": "docs/testing/cloud-tls-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugTlsFilesystemPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
     }
   },
   {
@@ -3024,12 +3058,14 @@
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugIntegrationTest.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
     ],
     "execution": "surefire",
     "reason": "Replaced static JUnit 4/SCR/fixed-port harness with per-class Jupiter loopback Moquette 0.18.0 and per-test real Paho/transport fixtures, random port and resource cleanup. The original real factory/SCR setup is now covered by CloudFactoryRuntimeIT.sparkplugFactoryPipeline, including the actual H2-backed DataService pipeline and local PID/name/description contract. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
     "deferredScenarios": [
-      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
     ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
@@ -3039,6 +3075,15 @@
       "errors": 0,
       "skipped": 0,
       "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    },
+    "tlsRuntimeValidation": {
+      "report": "docs/testing/cloud-tls-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugTlsFilesystemPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
     }
   },
   {
