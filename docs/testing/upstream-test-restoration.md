@@ -974,3 +974,14 @@ See `legacy-comm-service-restoration.md`.
 
 Inventory: 366 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
 sources, six removed-functionality exclusions and **7 unreviewed** out of 465.
+
+## Legacy network enumeration continuation (2026-10-10)
+
+Four meaningful legacy network scenarios now pass in the networking sibling at
+the controlled LinuxNetworkUtil component boundary; full linux.net validation
+passed **141 tests**, no failures/errors/skips. Real SCR and host D-Bus acceptance
+remain open. YOFC dbus-java 5.2.0/virtualthreads and Update/Activate remain unchanged.
+See `legacy-network-enumeration-restoration.md` (networking commit `994f131`).
+
+Inventory: 367 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
+sources, six removed-functionality exclusions and **6 unreviewed** out of 465.
