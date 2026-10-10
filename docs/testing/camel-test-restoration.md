@@ -50,6 +50,14 @@ mvn -f bundles/org.eclipse.kura.camel/pom.xml \
   -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2 test
 ```
 
-52 tests, zero failures/errors/skips. Equinox service discovery/DS wiring, runtime
-packaging, actual cloud transports and IDEA execution remain separate acceptance
-work; this source restoration does not claim they passed.
+52 tests, zero failures/errors/skips. Direct macOS IDEA JUnit class Run then
+passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3 using Maven
+3.10.0, JDK 21 and the isolated migration cache. In the separate isolated Mac
+Equinox/SCR development assembly, all three Camel bundles were ACTIVE. Camel's
+validation service and cloud service factory were ACTIVE, and the cloud
+component resolver was SATISFIED. Creating a temporary XML router through the
+configuration REST factory endpoint activated its DS instance, registered a
+CamelContext and started a local direct-to-log route. Deleting the configuration
+stopped the route and unregistered the context; SCR returned to zero router
+instances. See `mac-camel-idea-scr-validation-20261010.json`. Installed Debian
+sibling package and external cloud transport acceptance remain separate.

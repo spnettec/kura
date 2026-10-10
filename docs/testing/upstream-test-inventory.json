@@ -5512,10 +5512,24 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
-    ]
+      "Installed Debian sibling package and external cloud transport acceptance"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "suiteTests": 9,
+      "failures": 0,
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "serviceDiscovery": "passed",
+      "xmlRouterLifecycle": "create, start, delete, stop passed",
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/PayloadTest.java",
@@ -5539,10 +5553,24 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
-    ]
+      "Installed Debian sibling package and external cloud transport acceptance"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "suiteTests": 9,
+      "failures": 0,
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "serviceDiscovery": "passed",
+      "xmlRouterLifecycle": "create, start, delete, stop passed",
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/RouterTest.java",
@@ -5566,10 +5594,24 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
-    ]
+      "Installed Debian sibling package and external cloud transport acceptance"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "suiteTests": 9,
+      "failures": 0,
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "serviceDiscovery": "passed",
+      "xmlRouterLifecycle": "create, start, delete, stop passed",
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java",
@@ -5586,10 +5628,24 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
-    ]
+      "Installed Debian sibling package and external cloud transport acceptance"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "suiteTests": 9,
+      "failures": 0,
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "serviceDiscovery": "passed",
+      "xmlRouterLifecycle": "create, start, delete, stop passed",
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java",
@@ -5613,10 +5669,24 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged.",
+    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
-    ]
+      "Installed Debian sibling package and external cloud transport acceptance"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "suiteTests": 9,
+      "failures": 0,
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    },
+    "runtimeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "serviceDiscovery": "passed",
+      "xmlRouterLifecycle": "create, start, delete, stop passed",
+      "evidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
+    }
   },
   {
     "source": "tests/org.eclipse.kura.camel.test/src/test/java/org/eclipse/kura/camel/DependencyRunnerTest.java",

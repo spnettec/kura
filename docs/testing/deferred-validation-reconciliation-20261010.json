@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 39 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -268,10 +268,11 @@
       "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/AbstractRouterTest.java",
       "group": "camel",
       "evidence": [
-        "docs/testing/camel-test-restoration.md"
+        "docs/testing/camel-test-restoration.md",
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
       ],
-      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
-      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
+      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ]
@@ -281,10 +282,11 @@
       "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/PayloadTest.java",
       "group": "camel",
       "evidence": [
-        "docs/testing/camel-test-restoration.md"
+        "docs/testing/camel-test-restoration.md",
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
       ],
-      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
-      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
+      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ]
@@ -294,10 +296,11 @@
       "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/RouterTest.java",
       "group": "camel",
       "evidence": [
-        "docs/testing/camel-test-restoration.md"
+        "docs/testing/camel-test-restoration.md",
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
       ],
-      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
-      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
+      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ]
@@ -307,10 +310,11 @@
       "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java",
       "group": "camel",
       "evidence": [
-        "docs/testing/camel-test-restoration.md"
+        "docs/testing/camel-test-restoration.md",
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
       ],
-      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
-      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
+      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ]
@@ -320,10 +324,11 @@
       "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java",
       "group": "camel",
       "evidence": [
-        "docs/testing/camel-test-restoration.md"
+        "docs/testing/camel-test-restoration.md",
+        "docs/testing/mac-camel-idea-scr-validation-20261010.json"
       ],
-      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
-      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup.",
+      "remaining": "Installed Debian sibling package and external cloud transport acceptance remain unverified.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ]
@@ -601,5 +606,6 @@
     }
   ],
   "macIdentityScrMutationEvidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json",
-  "macKeystorePrivateKeyEvidence": "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json"
+  "macKeystorePrivateKeyEvidence": "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json",
+  "macCamelIdeaScrEvidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json"
 }

@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-10",
+  "scope": "Camel JUnit classes in macOS IntelliJ IDEA and temporary XML route in isolated Equinox/SCR development assembly",
+  "platform": "macOS-27.0.1-arm64",
+  "jdk": "21.0.12.1",
+  "maven": "3.10.0",
+  "idea": {
+    "project": "/Users/heyoulin/iot-kura-develop/git/kura-camel",
+    "mavenHome": "/opt/homebrew/Cellar/maven/3.10.0/libexec",
+    "localRepository": "/Users/heyoulin/iot-kura-develop/migration-m2",
+    "runner": "IntelliJ IDEA JUnit class Run",
+    "RouterTest": 5,
+    "PayloadTest": 1,
+    "TypeConverterTest": 3,
+    "total": 9,
+    "failures": 0,
+    "errors": 0,
+    "processExitCode": 0
+  },
+  "runtime": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "httpsPort": 18443,
+    "tls": "Generated localhost certificate validated with the isolated certificate authority file",
+    "authentication": "Basic isolated development admin identity; credential omitted",
+    "camelBundles": "org.eclipse.kura.camel, org.eclipse.kura.camel.cloud.factory and org.eclipse.kura.camel.xml all ACTIVE",
+    "scr": {
+      "CamelDslValidationService": "ACTIVE",
+      "KuraCloudComponentResolver": "SATISFIED",
+      "CamelCloudServiceFactory": "ACTIVE",
+      "XmlRouterComponentAfterCreate": "ACTIVE, one instance",
+      "XmlRouterComponentAfterDelete": "zero instances"
+    },
+    "temporaryFactoryPid": "org.eclipse.kura.camel.xml.XmlRouterComponent",
+    "temporaryRoute": "test1: direct:start to log:foo",
+    "configurationCreate": 200,
+    "configurationDelete": 200,
+    "camelContextRegistered": true,
+    "routeStarted": true,
+    "camelContextUnregistered": true,
+    "routeStopped": true,
+    "stoppedAfterProbe": true
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-scr-20261010",
+  "archiveResult": {
+    "file": "result.json",
+    "sha256": "d6b63f1549e5bcc6d8cc0acf90eba2d589e75cd42eadc7e6dac0ab4333c4a6f3"
+  },
+  "limits": [
+    "The XML route was a local direct-to-log fixture; no external cloud transport was exercised",
+    "This was an isolated macOS Maven development assembly, not an installed Debian sibling package",
+    "No new Linux, hardware, YOFC, PLC4X or official OPC UA validation was added"
+  ]
+}
