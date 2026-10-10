@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 47,
-  "assessment": "All 47 rows retain a scenario-specific unverified boundary. Configuration endpoint rows 210 and 211 now have direct Mac IDEA endpoint evidence (204/204) plus a real MQTT CONF-V2 encrypted snapshot round trip through SCR (cloud runtime 13/13, Mac IDEA 1/1). The six core-protocol rows now have real MQTT GET request/reply through SCR-bound Configuration and Inventory handlers, with direct Mac IDEA JUnit evidence; deployed package assembly and broader protocol operations remain open. Existing Mac IDEA development-runtime, configuration and HTTP evidence is unchanged. Linux package enumeration is outside the current acceptance scope.",
+  "count": 45,
+  "assessment": "Rows 210 and 211 now have authenticated HTTPS against actual macOS SCR configuration services and encrypted snapshot recovery in a second Java process using the same isolated profile and external master key. See configuration-rest-https-restart-validation-20261010.json. The other 45 rows retain scenario-specific unverified boundaries; no Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -182,38 +182,6 @@
       "originalDeferredValidation": [
         "Full deployed SCR/Felix servlet bridge/configuration wiring",
         "IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 210,
-      "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationRestServiceTest.java",
-      "group": "rest-configuration",
-      "evidence": [
-        "docs/testing/configuration-endpoint-test-restoration.md",
-        "docs/testing/configuration-runtime-test-restoration.md",
-        "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json",
-        "docs/testing/configuration-rest-mqtt-validation-20261010.json"
-      ],
-      "covered": "The 204 HTTP/MQTT endpoint cases passed in Mac IDEA with controlled backends. A companion authenticated MQTT test now reaches the actual SCR ConfigurationRestService, ConfigurationService and CryptoService; CONF-V2 writes an encrypted snapshot file and reads it back in the same Equinox process. Maven cloud runtime 13/13 and direct Mac IDEA 1/1 passed.",
-      "remaining": "Authenticated HTTP to the same real SCR configuration backend and encrypted snapshot/master-key recovery across a new Equinox process remain unverified.",
-      "originalDeferredValidation": [
-        "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 211,
-      "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationUtil.java",
-      "group": "rest-configuration",
-      "evidence": [
-        "docs/testing/configuration-endpoint-test-restoration.md",
-        "docs/testing/configuration-runtime-test-restoration.md",
-        "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json",
-        "docs/testing/configuration-rest-mqtt-validation-20261010.json"
-      ],
-      "covered": "The 204 HTTP/MQTT endpoint cases passed in Mac IDEA with controlled backends. A companion authenticated MQTT test now reaches the actual SCR ConfigurationRestService, ConfigurationService and CryptoService; CONF-V2 writes an encrypted snapshot file and reads it back in the same Equinox process. Maven cloud runtime 13/13 and direct Mac IDEA 1/1 passed.",
-      "remaining": "Authenticated HTTP to the same real SCR configuration backend and encrypted snapshot/master-key recovery across a new Equinox process remain unverified.",
-      "originalDeferredValidation": [
-        "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
       ]
     },
     {

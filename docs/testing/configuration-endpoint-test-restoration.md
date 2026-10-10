@@ -23,9 +23,16 @@ back in the same Equinox process. Maven passed 13/13 cloud runtime tests, and Ma
 IDEA directly passed the expanded method (1/1, exit code 0). See
 `configuration-rest-mqtt-validation-20261010.json`.
 
-Authenticated HTTP to the same SCR backend and encrypted snapshot/master-key
-recovery after a new Equinox process remain to be verified. No production code,
-OSGi metadata, network API, YOFC/PLC4X or official OPC UA behavior changes.
+An isolated macOS development assembly now also exercises the actual Jetty/Jersey
+HTTPS endpoint with Basic authentication, SCR ConfigurationRestService,
+ConfigurationService and CryptoService. A snapshot written through HTTPS is
+encrypted on disk and readable after a second Java process starts with the same
+external master key and profile. Both HTTPS reads returned 200 with the real
+HttpService PID; the encrypted file hash stayed the same across the restart.
+See `configuration-rest-https-restart-validation-20261010.json`. This run used
+the Mac development assembly from CLI; the exact HTTPS flow was not launched
+from IDEA, and installed Debian package behavior remains outside this evidence.
+No production code or handwritten OSGi metadata changed.
 
 Validation: Failsafe verify selected ConfigurationEndpointsIT in migration-m2.
 All upstream test method names match the restored parameterized method set; each

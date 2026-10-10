@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "jdk": "Temurin 21.0.12.1",
+  "mavenAssembly": "3.10.0",
+  "coreRevisionBeforeEvidence": "d77963a4d6fcd1b2ae69d7d599deb65746b9fba1",
+  "scope": "Actual macOS Maven development assembly, Equinox SCR ConfigurationRestService/ConfigurationService/CryptoService, Jetty/Jersey HTTPS and filesystem snapshot across two distinct Java processes.",
+  "isolation": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "equinoxConfiguration": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/equinox-config",
+    "httpPort": 18080,
+    "httpsPort": 18443,
+    "clientAuthPort": 18444,
+    "restAllowedPort": 18443,
+    "personalKuraDevUntouched": true,
+    "runtimeTargetNotCleaned": true
+  },
+  "security": {
+    "httpsKeystore": "real JKS with generated RSA certificate for localhost",
+    "tlsCertificateValidated": true,
+    "basicAuthentication": "isolated development admin identity",
+    "snapshotEncryption": "kura.snapshots.encrypt=true from isolated user/kura_custom.properties",
+    "externalMasterKey": "same 32-byte key supplied through KURA_CRYPTO_SECRET_KEY in both launches; value omitted"
+  },
+  "firstProcess": {
+    "pid": 1522,
+    "snapshotWriteHttpStatus": 200,
+    "snapshotReadHttpStatus": 200,
+    "snapshotId": 1791621913981,
+    "snapshotBytes": 57001,
+    "snapshotSha256": "56d402bf7585a562ef55669d83f667fa0ac99560c3a221fa2d88020ce17c0747",
+    "snapshotIsEncrypted": true,
+    "httpServicePidInDecodedResponse": true
+  },
+  "secondProcess": {
+    "pid": 2007,
+    "oldSnapshotId": 1791621913981,
+    "oldSnapshotListHttpStatus": 200,
+    "oldSnapshotReadHttpStatus": 200,
+    "oldEncryptedSnapshotShaUnchanged": true,
+    "httpServicePidInDecodedResponse": true,
+    "sameExternalMasterKey": true
+  },
+  "runtimeLog": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/runtime-two-processes.log",
+    "sha256": "6d5c50dabd1cb527891ebc3283051420ef658eef1fd7d7114a96ecd60f9f3855",
+    "lines": 1096,
+    "restActivations": 2,
+    "errors": 0
+  },
+  "artifacts": {
+    "beforeProcessRestart": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/before-process-restart.json",
+      "sha256": "06811e06ba12a31a6548ff476b072c1d05309436057280db101723e10ff55384"
+    },
+    "afterProcessRestart": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/after-process-restart.json",
+      "sha256": "c54d4c4d1f5751dd5395de01cc093bced197a3db91049a39b3ff6c7dc802fefb"
+    },
+    "httpsCertificate": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/https-cert.pem",
+      "sha256": "4477c8cb57700dc8cb06cc60c26b5203698ca3d455361a8769c6bd9b99d21577"
+    }
+  },
+  "sourceHashes": {
+    "kura/org.eclipse.kura.rest.configuration.provider/src/main/java/org/eclipse/kura/internal/rest/configuration/ConfigurationRestService.java": "a2d910faff6451747dc7110b41d4791dee2808001ce52982ae2bc3a6b93f5090",
+    "kura/org.eclipse.kura.core.configuration/src/main/java/org/eclipse/kura/core/configuration/ConfigurationServiceImpl.java": "e200764877de54396805cb2ad3700f16147858573d6f17816699a71495b1e313",
+    "kura/org.eclipse.kura.core.crypto/src/main/java/org/eclipse/kura/core/crypto/CryptoServiceImpl.java": "24a6d4ff1fa5f711eff55fca05447f51722ff5771e0a1c57fb042d68bb6b2589"
+  },
+  "result": "Authenticated real HTTPS SCR configuration flow and encrypted snapshot recovery in a new Java process passed on macOS.",
+  "limits": [
+    "This run used the isolated macOS development assembly, not an installed Debian package or Linux hardware.",
+    "The exact two-process HTTPS flow was launched from CLI; separate direct Mac IDEA endpoint JUnit 204/204 and application restart evidence remain linked in the inventory.",
+    "Other inventory deferredValidation entries remain open."
+  ]
+}
