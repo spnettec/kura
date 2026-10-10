@@ -850,3 +850,13 @@ avoid duplicate IDEA source roots. See `identity-endpoint-test-restoration.md`.
 Inventory: 355 restored, 49 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **39 unreviewed** out of 465.
 Actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## System and tamper endpoint continuation (2026-10-10)
+
+All upstream tamper and system endpoint scenarios pass over HTTP and MQTT: 18 and
+24 invocations respectively. System fixture export also passes its five existing
+tests plus install. See `system-tamper-endpoint-test-restoration.md`.
+
+Inventory: 357 restored, 49 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **37 unreviewed** out of 465.
+Actual Kura SCR/runtime and IDEA acceptance remain open.

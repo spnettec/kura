@@ -83,6 +83,8 @@ abstract class EndpointTestBase extends BaseCloudTests {
         this.assertions = new RequestAssertions(transport);
     }
 
+    protected Transport.Response runRequest(String path, MethodSpec method) { return this.assertions.rawRequest(path, method); }
+
     protected void whenRequestIsPerformed(MethodSpec method, String path) { this.assertions.request(method, path, null); }
     protected void whenRequestIsPerformed(MethodSpec method, String path, String body) { this.assertions.request(method, path, body); }
     protected void thenRequestSucceeds() { this.assertions.success(); }
@@ -125,6 +127,7 @@ abstract class EndpointTestBase extends BaseCloudTests {
     private static class RequestAssertions extends AbstractRequestHandlerTest {
         RequestAssertions(Transport transport) { super(transport); }
         void request(MethodSpec method, String path, String body) { whenRequestIsPerformed(method, path, body); }
+        Transport.Response rawRequest(String path, MethodSpec method) { return this.transport.runRequest(path, method); }
         void success() { thenRequestSucceeds(); }
         void status(int value) { thenResponseCodeIs(value); }
         void notEmpty() { thenResponseBodyIsNotEmpty(); }

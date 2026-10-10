@@ -41,3 +41,8 @@ explicitly. This tests real transport and component interaction; full SCR, persi
 configuration/keystore storage, deployed runtime and IDEA execution remain separate
 acceptance work. The `kura-cloud` checkout and its matching installed artifacts are
 required; YOFC/PLC4X and official OPC UA are not extended by this module.
+
+System property and tamper detection scenarios also run over both transports.
+System provider exports its existing mock decorator and JSON resources in a
+`fixtures` test JAR; install it with test compilation enabled before this module.
+See `docs/testing/system-tamper-endpoint-test-restoration.md` in the repository root.
