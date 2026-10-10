@@ -1,0 +1,44 @@
+{
+  "environment": "macOS / Maven 3.10.0 / JDK 21 / JUnit 5",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/wire-network-endpoints-20261010",
+  "tests": 184,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "reports": [
+    {
+      "file": "TEST-org.eclipse.kura.endpoint.WireGraphEndpointsIT.xml",
+      "tests": 98,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "df701785c6114b4b792ca1166c16039f06194de077a769d5ac3d3e29bda302ee"
+    },
+    {
+      "file": "TEST-org.eclipse.kura.endpoint.NetworkStatusEndpointsIT.xml",
+      "tests": 70,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "4f22d949756f620fa2de5c8344a6945e07ee2240f30e567f31083b412230b787"
+    },
+    {
+      "file": "TEST-org.eclipse.kura.endpoint.NetworkConfigurationEndpointsIT.xml",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sha256": "c2b7aca772b8c97cc4b629ead931c22ba006e41df5a5617bf517dc533ecf5c99"
+    }
+  ],
+  "initialBatch": "183 passed; one NetworkConfiguration adapter error, fixed and all 16 config cases rerun successfully",
+  "fixtureRevisions": {
+    "kura-wires": "4774dd5",
+    "kura-networking": "fb4679d"
+  },
+  "sourceSha256": {
+    "kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/NetworkConfigurationEndpointsIT.java": "74c648b82935a9fd823af20864f98234ab5cb4a126ef2b3a2a491b25c2daec34",
+    "kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/NetworkStatusEndpointsIT.java": "916b339d5464d84f519354584c7bafd6a401f96432c06daf6ee6436a6d49e44e",
+    "kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/WireGraphEndpointsIT.java": "694d85c69a2beac3c8dba0ab98c4f5b0c33e08803aab392627ca827047312d59"
+  }
+}

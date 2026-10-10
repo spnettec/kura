@@ -1074,3 +1074,14 @@ four HTTP authentication/role cases: 32 executions, zero failures/errors/skips.
 See [cloud restoration](cloud-test-restoration.md). Real registry lookup is covered;
 SCR/factory/configuration assembly remains deferred. Inventory source disposition
 counts are unchanged; this is additional evidence after the archived full build.
+
+
+### Wires and networking transports (2026-10-10)
+
+Wires now passes 49 scenarios on both HTTP and MQTT (98), networking configuration
+passes 16 HTTP scenario/authentication cases, and networking status passes 35 on
+both transports (70): **184 final executions, zero failures/errors/skips**. Initial
+fixture failures and the corrected configuration rerun are recorded separately in
+[transport evidence](wire-network-endpoint-restoration.md). Production networking
+and dbus-java behavior are unchanged; DS/device boundaries remain explicit.
+Source counts and the archived full-build totals are unchanged.

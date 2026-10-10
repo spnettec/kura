@@ -41,3 +41,15 @@ HTTP authentication and is explicitly deferred. No fake 401 or annotation-only
 substitute is counted as its restoration. The remaining runtime acceptance must
 exercise the real authentication filter, HTTP/MQTT transports and DS bindings.
 Production source and handwritten OSGi metadata are unchanged in this REST batch.
+
+
+## Transport continuation — 2026-10-10
+
+The transport/authentication deferrals above are now covered on macOS: **16 actual
+HTTP configuration tests and 35 status scenarios on each of HTTP/MQTT (70)** all
+passed, zero failures/errors/skips. This includes the original unauthorized request
+and additional credential/role checks. The same component assertions are reused
+from fixture JARs. See [transport evidence](wire-network-endpoint-restoration.md).
+Actual DS acceptance remains open; controlled network-service fixtures do not
+prove NetworkManager, device or system D-Bus behavior. No production networking
+source, D-Bus interface or handwritten OSGi metadata changed in this continuation.

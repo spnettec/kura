@@ -12,6 +12,8 @@ import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.core.testutil.requesthandler.*;
 import org.eclipse.kura.core.testutil.requesthandler.Transport.MethodSpec;
 import org.eclipse.kura.cloudconnection.listener.CloudConnectionListener;
+import org.eclipse.kura.cloudconnection.message.KuraMessage;
+import org.eclipse.kura.message.KuraResponsePayload;
 import org.eclipse.kura.internal.json.marshaller.unmarshaller.JsonMarshallUnmarshallImpl;
 import org.eclipse.kura.rest.provider.test.util.AbstractJwtRestScenario;
 import org.eclipse.kura.system.SystemService;
@@ -86,6 +88,16 @@ abstract class EndpointTestBase extends BaseCloudTests {
     protected void givenBasicCredentials(Optional<String> credentials) { this.assertions.credentials(credentials); }
     protected com.eclipsesource.json.JsonObject expectJsonResponse() { return this.assertions.responseJson(); }
     protected Transport.Response expectResponse() { return this.assertions.currentResponse(); }
+
+    /** Keep existing component assertions while replacing only their request transport. */
+    protected KuraMessage requestKuraMessage(MethodSpec method, String path, String body) {
+        whenRequestIsPerformed(method, path, body);
+        Transport.Response response = expectResponse();
+        KuraResponsePayload payload = new KuraResponsePayload(response.getStatus());
+        response.getBody().ifPresent(value -> payload.setBody(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        payload.setExceptionStack(response.getBody().orElse(""));
+        return new KuraMessage(payload);
+    }
 
     protected Transport.Response runRequest(String path, MethodSpec method) { return this.assertions.rawRequest(path, method); }
 
