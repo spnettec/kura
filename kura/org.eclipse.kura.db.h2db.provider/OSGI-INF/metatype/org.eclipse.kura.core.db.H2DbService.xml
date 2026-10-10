@@ -13,41 +13,64 @@
 	 Eurotech
 
 -->
-<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/H2DbServer">
-    <OCD id="org.eclipse.kura.core.db.H2DbServer" 
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/H2DbService">
+    <OCD id="org.eclipse.kura.core.db.H2DbService"
          name="%name" 
          description="%description">
 
-        <AD id="db.server.enabled"
-            name="%dbServerEnabled"
-            type="Boolean"
-            cardinality="0" 
-            required="true"
-            default="false"
-            description="%dbServerEnabledDesc"/>
-
-        <AD id="db.server.type"
-            name="%dbServerType"
+        <AD id="db.connector.url"
+            name="%connectorURL"
             type="String"
             cardinality="0" 
             required="true"
-            default="TCP"
-            description="%dbServerTypeDesc">
-            <Option label="WEB" value="WEB" />
-            <Option label="TCP" value="TCP" />
-            <Option label="PG" value="PG" />
-        </AD>
+            default="jdbc:h2:mem:kuradb"
+            description="%connectorURLDesc"/>
 
-        <AD id="db.server.commandline"
-            name="%dbServerCommandline"
+        <AD id="db.user"
+            name="%user"
             type="String"
             cardinality="0" 
             required="true"
-            default="-tcpPort 9123 -tcpAllowOthers -ifExists"
-            description="%dbServerCommandlineDesc"/>
+            default="SA"
+            description="%userDesc"/>
+
+        <AD id="db.password"
+            name="%password"
+            type="Password"
+            cardinality="0"
+            required="false"
+            default=""
+            description="%passwordDesc"/>
+
+        <AD id="db.checkpoint.interval.seconds"
+            name="%checkpoint"
+            type="Integer"
+            cardinality="0"
+            required="true"
+            default="900"
+            min="5"
+            description="%checkpointDesc"/>
+
+        <AD id="db.defrag.interval.minutes"
+            name="%defragInterval"
+            type="Integer"
+            cardinality="0"
+            required="true"
+            default="15"
+            min="0"
+            description="%defragIntervalDesc"/>
+
+        <AD id="db.connection.pool.max.size"
+            name="%poolMaxSize"
+            type="Integer"
+            cardinality="0" 
+            required="true"
+            default="10"
+            min="1"
+            description="%poolMaxSizeDesc"/>
         
     </OCD>
-    <Designate pid="org.eclipse.kura.core.db.H2DbServer" factoryPid="org.eclipse.kura.core.db.H2DbServer">
-        <Object ocdref="org.eclipse.kura.core.db.H2DbServer"/>
+    <Designate pid="org.eclipse.kura.core.db.H2DbService" factoryPid="org.eclipse.kura.core.db.H2DbService">
+        <Object ocdref="org.eclipse.kura.core.db.H2DbService"/>
     </Designate>
 </MetaData>

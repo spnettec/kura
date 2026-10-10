@@ -68,3 +68,12 @@ Maven 3.10 / JDK 21 targeted reactor validation passes, including the new runtim
 case and existing SQLite tests. This resolves the last named `deferredMethods`
 entry in the source inventory; other deferred scenario/validation fields remain
 open. Runtime coverage is not a claim of deployed database or IDEA GUI acceptance.
+
+## H2 factory metadata repair (2026-10-10)
+
+Real Cloud factory integration exposed a historical local H2DbService metadata file
+that duplicated H2DbServer. Factory discovery failed before correction. The repaired
+handwritten XML retains local English/Chinese resources and restores the upstream
+database schema. All 41 provider tests and two actual Equinox factory invocations
+pass, including discovery, defaults and SQL. See [repair evidence](h2-factory-metatype-repair.md).
+File persistence and complete broker/TLS assembly remain outside this validation.
