@@ -459,3 +459,27 @@ CloudConnectionManager connection contract); the final report excludes them.
 Production code and metadata are unchanged in this batch. This report supersedes
 the runtime suite's two-invocation count for its current source; it does not add
 four new distinct scenarios to the previous two or rewrite the archived full build.
+
+## Actual tamper EventAdmin and birth pipeline (2026-10-10)
+
+The runtime suite now passes **five invocations**, zero failures/errors/skips; one
+tamper variant is added to the previous four. The new variant takes about 37 seconds
+because it retains the production 30-second birth scheduler. See
+[report and checksums](cloud-tamper-runtime-validation-20261010.json). The current-source
+CI report collector also returns five executions, without summing historical runs.
+
+A simulated TamperDetectionService is registered with the actual Kura API classloader
+and bound by SCR. The broker receives initial BIRTH with `NOT_TAMPERED`. The test
+changes the sensor state and sends an actual TamperEvent through EventAdmin, after
+checking the registered event handler belongs to the cloud provider bundle. There
+is no immediate publication; the actual scheduler then sends BIRTH with `TAMPERED`.
+The registered service is read again, so the assertion covers current sensor state
+rather than only the event payload. Sensor unregistration is verified at teardown.
+Existing authenticated JSON MQTT round trips and factory cleanup also run in this case.
+
+The executor and CloudService private fields are not replaced, and production code
+is unchanged. The sensor and other host services remain controlled boundaries;
+physical hardware, TLS and file durability are not claimed. This resolves the
+remaining named tamper scenario for the legacy Kapua CloudService source. Other
+TLS/keystore/CRL, Sparkplug and REST runtime assembly items remain open. No additional
+Linux or full workspace validation is claimed.

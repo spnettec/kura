@@ -2463,10 +2463,11 @@
     "localSources": [
       "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceTest.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTamperScenario.java"
     ],
     "execution": "surefire",
-    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence and factory-created stack now also pass through actual Equinox/SCR/ConfigurationService, preserving local custom PID/name/description. Actual configuration/crypto credentials and in-memory SQL/MQTT assembly now also pass in JSON and Protobuf modes; TLS and the EventAdmin/DS tamper pipeline remain deferred. See cloud-test-restoration.md.",
+    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence and factory-created stack now also pass through actual Equinox/SCR/ConfigurationService, preserving local custom PID/name/description. Actual configuration/crypto credentials and in-memory SQL/MQTT assembly now also pass in JSON and Protobuf modes; Actual OSGi sensor registration, SCR binding, EventAdmin dispatch and delayed BIRTH republishing now pass through the broker. Physical hardware and TLS remain separate acceptance boundaries. See cloud-test-restoration.md.",
     "validation": {
       "tests": 12,
       "failures": 0,
@@ -2475,9 +2476,6 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredScenarios": [
-      "Actual EventAdmin/DS tamper registration and birth republishing pipeline remains deferred; actual configuration/crypto credentials, H2 queue and bidirectional JSON/Protobuf MQTT assembly now pass."
-    ],
     "runtimeValidation": {
       "tests": 1,
       "failures": 0,
@@ -2501,6 +2499,18 @@
       "sharedReport": "cloud-factory-mqtt-validation-20261010.json",
       "sharedSuiteTests": 4,
       "reportSha256": "54158da25058dfe5555112786ca74b4fa089c361c929c134b63ebd5384734b5a"
+    },
+    "tamperRuntimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual SCR EventAdmin scheduler and MQTT",
+      "sharedReport": "cloud-tamper-runtime-validation-20261010.json",
+      "sharedSuiteTests": 5,
+      "reportSha256": "5543d55ae04628b260dbeb9aad799c5f0d44c2327d75d54b2f015a4e009e5271"
     }
   },
   {

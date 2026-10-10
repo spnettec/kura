@@ -1105,3 +1105,13 @@ normal/control CloudClient round trips with all six callbacks. See
 two added variants, not four additional tests on top of the preceding two. Runtime
 TLS/keystore/CRL, tamper, Sparkplug and REST assembly gaps remain explicit. No new
 Linux or full workspace run is claimed; source disposition counts remain unchanged.
+
+### Cloud tamper EventAdmin pipeline (2026-10-10)
+
+Five current real Equinox variants pass, including one added tamper variant that
+preserves the actual 30-second birth scheduler. OSGi registration/SCR binding,
+EventAdmin dispatch, broker-received `NOT_TAMPERED` then `TAMPERED` BIRTH and sensor
+unregistration are verified. See [evidence](cloud-tamper-runtime-validation-20261010.json).
+The named Kapua tamper deferred scenario is closed; five other source rows retain
+deferred scenarios. Source disposition counts and historical full-build totals are
+unchanged. The simulated sensor does not establish physical hardware acceptance.

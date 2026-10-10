@@ -1,0 +1,50 @@
+{
+  "tests": 5,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "newTamperInvocations": 1,
+  "previousFactoryAndMqttInvocations": 4,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "execution": "JUnit 5 / Failsafe / actual Equinox SCR, EventAdmin, ConfigurationService, H2 and MQTT",
+  "reportSha256": "5543d55ae04628b260dbeb9aad799c5f0d44c2327d75d54b2f015a4e009e5271",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-tamper-runtime-20261010",
+  "coreRevision": "55e2f4521b6047c7cf947de3716cf3fd5235b697",
+  "cloudBaseRevision": "20cc3bc47366f17a4bcdfe6cc6502d357fc8e4a3",
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTamperScenario.java": "45829639ee55b5dabadb17fa8ad79dcf0bf91c759346a9cb6da5891ded1459f0",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java": "300754d7c806e6c8b90986d7360f1dfca4d75889f3b127ebd671b87f5614b7f5",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "390b9573b28aaed1a6156229d09ddf2706d6e74d3f28e9a6f472eace25e9af62"
+  },
+  "caseDurationsSeconds": {
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.811,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.548,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.654,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.632,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.606
+  },
+  "verified": [
+    "Sensor registered with actual Kura API classloader and bound by SCR",
+    "Initial broker-received BIRTH has NOT_TAMPERED metric",
+    "Actual registered CloudService EventHandler provider confirmed",
+    "Actual EventAdmin.sendEvent triggers unchanged 30-second scheduler",
+    "Broker-received BIRTH has TAMPERED metric and service state was read again",
+    "Sensor registration removed at teardown; existing MQTT round trips and factory cleanup still pass"
+  ],
+  "boundaries": [
+    "Sensor is a controlled host boundary, not physical hardware",
+    "Existing system/status/watchdog boundaries remain controlled",
+    "TLS, filesystem keystore/CRL and durable restart remain outside this suite",
+    "No new Linux or full workspace run"
+  ],
+  "counting": "Five final invocations include the previous four; only one scenario was added. Historical reports and full-workspace totals remain unchanged.",
+  "cloudRevision": "26600d238abee154012127cc3997373b5e53ab07",
+  "ciReportReplay": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}
