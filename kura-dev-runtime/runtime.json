@@ -1736,6 +1736,12 @@
     {
       "startLevel": 5,
       "start": true,
+      "coordinates": "org.snakeyaml:snakeyaml-engine:3.0.1",
+      "symbolicName": "org.snakeyaml.engine"
+    },
+    {
+      "startLevel": 5,
+      "start": true,
       "coordinates": "org.quartz-scheduler:quartz:2.5.0",
       "symbolicName": "quartz"
     },

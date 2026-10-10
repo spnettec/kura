@@ -174,6 +174,7 @@
         <tools.jackson.version>3.2.0</tools.jackson.version>
         <commons-configuration2.version>2.12.0</commons-configuration2.version>
         <org.yaml.snakeyaml.mvn.version>2.6</org.yaml.snakeyaml.mvn.version>
+        <org.snakeyaml.engine.mvn.version>3.0.1</org.snakeyaml.engine.mvn.version>
         <org.apache.felix.fileinstall.version>3.7.4</org.apache.felix.fileinstall.version>
         <jSerialComm.version>2.11.4</jSerialComm.version>
         <net.java.dev.jna.version>5.19.1</net.java.dev.jna.version>

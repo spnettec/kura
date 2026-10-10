@@ -387,6 +387,7 @@
                 <artifactItem><groupId>org.slf4j</groupId><artifactId>jcl-over-slf4j</artifactId><version>2.0.18</version><destFileName>org.slf4j-jcl-over-slf4j-2.0.18.jar</destFileName></artifactItem>
                 <artifactItem><groupId>org.slf4j</groupId><artifactId>jul-to-slf4j</artifactId><version>2.0.18</version><destFileName>org.slf4j-jul-to-slf4j-2.0.18.jar</destFileName></artifactItem>
                 <artifactItem><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.18</version><destFileName>org.slf4j-slf4j-api-2.0.18.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.snakeyaml</groupId><artifactId>snakeyaml-engine</artifactId><version>3.0.1</version><destFileName>org.snakeyaml-snakeyaml-engine-3.0.1.jar</destFileName></artifactItem>
                 <artifactItem><groupId>org.xerial</groupId><artifactId>sqlite-jdbc</artifactId><version>3.47.1.0</version><destFileName>org.xerial-sqlite-jdbc-3.47.1.0.jar</destFileName></artifactItem>
                 <artifactItem><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId><version>2.6</version><destFileName>org.yaml-snakeyaml-2.6.jar</destFileName></artifactItem>
                 <artifactItem><groupId>p2.osgi.bundle</groupId><artifactId>groovy-templates</artifactId><version>5.0.5</version><destFileName>p2.osgi.bundle-groovy-templates-5.0.5.jar</destFileName></artifactItem>

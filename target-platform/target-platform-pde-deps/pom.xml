@@ -940,6 +940,11 @@
 			<version>${org.yaml.snakeyaml.mvn.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.snakeyaml</groupId>
+			<artifactId>snakeyaml-engine</artifactId>
+			<version>${org.snakeyaml.engine.mvn.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.fileinstall</artifactId>
 			<version>${org.apache.felix.fileinstall.version}</version>

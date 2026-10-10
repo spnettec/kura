@@ -37,6 +37,11 @@
 						</goals>
 						<configuration>
 							<artifacts>
+								<artifact>
+									<id>org.snakeyaml:snakeyaml-engine:${org.snakeyaml.engine.mvn.version}</id>
+									<source>true</source>
+									<transitive>false</transitive>
+								</artifact>
 							<!-- vertx — shared bundles (kura-camel + others Import-Package these).
 							     yofc-only Vert.x bundles + fastjson2 + javacan shipped by kura-yofc-runtime sibling. -->
 								<artifact>

@@ -517,6 +517,8 @@
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
         <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId><version>2.6</version>
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+        <dependency><groupId>org.snakeyaml</groupId><artifactId>snakeyaml-engine</artifactId><version>3.0.1</version>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
         <dependency><groupId>p2.osgi.bundle</groupId><artifactId>groovy-templates</artifactId><version>5.0.5</version>
             <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
         <dependency><groupId>p2.osgi.bundle</groupId><artifactId>io.vertx.auth-common</artifactId><version>5.1.4</version>
@@ -1042,6 +1044,7 @@
                                     org.eclipse.kura.localization.resources,
                                     org.eclipse.paho.mqttv5.client,
                                     snakeyaml,
+                                    snakeyaml-engine,
                                     vavr,
                                     io.vertx.web-common
                                 </includeArtifactIds>
