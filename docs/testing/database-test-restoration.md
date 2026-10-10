@@ -45,3 +45,26 @@ deleted Kura Command API/UI. Felix Gogo parsing and OSGi service registration re
 runtime acceptance items. The upstream native-extraction test scans the whole shared
 java.io.tmpdir and requires the OSGi activator; its runtime placement assertion remains
 explicitly deferred. Existing six activator unit tests are not counted again.
+
+
+## SQLite native placement in actual Equinox (2026-10-10)
+
+The previously deferred `shouldNotExtractNativeLibrariesInJavaTempdir` now runs as
+`SqliteNativeRuntimeIT`. It installs the actual SQLite provider, util, Xerial JDBC
+3.47.1.0 and HikariCP 5.1.0 bundles into the existing isolated Equinox fixture.
+The controller classpath contains neither Kura database API nor the SQLite driver.
+
+The real activator selects its bundle data area for `org.sqlite.tmpdir`. Actual
+SCR/ConfigAdmin activate an in-memory database after configuration arrives; the
+bundle-loaded BaseDbService returns a real JDBC connection and `SELECT 42` returns
+42. Assertions check native mode, package providers, an actual extracted native
+file in bundle storage, and absence of SQLite native files in an isolated
+`java.io.tmpdir`. Stop unregisters the service and clears the activator override;
+all original system properties are restored. CryptoService is a controlled required
+reference and fails on unexpected business calls; this case does not exercise keys
+or encryption. No production source or metadata changed.
+
+Maven 3.10 / JDK 21 targeted reactor validation passes, including the new runtime
+case and existing SQLite tests. This resolves the last named `deferredMethods`
+entry in the source inventory; other deferred scenario/validation fields remain
+open. Runtime coverage is not a claim of deployed database or IDEA GUI acceptance.

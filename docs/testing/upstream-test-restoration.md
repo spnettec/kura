@@ -1026,3 +1026,13 @@ module tests passed, zero skipped**. They remain explicitly gated outside that
 fixture. No production or handwritten metadata changes were needed. See
 [system service restoration](system-service-test-restoration.md). Source disposition
 counts are unchanged; the corresponding four deferred methods are resolved.
+
+
+### SQLite native extraction placement (2026-10-10)
+
+The final named deferred method now passes in actual Equinox: SQLite activator,
+SCR/ConfigAdmin, a real native JDBC query and extraction into bundle storage are
+verified; the isolated Java temporary directory stays free of SQLite libraries.
+See [database restoration](database-test-restoration.md). Inventory source counts
+are unchanged. No `deferredMethods` entries remain, but deferred scenarios/runtime
+validation, the final workspace build, Linux GUI and P7 work remain open.

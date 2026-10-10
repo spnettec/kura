@@ -12,7 +12,7 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 
 `EquinoxRuntime.register` 创建的 keystore 代理只服务测试框架，RSA 密钥在测试内生成，不连接现场 PLC、云端或真实业务系统。
 
-当前 64 项真实容器测试包括原有 6 项 JWT/fragment/负向打包测试，以及 47 项配置测试
+当前 65 项真实容器测试包括原有 6 项 JWT/fragment/负向打包测试，以及 47 项配置测试
 （46 个上游场景 + 1 个本地明文快照/CDATA 场景），另有 1 项通信服务存在性测试和 8 项旧核心配置/清单协议场景。它们不替代完整 Kura 仿真、发行包和硬件验收。
 
 配置测试另行准备 `target/config-it-bundles`，包含实际 configuration、crypto、XML、
@@ -38,3 +38,8 @@ macOS IDEA 已直接运行 `BundleRuntimeIT` 的 6 项和 `LegacyCoreRuntimeIT` 
 `SystemServicesRuntimeIT` 增加 2 项真实 SystemService/SystemAdminService 注册测试，
 使用 `target/system-it-bundles` 中的实际 core.system 和 JUL 桥接 bundle。配置目录
 临时隔离，PrivilegedExecutorService 只提供拒绝执行命令的边界；不运行系统管理命令。
+
+`SqliteNativeRuntimeIT` 增加 1 项真实 SQLite 原生库解压位置测试：实际 SCR 数据库服务
+执行 SQL，断言原生库确实位于 bundle storage，且不进入隔离的 Java 临时目录。
+依赖由 `target/sqlite-it-bundles` 提供；此内存数据库场景不调用受控 CryptoService。
+新增场景已单独通过，整体回归将在总构建中再次执行。
