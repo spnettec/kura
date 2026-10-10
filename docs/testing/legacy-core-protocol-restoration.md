@@ -54,11 +54,21 @@ The four support files contain no independently counted test cases.
 
 ## Boundaries and validation
 
-The new protocol scenarios call handlers obtained through an actual SCR binding
-to a controlled RequestHandlerRegistry. They do **not** traverse MQTT. The
-previously passing HTTP/MQTT endpoint suites exercise transport with controlled
-backend services; these are distinct layers, not a claim of combined end-to-end
-coverage. Full MQTT plus these real OSGi backends remains an acceptance item.
+The eight original protocol scenarios call handlers obtained through an actual
+SCR binding to a controlled RequestHandlerRegistry. A companion cloud runtime
+test, `CloudFactoryRuntimeIT.coreHandlersOverMqtt`, now uses an authenticated
+Moquette broker and an independent Paho client to send CONF-V1 configuration
+GET and INVENTORY-V1 systemPackages/bundles GET requests through the real
+CloudService to those SCR-bound handlers. It checks correlated MQTT replies,
+response code 200 and the returned fixture configuration and active bundle.
+The cloud runtime suite passed 13/13 with Maven 3.10/JDK 21, and the new method
+passed directly in Mac IDEA JUnitStarter (1/1, exit code 0). See
+`core-protocol-mqtt-validation-20261010.json`.
+
+Snapshot PUT/rollback and deployment package operations remain verified at the
+direct registry boundary. A deployed Debian assembly and its host services
+remain a separate acceptance boundary. Linux package-manager enumeration is
+outside this Mac acceptance scope.
 
 Controller classpaths contain no Kura business JARs. The fixture uses explicit
 package imports and checks actual package providers. No Kura packages are exported
@@ -70,5 +80,6 @@ Maven 3.10.0 / Temurin 21 validation: the 20-module root reactor passed all eigh
 new container scenarios and selected dependency unit tests. The full container
 suite then passed **62 tests with zero failures/errors/skips** after extending the
 shared test bundle. Its snapshot comparator now compares array contents; the new
-18-attribute fixture exposed the old reference-equality assertion. IDEA GUI, full deployed
-assembly and Linux/runtime acceptance remain open.
+18-attribute fixture exposed the old reference-equality assertion. The original
+eight scenarios also passed directly in Mac IDEA; full deployed assembly
+acceptance remains open.

@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 aarch64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "5.14.4",
+  "coreBaseRevision": "c6dca9f2fa3d65220dc5ec635b51b052973db361",
+  "cloudBaseRevision": "4a9519576a27111ad28a4f9147bd11f0b7cba69c",
+  "scenario": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+  "inventoryIndices": [
+    180,
+    183,
+    185,
+    186,
+    190,
+    194
+  ],
+  "verified": [
+    "An authenticated independent Paho client publishes MQTT GET requests to the real Kapua CloudService and receives UUID-correlated MQTT replies",
+    "Actual Equinox SCR ConfigurationService and CONF-V1 handler return the fixture factory configuration",
+    "Actual SCR InventoryHandlerV1 and Felix DeploymentAdmin return systemPackages and enumerate the active core.inventory bundle",
+    "Real JSON Marshaller and Unmarshaller decode response code 200 and response body; the test broker permits the full bundle-inventory MQTT packet",
+    "Cloud factory PID, local Chinese name and description assertions remain in the surrounding scenario"
+  ],
+  "mavenTargeted": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dit.test=CloudFactoryRuntimeIT#coreHandlersOverMqtt -DfailIfNoTests=false -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 8.708
+  },
+  "mavenFullCloudRuntime": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 232.6
+  },
+  "idea": {
+    "project": "/Users/heyoulin/iot-kura-develop/git/kura-cloud",
+    "configuration": ".run/Kura cloud core protocol runtime.run.xml",
+    "runner": "IDEA JUnitStarter",
+    "case": "CloudFactoryRuntimeIT.coreHandlersOverMqtt",
+    "passed": 1,
+    "total": 1,
+    "exitCode": 0
+  },
+  "limits": [
+    "Only CONF-V1 configuration GET and INVENTORY-V1 systemPackages/bundles GET traverse MQTT; snapshot PUT/rollback and deployment package operations remain proven at the direct registry boundary",
+    "Equinox test runtime is not the installed Debian package assembly",
+    "System package response uses a controlled SystemService; no Linux package-manager validation was added",
+    "No production source or handwritten OSGi metadata changed"
+  ],
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/core-protocol-mqtt-20261010",
+  "artifacts": {
+    "targeted-final.log": "0d20d62ae8227eddb20e00bdb030bc7cddf009ae44db9c7f376fcbf6f37410bf",
+    "full-runtime.log": "f05150a1ca868887ff67cd78abf08151e1b2c76929043367345f6d130f5dfb2f",
+    "TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml": "1435233e87baca22ec7bc80685c8cd2df3545268eb786272dc09d2a844df8870"
+  },
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "6490e2e2d65db29feec898ba1688a0f650edcde4ef64cbc32ab81da1a4bc959c",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudMqttScenario.java": "63c3f57e09b62800010ac82af81585c087ca43f0f68ddca9e0b93b029dc70c61",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CoreProtocolMqttScenario.java": "9bb91641c79d87166f1bd48d6b5e978bf0432173fea6746b0a06bcdc897f4858",
+    "kura-cloud/.run/Kura cloud core protocol runtime.run.xml": "6ad385be2963c6447c6ffe0ec7e9db4670fb24fe0bbf5627fda48c9972ea8514"
+  },
+  "cloudValidationCommit": "3cad1e6a327d26f15eaea98d3a02c20175fc137f"
+}

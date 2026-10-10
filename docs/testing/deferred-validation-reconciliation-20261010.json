@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 47,
-  "assessment": "All 47 rows retain a scenario-specific unverified boundary. The complete Mac IDEA development runtime started twice with an isolated profile and Equinox state after two separately committed startup fixes; this establishes startup, REST registration, HTTP redirect and zero INSTALLED bundles, but does not execute the remaining combined endpoint, hardware or package scenarios. Three configuration rows have direct 47-case IDEA evidence. The HTTP manager class also passed directly in Mac IDEA (11/11), while installed Debian package wiring remains unverified.",
+  "assessment": "All 47 rows retain a scenario-specific unverified boundary. The six core-protocol rows now have real MQTT GET request/reply through SCR-bound Configuration and Inventory handlers, with direct Mac IDEA JUnit evidence; deployed package assembly and broader protocol operations remain open. Existing Mac IDEA development-runtime, configuration and HTTP evidence is unchanged. Linux package enumeration is outside the current acceptance scope.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -57,10 +57,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
@@ -73,10 +74,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
@@ -89,10 +91,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
@@ -105,10 +108,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified. Linux system package-manager enumeration remains outside this Mac acceptance scope.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution",
@@ -137,10 +141,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
@@ -153,10 +158,11 @@
       "evidence": [
         "docs/testing/legacy-core-protocol-restoration.md",
         "docs/testing/full-workspace-validation-20261010.json",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/core-protocol-mqtt-validation-20261010.json"
       ],
-      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
-      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "covered": "Eight real Equinox core scenarios plus a companion authenticated MQTT test through actual SCR-bound CONF-V1 and INVENTORY-V1 handlers: configuration GET, systemPackages GET and bundles GET. Maven cloud runtime suite 13/13; direct Mac IDEA JUnit 1/1, exit code 0.",
+      "remaining": "Full deployed assembly and broader configuration/inventory protocol operations over MQTT remain unverified.",
       "originalDeferredValidation": [
         "Actual MQTT round trip with these real OSGi backend services",
         "Full deployed assembly and actual IDEA execution"
