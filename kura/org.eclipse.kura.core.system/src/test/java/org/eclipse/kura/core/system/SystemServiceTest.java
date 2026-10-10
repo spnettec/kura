@@ -33,8 +33,56 @@ import org.eclipse.kura.system.SystemResourceInfo;
 import org.eclipse.kura.system.SystemResourceType;
 import org.eclipse.kura.system.SystemService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 class SystemServiceTest extends SystemServiceTestBase {
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "KURA_SYSTEM_PATH_FIXTURE", matches = "1")
+    void testActivateRelativeConfigFilePathsUpdate() throws Exception {
+        requireContainerFilesystem();
+        Path defaults = Path.of("/opt/eclipse/kura/framework/kura.properties");
+        Files.createDirectories(defaults.getParent());
+        Files.writeString(defaults, "");
+        System.setProperty(SystemService.KURA_CONFIG, "file:kura/kura.properties");
+        System.setProperty("dpa.configuration", "kura/dpa.properties");
+        System.setProperty("log4j.configuration", "file:kura/log4j.properties");
+        System.setProperty(SystemService.KURA_CUSTOM_CONFIG, defaults.toUri().toString());
+
+        activate(fileService());
+
+        assertEquals("file:/opt/eclipse/kura/framework/kura.properties", System.getProperty(SystemService.KURA_CONFIG));
+        assertEquals("/opt/eclipse/kura/packages/dpa.properties", System.getProperty("dpa.configuration"));
+        assertEquals("file:/opt/eclipse/kura/user/log4j.properties", System.getProperty("log4j.configuration"));
+        assertEquals("/opt/eclipse/kura", System.getProperty("user.dir"));
+    }
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "KURA_SYSTEM_PATH_FIXTURE", matches = "1")
+    void testActivateWithUpdatedDefaults() throws Exception {
+        requireContainerFilesystem();
+        Path defaults = this.directory.resolve("legacy-defaults.properties");
+        Files.writeString(defaults, SystemService.KEY_KURA_HOME_DIR + "=kura\n"
+                + SystemService.KEY_KURA_PLUGINS_DIR + "=kura/plugins\n"
+                + SystemService.KEY_KURA_PACKAGES_DIR + "=kura/packages\n");
+        Path custom = Files.writeString(this.directory.resolve("legacy-custom.properties"), "");
+        System.setProperty(SystemService.KURA_CONFIG, defaults.toUri().toString());
+        System.setProperty(SystemService.KURA_CUSTOM_CONFIG, custom.toUri().toString());
+
+        SystemServiceImpl service = fileService();
+        activate(service);
+
+        assertEquals("/opt/eclipse/kura", service.getProperties().getProperty(SystemService.KEY_KURA_HOME_DIR));
+        assertEquals("/opt/eclipse/kura/plugins", service.getProperties().getProperty(SystemService.KEY_KURA_PLUGINS_DIR));
+        assertEquals("/opt/eclipse/kura/data/packages", service.getProperties().getProperty(SystemService.KEY_KURA_PACKAGES_DIR));
+        assertEquals("/opt/eclipse/kura", System.getProperty("user.dir"));
+    }
+
+    private static void requireContainerFilesystem() throws IOException {
+        assertTrue(Files.isRegularFile(Path.of("/.dockerenv")), "Run through tools/testing/verify-system-paths.sh");
+        assertEquals("tmpfs", Files.getFileStore(Path.of("/opt/eclipse/kura")).type(),
+                "The legacy /opt path must be an isolated tmpfs, never a host bind mount");
+    }
 
     @Test
     void testActivateWithExplicitPropertyFiles() throws Exception {

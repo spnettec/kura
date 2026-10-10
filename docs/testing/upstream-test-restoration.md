@@ -1014,3 +1014,15 @@ fixture activation deadline and is recorded separately, not counted as passing.
 See [IDEA JUnit acceptance](idea-junit-acceptance.md) for preparation and scope.
 This does not complete deferred runtime scenarios, the full workspace regression,
 Linux GUI acceptance or P7 cleanup. Source dispositions are unchanged.
+
+
+### System deferred methods (2026-10-10)
+
+Both system-service existence methods now pass through actual Equinox/SCR, including
+mandatory reference and package-provider checks. Full runtime suite: **64 passed**.
+The two legacy hardcoded path migration methods run in an offline Linux container
+with tmpfs, read-only source/cache mounts and no host `/opt` access: **35 system
+module tests passed, zero skipped**. They remain explicitly gated outside that
+fixture. No production or handwritten metadata changes were needed. See
+[system service restoration](system-service-test-restoration.md). Source disposition
+counts are unchanged; the corresponding four deferred methods are resolved.

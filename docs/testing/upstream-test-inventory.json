@@ -3322,23 +3322,19 @@
     "status": "restored",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "execution": "surefire",
+    "execution": "surefire; two legacy path methods in offline Docker tmpfs fixture",
     "localSources": [
       "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemServiceTest.java"
     ],
     "validation": {
-      "tests": 5,
+      "tests": 7,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredMethods": [
-      "testActivateRelativeConfigFilePathsUpdate",
-      "testActivateWithUpdatedDefaults"
-    ],
-    "reason": "Five configuration layering/system override/package parsing contracts pass. Two hardcoded /opt/eclipse/kura migration cases require an isolated filesystem fixture; Mockito File construction interception destabilizes JVM class loading and is not retained. No host /opt writes or production changes. See system-service-test-restoration.md."
+    "reason": "All seven upstream scenarios pass in an isolated Linux container (35 tests in the system module). Two /opt migration methods require the explicit verify-system-paths.sh fixture and are skipped on the host; the fixture verifies /.dockerenv and tmpfs before any writes. JVM properties and scheduler cleanup remain isolated. See system-service-test-restoration.md."
   },
   {
     "source": "test/org.eclipse.kura.core.system.test/src/main/java/org/eclipse/kura/core/system/test/SystemServiceTest.java",
@@ -3352,7 +3348,8 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "execution": "surefire",
     "localSources": [
-      "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemServiceRuntimeTest.java"
+      "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemServiceRuntimeTest.java",
+      "kura/kura-osgi-tests/src/test/java/org/eclipse/kura/testing/SystemServicesRuntimeIT.java"
     ],
     "validation": {
       "tests": 26,
@@ -3366,10 +3363,16 @@
       "testDummy",
       "testGetProductVersion"
     ],
-    "deferredMethods": [
-      "testServiceExists"
-    ],
-    "reason": "Twenty-six property/runtime contracts use real activation and isolated properties, controlled scheduler and command executor. Meaningless assertTrue(true) placeholders excluded; actual SCR service registration remains deferred. JDK vendor version follows JDK 21 instead of obsolete null assumption. See system-service-test-restoration.md."
+    "reason": "Twenty-six property/runtime contracts pass with isolated activation, properties and scheduling. testServiceExists also passes in actual Equinox/SCR through SystemServicesRuntimeIT, checking mandatory executor binding, provider/API wiring and unregistration. Meaningless assertTrue(true) placeholders remain excluded. JDK vendor version follows JDK 21. No host commands are run. See system-service-test-restoration.md.",
+    "runtimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual Equinox SCR"
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/internal/linux/executor/CommandLineMatcher.java",
@@ -3829,7 +3832,8 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "execution": "surefire",
     "localSources": [
-      "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemAdminServiceTest.java"
+      "kura/kura/org.eclipse.kura.core.system/src/test/java/org/eclipse/kura/core/system/SystemAdminServiceTest.java",
+      "kura/kura-osgi-tests/src/test/java/org/eclipse/kura/testing/SystemServicesRuntimeIT.java"
     ],
     "validation": {
       "tests": 2,
@@ -3839,10 +3843,16 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Upstream positive uptime scenario plus one negative-confirmed macOS units regression. Separate production repair converts sysctl boot seconds to milliseconds before subtracting from the wall clock. Actual SCR registration deferred. See system-service-test-restoration.md.",
-    "deferredMethods": [
-      "testServiceExists"
-    ]
+    "reason": "Upstream positive uptime scenario plus one negative-confirmed macOS units regression pass. The prior separate production repair converts sysctl boot seconds to milliseconds. testServiceExists now also passes in actual Equinox/SCR through SystemServicesRuntimeIT, with controlled executor, actual provider/API wiring and unregistration. See system-service-test-restoration.md.",
+    "runtimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual Equinox SCR"
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/hw/CommTest.java",

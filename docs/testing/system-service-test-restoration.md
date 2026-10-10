@@ -57,3 +57,38 @@ system tests and isolated bundle installation** pass on Maven 3.10/JDK 21. Cloud
 birth/disconnect/device-profile and management UI callers consume the same string;
 no caller API adaptation is required. Networking has no matching call in its index.
 The suspected defect above is resolved; inventory remains 62 unreviewed.
+
+
+## Remaining methods restored (2026-10-10)
+
+Both `testServiceExists` methods now run in `SystemServicesRuntimeIT` with actual
+Equinox and SCR. The controller has no Kura business classes. It verifies missing
+mandatory executor references before registration, actual core.system service
+providers/API wiring afterward, and removal after stopping the bundle. The real
+SystemService reads temporary default/custom property files and creates only test
+directories. A proxy implements the actual bundle-loaded PrivilegedExecutorService
+interface and rejects command execution. No host package, ping, reboot or sync
+commands are run. Both scenarios pass; the complete Equinox suite is **64 passed**.
+
+The two hardcoded `/opt/eclipse/kura` migration cases now run through:
+
+```sh
+MAVEN_HOME=/path/to/apache-maven-3.10.0 \
+MAVEN_REPO=/absolute/path/to/prepared-m2 \
+  tools/testing/verify-system-paths.sh
+```
+
+The script uses an offline Temurin 21 Docker container with no network, a read-only
+checkout/cache, and tmpfs for `/opt/eclipse/kura`, `/tmp`, Maven locks and module
+build output. Only a fresh report directory is writable on the host. Maven 3.10.0
+and Java 21 were confirmed inside the container. Both original path assertions
+and the working-directory update pass; all **35 system tests pass with no skips**.
+Reports are copied while the container is running, before its tmpfs is torn down.
+Each run produces `target/isolated-system-reports-XXXXXXXX/`.
+
+The methods require `KURA_SYSTEM_PATH_FIXTURE=1`, then verify `/.dockerenv` and the
+actual tmpfs file-store type before writing. Ordinary host execution does not set
+this variable and skips those two methods. The former File-construction-mock
+approach was not reused. Production code and handwritten metadata are unchanged.
+Actual hardware/network commands, deployed Kura assembly and GUI execution of
+these new system tests remain separate acceptance work.
