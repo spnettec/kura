@@ -9174,7 +9174,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
     "validation": {
       "tests": 4,
@@ -9183,6 +9183,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9201,9 +9205,13 @@
     "execution": "Jupiter fixture with owned in-process gRPC resources",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
-    "kind": "helper"
+    "kind": "helper",
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    }
   },
   {
     "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
@@ -9221,7 +9229,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
     ],
     "validation": {
       "tests": 9,
@@ -9230,6 +9238,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9248,7 +9260,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
     "validation": {
       "tests": 1,
@@ -9257,6 +9269,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9275,7 +9291,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
     "validation": {
       "tests": 1,
@@ -9284,6 +9300,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9302,7 +9322,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
     "validation": {
       "tests": 7,
@@ -9311,6 +9331,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9329,7 +9353,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
     ],
     "validation": {
       "tests": 5,
@@ -9338,6 +9362,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9380,7 +9408,7 @@
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
     "validation": {
       "tests": 3,
@@ -9389,6 +9417,10 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
     }
   },
   {
@@ -9407,9 +9439,13 @@
     "execution": "Jupiter fixture with owned in-process gRPC resources",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
     "deferredValidation": [
-      "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
     ],
-    "kind": "helper"
+    "kind": "helper",
+    "runtimeValidation": {
+      "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+      "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    }
   },
   {
     "source": "tests/org.eclipse.kura.asset.helper.provider.test/src/test/java/org/eclipse/kura/internal/asset/AssetServiceImplTest.java",

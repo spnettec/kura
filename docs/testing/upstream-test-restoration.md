@@ -1,5 +1,16 @@
 # Upstream test restoration progress
 
+## 2026-10-11 Triton 实际 Mac SCR 与配置数组修复
+
+- Remote/Native/Container 三类工厂通过生产绑定实际 SCR 创建/删除；本地无效
+  配置不创建 manager，remote 的 gRPC channel 变更/关闭/恢复/清理通过。
+- 相同端口数组复制后重建 channel 的缺陷已确定性复现并单独修复；模块
+  **119/119**、IDEA **3/3** 通过。旧完整 CI 固定提交范围保持，调用不相加。
+- 9 条 Triton 记录缩小到真实 Triton 服务/native/container/GPU 的剩余边界；
+  仍是 465 reviewed、0 unreviewed、0 deferredScenarios、31 deferredValidation。
+  见 [验收记录](triton-copied-configuration-scr-validation-20261011.md)，整体未完成。
+
+
 ## 2026-10-11 Sparkplug 连接等待中断
 
 交接计划中的 interrupted reconnect 差异已复现：旧代码在首次连接、断连后

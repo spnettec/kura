@@ -108,3 +108,11 @@ configuration guard, manager lifecycle and transport settings remain intact.
 The two failures were observed before the fix; all three lifecycle cases and all
 116 module tests pass after it, with zero failures/errors/skips. This production
 repair is a separate commit; source inventory counts do not change.
+
+## 2026-10-11 Triton 数组配置及真实 SCR 后续
+
+相同端口数组经复制后误判为配置变更的问题已单独复现并修复。完整模块
+119/119、IDEA 3/3 通过；实际 Mac Remote/Native/Container 工厂 SCR 配置生命周期
+及 remote channel 更新/关闭通过，未启动 Triton/GPU/native 进程/容器。
+见 [验收记录](triton-copied-configuration-scr-validation-20261011.md)。
+旧完整 CI 保留固定提交范围，未覆盖此后续私有生产修复；结果不相加。

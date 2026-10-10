@@ -1,0 +1,316 @@
+{
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "environment": {
+    "maven": "3.10.0",
+    "jdk": "Temurin21",
+    "junit": "5"
+  },
+  "productionBase": {
+    "tritonRevision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+    "productionSha256": "53aad318771d63692b1c04917bb7ea80f5641dd822794646a21a6dee217ba500"
+  },
+  "revisions": {
+    "productionFix": "9227d8ae38b0ea920467bfd8f0fdea5ea456e4d1",
+    "testAndHelperRevision": "770f947624455dedb707e1d774afa0a828da84a5",
+    "productionSha256": "a025932a1666a81b48e08c5226a491baa253a804dd579c3643648a1737f17248",
+    "regressionSha256": "49621fdc2b3cbbf7211bc522feb75f85151056558872669910b517bb3fc200ac"
+  },
+  "repair": "ConfigAdmin returns copied array values; compare property values deeply and hash array contents consistently so equal port values retain the actual gRPC channel. Scalar, changed port, address and missing-property distinctions remain.",
+  "negativeRegression": {
+    "tests": 3,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0,
+    "exitCode": 1,
+    "scope": "Copied-port value equality/hash-key behavior and actual live gRPC channel preservation both fail before the fix; changed-value/missing-property control passes. These deterministic module failures are the production negative proof."
+  },
+  "module": {
+    "exitCode": 0,
+    "since": 1791657685.974089,
+    "totals": {
+      "tests": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "reports": [
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerEncryptionUtilsTest.xml",
+        "sha256": "c4255fe1883263da6d7d9ec0f222d51fa98e62b49040cb8d05186cbb6bcef69a",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerGrpcLifecycleTest.xml",
+        "sha256": "229c3d379f147c83a682edcb995e087862119cfe69afdf51b44806468f7026d5",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceOptionsEqualityTest.xml",
+        "sha256": "2cd8cea3bf430e9d621ae24cce30c2c03ee3344d842d15b72a38b314a537ac8b",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceOptionsTest.xml",
+        "sha256": "e4f9dee8714ce8a72d101c1794993746fa41ac05866e5304c33ce205237c9863",
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceNativeImplTest.xml",
+        "sha256": "d7f94456b11fb171d5a4e644513ff3cf041d7d427b6c5df08663de1dfbdd0ed9",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerContainerManagerTest.xml",
+        "sha256": "faeca18756dc2696e29279711e1882c04b4d534c51b5e2a5f9a5b4e5f8b1b65a",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceBundleTest.xml",
+        "sha256": "c1014c3698828a42f5bd29302ca2809b60c1a014e817be6f45826041e3feeb67",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceModelTest.xml",
+        "sha256": "3dd723d990ff6a8af3d7761714c8aac47aeb050c21770964449c68a7bd07d968",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerRemoteManagerTest.xml",
+        "sha256": "495b0f4f9e3f1034840e69e55481ce2b6fbcc0992f22d6b51ad14d51ce8dac6e",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerNativeManagerTest.xml",
+        "sha256": "65af818376b935b047fd0de543d8d367850df2e538cb3c2739502d158ac799b6",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.GpuMetricsParserTest.xml",
+        "sha256": "4144d5b48d360516b35ef6bed3bcc9b32c71d96c3155c6209ec7d3e57045adc0",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceInferTest.xml",
+        "sha256": "fb1e3105c7ce8f8243d747cf44d2495c7457431a07712b0e530b6976d6c9dc0b",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceRemoteImplTest.xml",
+        "sha256": "b86614e0de2e2dddee37720391323c1bce5c8daa9905b3e329912da49777b076",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceContainerImplTest.xml",
+        "sha256": "a245ff3aa10885e9d4fe46f3ba66589514239b424c9c7b050b66cdb622962d0a",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonServerServiceEngineTest.xml",
+        "sha256": "166a360cb287acb05b8b738be9f3967bbdf85b985eec6da84c604b7be6ddac76",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.ai.triton.server.TritonCopiedConfigurationTest.xml",
+        "sha256": "5b06aa37da6a81826268fb12f628caf1eb12a786215a26ab387a8c4feaf5a9db",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "idea": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "durationSeconds": 0.872,
+    "jdk": "Temurin21",
+    "runner": "Native IntelliJ IDEA JUnit5 Current File Run",
+    "sourceSha256": "49621fdc2b3cbbf7211bc522feb75f85151056558872669910b517bb3fc200ac",
+    "optionsCompiledSha256": "69e5d2ff90e11ae252bad7ca66f3b77a59cd0499a93c6db7436f629226984124",
+    "artifacts": {
+      "passed-ax.txt": "0219f27231da4536e788f4cae7e08b8ee993233d1fcd902c395949c8a78f6fa2",
+      "passed.png": "aabb377f487d1e0ce7144a459df7f4ec4cd720625ada0a7acb071ecee1165c2a"
+    }
+  },
+  "artifactCheck": {
+    "artifacts": [
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/git/kura-triton/bundles/org.eclipse.kura.ai.triton.server/target/org.eclipse.kura.ai.triton.server-2.0.0-SNAPSHOT.jar",
+        "jarSha256": "f5cd70f818d79255c72a3f560aab226b50655850c9a5421e5c4620ca91acb3d6",
+        "optionsClassSha256": "69e5d2ff90e11ae252bad7ca66f3b77a59cd0499a93c6db7436f629226984124"
+      },
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/migration-m2/org/eclipse/kura/org.eclipse.kura.ai.triton.server/2.0.0-SNAPSHOT/org.eclipse.kura.ai.triton.server-2.0.0-SNAPSHOT.jar",
+        "jarSha256": "f5cd70f818d79255c72a3f560aab226b50655850c9a5421e5c4620ca91acb3d6",
+        "optionsClassSha256": "69e5d2ff90e11ae252bad7ca66f3b77a59cd0499a93c6db7436f629226984124"
+      },
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-triton-scr-accepted-20261011/triton-production.jar",
+        "jarSha256": "f5cd70f818d79255c72a3f560aab226b50655850c9a5421e5c4620ca91acb3d6",
+        "optionsClassSha256": "69e5d2ff90e11ae252bad7ca66f3b77a59cd0499a93c6db7436f629226984124"
+      }
+    ],
+    "ideaCompiledOptionsSha256": "69e5d2ff90e11ae252bad7ca66f3b77a59cd0499a93c6db7436f629226984124"
+  },
+  "runtime": {
+    "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-triton-scr-accepted-20261011",
+    "result": {
+      "bundleLocation": "initial@reference:file:../../../../../../mac-complete-triton-scr-accepted-20261011/triton-production.jar",
+      "bundleVersion": "2.0.0.202610101841",
+      "bundleCount": 281,
+      "componentDescriptions": [
+        "org.eclipse.kura.ai.triton.server.TritonServerContainerService",
+        "org.eclipse.kura.ai.triton.server.TritonServerNativeService",
+        "org.eclipse.kura.ai.triton.server.TritonServerRemoteService"
+      ],
+      "nativeInvalidConfiguration": {
+        "managerAndChannelAbsent": true,
+        "implementation": "org.eclipse.kura.ai.triton.server.TritonServerServiceNativeImpl",
+        "state": 8,
+        "pid": "acceptance.mac.triton.remote.9c0ce57d-a2f8-43b3-ac8f-f6be374659d6.native",
+        "verified": true
+      },
+      "containerOrchestrationProviderCount": 1,
+      "containerInvalidConfiguration": {
+        "managerAndChannelAbsent": true,
+        "implementation": "org.eclipse.kura.ai.triton.server.TritonServerServiceContainerImpl",
+        "state": 8,
+        "pid": "acceptance.mac.triton.remote.9c0ce57d-a2f8-43b3-ac8f-f6be374659d6.container",
+        "verified": true
+      },
+      "createdPid": "acceptance.mac.triton.remote.9c0ce57d-a2f8-43b3-ac8f-f6be374659d6",
+      "activeConfiguration": true,
+      "privilegedExecutor": "org.eclipse.kura.core.linux.executor.privileged.PrivilegedExecutorServiceImpl",
+      "cryptoService": "org.eclipse.kura.core.crypto.CryptoServiceImpl",
+      "channelImplementation": "io.grpc.internal.ManagedChannelOrphanWrapper",
+      "absentServerReturnsNotReady": true,
+      "changedUpdateClosesReplacedChannel": true,
+      "invalidUpdateClosesChannel": true,
+      "validUpdateRecoversChannel": true,
+      "nativeAndContainerConfigurationsCleaned": true,
+      "serviceConfigurationAndChannelCleanup": true,
+      "passed": true,
+      "elapsedSeconds": 8.566,
+      "pid": 56833,
+      "exitCode": 143,
+      "forcedShutdown": false,
+      "portsReleased": true,
+      "productionBundleSha256": "f5cd70f818d79255c72a3f560aab226b50655850c9a5421e5c4620ca91acb3d6",
+      "helperSha256": "8a1f8eccde06ff7a9e270d48e91177804541720ad08dcc3ac48245efcb02af7f",
+      "runtimeInventorySha256": "f478ee7b4f92fc6ab0cf156dbdef28dd23a2fb6318eecb88d396b1e12f7fede6",
+      "sources": {
+        "run.py": "b284f8c7698abd6809ddf35304f37233e97cc065d8183cfd25d1ddd4d3da40f8",
+        "pom.xml": "668027ed520739375ba4626d8842dbc01ca7050a7b8c65f5f32bb3d1c1c6a732",
+        "README.md": "bc0445508c6b15351a707f9d2f397c388895c2df2894b32cecee48bdb615db7f",
+        "src/main/java/org/eclipse/kura/triton/testing/fullruntime/RemoteProbe.java": "bea368c75570344969c42b50569fe919715a092ac5cb3c207aaa6605991ac903"
+      },
+      "scope": "Actual remote SCR/configuration and gRPC channel lifecycle on Mac; no Triton server, GPU, native command or container started",
+      "logs": {
+        "console.log": "573d8f9645951ca0f92fc16f0037df55d00dba47d1deb36afa6637a108645f70",
+        "profile/logs/kura.log": "7617d15b8e4cf51b61a41c07162a964e2de64f23c86d8a43863e120f7f872ef8"
+      }
+    },
+    "runtime": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-assembly-20261011/source/kura/kura-dev-runtime/target/runtime",
+    "productionOverlayCount": 0,
+    "additionalProductionBundles": [
+      "org.eclipse.kura.ai.triton.server"
+    ],
+    "additionalObserverBundle": "org.eclipse.kura.testing.fullruntime.tritonremote",
+    "scope": "The default Mac assembly does not contain Triton. This opt-in run adds the actual current Triton JAR and observer, without substituting production services or modifying its handwritten metadata. No actual Triton server is supplied."
+  },
+  "retainedFailedHarnessArchives": [
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-triton-remote-scr-20261011",
+      "scope": "Initial helper observed a channel before async modified completion; its incomplete/unchecked unchanged-update field is not accepted proof. Old production array defect reproduced separately by2 deterministic module failures."
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-triton-remote-scr-final-20261011",
+      "scope": "Service unregistration precedes deactivation/channel termination. The helper asserted termination too early; repaired by a bounded await of the actual channel. This is a harness correction, not a production teardown repair."
+    }
+  ],
+  "evidenceManifests": {
+    "/Users/heyoulin/iot-kura-develop/migration-baseline/triton-copied-configuration-20261011/evidence-manifest.json": "c034ebc25974388f6791fb1dca34c5eba93d54e599e329b757d6d45614eda98b",
+    "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-triton-scr-accepted-20261011/evidence-manifest.json": "669e942b1e051aab0052dc61d75165e04eba83c42fa09d319017429a786faa45"
+  },
+  "protectedAudit": {
+    "completedAt": "2026-10-10T18:45:02.544657+00:00",
+    "probeSourceAndTemplateFiles": 301,
+    "changedProbeFiles": [],
+    "originalProtectedFiles": 315,
+    "changedOriginalFiles": [],
+    "durablePersonalFiles": 33,
+    "personalChanges": []
+  },
+  "covered": [
+    "Actual bundle resolution, all three component descriptors and metatype factory discovery",
+    "Remote/native/container actual SCR ACTIVE configurations using production required bindings",
+    "Invalid native/container configuration creates no instance manager or gRPC channel and is deleted",
+    "Remote actual gRPC Netty transport and negative absent-loopback-server readiness",
+    "Remote changed configuration terminates replaced channel; invalid update closes it; valid update restores channel; deletion removes the configuration/service and awaits termination",
+    "Copied-port equality and live-channel retention through new Maven/IDEA regressions"
+  ],
+  "limitations": [
+    "No actual Triton readiness/model/inference/metrics response, native process, container launch/monitor, GPU or installed Debian validation",
+    "The119 module invocations include3 added regressions; IDEA3 and real application assertions overlap and are not added to earlier5521-call workspace CI",
+    "The earlier complete CI pins did not run the later Sparkplug or Triton production repairs or their added regression cases",
+    "The accepted Mac application base retains its recorded earlier core/cloud pins; the added Triton bundle alone is the current repaired JAR. It is not a new whole-workspace or release assembly run",
+    "No API, handwritten OSGi metadata, dependency version, cloud PID/name/description, network dbus Update/Activate or snapshot implementation change",
+    "No additional Linux validation or YOFC/PLC4X/official OPC UA expansion; original runtime/profile and33 durable personal files remain unchanged"
+  ],
+  "inventory": {
+    "reviewed": 465,
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidationRows": 31,
+    "overallComplete": false
+  }
+}

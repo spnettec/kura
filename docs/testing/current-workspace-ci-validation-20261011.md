@@ -36,3 +36,11 @@ PLC4X 的本地 codex 分支没有远端同名 ref，其未改变的 HEAD 与已
 此前未验证的连接等待中断差异已单独复现并修复；模块 155/155、真实容器
 13/13、IDEA Run 3/3 通过，见 [新证据](sparkplug-interrupted-reconnect-validation-20261011.md)。
 原记录与完整 CI 数字保留其固定提交范围，不将后续修复记为完整门禁重跑。
+
+## 2026-10-11 Triton 数组配置及真实 SCR 后续
+
+相同端口数组经复制后误判为配置变更的问题已单独复现并修复。完整模块
+119/119、IDEA 3/3 通过；实际 Mac Remote/Native/Container 工厂 SCR 配置生命周期
+及 remote channel 更新/关闭通过，未启动 Triton/GPU/native 进程/容器。
+见 [验收记录](triton-copied-configuration-scr-validation-20261011.md)。
+旧完整 CI 保留固定提交范围，未覆盖此后续私有生产修复；结果不相加。
