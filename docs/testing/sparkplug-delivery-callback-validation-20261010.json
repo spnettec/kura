@@ -63,5 +63,12 @@
     "WSS filesystem/SCR acceptance, file-backed DataService restart durability and remaining Mac IDEA acceptance are separate pending work",
     "Upstream interrupted-reconnect behavior difference observed but not changed or verified",
     "No new Linux or whole-workspace run; these counts overlap earlier evidence and are not added to historical totals"
+  ],
+  "datedFollowups": [
+    {
+      "date": "2026-10-11",
+      "evidence": "sparkplug-interrupted-reconnect-validation-20261011.json",
+      "scope": "The previously unverified interrupted reconnect difference was independently reproduced and fixed. Historical callback report and limitations retain their original date/scope."
+    }
   ]
 }

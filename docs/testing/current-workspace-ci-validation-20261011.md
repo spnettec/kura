@@ -30,3 +30,9 @@ Docker 镜像、旧 P2 发布、installed Debian 和硬件验收保持各自边�
 19 个原仓库最终核对均干净。15 个发布的 codex 分支与 fork HEAD 一致；
 PLC4X 的本地 codex 分支没有远端同名 ref，其未改变的 HEAD 与已有 fork
 `heyoulin` 分支一致。三个本地 management 仓库无 remote，保持原状。
+
+## 2026-10-11 后续 Sparkplug 中断修复
+
+此前未验证的连接等待中断差异已单独复现并修复；模块 155/155、真实容器
+13/13、IDEA Run 3/3 通过，见 [新证据](sparkplug-interrupted-reconnect-validation-20261011.md)。
+原记录与完整 CI 数字保留其固定提交范围，不将后续修复记为完整门禁重跑。

@@ -1,0 +1,307 @@
+{
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "environment": {
+    "maven": "3.10.0",
+    "jdk": "Temurin 21",
+    "junit": "5"
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/sparkplug-interrupted-reconnect-20261011",
+  "originalCloudRevision": "aab00ff9643da835e71bd32ab025a96e99e1f7a0",
+  "upstream": {
+    "revision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "url": "https://raw.githubusercontent.com/eclipse-kura/kura/e500a68d7b3f4a970aca3e13c038947269278827/kura/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/transport/SparkplugMqttClient.java",
+    "archivedSha256": "b72453dda0b0e49931a204cb8e68dffd9d7e5dc9848ed7d4b9e95cbcad6f777e",
+    "behavior": "Restore the interrupt and throw KuraConnectException before creating a Paho client."
+  },
+  "revisions": {
+    "productionFix": "817b5a37d08bedecf3e78cbfe876a50da298c858",
+    "regressionTests": "2fc64e91eb32ed7d4ca78bbe73459ed9996474f0",
+    "productionSha256": "188e7908eb9aa85c0a444256bdfc9b1e7c336aa0758fcb8a8050403f409ee90a",
+    "testSha256": "52fea9666aca2568ad563110ec93ba4374afc0f651d7285bdc6b87b6a71e1f18"
+  },
+  "repair": "Stop an interrupted connection/reconnection delay after restoring the interrupt; do not create or replace the Paho client.",
+  "scenarios": [
+    "Already interrupted before the first connection",
+    "Already interrupted before reconnecting after a real broker connection/disconnect",
+    "Interrupt the actual production Thread.sleep during the reconnect delay"
+  ],
+  "negativeRegression": {
+    "exitCode": 1,
+    "tests": 3,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "sourceSha256": "52fea9666aca2568ad563110ec93ba4374afc0f651d7285bdc6b87b6a71e1f18",
+    "reportSha256": "6cb6b867c2eb917357c6d41a72a39c11f703d57ea88474023cc53cfccdc83eb0",
+    "scope": "The corrected harness fails on all three old-production paths because a Paho client is created or replaced. Initial teardown-only errors remain archived separately and are not treated as the negative proof."
+  },
+  "module": {
+    "exitCode": 0,
+    "since": 1791656667.080523,
+    "totals": {
+      "tests": 155,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "reports": [
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.test.CloudDeliveryListenerTest.xml",
+        "sha256": "1e996f7ffa3333b22038ed24fc3ad62664c37ad929703f6c42fd03aa9a2aa2f1",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.test.ConnectionStatusCallbackTest.xml",
+        "sha256": "3e4cb089f703d90c7b4da5b969268cbd4becc30e2bb5e90f97c935a41708a0ce",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.test.DataServiceTest.xml",
+        "sha256": "6e65b781b562841a138f33dae5d131136b78ef4e9b05ef2e7cbc5fdb9ab5935f",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.test.SubscriptionRecordTest.xml",
+        "sha256": "ecf06ce653021aa25df2c6effeb0f83593719fcb6d8c582409cd588c00381e2d",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.endpoint.test.SubscriptionsMapTest.xml",
+        "sha256": "6789032a83387479ad4bdd09f55fd14eb5cf4384b19a341cd0c9d3f7254ce7ab",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.factory.test.SparkplugCloudConnectionFactoryTest.xml",
+        "sha256": "db46a554a25877dd9f121f7c6f0fd100be8b0177bcf0320bba4e28b323209263",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.message.test.SparkplugBProtobufPayloadBuilderTest.xml",
+        "sha256": "9e609738efdf28be6fc8c275e91fc28abf40eeae289a0100f7a6ae2576e2ab44",
+        "tests": 51,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test.SparkplugDataTransportTest.xml",
+        "sha256": "1ecaadbe8171e179e8f7f3dc858f98d37fe86bb7546aa1ed8647f2033037225d",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test.SparkplugDeliveryCompleteTest.xml",
+        "sha256": "21d4dbd504ad368f930e46ca77d53600fc693942812ba578b937441a902d76c3",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test.SparkplugDeviceTest.xml",
+        "sha256": "f201da4bcc1cab730c8bd6030846907b19a15f38a99db63b7248edb3f18933a2",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test.SparkplugInterruptedReconnectTest.xml",
+        "sha256": "1c753ebdd70d0f700b85326241574e262a4f00e1eec9f05d4078446f14d20fd0",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.subscriber.test.SparkplugSubscriberTest.xml",
+        "sha256": "89cdd01aa5f24d58a50641efd1277ed8fd4c73723ab838fba5c2519bb5156ed8",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.test.ConfigurationUpdateTest.xml",
+        "sha256": "ceab9e41a5c093871dcbe6ee60e1648b4a8bcda9d1e38467a26925309468019c",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.transport.test.SparkplugDataTransportOptionsTest.xml",
+        "sha256": "1afecaa0575db44d63d058a7544ceb5ac9cd201067e6c4c53bae0dfd413636b1",
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "report": "TEST-org.eclipse.kura.cloudconnection.sparkplug.mqtt.utils.test.SparkplugCloudEndpointTrackerTest.xml",
+        "sha256": "98a9f3d3db26a3deefea1716f8da76d6dcc1d905f5b3a00b158462f1c2c841e8",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "runtime": {
+    "exitCode": 0,
+    "since": 1791656735.425052,
+    "totals": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "reports": [
+      {
+        "report": "TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml",
+        "sha256": "d8761fafc25bde8db4851491102ba5e65168e8d945756a4496fd38aaba3365c3",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "idea": {
+    "mode": "native IntelliJ IDEA Current File Run",
+    "exitCode": 0,
+    "totals": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "durationSeconds": 4.975,
+    "jdk": "Temurin JDK21",
+    "runner": "JUnit5",
+    "sourceRevision": "2fc64e91eb32ed7d4ca78bbe73459ed9996474f0",
+    "sourceSha256": "52fea9666aca2568ad563110ec93ba4374afc0f651d7285bdc6b87b6a71e1f18",
+    "compiledSessionStatusSha256": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186",
+    "artifacts": {
+      "passed-ax.txt": "0204956b61b3e7ea88197ff642e51c0a668b24b7622238692b0e94fcca933ebe",
+      "passed.png": "1d1da033591624310bca0059ecc50147d6ee51152971e6e411f2342e6c8683f3"
+    },
+    "classpathScope": "Actual current module target/test-classes and target/classes; Moquette fixture dependencies are test-scope and distinct from public runtime Vertx/Netty wrappers. No Debug claim."
+  },
+  "runtimeHelperSources": [
+    {
+      "source": "kura-cloud/runtime-tests/pom.xml",
+      "sha256": "8897cbe4a1b8e4a6cb6fa118a11befaf40dc34a64bed0928225b674663d87910",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/pom.xml"
+    },
+    {
+      "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "sha256": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
+    },
+    {
+      "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
+      "sha256": "56ed3a226efd6d3a75239a1d82c06bc8461330d68053dac8737ecf7b2f50f885",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java"
+    },
+    {
+      "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java",
+      "sha256": "d7298e7e0324a29721d5fdfda7e47422249db40faf760cb26dc6062ffed6c60f",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
+    },
+    {
+      "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java",
+      "sha256": "18cc643313ca246a13d1189c3dff0d518ac3d98a01a48a64868fccafd4f30e3a",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java"
+    },
+    {
+      "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
+      "sha256": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
+    },
+    {
+      "source": "kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml",
+      "sha256": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468",
+      "matchesPriorHelper": true,
+      "archive": "runtime-sources/kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml"
+    }
+  ],
+  "artifactCheck": {
+    "compiledSessionStatusSha256": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186",
+    "artifacts": [
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/git/kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/target/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider-3.0.0-SNAPSHOT.jar",
+        "jarSha256": "c2bccde6aee93fdf5a3a4dafaf5daa86abb963a67a2034828cdc6e403d79c6cb",
+        "sessionStatusClassSha256": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186"
+      },
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/migration-m2/org/eclipse/kura/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/3.0.0-SNAPSHOT/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider-3.0.0-SNAPSHOT.jar",
+        "jarSha256": "c2bccde6aee93fdf5a3a4dafaf5daa86abb963a67a2034828cdc6e403d79c6cb",
+        "sessionStatusClassSha256": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186"
+      },
+      {
+        "path": "/Users/heyoulin/iot-kura-develop/git/kura-cloud/runtime-tests/target/it-bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.jar",
+        "jarSha256": "c2bccde6aee93fdf5a3a4dafaf5daa86abb963a67a2034828cdc6e403d79c6cb",
+        "sessionStatusClassSha256": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186"
+      }
+    ]
+  },
+  "artifactSha256": "c2bccde6aee93fdf5a3a4dafaf5daa86abb963a67a2034828cdc6e403d79c6cb",
+  "evidenceManifest": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/sparkplug-interrupted-reconnect-20261011/evidence-manifest.json",
+    "sha256": "4ac73a8c3676c7f46c3b79da75dec86dfd6febd903bf8be3465b5cb6527485e8"
+  },
+  "scope": [
+    "The real Moquette/Paho regression uses owned virtual threads; interrupts and shutdown are checked. Reflection accesses private client identity and delay generation only.",
+    "The thirteen fresh Equinox/SCR cases exercise the repaired installed JAR, including WSS/SSL-manager/filesystem certificate paths, file-store restart, Sparkplug delivery, REST and factory lifecycle. They provide normal-runtime compatibility; interruption itself is exercised by the three module/IDEA regression cases.",
+    "No API, cloud PID/name/description, handwritten OSGi metadata, dependency versions, network dbus Update/Activate, or snapshot behavior changes.",
+    "The completed 5521-call/409-report workspace CI remains evidence for its recorded earlier pins. It did not run this production repair or the three added regression cases. These scoped follow-ups and overlapping counts are not added to that total.",
+    "The existing callback null-message/NDEATH fix remains historical, separately validated work; this is a different interruption defect.",
+    "No new Linux, hardware, PLC4X/YOFC expansion, removed features, original target/runtime cleanup or personal configuration reset."
+  ],
+  "remainingInventory": {
+    "reviewed": 465,
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidation": 31,
+    "overallComplete": false
+  },
+  "protectedAudit": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/sparkplug-interrupted-reconnect-20261011/protected-audit.json",
+    "sha256": "dc1f7435919c34d4be28de431df78f93ce81db3c3ae6c08969593f02547f314c",
+    "protectedFiles": 315,
+    "personalFiles": 33,
+    "changed": 0
+  },
+  "archivedProductionArtifacts": {
+    "artifacts/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider-3.0.0-SNAPSHOT.jar": "c2bccde6aee93fdf5a3a4dafaf5daa86abb963a67a2034828cdc6e403d79c6cb",
+    "artifacts/SparkplugMqttClient$SessionStatus.class": "44af4c07c8b6ba9a5edc3971fef89cff4684fde4b5d68d70fd3ec51f7b484186"
+  }
+}

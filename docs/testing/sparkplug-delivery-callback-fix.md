@@ -31,3 +31,9 @@ commits, exact counts, checksums and the archived before/after logs. The unrelat
 upstream interrupted-reconnect behavior difference was observed during comparison but
 is not changed or declared verified by this repair. WSS, file-backed DataService
 restart durability and remaining IDEA acceptance are separate work.
+
+## 2026-10-11 后续 Sparkplug 中断修复
+
+此前未验证的连接等待中断差异已单独复现并修复；模块 155/155、真实容器
+13/13、IDEA Run 3/3 通过，见 [新证据](sparkplug-interrupted-reconnect-validation-20261011.md)。
+原记录与完整 CI 数字保留其固定提交范围，不将后续修复记为完整门禁重跑。

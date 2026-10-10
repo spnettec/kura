@@ -194,7 +194,7 @@
       "deltaFromCi": []
     }
   ],
-  "scope": "The CI run uses its recorded fourteen clean pinned clones. All 409 test source hashes and original/published report hashes match. Later changes are the public Vertx Multi-Release manifest and matching Reficio instruction, opt-in acceptance helper/assertions/profile relocation, and documentation. They were separately verified by the freshly assembled macOS runtime and direct IDEA Run; the CI is not claimed to have run these later HEADs. Remote Jenkins, Docker images, legacy P2 publication and installed Debian/hardware acceptance are not covered.",
+  "scope": "The CI run uses its recorded fourteen clean pinned clones. All 409 test source hashes and original/published report hashes match. Later changes are the public Vertx Multi-Release manifest and matching Reficio instruction, opt-in acceptance helper/assertions/profile relocation, and documentation. They were separately verified by the freshly assembled macOS runtime and direct IDEA Run; the CI is not claimed to have run these later HEADs. Remote Jenkins, Docker images, legacy P2 publication and installed Debian/hardware acceptance are not covered. A later private Sparkplug connection-delay interruption repair and three added regression cases were validated separately by 155 module calls, 13 real Equinox/SCR calls and 3 native IDEA calls; this CI does not cover those later commits.",
   "reportCountByRepository": {
     "kura": 178,
     "kura-camel": 14,
@@ -362,5 +362,6 @@
   "laterIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
   "counting": "5521 is the workspace JUnit invocation total. Separate IDEA and MQTT/HTTP acceptance results are not added to it.",
   "postPushRepositoryAudit": "/Users/heyoulin/iot-kura-develop/migration-baseline/workspace-camel-vertx-final-post-push-audit-20261011.json",
-  "repositoryAuditScope": "19 clean repositories. Fifteen published codex/maven-bundle-idea fork branches match HEAD. Unchanged PLC4X local codex branch has no remote ref; its identical HEAD is verified on existing fork heyoulin. Three local-only management repositories have no remote."
+  "repositoryAuditScope": "19 clean repositories. Fifteen published codex/maven-bundle-idea fork branches match HEAD. Unchanged PLC4X local codex branch has no remote ref; its identical HEAD is verified on existing fork heyoulin. Three local-only management repositories have no remote.",
+  "laterSparkplugInterruptionEvidence": "sparkplug-interrupted-reconnect-validation-20261011.json"
 }

@@ -1,5 +1,17 @@
 # Upstream test restoration progress
 
+## 2026-10-11 Sparkplug 连接等待中断
+
+交接计划中的 interrupted reconnect 差异已复现：旧代码在首次连接、断连后
+重连、等待期间中断的三个场景中继续创建/替换 Paho 客户端。三项旧代码回归
+均失败；修复恢复中断标志后立即抛出连接异常，生产/测试分别提交。
+完整模块 **155/155**、真实 Equinox/SCR **13/13**、IDEA 直接 Run **3/3**
+通过。实际容器 JAR 与修复产物哈希一致。
+见 [修复证据](sparkplug-interrupted-reconnect-validation-20261011.md)。
+此修复晚于固定完整 CI 提交，各组结果不相加；仍有 31 条外部验收边界，
+整体恢复未完成。
+
+
 ## 2026-10-11 完整门禁、新组装运行集及 IDEA 三种 DSL
 
 - 完整 workspace CI：**5,521 次调用，0 失败/错误，9 跳过**；409 份报告与

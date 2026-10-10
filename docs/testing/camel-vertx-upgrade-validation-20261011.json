@@ -99,5 +99,9 @@
   },
   "packagedRuntimeEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
   "directIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
-  "acceptanceHelperRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b"
+  "acceptanceHelperRevision": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+  "laterCloudProductionFollowup": {
+    "evidence": "sparkplug-interrupted-reconnect-validation-20261011.json",
+    "scope": "Separate private Sparkplug interruption repair after the full CI pins; module155/runtime13/IDEA3 passed. Upgrade and packaged-runtime evidence retain their earlier pinned cloud scope."
+  }
 }
