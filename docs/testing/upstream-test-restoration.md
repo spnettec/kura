@@ -1,5 +1,15 @@
 # Upstream test restoration progress
 
+## 2026-10-11 用户排除后续 Triton 测试
+
+用户回复“Tiiton就不测了”，本任务不再追加或重跑 Triton 测试。9 条真实
+Triton 服务/native/container/GPU 的未验收边界转为 `excludedValidation`，
+标记 `excluded-by-user`，不记为通过。已有源码、修复和验收证据保留。
+当前清单为 **465 reviewed、0 unreviewed、0 deferredScenarios、22
+deferredValidation、9 excludedValidation**，整体未完成。
+见 [范围决定](triton-validation-scope-decision-20261011.md)。以下各阶段统计
+保持当时的历史范围；本决定前的 31 条不能作为当前待验收总数。
+
 ## 2026-10-11 Triton 实际 Mac SCR 与配置数组修复
 
 - Remote/Native/Container 三类工厂通过生产绑定实际 SCR 创建/删除；本地无效

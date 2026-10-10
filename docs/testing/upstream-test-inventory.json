@@ -9173,9 +9173,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "validation": {
       "tests": 4,
       "failures": 0,
@@ -9187,6 +9184,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9204,13 +9210,19 @@
     ],
     "execution": "Jupiter fixture with owned in-process gRPC resources",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "kind": "helper",
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9228,9 +9240,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
-    ],
     "validation": {
       "tests": 9,
       "failures": 0,
@@ -9242,6 +9251,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9259,9 +9277,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "validation": {
       "tests": 1,
       "failures": 0,
@@ -9273,6 +9288,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9290,9 +9314,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "validation": {
       "tests": 1,
       "failures": 0,
@@ -9304,6 +9325,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9321,9 +9351,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "validation": {
       "tests": 7,
       "failures": 0,
@@ -9335,6 +9362,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9352,9 +9388,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
-    ],
     "validation": {
       "tests": 5,
       "failures": 0,
@@ -9366,6 +9399,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9407,9 +9449,6 @@
     ],
     "execution": "surefire",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "validation": {
       "tests": 3,
       "failures": 0,
@@ -9421,6 +9460,15 @@
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {
@@ -9438,13 +9486,19 @@
     ],
     "execution": "Jupiter fixture with owned in-process gRPC resources",
     "reason": "Reviewed against current fork. Production service/manager lifecycle and real gRPC/HTTP serialization are exercised with command/container boundaries mocked. See triton-test-restoration.md.",
-    "deferredValidation": [
-      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
-    ],
     "kind": "helper",
     "runtimeValidation": {
       "evidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
       "scope": "Actual Mac three-factory SCR arrival and invalid local configuration cleanup; remote gRPC transport/configuration/channel lifecycle. No real Triton server or GPU/native/container launch claim."
+    },
+    "excludedValidation": [
+      "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+    ],
+    "validationScopeDecision": {
+      "decision": "excluded-by-user",
+      "date": "2026-10-11",
+      "instruction": "Tiiton就不测了",
+      "evidence": "docs/testing/triton-validation-scope-decision-20261011.json"
     }
   },
   {

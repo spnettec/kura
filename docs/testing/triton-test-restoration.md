@@ -1,5 +1,12 @@
 # Triton upstream test restoration
 
+## 2026-10-11 用户范围决定
+
+用户要求 Triton 不再测试，本任务不追加或重跑 Triton 测试。
+9 条未执行的真实服务/native/container/GPU 验收边界已明确排除，不记为通过；
+下文既有测试、修复和报告保留原范围。
+见 [范围决定](triton-validation-scope-decision-20261011.md)。
+
 2026-10-09; upstream snapshot `kura-triton@13d23a95`. This first batch restores six
 source entries on Jupiter against the current production API; nine sources remain
 unreviewed. No production or handwritten OSGi metadata changes in this batch.

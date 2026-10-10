@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-11",
+  "recordedAt": "2026-10-11T05:41:00.888014+08:00",
+  "decision": "excluded-by-user",
+  "userInstruction": "Tiiton就不测了",
+  "component": "Triton",
+  "scope": "Do not append or rerun Triton tests for this restoration task. Remove the remaining actual Triton server/model/inference/metrics/native/container/GPU acceptance from the pending queue. Retain existing test sources, production repairs and archived results.",
+  "previousCoreRevision": "67f4fb633f702ddf4a7216671fe28473c4b31faa",
+  "inventoryBefore": {
+    "reviewed": 465,
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidationRows": 31,
+    "deferredValidationStrings": 31
+  },
+  "inventoryAfter": {
+    "reviewed": 465,
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidationRows": 22,
+    "deferredValidationStrings": 22,
+    "excludedValidationRows": 9,
+    "excludedValidationStrings": 9
+  },
+  "excludedRows": [
+    {
+      "inventoryIndex": 389,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 390,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 391,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
+      "notExecuted": [
+        "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 392,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 393,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 394,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 395,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
+      "notExecuted": [
+        "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 397,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    },
+    {
+      "inventoryIndex": 398,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
+      "notExecuted": [
+        "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation"
+      ]
+    }
+  ],
+  "retainedEvidence": [
+    "docs/testing/triton-test-restoration.md",
+    "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+    "docs/testing/current-workspace-ci-validation-20261011.json"
+  ],
+  "notAcceptedAsPassing": true,
+  "newTestExecution": false,
+  "overallComplete": false,
+  "remainingBoundaries": "Supported deployment/hardware and external SecurityService provider acceptance remain pending under the existing no-additional-Linux restriction."
+}

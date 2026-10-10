@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 31,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. At that stage, the 39 retained rows stated remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified. The subsequent unchanged 47-case configuration assertion set passed in 47 complete Mac applications with production host SystemService, resolving rows 154, 155 and 158 within the requested Mac scope. There are now 36 retained rows / 37 strings; no installed Debian or hardware validation is claimed. Complete Mac authenticated MQTT configuration/inventory acceptance subsequently resolves rows 180, 183, 185, 190 and 194; row 186 retains only Linux package-manager enumeration. Current total is 31 retained rows / 31 strings. Complete Mac historical driver and adapted emitter/receiver fixture SCR/OCD/WireAdmin plus authenticated HTTPS reads now cover the Mac fixture boundaries for rows 459, 460, 462 and 463; their Debian package boundary remains. Total remains 31 rows / 31 strings. The customized Camel follow-up resolves actual GraalJS JavaScript and ACE browser edit/save sub-boundaries in rows 248-252, with XML/Java/YAML, English/Chinese naming and common Engine/YOFC YAML acceptance. Camel 4.22.1 and wrapped Vertx 5.2.1 are now exercised in the complete Mac application; these five rows retain only installed Debian package acceptance. Total remains 31 rows / 31 strings. The missing public Vertx core Multi-Release header was subsequently repaired separately; actual Java21 virtual-thread HTTP passed without changing any class-file content. Final 2026-10-11 workspace CI passed 5521 invocations with zero failures/errors, nine skips and 409 current-source-matched reports. The fresh packaged runtime then passed without production overlays, including actual virtual-thread HTTP; direct IDEA XML/Java/YAML Run passed 3/3. Recorded earlier CI pins remain distinct from later manifest/helper revisions. The remaining 31 rows/strings retain their external/deployed boundaries. A later opt-in Mac run adds the current built production Triton JAR to the complete application and verifies actual Remote/Native/Container factory/SCR configuration wiring; invalid local configurations create no manager, and remote gRPC channel update/cleanup passes. Triton copied-array equality defect was separately reproduced and repaired;119module/3IDEA pass. The9 Triton rows now retain real server/native/container/GPU boundaries, not wholly untested SCR wiring. Total remains31rows/strings.",
+  "count": 22,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. At that stage, the 39 retained rows stated remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified. The subsequent unchanged 47-case configuration assertion set passed in 47 complete Mac applications with production host SystemService, resolving rows 154, 155 and 158 within the requested Mac scope. There are now 36 retained rows / 37 strings; no installed Debian or hardware validation is claimed. Complete Mac authenticated MQTT configuration/inventory acceptance subsequently resolves rows 180, 183, 185, 190 and 194; row 186 retains only Linux package-manager enumeration. Current total is 31 retained rows / 31 strings. Complete Mac historical driver and adapted emitter/receiver fixture SCR/OCD/WireAdmin plus authenticated HTTPS reads now cover the Mac fixture boundaries for rows 459, 460, 462 and 463; their Debian package boundary remains. Total remains 31 rows / 31 strings. The customized Camel follow-up resolves actual GraalJS JavaScript and ACE browser edit/save sub-boundaries in rows 248-252, with XML/Java/YAML, English/Chinese naming and common Engine/YOFC YAML acceptance. Camel 4.22.1 and wrapped Vertx 5.2.1 are now exercised in the complete Mac application; these five rows retain only installed Debian package acceptance. Total remains 31 rows / 31 strings. The missing public Vertx core Multi-Release header was subsequently repaired separately; actual Java21 virtual-thread HTTP passed without changing any class-file content. Final 2026-10-11 workspace CI passed 5521 invocations with zero failures/errors, nine skips and 409 current-source-matched reports. The fresh packaged runtime then passed without production overlays, including actual virtual-thread HTTP; direct IDEA XML/Java/YAML Run passed 3/3. Recorded earlier CI pins remain distinct from later manifest/helper revisions. The remaining 31 rows/strings retain their external/deployed boundaries. A later opt-in Mac run adds the current built production Triton JAR to the complete application and verifies actual Remote/Native/Container factory/SCR configuration wiring; invalid local configurations create no manager, and remote gRPC channel update/cleanup passes. Triton copied-array equality defect was separately reproduced and repaired;119module/3IDEA pass. The9 Triton rows now retain real server/native/container/GPU boundaries, not wholly untested SCR wiring. Total remains31rows/strings. User instruction on2026-10-11: Tiiton就不测了. Further Triton tests are excluded from this task; the9unexecuted actual-server/native/container/GPU boundaries are recorded separately as excluded-by-user, not as passing acceptance. Existing tests and positive/negative evidence remain unchanged. Current inventory retains22deferredValidation rows/strings plus9excludedValidation rows/strings; overall restoration remains incomplete.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -288,132 +288,6 @@
       ]
     },
     {
-      "inventoryIndex": 389,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 390,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 391,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 392,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 393,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 394,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 395,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 397,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
-      "inventoryIndex": 398,
-      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
-      "group": "triton",
-      "evidence": [
-        "docs/testing/triton-test-restoration.md",
-        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
-      ],
-      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
-      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
-      "originalDeferredValidation": [
-        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
-      ]
-    },
-    {
       "inventoryIndex": 445,
       "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/event/EventAdminUtil.java",
       "group": "helpers",
@@ -581,7 +455,7 @@
   "completeMacRuntimeEvidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
   "currentWorkspaceCiEvidence": "docs/testing/current-workspace-ci-validation-20261011.json",
   "latestReconciliationCoreRevision": "578b32b17084b9800adc3b20fed88b81b67b5e41",
-  "deferredValidationStrings": 31,
+  "deferredValidationStrings": 22,
   "closedConfigurationRows": [
     {
       "inventoryIndex": 154,
@@ -673,5 +547,153 @@
   "camelVertxUpgradeEvidence": "docs/testing/camel-vertx-upgrade-validation-20261011.json",
   "packagedCamelVertxEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
   "forkDslIdeaEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
-  "latestTritonScrEvidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+  "latestTritonScrEvidence": "docs/testing/triton-copied-configuration-scr-validation-20261011.json",
+  "excludedValidationRows": [
+    {
+      "inventoryIndex": 389,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 390,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 391,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton container launch/monitoring and model/inference/metrics beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 392,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 393,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 394,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 395,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual native Triton process/model/inference/GPU behavior beyond the verified Mac invalid-configuration SCR wiring; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 397,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    },
+    {
+      "inventoryIndex": 398,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md",
+        "docs/testing/triton-copied-configuration-scr-validation-20261011.json"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed. Actual Mac Remote/Native/Container factories and SCR configuration lifecycle now pass using production bindings. Invalid native/container configurations start no manager; remote channel replacement/invalid-update/recovery/deletion passes. Module119/IDEA3 follow-up passed.",
+      "remaining": "Actual Triton server readiness/model/inference/metrics and real GPU/native/container runtime beyond the verified Mac SCR configuration/channel lifecycle; no additional Linux validation",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ],
+      "disposition": "excluded-by-user; not accepted as passing",
+      "scopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
+    }
+  ],
+  "excludedValidationCount": 9,
+  "latestScopeDecisionEvidence": "docs/testing/triton-validation-scope-decision-20261011.json"
 }
