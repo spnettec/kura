@@ -951,3 +951,15 @@ See `configuration-runtime-test-restoration.md` and its linked defect audits.
 Inventory: 365 restored, 59 helpers, fifteen replaced harnesses, nine not-applicable
 sources, six removed-functionality exclusions and **11 unreviewed** out of 465.
 This does not complete deployed assembly, remaining source review or IDEA acceptance.
+
+## Official OPC UA applicability audit (2026-10-10)
+
+Read the remaining three legacy server-fixture sources in full. Their Milo 0.6.16
+sdk-server/stack-server APIs are outside the retained Milo 1.1.2 client-only setup
+and the instruction to keep official OPC UA unchanged. They are marked
+not-applicable-current-api with evidence in `opcua-legacy-server-fixture-audit.md`;
+no certificate/live-server test result or equivalent coverage is claimed.
+
+Inventory: 365 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
+sources, six removed-functionality exclusions and **8 unreviewed** out of 465.
+The eight remaining sources are the legacy core suite and its support files.

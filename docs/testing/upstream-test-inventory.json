@@ -7911,7 +7911,9 @@
     "destinations": [
       "kura-opcua/bundles/org.eclipse.kura.driver.opcua.provider"
     ],
-    "status": "unreviewed"
+    "status": "not-applicable-current-api",
+    "execution": "Source/fixture applicability audit only; no test execution claimed",
+    "reason": "Legacy Milo 0.6.16 sdk-server/stack-server fixture, incompatible with the retained Milo 1.1.2 client-only build. Excluded under the explicit instruction to keep official OPC UA unchanged; no server dependency, driver behavior change or equivalent certificate/live-I/O coverage claimed. See opcua-legacy-server-fixture-audit.md."
   },
   {
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/OpcUaDriverTest.java",
@@ -7922,7 +7924,9 @@
     "destinations": [
       "kura-opcua/bundles/org.eclipse.kura.driver.opcua.provider"
     ],
-    "status": "unreviewed"
+    "status": "not-applicable-current-api",
+    "execution": "Source/fixture applicability audit only; no test execution claimed",
+    "reason": "Legacy Milo 0.6.16 sdk-server/stack-server fixture, incompatible with the retained Milo 1.1.2 client-only build. Excluded under the explicit instruction to keep official OPC UA unchanged; no server dependency, driver behavior change or equivalent certificate/live-I/O coverage claimed. See opcua-legacy-server-fixture-audit.md."
   },
   {
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/main/java/org/eclipse/kura/driver/opcua/test/TestNamespace.java",
@@ -7933,7 +7937,9 @@
     "destinations": [
       "kura-opcua/bundles/org.eclipse.kura.driver.opcua.provider"
     ],
-    "status": "unreviewed"
+    "status": "not-applicable-current-api",
+    "execution": "Source/fixture applicability audit only; no test execution claimed",
+    "reason": "Legacy Milo 0.6.16 sdk-server/stack-server fixture, incompatible with the retained Milo 1.1.2 client-only build. Excluded under the explicit instruction to keep official OPC UA unchanged; no server dependency, driver behavior change or equivalent certificate/live-I/O coverage claimed. See opcua-legacy-server-fixture-audit.md."
   },
   {
     "source": "tests/org.eclipse.kura.driver.opcua.test/src/test/java/org/eclipse/kura/driver/opcua/OpcUaChannelDescriptorTest.java",
