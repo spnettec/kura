@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-10",
+  "scope": "Production FrameworkPropertiesDTO boolean serialization under a String JVM override",
+  "trigger": "-Dkura.have.net.admin=false in the macOS development runtime; SystemServiceImpl stores JVM override as String while default property is Boolean",
+  "before": {
+    "frameworkGetStatus": 500,
+    "frameworkFilteredFlagStatus": 500,
+    "javaVersionFilterStatus": 200,
+    "artifact": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/framework-boolean-before-fix-20261010.json",
+    "artifactSha256": "e8a9ed4d1e8201032a198e5f2f74676a769864a8e6e49b17d2f8f02a3b793039"
+  },
+  "fix": "Convert non-null SystemService property through Boolean.valueOf(value.toString()) when populating kuraHaveNetAdmin; preserve null and existing SystemService property-layer behavior.",
+  "verification": {
+    "maven": "3.10.0",
+    "jdk": "Temurin 21.0.12.1",
+    "moduleTests": 7,
+    "regressionTests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "actualMacEquinoxHttps": {
+      "frameworkGetStatus": 200,
+      "frameworkFilteredFlagStatus": 200,
+      "flagValue": false,
+      "otherSystemRoutesStatus": 200,
+      "artifact": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/system-rest-postfix-scr-20261010.json",
+      "artifactSha256": "24595d720ff96ee8c75c6af0773487fc223330629096ad64357090c9855e724c"
+    }
+  },
+  "sourceSha256": "3749ed2e8d37b786b431d073bfc7597af2136807fc2b91f19ed7c4d30db61ccc",
+  "testSha256": "d9efbc08d716d544d8df790f86b811838b75a4c5a539b1bd745b6893f27a8c35",
+  "bundleSha256": "f28d1f02c404e1b34ca755dc5a0aff941b7fd8264948cf57dbadc2390054462d",
+  "manifestComparison": "Handwritten metadata identical to prior runtime bundle; only generated Bundle-Version timestamp changed.",
+  "limits": [
+    "Only isolated Mac development assembly tested over actual HTTPS/Equinox; installed Debian and Linux hardware were not retested."
+  ]
+}

@@ -277,7 +277,8 @@ public class FrameworkPropertiesDTO {
         }
 
         if (filter.test("kuraHaveNetAdmin")) {
-            this.kuraHaveNetAdmin = (Boolean) systemService.getProperties().get(SystemService.KEY_KURA_HAVE_NET_ADMIN);
+            Object hasNetAdmin = systemService.getProperties().get(SystemService.KEY_KURA_HAVE_NET_ADMIN);
+            this.kuraHaveNetAdmin = hasNetAdmin == null ? null : Boolean.valueOf(hasNetAdmin.toString());
         }
 
         if (filter.test("kuraWifiTopChannel")) {
