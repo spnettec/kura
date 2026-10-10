@@ -51,7 +51,7 @@ Additionally, we provide two channels for reporting any issue you find with the 
 Install
 -------
 
-Eclipse Kura™ is compatible with Java 17.
+This fork builds and runs with JDK 21. The management UI retains its Java 11 bytecode target for GWT compatibility.
 
 ### Target Gateways Installers
 Eclipse Kura™ provides pre-built installers for common development boards. Check the following [link](https://www.eclipse.org/kura/downloads.php) to download the desired installers.
@@ -65,136 +65,72 @@ Build
 
 ### Prerequisites
 
-In order to be able to build Eclipse Kura™ on your development machine, you need to have the following programs installed in your system:
-* JDK 17
-* Maven 3.9.x
+Use **Maven 3.10, JDK 21 and JUnit 5**. The default build uses Maven Bundle Plugin
+6.0.0 and preserves handwritten OSGi metadata. Check the JDK used by Maven with
+`mvn --version`; setting only the IDEA project SDK does not set Maven's JDK.
 
-<details>
-<summary>
+This fork is a multi-repository workspace. Keep the sibling repositories listed in
+`build-all.sh` beside `kura/`. Independently build the required PLC4X fork artifacts
+from source into the same Maven repository before building YOFC. Missing required
+siblings fail explicitly; they are not silently skipped. Docker is only required
+when image building is enabled.
 
-#### Installing Prerequisites in Mac OS 
+### Build the workspace
 
-</summary>
+```sh
+# Core and public build support only
+mvn clean install
 
-To install Java 17, download the JDK tar archive from the [Adoptium Project Repository](https://adoptium.net/en-GB/temurin/releases/?variant=openjdk8&jvmVariant=hotspot&version=17).
+# Complete workspace and packages, without Docker images
+BUILD_DOCKER=0 ./build-all.sh
 
-Once downloaded, copy the tar archive in `/Library/Java/JavaVirtualMachines/` and cd into it. Unpack the archive with the following command:
-
-```bash
-sudo tar -xzf <archive-name>.tar.gz
+# Ordinary tests, actual Equinox tests and HTTP/MQTT endpoint tests
+RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0 ./build-all.sh
 ```
 
-The tar archive can be deleted afterwards.
+The script builds public support and wrappers, core, sibling bundles/packages,
+YOFC, core distribution and the development runtime in dependency order. Tests
+are skipped by default. With Docker enabled (the script default), the final stage
+builds matching ARM64 and AMD64 deb/image combinations in `kura-docker`.
 
-Depending on which terminal you are using, edit the profiles (.zshrc, .profile, .bash_profile) to contain:
+Use `KURA_MAVEN_REPO=/absolute/cache` with `build-all.sh` or
+`-Dmaven.repo.local=/absolute/cache` with direct Maven commands. PLC4X and all
+consumers must use the same cache. Do not clean or reassemble an active IDEA
+application's `target/runtime`; its persistent data lives separately in
+`~/.kura-dev/<profile>`.
 
-```bash
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/<archive-name>/Contents/Home
-```
+### Focused tests and packaging
 
-Reload the terminal and run `java -version` to make sure it is installed correctly.
-
-Using [Brew](https://brew.sh/) you can easily install Maven from the command line:
-
-```bash
-brew install maven@3.9
-```
-Run `mvn -version` to ensure that Maven has been added to the PATH. If Maven cannot be found, try running `brew link maven@3.9 --force` or manually add it to your path with:
-
-```bash
-export PATH="/usr/local/opt/maven@3.9/bin:$PATH"
-```
-
-</details>
-
-<details>
-<summary>
-
-#### Installing Prerequisites in Linux
-
-</summary>
-
-For Java
-```bash
-sudo apt install openjdk-17-jdk
-```
-For Maven   
-
-You can follow the tutorial from the official [Maven](http://maven.apache.org/install.html) site. Remember that you need to install the 3.9.x version.
-
-</details>
-
-### Build Eclipse Kura™
-
-Change to the new directory and clone the Eclipse Kura™ repo:
-
-```bash
-git clone -b develop https://github.com/eclipse-kura/kura.git
-```
-
-Move inside the newly created directory and build the target platform:
-
-```bash
-mvn -f target-platform/pom.xml clean install
-```
-
-Build the core components:
-
-```bash
-mvn -f kura/pom.xml clean install
-```
-
-Build the target profiles and the Eclipse Kura Target Definition:
-
-```bash
-mvn -f kura/distrib/pom.xml clean install -DbuildAll
-```
-
-> [!TIP]
-You can skip tests by adding `-Dmaven.test.skip=true` in the commands above and you can compile a specific target by specifying the profile (e.g. `-Paarch64`).
-
-To list the available installer profiles, run:
-
-```bash
+```sh
+mvn -f path/to/module/pom.xml test -Dtest=ClassName
+mvn -Posgi-it -pl :kura-osgi-tests -am verify
+mvn -f kura-endpoint-tests/pom.xml verify
 mvn -f kura/distrib/pom.xml help:all-profiles
+mvn -f kura/distrib/pom.xml install -Parch-aarch64,!arch-x86_64
 ```
 
-Additionally you can build only the Eclipse Kura Target Definition, by running in the `distrib` folder:
-
-```bash
-mvn -f kura/distrib/pom.xml clean install -Ptarget-definition
-```
-
-#### Build scripts
-
-Alternatively, you can use the build scripts available in the root directory.
-
-```bash
-./build-all.sh
-```
-
-### Building Eclipse Kura™ Containers
-
-The Eclipse Kura™ container build process currently only supports x86 containers. Following the instructions below will build two containers. One based on Alpine Linux `kura-alpine-x86_64`, and another on Ubi8 `kura-ubi8-x86_64`.
-
-Build Eclipse Kura™ as per [our instructions](#build-kura). To build the containers you'll need to change the target of the "Build the target profiles" step like the following:
-
-```bash
-mvn -f kura/distrib/pom.xml clean install -DbuildAllContainers
-```
-
-> [!NOTE]
-This build step requires 'docker' to be a executable command on your system. For Instance, if you are using Podman please follow the [Emulating Docker Cli Guide](https://podman-desktop.io/docs/migrating-from-docker/emulating-docker-cli-with-podman) before running the command above.
-
-After this command completes, images can be found in your preferred container engine image list.
+Install the current core/sibling fixture artifacts before standalone endpoint
+tests. Surefire and Failsafe reports are in each module's `target` directory.
+`-DskipTests` skips ordinary tests; use `-DskipITs` as well when skipping Failsafe.
+The [CI entry](docs/migration/ci-migration.md) invokes the complete tested workspace
+command and filters reports against current source files. Badges above refer to
+the upstream project, not a verified CI run for this fork.
 
 IDE Setups
 ----------
 
-We currently support two setups for Eclipse Kura™ development:
+Import the root `pom.xml` in IDEA with Maven 3.10 and JDK 21. Enable `workspace`
+for sibling modules and the development runtime, `osgi-it` for real Equinox tests,
+and `endpoint-it` for HTTP/MQTT tests. Shared application and JUnit Run/Debug
+configurations are in `.run/`; see [runtime setup](kura-dev-runtime/README.md)
+and [IDEA test acceptance](docs/testing/idea-junit-acceptance.md).
 
-- [**Eclipse Kura™ Development Environment Setup**](https://eclipse-kura.github.io/kura/latest/java-application-development/development-environment-setup/): This is the full setup allowing you to contribute to the core Eclipse Kura™ project codebase. It will install all the IDE plugins and formatters to have a pleasant development experience and clone the Eclipse Kura™ source code on your workstation.
-- [**Kura Addon Archetype**](https://eclipse-kura.github.io/kura/docs-develop/java-application-development/kura-addon-archetype/): The Kura Addon Archetype will allow you to develop applications or bundles running on Eclipse Kura™. It will install only the APIs and is best suited for developing Eclipse Kura™ add-ons.
+The [add-on archetype](docs/migration/addon-archetype-migration.md) generates an
+ordinary Maven Bundle Plugin project with JUnit 5 and an isolated real Equinox
+test. Legacy Eclipse/PDE resources remain where they have compatibility or
+packaged-resource consumers. The default build and IDEA launch do not read P2.
+See the [migration record](docs/migration/README.md) for exact validation boundaries
+and outstanding restoration work.
 
 Contributing
 ------------

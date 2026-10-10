@@ -1,0 +1,312 @@
+{
+  "checkedReactorPoms": 192,
+  "allProfileTraversal": true,
+  "legacyConfigurationsInReactor": [],
+  "reactorPoms": [
+    "kura-artemis/bundles/org.eclipse.kura.broker.artemis.core/pom.xml",
+    "kura-artemis/bundles/org.eclipse.kura.broker.artemis.simple.mqtt/pom.xml",
+    "kura-artemis/bundles/org.eclipse.kura.broker.artemis.xml/pom.xml",
+    "kura-artemis/bundles/pom.xml",
+    "kura-artemis/distrib/pom.xml",
+    "kura-artemis/dp/pom.xml",
+    "kura-artemis/pom.xml",
+    "kura-camel/bundles/org.eclipse.kura.camel.cloud.factory/pom.xml",
+    "kura-camel/bundles/org.eclipse.kura.camel.xml/pom.xml",
+    "kura-camel/bundles/org.eclipse.kura.camel/pom.xml",
+    "kura-camel/bundles/org.eclipse.kura.wire.camel/pom.xml",
+    "kura-camel/bundles/pom.xml",
+    "kura-camel/distrib/pom.xml",
+    "kura-camel/dp/pom.xml",
+    "kura-camel/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.cloudconnection.eclipseiot.mqtt.provider/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.cloudconnection.raw.mqtt.provider/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.core.cloud.factory/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.misc.cloudcat/pom.xml",
+    "kura-cloud/bundles/org.eclipse.kura.rest.cloudconnection.provider/pom.xml",
+    "kura-cloud/bundles/pom.xml",
+    "kura-cloud/distrib/pom.xml",
+    "kura-cloud/dp/pom.xml",
+    "kura-cloud/pom.xml",
+    "kura-container/bundles/org.eclipse.kura.container.orchestration.provider/pom.xml",
+    "kura-container/bundles/org.eclipse.kura.container.provider/pom.xml",
+    "kura-container/bundles/pom.xml",
+    "kura-container/distrib/pom.xml",
+    "kura-container/dp/pom.xml",
+    "kura-container/pom.xml",
+    "kura-deployment/bundles/org.eclipse.kura.core.deployment/pom.xml",
+    "kura-deployment/bundles/org.eclipse.kura.deployment.agent/pom.xml",
+    "kura-deployment/bundles/org.eclipse.kura.hook.file.move.provider/pom.xml",
+    "kura-deployment/bundles/org.eclipse.kura.rest.packages.provider/pom.xml",
+    "kura-deployment/bundles/pom.xml",
+    "kura-deployment/distrib/pom.xml",
+    "kura-deployment/pom.xml",
+    "kura-management-ui/bundles/org.eclipse.kura.web2.test/pom.xml",
+    "kura-management-ui/bundles/org.eclipse.kura.web2/pom.xml",
+    "kura-management-ui/bundles/pom.xml",
+    "kura-management-ui/distrib/pom.xml",
+    "kura-management-ui/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.core.net/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.linux.net/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.linux.systemd.provider/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.net.admin.firewall/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.net.configuration/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.network.threat.manager/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.nm/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.rest.network.configuration.provider/pom.xml",
+    "kura-networking/bundles/org.eclipse.kura.rest.network.status.provider/pom.xml",
+    "kura-networking/bundles/pom.xml",
+    "kura-networking/distrib-firewall/pom.xml",
+    "kura-networking/distrib/pom.xml",
+    "kura-networking/dp/pom.xml",
+    "kura-networking/pom.xml",
+    "kura-opcua/bundles/org.eclipse.kura.driver.opcua.provider/pom.xml",
+    "kura-opcua/bundles/pom.xml",
+    "kura-opcua/distrib/pom.xml",
+    "kura-opcua/dp/pom.xml",
+    "kura-opcua/pom.xml",
+    "kura-position/bundles/org.eclipse.kura.linux.position/pom.xml",
+    "kura-position/bundles/org.eclipse.kura.rest.position.provider/pom.xml",
+    "kura-position/bundles/pom.xml",
+    "kura-position/distrib/pom.xml",
+    "kura-position/dp/pom.xml",
+    "kura-position/pom.xml",
+    "kura-triton/bundles/org.eclipse.kura.ai.triton.server/pom.xml",
+    "kura-triton/bundles/pom.xml",
+    "kura-triton/distrib/pom.xml",
+    "kura-triton/dp/pom.xml",
+    "kura-triton/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.asset.cloudlet.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.asset.helper.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.rest.asset.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.rest.wire.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.ai.component.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.component.join.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.component.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.db.component.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.h2db.component.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.helper.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.provider/pom.xml",
+    "kura-wires/bundles/org.eclipse.kura.wire.script.tools/pom.xml",
+    "kura-wires/bundles/pom.xml",
+    "kura-wires/distrib/pom.xml",
+    "kura-wires/dp/pom.xml",
+    "kura-wires/pom.xml",
+    "kura-yofc-runtime/bundles/com.yofc.iot.runtime/pom.xml",
+    "kura-yofc-runtime/bundles/pom.xml",
+    "kura-yofc-runtime/distrib/pom.xml",
+    "kura-yofc-runtime/dp/pom.xml",
+    "kura-yofc-runtime/pom.xml",
+    "kura/build-support/kura-build-bom/pom.xml",
+    "kura/build-support/kura-build-parent/pom.xml",
+    "kura/build-support/kura-configuration-test-fixtures/pom.xml",
+    "kura/build-support/kura-dp-maven-plugin/pom.xml",
+    "kura/build-support/kura-osgi-test-support/pom.xml",
+    "kura/build-support/kura-test-support/pom.xml",
+    "kura/build-support/pom.xml",
+    "kura/build-support/thirdparty/com.digitalpetri.fsm.strict-machine/pom.xml",
+    "kura/build-support/thirdparty/com.digitalpetri.netty.channel-fsm/pom.xml",
+    "kura/build-support/thirdparty/groovy-templates/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.auth-common/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.core-logging/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.core/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.uri-template/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.web-client/pom.xml",
+    "kura/build-support/thirdparty/io.vertx.web-common/pom.xml",
+    "kura/build-support/thirdparty/org.eclipse.milo.sdk-client/pom.xml",
+    "kura/build-support/thirdparty/org.eclipse.milo.sdk-core/pom.xml",
+    "kura/build-support/thirdparty/org.eclipse.milo.stack-core/pom.xml",
+    "kura/build-support/thirdparty/org.eclipse.milo.transport/pom.xml",
+    "kura/build-support/thirdparty/org.eclipse.paho.mqttv5.client/pom.xml",
+    "kura/build-support/thirdparty/pom.xml",
+    "kura/kura-dev-runtime/pom.xml",
+    "kura/kura-endpoint-tests/pom.xml",
+    "kura/kura-osgi-tests/pom.xml",
+    "kura/kura-unit-tests/pom.xml",
+    "kura/kura/distrib/kura-core/pom.xml",
+    "kura/kura/distrib/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator.clock/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator.net/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator.position/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator.usb/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator.watchdog/pom.xml",
+    "kura/kura/emulator/org.eclipse.kura.emulator/pom.xml",
+    "kura/kura/emulator/pom.xml",
+    "kura/kura/org.eclipse.kura.api/pom.xml",
+    "kura/kura/org.eclipse.kura.asset.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.configuration.change.manager/pom.xml",
+    "kura/kura/org.eclipse.kura.core.certificates/pom.xml",
+    "kura/kura/org.eclipse.kura.core.comm/pom.xml",
+    "kura/kura/org.eclipse.kura.core.configuration/pom.xml",
+    "kura/kura/org.eclipse.kura.core.crypto/pom.xml",
+    "kura/kura/org.eclipse.kura.core.identity/pom.xml",
+    "kura/kura/org.eclipse.kura.core.inventory/pom.xml",
+    "kura/kura/org.eclipse.kura.core.keystore/pom.xml",
+    "kura/kura/org.eclipse.kura.core.status/pom.xml",
+    "kura/kura/org.eclipse.kura.core.system/pom.xml",
+    "kura/kura/org.eclipse.kura.core.token.jwt/pom.xml",
+    "kura/kura/org.eclipse.kura.core/pom.xml",
+    "kura/kura/org.eclipse.kura.db.h2db.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.db.sqlite.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.docs/pom.xml",
+    "kura/kura/org.eclipse.kura.driver.helper.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.event.publisher/pom.xml",
+    "kura/kura/org.eclipse.kura.http.server.manager/pom.xml",
+    "kura/kura/org.eclipse.kura.json.marshaller.unmarshaller.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.jul.to.slf4j.configuration/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.clock/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.position.spi/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.usb.aarch64/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.usb.x86_64/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.usb/pom.xml",
+    "kura/kura/org.eclipse.kura.linux.watchdog/pom.xml",
+    "kura/kura/org.eclipse.kura.localization.resources/pom.xml",
+    "kura/kura/org.eclipse.kura.localization/pom.xml",
+    "kura/kura/org.eclipse.kura.log.filesystem.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.request.handler.jaxrs/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.configuration.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.identity.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.inventory.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.keystore.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.security.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.service.listing.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.system.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.rest.tamper.detection.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.script.provider/pom.xml",
+    "kura/kura/org.eclipse.kura.stress/pom.xml",
+    "kura/kura/org.eclipse.kura.useradmin.store/pom.xml",
+    "kura/kura/org.eclipse.kura.util/pom.xml",
+    "kura/kura/org.eclipse.kura.xml.marshaller.unmarshaller.provider/pom.xml",
+    "kura/kura/pom.xml",
+    "kura/kura/tools/kura-addon-archetype/pom.xml",
+    "kura/kura/tools/pom.xml",
+    "kura/pom.xml",
+    "yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/pom.xml",
+    "yofc-iot/com.yofc.iot.api/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.abplc/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.comp/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdb/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.influxdbv1/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.ot3001/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.visa/pom.xml",
+    "yofc-iot/com.yofc.iot.apps/pom.xml",
+    "yofc-iot/pom.xml"
+  ],
+  "legacyPdeConsumers": [
+    {
+      "target": "kura-deployment/target-definition/kura-deployment.target",
+      "artifacts": [
+        "target-platform-pde-deps",
+        "kura-pde-deps"
+      ]
+    },
+    {
+      "target": "kura-artemis/target-definition/kura-artemis.target",
+      "artifacts": [
+        "target-platform-pde-deps",
+        "kura-pde-deps",
+        "proton-j",
+        "qpid-jms-client",
+        "commons-beanutils",
+        "commons-collections"
+      ]
+    },
+    {
+      "target": "kura-cloud/target-definition/kura-cloud.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps"
+      ]
+    },
+    {
+      "target": "kura-opcua/target-definition/kura-opcua.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps",
+        "org.eclipse.milo.sdk-client",
+        "org.eclipse.milo.sdk-core",
+        "org.eclipse.milo.stack-core",
+        "org.eclipse.milo.transport",
+        "com.digitalpetri.fsm.strict-machine",
+        "com.digitalpetri.netty.channel-fsm"
+      ]
+    },
+    {
+      "target": "kura-camel/target-definition/kura-camel.target",
+      "artifacts": [
+        "target-platform-pde-deps",
+        "kura-pde-deps",
+        "commons-pool2",
+        "httpcore-osgi"
+      ]
+    },
+    {
+      "target": "kura-triton/target-definition/kura-triton.target",
+      "artifacts": [
+        "target-platform-pde-deps",
+        "kura-pde-deps"
+      ]
+    },
+    {
+      "target": "kura-position/target-definition/kura-position.target",
+      "artifacts": [
+        "target-platform-pde-deps",
+        "kura-pde-deps",
+        "gpsd4java"
+      ]
+    },
+    {
+      "target": "kura-management-ui/target-definition/kura-management-ui.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps",
+        "commons-csv"
+      ]
+    },
+    {
+      "target": "kura-container/target-definition/kura-container.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps"
+      ]
+    },
+    {
+      "target": "kura-wires/target-definition/kura-wires.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps"
+      ]
+    },
+    {
+      "target": "kura-networking/target-definition/kura-networking.target",
+      "artifacts": [
+        "kura-pde-deps",
+        "target-platform-pde-deps"
+      ]
+    }
+  ],
+  "packagedLaunchResources": [
+    {
+      "path": "kura/emulator/org.eclipse.kura.emulator/src/main/resources/Kura_Emulator.launch",
+      "sha256": "490555546af4e6276c467e216ba412d78d580ec04093dd39654e725a6e13c282"
+    },
+    {
+      "path": "kura/emulator/org.eclipse.kura.emulator/src/main/resources/Kura_Emulator_Linux_Emulator.launch",
+      "sha256": "92cce588d9319eb26acfd8eb95f3d7ee0f52d136f7fa3cac3f27b7894fc9ee0b"
+    },
+    {
+      "path": "kura/emulator/org.eclipse.kura.emulator/src/main/resources/Kura_Emulator_OSX_Emulator.launch",
+      "sha256": "88c1a63690ec0daf6ed161f34b6bda55c20761fe4157d09602098a24c6d3c36b"
+    },
+    {
+      "path": "kura/emulator/org.eclipse.kura.emulator/src/main/resources/Kura_Emulator_WIN_Emulator.launch",
+      "sha256": "dea0673ae546d6e6e7fda16a5f48d68c680fb9fe6823fe0ae9596429ec5943b9"
+    }
+  ],
+  "scope": "Static reactor/consumer and current JAR audit; no build or Linux execution",
+  "artemisCleanupRevision": "69053d3ead3860955a4b7e9f3419b92e5f53e909"
+}

@@ -39,85 +39,61 @@ Sibling 的 bundles 通过 Import-Package 从 monorepo 的 `org.eclipse.kura.api
 
 monorepo 内目前**只保留** `org.eclipse.kura.driver.helper.provider`（被 wires + management-ui 通过 `DriverDescriptorService` 消费）。
 
-## 构建命令
+## 构建命令（Maven Bundle Plugin 迁移后）
 
-### 三阶段一键脚本（推荐）
-
-```bash
-./build-all.sh              # 跳过测试（默认）
-RUN_TESTS=1 ./build-all.sh  # 包含测试
-```
-
-执行顺序：
-1. **Stage 1** — `target-platform/pom.xml` + `kura/pom.xml`（产出 monorepo bundles 到 ~/.m2）
-2. **Stage 2** — 同级目录下存在的每个 `kura-*` sibling（顺序无关；缺失则跳过）
-3. **Stage 3** — `kura/distrib/pom.xml`（产出 kura-core.deb + docker 镜像；docker-base 从 ~/.m2 拉 sibling jar 烘焙进 installer.sh）
-
-**Stage 3 必须在 Stage 2 之后**，否则 docker 镜像里的 sibling jar 会缺失。
-
-### 分步手工构建
+当前默认入口为普通 Maven，旧 Tycho/PDE 文件仅按实际兼容消费者保留。
+以实际 POM、`build-all.sh` 和 `docs/migration/README.md` 为准，不恢复旧构建链。
 
 ```bash
-# 1. 目标平台
-mvn -f target-platform/pom.xml clean install
-
-# 2. monorepo 核心
-mvn -f kura/pom.xml clean install
-
-# 3. 各 sibling（如有 clone）
-mvn -f ../kura-wires/pom.xml clean install
-mvn -f ../kura-wires/distrib/pom.xml clean install
-# ...其余 sibling 同样模式
-
-# 4. kura-core.deb + docker
-mvn -f kura/distrib/pom.xml clean install -DbuildAll
+mvn clean install                  # 公共 parent/BOM、封装与核心
+BUILD_DOCKER=0 ./build-all.sh        # 完整工作空间，默认跳过测试
+RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0 ./build-all.sh
 ```
 
-### 跳过测试 / 特定 Profile
+脚本顺序：公共构建支持/第三方封装 → 核心及可选 Equinox 测试 → sibling
+及可选 HTTP/MQTT 测试 → YOFC → 核心发行包/开发运行集 → 可选 Docker 双架构镜像。
+必需 sibling 缺失会失败，不再跳过。PLC4X 从源码独立构建并安装到相同 Maven
+缓存，是显式前置步骤，不纳入 Kura reactor，也不扩展其测试。
+
+直接 Maven 使用 `-Dmaven.repo.local=/absolute/cache`；脚本使用
+`KURA_MAVEN_REPO=/absolute/cache`。sibling 根 POM 已包含自己的发行模块。
 
 ```bash
-mvn -f kura/pom.xml clean install -Dmaven.test.skip=true
-mvn -f kura/distrib/pom.xml help:all-profiles            # 列出所有 profile
-mvn -f kura/distrib/pom.xml clean install -Paarch64
-mvn -f kura/distrib/pom.xml clean install -DbuildAllContainers
-mvn -f kura/distrib/pom.xml clean install -Ptarget-definition  # 仅迭代 P2 target
+mvn -f path/to/module/pom.xml test -Dtest=ClassName
+mvn -Posgi-it -pl :kura-osgi-tests -am verify
+mvn -f kura-endpoint-tests/pom.xml verify
+mvn -f kura/distrib/pom.xml help:all-profiles
+mvn -f kura/distrib/pom.xml install -Parch-aarch64,!arch-x86_64
 ```
 
-### 运行测试
+先安装对应核心/sibling fixture 后再单独跑 endpoint。Surefire/Failsafe 报告
+位于各模块的 `target`；不再从旧 `kura/test` 统计。`-DskipTests` 不替代
+Failsafe 的 `-DskipITs`，跳过全部测试时需同时指定。
 
-```bash
-mvn -f kura/pom.xml test                       # 全量
-mvn -f <module>/pom.xml test -Dtest=ClassName  # 指定单测（Tycho Surefire）
-```
-
-Surefire 报告位于 `kura/test/*/target/surefire-reports/`。
-CI（Jenkinsfile）使用 `-Dsurefire.rerunFailingTestsCount=3` 掩盖偶发性失败。
-
-### 代码检查
-
-```bash
-mvn checkstyle:check  # 根目录 checkstyle_checks.xml / suppressions.xml
-```
-
-### CI 行为参考（Jenkinsfile）
-
-- `temurin-jdk17-latest` + `apache-maven-3.9.6`
-- target-platform 阶段附加 `-Pno-mirror -Pcheck-exists-plugin`
-- 仅修改 `*.md` / `*.txt` 时跳过整个构建
-- Sonar 扫描排除 `org.eclipse.kura.web2/**`（已迁到 sibling）、`...freedesktop|w1/**` 中的生成代码
+Jenkins 调用 `tools/ci/verify-workspace.sh`，要求预置专用多仓库 workspace、
+Maven 3.10/JDK 21 和 PLC4X 缓存；不假设 Eclipse 的工具名/凭据存在。
+不自动重跑或忽略失败，只发布本次且能匹配当前源码的测试报告。
+见 `docs/migration/ci-migration.md`；本地检查不代表远端 Jenkins 已验收。
 
 ## 环境要求
 
-- **JDK 17** — monorepo 全部 `maven.compiler.source/target=17`，CI 使用 `temurin-jdk17-latest`
-  - 例外：`kura-management-ui/bundles/org.eclipse.kura.web2` 编译目标仍是 Java 11（GWT 约束，**不要随意提升**）
-  - 注意：仓库中 `jdk21` 命名的提交只改了 `docker-alpine-x86_64-nn` 运行时镜像，**不是**构建目标语言级别
-- **Maven 3.9.x**（CI 用 3.9.6）
-- **Docker/Podman** — 仅构建容器时需要
+- **JDK 21** — 核心/运行集使用 Java 21。
+  - 例外：`kura-management-ui/bundles/org.eclipse.kura.web2` 保留 Java 11 编译目标（GWT 约束）。
+- **Maven 3.10**，Maven Bundle Plugin 6.0.0，JUnit 5。
+- **Docker** — 仅构建镜像时需要；默认脚本构建 ARM64 和 AMD64。
+- IDEA 应用仍运行时禁止 clean/重组装同一个 `target/runtime`。
+  `~/.kura-dev/<profile>` 中个人快照、密钥和配置不重置、不入 Git。
+- 2026-10-10 用户要求不再追加 Linux 验证；继续使用 macOS 验收。
+  未实际执行的硬件/系统 D-Bus 验证不能据此记为通过。
 
 ## Monorepo 模块（本仓库 kura/）
 
 ```
-target-platform/   → P2/依赖管理、第三方 OSGi 化
+build-support/     → 普通 Maven parent/BOM、第三方封装、OSGi 测试支持
+kura-dev-runtime/  → 独立 Equinox 运行集
+kura-osgi-tests/   → 真实容器测试
+kura-endpoint-tests/ → HTTP/MQTT 端点测试
+target-platform/   → 保留的 P2/PDE 兼容输出（不在默认构建）
 kura/
   ├── org.eclipse.kura.api                    → 公共 API（含 container/* 接口供 sibling 引用）
   ├── org.eclipse.kura.core*                  → 核心服务（configuration/identity/keystore/inventory/system/status/...）
@@ -135,7 +111,7 @@ kura/
   ├── org.eclipse.kura.event.publisher
   ├── org.eclipse.kura.configuration.change.manager
   ├── org.eclipse.kura.util / test-util       → 工具 + 测试支持
-  ├── kura-pde-deps / target-definition       → Tycho P2 配置
+  ├── kura-pde-deps / target-definition       → 保留的旧 PDE 兼容配置
   ├── emulator/                               → 本地仿真启动配置
   ├── distrib/                                → kura-core.deb + docker 镜像
   └── tools/                                  → kura-addon-archetype 等
@@ -154,8 +130,8 @@ Sibling 安装顺序通过 `/opt/eclipse/kura/framework/sibling-install-order` �
 
 ## 关键设计原则
 
-- **OSGi Bundle 是基本交付单元**，不是 JAR/WAR；packaging 为 `eclipse-plugin` 或 `eclipse-feature`
-- **Tycho 构建**，不是标准 Maven 打包；理解 Tycho/P2/Feature 的关系很重要
+- **OSGi Bundle 是基本交付单元**；生产模块 packaging 为 `bundle`，保留手写 MANIFEST、DS/metatype 和嵌入布局
+- **普通 Maven + Maven Bundle Plugin 构建**；不要重新引入 Tycho 或用自动推导覆盖手写 OSGi 元数据
 - **API 与实现分离**：插件开发依赖 `org.eclipse.kura.api`，不要直接依赖 `core*` 实现
 - **Sibling 通过 Import-Package 拉 monorepo API**，**不要**把 sibling 的实现包反向引入 monorepo
 - **扩展点机制**：通过 `kura/tools/kura-addon-archetype` 模板创建新插件
@@ -168,7 +144,7 @@ Sibling 安装顺序通过 `/opt/eclipse/kura/framework/sibling-install-order` �
 3. **修改依赖版本** 需同步检查 `target-platform/pom.xml` 兼容性
 4. **驱动/Linux 模块** 的改动可能只在特定硬件上暴露问题
 5. **测试覆盖率较低**，大部分模块无 `src/test`，改核心逻辑要格外谨慎
-6. **容器构建仅 x86 支持**，ARM 上的 Docker 构建未支持
+6. **容器构建支持 ARM64/AMD64**，各镜像必须配套同架构 deb
 7. **不要在 monorepo 内增加面向特定 sibling 的代码**——如果 wires/container/cloud 需要新功能，加在对应 sibling 里
 8. **CloudConnection bundles 已与上游分叉**（i18n 层面），上游 `CloudConnection*` 提交要手动合并，不要批量 cherry-pick
 9. **Localization bundle 与上游分叉**，禁止 cherry-pick 上游 `664f0878e5` (#5891)
@@ -232,7 +208,7 @@ WARN  Error creating configuration with pid: <pid> and factory pid: <factoryPid>
 
 ### 本地调试
 
-使用 `kura/emulator/` 中的 Kura_Emulator 启动配置在本地仿真运行，无需真实网关设备。
+IDEA 导入根 POM，按需启用 workspace/osgi-it/endpoint-it profiles，使用 `.run/` 中共享应用与 JUnit 配置。应用启动前增量构建，开发运行集见 `kura-dev-runtime/README.md`。旧 Eclipse 安装与 workspace 保留，不自动卸载。
 
 ### REST API 开发
 

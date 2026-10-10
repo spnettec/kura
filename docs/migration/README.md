@@ -23,7 +23,7 @@
 | P4 核心迁移 | 已通过：51 个默认 bundle + docs；22 项普通测试、6 项真实容器测试及新核心运行验证。 |
 | P5 Sibling / YOFC | 47 个原 Tycho sibling bundle、YOFC 及 runtime 构建/产物检查通过；完整新运行集 CLI 和 IDEA 增量构建、Debug、控制台登录通过。 |
 | P6 交付与平台回归 | 空缓存、ARM64/AMD64 Docker 运行及重启、Linux deb 安装/升级/卸载、macOS IDEA 与 Linux CLI 通过；Linux GUI 应用及 JUnit Run/Debug 通过。 |
-| P7 清理切换 | 插件模板及 CI 定义已切换，模板运行和 CI 本地检查通过；通用 PDE 清理仍待完成，旧 Eclipse 安装和 workspace 保留。 |
+| P7 清理切换 | 插件模板及 CI 定义已切换，模板运行和 CI 本地检查通过；已清除无消费者的旧测试/模板/CI 配置；PDE/P2 兼容消费者按审计保留。 |
 
 ## 基线与回退
 
@@ -151,7 +151,7 @@ mvn -Pjavadocs,osgi-it install
 
 发行包中两个独立的 Jackson YAML / JAXB 模块在原包中已有未解析依赖；新旧 JAR 字节相同，原包也在真实 Equinox resolver 中复现。没有为此改变共享依赖边界。OPC UA bundle 内的 YAMLFactory 和 SnakeYAML Engine 均通过自身真实 bundle classloader 加载，详见 [Jackson/YAML 原包对照](jackson-yaml-boundary.md)。桌面仿真清单不含这两个多余的独立模块，全部条目可以解析。
 
-2026-10-10 已在隔离 Linux VM 补齐 GUI/IDEA，直接打开宿主仓库，完成应用及 JUnit Run/Debug、真实 SCR 断点/单步、停止释放端口和重启数据保留。见 [完整应用记录](../testing/linux-idea-application-acceptance.md)及 [JUnit 记录](../testing/idea-junit-acceptance.md)。真实硬件功能仍按原独立流程验收。P7 插件模板已完成普通 Maven/JUnit 5 切换，见 [模板验收](addon-archetype-migration.md)；[CI 定义](ci-migration.md)也已切换并通过本地检查，未执行远端 Jenkins；通用 Eclipse/PDE 配置清理仍未完成。
+2026-10-10 已在隔离 Linux VM 补齐 GUI/IDEA，直接打开宿主仓库，完成应用及 JUnit Run/Debug、真实 SCR 断点/单步、停止释放端口和重启数据保留。见 [完整应用记录](../testing/linux-idea-application-acceptance.md)及 [JUnit 记录](../testing/idea-junit-acceptance.md)。真实硬件功能仍按原独立流程验收。P7 插件模板已完成普通 Maven/JUnit 5 切换，见 [模板验收](addon-archetype-migration.md)；[CI 定义](ci-migration.md)也已切换并通过本地检查，未执行远端 Jenkins；[配置消费者审计](legacy-config-consumer-audit.md)已清理空 Artemis 测试聚合模块；仍被 Eclipse/P2 或 bundle 资源打包消费的配置保留。
 
 
 ## 调试数据导入和当前版本组合
