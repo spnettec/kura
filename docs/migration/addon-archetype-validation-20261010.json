@@ -1,0 +1,35 @@
+{
+  "environment": "macOS / Maven 3.10.0 / JDK 21",
+  "project": "/tmp/kura-addon-mbp-final-20261010/kura-addon-acceptance",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/addon-archetype-20261010",
+  "cleanGeneration": true,
+  "initialVerify": true,
+  "incrementalVerify": true,
+  "reports": [
+    {
+      "file": "TEST-org.example.addon.test.ExampleComponentTest.xml",
+      "tests": 1,
+      "sha256": "f72961d4e54ed2f5a155b53788f462ebf213df908235482e8147cedd4a558dae"
+    },
+    {
+      "file": "TEST-org.example.addon.test.ExampleComponentIT.xml",
+      "tests": 1,
+      "sha256": "865b3fe108566a1cecfe4896b74a79216c262a05cb82560b5dd9cabed5119c07"
+    }
+  ],
+  "handwrittenHeadersPreserved": true,
+  "noImplicitExports": true,
+  "classMajor": 65,
+  "descriptors": {
+    "OSGI-INF/metatype/org.example.addon.ExampleComponent.xml": "d53970d228dcf54b09c267274de6e80968d71960b3a78ac55f4177891bd08824",
+    "OSGI-INF/org.example.addon.ExampleComponent.xml": "481f9a9267cd5d9d85881f3de9eb5dbf56a94ffe4a47e60c5b9e5bc8f982a706",
+    "OSGI-INF/org.example.addon.ExampleDependencyServiceComponent.xml": "49f1f9ca760d48d9e96fe557a19bacb7e153d7a2f4e19993348032489b046af7"
+  },
+  "sourceJavaCount": 6,
+  "debBundlePath": "./opt/eclipse/kura/plugins/6s/kura-addon-acceptance.bundle-1.0.0-SNAPSHOT.jar",
+  "artifacts": {
+    "kura-addon-acceptance.bundle-1.0.0-SNAPSHOT.jar": "d4635a84d221fd73a32694658b28b15416c5511444634bbc837c0c9a8ebce558",
+    "kura-addon-acceptance.bundle-1.0.0-SNAPSHOT-sources.jar": "43522e8d09aab7bc5b9e7aadd195cac1cdc8d9a264a32a4a5f0d7d8f86bfc8a7",
+    "kura-addon-acceptance_1.0.0~git202610100424.5efdb9a-1_all.deb": "54a03fa97e82daee41122ae8df7c72b5f577b0da1e6834d07af0bc59f0b1818c"
+  }
+}

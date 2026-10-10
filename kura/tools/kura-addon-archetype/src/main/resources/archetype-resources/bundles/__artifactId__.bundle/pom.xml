@@ -1,36 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-
-    Copyright (c) 2025 Eurotech and/or its affiliates and others
-
-    This program and the accompanying materials are made
-    available under the terms of the Eclipse Public License 2.0
-    which is available at https://www.eclipse.org/legal/epl-2.0/
-
-    SPDX-License-Identifier: EPL-2.0
-
-    Contributors:
-     Eurotech
-
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-        <groupId>${groupId}</groupId>
-        <artifactId>${artifactId}.parent</artifactId>
-        <version>${version}</version>
-    </parent>
-
-    <properties>
-        <sonar.coverage.jacoco.xmlReportPaths>
-            ${project.basedir}/../../tests/*/target/site/jacoco-aggregate/jacoco.xml
-        </sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
-    <artifactId>${artifactId}.bundle</artifactId>
-    <packaging>eclipse-plugin</packaging>
-
+<!-- Copyright (c) 2025, 2026 Eurotech and contributors.
+     SPDX-License-Identifier: EPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>${groupId}</groupId><artifactId>${artifactId}.parent</artifactId>
+    <version>${version}</version><relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>${artifactId}.bundle</artifactId><packaging>bundle</packaging>
+  <dependencies>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.api</artifactId>
+      <version>${kura.api.version}</version><scope>provided</scope>
+      <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.configuration</artifactId>
+      <version>${kura.configuration.version}</version><scope>provided</scope>
+      <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><scope>provided</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.component.annotations</artifactId><scope>provided</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.metatype.annotations</artifactId><scope>provided</scope></dependency>
+  </dependencies>
+  <build>
+    <resources><resource><directory>${project.basedir}</directory><includes>
+      <include>about.html</include><include>about_files/**</include>
+    </includes></resource></resources>
+    <plugins>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-antrun-plugin</artifactId>
+        <executions><execution><id>prepare-handwritten-manifest</id><phase>generate-resources</phase></execution></executions></plugin>
+      <plugin><groupId>org.apache.felix</groupId><artifactId>maven-bundle-plugin</artifactId><extensions>true</extensions>
+        <configuration><instructions>
+          <_include>${project.build.directory}/osgi/MANIFEST.MF</_include>
+          <_nodefaultversion>true</_nodefaultversion><_removeheaders>Include-Resource,Private-Package</_removeheaders>
+          <Export-Package>!*</Export-Package><Private-Package>!*</Private-Package><Include-Resource>${project.build.outputDirectory}</Include-Resource>
+          <!-- This template already uses annotated components; keep descriptor generation explicit. -->
+          <_dsannotations>*</_dsannotations><_metatypeannotations>*</_metatypeannotations>
+        </instructions></configuration>
+      </plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-source-plugin</artifactId><version>3.4.0</version>
+        <executions><execution><id>bundle-sources</id><goals><goal>jar-no-fork</goal></goals></execution></executions>
+      </plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jarsigner-plugin</artifactId></plugin>
+    </plugins>
+  </build>
 </project>

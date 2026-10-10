@@ -1,68 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Copyright (c) 2025 Eurotech and/or its affiliates and others
-
-    This program and the accompanying materials are made
-    available under the terms of the Eclipse Public License 2.0
-    which is available at https://www.eclipse.org/legal/epl-2.0/
-
-    SPDX-License-Identifier: EPL-2.0
-
-    Contributors:
-     Eurotech
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-        <groupId>${groupId}</groupId>
-        <artifactId>${artifactId}.tests</artifactId>
-        <version>${version}</version>
-    </parent>
-
-    <artifactId>${artifactId}.bundle.test</artifactId>
-    <packaging>eclipse-test-plugin</packaging>
-
-    <build>
-        <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>prepare-test-resources</id>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-            </plugin>
-            
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.eclipse.tycho</groupId>
-                <artifactId>tycho-surefire-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-maven-plugin</artifactId>
-            </plugin>
-
-        </plugins>
-    </build>
+<!-- Copyright (c) 2025, 2026 Eurotech and contributors.
+     SPDX-License-Identifier: EPL-2.0 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>${groupId}</groupId><artifactId>${artifactId}.tests</artifactId>
+    <version>${version}</version><relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>${artifactId}.bundle.test</artifactId>
+  <dependencies>
+    <dependency><groupId>${groupId}</groupId><artifactId>${artifactId}.bundle</artifactId><version>${version}</version><scope>test</scope></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.api</artifactId><version>${kura.api.version}</version><scope>test</scope></dependency>
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>kura-osgi-test-support</artifactId><version>${kuraVersion}</version><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId>
+      <executions><execution><id>prepare-real-bundles</id><phase>pre-integration-test</phase><goals><goal>copy</goal></goals>
+        <configuration><outputDirectory>${project.build.directory}/it-bundles</outputDirectory><overWriteSnapshots>true</overWriteSnapshots><artifactItems>
+          <artifactItem><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.86</version><destFileName>bcpkix.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId><version>1.86</version><destFileName>bcprov.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>1.86</version><destFileName>bcutil.jar</destFileName></artifactItem>
+          <artifactItem><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>33.4.0-jre</version><destFileName>com.google.guava.jar</destFileName></artifactItem>
+          <artifactItem><groupId>com.google.guava</groupId><artifactId>failureaccess</artifactId><version>1.0.2</version><destFileName>com.google.guava.failureaccess.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.commons</groupId><artifactId>commons-exec</artifactId><version>1.4.0</version><destFileName>org.apache.commons.commons-exec.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.felix</groupId><artifactId>org.apache.felix.scr</artifactId><version>2.2.14</version><destFileName>org.apache.felix.scr.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><version>2.26.0</version><destFileName>org.apache.logging.log4j.api.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.equinox.cm</artifactId><version>1.6.400</version><destFileName>org.eclipse.equinox.cm.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.api</artifactId><version>3.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.api.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.configuration</artifactId><version>3.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.configuration.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.util</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.util.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.cm</artifactId><version>1.6.1</version><destFileName>org.osgi.service.cm.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.component</artifactId><version>1.5.1</version><destFileName>org.osgi.service.component.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.coordinator</artifactId><version>1.0.2</version><destFileName>org.osgi.service.coordinator.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.event</artifactId><version>1.4.1</version><destFileName>org.osgi.service.event.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.metatype</artifactId><version>1.4.1</version><destFileName>org.osgi.service.metatype.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.wireadmin</artifactId><version>1.0.2</version><destFileName>org.osgi.service.wireadmin.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.util.function</artifactId><version>1.2.0</version><destFileName>org.osgi.util.function.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.util.measurement</artifactId><version>1.0.2</version><destFileName>org.osgi.util.measurement.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.util.position</artifactId><version>1.0.1</version><destFileName>org.osgi.util.position.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.util.promise</artifactId><version>1.3.0</version><destFileName>org.osgi.util.promise.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.quartz-scheduler</groupId><artifactId>quartz</artifactId><version>2.5.0</version><destFileName>quartz.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.18</version><destFileName>slf4j.api.jar</destFileName></artifactItem>
+          <artifactItem><groupId>commons-io</groupId><artifactId>commons-io</artifactId><version>2.21.0</version><destFileName>org.apache.commons.commons-io.jar</destFileName></artifactItem>
+          <artifactItem><groupId>${groupId}</groupId><artifactId>${artifactId}.bundle</artifactId><version>${version}</version><destFileName>addon.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.aries.spifly</groupId><artifactId>org.apache.aries.spifly.dynamic.bundle</artifactId><version>1.3.7</version><destFileName>org.apache.aries.spifly.dynamic.bundle.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-core</artifactId><version>2.26.0</version><destFileName>log4j-core.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-slf4j2-impl</artifactId><version>2.26.0</version><destFileName>log4j-slf4j2-impl.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.jspecify</groupId><artifactId>jspecify</artifactId><version>1.0.0</version><destFileName>jspecify.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.ow2.asm</groupId><artifactId>asm</artifactId><version>9.7.1</version><destFileName>asm.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.ow2.asm</groupId><artifactId>asm-commons</artifactId><version>9.7.1</version><destFileName>asm-commons.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.ow2.asm</groupId><artifactId>asm-tree</artifactId><version>9.7.1</version><destFileName>asm-tree.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.ow2.asm</groupId><artifactId>asm-analysis</artifactId><version>9.7.1</version><destFileName>asm-analysis.jar</destFileName></artifactItem>
+          <artifactItem><groupId>org.ow2.asm</groupId><artifactId>asm-util</artifactId><version>9.7.1</version><destFileName>asm-util.jar</destFileName></artifactItem>
+        </artifactItems></configuration>
+      </execution></executions>
+    </plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
+      <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions>
+    </plugin>
+  </plugins></build>
 </project>
