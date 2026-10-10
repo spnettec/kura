@@ -3020,7 +3020,8 @@
       "skipped": 0,
       "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
       "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
-    }
+    },
+    "latestSuiteEvidence": "docs/testing/cloud-factory-suite-regression-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDeviceTest.java",
@@ -3088,7 +3089,8 @@
       "skipped": 0,
       "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
       "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
-    }
+    },
+    "latestSuiteEvidence": "docs/testing/cloud-factory-suite-regression-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugIntegrationTest.java",
@@ -3148,7 +3150,8 @@
       "skipped": 0,
       "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
       "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
-    }
+    },
+    "latestSuiteEvidence": "docs/testing/cloud-factory-suite-regression-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/subscriber/test/SparkplugSubscriberTest.java",

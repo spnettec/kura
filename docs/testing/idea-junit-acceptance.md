@@ -94,6 +94,13 @@ Maven 3.10.0 和工作空间 Maven 缓存运行共享 `Kura network enumeration 
 `mac-idea-network-enumeration-validation-20261010.json`。测试使用受控
 LinuxNetworkUtil，不计为 Linux NetworkManager/D-Bus 或真实 SCR 验收。
 
+在单独导入的 `kura-cloud` 工程中，共享 `Kura cloud TLS runtime` 配置以
+IDEA JUnitStarter 直接运行 `CloudFactoryRuntimeIT.sparkplugTlsFilesystemPipeline`，
+**1/1 Passed**，耗时 55.818 秒，进程退出码 0。该用例通过真实 SCR、文件密钥库、
+SSL 管理服务与临时 MQTT broker；完整云工厂类的 Maven 回归另有 13/13 通过。
+本次结果及一次配置事件竞争导致的先前失败见
+`cloud-factory-suite-regression-20261010.json`。
+
 ## Linux IDEA JUnit 验收（2026-10-10）
 
 在隔离 Ubuntu 24.04 ARM64 VM 的 IDEA 2026.2.3 中，直接打开宿主仓库的挂载路径：

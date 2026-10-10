@@ -626,3 +626,19 @@ and [validation evidence](sparkplug-delivery-callback-validation-20261010.json).
 Earlier TLS evidence remains a historical snapshot; the latest checks replace its
 weaker callback/disconnect acceptance. Remaining WSS, durability and IDEA work is
 unchanged.
+
+### Mac factory suite and IDEA TLS follow-up (2026-10-10)
+
+After the core-protocol MQTT fixture gained deployed inventory and a controlled
+system package, the complete `CloudFactoryRuntimeIT` class was rerun. The first
+13-case attempt had one Sparkplug TLS failure: ConfigAdmin updated the transport
+while the test was connecting, and the immediate `isConnected()` assertion saw
+false. The TLS case passed by itself and paired with the core-protocol case.
+The test fixture now gives successful TLS connections at most five seconds to
+settle after asynchronous configuration; certificate rejection, publication,
+CRL revocation and NDEATH assertions are unchanged. A subsequent complete Maven
+class run passed 13/13, and the shared `Kura cloud TLS runtime` configuration
+passed `sparkplugTlsFilesystemPipeline` directly in Mac IDEA (1/1, exit code 0).
+This is test-only stabilization, not a claim that every scheduling interleaving
+or installed Debian assembly has been verified. See
+[the follow-up evidence](cloud-factory-suite-regression-20261010.json).

@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 aarch64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "5.14.4",
+  "cloudCommit": "d2da9b1",
+  "coreRevisionAtValidation": "13821bcf00",
+  "observedFailureBeforeAdjustment": {
+    "scope": "CloudFactoryRuntimeIT full class",
+    "tests": 13,
+    "failures": 1,
+    "case": "sparkplugTlsFilesystemPipeline",
+    "location": "CloudTlsRuntimeScenario.verify:168",
+    "symptom": "connect() returned, then immediate isConnected() was false; ConfigurationListener Event Queue logged a reconnect after configuration update ending in MQTT EOF",
+    "isolation": "The same TLS method and a two-method core-protocol/TLS run each passed without code changes"
+  },
+  "testOnlyAdjustment": "Successful TLS paths retry connection for at most five seconds while an asynchronous SCR/ConfigAdmin update settles; negative certificate and revoked-certificate rejection assertions and NDEATH checks are unchanged",
+  "mavenFullClass": {
+    "command": "mvn -f runtime-tests/pom.xml verify -Dit.test=CloudFactoryRuntimeIT -DfailIfNoTests=false -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 235.232,
+    "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-factory-suite-regression-20261010/TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml",
+    "sha256": "fb5fc57b2f2814ad77a39b642fe5c3bbea534ca6feaa5265f5cadc001826547d"
+  },
+  "idea": {
+    "version": "2026.2.3",
+    "configuration": "kura-cloud/.run/Kura cloud TLS runtime.run.xml",
+    "runner": "IDEA JUnitStarter",
+    "case": "CloudFactoryRuntimeIT.sparkplugTlsFilesystemPipeline",
+    "passed": 1,
+    "total": 1,
+    "elapsedSeconds": 55.818,
+    "exitCode": 0
+  },
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java": "56ed3a226efd6d3a75239a1d82c06bc8461330d68053dac8737ecf7b2f50f885",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "f79af43c949c1ac3958e0a93a9d9775758d89ff4fd491c43f3d75b392fe37f1b",
+    "kura-cloud/.run/Kura cloud TLS runtime.run.xml": "73dddd0dfdfb46e4f328faf131faaa6f75f7b2b8723a20b5406d1363c76ec0f1"
+  },
+  "limits": [
+    "One passing full-class rerun does not prove that the timing race cannot recur under other schedules",
+    "No production TLS, Sparkplug callback or NDEATH behavior changed in this test-only adjustment",
+    "This is an isolated macOS Equinox assembly, not installed Debian acceptance; no new Linux validation was added",
+    "The 13 class invocations overlap earlier targeted and full suite reports and must not be added to historical totals"
+  ]
+}
