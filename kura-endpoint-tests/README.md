@@ -46,3 +46,6 @@ System property and tamper detection scenarios also run over both transports.
 System provider exports its existing mock decorator and JSON resources in a
 `fixtures` test JAR; install it with test compilation enabled before this module.
 See `docs/testing/system-tamper-endpoint-test-restoration.md` in the repository root.
+
+Service-listing scenarios use a private real Equinox service registry. SCR description
+and configuration-service boundaries are controlled; see the service-listing audit.

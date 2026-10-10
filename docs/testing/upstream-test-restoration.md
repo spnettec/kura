@@ -860,3 +860,17 @@ tests plus install. See `system-tamper-endpoint-test-restoration.md`.
 Inventory: 357 restored, 49 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **37 unreviewed** out of 465.
 Actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## Service listing endpoint continuation (2026-10-10)
+
+All 28 service-listing scenarios pass in 55 HTTP/MQTT invocations with real Equinox
+service registration/filter matching; four helper sources are reused. See
+`service-listing-endpoint-test-restoration.md` for controlled SCR boundaries.
+
+Separate production fixes `05484a52dd` and `6837913634` release the filesystem
+keystore password updater and endpoint tracked service uses. Their pre-fix
+regressions fail as expected; full modules pass 78 and 22 tests plus installation.
+
+Inventory: 358 restored, 53 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **32 unreviewed** out of 465.
+Actual Kura SCR/runtime and IDEA acceptance remain open.
