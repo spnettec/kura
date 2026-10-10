@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-10",
+  "scope": "Temporary Timer to Logger route through real Equinox/SCR, ConfigAdmin and WireAdmin on macOS",
+  "platform": "macOS-27.0.1-arm64",
+  "jdk": "21.0.12.1",
+  "maven": "3.10.0",
+  "runtime": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "configuration": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/equinox-config-postfix",
+    "stoppedAfterProbe": true
+  },
+  "route": {
+    "factoryPids": [
+      "org.eclipse.kura.wire.Timer",
+      "org.eclipse.kura.wire.Logger"
+    ],
+    "temporaryPids": [
+      "acceptance.wire.timer.1791627222",
+      "acceptance.wire.logger.1791627222"
+    ],
+    "configurationPutStatus": 200,
+    "graphReadStatus": 200,
+    "wireCount": 1,
+    "loggerWireEnvelopeEvents": 4,
+    "graphDeleteStatus": 200,
+    "afterDeleteReadStatus": 200,
+    "afterDeleteComponents": 0,
+    "afterDeleteWires": 0,
+    "afterDeleteTimerScrInstances": 0,
+    "afterDeleteLoggerScrInstances": 0
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/wire-scr-20261010",
+  "archiveFiles": [
+    {
+      "file": "route-result.json",
+      "sha256": "d500c007319e6fb17501aa1e487f796fb0cceb48ef9c14bf394c936ed87f69c1"
+    },
+    {
+      "file": "route-log-excerpt.txt",
+      "sha256": "e4870357471ffe6a3e687351fe82bf850200e29877e8fd369b8e437d0640aaa3"
+    }
+  ],
+  "limits": [
+    "The route used production Timer and Logger components, not the historical test-only driver/emitter fixtures",
+    "This was an isolated macOS development assembly, not an installed Debian sibling package",
+    "No new Linux, hardware, YOFC, PLC4X or official OPC UA validation was added"
+  ]
+}

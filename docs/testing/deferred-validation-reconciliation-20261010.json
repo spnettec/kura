@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -502,10 +502,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Historical test driver fixture SCR arrival and installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -518,10 +519,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Historical test driver fixture SCR arrival and installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -534,10 +536,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -550,10 +553,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Historical test emitter/receiver fixture SCR arrival and installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -566,10 +570,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Historical test emitter/receiver fixture SCR arrival and installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -582,10 +587,11 @@
       "evidence": [
         "docs/testing/legacy-test-helper-audit.md",
         "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-wire-scr-service-validation-20261010.json"
+        "docs/testing/mac-wire-scr-service-validation-20261010.json",
+        "docs/testing/mac-wire-route-scr-validation-20261010.json"
       ],
-      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS.",
-      "remaining": "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance remain unverified.",
+      "covered": "Helper sources map to current scoped fixtures; their WireGraphEndpointsIT consumer passed direct Mac IDEA class Run 98/98 over HTTP and MQTT. Isolated Mac Equinox/SCR activated graph and REST services, bound WireAdmin/ConfigurationService and returned the empty graph over authenticated HTTPS. A subsequent real Mac SCR Timer-to-Logger graph created factory instances, delivered four WireEnvelopes and returned to an empty graph and zero instances after deletion.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -616,5 +622,6 @@
   "macIdentityScrMutationEvidence": "docs/testing/mac-identity-scr-mutation-validation-20261010.json",
   "macKeystorePrivateKeyEvidence": "docs/testing/mac-keystore-privatekey-scr-validation-20261010.json",
   "macCamelIdeaScrEvidence": "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-  "macWireScrServiceEvidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+  "macWireScrServiceEvidence": "docs/testing/mac-wire-scr-service-validation-20261010.json",
+  "macWireRouteScrEvidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
 }

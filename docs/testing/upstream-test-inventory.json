@@ -10336,7 +10336,7 @@
     "destinations": [],
     "status": "restored-helper",
     "kind": "helper",
-    "reason": "Existing migrated driver fixture is now linked to its upstream source. Corrected test-only withMin/withoutMin setters and expected JSON; both endpoint descriptor scenarios now check all eight minimum bounds. Full REST wire module passes 49 tests; no new test invocation is counted. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "Existing migrated driver fixture is now linked to its upstream source. Corrected test-only withMin/withoutMin setters and expected JSON; both endpoint descriptor scenarios now check all eight minimum bounds. Full REST wire module passes 49 tests; no new test invocation is counted. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10344,7 +10344,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Historical test driver fixture SCR arrival and installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10354,6 +10354,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   },
   {
@@ -10363,7 +10371,7 @@
     "destinations": [],
     "status": "restored-helper",
     "kind": "helper",
-    "reason": "Upstream test.property OCD/default metadata is represented explicitly by RestGraphFixture.driverDefinition and consumed by existing endpoint assertions; no extra annotated production component is installed. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "Upstream test.property OCD/default metadata is represented explicitly by RestGraphFixture.driverDefinition and consumed by existing endpoint assertions; no extra annotated production component is installed. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10371,7 +10379,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Historical test driver fixture SCR arrival and installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10381,6 +10389,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   },
   {
@@ -10390,7 +10406,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "Graph construction is owned by RestGraphFixture and passed to real WireGraphServiceImpl. Global asynchronous service discovery is replaced by explicit configuration/registry boundaries; real DS arrival is still deferred. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "Graph construction is owned by RestGraphFixture and passed to real WireGraphServiceImpl. Global asynchronous service discovery is replaced by explicit configuration/registry boundaries; real DS arrival is still deferred. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10398,7 +10414,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10408,6 +10424,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   },
   {
@@ -10417,7 +10441,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "Endpoint metadata and recording WireSupport callbacks replace the globally activated emitter helper in migrated consumers. This does not claim real WireAdmin/SCR graph delivery. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "Endpoint metadata and recording WireSupport callbacks replace the globally activated emitter helper in migrated consumers. This does not claim real WireAdmin/SCR graph delivery. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10426,7 +10450,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Historical test emitter/receiver fixture SCR arrival and installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10436,6 +10460,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   },
   {
@@ -10445,7 +10477,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "The empty OCD identity and one-input/one-output test metadata are supplied explicitly by emitterDefinition; no standalone fixture bundle is required. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "The empty OCD identity and one-input/one-output test metadata are supplied explicitly by emitterDefinition; no standalone fixture bundle is required. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10453,7 +10485,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Historical test emitter/receiver fixture SCR arrival and installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10463,6 +10495,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   },
   {
@@ -10472,7 +10512,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "Migrated tests own graph/configuration lifecycle and bounded waits directly. Legacy global FrameworkUtil tracker chains are not reinstated; real WireAdmin arrival remains deferred. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json.",
+    "reason": "Migrated tests own graph/configuration lifecycle and bounded waits directly. Legacy global FrameworkUtil tracker chains are not reinstated; real WireAdmin arrival remains deferred. See legacy-test-helper-audit.md. The WireGraphEndpointsIT consumer ran directly in Mac IDEA, 98/98; see mac-idea-rest-endpoints-validation-20261010.json. Isolated Mac Equinox/SCR confirmed WireGraphService and WireRestService ACTIVE, real WireAdmin/ConfigurationService binding and authenticated HTTPS graph read; see mac-wire-scr-service-validation-20261010.json. A follow-up isolated Mac SCR route created production Timer/Logger factory instances, delivered four WireEnvelopes through WireAdmin and cleaned up; see mac-wire-route-scr-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10481,7 +10521,7 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Wire component/driver factory SCR instance arrival, WireAdmin route delivery and installed sibling package acceptance"
+      "Installed Debian sibling package acceptance"
     ],
     "runtimeValidation": {
       "platform": "macOS",
@@ -10491,6 +10531,14 @@
       "wireAdminReference": "SATISFIED",
       "httpsGraphRead": 200,
       "evidence": "docs/testing/mac-wire-scr-service-validation-20261010.json"
+    },
+    "routeValidation": {
+      "platform": "macOS",
+      "assembly": "isolated Equinox/SCR development assembly",
+      "productionComponents": "Timer to Logger",
+      "wireEnvelopeDeliveries": 4,
+      "cleanup": "empty graph and zero component instances",
+      "evidence": "docs/testing/mac-wire-route-scr-validation-20261010.json"
     }
   }
 ]

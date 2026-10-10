@@ -79,6 +79,15 @@ DS instance; the graph service was bound to the real Equinox WireAdmin and core
 ConfigurationService, and was used by the REST bundle. A certificate-validated
 HTTPS GET of `/services/wire/v1/graph/snapshot` returned the empty graph with
 status 200 for the isolated admin and 401 without authentication. See
-`mac-wire-scr-service-validation-20261010.json`. Component/driver factory
-instance arrival, WireAdmin route delivery and installed sibling package
-acceptance remain open.
+`mac-wire-scr-service-validation-20261010.json`. That read-only probe left
+component/driver factory instance arrival, WireAdmin route delivery and
+installed sibling package acceptance open.
+
+A follow-up on the same isolated assembly used the actual Wires REST graph
+endpoint to create temporary Timer and Logger factory components and connect
+their ports. Equinox SCR registered both components, WireGraphService created
+the WireAdmin wire, and Logger received four Timer WireEnvelopes. REST then
+deleted the graph; the graph read back empty and SCR reported zero Timer and
+Logger instances. See `mac-wire-route-scr-validation-20261010.json`. This route
+uses production components; the historical test-only driver/emitter fixtures
+and installed Debian sibling package remain separate acceptance boundaries.
