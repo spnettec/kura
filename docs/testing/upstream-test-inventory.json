@@ -4421,10 +4421,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "All ten upstream scenarios run with explicit lifecycle, temporary storage and random ports. Server-side handshake failure and bounded cleanup are asserted; local keystore-monitor and delayed-restart behavior are retained. See http-server-manager-test-restoration.md.",
+  "reason": "All ten upstream scenarios run with explicit lifecycle, temporary storage and random ports. Server-side handshake failure and bounded cleanup are asserted; local keystore-monitor and delayed-restart behavior are retained. Mac IDEA directly passed the current 11-case class (ten restored upstream cases plus the startup regression), and the isolated development runtime demonstrated SCR configuration and Felix HTTP bridge startup. See http-server-manager-test-restoration.md and mac-idea-http-manager-validation-20261010.json.",
     "deferredValidation": [
-      "Full deployed SCR/Felix servlet bridge/configuration wiring",
-      "IDEA execution"
+    "Installed Debian package SCR/Felix servlet bridge/configuration wiring"
     ]
   },
   {

@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-10",
+  "coreRevision": "c0092df3cadb7d0f8404b224f98894902aee2c18",
+  "platform": "macOS aarch64",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "jdk": "Temurin 21.0.12.1",
+  "ideaDirectJunit": {
+    "class": "org.eclipse.kura.https.server.manager.test.HttpServiceTest",
+    "module": "org.eclipse.kura.http.server.manager",
+    "testCount": 11,
+    "passed": 11,
+    "failed": 0,
+    "duration": "1 min 3 sec",
+    "exitCode": 0,
+    "evidence": "IDEA JUnit result tree and console observed on 2026-10-10",
+    "includes": [
+      "ten restored upstream HTTP/TLS/CRL scenarios",
+      "repeatedKeystoreInjectionDuringStartupDoesNotOpenAnotherServer"
+    ]
+  },
+  "isolatedDevelopmentRuntime": {
+    "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/fixed-second-complete-kura.log",
+    "sha256": "3f07aec9c450ebe0ddd0f8d3a75a76ff9a2dbb1de2a2bfd96ee5e3546caa9ea9",
+    "felixBridgeStartedLine": 186,
+    "httpServiceActivatedLine": 219,
+    "scrRegistrationLine": 274,
+    "configAdminUpdateLine": 310,
+    "configurationSeedLine": 433,
+    "jettyServletContextStartedLine": 508,
+    "httpRoot": "302 Location: /admin/console",
+    "restart": "two Mac IDEA Run starts passed with the same isolated Equinox configuration; see mac-idea-application-restart-validation-20261010.json"
+  },
+  "source": {
+    "path": "kura/org.eclipse.kura.http.server.manager/src/test/java/org/eclipse/kura/https/server/manager/test/HttpServiceTest.java",
+    "sha256": "fc53c1c05dd58d091ecac98bfbb60d76b9b96a8d85e653202fe9e18a666b384c"
+  },
+  "remaining": "Installed Debian package SCR/Felix servlet bridge/configuration wiring is unverified. The direct IDEA JUnit class uses explicit component lifecycle, and the separate complete macOS development runtime supplies the SCR/Felix startup evidence."
+}

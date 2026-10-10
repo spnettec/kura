@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 47,
-  "assessment": "All 47 rows retain their scenario-specific unverified boundary. The complete Mac IDEA development runtime started twice with an isolated profile and Equinox state after two separately committed startup fixes; this establishes startup, REST registration, HTTP redirect and zero INSTALLED bundles, but does not execute the remaining combined endpoint, hardware or package scenarios. Three configuration rows also have direct 47-case IDEA evidence.",
+  "assessment": "All 47 rows retain a scenario-specific unverified boundary. The complete Mac IDEA development runtime started twice with an isolated profile and Equinox state after two separately committed startup fixes; this establishes startup, REST registration, HTTP redirect and zero INSTALLED bundles, but does not execute the remaining combined endpoint, hardware or package scenarios. Three configuration rows have direct 47-case IDEA evidence. The HTTP manager class also passed directly in Mac IDEA (11/11), while installed Debian package wiring remains unverified.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -167,10 +167,12 @@
       "source": "test/org.eclipse.kura.http.server.manager.test/src/main/java/org/eclipse/kura/https/server/manager/test/HttpServiceTest.java",
       "group": "http-manager",
       "evidence": [
-        "docs/testing/http-server-manager-test-restoration.md"
+        "docs/testing/http-server-manager-test-restoration.md",
+        "docs/testing/mac-idea-application-restart-validation-20261010.json",
+        "docs/testing/mac-idea-http-manager-validation-20261010.json"
       ],
-      "covered": "Real Jetty, TLS and CRL component tests passed.",
-      "remaining": "Full deployed SCR/Felix servlet bridge/configuration wiring and direct IDEA execution remain unverified.",
+      "covered": "Real Jetty, TLS and CRL component tests passed. Mac IDEA directly passed HttpServiceTest 11/11 with exit code 0. The isolated development runtime started Felix bridged HTTP services, registered and configured HttpService through SCR/ConfigAdmin, started a Jetty servlet context and served the root HTTP redirect.",
+      "remaining": "Installed Debian package SCR/Felix servlet bridge/configuration wiring remains unverified; the macOS development runtime evidence does not cover package installation.",
       "originalDeferredValidation": [
         "Full deployed SCR/Felix servlet bridge/configuration wiring",
         "IDEA execution"

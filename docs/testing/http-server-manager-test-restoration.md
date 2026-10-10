@@ -23,5 +23,13 @@ also represent a connection reset and are not the evidence of certificate reject
 Each case stops Jetty, asserts listener closure and manager executor termination,
 terminates keystore/CRL executors and stops Equinox. Tests do not use the host's
 fixed ports or keystore. Maven 3.10.0 / Temurin 21, zero failures/errors/skips.
-Full deployed SCR, Felix servlet bridge/configuration assembly and IDEA execution
-remain open. Production code and handwritten OSGi metadata are unchanged.
+Mac IDEA directly ran `HttpServiceTest`: 11/11 passed in 1 min 3 sec with exit
+code 0 (the ten restored upstream cases plus the duplicate-keystore-injection
+regression). The isolated Mac IDEA development runtime also started Felix bridged
+HTTP services, registered and configured `HttpService` through SCR/ConfigAdmin,
+started the Jetty servlet context, and served the root redirect to `/admin/console`.
+See `mac-idea-http-manager-validation-20261010.json` and
+`mac-idea-application-restart-validation-20261010.json`.
+
+Installed Debian package SCR/Felix servlet bridge/configuration wiring remains
+unverified. Production code and handwritten OSGi metadata are unchanged.
