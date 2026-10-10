@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kura Configuration JUnit" type="JUnit" factoryName="JUnit">
+    <module name="kura-osgi-tests" />
+    <option name="PACKAGE_NAME" value="org.eclipse.kura.testing" />
+    <option name="MAIN_CLASS_NAME" value="org.eclipse.kura.testing.ConfigurationServiceRuntimeIT" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="VM_PARAMETERS" value="-ea -Djunit.jupiter.execution.timeout.mode=disabled_on_debug" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kura-osgi-tests" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

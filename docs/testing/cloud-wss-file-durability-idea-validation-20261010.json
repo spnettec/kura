@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-10",
+  "coreBaseRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
+  "cloudBaseRevision": "5c7993d2e1b219336fcfcab29427f543238171bf",
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-wss-file-durability-20261010",
+  "runtime": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 231.888,
+    "newCases": [
+      "CloudFactoryRuntimeIT.wssFilesystemPipeline",
+      "CloudFactoryRuntimeIT.sparkplugFileStoreRestart"
+    ],
+    "caseDurationsSeconds": {
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.816,
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.524,
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.57,
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.544,
+      "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.559,
+      "sparkplugFileStoreRestart(EquinoxRuntime)": 9.71,
+      "restFactoryPipeline(EquinoxRuntime)": 1.566,
+      "sparkplugFactoryPipeline(EquinoxRuntime)": 10.324,
+      "tlsFilesystemPipeline(EquinoxRuntime)": 51.381,
+      "restInitialStartup(EquinoxRuntime)": 1.769,
+      "wssFilesystemPipeline(EquinoxRuntime)": 49.142,
+      "sparkplugTlsFilesystemPipeline(EquinoxRuntime)": 52.959
+    }
+  },
+  "idea": {
+    "project": "/Users/heyoulin/iot-kura-develop/git/kura-cloud",
+    "profile": "osgi-it",
+    "projectSdk": "temurin-21",
+    "mavenHome": "/opt/homebrew/Cellar/maven/3.10.0/libexec",
+    "configuration": ".run/Kura cloud Sparkplug runtime.run.xml",
+    "run": {
+      "case": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
+      "passed": 1,
+      "total": 1,
+      "durationSeconds": 11.371,
+      "exitCode": 0
+    },
+    "debug": {
+      "case": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
+      "passed": 1,
+      "total": 1,
+      "durationSeconds": 31.427,
+      "exitCode": 0,
+      "breakpoint": "SparkplugRuntimeScenario.java:139",
+      "evaluation": "endpoint.property(\"kura.service.pid\") = \"fixture.custom.sparkplug\""
+    }
+  },
+  "verified": [
+    "WSS uses actual SCR ConfigurationService, filesystem JKS keystore and SslManagerService with Moquette secure WebSocket broker",
+    "Five WSS paths cover absent client key, wrong trust, hostname mismatch, mutual TLS publication and CRL revocation",
+    "File-backed H2 survives SCR H2 and DataService factory service teardown and recreation with the same PIDs",
+    "Same queued message ID survives service restart; exact Unicode payload, QoS 1, non-retained replay and unpublished queue drain pass",
+    "Mac IDEA direct JUnit Run and Debug use the imported osgi-it module and complete the real Sparkplug factory pipeline"
+  ],
+  "limitations": [
+    "Persistence test restarts SCR H2 and DataService services in one Equinox JVM; complete JVM or deployed runtime restart is not covered",
+    "IDEA Run and Debug evidence covers the Sparkplug factory pipeline, not every upstream test class",
+    "47 deferredValidation inventory rows retain separate combined deployed, hardware or direct IDEA boundaries; see deferred-validation-reconciliation-20261010.json",
+    "No new Linux, Docker, PLC4X, OPC UA server or complete 19-repository workspace run"
+  ],
+  "artifacts": {
+    "TEST-org.eclipse.kura.cloud.testing.CloudFactoryRuntimeIT.xml": "67f328f99fd866de59f618cfce5eca79e0497db70473566230b05d1251e8450b",
+    "kura-cloud-runtime-full-20261010.log": "9f28c4d874171e5bc4041044e7ed44754663df07c08ac3e26b4b46012add3139",
+    "kura-durable-runtime-20261010.log": "58e1be9c38ddc50032a22392594860bf96f35202a1765aedda5ad21da9fddf36",
+    "kura-wss-runtime-20261010.log": "895fd72332e33332bd3815da553340fc39c10dd23f7be8e9757f46fb37e373a1"
+  },
+  "sources": {
+    "kura-cloud/runtime-tests/pom.xml": "8897cbe4a1b8e4a6cb6fa118a11befaf40dc34a64bed0928225b674663d87910",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "58f7e458fea86c90a4ea9f3cb60545576c613609b465ec4c9d9fc4d68487f3fd",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java": "f55781275f482c443a9d072f92ffa3dbb047e68c3ab1ffb9c598b963c04cff9c",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java": "d7298e7e0324a29721d5fdfda7e47422249db40faf760cb26dc6062ffed6c60f",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java": "18cc643313ca246a13d1189c3dff0d518ac3d98a01a48a64868fccafd4f30e3a",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
+    "kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468"
+  },
+  "cloudValidationCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
+}

@@ -8,8 +8,9 @@
 | `Kura plain JUnit` → `KuraExceptionMessageTest` | 7 | Run 通过 |
 | `BundleRuntimeIT` | 6 | Run 通过 |
 | `Kura Equinox JUnit` → `LegacyCoreRuntimeIT` | 8 | Run 和 Debug 均通过 |
+| `Kura Configuration JUnit` → `ConfigurationServiceRuntimeIT` | 47 | Run 通过，exit code 0（2026-10-10 续接） |
 
-根 `.run/` 中提交了两个共享 JUnit 配置。它们使用项目 JDK 和相对工作目录，不写入
+根 `.run/` 中提交了三个共享 JUnit 配置。它们使用项目 JDK 和相对工作目录，不写入
 本机 JDK 路径、个人配置或调试器断点。普通 JUnit 的 classpath 来自 core 模块；
 Equinox 测试控制端来自 kura-osgi-tests 模块，业务代码仍通过真实 bundle 加载。
 
@@ -42,8 +43,11 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 `junit.jupiter.execution.timeout.mode=disabled_on_debug` 关闭调试时的 JUnit 超时；
 服务等待、轮询和其他显式时限仍然有效。长时间暂停后可以重跑，测试时限没有为演示放宽。
 
-本记录只覆盖表中的实际 GUI 入口。Linux GUI 结果见下节；全工作区回归见
-[独立记录](full-workspace-validation-20261010.md)。其余配置/通信场景、HTTP/MQTT
+本记录只覆盖表中的实际 GUI 入口。配置服务 47 项通过真实 Equinox/SCR/ConfigAdmin
+夹具运行，使用 `kura-osgi-tests/target/config-it-bundles`；IDEA 汇总为 47/47 通过，
+耗时 47.965 秒，进程退出码 0。它未验证完整部署装配或宿主 SystemService。
+Linux GUI 结果见下节；全工作区回归见
+[独立记录](full-workspace-validation-20261010.md)。其余通信场景、HTTP/MQTT
 端点和 P7 仍按各自清单验收；Maven 通过不能作为所有测试已经在 IDEA GUI 运行的证明。
 
 ## Linux IDEA JUnit 验收（2026-10-10）

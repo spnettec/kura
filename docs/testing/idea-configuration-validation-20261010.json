@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-10",
+  "coreBaseRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
+  "platform": "macOS aarch64",
+  "jdk": "Temurin 21.0.12.1",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "maven": "3.10.0",
+  "project": "/Users/heyoulin/iot-kura-develop/git/kura",
+  "profile": "osgi-it",
+  "configuration": ".run/Kura Configuration JUnit.run.xml",
+  "case": "org.eclipse.kura.testing.ConfigurationServiceRuntimeIT",
+  "runner": "com.intellij.rt.junit.JUnitStarter -junit5",
+  "result": {
+    "tests": 47,
+    "passed": 47,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "durationSeconds": 47.965,
+    "exitCode": 0
+  },
+  "execution": "Direct IDEA Run against existing target/it-bundles and target/config-it-bundles; actual Equinox, SCR and ConfigAdmin fixture bundles.",
+  "sources": {
+    ".run/Kura Configuration JUnit.run.xml": "687fa7eb37f4b997dee0fe988777adf5e8f10b878f344ad55f7d7d75a7273e76",
+    "kura-osgi-tests/src/test/java/org/eclipse/kura/testing/ConfigurationServiceRuntimeIT.java": "b743a154be60c4a433d1468d6e12ca40b8b39a9788fcae9038dd190538e47a8e"
+  },
+  "limitations": [
+    "Complete deployed Kura assembly and host SystemService not covered",
+    "No new Linux validation; historical Maven and GUI results are not added to this run count"
+  ]
+}

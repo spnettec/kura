@@ -2266,9 +2266,6 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredScenarios": [
-      "Actual filesystem-keystore/SCR WSS acceptance; MQTTS filesystem keys, HTTP CRL refresh and EventAdmin delivery now pass."
-    ],
     "pipelineValidation": {
       "tests": 2,
       "failures": 0,
@@ -2290,6 +2287,16 @@
       "skipped": 0,
       "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
       "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
+    },
+    "followupRuntimeValidation": {
+      "report": "docs/testing/cloud-wss-file-durability-idea-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.wssFilesystemPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
+      "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
     }
   },
   {
@@ -2962,7 +2969,8 @@
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java"
     ],
     "execution": "surefire",
     "reason": "All 16 upstream protocol cases use actual loopback Moquette/Paho and transport dispatch. Explicit negative subscriptions and dispatch completion barriers prevent vacuous asynchronous assertions. No remote DNS or fixed port; only random delay is controlled. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
@@ -2974,9 +2982,6 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredScenarios": [
-      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
-    ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
       "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
@@ -2995,6 +3000,16 @@
       "skipped": 0,
       "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
       "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
+    },
+    "followupRuntimeValidation": {
+      "report": "docs/testing/cloud-wss-file-durability-idea-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFileStoreRestart",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
+      "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
     }
   },
   {
@@ -3012,7 +3027,8 @@
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java"
     ],
     "execution": "surefire",
     "reason": "All seven upstream device cases exercise real device/endpoint/Paho/broker with a forwarding mock at the DataService persistence boundary and real ServiceTracker against a mocked registry. Changed-metric and reconnect checks require the second DBIRTH, exact sequence and payload. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
@@ -3024,9 +3040,6 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredScenarios": [
-      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
-    ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
       "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
@@ -3045,6 +3058,16 @@
       "skipped": 0,
       "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
       "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
+    },
+    "followupRuntimeValidation": {
+      "report": "docs/testing/cloud-wss-file-durability-idea-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFileStoreRestart",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
+      "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
     }
   },
   {
@@ -3062,13 +3085,11 @@
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java",
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudTlsRuntimeScenario.java",
-      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java"
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/RuntimeCrlFeed.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugFileStoreScenario.java"
     ],
     "execution": "surefire",
     "reason": "Replaced static JUnit 4/SCR/fixed-port harness with per-class Jupiter loopback Moquette 0.18.0 and per-test real Paho/transport fixtures, random port and resource cleanup. The original real factory/SCR setup is now covered by CloudFactoryRuntimeIT.sparkplugFactoryPipeline, including the actual H2-backed DataService pipeline and local PID/name/description contract. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
-    "deferredScenarios": [
-      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
-    ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
       "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
@@ -3087,6 +3108,16 @@
       "skipped": 0,
       "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
       "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
+    },
+    "followupRuntimeValidation": {
+      "report": "docs/testing/cloud-wss-file-durability-idea-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFileStoreRestart",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
+      "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
     }
   },
   {
@@ -3183,8 +3214,17 @@
     "execution": "JUnit 5 parameterized controller invokes scenarios inside an installed real Equinox test bundle",
     "reason": "All 46 upstream scenarios execute with actual ConfigAdmin, SCR, metatype, XML and CryptoService bundles; one added fork plaintext/CDATA scenario. Temp system paths are controlled. See configuration-runtime-test-restoration.md.",
     "deferredValidation": [
-      "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-    ]
+      "Complete deployed Kura assembly with host SystemService"
+    ],
+    "ideaValidation": {
+      "report": "docs/testing/idea-configuration-validation-20261010.json",
+      "suite": "ConfigurationServiceRuntimeIT",
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestSelfComponent.java",
@@ -3202,8 +3242,17 @@
     "execution": "JUnit 5 parameterized controller invokes scenarios inside an installed real Equinox test bundle",
     "reason": "All 46 upstream scenarios execute with actual ConfigAdmin, SCR, metatype, XML and CryptoService bundles; one added fork plaintext/CDATA scenario. Temp system paths are controlled. See configuration-runtime-test-restoration.md.",
     "deferredValidation": [
-      "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-    ]
+      "Complete deployed Kura assembly with host SystemService"
+    ],
+    "ideaValidation": {
+      "report": "docs/testing/idea-configuration-validation-20261010.json",
+      "suite": "ConfigurationServiceRuntimeIT",
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CloudConfigurationHandlerFailureTest.java",
@@ -3273,8 +3322,17 @@
       "jdk": "21"
     },
     "deferredValidation": [
-      "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
-    ]
+      "Complete deployed Kura assembly with host SystemService"
+    ],
+    "ideaValidation": {
+      "report": "docs/testing/idea-configuration-validation-20261010.json",
+      "suite": "ConfigurationServiceRuntimeIT",
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Three inventory rows reference the same direct IDEA JUnit run; do not sum."
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/PasswordTypePreservationTest.java",

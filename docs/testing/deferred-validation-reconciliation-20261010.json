@@ -1,0 +1,669 @@
+{
+  "date": "2026-10-10",
+  "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
+  "count": 47,
+  "assessment": "All 47 rows retain a distinct unverified boundary after existing and new Mac IDEA evidence is applied. Three configuration rows now have direct 47-case IDEA evidence; their deployed host boundary remains open.",
+  "rows": [
+    {
+      "inventoryIndex": 154,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestComponent.java",
+      "group": "configuration",
+      "evidence": [
+        "docs/testing/configuration-runtime-test-restoration.md",
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/idea-configuration-validation-20261010.json"
+      ],
+      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed.",
+      "remaining": "Complete deployed Kura assembly with host SystemService remains unverified.",
+      "originalDeferredValidation": [
+        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 155,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/CfgSvcTestSelfComponent.java",
+      "group": "configuration",
+      "evidence": [
+        "docs/testing/configuration-runtime-test-restoration.md",
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/idea-configuration-validation-20261010.json"
+      ],
+      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed.",
+      "remaining": "Complete deployed Kura assembly with host SystemService remains unverified.",
+      "originalDeferredValidation": [
+        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 158,
+      "source": "test/org.eclipse.kura.core.configuration.test/src/main/java/org/eclipse/kura/core/configuration/ConfigurationServiceTest.java",
+      "group": "configuration",
+      "evidence": [
+        "docs/testing/configuration-runtime-test-restoration.md",
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/idea-configuration-validation-20261010.json"
+      ],
+      "covered": "Actual Equinox/SCR/ConfigAdmin configuration fixtures passed in Maven and directly in Mac IDEA: 47/47, exit code 0. The separate LegacyCoreRuntimeIT Mac IDEA Run/Debug also passed.",
+      "remaining": "Complete deployed Kura assembly with host SystemService remains unverified.",
+      "originalDeferredValidation": [
+        "Complete deployed Kura assembly, host SystemService and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 180,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/CloudEndpointPublisher.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 183,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/ConfigurationServiceTest.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 185,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/IConfigurationServiceTest.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 186,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/InventoryHandlerTest.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution",
+        "Linux system package-manager enumeration"
+      ]
+    },
+    {
+      "inventoryIndex": 189,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/NetworkServiceTest.java",
+      "group": "network-core",
+      "evidence": [
+        "docs/testing/legacy-network-enumeration-restoration.md",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Restored tests and existing IDEA entry are documented.",
+      "remaining": "Real NetworkManager/kernel D-Bus and this exact SCR service scenario are unverified; no further Linux validation requested.",
+      "originalDeferredValidation": [
+        "Actual SCR service availability and real Linux/kernel/NetworkManager D-Bus behavior",
+        "Actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 190,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/RequestIdGenerator.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 194,
+      "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/util/CoreTestXmlUtil.java",
+      "group": "core-protocol",
+      "evidence": [
+        "docs/testing/legacy-core-protocol-restoration.md",
+        "docs/testing/full-workspace-validation-20261010.json",
+        "docs/testing/idea-junit-acceptance.md"
+      ],
+      "covered": "Eight actual Equinox core scenarios and separate HTTP/MQTT endpoint suites passed; Mac IDEA ran LegacyCoreRuntimeIT.",
+      "remaining": "A combined MQTT round trip through these real OSGi backends and full deployed assembly remain unverified; Linux package enumeration is out of scope.",
+      "originalDeferredValidation": [
+        "Actual MQTT round trip with these real OSGi backend services",
+        "Full deployed assembly and actual IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 206,
+      "source": "test/org.eclipse.kura.http.server.manager.test/src/main/java/org/eclipse/kura/https/server/manager/test/HttpServiceTest.java",
+      "group": "http-manager",
+      "evidence": [
+        "docs/testing/http-server-manager-test-restoration.md"
+      ],
+      "covered": "Real Jetty, TLS and CRL component tests passed.",
+      "remaining": "Full deployed SCR/Felix servlet bridge/configuration wiring and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/Felix servlet bridge/configuration wiring",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 210,
+      "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationRestServiceTest.java",
+      "group": "rest-configuration",
+      "evidence": [
+        "docs/testing/configuration-endpoint-test-restoration.md",
+        "docs/testing/configuration-runtime-test-restoration.md"
+      ],
+      "covered": "HTTP/MQTT endpoint assertions and separate actual SCR/ConfigAdmin/master-key scenarios passed.",
+      "remaining": "Combined endpoint plus persistent ConfigurationService/master-key assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 211,
+      "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationUtil.java",
+      "group": "rest-configuration",
+      "evidence": [
+        "docs/testing/configuration-endpoint-test-restoration.md",
+        "docs/testing/configuration-runtime-test-restoration.md"
+      ],
+      "covered": "HTTP/MQTT endpoint assertions and separate actual SCR/ConfigAdmin/master-key scenarios passed.",
+      "remaining": "Combined endpoint plus persistent ConfigurationService/master-key assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 215,
+      "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV1EndpointsTest.java",
+      "group": "rest-identity",
+      "evidence": [
+        "docs/testing/identity-endpoint-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Kura Equinox SCR/configuration assembly",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 216,
+      "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV2EndpointsTest.java",
+      "group": "rest-identity",
+      "evidence": [
+        "docs/testing/identity-endpoint-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Kura Equinox SCR/configuration assembly",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 217,
+      "source": "test/org.eclipse.kura.rest.keystore.provider.test/src/main/java/org/eclipse/kura/rest/keystore/provider/KeystoreRequestHandlerV2Test.java",
+      "group": "rest-keystore",
+      "evidence": [
+        "docs/testing/keystore-endpoint-test-restoration.md",
+        "docs/testing/cloud-tls-runtime-validation-20261010.json"
+      ],
+      "covered": "Endpoint tests and separate actual filesystem/SCR keystore and CryptoService TLS chain passed.",
+      "remaining": "Combined deployed REST endpoint/configuration/master-key assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Deployed SCR/configuration and actual CryptoService master-key assembly",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 230,
+      "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV1Test.java",
+      "group": "rest-security",
+      "evidence": [
+        "docs/testing/security-endpoint-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Combined deployed SCR/configuration and real security policy application plus direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Deployed SCR/configuration and real security policy file application",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 231,
+      "source": "test/org.eclipse.kura.rest.security.provider.test/src/main/java/org/eclipse/kura/internal/rest/security/provider/test/SecurityEndpointsV2Test.java",
+      "group": "rest-security",
+      "evidence": [
+        "docs/testing/security-endpoint-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Combined deployed SCR/configuration and real security policy application plus direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Deployed SCR/configuration and real security policy file application",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 234,
+      "source": "test/org.eclipse.kura.rest.service.listing.provider.test/src/main/java/org/eclipse/kura/internal/rest/service/listing/provider/test/ServiceListingEndpointsTest.java",
+      "group": "rest-listing",
+      "evidence": [
+        "docs/testing/service-listing-endpoint-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Deployed SCR/metatype/configuration factory discovery and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Deployed SCR/metatype/configuration factory discovery",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 239,
+      "source": "test/org.eclipse.kura.rest.system.provider.test/src/main/java/org/eclipse/kura/rest/system/provider/test/EndpointsTest.java",
+      "group": "rest-system",
+      "evidence": [
+        "docs/testing/system-service-test-restoration.md"
+      ],
+      "covered": "Restored endpoint tests passed.",
+      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Kura Equinox SCR/configuration assembly",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 241,
+      "source": "test/org.eclipse.kura.rest.tamper.detection.provider.test/src/main/java/org/eclipse/kura/rest/tamper/detection/provider/test/TamperDetectionRemoteServiceTest.java",
+      "group": "rest-tamper",
+      "evidence": [
+        "docs/testing/system-tamper-endpoint-test-restoration.md",
+        "docs/testing/cloud-tamper-runtime-validation-20261010.json"
+      ],
+      "covered": "Endpoint tests and separate actual EventAdmin tamper scheduling passed with a simulated sensor.",
+      "remaining": "Combined deployed REST SCR/configuration assembly and direct IDEA execution remain unverified; no physical sensor claim.",
+      "originalDeferredValidation": [
+        "Kura Equinox SCR/configuration assembly",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 247,
+      "source": "test/org.eclipse.kura.watchdog.criticaltest/src/main/java/org/eclipse/kura/watchdog/criticaltest/FailingCriticalComponent.java",
+      "group": "watchdog",
+      "evidence": [
+        "docs/testing/watchdog-critical-fixture-restoration.md"
+      ],
+      "covered": "Critical fixture restoration passed its isolated tests.",
+      "remaining": "Deployed DS wiring and physical watchdog reboot remain unverified; no additional hardware validation requested.",
+      "originalDeferredValidation": [
+        "Deployed DS wiring and physical watchdog reboot behavior"
+      ]
+    },
+    {
+      "inventoryIndex": 248,
+      "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/AbstractRouterTest.java",
+      "group": "camel",
+      "evidence": [
+        "docs/testing/camel-test-restoration.md"
+      ],
+      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
+      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "originalDeferredValidation": [
+        "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 249,
+      "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/PayloadTest.java",
+      "group": "camel",
+      "evidence": [
+        "docs/testing/camel-test-restoration.md"
+      ],
+      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
+      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "originalDeferredValidation": [
+        "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 250,
+      "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/RouterTest.java",
+      "group": "camel",
+      "evidence": [
+        "docs/testing/camel-test-restoration.md"
+      ],
+      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
+      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "originalDeferredValidation": [
+        "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 251,
+      "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/component/TestableXmlCamelComponent.java",
+      "group": "camel",
+      "evidence": [
+        "docs/testing/camel-test-restoration.md"
+      ],
+      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
+      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "originalDeferredValidation": [
+        "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 252,
+      "source": "tests/org.eclipse.kura.camel.test/src/main/java/org/eclipse/kura/camel/test/type/TypeConverterTest.java",
+      "group": "camel",
+      "evidence": [
+        "docs/testing/camel-test-restoration.md"
+      ],
+      "covered": "Actual Camel component routing passed in ordinary Jupiter tests.",
+      "remaining": "Equinox service discovery, DS wiring and installed runtime package acceptance remain unverified.",
+      "originalDeferredValidation": [
+        "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 274,
+      "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/main/java/org/eclipse/kura/rest/packages/provider/test/PackagesRestServiceTest.java",
+      "group": "deployment",
+      "evidence": [
+        "docs/testing/deployment-test-restoration.md"
+      ],
+      "covered": "Restored package REST tests passed.",
+      "remaining": "Deployed OSGi whiteboard and runtime authentication/filter integration remain unverified.",
+      "originalDeferredValidation": [
+        "OSGi whiteboard registration and runtime authentication/filter integration"
+      ]
+    },
+    {
+      "inventoryIndex": 368,
+      "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/NetworkConfigurationRestServiceTest.java",
+      "group": "network-rest",
+      "evidence": [
+        "docs/testing/wire-network-endpoint-validation-20261010.json",
+        "docs/testing/wire-network-endpoint-restoration.md"
+      ],
+      "covered": "Actual HTTP/MQTT transport and authentication tests passed against controlled backend fixtures.",
+      "remaining": "Real OSGi DS endpoint registration remains unverified; no additional Linux validation requested.",
+      "originalDeferredValidation": [
+        "Real OSGi DS acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 371,
+      "source": "tests/org.eclipse.kura.rest.network.status.provider.test/src/main/java/org/eclipse/kura/rest/network/status/provider/test/NetworkStatusRestServiceImplTest.java",
+      "group": "network-rest",
+      "evidence": [
+        "docs/testing/wire-network-endpoint-validation-20261010.json",
+        "docs/testing/wire-network-endpoint-restoration.md"
+      ],
+      "covered": "Actual HTTP/MQTT transport and authentication tests passed against controlled backend fixtures.",
+      "remaining": "Real OSGi DS endpoint registration remains unverified; no additional Linux validation requested.",
+      "originalDeferredValidation": [
+        "Real OSGi DS acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 389,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceBundleTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 390,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceConstants.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 391,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceContainerImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 392,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceEngineTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 393,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceInferTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 394,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceModelTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 395,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceNativeImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 397,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceRemoteImplTest.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 398,
+      "source": "tests/org.eclipse.kura.ai.triton.server.test/src/test/java/org/eclipse/kura/ai/triton/server/TritonServerServiceStepDefinitions.java",
+      "group": "triton",
+      "evidence": [
+        "docs/testing/triton-test-restoration.md"
+      ],
+      "covered": "Jupiter component and in-process gRPC scenarios passed.",
+      "remaining": "Equinox/DS and real Triton/GPU/container runtime remain unverified; no hardware or GPU validation requested.",
+      "originalDeferredValidation": [
+        "Equinox OSGi/DS and real Triton/GPU/container runtime acceptance"
+      ]
+    },
+    {
+      "inventoryIndex": 445,
+      "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/event/EventAdminUtil.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 454,
+      "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/service/ServiceUtil.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 459,
+      "source": "kura/test-util/org.eclipse.kura.util.test.driver/src/main/java/org/eclipse/kura/util/test/driver/ChannelDescriptorTestDriver.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 460,
+      "source": "kura/test-util/org.eclipse.kura.util.test.driver/src/main/java/org/eclipse/kura/util/test/driver/ChannelDescriptorTestDriverOptions.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 461,
+      "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/GraphBuilder.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 462,
+      "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/TestEmitterReceiver.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 463,
+      "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/TestEmitterReceiverOptions.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    },
+    {
+      "inventoryIndex": 464,
+      "source": "kura/test-util/org.eclipse.kura.util.wire.test/src/main/java/org/eclipse/kura/util/wire/test/WireTestUtil.java",
+      "group": "helpers",
+      "evidence": [
+        "docs/testing/legacy-test-helper-audit.md"
+      ],
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
+      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "originalDeferredValidation": [
+        "Full deployed SCR/service arrival and event/wire routing",
+        "IDEA execution"
+      ]
+    }
+  ]
+}
