@@ -840,3 +840,13 @@ reject 3xx success and missing-current-cookie rotation false positives. See
 Inventory: 353 restored, 48 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **42 unreviewed** out of 465.
 Endpoint integration, actual Kura runtime and IDEA acceptance remain open.
+
+## Identity endpoint continuation (2026-10-10)
+
+The opt-in endpoint module restores all nine V1 and sixteen V2 scenarios over real
+HTTP and MQTT: 50 passing invocations, including cleanup. Shared fixture test JARs
+avoid duplicate IDEA source roots. See `identity-endpoint-test-restoration.md`.
+
+Inventory: 355 restored, 49 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **39 unreviewed** out of 465.
+Actual Kura SCR/runtime and IDEA acceptance remain open.

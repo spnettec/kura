@@ -4158,9 +4158,26 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.identity.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "JUnit Jupiter / Failsafe, actual loopback HTTP and MQTT",
+    "localSources": [
+      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/IdentityV1EndpointsIT.java"
+    ],
+    "validation": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md.",
+    "deferredValidation": [
+      "Kura Equinox SCR/configuration assembly",
+      "IDEA execution"
+    ]
   },
   {
     "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV2EndpointsTest.java",
@@ -4169,9 +4186,26 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.rest.identity.provider"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "JUnit Jupiter / Failsafe, actual loopback HTTP and MQTT",
+    "localSources": [
+      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/endpoint/IdentityV2EndpointsIT.java"
+    ],
+    "validation": {
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21"
+    },
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md.",
+    "deferredValidation": [
+      "Kura Equinox SCR/configuration assembly",
+      "IDEA execution"
+    ]
   },
   {
     "source": "test/org.eclipse.kura.rest.keystore.provider.test/src/main/java/org/eclipse/kura/rest/keystore/provider/KeystoreRequestHandlerV2Test.java",
@@ -9314,11 +9348,15 @@
     "upstreamModule": "test-util",
     "productionModule": null,
     "destinations": [],
-    "status": "unreviewed",
+    "status": "restored-helper",
     "kind": "helper",
-    "reason": "",
+    "reason": "Independent Paho observer with unique request correlation, bounded connect/reply/close, real JSON codec and actual broker/Kura server-side stack. Exercised by 25 MQTT identity scenarios; no standalone upstream test count. See identity-endpoint-test-restoration.md.",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "execution": "Failsafe fixture, actual MQTT",
+    "localSources": [
+      "kura/kura-endpoint-tests/src/test/java/org/eclipse/kura/core/testutil/requesthandler/MqttTransport.java"
+    ]
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/requesthandler/RestTransport.java",

@@ -107,7 +107,7 @@ public abstract class AbstractJwtRestScenario {
 
     @BeforeEach
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    void setUpHttp() throws Exception {
+    protected void setUpHttp() throws Exception {
         this.tokenServices = new TokenServicesFixture();
         this.rest.setUserAdmin(this.identities.userAdmin);
         this.rest.setIdentityService(this.identities.service);
@@ -162,7 +162,7 @@ public abstract class AbstractJwtRestScenario {
     }
 
     @AfterEach
-    void tearDownHttp() throws Exception {
+    protected void tearDownHttp() throws Exception {
         try {
             if (this.client != null) { this.client.close(); }
         } finally {

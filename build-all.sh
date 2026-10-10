@@ -66,6 +66,10 @@ for repo in "${siblings[@]}"; do
     build "$SCRIPT_DIR/../$repo/pom.xml" clean install
 done
 
+if [[ "$RUN_IT" == 1 ]]; then
+    build "$SCRIPT_DIR/kura-endpoint-tests/pom.xml" verify
+fi
+
 echo "=== Stage 4: YOFC applications (consumes independently installed PLC4X JARs) ==="
 if ! build "$SCRIPT_DIR/../yofc-iot/pom.xml" clean install; then
     echo "YOFC build failed. If PLC4X artifacts are missing, build plc4x-yofc separately into the same Maven repository." >&2

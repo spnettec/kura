@@ -228,6 +228,12 @@
     </resources>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId>
+        <executions><execution><id>integration-fixtures</id><goals><goal>test-jar</goal></goals>
+          <configuration><classifier>fixtures</classifier><includes><include>org/eclipse/kura/rest/provider/test/util/**/*.class</include></includes></configuration>
+        </execution></executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
       <executions><execution><id>prepare-handwritten-manifest</id><phase>generate-resources</phase></execution></executions></plugin>

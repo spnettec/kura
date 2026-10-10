@@ -34,3 +34,7 @@ zero failures/errors/skips. Checks cover UTF-8 DELETE bodies and authentication,
 case-insensitive headers, empty/error responses, redirect rejection, isolated and
 replayed cookies, read/port timeouts, JSON composition/matching and method mapping.
 Endpoint integration, OSGi discovery, MQTT runtime and IDEA acceptance remain open.
+
+Follow-up: `MqttTransport` and actual HTTP/MQTT identity endpoint integration are
+now restored in `kura-endpoint-tests`; see `identity-endpoint-test-restoration.md`.
+OSGi discovery, deployed runtime and IDEA acceptance remain separate.

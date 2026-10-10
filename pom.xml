@@ -38,6 +38,10 @@
       </modules>
     </profile>
     <profile>
+      <id>endpoint-it</id>
+      <modules><module>kura-endpoint-tests</module></modules>
+    </profile>
+    <profile>
       <id>osgi-it</id>
       <modules>
         <module>kura-osgi-tests</module>
