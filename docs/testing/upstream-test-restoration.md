@@ -1,5 +1,14 @@
 # Upstream test restoration progress
 
+## 2026-10-10 完整 Mac 历史 Wires fixture 到达与回调验收
+
+- 实际完整应用中 driver 和两个 emitter/receiver 工厂 SCR ACTIVE，真实 OCD/default/修改、8 个描述符最小值及 3 次 WireAdmin 回调通过。
+- 独立 HTTPS 验证 owned localhost 证书/主机名；未认证 401、4 次已认证 200，返回同一批 descriptor/OCD/metadata/graph snapshot。
+- owned 配置、实例、wires 与 JVM 均清理，端口释放；原运行集 279 个 artifact、33 个个人受保护文件和模板密钥库未变。
+- helper indices 459、460、462、463 仅保留 installed Debian 包边界。仍有 31 条 deferredValidation；不新增 Linux/硬件验收、不宣告整体完成。
+- 见 [本次证据](mac-complete-wire-fixture-validation-20261010.md)。失败运行保留；没有生产代码变更，不叠加历史 JUnit 数量。
+
+
 This is an in-progress audit, not a declaration that restoration is complete. Upstream snapshots and every reviewed/excluded source are recorded in `upstream-test-inventory.json`. YOFC and PLC4X test restoration is outside this task.
 
 ## Complete Mac core protocol closure (2026-10-10)

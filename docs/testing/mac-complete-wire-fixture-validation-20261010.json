@@ -1,0 +1,256 @@
+{
+  "date": "2026-10-10",
+  "scope": "Historical test driver and adapted emitter/receiver fixture arrival through real SCR/OCD in a complete macOS application, actual WireAdmin callbacks and authenticated HTTPS metadata/graph read",
+  "platform": "macOS 27.0.1 arm64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "bundlePlugin": "6.0.0",
+  "coreWorkingRevision": "314dc472519d88adc36ce503385279d76aa0f6a9",
+  "wiresAcceptanceRevision": "0886a09e0b9dcb7e14491a825c7016d0cef8882e",
+  "runtimeProductionCoreRevision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+  "runtimeProductionWiresRevision": "4774dd56f72680d5ada622c8d3345214d7060521",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-accepted-20261010",
+  "helperModule": "kura-wires/acceptance/full-runtime-fixture-probe",
+  "result": {
+    "restAllowedPorts": [
+      18443
+    ],
+    "driverPid": "acceptance.mac.wirefixtures.e3155965-8595-4f44-a0f5-8a813e944427.driver",
+    "emitterPid": "acceptance.mac.wirefixtures.e3155965-8595-4f44-a0f5-8a813e944427.emitter",
+    "receiverPid": "acceptance.mac.wirefixtures.e3155965-8595-4f44-a0f5-8a813e944427.receiver",
+    "bundleCount": 279,
+    "driverMinimumBounds": {
+      "BYTE": "10",
+      "FLOAT": "13.5",
+      "LONG": "-2147493648",
+      "INTEGER": "-200000",
+      "SHORT": "-20000",
+      "STRING": "foo",
+      "DOUBLE": "13.5",
+      "CHAR": "b"
+    },
+    "driverAttributeCount": 34,
+    "driverScrActiveAndUpdated": true,
+    "fixtureScrActive": true,
+    "actualOcdAndPortMetadata": true,
+    "wireEnvelopeDeliveries": 3,
+    "consumerUpdatedCallbacks": 3,
+    "https": {
+      "passed": true,
+      "tls": "Owned localhost certificate and hostname validated",
+      "calls": 5,
+      "minimumBoundsChecked": 8,
+      "graphComponents": 2,
+      "graphWires": 1
+    },
+    "cleanupPassed": true,
+    "passed": true,
+    "elapsedSeconds": 7.818,
+    "pid": 44404,
+    "exitCode": 143,
+    "forcedShutdown": false,
+    "portsReleased": true,
+    "helperSha256": "af12611fa166433830b5f94f07126927ded056b5fac42e03fc375f9dce7e46f0",
+    "httpsCertificateSha256": "5d448ef06391c98075814b1031897ede5d9d3dd8e196617de0cd8c1c0906c1e8",
+    "sources": {
+      "run.py": "653c957ba309ad1a4693f10ed3f62138d861560c74d083cadc7805b337a736da",
+      "pom.xml": "6e14292445d294680dfd1af2eb052985b708e53cf869f019c34d6ce0f90e460d",
+      "README.md": "6c9697496f497cceb5508ed3873a11b1343d9edca3967d6ce667a8927d1632a3",
+      "src/main/resources/OSGI-INF/driver.xml": "7cf384d08af7de16c6e219340b24123992a6c5208284f5abba0da86018887cc1",
+      "src/main/resources/OSGI-INF/emitter.xml": "bf96df3f4494ed718f591cb06e59e50e8e40a6b5d50e48726fc47402d32c37cc",
+      "src/main/resources/OSGI-INF/metatype/org.eclipse.kura.util.wire.test.TestEmitterReceiver.xml": "652fd02cce33b2de470e6889996b9165c582244404eee9c481528671a9554560",
+      "src/main/resources/OSGI-INF/metatype/org.eclipse.kura.util.test.driver.ChannelDescriptorTestDriver.xml": "d225dd11034cfef3d319e7804dace503243e455b0a0aa0d14f2bc4c2fdf5524e",
+      "src/main/java/org/eclipse/kura/wires/testing/fullruntime/TestEmitterReceiver.java": "adc2ae77a7b706bc7558660041490ae78482e8ae3a44368d6c35fc3e3e5a4d00",
+      "src/main/java/org/eclipse/kura/wires/testing/fullruntime/FixtureProbe.java": "c92d34bb860194ca9622403488f2288b74cb33f779392a42cd3fb455a9da5776"
+    },
+    "existingFixtureSources": {
+      "bundles/org.eclipse.kura.rest.wire.provider/src/test/java/org/eclipse/kura/rest/wire/provider/test/ChannelDescriptorTestDriver.java": "85f598c61a23d4411541171209a26476e264891e95e38c862f574368ee60bfdd",
+      "bundles/org.eclipse.kura.rest.wire.provider/src/test/java/org/eclipse/kura/rest/wire/provider/test/RestGraphFixture.java": "71fa0a88b1cadad3f2637dec8e7becbe6eade78e688e2c83fed0c8c01e6fd44a"
+    },
+    "logs": {
+      "console.log": "85c343793b1542b26e94e2a34b5edcdbb42fbe27b231b7a7af902aefd87a7d33",
+      "profile/logs/kura.log": "ac2d3b24f2258369af07a2135a65d5b45a02b276c5c321523855ac243a84c0a6"
+    }
+  },
+  "isolation": {
+    "runtimeArtifactHashesMatched": 279,
+    "protectedPersonalFilesMatched": 33,
+    "templateKeystoreChecks": {
+      "user/security/httpskeystore.ks": {
+        "templateSha256": "284c4d79601d8bec4dfd5fe51ae7efbf40b1940754d1bef7f8a92e89ab8d8c75",
+        "initialCopySha256": "284c4d79601d8bec4dfd5fe51ae7efbf40b1940754d1bef7f8a92e89ab8d8c75"
+      },
+      "user/security/cacerts.ks": {
+        "templateSha256": "630d412dfe75add53ddb5216519e032ef2f01929c11d5ed02f18d343a345ddfa",
+        "initialCopySha256": "630d412dfe75add53ddb5216519e032ef2f01929c11d5ed02f18d343a345ddfa"
+      }
+    },
+    "templateLogUnchanged": true,
+    "matchedHttpsStatuses": [
+      401,
+      200,
+      200,
+      200,
+      200
+    ]
+  },
+  "artifacts": [
+    {
+      "file": "result.json",
+      "sha256": "d675ecb73c6ff2e341b8035a690de49e8f23dc501f481688bfb9924f9461f21f"
+    },
+    {
+      "file": "wire-probe-result.json",
+      "sha256": "67ac3e9373e67f80b03204cc5e83134b42947a9de9c7cb17bf2376033f6bf99f"
+    },
+    {
+      "file": "wire-probe-ready.json",
+      "sha256": "d98a8e2081ff9cb1996e92066941d09855667830a486cc4fbc9d314891a0c926"
+    },
+    {
+      "file": "https-result.json",
+      "sha256": "d7037f551b0888ecf623c1e6d712c9bec7fac4fb6ce4f98c35c33c513f06a84e"
+    },
+    {
+      "file": "https-calls.json",
+      "sha256": "dcbb66849f46a037c150bb582927722317c4e575407a179db846b8f5389ae14b"
+    },
+    {
+      "file": "https-route-readiness.json",
+      "sha256": "ad41e39737c12b2b037884a0001d6e9894e1950bffede755d276bb62e290a8b3"
+    },
+    {
+      "file": "https-cert.pem",
+      "sha256": "5d448ef06391c98075814b1031897ede5d9d3dd8e196617de0cd8c1c0906c1e8"
+    },
+    {
+      "file": "https-provision.log",
+      "sha256": "fa1b5c02a3b75abce08e411fefd81f82cd04cb3aa2e790146324ca593ebccb8c"
+    },
+    {
+      "file": "console.log",
+      "sha256": "85c343793b1542b26e94e2a34b5edcdbb42fbe27b231b7a7af902aefd87a7d33"
+    },
+    {
+      "file": "profile/logs/kura.log",
+      "sha256": "ac2d3b24f2258369af07a2135a65d5b45a02b276c5c321523855ac243a84c0a6"
+    },
+    {
+      "file": "command.json",
+      "sha256": "a41c337c6711d95aa37131c1799a7d69dc470119a25f1ca38c9aa32d4e2a6749"
+    },
+    {
+      "file": "relocated-profile-files.json",
+      "sha256": "c272003982ddf3238053b91b31f503b18ec9b19582a25f5091d1b3d60a3da6a4"
+    },
+    {
+      "file": "fixture-probe.jar",
+      "sha256": "af12611fa166433830b5f94f07126927ded056b5fac42e03fc375f9dce7e46f0"
+    },
+    {
+      "file": "isolation-reconciliation.json",
+      "sha256": "e14401838f4628e0c143a34d21cff68de4d7505ce00ffa674e3a08487b77def7"
+    },
+    {
+      "file": "wire-fixture-probe-build.log",
+      "sha256": "6ceccd8ae8524deed13ddb839aa72647af0b4f9f51de0b26c7354edb94f08749"
+    },
+    {
+      "file": "wire-fixture-probe-build2.log",
+      "sha256": "736e8ce7d0286c8de2a409df98e8e0490cda83c3c2aba95bb244af2b99191b52"
+    },
+    {
+      "file": "wire-fixture-probe-build3.log",
+      "sha256": "b9e3d44f6a3a40a4844d5e30ed890607f1a15e24be108e7716c6f3898a591144"
+    },
+    {
+      "file": "wire-fixture-probe-build4.log",
+      "sha256": "e9d122d293bb01ca1e4256b151042dce096df3414b5a0aee630aba35a93d0642"
+    },
+    {
+      "file": "wire-fixture-probe-build5.log",
+      "sha256": "9494d29cbf5d7ff92fff78cb30ccd4fada9402ceebb60512064b3fc64b613a0f"
+    },
+    {
+      "file": "wire-fixture-probe-build6.log",
+      "sha256": "cf909f7f3a24eaed4e101a56365b8e77b63fb6a6e259c506681d10da7d81d765"
+    }
+  ],
+  "diagnosticRuns": [
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-initial-20261010",
+      "passed": false,
+      "cause": "Acceptance metatype resources used short names; Kura resolves the PID-named XML resource",
+      "resultSha256": "3294763304634d8a68704d9789c2802ff6bfdabafb65ae84a0960ffa8ed90d62",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-pid-metadata-20261010",
+      "passed": false,
+      "cause": "Copied complete-runtime HTTPS keystore had zero entries; no server certificate was provisioned",
+      "resultSha256": "610d347cfa947e17c00ff22091f33be6c228062c96072dfa82622de521049a3d",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-owned-https-20261010",
+      "passed": false,
+      "cause": "Owned certificate worked; production REST defaults excluded acceptance port 18443",
+      "resultSha256": "556a5fd31e9643edc40536907b61b929ff42daf5cb82ff7a1b95b57060e62b9e",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-final-20261010",
+      "passed": false,
+      "cause": "Bounded route readiness retained 404 because acceptance REST allowed.ports was still unconfigured",
+      "resultSha256": "056e92e6a4c5e05003b4d8966b30a27bdca607b635a5adc29eca8819c269ec2f",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-configured-rest-20261010",
+      "passed": false,
+      "cause": "HTTPS fixture assertion expected an OCD name; the production DTO exposes the empty componentOCD array",
+      "resultSha256": "8a200931244d68dc6ee4424ddaf9098b45f524a265dcf0f91870aa23186c2007",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-wire-fixtures-verified-20261010",
+      "passed": false,
+      "cause": "GET /graph is not a read endpoint; the accepted read is GET /graph/snapshot",
+      "resultSha256": "5e39f42c49d13f7a527b30db9f76ea05394da371b2cc9f1723661902723235c8",
+      "cleanupPassed": true,
+      "forcedShutdown": false,
+      "portsReleased": true
+    }
+  ],
+  "coveredInventoryIndices": [
+    459,
+    460,
+    462,
+    463
+  ],
+  "counting": "Executable acceptance assertions and five HTTPS requests are not JUnit engine invocations and are not added to the overlapping 5515 workspace total.",
+  "limits": [
+    "Acceptance-only bundle is outside the default reactor and all production Debian packages; no production source or OSGi metadata changed.",
+    "The existing migrated test driver source is compiled unchanged. The emitter/receiver uses current YOFC onWireReceive(Object) and production WireSupport.emit, with an acceptance recording queue; this is not a restoration of the global legacy harness.",
+    "Owned localhost certificate and REST allowed.ports are provisioned only for this fresh acceptance profile. The stopped template keystore and 33 protected personal files remain unchanged.",
+    "Installed Debian sibling package acceptance remains deferred for the four helper rows; no additional Linux or hardware validation is claimed.",
+    "No deleted feature, YOFC/PLC4X expansion, or official OPC UA change."
+  ],
+  "inventoryAfterUpdate": {
+    "entries": 465,
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidationRows": 31,
+    "deferredValidationStrings": 31
+  }
+}
