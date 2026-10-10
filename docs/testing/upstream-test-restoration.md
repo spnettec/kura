@@ -2,6 +2,21 @@
 
 This is an in-progress audit, not a declaration that restoration is complete. Upstream snapshots and every reviewed/excluded source are recorded in `upstream-test-inventory.json`. YOFC and PLC4X test restoration is outside this task.
 
+## Complete Mac core protocol closure (2026-10-10)
+
+The complete Mac application passed six unchanged legacy assertions and twelve
+UUID-correlated authenticated MQTT requests through actual CONF-V1/CONF-V2 and
+INVENTORY-V1 handlers. Configuration PUT/rollback, real deployment/bundle/merged
+inventory and encrypted snapshot write/read passed. Actual host SystemService
+returns an empty Mac package list matching MQTT; Linux enumeration remains scoped.
+See [complete protocol evidence](mac-complete-protocol-validation-20261010.md).
+
+Five protocol rows are resolved; row 186 retains Linux package-manager acceptance.
+Current inventory: **465 reviewed, zero unreviewed, zero deferred scenarios,
+31 rows / 31 strings of deferred validation**. These executable assertions and
+requests are separate from workspace/IDEA JUnit totals. Restoration remains in
+progress; no additional Linux validation was performed.
+
 ## Complete Mac configuration scenario closure (2026-10-10)
 
 The unchanged 47-case configuration assertion set now passed in **47 fresh

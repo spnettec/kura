@@ -1,0 +1,211 @@
+{
+  "legacyAssertions": [
+    "LegacyCoreScenarios.testServiceExists",
+    "LegacyCoreScenarios.testLocalConfiguration",
+    "LegacyCoreScenarios.testRemoteConfiguration",
+    "LegacyCoreScenarios.testSnapshotsMaxCount",
+    "LegacyInventoryScenarios.testGetPackages",
+    "LegacyInventoryScenarios.testGetBundles"
+  ],
+  "mqttRequests": [
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "fa509bf7-8d89-463a-8582-3018e5017296",
+      "resource": "configurations/org.eclipse.kura.core.test.IConfigurationServiceTest"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "EXEC",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "4059e751-e888-447e-85b2-c145bd20df49",
+      "resource": "snapshot"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "PUT",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "b8135a8b-fe91-4d43-8067-0f8cf1176694",
+      "resource": "configurations/org.eclipse.kura.core.test.IConfigurationServiceTest"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "4bb264b0-fdfe-425f-b932-ee6e9fc6d14e",
+      "resource": "configurations/org.eclipse.kura.core.test.IConfigurationServiceTest"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "EXEC",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "a880aead-7b8b-46ef-9209-6fdd7296059c",
+      "resource": "rollback/1791645867269"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "CONF-V1",
+      "requestId": "cffc53ec-88ba-426b-8409-f9c15ee5e58a",
+      "resource": "configurations/org.eclipse.kura.core.test.IConfigurationServiceTest"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "INVENTORY-V1",
+      "requestId": "edce9f9c-1481-4627-9e01-e3c85d70454f",
+      "resource": "deploymentPackages"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "INVENTORY-V1",
+      "requestId": "757b2aa0-c6aa-460c-b2fc-f54e772eb13c",
+      "resource": "bundles"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "INVENTORY-V1",
+      "requestId": "ee988e4a-1af1-4378-b2cc-b5a44f1b5f68",
+      "resource": "inventory"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "GET",
+      "responseCode": 200,
+      "app": "INVENTORY-V1",
+      "requestId": "a0f00e97-21f7-4fc0-a52d-d842fd20ac66",
+      "resource": "systemPackages"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "EXEC",
+      "responseCode": 200,
+      "app": "CONF-V2",
+      "requestId": "ee3699a4-4866-4641-8b87-0191af5524f8",
+      "resource": "snapshots/_write"
+    },
+    {
+      "replyTopicMatched": true,
+      "method": "POST",
+      "responseCode": 200,
+      "app": "CONF-V2",
+      "requestId": "883db25f-14bf-456c-a3eb-e0165976aecb",
+      "resource": "snapshots/byId"
+    }
+  ],
+  "systemPackageApiSucceeded": true,
+  "hostSystemPackageCount": 0,
+  "hostPackageError": "",
+  "snapshotId": 1791645869670,
+  "bundleCount": 284,
+  "systemImplementation": "org.eclipse.kura.core.system.SystemServiceImpl",
+  "cloudPid": "acceptance.complete.2dca618e-08d4-47c8-9849-2c37abbc3906",
+  "clientId": "complete-cloud-7a72bd75-187d-45d0-aaa7-9c4017dd2b1c",
+  "observerId": "complete-observer-844279c2-cd98-4b9f-be30-94ff10fff1bb",
+  "cloudStackDeleted": true,
+  "passed": true,
+  "elapsedSeconds": 18.734,
+  "pids": [
+    35491,
+    35500
+  ],
+  "exitCodes": [
+    0,
+    143
+  ],
+  "forcedShutdown": false,
+  "portsReleased": true,
+  "broker": {
+    "stopped": true,
+    "authenticatedClients": [
+      "complete-cloud-7a72bd75-187d-45d0-aaa7-9c4017dd2b1c",
+      "complete-observer-844279c2-cd98-4b9f-be30-94ff10fff1bb"
+    ]
+  },
+  "helpers": {
+    "kura-configuration-test-fixtures.jar": "dc53e67437e3b162257f156f8ebe20a597d1a4d44b6b2bb1627ebd400309a098",
+    "junit-platform-commons.jar": "55c8a0c069ac1bc4e1f8bbb26b5eae95cbd10e4ff1b23248441ab61a607381e1",
+    "opentest4j.jar": "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
+    "protocol-probe.jar": "815b28374b6959ca4ebe19ef35f84f06a82ffeb20e97b035becf81eedd5fbda3",
+    "apiguardian-api.jar": "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38",
+    "junit-jupiter-api.jar": "aa1ae085fd92dfdbf85d867e60e59adc599bac183b46fc7e0698198bf426ad3f"
+  },
+  "logs": {
+    "console.log": "171d05d85e6ca009b434ea842d92eff79e823090caee6dc083ee536bfb6a82c1",
+    "broker.log": "2c58b87a0350a39bb1c3b5f4891defeeb9a785e84aa11a466dc9ddb21253bf58"
+  },
+  "sources": {
+    "run.py": "b35b124e3ac7f226c69de2cfd0452e82668490d81a670021f2bef0986b0e4403",
+    "pom.xml": "2ee7b4761a6d06cb8432b02e74f82e646dea1be692c16346fd11f311b397732e",
+    "src/test/java/org/eclipse/kura/cloud/testing/fullruntime/AcceptanceBroker.java": "3908776bd702a174a2df69cc994a197a6570de8df236c8a19da843f8f05fb175",
+    "src/main/java/org/eclipse/kura/cloud/testing/fullruntime/ProtocolProbe.java": "92eae3088e70273d9c2c6c863ad0a8cdbe6865848f7b5d0f4db8d24a82c13e38"
+  },
+  "coreSources": {
+    "build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyCoreScenarios.java": "fe51865e9c892cf26260f8159195a4cfd7c03ed949027b433699579d94896d65",
+    "build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyInventoryScenarios.java": "e609920110f1341026edf8ee4e8a57b7fe3e6cab9ede08f8ed7ae731b470a702"
+  },
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 arm64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "jupiterAssertionLibrary": "5.14.4",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-protocol-final-20261010",
+  "coreWorkingRevision": "804bdc607ef433918706fcb2345f47ea5c7316b8",
+  "cloudAcceptanceCommit": "aab00ff9643da835e71bd32ab025a96e99e1f7a0",
+  "runtimeProductionCoreRevision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+  "runtimeProductionCloudRevision": "d2da9b137fd711d2aa70befd4c9c229c72224696",
+  "runtimeArtifactCount": 279,
+  "runtimeInventorySha256": "bb1cf092b48a93c6dafdc89e9f88c04a14a6c24a10ca27c874535357035031f8",
+  "runtimeArtifactMismatches": [],
+  "protectedPersonalProfile": {
+    "root": "/Users/heyoulin/.kura-dev",
+    "existingFiles": 33,
+    "changed": [],
+    "newFiles": [],
+    "removed": []
+  },
+  "templateKeystoreChecks": {
+    "user/security/httpskeystore.ks": {
+      "templateSha256": "284c4d79601d8bec4dfd5fe51ae7efbf40b1940754d1bef7f8a92e89ab8d8c75",
+      "initialCopySha256": "284c4d79601d8bec4dfd5fe51ae7efbf40b1940754d1bef7f8a92e89ab8d8c75"
+    },
+    "user/security/cacerts.ks": {
+      "templateSha256": "630d412dfe75add53ddb5216519e032ef2f01929c11d5ed02f18d343a345ddfa",
+      "initialCopySha256": "630d412dfe75add53ddb5216519e032ef2f01929c11d5ed02f18d343a345ddfa"
+    }
+  },
+  "probeBuildLogSha256": "e58c21db9f9c4b4b041747698aab756d002d1ef7d64a09acd69153ff67d01d72",
+  "scope": "Complete Maven Mac application: real host SystemService, six unchanged legacy assertions and twelve authenticated MQTT requests through actual SCR handlers",
+  "counting": "Six reflectively invoked Jupiter-backed fixture methods and twelve protocol requests are separate executable evidence; do not add them to the 5515 workspace JUnit invocations or overlapping earlier runs.",
+  "diagnosticRuns": [
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-protocol-initial-20261010",
+      "passed": false,
+      "issue": "Test helper passed an immutable password Map to the existing in-place encryption path; corrected to match the established fixture mutable Map pattern. No production change."
+    },
+    {
+      "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-protocol-mutable-20261010",
+      "passed": true,
+      "issue": "Preliminary six-assertion/twelve-request pass; final helper additionally compares MQTT system package count with actual host API and uses an API-success field instead of claiming package-enumeration support."
+    }
+  ],
+  "limits": [
+    "Complete Maven macOS development application; no installed Debian or additional Linux acceptance.",
+    "Actual Mac host SystemService system-package API and MQTT endpoint both return an empty list successfully. This does not prove Linux dpkg/rpm/apk enumeration.",
+    "Development encryption uses the default isolated test key; no production master-key provisioning claim.",
+    "Direct legacy methods use their existing temporary RequestHandlerRegistry. Those fixtures are closed before the independent Paho/MQTT phase; SystemService and OS package data are not replaced.",
+    "No production code, handwritten production OSGi metadata, YOFC/PLC4X scope, Sparkplug callback/NDEATH logic or official OPC UA behavior changed."
+  ]
+}

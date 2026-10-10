@@ -3870,9 +3870,6 @@
     "status": "replaced-legacy-harness",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "deferredValidation": [
-      "Full deployed assembly"
-    ],
     "kind": "helper",
     "execution": "Consumer fixtures; no independent upstream test cases",
     "localSources": [
@@ -3882,7 +3879,17 @@
     ],
     "reason": "Existing lifecycle-managed MqttTransport supplies actual request/reply correlation, bounded waits, observer cleanup and pending-request cleanup for endpoint suites. New real-OSGi backend scenarios explicitly use the registry boundary. Old listener-owning singleton/global test helper is replaced, not counted as additional transport coverage. See legacy-core-protocol-restoration.md. Companion CloudFactoryRuntimeIT now verifies an MQTT request/reply through the actual SCR configuration and inventory handlers. A later authenticated MQTT run also covers INVENTORY-V1 deploymentPackages, bundles, systemPackages and merged inventory GET with real Felix deployment and a controlled OS package fixture; see core-protocol-deployment-mqtt-validation-20261010.json.",
     "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
-    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/CommURITest.java",
@@ -3937,9 +3944,6 @@
     "status": "restored",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "deferredValidation": [
-      "Full deployed assembly"
-    ],
     "localSources": [
       "kura/build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyCoreScenarios.java",
       "kura/kura-osgi-tests/src/test/java/org/eclipse/kura/testing/LegacyCoreRuntimeIT.java",
@@ -3955,7 +3959,17 @@
       "jdk": "21"
     },
     "reason": "Four upstream scenarios retained with real ConfigurationService/CM/SCR/metatype/Crypto/XML and the original scalar/array definitions. Current merge and partial-success API behavior preserved, false-positive assertions replaced. CONF-V1 operates through the actual SCR-bound handler. Companion MQTT GET evidence is in core-protocol-mqtt-validation-20261010.json; see also legacy-core-protocol-restoration.md.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/ExampleTest.java",
@@ -3984,16 +3998,23 @@
     "status": "replaced-legacy-harness",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "deferredValidation": [
-      "Full deployed assembly"
-    ],
     "kind": "helper",
     "execution": "Consumer fixtures; no independent upstream test cases",
     "localSources": [
       "kura/build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyConfigurationComponent.java"
     ],
     "reason": "Empty legacy marker replaced by a real SCR test-component service, keeping the original metatype and PID. No behavior is lost. See legacy-core-protocol-restoration.md.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/InventoryHandlerTest.java",
@@ -4007,7 +4028,6 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "deferredValidation": [
-      "Full deployed assembly",
       "Linux system package-manager enumeration"
     ],
     "localSources": [
@@ -4026,7 +4046,17 @@
     },
     "reason": "Four upstream scenarios retained with actual Felix DeploymentAdmin, SCR InventoryHandlerV1 and JSON services. An in-memory deployment package supplies a real installed bundle; JSON fields and actual uninstall are asserted. OS package enumeration is controlled. Companion MQTT GET evidence is in core-protocol-mqtt-validation-20261010.json; see also legacy-core-protocol-restoration.md. The later authenticated MQTT run checks deployed bundle/package details and controlled DEB type/version in both systemPackages and merged inventory; see core-protocol-deployment-mqtt-validation-20261010.json.",
     "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
-    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/KuraExceptionMessageTest.java",
@@ -4118,9 +4148,6 @@
     "status": "replaced-legacy-harness",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "deferredValidation": [
-      "Full deployed assembly"
-    ],
     "kind": "helper",
     "execution": "Consumer fixtures; no independent upstream test cases",
     "localSources": [
@@ -4129,7 +4156,17 @@
     ],
     "reason": "The existing MQTT observer uses fresh UUID request IDs and an independent observer ID instead of the legacy timestamp/random singleton. Direct registry scenarios need no wire request ID. No standalone test count. See legacy-core-protocol-restoration.md. The same independent observer correlates all four INVENTORY-V1 GET responses with unique IDs over MQTT; see core-protocol-deployment-mqtt-validation-20261010.json.",
     "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
-    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json"
+    "mqttDeploymentEvidence": "docs/testing/core-protocol-deployment-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/SystemAdminServiceTest.java",
@@ -4222,9 +4259,6 @@
     "status": "restored-helper",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
-    "deferredValidation": [
-      "Full deployed assembly"
-    ],
     "kind": "helper",
     "execution": "Consumer fixtures; no independent upstream test cases",
     "localSources": [
@@ -4232,7 +4266,17 @@
       "kura/build-support/kura-configuration-test-fixtures/src/main/java/org/eclipse/kura/testing/configuration/fixture/LegacyInventoryScenarios.java"
     ],
     "reason": "Active snapshot-ID consumer retained with namespace-aware DOM and disabled external entities. Actual XML service decodes configurations; current inventory uses structured JSON assertions. Unused historical inventory XML parsers are not copied. See legacy-core-protocol-restoration.md.",
-    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json"
+    "mqttRuntimeEvidence": "docs/testing/core-protocol-mqtt-validation-20261010.json",
+    "completeMacProtocolValidation": {
+      "evidence": "docs/testing/mac-complete-protocol-validation-20261010.json",
+      "legacyAssertions": 6,
+      "mqttRequests": 12,
+      "hostSystemService": "org.eclipse.kura.core.system.SystemServiceImpl",
+      "counting": "Shared acceptance run across six inventory rows; do not sum or add to JUnit totals."
+    },
+    "platformValidationLimits": [
+      "Complete Maven Mac development assembly; installed Debian/hardware acceptance not performed."
+    ]
   },
   {
     "source": "test/org.eclipse.kura.core.unit.test/src/test/java/org/eclipse/kura/core/ssl/ConnectionSslOptionsTest.java",
