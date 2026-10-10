@@ -67,6 +67,7 @@ for repo in "${siblings[@]}"; do
 done
 
 if [[ "$RUN_IT" == 1 ]]; then
+    build "$SCRIPT_DIR/../kura-cloud/runtime-tests/pom.xml" verify
     build "$SCRIPT_DIR/kura-endpoint-tests/pom.xml" verify
 fi
 

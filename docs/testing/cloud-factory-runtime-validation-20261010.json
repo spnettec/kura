@@ -1,0 +1,42 @@
+{
+  "tests": 2,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "execution": "JUnit 5 / Failsafe / actual Equinox SCR and ConfigurationAdmin",
+  "installedBundles": 53,
+  "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-factory-runtime-20261010",
+  "source": "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+  "coverage": [
+    "Factory-created cloud stack and publisher registration",
+    "Custom kura.service.pid independent of Chinese cloud name and description",
+    "Real service.factoryPid discovery and ConfigurationService properties",
+    "Actual publisher ServiceTracker binding by cloud endpoint PID",
+    "Linked DataService and DataTransport target PIDs and service unregistration"
+  ],
+  "boundaries": [
+    "Controlled SystemService, SystemAdminService, WatchdogService and CloudConnectionStatusService",
+    "No broker connection, SQL persistence or TLS acceptance in this suite"
+  ],
+  "notes": [
+    "Two parameter invocations cover service-existence assertions from three upstream source entries; do not sum per-source references as distinct executions.",
+    "Earlier compilation-only draft, compile failure and preliminary passing runs are not counted.",
+    "Historical 5280 full workspace total remains unchanged."
+  ],
+  "reactor-validate.logSha256": "8990de644f2e75adc4eb2c4ca01e1c4952ffecc68049fce1566de142227d61c2",
+  "ci-preflight.logSha256": "4914c68ea2de596fdfdbea82ae3c447152abdd5d206d287c6822e5e096efd2f3",
+  "cloudRevision": "cb0e315bc298659483bde6c904b07947fd1d96a7",
+  "coreBaseRevision": "aea5d45f6fb24effcc8b4f9eeebfa164d0f52aa5",
+  "sourceSha256": "ee7d6a1eac16d390edee2661869661a008eef73fa217844e4aea7f85da88d034",
+  "ciReportReplay": {
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "directory": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-factory-runtime-20261010/ci-report-replay"
+  }
+}

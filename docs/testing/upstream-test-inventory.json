@@ -2177,9 +2177,10 @@
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "execution": "surefire",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceMqttTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceMqttTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
     ],
-    "reason": "Real SQL/MQTT/Protobuf normal and control round trips verify all six delivery callbacks, IDs, topics, device, body, metric, timestamp and QoS. Uses configured EDC prefix because Moquette 0.18 rejects client publications starting with $. Production default unchanged. Original service-existence assertion needs real SCR and remains deferred. See cloud-test-restoration.md.",
+    "reason": "Real SQL/MQTT/Protobuf normal and control round trips verify all six delivery callbacks, IDs, topics, device, body, metric, timestamp and QoS. Uses configured EDC prefix because Moquette 0.18 rejects client publications starting with $. Production default unchanged. Original service-existence assertion now also passes through the shared actual Equinox/SCR cloud factory fixture, preserving local custom PID/name/description. Full broker/SQL and SCR assembly together remains deferred. See cloud-test-restoration.md.",
     "validation": {
       "tests": 1,
       "failures": 0,
@@ -2187,6 +2188,18 @@
       "skipped": 0,
       "maven": "3.10.0",
       "jdk": "21"
+    },
+    "runtimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual Equinox SCR cloud factory",
+      "sharedReport": "cloud-factory-runtime-validation-20261010.json",
+      "sharedSuiteTests": 2,
+      "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
     }
   },
   {
@@ -2323,10 +2336,11 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudPublisherImplTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudPublisherImplTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
     ],
     "execution": "surefire",
-    "reason": "Publisher failure and message forwarding contracts validated; real ServiceTracker over mocked BundleContext replaces DS latch fixture. Full property maps and payload identity checked. Actual DS/configuration-factory/MQTT acceptance remains open. See cloud-test-restoration.md.",
+    "reason": "Publisher failure and forwarding contracts remain covered by ordinary tests. testServiceExists now also passes through actual Equinox/SCR/ConfigurationService, factory-created CloudService and publisher, including real ServiceTracker binding by custom PID. See cloud-test-restoration.md.",
     "validation": {
       "tests": 4,
       "failures": 0,
@@ -2335,9 +2349,18 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "deferredScenarios": [
-      "testServiceExists: actual Equinox/SCR ConfigurationService and factory-created publisher integration remains open; controlled ServiceTracker binding is the current ordinary-JVM replacement"
-    ]
+    "runtimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual Equinox SCR cloud factory",
+      "sharedReport": "cloud-factory-runtime-validation-20261010.json",
+      "sharedSuiteTests": 2,
+      "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.kapua.mqtt.provider.test/src/main/java/org/eclipse/kura/core/cloud/CloudServiceImplTest.java",
@@ -2398,10 +2421,11 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.kapua.mqtt.provider/src/test/java/org/eclipse/kura/core/cloud/CloudServiceTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java"
     ],
     "execution": "surefire",
-    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence plus real MQTT broker/configuration-factory transport acceptance remain deferred. See cloud-test-restoration.md.",
+    "reason": "All 13 upstream scenarios audited: 12 connection facade/birth semantics restored using actual CloudService publication, actual shared JSON encoder, current modem DTOs and controlled scheduler. DS service existence and factory-created stack now also pass through actual Equinox/SCR/ConfigurationService, preserving local custom PID/name/description. Full MQTT/SQL/TLS/tamper transport assembly remains deferred. See cloud-test-restoration.md.",
     "validation": {
       "tests": 12,
       "failures": 0,
@@ -2411,9 +2435,20 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "testServiceExists: real Equinox/SCR service and factory-created stack existence",
       "Original Moquette/MQTT transport, CryptoService credentials, ConfigurationService updates and EventAdmin/DS tamper registration pipeline: current tests validate facade delegation and encoded published bytes at mocked DataService boundary, not broker delivery"
-    ]
+    ],
+    "runtimeValidation": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "maven": "3.10.0",
+      "jdk": "21",
+      "execution": "failsafe / actual Equinox SCR cloud factory",
+      "sharedReport": "cloud-factory-runtime-validation-20261010.json",
+      "sharedSuiteTests": 2,
+      "reportSha256": "2aa8e9b7c2ed661b54d0932690f9d14fc936d706239cb877e137ce245145d507"
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.kapua.mqtt.provider.test/src/main/java/org/eclipse/kura/core/cloud/LifeCyclePayloadBuilderTest.java",

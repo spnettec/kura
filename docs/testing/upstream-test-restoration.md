@@ -1085,3 +1085,12 @@ fixture failures and the corrected configuration rerun are recorded separately i
 [transport evidence](wire-network-endpoint-restoration.md). Production networking
 and dbus-java behavior are unchanged; DS/device boundaries remain explicit.
 Source counts and the archived full-build totals are unchanged.
+
+### Cloud factory registration (2026-10-10)
+
+Two real Equinox/SCR invocations now cover factory-created cloud stack and publisher
+existence, local custom PID/name/description, actual PID-based publisher tracking
+and service removal. See [cloud restoration](cloud-test-restoration.md). Three
+upstream source entries share this two-invocation report. Full broker/SQL/TLS/tamper
+assembly remains deferred; inventory source counts and historical full-build totals
+are unchanged. Production behavior and handwritten metadata are preserved.

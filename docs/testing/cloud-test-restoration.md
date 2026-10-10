@@ -391,3 +391,35 @@ remain. No production or OSGi metadata changes. Original report and build log ar
 archived in `migration-baseline/cloud-endpoint-20261010`; the inventory records the
 report SHA-256. These 32 executions are additional to the prior archived full
 workspace build; the old 5280 total is not rewritten.
+
+## Real cloud factory and publisher registration (2026-10-10)
+
+The new `kura-cloud/runtime-tests` module passes **two actual Equinox invocations**,
+zero failures/errors/skips on macOS Maven 3.10/JDK 21/Jupiter. This closes the
+service-existence scenarios in the legacy Cloud Base CloudService test and Kapua
+CloudService/CloudPublisher tests. Two invocations cover three source entries;
+their shared report must not be counted three times. See
+[validation evidence](cloud-factory-runtime-validation-20261010.json).
+
+SCR and ConfigurationAdmin create the actual factory, CloudService, DataService,
+MQTT transport and optional publisher from 53 installed bundles. ConfigurationService,
+CryptoService, XML/JSON providers and EventAdmin are real. Custom `kura.service.pid`
+is checked independently from Chinese `kura.cloud.factory.name` and
+`kura.cloud.factory.desc`, both on registered services and configuration properties.
+Discovery uses the local `service.factoryPid` contract; linked data/transport PIDs,
+factory name lookup, publisher tracking by PID and unregistration after deletion
+are asserted. Production code and handwritten metadata are unchanged.
+
+SystemService, SystemAdminService, WatchdogService and CloudConnectionStatusService
+remain controlled host boundaries. Auto-connect stays off; this suite does not
+claim real broker delivery, SQL persistence, TLS credentials or the tamper pipeline
+through this SCR assembly. Those deferred scenarios remain. Temporary properties
+and snapshots are isolated, and the missing host configuration diagnostic in an
+earlier draft is removed by temporary configuration URLs with property restoration.
+
+The sibling `osgi-it` profile supports reactor/IDEA inclusion. `build-all.sh` runs
+the module after sibling installation under `RUN_IT=1`, preserving cold build order.
+Final `clean verify`, selected workspace reactor validation, shell syntax and CI
+preflight pass. Earlier preliminary runs and a checked-exception compile error are
+excluded from the final evidence. No additional Linux or full workspace rerun is
+claimed; the historical 5280 total is unchanged.
