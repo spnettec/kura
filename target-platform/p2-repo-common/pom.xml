@@ -48,6 +48,9 @@
 									<id>io.vertx:vertx-core:${vertx.version}</id>
 									<source>true</source>
 									<transitive>true</transitive>
+									<instructions>
+										<Multi-Release>true</Multi-Release>
+									</instructions>
 								</artifact>
 								<!-- java-jwt wrapped as a real OSGi bundle so
 								     org.eclipse.kura.core.token.jwt can Import-Package it instead of
