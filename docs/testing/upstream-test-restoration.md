@@ -985,3 +985,19 @@ See `legacy-network-enumeration-restoration.md` (networking commit `994f131`).
 
 Inventory: 367 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
 sources, six removed-functionality exclusions and **6 unreviewed** out of 465.
+
+
+## Legacy core protocol source audit (2026-10-10)
+
+The remaining configuration/inventory suites now pass eight real Equinox scenarios
+against SCR, ConfigAdmin, metatype, Crypto/XML/JSON and Felix DeploymentAdmin.
+Current merge/partial-success behavior is retained. The full shared container suite
+passed **62 tests**, zero failures/errors/skips, including array-valued snapshot
+comparisons. Legacy marker, XML and request/reply helpers have explicit replacement
+mappings. See `legacy-core-protocol-restoration.md` for the transport/platform bounds.
+
+Inventory: **369 restored, 60 helpers, 18 replaced harnesses, 12 not-applicable
+sources, six removed-functionality exclusions, zero unreviewed** out of 465. These
+are source dispositions. Deferred scenario/transport/platform acceptance, full
+workspace test validation, actual IDEA execution and migration cleanup remain open;
+this is not a declaration that the overall restoration is complete.

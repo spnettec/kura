@@ -1357,6 +1357,9 @@ public class ConfigurationServiceScenarios {
     private void assertPropertyEquals(final String key, final Object expected, final Object actual) {
         if (expected instanceof Password && actual instanceof Password) {
             assertArrayEquals(((Password) expected).getPassword(), ((Password) actual).getPassword(), "property " + key + " does not match");
+        } else if (expected instanceof Object[]) {
+            assertTrue(actual instanceof Object[], "property " + key + " must remain an array");
+            assertArrayEquals((Object[]) expected, (Object[]) actual, "property " + key + " does not match");
         } else {
             assertEquals(expected, actual, "property " + key + " does not match");
         }

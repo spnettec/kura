@@ -5,7 +5,15 @@ Bundle-Name: Kura configuration integration fixtures
 Bundle-Version: 6.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: org.eclipse.kura.testing.configuration.fixture
-Import-Package: org.eclipse.kura,
+Import-Package: com.eclipsesource.json,
+ javax.xml,
+ javax.xml.parsers,
+ org.w3c.dom,
+ org.eclipse.kura,
+ org.eclipse.kura.cloudconnection.message,
+ org.eclipse.kura.cloudconnection.request,
+ org.eclipse.kura.marshalling,
+ org.eclipse.kura.message,
  org.eclipse.kura.configuration,
  org.eclipse.kura.configuration.metatype,
  org.eclipse.kura.core.configuration,
@@ -14,8 +22,10 @@ Import-Package: org.eclipse.kura,
  org.junit.jupiter.api;version="[5.14,6)",
  org.junit.jupiter.api.function;version="[5.14,6)",
  org.osgi.framework,
+ org.osgi.service.deploymentadmin,
  org.slf4j
 Service-Component: OSGI-INF/test-CfgSvcTestComponent.xml,
  OSGI-INF/test-CfgSvcTestSelfComponent.xml,
  OSGI-INF/test-FactoryComponent.xml,
- OSGI-INF/test-SecondFactory.xml
+ OSGI-INF/test-SecondFactory.xml,
+ OSGI-INF/test-LegacyConfigurationComponent.xml
