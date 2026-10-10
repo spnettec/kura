@@ -1001,3 +1001,16 @@ sources, six removed-functionality exclusions, zero unreviewed** out of 465. The
 are source dispositions. Deferred scenario/transport/platform acceptance, full
 workspace test validation, actual IDEA execution and migration cleanup remain open;
 this is not a declaration that the overall restoration is complete.
+
+
+### macOS IDEA JUnit acceptance (2026-10-10)
+
+IDEA JUnitStarter directly ran 7 ordinary core tests, 6 base Equinox tests and
+8 legacy core runtime scenarios successfully. The two shared `.run` JUnit
+configurations are verified. A real SCR component breakpoint, bundle identity,
+property inspection and F8 step were checked; an unpaused Debug rerun passed all
+8 scenarios and exited. The long breakpoint demonstration itself exceeded the
+fixture activation deadline and is recorded separately, not counted as passing.
+See [IDEA JUnit acceptance](idea-junit-acceptance.md) for preparation and scope.
+This does not complete deferred runtime scenarios, the full workspace regression,
+Linux GUI acceptance or P7 cleanup. Source dispositions are unchanged.

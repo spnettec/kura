@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Kura plain JUnit" type="JUnit" factoryName="JUnit">
+    <module name="org.eclipse.kura.core" />
+    <option name="PACKAGE_NAME" value="org.eclipse.kura.core.test" />
+    <option name="MAIN_CLASS_NAME" value="org.eclipse.kura.core.test.KuraExceptionMessageTest" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kura/org.eclipse.kura.core" />
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>
