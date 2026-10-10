@@ -2288,7 +2288,8 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
+      "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
     }
   },
   {
@@ -2974,8 +2975,7 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance.",
-      "Investigate two Paho 32104 NDEATH publish errors during TLS disconnect; graceful death delivery is not asserted by the TLS acceptance."
+      "File-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
     ],
     "runtimeValidation": {
       "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
@@ -2993,7 +2993,8 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
+      "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
     }
   },
   {
@@ -3042,7 +3043,8 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
+      "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
     }
   },
   {
@@ -3083,7 +3085,8 @@
       "failures": 0,
       "errors": 0,
       "skipped": 0,
-      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references."
+      "counting": "Two runtime invocations in total, each covering five certificate paths; three Sparkplug rows share one invocation. Do not sum references.",
+      "followupReport": "docs/testing/sparkplug-delivery-callback-validation-20261010.json"
     }
   },
   {

@@ -613,3 +613,16 @@ filesystem/SCR WSS path. Two Sparkplug NDEATH publish errors (Paho 32104) appear
 disconnect despite successful preceding application publication. Graceful NDEATH
 delivery is not asserted here and remains a separate investigation; this batch changes
 only tests and evidence.
+
+### Delivery callback follow-up (2026-10-10)
+
+The preceding NDEATH investigation is now resolved: a null Paho delivery-token message
+caused Sparkplug's callback to throw and disconnect. The production fix is isolated
+in cloud commit `75771e5`. The final run passes 152 module tests and 10 shared runtime
+invocations, now waiting for matching delivery confirmations and observing graceful
+QoS 0 NDEATH in both successful TLS paths. No NDEATH publish error remains in the
+final log. See [repair and upstream comparison](sparkplug-delivery-callback-fix.md)
+and [validation evidence](sparkplug-delivery-callback-validation-20261010.json).
+Earlier TLS evidence remains a historical snapshot; the latest checks replace its
+weaker callback/disconnect acceptance. Remaining WSS, durability and IDEA work is
+unchanged.
