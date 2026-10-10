@@ -42,9 +42,9 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 `junit.jupiter.execution.timeout.mode=disabled_on_debug` 关闭调试时的 JUnit 超时；
 服务等待、轮询和其他显式时限仍然有效。长时间暂停后可以重跑，测试时限没有为演示放宽。
 
-本记录只覆盖表中的实际 GUI 入口。其余配置/通信容器测试、HTTP/MQTT 端点套件、
-Linux GUI IDEA、全工作空间回归和 P7 清理仍需各自验收；此前 Maven 的 62 项通过
-不能作为所有测试已经在 IDEA GUI 运行的证明。
+本记录只覆盖表中的实际 GUI 入口。Linux GUI 结果见下节；全工作区回归见
+[独立记录](full-workspace-validation-20261010.md)。其余配置/通信场景、HTTP/MQTT
+端点和 P7 仍按各自清单验收；Maven 通过不能作为所有测试已经在 IDEA GUI 运行的证明。
 
 ## Linux IDEA JUnit 验收（2026-10-10）
 
@@ -79,5 +79,6 @@ Equinox Run/Debug，未改变被测代码、超时、OSGi 元数据或 Kura 运�
 
 截图和校验和保存在本地
 `/Users/heyoulin/iot-kura-develop/migration-baseline/linux-idea-gui-20261010`。
-这些 GUI 执行不重复加入全工作区 Maven 报告总数。本节只完成 Linux 的 JUnit
-入口验收；完整 `Kura Linux` 应用启动/断点/停止重启、其他延后场景及 P7 仍需完成。
+这些 GUI 执行不重复加入全工作区 Maven 报告总数。本节覆盖 Linux 的 JUnit
+入口；完整 `Kura Linux` 应用启动/断点/停止重启已在
+[应用验收记录](linux-idea-application-acceptance.md)中完成。其他延后场景及 P7 仍需完成。

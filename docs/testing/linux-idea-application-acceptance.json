@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-10",
+  "environment": {
+    "vm": "kura-migration-acceptance",
+    "os": "Ubuntu 24.04 ARM64",
+    "idea": "2026.2.3 (262.10968.63)",
+    "jdk": "OpenJDK 21.0.12.1",
+    "maven": "3.10.0",
+    "source": "host repository mounted at /home/heyoulin/kura-gui-acceptance/host-git/kura",
+    "profiles": [
+      "workspace",
+      "dev-runtime",
+      "osgi-it",
+      "endpoint-it",
+      "javadocs"
+    ]
+  },
+  "application": {
+    "debugPid": 12360,
+    "runPid": 13418,
+    "beforeRunReactorModules": 123,
+    "breakpoint": "Emulator.activate(ComponentContext):47",
+    "stepToLine": 50,
+    "evaluatedBundle": "org.eclipse.kura.emulator",
+    "debugFrameworkStates": {
+      "ACTIVE": 269,
+      "RESOLVED": 8,
+      "STARTING": 1,
+      "INSTALLED": 0
+    },
+    "businessBundles": 277,
+    "httpStatusAfterDebugAndRun": 200,
+    "portsReleasedAfterBothStops": [
+      8080,
+      8443,
+      8444
+    ],
+    "stopExitCode": 130,
+    "stopSignal": "SIGINT",
+    "dataHashesUnchanged": true,
+    "startupErrors": 0
+  },
+  "resources": {
+    "vmMemoryMiBForSuccessfulApplicationRuns": 8192,
+    "restoredVmMemoryMiB": 4096,
+    "ideaHeapMiB": 1024,
+    "oomKillCountBeforeAndAfterSuccessfulRuns": 2,
+    "earlierApplicationBuildFailure": "IDEA OOM killed with 6 GiB cgroup during GWT compilation; excluded from pass"
+  },
+  "cleanup": {
+    "linuxIdeaExited": true,
+    "temporaryBreakpointRemoved": true,
+    "hostMavenPathsRestored": true,
+    "hostMacosRuntimeReassembled": true
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/linux-idea-gui-20261010",
+  "evidence": {
+    "kura-linux-idea-application-breakpoint.jpg": "c9d35df1833060ea20e151f099b2e9eb5fc9dad8fa5468e1312e3434eb2aca85",
+    "kura-linux-idea-application-step.jpg": "e719c3dc85a1bb01150ed55395c3ac1933b08593cf4dda99771cfb3a53198b16",
+    "kura-linux-idea-no-unresolved-bundles.jpg": "1d6dc5bd256a5b793482cbee127499d245549486c6f7e9156001202aa4cb0cc2",
+    "kura-linux-idea-application-debug-stopped.jpg": "01c57681bd406a00de1771671ffd077302512221c0963d3989ba575592081610",
+    "kura-linux-idea-application-run.jpg": "506e730d7f241a1701b1178238c304e79bf5bad8d53a9b0aca1d799c36ccdcab",
+    "kura-linux-idea-application-run-stopped.jpg": "f8c4e0e88ce0c37a1dddc02d30dda1c152b74e96a74d0d1cb23cc96efba73e37",
+    "application-debug-runtime-state.txt": "39ad403b54ee50581a9842a9b439aeda10177ecafa669fd6d7d53ac0c1e689e7",
+    "application-debug-kura.log": "612878f7c39884d8814be9ee98607c4f459ad35ebea75d6c7bd54c83059d04e6",
+    "application-run-kura.log": "77c349c77d7bf6859fed3ac8061f3e45ff4e494f9a4fc4c32f6a4cd03b287bac",
+    "application-runtime-inventory.json": "1085345f98933b702f10c8d7e4faefdbf48da535ff6fe2c4f1162131cdd42514",
+    "application-before-restart-data-sha256.json": "8e83539fc5b0da96a83e61240018117b85373567a4831012af802c74eaa6fcfc",
+    "application-after-restart-data-sha256.json": "534e881cdf4fb264e06a60428b8890ac06f9852cdf5f0c353fcaedcb3f47db3b",
+    "application-build-oom.log": "5cd7dfc10b55b322f817d87a83c955d10710dc59e3ff55265e99ec647bd920e6",
+    "linux-crl-before-run.xml": "650fc49661ec615eb9233f08784f40a5a9cd810641df29701eeb044414d0ad2c"
+  }
+}

@@ -1,6 +1,6 @@
 # Maven Bundle Plugin / IDEA 迁移实施记录
 
-本分支按 P0–P7 分阶段迁移。**默认构建和开发启动已切换普通 Maven；macOS IDEA、Linux CLI、冷构建、双架构 Docker 和 deb 安装回归已通过。Linux GUI 调试及 P7 清理尚未完成。** 不将构建支持安装成功当作完整迁移完成。
+本分支按 P0–P7 分阶段迁移。**默认构建和开发启动已切换普通 Maven；macOS IDEA、Linux CLI、冷构建、双架构 Docker 和 deb 安装回归已通过。Linux GUI 应用及 JUnit Run/Debug 已通过；P7 清理尚未完成。** 不将构建支持安装成功当作完整迁移完成。
 
 ## 已冻结的约束
 
@@ -21,7 +21,7 @@
 | P3 代表模块 | 试点通过：5 个 bundle 语义对比、14 项普通测试、6 项真实容器测试，以及替换新 JAR 后的完整运行验证。 |
 | P4 核心迁移 | 已通过：51 个默认 bundle + docs；22 项普通测试、6 项真实容器测试及新核心运行验证。 |
 | P5 Sibling / YOFC | 47 个原 Tycho sibling bundle、YOFC 及 runtime 构建/产物检查通过；完整新运行集 CLI 和 IDEA 增量构建、Debug、控制台登录通过。 |
-| P6 交付与平台回归 | 空缓存、ARM64/AMD64 Docker 运行及重启、Linux deb 安装/升级/卸载、macOS IDEA 与 Linux CLI 通过；Linux GUI 断点未验收。 |
+| P6 交付与平台回归 | 空缓存、ARM64/AMD64 Docker 运行及重启、Linux deb 安装/升级/卸载、macOS IDEA 与 Linux CLI 通过；Linux GUI 应用及 JUnit Run/Debug 通过。 |
 | P7 清理切换 | 最后执行；目前不删除旧 `.target`、`.launch` 或 Tycho 配置。 |
 
 ## 基线与回退
@@ -150,7 +150,7 @@ mvn -Pjavadocs,osgi-it install
 
 发行包中两个独立的 Jackson YAML / JAXB 模块在原包中已有未解析依赖；新旧 JAR 字节相同，原包也在真实 Equinox resolver 中复现。没有为此改变共享依赖边界。OPC UA bundle 内的 YAMLFactory 和 SnakeYAML Engine 均通过自身真实 bundle classloader 加载，详见 [Jackson/YAML 原包对照](jackson-yaml-boundary.md)。桌面仿真清单不含这两个多余的独立模块，全部条目可以解析。
 
-Linux VM 没有图形界面和 IDEA，**Linux GUI Run/Debug 断点未验收**；Linux CLI 和 Docker 结果不替代此项。真实硬件功能仍按原独立流程验收。P7 尚未删除旧 Eclipse/PDE 配置，也尚未完成模板及 CI 切换。
+2026-10-10 已在隔离 Linux VM 补齐 GUI/IDEA，直接打开宿主仓库，完成应用及 JUnit Run/Debug、真实 SCR 断点/单步、停止释放端口和重启数据保留。见 [完整应用记录](../testing/linux-idea-application-acceptance.md)及 [JUnit 记录](../testing/idea-junit-acceptance.md)。真实硬件功能仍按原独立流程验收。P7 尚未删除旧 Eclipse/PDE 配置，也尚未完成模板及 CI 切换。
 
 
 ## 调试数据导入和当前版本组合
