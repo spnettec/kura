@@ -1036,3 +1036,14 @@ verified; the isolated Java temporary directory stays free of SQLite libraries.
 See [database restoration](database-test-restoration.md). Inventory source counts
 are unchanged. No `deferredMethods` entries remain, but deferred scenarios/runtime
 validation, the final workspace build, Linux GUI and P7 work remain open.
+
+### Full workspace regression (2026-10-10)
+
+The complete `RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0` build passed with Maven 3.10 /
+JDK 21. Current-source, deduplicated reports contain **5,280 invocations: 5,271
+passed, nine explicitly skipped, zero failures/errors**, including 65 real Equinox
+and 397 HTTP/MQTT endpoint tests. Existing YOFC tests were run without expansion.
+See [full workspace validation](full-workspace-validation-20261010.md) for report
+checksums, repository revisions, skip reasons and the archive made before Linux
+IDEA rewrites shared targets. Deferred runtime scenarios, Linux GUI and P7 remain
+open; source disposition counts are unchanged.
