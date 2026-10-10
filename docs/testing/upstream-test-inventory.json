@@ -5319,10 +5319,15 @@
         "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       }
     },
-    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
-    "deferredValidation": [
-      "Equinox SCR/configuration with a registered tamper service and event/reset flows"
-    ]
+    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md. Direct macOS IDEA class Run passed. An opt-in Maven-built fixture then passed actual Equinox/SCR, EventAdmin and authenticated HTTPS status/reset/unbind acceptance; see mac-tamper-scr-event-reset-validation-20261010.json. Physical hardware and installed Debian packaging remain outside this scope.",
+    "deferredValidation": [],
+    "runtimeValidation": {
+      "report": "docs/testing/mac-tamper-scr-event-reset-validation-20261010.json",
+      "transport": "certificate-validated HTTPS",
+      "requests": 7,
+      "eventAdminDeliveries": 2,
+      "fixture": "Maven Bundle Plugin 6.0.0 / actual Equinox SCR"
+    }
   },
   {
     "source": "test/org.eclipse.kura.useradmin.store.test/src/main/java/org/eclipse/kura/useradmin/store/test/RoleRepositoryStoreTest.java",

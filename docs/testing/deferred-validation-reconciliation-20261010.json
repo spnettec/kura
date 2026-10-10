@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 42,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 42 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "count": 41,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 41 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -278,23 +278,6 @@
       "remaining": "Installed Debian SCR/metatype/configuration factory discovery remains unverified.",
       "originalDeferredValidation": [
         "Deployed SCR/metatype/configuration factory discovery",
-        "IDEA execution"
-      ]
-    },
-    {
-      "inventoryIndex": 241,
-      "source": "test/org.eclipse.kura.rest.tamper.detection.provider.test/src/main/java/org/eclipse/kura/rest/tamper/detection/provider/test/TamperDetectionRemoteServiceTest.java",
-      "group": "rest-tamper",
-      "evidence": [
-        "docs/testing/system-tamper-endpoint-test-restoration.md",
-        "docs/testing/cloud-tamper-runtime-validation-20261010.json",
-        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
-      ],
-      "covered": "IDEA Tamper 18/18; isolated Equinox/SCR authenticated HTTPS tamper list returned 200 and zero devices.",
-      "remaining": "Equinox SCR/configuration with a registered tamper service and event/reset flows.",
-      "originalDeferredValidation": [
-        "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
       ]
     },
@@ -630,5 +613,12 @@
   "macIdeaRestEndpointEvidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
   "macRestScrEvidence": "docs/testing/mac-rest-scr-endpoint-validation-20261010.json",
   "macDeploymentNetworkRestEvidence": "docs/testing/mac-deployment-network-rest-scr-validation-20261010.json",
-  "macSystemListingScrEvidence": "docs/testing/mac-system-listing-scr-validation-20261010.json"
+  "macSystemListingScrEvidence": "docs/testing/mac-system-listing-scr-validation-20261010.json",
+  "resolvedRows": [
+    {
+      "inventoryIndex": 241,
+      "report": "docs/testing/mac-tamper-scr-event-reset-validation-20261010.json",
+      "resolution": "Actual Mac Equinox/SCR dynamic service binding, EventAdmin trigger/reset delivery and authenticated HTTPS status/reset/unbind passed; physical hardware and Debian installation are separate scopes."
+    }
+  ]
 }

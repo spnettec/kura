@@ -40,5 +40,6 @@
     "The actual SCR registrations and read-only authenticated HTTPS operations are proven; mutating endpoint scenarios remain covered by their separate Maven/IDEA fixture tests.",
     "The empty tamper list confirms the service registration but not a physical tamper event.",
     "The macOS development assembly is not an installed Debian package or Linux hardware acceptance."
-  ]
+  ],
+  "tamperEventResetFollowup": "docs/testing/mac-tamper-scr-event-reset-validation-20261010.json"
 }

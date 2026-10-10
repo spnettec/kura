@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-10",
+  "scope": "macOS full development assembly: actual Equinox/SCR tamper service binding, EventAdmin delivery and authenticated HTTPS status/reset",
+  "platform": "macOS-27.0.1-arm64",
+  "jdk": "21.0.12.1",
+  "maven": "3.10.0",
+  "fixtureBuild": "Maven Bundle Plugin 6.0.0, opt-in kura-dev-runtime/acceptance/tamper-probe/pom.xml",
+  "fixtureBundleSha256": "c2415017e665475108cbd6e76e193067a7d3b8cbe5cc1c4b0b090b4800274a33",
+  "runtime": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "configuration": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/equinox-config-postfix",
+    "jvmPid": 38964,
+    "fixtureBundleId": 280,
+    "httpsPort": 18443,
+    "tls": "Generated localhost certificate validated with the isolated certificate authority file; no insecure TLS flag",
+    "authentication": "Basic isolated development admin identity; credential omitted",
+    "masterKey": "External KURA_CRYPTO_SECRET_KEY from the isolated profile; value omitted",
+    "stoppedAfterProbe": true
+  },
+  "http": {
+    "requests": 7,
+    "listWithRegisteredService": 200,
+    "initialStatus": 200,
+    "statusAfterTrigger": 200,
+    "reset": 204,
+    "statusAfterReset": 200,
+    "listAfterUninstall": 200,
+    "statusAfterUninstall": 404
+  },
+  "verified": [
+    "SCR dynamically bound the test TamperDetectionService with the declared kura.service.pid; HTTPS list returned its PID and display name",
+    "Status changed from false to true after the fixture sent a TamperEvent through real EventAdmin",
+    "Authenticated HTTPS reset returned 204 and restored status false",
+    "The fixture EventHandler received both the trigger event and the reset event through EventAdmin",
+    "Uninstall removed the service from the SCR-backed list and changed PID lookup to 404",
+    "The final Maven-built fixture JAR was used for this run and the isolated runtime JVM exited"
+  ],
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/tamper-scr-probe-20261010",
+  "archiveResult": {
+    "file": "final-result.json",
+    "sha256": "cce5001a68f7be3a7e2c48c65bfcce0a962986ccb707887579db94965bd5d384"
+  },
+  "sourceSha256": {
+    "kura-dev-runtime/acceptance/tamper-probe/pom.xml": "74cd525ea3977104e235332d50e2cecbbd0e52ba7bba30b188c1cc7ea0a1d442",
+    "kura-dev-runtime/acceptance/tamper-probe/src/main/java/org/eclipse/kura/testing/tamper/TamperProbe.java": "83657ca0798322efdb986bfa9e7160f2c735f60bbba191ed38ef8b8737ebc61f",
+    "kura-dev-runtime/acceptance/tamper-probe/README.md": "1da848ce0b6956ac5a4a4c0279df0180edb14f886b996c68471461d9e7fbc4fe"
+  },
+  "limits": [
+    "A simulated service was used; no physical tamper sensor or hardware interrupt was exercised",
+    "The runtime was an isolated macOS Maven development assembly, not an installed Debian package",
+    "No Linux, YOFC, PLC4X or official OPC UA validation was added"
+  ]
+}
