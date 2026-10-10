@@ -874,3 +874,13 @@ regressions fail as expected; full modules pass 78 and 22 tests plus installatio
 Inventory: 358 restored, 53 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **32 unreviewed** out of 465.
 Actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## Security endpoint continuation (2026-10-10)
+
+All eight V1 and seven V2 security endpoint scenarios pass on HTTP and MQTT: 30
+invocations. Oversized input reaches the real endpoint limit and is rejected before
+SecurityService is called. See `security-endpoint-test-restoration.md`.
+
+Inventory: 360 restored, 53 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **30 unreviewed** out of 465.
+Actual Kura SCR/runtime and IDEA acceptance remain open.

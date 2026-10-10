@@ -49,3 +49,8 @@ See `docs/testing/system-tamper-endpoint-test-restoration.md` in the repository 
 
 Service-listing scenarios use a private real Equinox service registry. SCR description
 and configuration-service boundaries are controlled; see the service-listing audit.
+
+Security V1/V2 scenarios exercise authentication, reload/application boundary calls
+and error mapping. Their SecurityService is controlled, so live host policy files
+are not modified. The V2 oversized-request fixture requires kura-cloud `591fea6`
+or later; its private broker limit is bounded at 8 MiB only for that test class.
