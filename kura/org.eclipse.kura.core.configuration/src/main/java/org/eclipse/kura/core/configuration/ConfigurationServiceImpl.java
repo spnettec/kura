@@ -444,7 +444,15 @@ public class ConfigurationServiceImpl implements ConfigurationService, OCDServic
     @Override
     public ComponentConfiguration getDefaultComponentConfiguration(String pid) throws KuraException {
         Tocd ocd = getOCDForPid(pid);
+        if (this.activatedSelfConfigComponents.contains(pid)) {
+            ComponentConfiguration configuration = getSelfConfiguringComponentConfiguration(pid);
+            if (configuration == null) {
+                return null;
+            }
+            ocd = (Tocd) configuration.getDefinition();
+        }
         Map<String, Object> props = ComponentUtil.getDefaultProperties(ocd, this.ctx);
+        decryptConfigurationProperties(props);
         return new ComponentConfigurationImpl(pid, ocd, props);
     }
 
