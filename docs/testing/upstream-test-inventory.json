@@ -3515,9 +3515,15 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core"
     ],
-    "status": "unreviewed",
+    "status": "replaced-legacy-harness",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/build-support/cloud-integration-tests/src/test/java/org/eclipse/kura/core/data/BaseCloudTests.java",
+      "kura/kura-endpoint-tests/pom.xml"
+    ],
+    "reason": "JUnit 4 suite/bootstrap has no standalone test methods. Jupiter module discovery and private BaseCloudTests broker/data lifecycle replace its global latches, fixed ports and global configuration updates. This does not mark its still-pending configuration/inventory/network consumers restored. See legacy-core-harness-audit.md.",
+    "execution": "Source audit and existing Jupiter coverage mapping; zero new invocations"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/CloudEndpointPublisher.java",
@@ -3590,9 +3596,14 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core"
     ],
-    "status": "unreviewed",
+    "status": "restored",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [
+      "kura-cloud/bundles/org.eclipse.kura.cloud.base.provider/src/test/java/org/eclipse/kura/core/data/DataServiceTest.java"
+    ],
+    "reason": "Its sole QoS-1 publish/confirmation scenario is already covered by DataServiceTest.testPublish with qos=1 (100 unique IDs matched to confirmations through actual H2/DataService/MQTT). Reuses the previously validated cloud batch; adds no test invocation. Static dual JUnit/DS instances are replaced by explicit listener ownership. Deployed DS arrival remains deferred. See legacy-core-harness-audit.md.",
+    "execution": "Source audit and existing Jupiter coverage mapping; zero new invocations"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/IConfigurationServiceTest.java",
@@ -3728,9 +3739,12 @@
     "destinations": [
       "kura/kura/org.eclipse.kura.core"
     ],
-    "status": "unreviewed",
+    "status": "not-applicable-current-api",
     "upstreamRepository": "kura",
-    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827"
+    "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+    "localSources": [],
+    "reason": "The upstream class contains no executable methods or active test annotations; the entire physical serial-port example is already commented out. No test is re-enabled or counted, and no serial hardware or host permissions are modified. See legacy-core-harness-audit.md.",
+    "execution": "Source audit and existing Jupiter coverage mapping; zero new invocations"
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/util/CoreTestXmlUtil.java",

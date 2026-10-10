@@ -916,3 +916,14 @@ in kura-wires 4d304a9 passes all 49 existing REST wire tests. See legacy-test-he
 Inventory: 362 restored, 56 helpers, fourteen replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **19 unreviewed** out of 465.
 Actual Kura SCR/runtime, hardware and IDEA acceptance remain open.
+
+## Legacy core harness mapping (2026-10-10)
+
+The JUnit 4 suite bootstrap is replaced by existing Jupiter fixtures; its one
+publish/confirmation example maps to the existing real QoS-1 pipeline test. The
+fully commented RxTx example has no executable test to restore. No new invocation
+is counted; see legacy-core-harness-audit.md.
+
+Inventory: 363 restored, 56 helpers, fifteen replaced harnesses, nine not-applicable
+sources, six removed-functionality exclusions and **16 unreviewed** out of 465.
+Pending legacy configuration/inventory/network and runtime/IDEA acceptance remain open.
