@@ -1,8 +1,8 @@
 {
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
-  "count": 45,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Six REST endpoint classes also passed direct Mac IDEA JUnit (163/163), while isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The 45 retained rows now state the remaining scenario-specific SCR/deployed/hardware boundaries; no Linux package or hardware acceptance is claimed.",
+  "count": 43,
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Six REST endpoint classes passed direct Mac IDEA JUnit (163/163), and isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. The 43 retained rows state remaining scenario-specific SCR/deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -389,42 +389,16 @@
       ]
     },
     {
-      "inventoryIndex": 274,
-      "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/main/java/org/eclipse/kura/rest/packages/provider/test/PackagesRestServiceTest.java",
-      "group": "deployment",
-      "evidence": [
-        "docs/testing/deployment-test-restoration.md"
-      ],
-      "covered": "Restored package REST tests passed.",
-      "remaining": "Deployed OSGi whiteboard and runtime authentication/filter integration remain unverified.",
-      "originalDeferredValidation": [
-        "OSGi whiteboard registration and runtime authentication/filter integration"
-      ]
-    },
-    {
-      "inventoryIndex": 368,
-      "source": "tests/org.eclipse.kura.rest.network.configuration.provider.test/src/main/java/org/eclipse/kura/rest/network/configuration/provider/test/NetworkConfigurationRestServiceTest.java",
-      "group": "network-rest",
-      "evidence": [
-        "docs/testing/wire-network-endpoint-validation-20261010.json",
-        "docs/testing/wire-network-endpoint-restoration.md"
-      ],
-      "covered": "Actual HTTP/MQTT transport and authentication tests passed against controlled backend fixtures.",
-      "remaining": "Real OSGi DS endpoint registration remains unverified; no additional Linux validation requested.",
-      "originalDeferredValidation": [
-        "Real OSGi DS acceptance"
-      ]
-    },
-    {
       "inventoryIndex": 371,
       "source": "tests/org.eclipse.kura.rest.network.status.provider.test/src/main/java/org/eclipse/kura/rest/network/status/provider/test/NetworkStatusRestServiceImplTest.java",
       "group": "network-rest",
       "evidence": [
         "docs/testing/wire-network-endpoint-validation-20261010.json",
-        "docs/testing/wire-network-endpoint-restoration.md"
+        "docs/testing/wire-network-endpoint-restoration.md",
+        "docs/testing/mac-deployment-network-rest-scr-validation-20261010.json"
       ],
-      "covered": "Actual HTTP/MQTT transport and authentication tests passed against controlled backend fixtures.",
-      "remaining": "Real OSGi DS endpoint registration remains unverified; no additional Linux validation requested.",
+      "covered": "Actual HTTP/MQTT transport and authentication fixture tests passed. Isolated Mac Equinox/SCR HTTPS networkStatus routes returned 404; the service is not registered in that runtime.",
+      "remaining": "NetworkStatusRestService DS service arrival on a supported runtime remains unverified; no additional Linux validation requested.",
       "originalDeferredValidation": [
         "Real OSGi DS acceptance"
       ]
@@ -660,5 +634,6 @@
     }
   ],
   "macIdeaRestEndpointEvidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
-  "macRestScrEvidence": "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
+  "macRestScrEvidence": "docs/testing/mac-rest-scr-endpoint-validation-20261010.json",
+  "macDeploymentNetworkRestEvidence": "docs/testing/mac-deployment-network-rest-scr-validation-20261010.json"
 }

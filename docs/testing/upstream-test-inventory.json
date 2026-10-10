@@ -6060,10 +6060,7 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "All 12 upstream endpoint scenarios through actual localhost Jersey HTTP, production GsonSerializer and multipart EntityPart parsing. Only deployment-agent/admin service boundaries mocked. See deployment-test-restoration.md.",
-    "deferredValidation": [
-      "OSGi whiteboard registration and runtime authentication/filter integration"
-    ]
+    "reason": "All 12 upstream endpoint scenarios through actual localhost Jersey HTTP, production GsonSerializer and multipart EntityPart parsing. Only deployment-agent/admin service boundaries mocked. See deployment-test-restoration.md. Actual isolated Mac Equinox/SCR HTTPS /services/deploy/v2 returned 200 authenticated and 401 unauthenticated, proving read-only whiteboard/authentication integration; see mac-deployment-network-rest-scr-validation-20261010.json."
   },
   {
     "source": "tests/org.eclipse.kura.rest.packages.provider.test/src/test/java/org/eclipse/kura/internal/rest/deployment/agent/test/DeploymentRestServiceUnitTest.java",
@@ -8273,10 +8270,7 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Retain local metadata API, JSON DTOs, exception mapping and update behavior. Actual HTTP verifies 12 component scenarios plus original unauthorized request and three additional credential/role cases. DS acceptance remains deferred. See networking-rest-test-restoration.md.",
-    "deferredValidation": [
-      "Real OSGi DS acceptance"
-    ],
+    "reason": "Retain local metadata API, JSON DTOs, exception mapping and update behavior. Actual HTTP verifies 12 component scenarios plus original unauthorized request and three additional credential/role cases. DS acceptance remains deferred. See networking-rest-test-restoration.md. Actual isolated Mac Equinox/SCR HTTPS networkConfiguration configurableComponents and configurations returned 200 authenticated; 401 unauthenticated. The provider invoked real ConfigurationService/CryptoService read paths; see mac-deployment-network-rest-scr-validation-20261010.json.",
     "transportValidation": {
       "tests": 16,
       "failures": 0,
@@ -8340,9 +8334,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Retain all 35 local DTO/error scenarios; additionally verified over actual HTTP and MQTT (70 executions). NetworkStatusService is controlled; this does not validate system D-Bus or device behavior. DS acceptance remains deferred.",
+    "reason": "Retain all 35 local DTO/error scenarios; additionally verified over actual HTTP and MQTT (70 executions). NetworkStatusService is controlled; this does not validate system D-Bus or device behavior. DS acceptance remains deferred. The isolated Mac Equinox/SCR HTTPS networkStatus routes returned 404 while the DS descriptor requires NetworkStatusService; no Linux acceptance was added. See mac-deployment-network-rest-scr-validation-20261010.json.",
     "deferredValidation": [
-      "Real OSGi DS acceptance"
+      "NetworkStatusRestService DS service arrival on a supported runtime; macOS route returned 404"
     ],
     "transportValidation": {
       "tests": 70,

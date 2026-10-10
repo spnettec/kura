@@ -130,3 +130,14 @@ No production, i18n, OSGi metadata or external cloud transport changes.
 Full core.deployment now passes 112 cases, zero failures/errors/skips. Deployment's
 source inventory has no unreviewed entries; this is source-audit completion only.
 Real OSGi/IDEA and runtime authentication acceptance remain unfinished.
+
+## Mac runtime REST registration and authentication follow-up
+
+An isolated Mac Equinox/SCR development assembly served the production
+`DeploymentRestService` at `/services/deploy/v2` over certificate-validated HTTPS.
+With the isolated admin identity, read-only package listing returned HTTP 200 and
+an empty array; without authentication it returned HTTP 401. This closes the
+inventory's whiteboard registration and runtime authentication/filter boundary
+for the listing endpoint. Package upload/install/uninstall, installed Debian
+assembly and direct IDEA execution of this deployment test class were not part of
+this probe. Evidence: `mac-deployment-network-rest-scr-validation-20261010.json`.

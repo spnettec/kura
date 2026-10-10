@@ -58,3 +58,12 @@ Pass the same explicit Maven repository used for those installations. This is
 additional scoped evidence after the archived 5,280-invocation workspace build;
 that historical build count is unchanged. Inventory source dispositions also
 remain unchanged; only the covered transport/authentication deferrals are removed.
+
+An isolated Mac Equinox/SCR development assembly later returned HTTPS 200 for
+`networkConfiguration/v1/configurableComponents` and its configurations list,
+and 401 without authentication. This establishes actual DS registration and
+ConfigurationService/CryptoService read-path wiring for the network-configuration
+REST provider. The network-status routes returned 404 in this macOS runtime, so
+their DS service-arrival boundary remains open. No network settings were changed
+and no additional Linux, D-Bus or hardware validation was performed. Evidence:
+`mac-deployment-network-rest-scr-validation-20261010.json`.

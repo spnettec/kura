@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "runtime": "isolated Equinox/SCR development assembly over certificate-validated HTTPS",
+  "deploymentRest": {
+    "route": "/services/deploy/v2",
+    "authenticatedStatus": 200,
+    "unauthenticatedStatus": 401,
+    "installedPackageCount": 0,
+    "interpretation": "Actual OSGi whiteboard registration and runtime authentication/filter integration passed for read-only package listing.",
+    "artifact": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/deployment-rest-scr-20261010.json",
+      "sha256": "6f48df784e7887bcdf86865dcc792916768de09644f2d102c7bf75f68b5a4c04"
+    }
+  },
+  "networkRest": {
+    "configurationPidsStatus": 200,
+    "configurationListStatus": 200,
+    "configurationUnauthenticatedStatus": 401,
+    "networkStatusInterfaceIdsStatus": 404,
+    "networkStatusStatus": 404,
+    "interpretation": "NetworkConfigurationRestService registered through actual DS and invoked ConfigurationService/CryptoService read paths. NetworkStatusRestService registration was not established on macOS.",
+    "artifact": {
+      "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/network-rest-scr-20261010.json",
+      "sha256": "315933cda3153123b2cad359c19661491e1a7cbaebdca746f2fc018ec5ef8f7b"
+    }
+  },
+  "limits": [
+    "No package installation, upload or removal was attempted.",
+    "No network configuration was changed.",
+    "No new Linux, NetworkManager, kernel D-Bus or physical hardware validation was performed."
+  ]
+}
