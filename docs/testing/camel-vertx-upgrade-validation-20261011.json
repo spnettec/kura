@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-11",
+  "versions": {
+    "Camel": {
+      "from": "4.20.0",
+      "to": "4.22.1"
+    },
+    "Vertx": {
+      "from": "5.1.4",
+      "to": "5.2.1"
+    },
+    "Netty": {
+      "from": "4.2.16.Final",
+      "to": "4.2.19.Final"
+    },
+    "commonSnakeYamlEngine": "3.0.1"
+  },
+  "productionRevisions": {
+    "kura": "4a32181316686923794345b19c30de3ca0ad73f3",
+    "kura-camel": "8c82b117f1639206c77917fa28a50fd8fa8fd69a",
+    "kura-yofc-runtime": "45472f0e9157e5c8fa1d1208ddbad26945c76dcb",
+    "yofc-iot": "74fe3d54dcd1687cf6daa9879b001a976b544fa4"
+  },
+  "officialSources": {
+    "camelRelease": "https://camel.apache.org/blog/2026/09/RELEASE-4.22.1/",
+    "camelSecurity": "https://camel.apache.org/security/CVE-2026-42527.html",
+    "camelDownload": "https://camel.apache.org/download/",
+    "vertxRelease": "https://vertx.io/blog/eclipse-vert-x-5-2-1/",
+    "vertx52": "https://vertx.io/blog/whats-new-in-vert-x-5-2/"
+  },
+  "officialResearchArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-upgrade-official-20261011",
+  "productionEvidenceArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-production-upgrade-20261011",
+  "actualRuntimeEvidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+  "publicWrappers": {
+    "coordinateGroup": "p2.osgi.bundle",
+    "symbolicNames": [
+      "io.vertx.auth-common",
+      "io.vertx.core",
+      "io.vertx.core-logging",
+      "io.vertx.uri-template",
+      "io.vertx.web-client",
+      "io.vertx.web-common"
+    ],
+    "metadataChanges": "Bundle-Version updated for all six; existing Import/Export/BSN retained. io.vertx.core additionally restores the missing Multi-Release: true header, with the same explicit Reficio P2 instruction.",
+    "mavenBuild": "existing Maven Bundle Plugin 6.0.0 wrappers built and installed",
+    "p2Compatibility": "Reficio P2 version properties aligned; legacy Tycho/PDE publication not separately executed"
+  },
+  "yofcOnlyLibraries": "Existing com.yofc.iot.runtime embedded package layout retained, versions aligned with common wrappers",
+  "compatibilityRepair": {
+    "source": "yofc-iot/com.yofc.iot.api/com.yofc.iot.api.comp/src/main/java/com/yofc/vertx/osgi/VertxActivator.java",
+    "removedVertxClass": "io.vertx.core.impl.VirtualThreadSupport",
+    "replacement": "((VertxInternal) vertx).isVirtualThreadAvailable()",
+    "actualResult": {
+      "eventBusRoundTripPassed": true,
+      "actualHttpPassed": true,
+      "actualThreadingModelPassed": true,
+      "virtualThreadAvailable": true,
+      "version": "5.2.1"
+    },
+    "threadModelExercised": "VIRTUAL_THREAD after the public wrapper Multi-Release repair; real HTTP handler confirmed Thread.isVirtual=true"
+  },
+  "securityScope": "Camel 4.20.0 is affected by CVE-2026-42527 under the documented Java serialization conditions; upgrade includes the fix. This is not an assertion that the application has no vulnerabilities.",
+  "unrelatedDependencies": "Groovy, Jackson, official OPC UA, PLC4X and removed features unchanged",
+  "fullWorkspaceGate": "Running in pinned clean clones at the main dependency-upgrade revisions; the later manifest-only repair and opt-in probe assertion have separate actual runtime evidence. Final test-source/artifact reconciliation will state the exact scope.",
+  "retainedConsumerCompilePins": {
+    "kura-artemis": "Netty 4.2.16 provided compile dependencies unchanged; common runtime uses 4.2.19",
+    "kura-opcua": "Netty 4.2.16 provided compile dependencies unchanged per official OPC UA scope",
+    "plc4x-yofc": "Source and cached prerequisites unchanged"
+  },
+  "multiReleaseRepair": {
+    "revision": "4a32181316686923794345b19c30de3ca0ad73f3",
+    "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/vertx-multi-release-production-repair-20261011",
+    "scope": "One public wrapper manifest attribute plus matching Reficio P2 instruction",
+    "changedJarEntries": [
+      "META-INF/MANIFEST.MF"
+    ],
+    "before": "5.1.4 and 5.2.1 wrappers retained versioned classes but omitted the Multi-Release header; original capability and first upgraded runs selected WORKER",
+    "after": {
+      "java21Capability": true,
+      "actualVirtualHttp": true,
+      "mqttDeliveries": 16,
+      "vertxHttpCalls": 7,
+      "result": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-virtual-thread-20261011/result.json"
+    },
+    "publicApiAndClassContents": "unchanged",
+    "officialSource": "https://raw.githubusercontent.com/eclipse-vertx/vert.x/5.2.1/vertx-core/src/main/java21/io/vertx/core/impl/JdkDependent.java"
+  }
+}

@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 31,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. At that stage, the 39 retained rows stated remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified. The subsequent unchanged 47-case configuration assertion set passed in 47 complete Mac applications with production host SystemService, resolving rows 154, 155 and 158 within the requested Mac scope. There are now 36 retained rows / 37 strings; no installed Debian or hardware validation is claimed. Complete Mac authenticated MQTT configuration/inventory acceptance subsequently resolves rows 180, 183, 185, 190 and 194; row 186 retains only Linux package-manager enumeration. Current total is 31 retained rows / 31 strings. Complete Mac historical driver and adapted emitter/receiver fixture SCR/OCD/WireAdmin plus authenticated HTTPS reads now cover the Mac fixture boundaries for rows 459, 460, 462 and 463; their Debian package boundary remains. Total remains 31 rows / 31 strings.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. At that stage, the 39 retained rows stated remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring. Isolated Mac Equinox/SCR now confirms Wires graph/REST service arrival, WireAdmin binding and authenticated read for helper rows 459-464; component factory arrival and actual route delivery remain open. A further actual Mac SCR Timer-to-Logger route delivered four WireEnvelopes and cleaned up, covering WireAdmin route delivery for helper rows 459-464; historical test fixtures and Debian package acceptance stay scoped as recorded per row. A later Mac authenticated MQTT run exercised all four INVENTORY-V1 GET resources through actual SCR with Felix deployment and a controlled DEB fixture; installed assembly and Linux package-manager enumeration remain unverified. The complete Mac development application later passed real host SystemService, representative configuration/SCR factory lifecycle, EventAdmin delivery and a production Timer-to-Logger route. The relevant remaining wording now scopes unexecuted complete upstream/deployed gateway acceptance rather than treating the Mac host/event paths as wholly unverified. The subsequent unchanged 47-case configuration assertion set passed in 47 complete Mac applications with production host SystemService, resolving rows 154, 155 and 158 within the requested Mac scope. There are now 36 retained rows / 37 strings; no installed Debian or hardware validation is claimed. Complete Mac authenticated MQTT configuration/inventory acceptance subsequently resolves rows 180, 183, 185, 190 and 194; row 186 retains only Linux package-manager enumeration. Current total is 31 retained rows / 31 strings. Complete Mac historical driver and adapted emitter/receiver fixture SCR/OCD/WireAdmin plus authenticated HTTPS reads now cover the Mac fixture boundaries for rows 459, 460, 462 and 463; their Debian package boundary remains. Total remains 31 rows / 31 strings. The customized Camel follow-up resolves actual GraalJS JavaScript and ACE browser edit/save sub-boundaries in rows 248-252, with XML/Java/YAML, English/Chinese naming and common Engine/YOFC YAML acceptance. Camel 4.22.1 and wrapped Vertx 5.2.1 are now exercised in the complete Mac application; these five rows retain only installed Debian package acceptance. Total remains 31 rows / 31 strings. The missing public Vertx core Multi-Release header was subsequently repaired separately; actual Java21 virtual-thread HTTP passed without changing any class-file content.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -144,17 +144,20 @@
       "evidence": [
         "docs/testing/camel-test-restoration.md",
         "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+        "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "docs/testing/camel-vertx-upgrade-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
-      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
+      "covered": "Own and restored Jupiter Camel tests passed 58/58 on 4.22.1. Historical direct Mac IDEA JUnit remains 9/9 on its dated revision. Latest complete Mac SCR application passed XML/Java/YAML routes, actual separately supplied GraalJS JSR-223 init, Groovy file/inline/rebind/context lifecycle and actual ACE browser edit/validate/save, resulting in 17 MQTT deliveries and eight independent Vertx HTTP calls. Actual YOFC EventBus/HTTP and WORKER capability fallback, common Engine class identity and YOFC Jackson YAML round trip passed. Actual English/Simplified Chinese naming was verified separately. A separate manifest-only public core repair restored Java21 multi-release loading and passed actual YOFC virtual-thread HTTP, with the three-DSL 16 MQTT / seven HTTP run.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified; no additional Linux validation.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ],
       "forkAcceptanceRequirements": [
-        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
-        "Actual JavaScript init execution",
-        "Modified console ACE language selection and browser edit/save",
+        "Camel 4.22.1, shared wrapped Vertx 5.2.1, Netty 4.2.19 and production cloud/script paths passed",
+        "Actual JavaScript init and ACE browser edit/save passed",
+        "XML/Java/YAML runtime delivery and shared Engine/YOFC YAML passed",
+        "English and Simplified Chinese custom i18n verified; other locales not in scope",
         "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
@@ -165,17 +168,20 @@
       "evidence": [
         "docs/testing/camel-test-restoration.md",
         "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+        "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "docs/testing/camel-vertx-upgrade-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
-      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
+      "covered": "Own and restored Jupiter Camel tests passed 58/58 on 4.22.1. Historical direct Mac IDEA JUnit remains 9/9 on its dated revision. Latest complete Mac SCR application passed XML/Java/YAML routes, actual separately supplied GraalJS JSR-223 init, Groovy file/inline/rebind/context lifecycle and actual ACE browser edit/validate/save, resulting in 17 MQTT deliveries and eight independent Vertx HTTP calls. Actual YOFC EventBus/HTTP and WORKER capability fallback, common Engine class identity and YOFC Jackson YAML round trip passed. Actual English/Simplified Chinese naming was verified separately. A separate manifest-only public core repair restored Java21 multi-release loading and passed actual YOFC virtual-thread HTTP, with the three-DSL 16 MQTT / seven HTTP run.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified; no additional Linux validation.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ],
       "forkAcceptanceRequirements": [
-        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
-        "Actual JavaScript init execution",
-        "Modified console ACE language selection and browser edit/save",
+        "Camel 4.22.1, shared wrapped Vertx 5.2.1, Netty 4.2.19 and production cloud/script paths passed",
+        "Actual JavaScript init and ACE browser edit/save passed",
+        "XML/Java/YAML runtime delivery and shared Engine/YOFC YAML passed",
+        "English and Simplified Chinese custom i18n verified; other locales not in scope",
         "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
@@ -186,17 +192,20 @@
       "evidence": [
         "docs/testing/camel-test-restoration.md",
         "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+        "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "docs/testing/camel-vertx-upgrade-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
-      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
+      "covered": "Own and restored Jupiter Camel tests passed 58/58 on 4.22.1. Historical direct Mac IDEA JUnit remains 9/9 on its dated revision. Latest complete Mac SCR application passed XML/Java/YAML routes, actual separately supplied GraalJS JSR-223 init, Groovy file/inline/rebind/context lifecycle and actual ACE browser edit/validate/save, resulting in 17 MQTT deliveries and eight independent Vertx HTTP calls. Actual YOFC EventBus/HTTP and WORKER capability fallback, common Engine class identity and YOFC Jackson YAML round trip passed. Actual English/Simplified Chinese naming was verified separately. A separate manifest-only public core repair restored Java21 multi-release loading and passed actual YOFC virtual-thread HTTP, with the three-DSL 16 MQTT / seven HTTP run.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified; no additional Linux validation.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ],
       "forkAcceptanceRequirements": [
-        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
-        "Actual JavaScript init execution",
-        "Modified console ACE language selection and browser edit/save",
+        "Camel 4.22.1, shared wrapped Vertx 5.2.1, Netty 4.2.19 and production cloud/script paths passed",
+        "Actual JavaScript init and ACE browser edit/save passed",
+        "XML/Java/YAML runtime delivery and shared Engine/YOFC YAML passed",
+        "English and Simplified Chinese custom i18n verified; other locales not in scope",
         "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
@@ -207,17 +216,20 @@
       "evidence": [
         "docs/testing/camel-test-restoration.md",
         "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+        "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "docs/testing/camel-vertx-upgrade-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
-      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
+      "covered": "Own and restored Jupiter Camel tests passed 58/58 on 4.22.1. Historical direct Mac IDEA JUnit remains 9/9 on its dated revision. Latest complete Mac SCR application passed XML/Java/YAML routes, actual separately supplied GraalJS JSR-223 init, Groovy file/inline/rebind/context lifecycle and actual ACE browser edit/validate/save, resulting in 17 MQTT deliveries and eight independent Vertx HTTP calls. Actual YOFC EventBus/HTTP and WORKER capability fallback, common Engine class identity and YOFC Jackson YAML round trip passed. Actual English/Simplified Chinese naming was verified separately. A separate manifest-only public core repair restored Java21 multi-release loading and passed actual YOFC virtual-thread HTTP, with the three-DSL 16 MQTT / seven HTTP run.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified; no additional Linux validation.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ],
       "forkAcceptanceRequirements": [
-        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
-        "Actual JavaScript init execution",
-        "Modified console ACE language selection and browser edit/save",
+        "Camel 4.22.1, shared wrapped Vertx 5.2.1, Netty 4.2.19 and production cloud/script paths passed",
+        "Actual JavaScript init and ACE browser edit/save passed",
+        "XML/Java/YAML runtime delivery and shared Engine/YOFC YAML passed",
+        "English and Simplified Chinese custom i18n verified; other locales not in scope",
         "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
@@ -228,17 +240,20 @@
       "evidence": [
         "docs/testing/camel-test-restoration.md",
         "docs/testing/mac-camel-idea-scr-validation-20261010.json",
-        "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+        "docs/testing/mac-complete-camel-fork-validation-20261011.json",
+        "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+        "docs/testing/camel-vertx-upgrade-validation-20261011.json"
       ],
-      "covered": "Ordinary Jupiter Camel tests passed 52/52. Direct Mac IDEA JUnit passed RouterTest 5/5, PayloadTest 1/1 and TypeConverterTest 3/3. Isolated Mac Equinox/SCR discovered Camel services and activated, started, stopped and deleted a temporary XML router with cleanup. Complete Mac application additionally passed nine real MQTT deliveries and four Vertx HTTP calls through actual Groovy file/inline scripts, rebind and XML context lifecycle.",
-      "remaining": "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance remain unverified.",
+      "covered": "Own and restored Jupiter Camel tests passed 58/58 on 4.22.1. Historical direct Mac IDEA JUnit remains 9/9 on its dated revision. Latest complete Mac SCR application passed XML/Java/YAML routes, actual separately supplied GraalJS JSR-223 init, Groovy file/inline/rebind/context lifecycle and actual ACE browser edit/validate/save, resulting in 17 MQTT deliveries and eight independent Vertx HTTP calls. Actual YOFC EventBus/HTTP and WORKER capability fallback, common Engine class identity and YOFC Jackson YAML round trip passed. Actual English/Simplified Chinese naming was verified separately. A separate manifest-only public core repair restored Java21 multi-release loading and passed actual YOFC virtual-thread HTTP, with the three-DSL 16 MQTT / seven HTTP run.",
+      "remaining": "Installed Debian sibling package acceptance remains unverified; no additional Linux validation.",
       "originalDeferredValidation": [
         "Equinox OSGi service discovery, DS wiring and runtime packaging acceptance"
       ],
       "forkAcceptanceRequirements": [
-        "Current Camel 4.20.0, production cloud transport and Groovy/Vertx/rebind paths passed in complete Mac application",
-        "Actual JavaScript init execution",
-        "Modified console ACE language selection and browser edit/save",
+        "Camel 4.22.1, shared wrapped Vertx 5.2.1, Netty 4.2.19 and production cloud/script paths passed",
+        "Actual JavaScript init and ACE browser edit/save passed",
+        "XML/Java/YAML runtime delivery and shared Engine/YOFC YAML passed",
+        "English and Simplified Chinese custom i18n verified; other locales not in scope",
         "Installed Debian sibling package boundary; no additional Linux validation"
       ]
     },
@@ -541,7 +556,7 @@
   "macWireRouteScrEvidence": "docs/testing/mac-wire-route-scr-validation-20261010.json",
   "completeMacRuntimeEvidence": "docs/testing/mac-full-runtime-business-validation-20261010.json",
   "currentWorkspaceCiEvidence": "docs/testing/current-workspace-ci-validation-20261010.json",
-  "latestReconciliationCoreRevision": "d8e7c0b3d28726cb9645b834908e654a90c95eb4",
+  "latestReconciliationCoreRevision": "578b32b17084b9800adc3b20fed88b81b67b5e41",
   "deferredValidationStrings": 31,
   "closedConfigurationRows": [
     {
@@ -629,5 +644,7 @@
     463
   ],
   "completeMacCamelForkEvidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json",
-  "latestReconciliationDate": "2026-10-11"
+  "latestReconciliationDate": "2026-10-11",
+  "latestMacCamelCustomEvidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+  "camelVertxUpgradeEvidence": "docs/testing/camel-vertx-upgrade-validation-20261011.json"
 }

@@ -1,5 +1,9 @@
 # 完整 Mac Camel fork 验收
 
+后续定制 JavaScript、ACE 浏览器、三种 DSL、公共 Engine 及 Camel/Vertx 升级
+验收见[续接证据](mac-complete-camel-custom-dsl-browser-validation-20261011.md)。
+下文保留本轮 4.20.0 / 9 MQTT / 4 HTTP 的历史结果。
+
 2026-10-11；Maven 3.10.0、JDK21，完整 Mac 应用、独立认证 MQTT broker
 和独立 HTTP responder。实际生产 Camel **4.20.0**、Kapua cloud stack、
 ConfigurationService/SCR、Groovy、Vertx WebClient、registry/rebind 和文件 watcher

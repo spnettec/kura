@@ -1,5 +1,23 @@
 # Camel upstream test restoration
 
+## Latest customized fork acceptance — 2026-10-11
+
+Camel is now **4.22.1**, with wrapped shared and YOFC-only Vertx **5.2.1** and
+Netty **4.2.19.Final**. Own GraalJS host/rebind and XML/Java/YAML tests increase
+the module result to **58/58**, zero failures/errors/skips. Actual complete Mac
+SCR routes, separately supplied JSR-223 JavaScript, Groovy file/inline scripts,
+registry/rebind, real cloud MQTT/Vertx HTTP and browser ACE edit/validate/save
+passed. The final browser run delivered **17 MQTT messages / eight HTTP calls**.
+The shared Engine 3.0.1 class identity and actual YOFC Jackson YAML round trip
+also passed. English/Chinese labels are Camel Router / Camel 路由器; the custom
+PID, configuration keys and dynamic editor markers remain.
+
+See [current evidence](mac-complete-camel-custom-dsl-browser-validation-20261011.md)
+and [upgrade record](camel-vertx-upgrade-validation-20261011.md). The installed
+Debian boundary remains. The following sections retain the dated 4.20.0 / 52-case
+restoration and early runtime evidence; their then-open JavaScript/browser
+sub-boundaries are covered by the linked follow-up.
+
 2026-10-09; upstream snapshot `kura-camel@b51b9dd0`, all 14 inventory sources
 reviewed against the current fork, which retains Camel 4.20.0. Twelve Jupiter
 suites and two helpers now live under the production bundle's `src/test`.

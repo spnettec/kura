@@ -5591,9 +5591,9 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
     "deferredValidation": [
-      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
+      "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5618,6 +5618,21 @@
       "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
       "browserEditorSaveExecuted": false,
       "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+    },
+    "latestMacForkValidation": {
+      "platform": "macOS",
+      "camelVersion": "4.22.1",
+      "vertxVersion": "5.2.1",
+      "mqttDeliveries": 17,
+      "vertxHttpCalls": 8,
+      "javaAndYamlDslPassed": true,
+      "javascriptInitPassed": true,
+      "browserSavedScriptExecuted": true,
+      "englishChineseLabelsPassed": true,
+      "sharedEngineAndYofcYamlPassed": true,
+      "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+      "virtualThreadHttpPassed": true,
+      "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
     }
   },
   {
@@ -5642,9 +5657,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
     "deferredValidation": [
-      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
+      "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5669,6 +5684,21 @@
       "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
       "browserEditorSaveExecuted": false,
       "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+    },
+    "latestMacForkValidation": {
+      "platform": "macOS",
+      "camelVersion": "4.22.1",
+      "vertxVersion": "5.2.1",
+      "mqttDeliveries": 17,
+      "vertxHttpCalls": 8,
+      "javaAndYamlDslPassed": true,
+      "javascriptInitPassed": true,
+      "browserSavedScriptExecuted": true,
+      "englishChineseLabelsPassed": true,
+      "sharedEngineAndYofcYamlPassed": true,
+      "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+      "virtualThreadHttpPassed": true,
+      "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
     }
   },
   {
@@ -5693,9 +5723,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
     "deferredValidation": [
-      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
+      "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5720,6 +5750,21 @@
       "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
       "browserEditorSaveExecuted": false,
       "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+    },
+    "latestMacForkValidation": {
+      "platform": "macOS",
+      "camelVersion": "4.22.1",
+      "vertxVersion": "5.2.1",
+      "mqttDeliveries": 17,
+      "vertxHttpCalls": 8,
+      "javaAndYamlDslPassed": true,
+      "javascriptInitPassed": true,
+      "browserSavedScriptExecuted": true,
+      "englishChineseLabelsPassed": true,
+      "sharedEngineAndYofcYamlPassed": true,
+      "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+      "virtualThreadHttpPassed": true,
+      "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
     }
   },
   {
@@ -5737,9 +5782,9 @@
     ],
     "execution": "Jupiter fixture: real XML component/CamelRunner/context; in-process registry instead of OSGi service discovery",
     "kind": "helper",
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
     "deferredValidation": [
-      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
+      "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5764,6 +5809,21 @@
       "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
       "browserEditorSaveExecuted": false,
       "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+    },
+    "latestMacForkValidation": {
+      "platform": "macOS",
+      "camelVersion": "4.22.1",
+      "vertxVersion": "5.2.1",
+      "mqttDeliveries": 17,
+      "vertxHttpCalls": 8,
+      "javaAndYamlDslPassed": true,
+      "javascriptInitPassed": true,
+      "browserSavedScriptExecuted": true,
+      "englishChineseLabelsPassed": true,
+      "sharedEngineAndYofcYamlPassed": true,
+      "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+      "virtualThreadHttpPassed": true,
+      "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
     }
   },
   {
@@ -5788,9 +5848,9 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "Reviewed against local Camel 4.20.0 and fork lifecycle. See camel-test-restoration.md; production and handwritten metadata unchanged. Direct Mac IDEA JUnit passed 9/9, and isolated Equinox/SCR Camel services plus temporary XML router create/start/delete/stop passed; see mac-camel-idea-scr-validation-20261010.json. Complete Mac fork Groovy/Vertx/cloud and file/inline/XML lifecycle acceptance passed; see mac-complete-camel-fork-validation-20261011.json. JavaScript/browser editing and installed Debian package boundaries remain explicit.",
+    "reason": "Reviewed against the customized fork; upstream assertions are retained where applicable. Own GraalJS host/rebind and XML/Java/YAML tests now pass 58/58 on Camel 4.22.1. Actual Mac SCR, production cloud MQTT, Groovy/JavaScript/Vertx, file/inline lifecycle, ACE browser edit/save, EN/ZH labels and shared SnakeYAML Engine plus YOFC YAML round trip passed; see mac-complete-camel-custom-dsl-browser-validation-20261011.json and camel-vertx-upgrade-validation-20261011.json. Historical IDEA 9/9 and 4.20.0 runtime evidence remains dated. Installed Debian package acceptance remains unverified.",
     "deferredValidation": [
-      "Installed Debian sibling package, actual JavaScript init execution, and modified console ACE browser edit/save acceptance"
+      "Installed Debian sibling package acceptance; no additional Linux validation"
     ],
     "ideaValidation": {
       "platform": "macOS",
@@ -5815,6 +5875,21 @@
       "xmlContextLifecycle": "unchanged configuration preserves context; changed XML stops/replaces context",
       "browserEditorSaveExecuted": false,
       "evidence": "docs/testing/mac-complete-camel-fork-validation-20261011.json"
+    },
+    "latestMacForkValidation": {
+      "platform": "macOS",
+      "camelVersion": "4.22.1",
+      "vertxVersion": "5.2.1",
+      "mqttDeliveries": 17,
+      "vertxHttpCalls": 8,
+      "javaAndYamlDslPassed": true,
+      "javascriptInitPassed": true,
+      "browserSavedScriptExecuted": true,
+      "englishChineseLabelsPassed": true,
+      "sharedEngineAndYofcYamlPassed": true,
+      "evidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
+      "virtualThreadHttpPassed": true,
+      "threadEvidence": "Multi-Release repair follow-up: 16 MQTT / 7 HTTP plus actual virtual-thread YOFC HTTP; prior browser run remains 17 / 8."
     }
   },
   {

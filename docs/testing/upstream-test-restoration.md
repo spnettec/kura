@@ -1,5 +1,22 @@
 # Upstream test restoration progress
 
+## 2026-10-11 定制 Camel 三种 DSL、ACE 及公共 Vertx 升级
+
+- 修复 GraalJS host/rebind 和 YAML 缺失依赖，新增 fork 自有测试；Camel
+  4.22.1 下 58/58 Jupiter 通过。SnakeYAML Engine 3.0.1 提升为公共 bundle，
+  Camel 与 YOFC 实际同 class identity 和 YOFC YAML 中文往返通过。
+- 公共 Vertx 封装及 YOFC 专用库统一 5.2.1，Netty 4.2.19.Final；保留 BSN、
+  手写元数据和 Reficio P2 兼容入口。YOFC 适配删除的虚拟线程能力检查 API，
+  实际 EventBus/HTTP 通过。另修复公共 core 缺失的 Multi-Release 标记，
+  Java21 实际虚拟线程 HTTP 与 16 MQTT / 7 HTTP 后续运行通过。
+- 完整 Mac 应用 XML/Java/YAML、JavaScript 和实际 ACE 编辑保存通过；最终
+  17 MQTT / 8 Vertx HTTP。英文/中文名称为 Camel Router / Camel 路由器。
+- inventory 248–252 只保留 Debian 安装边界；仍是 465 reviewed、0 unreviewed、
+  0 deferredScenarios、31 deferredValidation。整体恢复仍在进行。
+- 见[定制运行证据](mac-complete-camel-custom-dsl-browser-validation-20261011.md)
+  和[升级记录](camel-vertx-upgrade-validation-20261011.md)。本次 14 个固定版本
+  隔离 clone 的完整门禁正在运行，旧门禁统计保持历史范围。
+
 ## 2026-10-11 SecurityService 上游边界及 Camel fork 验收
 
 - 官方 HEAD e500a68d7b 核实为 API、optional REST 和 mock 测试，无策略文件 provider；
