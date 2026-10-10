@@ -140,6 +140,10 @@ public class FilesystemKeystoreServiceImpl extends BaseKeystoreService {
             this.selfUpdaterFuture.cancel(true);
         }
 
+        if (this.selfUpdaterExecutor != null) {
+            this.selfUpdaterExecutor.shutdownNow();
+        }
+
         super.deactivate();
     }
 
