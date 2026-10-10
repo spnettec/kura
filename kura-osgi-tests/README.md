@@ -12,4 +12,13 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 
 `EquinoxRuntime.register` 创建的 keystore 代理只服务测试框架，RSA 密钥在测试内生成，不连接现场 PLC、云端或真实业务系统。
 
-当前 6 项真实测试包括 JWT 配置/动态绑定、本地化 fragment/fallback，以及四类负向打包 fixture。它们不替代完整 277 bundle 仿真、发行包和硬件验收。
+当前 53 项真实容器测试包括原有 6 项 JWT/fragment/负向打包测试，以及 47 项配置测试
+（46 个上游场景 + 1 个本地明文快照/CDATA 场景）。它们不替代完整 Kura 仿真、发行包和硬件验收。
+
+配置测试另行准备 `target/config-it-bundles`，包含实际 configuration、crypto、XML、
+metatype 及测试夹具 bundle。上游场景在已安装的测试 bundle 中执行，控制端仍没有业务
+Kura JAR。SystemService 只提供隔离目录、快照数量和加密开关；CM、SCR、密码与快照服务
+都由实际 bundle 提供。根 `osgi-it` profile 自动把测试夹具纳入 reactor，默认生产构建不包含它。
+
+准备 bundle 后，IDEA 可运行 `ConfigurationServiceRuntimeIT`（工作目录为本模块）。
+IDEA GUI 的实际执行验收仍未完成。详见 `docs/testing/configuration-runtime-test-restoration.md`。

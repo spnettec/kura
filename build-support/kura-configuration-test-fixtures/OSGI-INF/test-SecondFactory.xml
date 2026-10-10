@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2026 Contributors to the Eclipse Foundation. SPDX-License-Identifier: EPL-2.0 -->
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.kura.testing.configuration.SecondFactory"
+    modified="updated" immediate="true" configuration-policy="require">
+    <implementation class="org.eclipse.kura.testing.configuration.fixture.CfgSvcTestComponent"/>
+    <service><provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/></service>
+</scr:component>

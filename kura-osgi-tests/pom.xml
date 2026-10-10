@@ -86,6 +86,27 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.configuration</artifactId><version>3.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core</artifactId><version>2.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.inventory</artifactId><version>2.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.util</artifactId><version>2.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId><version>2.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.crypto</artifactId><version>2.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>kura-configuration-test-fixtures</artifactId><version>6.0.0-SNAPSHOT</version>
+      <type>pom</type><scope>test</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -331,6 +352,32 @@
                   <version>1.0.2</version>
                   <destFileName>org.osgi.service.coordinator.jar</destFileName>
                 </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>prepare-configuration-bundles</id><phase>process-test-resources</phase><goals><goal>copy</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/config-it-bundles</outputDirectory>
+              <overWriteSnapshots>true</overWriteSnapshots>
+              <artifactItems>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.configuration</artifactId><version>3.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.configuration.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.inventory</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.inventory.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.util</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.util.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.xml.marshaller.unmarshaller.provider.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.crypto</artifactId><version>2.0.0-SNAPSHOT</version><destFileName>org.eclipse.kura.core.crypto.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.equinox.metatype</artifactId><version>1.6.900</version><destFileName>org.eclipse.equinox.metatype.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.osgi</groupId><artifactId>org.osgi.service.metatype</artifactId><version>1.4.1</version><destFileName>org.osgi.service.metatype.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.apache.commons</groupId><artifactId>commons-exec</artifactId><version>1.4.0</version><destFileName>commons-exec.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.quartz-scheduler</groupId><artifactId>quartz</artifactId><version>2.5.0</version><destFileName>quartz.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.apache.felix</groupId><artifactId>org.apache.felix.deploymentadmin</artifactId><version>0.9.10</version><destFileName>org.apache.felix.deploymentadmin.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.apache.felix</groupId><artifactId>org.apache.felix.dependencymanager</artifactId><version>4.6.1</version><destFileName>org.apache.felix.dependencymanager.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.eclipse.kura</groupId><artifactId>kura-configuration-test-fixtures</artifactId><version>6.0.0-SNAPSHOT</version><destFileName>kura-configuration-test-fixtures.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId><version>5.14.4</version><destFileName>junit-jupiter-api.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.junit.platform</groupId><artifactId>junit-platform-commons</artifactId><version>1.14.4</version><destFileName>junit-platform-commons.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.opentest4j</groupId><artifactId>opentest4j</artifactId><version>1.3.0</version><destFileName>opentest4j.jar</destFileName></artifactItem>
+                <artifactItem><groupId>org.apiguardian</groupId><artifactId>apiguardian-api</artifactId><version>1.1.2</version><destFileName>apiguardian-api.jar</destFileName></artifactItem>
               </artifactItems>
             </configuration>
           </execution>

@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.eclipse.kura.testing.configuration.fixtures
+Bundle-Name: Kura configuration integration fixtures
+Bundle-Version: 6.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Export-Package: org.eclipse.kura.testing.configuration.fixture
+Import-Package: org.eclipse.kura,
+ org.eclipse.kura.configuration,
+ org.eclipse.kura.configuration.metatype,
+ org.eclipse.kura.core.configuration,
+ org.eclipse.kura.core.configuration.metatype,
+ org.eclipse.kura.system,
+ org.junit.jupiter.api;version="[5.14,6)",
+ org.junit.jupiter.api.function;version="[5.14,6)",
+ org.osgi.framework,
+ org.slf4j
+Service-Component: OSGI-INF/test-CfgSvcTestComponent.xml,
+ OSGI-INF/test-CfgSvcTestSelfComponent.xml,
+ OSGI-INF/test-FactoryComponent.xml,
+ OSGI-INF/test-SecondFactory.xml

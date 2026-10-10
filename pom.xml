@@ -44,6 +44,7 @@
     <profile>
       <id>osgi-it</id>
       <modules>
+        <module>build-support/kura-configuration-test-fixtures</module>
         <module>kura-osgi-tests</module>
       </modules>
     </profile>

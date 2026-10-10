@@ -938,3 +938,16 @@ acceptance remain separate. See `configuration-endpoint-test-restoration.md`.
 
 Inventory: 364 restored, 57 helpers, fifteen replaced harnesses, nine not-applicable
 sources, six removed-functionality exclusions and **14 unreviewed** out of 465.
+
+## Real ConfigurationService continuation (2026-10-10)
+
+All 46 upstream container scenarios plus one fork plaintext/CDATA scenario passed
+in separate real Equinox frameworks: **47 passed**. Root osgi-it reactor selection
+built 17 modules and passed all **53 container tests**, including the original six.
+Both upstream component helpers are now actual test-bundle SCR services. Default
+retrieval and factory rollback defects have separate tested/pushed production fixes.
+See `configuration-runtime-test-restoration.md` and its linked defect audits.
+
+Inventory: 365 restored, 59 helpers, fifteen replaced harnesses, nine not-applicable
+sources, six removed-functionality exclusions and **11 unreviewed** out of 465.
+This does not complete deployed assembly, remaining source review or IDEA acceptance.
