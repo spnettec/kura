@@ -963,3 +963,14 @@ no certificate/live-server test result or equivalent coverage is claimed.
 Inventory: 365 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
 sources, six removed-functionality exclusions and **8 unreviewed** out of 465.
 The eight remaining sources are the legacy core suite and its support files.
+
+## Legacy communication service continuation (2026-10-10)
+
+The sole active CommTest scenario now passes against the actual core.comm SCR
+service in Equinox using the current CommConnectionFactory API. The targeted root
+reactor passed one new container case and four existing comm unit cases; no serial
+hardware was opened. Historical commented hardware code remains inactive.
+See `legacy-comm-service-restoration.md`.
+
+Inventory: 366 restored, 59 helpers, fifteen replaced harnesses, twelve not-applicable
+sources, six removed-functionality exclusions and **7 unreviewed** out of 465.
