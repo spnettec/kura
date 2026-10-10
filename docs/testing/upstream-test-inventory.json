@@ -4065,9 +4065,16 @@
     },
     "reason": "Four meaningful legacy scenarios retained at the component boundary, with exact enumeration/metadata/address-filter assertions. Trivial dummy assertion omitted. Real SCR service presence, kernel/network state and D-Bus remain runtime acceptance. YOFC dbus-java 5.2.0/virtualthreads and Update/Activate are unchanged. See legacy-network-enumeration-restoration.md.",
     "deferredValidation": [
-      "Actual SCR service availability and real Linux/kernel/NetworkManager D-Bus behavior",
-      "Actual IDEA execution"
-    ]
+      "Actual SCR service availability and real Linux/kernel/NetworkManager D-Bus behavior"
+    ],
+    "ideaValidation": {
+      "report": "docs/testing/mac-idea-network-enumeration-validation-20261010.json",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution": "Mac IDEA JUnitStarter class Run, controlled network component fixture"
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/RequestIdGenerator.java",

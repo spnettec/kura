@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS-27.0.1-arm64",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "project": "/Users/heyoulin/iot-kura-develop/git/kura-networking",
+  "projectSdk": "temurin-21",
+  "mavenHome": "/opt/homebrew/Cellar/maven/3.10.0/libexec",
+  "mavenRepository": "/Users/heyoulin/iot-kura-develop/migration-m2",
+  "configuration": "kura-networking/.run/Kura network enumeration JUnit.run.xml",
+  "class": "org.eclipse.kura.linux.net.LegacyNetworkServiceTest",
+  "execution": "IDEA JUnitStarter class Run in the imported networking Maven project",
+  "passed": 4,
+  "total": 4,
+  "exitCode": 0,
+  "durationMillis": 1140,
+  "initialImport": "The first IDEA Make ran before Maven dependency synchronization and reported missing JUnit classes. After setting Maven 3.10 and the existing workspace Maven cache, Maven synchronization passed; the final class Run passed 4/4.",
+  "verified": [
+    "IDEA test summary displayed 4 tests passed and 4 tests total",
+    "The JUnit process finished with exit code 0",
+    "The four tests cover component/API presence, interface names, interface DTO metadata and active-interface address filtering with controlled LinuxNetworkUtil"
+  ],
+  "limitations": [
+    "The four tests instantiate NetworkServiceImpl directly; actual SCR registration remains unverified",
+    "No real Linux interfaces, kernel state, NetworkManager or D-Bus interaction was performed",
+    "The macOS IDEA result does not count as Linux or hardware acceptance"
+  ],
+  "networkingCommit": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+  "sourceSha256": {
+    "kura-networking/.run/Kura network enumeration JUnit.run.xml": "319e03504d59cca34bdb01309f09b636a3abdb833b35f5c0cdc307925bc7a8d9",
+    "kura-networking/bundles/org.eclipse.kura.linux.net/src/test/java/org/eclipse/kura/linux/net/LegacyNetworkServiceTest.java": "9853afa071856e03ffba93951e0503bc02b60485129fac70109efae117adeb46"
+  }
+}

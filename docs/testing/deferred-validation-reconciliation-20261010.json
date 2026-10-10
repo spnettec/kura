@@ -125,9 +125,10 @@
       "group": "network-core",
       "evidence": [
         "docs/testing/legacy-network-enumeration-restoration.md",
-        "docs/testing/idea-junit-acceptance.md"
+        "docs/testing/idea-junit-acceptance.md",
+        "docs/testing/mac-idea-network-enumeration-validation-20261010.json"
       ],
-      "covered": "Restored tests and existing IDEA entry are documented.",
+      "covered": "Four restored component scenarios passed directly in Mac IDEA with the imported networking Maven project: 4/4, exit code 0. See mac-idea-network-enumeration-validation-20261010.json.",
       "remaining": "Real NetworkManager/kernel D-Bus and this exact SCR service scenario are unverified; no further Linux validation requested.",
       "originalDeferredValidation": [
         "Actual SCR service availability and real Linux/kernel/NetworkManager D-Bus behavior",

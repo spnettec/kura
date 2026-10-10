@@ -22,3 +22,9 @@ Validation: four new cases passed; the full linux.net module then passed **141**
 tests with zero failures/errors/skips under Maven 3.10.0 / Temurin 21 / JUnit 5.
 Networking commit `994f131` changes only this test source. No production dependency,
 network behavior, handwritten metadata, YOFC or PLC4X code was changed.
+
+Mac IDEA 2026.2.3 后续直接导入 networking Maven 工程，以 Temurin 21、Maven
+3.10.0 和同一工作空间缓存运行共享配置 `Kura network enumeration JUnit`：
+四项均 Passed，进程退出码 0。首次导入时 Maven 依赖尚未同步，Make 缺少 JUnit；
+完成 Maven 同步后重跑通过。见 `mac-idea-network-enumeration-validation-20261010.json`。
+这只补齐直接 IDEA 执行证据，真实 SCR 注册、Linux 网络状态和 D-Bus 保持待验。

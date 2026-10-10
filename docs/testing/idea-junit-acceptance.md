@@ -88,6 +88,12 @@ tamper、keystores 接口；见 `mac-rest-scr-endpoint-validation-20261010.json`
 IDEA 测试中的受控服务绑定与运行集只读请求是两组独立证据，仍需保留清单中对
 真实 SCR 写入流程、已安装 Debian 装配和物理设备的相应边界。
 
+另外在 Mac IDEA 中作为独立 Maven 工程打开 `kura-networking`，以 Temurin 21、
+Maven 3.10.0 和工作空间 Maven 缓存运行共享 `Kura network enumeration JUnit`。
+`LegacyNetworkServiceTest` **4/4 Passed**，进程退出码 0；详见
+`mac-idea-network-enumeration-validation-20261010.json`。测试使用受控
+LinuxNetworkUtil，不计为 Linux NetworkManager/D-Bus 或真实 SCR 验收。
+
 ## Linux IDEA JUnit 验收（2026-10-10）
 
 在隔离 Ubuntu 24.04 ARM64 VM 的 IDEA 2026.2.3 中，直接打开宿主仓库的挂载路径：
