@@ -4147,7 +4147,15 @@
       "maven": "3.10.0",
       "jdk": "21"
     },
-    "reason": "The sole active service-presence scenario uses the current CommConnectionFactory API and actual core.comm/jSerialComm 2.11.4 bundles. Historical commented hardware tests remain inactive; no serial port is opened or enumerated. See legacy-comm-service-restoration.md."
+    "reason": "The sole active service-presence scenario uses the current CommConnectionFactory API and actual core.comm/jSerialComm 2.11.4 bundles. Historical commented hardware tests remain inactive; no serial port is opened or enumerated. See legacy-comm-service-restoration.md.",
+    "ideaValidation": {
+      "report": "docs/testing/mac-idea-comm-scr-validation-20261010.json",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "execution": "Mac IDEA JUnitStarter class Run, isolated Equinox/SCR"
+    }
   },
   {
     "source": "test/org.eclipse.kura.core.test/src/main/java/org/eclipse/kura/core/test/hw/RxTxTest.java",

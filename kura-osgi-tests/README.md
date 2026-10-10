@@ -21,9 +21,9 @@ Kura JAR。SystemService 只提供隔离目录、快照数量和加密开关；C
 都由实际 bundle 提供。根 `osgi-it` profile 自动把测试夹具纳入 reactor，默认生产构建不包含它。
 
 准备 bundle 后，IDEA 可运行 `ConfigurationServiceRuntimeIT`（工作目录为本模块）。
-macOS IDEA 已直接运行 `BundleRuntimeIT` 的 6 项、`LegacyCoreRuntimeIT` 的 8 项和
-`ConfigurationServiceRuntimeIT` 的 47 项，并验证真实 SCR 回调断点与单步；
-`CommServiceRuntimeIT` 仍未在 GUI 执行。共享运行配置和准备步骤见
+macOS IDEA 已直接运行 `BundleRuntimeIT` 的 6 项、`LegacyCoreRuntimeIT` 的 8 项、
+`ConfigurationServiceRuntimeIT` 的 47 项和 `CommServiceRuntimeIT` 的 1 项，
+并验证真实 SCR 回调断点与单步。共享运行配置和准备步骤见
 [`docs/testing/idea-junit-acceptance.md`](../docs/testing/idea-junit-acceptance.md)。
 配置场景说明见 `docs/testing/configuration-runtime-test-restoration.md`。
 

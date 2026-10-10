@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS-27.0.1-arm64",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "JUnit 5",
+  "project": "/Users/heyoulin/iot-kura-develop/git/kura",
+  "module": "kura-osgi-tests",
+  "configuration": ".run/Kura Comm Equinox JUnit.run.xml",
+  "class": "org.eclipse.kura.testing.CommServiceRuntimeIT",
+  "method": "testServiceExists(EquinoxRuntime)",
+  "execution": "IDEA JUnitStarter class Run in the imported Maven project",
+  "passed": 1,
+  "total": 1,
+  "exitCode": 0,
+  "verified": [
+    "IDEA test tree marked the class and method Passed",
+    "The test process finished with exit code 0",
+    "The isolated Equinox/SCR fixture installed the actual core.comm and jSerialComm bundles and asserted service arrival and package binding"
+  ],
+  "limitations": [
+    "No serial port was opened and no physical serial device was exercised",
+    "The test uses isolated framework storage, not an installed Debian gateway",
+    "No Linux validation was added"
+  ],
+  "sourceSha256": {
+    ".run/Kura Comm Equinox JUnit.run.xml": "e90d28beff36c0f84f818495b0446bcdd0c79a3347512b6477b975ae9d8a5c44",
+    "kura-osgi-tests/src/test/java/org/eclipse/kura/testing/CommServiceRuntimeIT.java": "4f01f65e4802673ec645d3c6218a2470816e735f1875cfcf95e966fb576eb277"
+  }
+}

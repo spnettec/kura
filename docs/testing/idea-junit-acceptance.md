@@ -9,8 +9,9 @@
 | `BundleRuntimeIT` | 6 | Run 通过 |
 | `Kura Equinox JUnit` → `LegacyCoreRuntimeIT` | 8 | Run 和 Debug 均通过 |
 | `Kura Configuration JUnit` → `ConfigurationServiceRuntimeIT` | 47 | Run 通过，exit code 0（2026-10-10 续接） |
+| `Kura Comm Equinox JUnit` → `CommServiceRuntimeIT` | 1 | Run 通过，exit code 0（2026-10-10 续接） |
 
-根 `.run/` 中提交了四个共享 JUnit 配置。它们使用项目 JDK 和相对工作目录，不写入
+根 `.run/` 中提交了对应的共享 JUnit 配置。它们使用项目 JDK 和相对工作目录，不写入
 本机 JDK 路径、个人配置或调试器断点。普通 JUnit 的 classpath 来自 core 模块；
 Equinox 测试控制端来自 kura-osgi-tests 模块，业务代码仍通过真实 bundle 加载。
 
@@ -49,6 +50,12 @@ mvn -Posgi-it -pl :kura-osgi-tests -am verify
 Linux GUI 结果见下节；全工作区回归见
 [独立记录](full-workspace-validation-20261010.md)。其余通信场景、HTTP/MQTT
 端点和 P7 仍按各自清单验收；Maven 通过不能作为所有测试已经在 IDEA GUI 运行的证明。
+
+`CommServiceRuntimeIT.testServiceExists` 随后由 Mac IDEA 2026.2.3 使用共享
+`Kura Comm Equinox JUnit` 配置直接运行，界面显示 1/1 Passed、进程退出码 0。
+实际 core.comm 和 jSerialComm bundle 通过 `target/comm-it-bundles` 安装到隔离的
+Equinox/SCR 框架；仅验收服务注册与包绑定，未打开串口。配置和源码哈希见
+`mac-idea-comm-scr-validation-20261010.json`。
 
 续接时还从导入的 `kura-endpoint-tests` 模块，在 Mac IDEA 中直接运行
 `ConfigurationEndpointsIT`：HTTP/MQTT 参数化用例 **204/204 通过**，耗时
