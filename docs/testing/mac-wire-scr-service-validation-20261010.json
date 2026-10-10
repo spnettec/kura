@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-10",
+  "scope": "Wires service arrival, WireAdmin binding and read-only graph configuration over HTTPS in isolated macOS Equinox/SCR assembly",
+  "platform": "macOS-27.0.1-arm64",
+  "jdk": "21.0.12.1",
+  "maven": "3.10.0",
+  "runtime": {
+    "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+    "configuration": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/equinox-config-postfix",
+    "bundleStates": {
+      "org.eclipse.kura.wire.provider": "ACTIVE, bundle 217",
+      "org.eclipse.kura.rest.wire.provider": "ACTIVE, bundle 205"
+    },
+    "scr": {
+      "WireGraphService": "ACTIVE, one instance, service used by REST bundle",
+      "WireAdminReference": "SATISFIED, bound to org.eclipse.equinox.wireadmin service",
+      "ConfigurationServiceReference": "SATISFIED, bound to core configuration service",
+      "WireRestService": "ACTIVE, one instance"
+    },
+    "stoppedAfterProbe": true
+  },
+  "https": {
+    "port": 18443,
+    "tls": "Generated localhost certificate validated with the isolated certificate authority file",
+    "unauthenticatedStatus": 401,
+    "authenticatedStatus": 200,
+    "configurationPid": "org.eclipse.kura.wire.graph.WireGraphService",
+    "wireGraph": {
+      "components": [],
+      "wires": []
+    }
+  },
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/wire-scr-20261010",
+  "archiveResult": {
+    "file": "result.json",
+    "sha256": "d0bbbccf2b66ce3d501d96eb127fc6d27b3b4cdf80d3e1377f5bfb21de89f176"
+  },
+  "limits": [
+    "No WireComponent or Driver factory instance was created and no WireAdmin route delivery was exercised",
+    "This was an isolated macOS development assembly, not an installed Debian sibling package",
+    "No new Linux, hardware, YOFC, PLC4X or official OPC UA validation was added"
+  ]
+}

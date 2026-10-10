@@ -72,3 +72,13 @@ The complete `WireGraphEndpointsIT` class also passed direct Mac IDEA JUnit Run,
 98/98 over HTTP and MQTT. This exercises the scoped wire helper mappings in the
 IDEA module; deployed SCR service arrival and end-to-end event/wire routing remain
 separate. See `mac-idea-rest-endpoints-validation-20261010.json`.
+
+In the isolated Mac Equinox/SCR development assembly, the Wires core and REST
+bundles were ACTIVE. `WireGraphService` and `WireRestService` each had an ACTIVE
+DS instance; the graph service was bound to the real Equinox WireAdmin and core
+ConfigurationService, and was used by the REST bundle. A certificate-validated
+HTTPS GET of `/services/wire/v1/graph/snapshot` returned the empty graph with
+status 200 for the isolated admin and 401 without authentication. See
+`mac-wire-scr-service-validation-20261010.json`. Component/driver factory
+instance arrival, WireAdmin route delivery and installed sibling package
+acceptance remain open.
