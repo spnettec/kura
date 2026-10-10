@@ -26,3 +26,7 @@ IDEA 3 次、MQTT/HTTP 运行断言不加入上述 JUnit 总数。远端 Jenkins
 Docker 镜像、旧 P2 发布、installed Debian 和硬件验收保持各自边界。
 2026-10-10 的 5,515 次调用保留为历史记录。inventory 仍是 465 reviewed、
 0 unreviewed、0 deferredScenarios、31 deferredValidation，整体恢复未完成。
+
+19 个原仓库最终核对均干净。15 个发布的 codex 分支与 fork HEAD 一致；
+PLC4X 的本地 codex 分支没有远端同名 ref，其未改变的 HEAD 与已有 fork
+`heyoulin` 分支一致。三个本地 management 仓库无 remote，保持原状。

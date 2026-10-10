@@ -564,5 +564,7 @@
   "protectedAuditSha256": "59a0ec93b64024752bcebd287848956097221b7c46d95cb1701f2d4cd54caede",
   "inventorySha256": "f478ee7b4f92fc6ab0cf156dbdef28dd23a2fb6318eecb88d396b1e12f7fede6",
   "browserEvidence": "docs/testing/mac-complete-camel-custom-dsl-browser-validation-20261011.json",
-  "limits": "This packaged run does not repeat ACE browser save. Its separate upgraded browser run remains 17 MQTT / 8 HTTP. Installed Debian, external policy provider, NetworkManager/kernel, hardware/GPU and deployed gateway boundaries remain."
+  "limits": "This packaged run does not repeat ACE browser save. Its separate upgraded browser run remains 17 MQTT / 8 HTTP. Installed Debian, external policy provider, NetworkManager/kernel, hardware/GPU and deployed gateway boundaries remain.",
+  "personalProtectionScope": "Durable personal configuration, snapshots, scripts and keys; pre-existing logs excluded as in the 33-file baseline",
+  "postPushProtectedAudit": "/Users/heyoulin/iot-kura-develop/migration-baseline/camel-vertx-final-protected-post-push-20261011.json"
 }

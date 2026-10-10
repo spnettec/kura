@@ -360,5 +360,7 @@
   },
   "laterPackagedRuntimeEvidence": "docs/testing/mac-packaged-camel-vertx-validation-20261011.json",
   "laterIdeaDslEvidence": "docs/testing/mac-idea-camel-dsl-validation-20261011.json",
-  "counting": "5521 is the workspace JUnit invocation total. Separate IDEA and MQTT/HTTP acceptance results are not added to it."
+  "counting": "5521 is the workspace JUnit invocation total. Separate IDEA and MQTT/HTTP acceptance results are not added to it.",
+  "postPushRepositoryAudit": "/Users/heyoulin/iot-kura-develop/migration-baseline/workspace-camel-vertx-final-post-push-audit-20261011.json",
+  "repositoryAuditScope": "19 clean repositories. Fifteen published codex/maven-bundle-idea fork branches match HEAD. Unchanged PLC4X local codex branch has no remote ref; its identical HEAD is verified on existing fork heyoulin. Three local-only management repositories have no remote."
 }

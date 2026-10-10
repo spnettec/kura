@@ -26,3 +26,7 @@ Maven 3.10.0 / JDK21；运行集直接使用组装产物，**0 生产 overlay、
 浏览器保存；[升级后的独立 ACE 证据](mac-complete-camel-custom-dsl-browser-validation-20261011.md)
 为 17 MQTT / 8 HTTP。结果不互相累加或计入 workspace JUnit 总数。
 installed Debian、外部安全策略 provider、硬件/GPU 与部署网关保持未验证。
+
+个人保护比较覆盖 33 个配置、快照、脚本和密钥文件；与原基线一致排除 logs。
+四个现有日志的修改时间均早于基线，未清理。最终推送后再次核对保护范围，
+无变化。
