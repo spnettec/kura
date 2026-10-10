@@ -10122,7 +10122,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "Per-fixture event queues and bounded waits replace the global one-shot event future. Real keystore event generation and manager handling run; EventAdmin routing is a controlled boundary and remains deferred to SCR/runtime acceptance. See legacy-test-helper-audit.md.",
+    "reason": "Per-fixture event queues and bounded waits replace the global one-shot event future. Real keystore event generation and manager handling run; EventAdmin routing is a controlled boundary and remains deferred to SCR/runtime acceptance. See legacy-test-helper-audit.md. Existing direct Mac IDEA evidence confirms HttpServiceTest 11/11; see mac-idea-http-manager-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10131,9 +10131,16 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Full deployed SCR/service arrival and event/wire routing",
-      "IDEA execution"
-    ]
+      "Full deployed SCR/service arrival and event/wire routing"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "consumerClass": "HttpServiceTest",
+      "tests": 11,
+      "failures": 0,
+      "evidence": "docs/testing/mac-idea-http-manager-validation-20261010.json"
+    }
   },
   {
     "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/http/TestServer.java",
@@ -10258,7 +10265,7 @@
     "destinations": [],
     "status": "replaced-legacy-harness",
     "kind": "helper",
-    "reason": "The test-only global service/factory tracker utility is replaced by explicitly scoped service handles, bounded EquinoxRuntime lookup and per-fixture activation. This is distinct from the retained production org.eclipse.kura.util.service.ServiceUtil; full factory SCR integration remains open. See legacy-test-helper-audit.md.",
+    "reason": "The test-only global service/factory tracker utility is replaced by explicitly scoped service handles, bounded EquinoxRuntime lookup and per-fixture activation. This is distinct from the retained production org.eclipse.kura.util.service.ServiceUtil; full factory SCR integration remains open. See legacy-test-helper-audit.md. Existing direct Mac IDEA evidence confirms ServiceListingEndpointsIT 55/55; see mac-idea-rest-endpoints-validation-20261010.json.",
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
@@ -10267,9 +10274,16 @@
     ],
     "execution": "Existing Jupiter consumer fixtures; no additional standalone upstream tests",
     "deferredValidation": [
-      "Full deployed SCR/service arrival and event/wire routing",
-      "IDEA execution"
-    ]
+      "Full deployed SCR/service arrival and event/wire routing"
+    ],
+    "ideaValidation": {
+      "platform": "macOS",
+      "runner": "IntelliJ IDEA JUnit class Run",
+      "consumerClass": "ServiceListingEndpointsIT",
+      "tests": 55,
+      "failures": 0,
+      "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+    }
   },
   {
     "source": "kura/test-util/org.eclipse.kura.test/src/main/java/org/eclipse/kura/test/RemoteTargetTest.java",

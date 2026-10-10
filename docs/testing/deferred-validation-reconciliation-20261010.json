@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 39,
-  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Nine REST endpoint classes passed direct Mac IDEA JUnit (291/291), and isolated Equinox/SCR HTTPS identity, system, service listing, tamper and keystore requests passed. A registered tamper fixture then passed actual SCR/EventAdmin and HTTPS status/reset/unbind flows, resolving row 241. Identity V1/V2 actual SCR/configuration-backed mutations, cross-version reads and cleanup passed, resolving rows 215 and 216. A Mac SCR PKCS12 keystore accepted and removed a real private key/certificate chain; row 217 retains only Debian package acceptance. The deployment REST whiteboard/authentication and network-configuration DS read paths also passed on Mac. Camel passed direct Mac IDEA JUnit 9/9 and actual isolated Equinox/SCR service discovery and temporary XML route create/start/delete/stop; rows 248-252 retain installed package and external cloud transport acceptance. The 39 retained rows state remaining scenario-specific deployed/hardware boundaries; no new Linux package or hardware acceptance is claimed. Existing direct Mac IDEA evidence also resolves the IDEA-only sub-boundary for helper rows 445 and 454 without claiming their deployed SCR/event wiring.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -470,10 +470,11 @@
       "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/event/EventAdminUtil.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-http-manager-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests. Existing direct Mac IDEA consumer class HttpServiceTest passed 11/11.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
@@ -484,10 +485,11 @@
       "source": "kura/test-util/org.eclipse.kura.core.testutil/src/main/java/org/eclipse/kura/core/testutil/service/ServiceUtil.java",
       "group": "helpers",
       "evidence": [
-        "docs/testing/legacy-test-helper-audit.md"
+        "docs/testing/legacy-test-helper-audit.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
       ],
-      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests.",
-      "remaining": "Combined full deployed SCR/service arrival and event/wire routing plus exact direct IDEA execution remain unverified.",
+      "covered": "Helper sources were mapped to current scoped fixtures and their consumer tests. Existing direct Mac IDEA consumer class ServiceListingEndpointsIT passed 55/55.",
+      "remaining": "Full deployed SCR/service arrival and event/wire routing remain unverified.",
       "originalDeferredValidation": [
         "Full deployed SCR/service arrival and event/wire routing",
         "IDEA execution"
