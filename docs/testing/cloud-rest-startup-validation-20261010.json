@@ -1,0 +1,58 @@
+{
+  "tests": 8,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "newInitialStartupInvocations": 1,
+  "previousInvocations": 7,
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "cloudRevision": "1894be837cb6c759f06880793330805a48548410",
+  "coreBaseRevision": "b9c5f1dce0eaad56436760406ae19bf669aafd1b",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/cloud-rest-startup-20261010",
+  "reportSha256": "73bfacbbf23eb4eeb3fe3ead13e96c96f3ad15a631d8b00bdbd8b1138ca94151",
+  "sources": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "6746a2547b5bc2f3cf7cfaa8cbfebdb3ea5916de88293c14482f65f8cb712a31",
+    "kura-cloud/runtime-tests/src/test/resources/rest-role-snapshot.xml": "49f24c5ba530edee5a06f72fe27f8df28a9fe24f206903f8382a2d6408791536",
+    "kura/kura/distrib/src/main/resources/unfiltered/pkg/user/snapshots/snapshot_0.xml": "c53953c8cb757d75d5a3c85613ca4d176e740254305314f7b396f5462f082122",
+    "kura/kura/distrib/src/main/resources/variants/linux-shared/unfiltered/pkg/install/snapshot_0.xml": "978851b30f18b6e6e58e1bb54b6f550cfbbf3f7466834790baf1c7a3ba0ee63a"
+  },
+  "caseDurationsSeconds": {
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.842,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.61,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.709,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.673,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.693,
+    "restFactoryPipeline(EquinoxRuntime)": 1.675,
+    "sparkplugFactoryPipeline(EquinoxRuntime)": 5.887,
+    "restInitialStartup(EquinoxRuntime)": 1.614
+  },
+  "ciReportReplay": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "verified": [
+    "Cloudconnection permission role exists in both shipped distribution snapshots",
+    "Minimal no-user/no-credential snapshot loaded through actual ConfigurationService",
+    "REST installed with initial bundle set and ACTIVE before shared helper",
+    "Actual UserAdmin provides seeded role without restarting REST or manual role creation",
+    "Shared full factory, configuration, pub/sub discovery and lifecycle assertions pass again",
+    "Previous late-arrival and MQTT/Sparkplug/tamper scenarios still pass"
+  ],
+  "investigation": {
+    "emptySnapshot": "Missing role reproduced; failed report and synchronous startup stack archived separately",
+    "startupOrigin": "MetaTypeService registration -> SCR dependency activation and class loading -> Equinox EclipseLazyStarter",
+    "correction": "No evidence of explicit ConfigurationService bundle.start(); earlier attribution corrected",
+    "upstreamComparison": "Current upstream CloudConnectionRestService also creates role only in bindUserAdmin"
+  },
+  "boundaries": [
+    "Does not claim automatic recovery for custom/empty snapshots omitting the shipped role",
+    "No production code, permissions or distribution snapshot changes",
+    "TLS, filesystem keystore/CRL and durable restart remain outside this suite",
+    "No new Linux or full-workspace execution"
+  ],
+  "counting": "Eight final invocations include seven previous cases; historical full-workspace totals remain unchanged."
+}

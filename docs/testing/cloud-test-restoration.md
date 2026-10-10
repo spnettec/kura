@@ -547,3 +547,33 @@ round-trip behavior has not been established by this test.
 See [final counts, revisions and checksums](cloud-rest-runtime-validation-20261010.json).
 No production code or handwritten metadata changed in this batch. No additional
 Linux or full-workspace validation is claimed.
+
+## REST initial startup with distribution role seed (2026-10-10)
+
+The initial-start investigation reproduced the empty-snapshot failure and captured a
+synchronous bundle-start stack. MetaTypeService registration makes SCR dependencies
+available; SCR class loading triggers Equinox EclipseLazyStarter for the REST bundle.
+This is more precise than attributing startup to an explicit ConfigurationService
+`bundle.start()` call, for which no evidence was found.
+
+Both distribution snapshots already seed `kura.permission.rest.cloudconnection` in
+`RoleRepositoryStoreImpl/groups.config`:
+`kura/distrib/src/main/resources/unfiltered/pkg/user/snapshots/snapshot_0.xml` and
+`kura/distrib/src/main/resources/variants/linux-shared/unfiltered/pkg/install/snapshot_0.xml`.
+The prior empty test snapshot omitted that production precondition. The new minimal
+`rest-role-snapshot.xml` contains only this group, with no users or credentials.
+The fixture's group was checked against both distribution files.
+
+`CloudFactoryRuntimeIT.restInitialStartup` installs REST with the initial bundle set,
+loads the seed through the actual ConfigurationService snapshot path, and asserts REST
+is already ACTIVE before entering the shared lifecycle checks. It does not stop or
+restart REST or manually create its role. Actual UserAdmin/store supplies the seeded
+role and all factory/configuration/pubsub assertions run again. The separate late
+arrival case still checks role creation against an already available store.
+
+This closes the named initial-start acceptance for the shipped role configuration.
+An intentionally empty/custom snapshot without the role can still miss the early
+creation attempt; automatic repair of that non-default state is not claimed or added.
+No production permission logic, roles, snapshot templates or metadata changed.
+The failed empty-snapshot report and startup stack are archived separately from the
+final passing report. See [validation evidence](cloud-rest-startup-validation-20261010.json).

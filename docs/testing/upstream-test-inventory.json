@@ -4383,10 +4383,7 @@
       "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudRestRuntimeScenario.java"
     ],
     "execution": "Surefire component scenarios and Failsafe Jupiter HTTP/MQTT transport matrix",
-    "reason": "All 14 distinct upstream endpoint scenarios retain exact component assertions and additionally execute over actual HTTP and MQTT through CloudConnectionService/manager bridge and a real Equinox service registry. Four extra HTTP credential/role cases verify 401, 403 and endpoint-only permission. SCR, factories and ConfigurationService remain controlled service boundaries. See cloud-test-restoration.md. Actual SCR/factory/ConfigurationService service arrival and create/read/update/delete path now pass with both pub/sub services; see cloud-rest-runtime-validation-20261010.json. Earlier HTTP/MQTT transport results remain separate.",
-    "deferredScenarios": [
-      "Initial startup with REST present before role store readiness: trace early activation and verify permission-role recovery. Late REST arrival with actual SCR/factory/ConfigurationService and role storage is now verified."
-    ],
+    "reason": "All 14 distinct upstream endpoint scenarios retain exact component assertions and additionally execute over actual HTTP and MQTT through CloudConnectionService/manager bridge and a real Equinox service registry. Four extra HTTP credential/role cases verify 401, 403 and endpoint-only permission. SCR, factories and ConfigurationService remain controlled service boundaries. See cloud-test-restoration.md. Actual SCR/factory/ConfigurationService service arrival and create/read/update/delete path now pass with both pub/sub services; see cloud-rest-runtime-validation-20261010.json. Earlier HTTP/MQTT transport results remain separate. Initial installation with the distribution permission-role seed now also passes; empty/custom snapshot automatic repair is not claimed.",
     "validation": {
       "tests": 14,
       "failures": 0,
@@ -4410,10 +4407,12 @@
     "runtimeValidation": {
       "report": "docs/testing/cloud-rest-runtime-validation-20261010.json",
       "scenario": "CloudFactoryRuntimeIT.restFactoryPipeline",
-      "tests": 1,
+      "tests": 2,
       "failures": 0,
       "errors": 0,
-      "skipped": 0
+      "skipped": 0,
+      "startupReport": "docs/testing/cloud-rest-startup-validation-20261010.json",
+      "startupScenario": "CloudFactoryRuntimeIT.restInitialStartup"
     }
   },
   {
