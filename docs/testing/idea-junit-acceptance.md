@@ -58,6 +58,26 @@ Run，新增的共享配置未单独重跑；详见
 `mac-idea-configuration-endpoints-validation-20261010.json`。该类使用受控的
 ConfigurationService 等依赖，真实持久化配置服务与端点装配的组合验收仍待完成。
 
+同一 Mac IDEA 导入工程又通过六个共享类级 JUnit 配置直接运行端点场景：
+
+| 类 | IDEA 结果 |
+| --- | ---: |
+| `IdentityV1EndpointsIT` | 18/18 |
+| `IdentityV2EndpointsIT` | 32/32 |
+| `KeystoreEndpointsV2IT` | 16/16 |
+| `ServiceListingEndpointsIT` | 55/55 |
+| `SystemEndpointsIT` | 24/24 |
+| `TamperDetectionEndpointsIT` | 18/18 |
+
+合计 **163/163**，六个类均被 IDEA 标为 Passed；没有失败或跳过。运行配置在
+`.run/Kura * endpoints JUnit.run.xml`，均指向导入的 `kura-endpoint-tests` 模块、
+JDK 21 和类级 Run。逐类结果及源码/配置哈希见
+`mac-idea-rest-endpoints-validation-20261010.json`。另有隔离 Mac Equinox 运行集
+通过证书校验的 HTTPS 与 Basic 认证实际读取 identity、system、serviceListing、
+tamper、keystores 接口；见 `mac-rest-scr-endpoint-validation-20261010.json`。
+IDEA 测试中的受控服务绑定与运行集只读请求是两组独立证据，仍需保留清单中对
+真实 SCR 写入流程、已安装 Debian 装配和物理设备的相应边界。
+
 ## Linux IDEA JUnit 验收（2026-10-10）
 
 在隔离 Ubuntu 24.04 ARM64 VM 的 IDEA 2026.2.3 中，直接打开宿主仓库的挂载路径：

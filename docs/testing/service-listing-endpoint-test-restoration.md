@@ -23,5 +23,8 @@ dependencies needed to load SCR's API; production bundle imports are unchanged.
 
 Maven 3.10.0 / Temurin 21: a five-invocation fixture smoke check and the complete
 55-invocation run pass, zero failures/errors/skips. The earlier classpath-incomplete
-run was terminated and is not counted. Full Kura SCR/runtime and IDEA acceptance
-remain open.
+run was terminated and is not counted. Mac IDEA class Run also passed 55/55;
+isolated Equinox/SCR HTTPS servicePids and factoryPids returned 42 and 67 PIDs.
+Installed Debian SCR/metatype factory discovery and filtered queries under that
+assembly remain open. See `mac-idea-rest-endpoints-validation-20261010.json` and
+`mac-rest-scr-endpoint-validation-20261010.json`.

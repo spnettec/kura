@@ -4656,12 +4656,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 18,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md.",
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Kura Equinox SCR/configuration assembly",
-      "IDEA execution"
+      "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe"
     ]
   },
   {
@@ -4684,12 +4690,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 32,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md.",
+    "reason": "All upstream endpoint scenarios run over both transports using exported test fixtures. Real Jetty/Jersey authentication and MQTT/DataService/H2/Kapua request handling; explicit service binding preserves local API. See identity-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Kura Equinox SCR/configuration assembly",
-      "IDEA execution"
+      "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe"
     ]
   },
   {
@@ -4712,12 +4724,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 16,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All eight upstream private-key upload/update and invalid-request scenarios run over both transports with real filesystem PKCS12 stores and Equinox trackers. See keystore-endpoint-test-restoration.md.",
+    "reason": "All eight upstream private-key upload/update and invalid-request scenarios run over both transports with real filesystem PKCS12 stores and Equinox trackers. See keystore-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Deployed SCR/configuration and actual CryptoService master-key assembly",
-      "IDEA execution"
+      "Installed Debian REST/SCR/configuration and private-key mutation with actual CryptoService master-key assembly"
     ]
   },
   {
@@ -5083,12 +5101,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 55,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All 28 upstream scenarios: 27 on each transport plus the HTTP-only unauthenticated case once. Actual registry/LDAP matching; controlled SCR descriptors and ConfigurationService. See service-listing-endpoint-test-restoration.md.",
+    "reason": "All 28 upstream scenarios: 27 on each transport plus the HTTP-only unauthenticated case once. Actual registry/LDAP matching; controlled SCR descriptors and ConfigurationService. See service-listing-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Deployed SCR/metatype/configuration factory discovery",
-      "IDEA execution"
+      "Installed Debian SCR/metatype/configuration factory discovery and filtered service queries"
     ]
   },
   {
@@ -5183,12 +5207,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 24,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md.",
+    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Kura Equinox SCR/configuration assembly",
-      "IDEA execution"
+      "Equinox SCR/configuration-backed system operations beyond the read-only HTTPS properties probe"
     ]
   },
   {
@@ -5226,12 +5256,18 @@
       "errors": 0,
       "skipped": 0,
       "maven": "3.10.0",
-      "jdk": "21"
+      "jdk": "21",
+      "idea": {
+        "platform": "macOS",
+        "runner": "IntelliJ IDEA JUnit class Run",
+        "tests": 18,
+        "failures": 0,
+        "evidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json"
+      }
     },
-    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md.",
+    "reason": "All upstream scenarios restored over both transports. Explicit per-test service bindings and controlled provider boundaries; actual transport, routing, serialization, response/error mapping and cleanup. See system-tamper-endpoint-test-restoration.md. Direct macOS IDEA class Run passed and isolated Equinox/SCR read-only HTTPS acceptance was recorded; see mac-idea-rest-endpoints-validation-20261010.json and mac-rest-scr-endpoint-validation-20261010.json.",
     "deferredValidation": [
-      "Kura Equinox SCR/configuration assembly",
-      "IDEA execution"
+      "Equinox SCR/configuration with a registered tamper service and event/reset flows"
     ]
   },
   {

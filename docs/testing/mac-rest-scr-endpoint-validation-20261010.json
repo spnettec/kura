@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "jdk": "Temurin 21.0.12.1",
+  "mavenAssembly": "3.10.0",
+  "scope": "Isolated full development assembly with Equinox SCR, ConfigAdmin, Jetty/Jersey, real JKS HTTPS keystore, Kura identity, system, service listing, tamper and keystore services.",
+  "profile": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/profile",
+  "security": {
+    "https": "certificate chain validated against the generated local certificate with localhost hostname verification",
+    "authentication": "Basic isolated development admin identity; credentials omitted",
+    "masterKey": "external KURA_CRYPTO_SECRET_KEY in the isolated profile; value omitted",
+    "snapshotEncryption": true
+  },
+  "httpResults": {
+    "/services/identity/v1/identities": 200,
+    "/services/identity/v2/identities": 200,
+    "/services/identity/v1/definedPermissions": 200,
+    "/services/identity/v2/definedPermissions": 200,
+    "/services/system/v1/properties/kura": 200,
+    "/services/serviceListing/v1/servicePids": 200,
+    "/services/serviceListing/v1/factoryPids": 200,
+    "/services/tamper/v1/list": 200,
+    "/services/keystores/v2": 200,
+    "/services/keystores/v2/entries": 200
+  },
+  "observed": {
+    "identityV2Count": 1,
+    "permissionV2Count": 19,
+    "servicePidCount": 42,
+    "factoryPidCount": 67,
+    "tamperDeviceCount": 0,
+    "keystoreCount": 2,
+    "keystoreEntryCount": 1
+  },
+  "artifact": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/config-rest-https-20261010/rest-readonly-scr-20261010.json",
+    "sha256": "aae80e7b151e37a68ad28ae165a75e6dc4dc42bb20c3e9c89914028a433f22ae"
+  },
+  "limits": [
+    "The actual SCR registrations and read-only authenticated HTTPS operations are proven; mutating endpoint scenarios remain covered by their separate Maven/IDEA fixture tests.",
+    "The empty tamper list confirms the service registration but not a physical tamper event.",
+    "The macOS development assembly is not an installed Debian package or Linux hardware acceptance."
+  ]
+}

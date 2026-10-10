@@ -26,5 +26,10 @@ there are 92 validated endpoint invocations across those runs, not a claim of on
 combined full workspace execution. Tests retain the bounded transport and cleanup
 checks from the shared fixture.
 
-Full deployed SCR/configuration discovery and actual IDEA execution remain open.
-No production code, handwritten metadata, D-Bus, YOFC/PLC4X or OPC UA changed.
+Mac IDEA class Run passed System 24/24 and Tamper 18/18. Isolated Equinox/SCR
+authenticated HTTPS returned 200 for Kura properties and an empty tamper list.
+System operations beyond the read-only probe and tamper event/reset flows with
+a registered service remain open under actual SCR/configuration assembly. See
+`mac-idea-rest-endpoints-validation-20261010.json` and
+`mac-rest-scr-endpoint-validation-20261010.json`. No production code,
+handwritten metadata, D-Bus, YOFC/PLC4X or OPC UA changed.

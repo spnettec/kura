@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 45,
-  "assessment": "Rows 210 and 211 now have authenticated HTTPS against actual macOS SCR configuration services and encrypted snapshot recovery in a second Java process using the same isolated profile and external master key. See configuration-rest-https-restart-validation-20261010.json. The other 45 rows retain scenario-specific unverified boundaries; no Linux package or hardware acceptance is claimed.",
+  "assessment": "Rows 210 and 211 have two-process authenticated HTTPS encrypted-snapshot recovery. Six REST endpoint classes also passed direct Mac IDEA JUnit (163/163), while isolated Equinox/SCR HTTPS read-only identity, system, service listing, tamper and keystore requests passed. The 45 retained rows now state the remaining scenario-specific SCR/deployed/hardware boundaries; no Linux package or hardware acceptance is claimed.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -189,10 +189,12 @@
       "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV1EndpointsTest.java",
       "group": "rest-identity",
       "evidence": [
-        "docs/testing/identity-endpoint-test-restoration.md"
+        "docs/testing/identity-endpoint-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "covered": "IDEA Identity V1 18/18; isolated Equinox/SCR authenticated HTTPS identity V1 and defined-permission GET returned 200.",
+      "remaining": "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe.",
       "originalDeferredValidation": [
         "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
@@ -203,10 +205,12 @@
       "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityV2EndpointsTest.java",
       "group": "rest-identity",
       "evidence": [
-        "docs/testing/identity-endpoint-test-restoration.md"
+        "docs/testing/identity-endpoint-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "covered": "IDEA Identity V2 32/32; isolated Equinox/SCR authenticated HTTPS identity V2 and defined-permission GET returned 200.",
+      "remaining": "Equinox SCR/configuration-backed mutating identity and permission flows beyond the read-only HTTPS probe.",
       "originalDeferredValidation": [
         "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
@@ -218,10 +222,12 @@
       "group": "rest-keystore",
       "evidence": [
         "docs/testing/keystore-endpoint-test-restoration.md",
-        "docs/testing/cloud-tls-runtime-validation-20261010.json"
+        "docs/testing/cloud-tls-runtime-validation-20261010.json",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Endpoint tests and separate actual filesystem/SCR keystore and CryptoService TLS chain passed.",
-      "remaining": "Combined deployed REST endpoint/configuration/master-key assembly and direct IDEA execution remain unverified.",
+      "covered": "IDEA Keystore V2 16/16; isolated Equinox/SCR authenticated HTTPS keystore and entry lists returned 200 with real JKS and external master key.",
+      "remaining": "Installed Debian REST/SCR/configuration and private-key mutation with actual CryptoService master-key assembly.",
       "originalDeferredValidation": [
         "Deployed SCR/configuration and actual CryptoService master-key assembly",
         "IDEA execution"
@@ -260,10 +266,12 @@
       "source": "test/org.eclipse.kura.rest.service.listing.provider.test/src/main/java/org/eclipse/kura/internal/rest/service/listing/provider/test/ServiceListingEndpointsTest.java",
       "group": "rest-listing",
       "evidence": [
-        "docs/testing/service-listing-endpoint-test-restoration.md"
+        "docs/testing/service-listing-endpoint-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Deployed SCR/metatype/configuration factory discovery and direct IDEA execution remain unverified.",
+      "covered": "IDEA ServiceListing 55/55; isolated Equinox/SCR authenticated HTTPS servicePids and factoryPids returned 200 with 42 and 67 PIDs.",
+      "remaining": "Installed Debian SCR/metatype/configuration factory discovery and filtered service queries.",
       "originalDeferredValidation": [
         "Deployed SCR/metatype/configuration factory discovery",
         "IDEA execution"
@@ -274,10 +282,12 @@
       "source": "test/org.eclipse.kura.rest.system.provider.test/src/main/java/org/eclipse/kura/rest/system/provider/test/EndpointsTest.java",
       "group": "rest-system",
       "evidence": [
-        "docs/testing/system-service-test-restoration.md"
+        "docs/testing/system-service-test-restoration.md",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Restored endpoint tests passed.",
-      "remaining": "Combined Kura Equinox SCR/configuration assembly and direct IDEA execution remain unverified.",
+      "covered": "IDEA System 24/24; isolated Equinox/SCR authenticated HTTPS Kura properties GET returned 200.",
+      "remaining": "Equinox SCR/configuration-backed system operations beyond the read-only HTTPS properties probe.",
       "originalDeferredValidation": [
         "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
@@ -289,10 +299,12 @@
       "group": "rest-tamper",
       "evidence": [
         "docs/testing/system-tamper-endpoint-test-restoration.md",
-        "docs/testing/cloud-tamper-runtime-validation-20261010.json"
+        "docs/testing/cloud-tamper-runtime-validation-20261010.json",
+        "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+        "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
       ],
-      "covered": "Endpoint tests and separate actual EventAdmin tamper scheduling passed with a simulated sensor.",
-      "remaining": "Combined deployed REST SCR/configuration assembly and direct IDEA execution remain unverified; no physical sensor claim.",
+      "covered": "IDEA Tamper 18/18; isolated Equinox/SCR authenticated HTTPS tamper list returned 200 and zero devices.",
+      "remaining": "Equinox SCR/configuration with a registered tamper service and event/reset flows.",
       "originalDeferredValidation": [
         "Kura Equinox SCR/configuration assembly",
         "IDEA execution"
@@ -646,5 +658,7 @@
         "IDEA execution"
       ]
     }
-  ]
+  ],
+  "macIdeaRestEndpointEvidence": "docs/testing/mac-idea-rest-endpoints-validation-20261010.json",
+  "macRestScrEvidence": "docs/testing/mac-rest-scr-endpoint-validation-20261010.json"
 }

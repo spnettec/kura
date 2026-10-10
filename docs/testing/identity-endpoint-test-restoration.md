@@ -35,7 +35,11 @@ the exported fixture JARs. `RUN_IT=1 ./build-all.sh` runs it after sibling insta
 root `endpoint-it` profile exposes it for IDEA/Maven import. See its README for
 standalone commands and prerequisite artifacts.
 
-Service activation/registry/configuration boundaries are explicit fixtures. Full
-Equinox SCR/whiteboard assembly, persistent production stores, deployed runtime,
-and actual IDEA execution remain acceptance work. No production logic, handwritten
-OSGi metadata, YOFC/PLC4X or official OPC UA behavior changed in this batch.
+Service activation/registry/configuration boundaries are explicit fixtures. Mac
+IDEA class Run passed V1 18/18 and V2 32/32; an isolated Equinox/SCR runtime also
+returned authenticated HTTPS 200 for identity and permission lists. Mutating
+identity/permission flows under the complete SCR/configuration assembly and
+deployed runtime remain separate acceptance work. See
+`mac-idea-rest-endpoints-validation-20261010.json` and
+`mac-rest-scr-endpoint-validation-20261010.json`. No production logic,
+handwritten OSGi metadata, YOFC/PLC4X or official OPC UA behavior changed.

@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "project": "/Users/heyoulin/iot-kura-develop/git/kura",
+  "projectSdk": "Temurin 21",
+  "mavenHome": "/opt/homebrew/Cellar/maven/3.10.0/libexec",
+  "module": "kura-endpoint-tests",
+  "launch": "Direct IDEA JUnit Run using shared class configurations and IDEA Make; each class run separately",
+  "results": [
+    {
+      "class": "IdentityV1EndpointsIT",
+      "configuration": ".run/Kura identity V1 endpoints JUnit.run.xml",
+      "passed": 18,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "1a52665ace200a13c672c58f179ff2840f205fd8e0087502137dabaa4e180312",
+      "configurationSha256": "8ccac8ba305e8dbb4ba6388658d00f7e1165377f5a7d6091282e8a111989c22f"
+    },
+    {
+      "class": "IdentityV2EndpointsIT",
+      "configuration": ".run/Kura identity V2 endpoints JUnit.run.xml",
+      "passed": 32,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "sourceSha256": "7e4d9e0c22205b07a5c0e347f9d730a121c1773192c6d0a4680a5a8260d61489",
+      "configurationSha256": "062e4fb03f5cdb6839db6f44c8205a05bebe761aeb5316b7e8fd549550f80efa",
+      "completionUi": "IDEA tree marked class Passed with full passed count; exit-code line was not separately captured"
+    },
+    {
+      "class": "KeystoreEndpointsV2IT",
+      "configuration": ".run/Kura keystore V2 endpoints JUnit.run.xml",
+      "passed": 16,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "01f67e191aaff272108970ea7c47e0c984161b5cfa2c4f0ad9b58fa6862c5f2f",
+      "configurationSha256": "d95871fc6d2f3d38bf0464fcaf9d327f111cbecc6cff7d4f9d77e44a6e8d62c9"
+    },
+    {
+      "class": "ServiceListingEndpointsIT",
+      "configuration": ".run/Kura service listing endpoints JUnit.run.xml",
+      "passed": 55,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "sourceSha256": "0d08b39f1499f0056a5a0609ce93ca960d0ed11c57957e6cbcc16993666bee22",
+      "configurationSha256": "91ef8b393dde9caf0573c1d4a26cb4c5cfd2bdf1ee70f0467a6acde742418eb7",
+      "completionUi": "IDEA tree marked class Passed with full passed count; exit-code line was not separately captured"
+    },
+    {
+      "class": "SystemEndpointsIT",
+      "configuration": ".run/Kura system endpoints JUnit.run.xml",
+      "passed": 24,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "d5355f0fbdd96a466f7bc60bb62fac7659d3b2994813e216b6e0d7bf76f236e0",
+      "configurationSha256": "57e6987e1091b1e029ff4bed9a7f065fcd4fe00e7b9f2ac72dc1db28dae47e66"
+    },
+    {
+      "class": "TamperDetectionEndpointsIT",
+      "configuration": ".run/Kura tamper endpoints JUnit.run.xml",
+      "passed": 18,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "classStatus": "Passed",
+      "processExitCode": 0,
+      "sourceSha256": "989a3036ac5d07138f5d3fdf578b8f006564def8584426ed85ccbb7bed88b4aa",
+      "configurationSha256": "279a98f75dfecc6c8ab1ed117c132596213770cc591e39a664d0df0d00f2cdbb"
+    }
+  ],
+  "totalPassed": 163,
+  "totalFailed": 0,
+  "limits": [
+    "These are direct IDEA class runs against exported fixture jars, not a single complete deployed SCR endpoint run.",
+    "The separately observed macOS Equinox/SCR HTTPS service registrations and read-only calls are recorded in mac-rest-scr-endpoint-validation-20261010.json.",
+    "The broader package run was intentionally stopped at 66 passed tests; it is not counted as a completed suite.",
+    "No installed Debian package, Linux hardware or physical tamper sensor acceptance is claimed."
+  ]
+}
