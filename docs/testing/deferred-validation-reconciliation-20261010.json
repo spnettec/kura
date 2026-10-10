@@ -2,7 +2,8 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 47,
-  "assessment": "All 47 rows retain a distinct unverified boundary after existing and new Mac IDEA evidence is applied. Three configuration rows now have direct 47-case IDEA evidence; their deployed host boundary remains open.",
+  "assessment": "All 47 rows retain their scenario-specific unverified boundary. The complete Mac IDEA development runtime started twice with an isolated profile and Equinox state after two separately committed startup fixes; this establishes startup, REST registration, HTTP redirect and zero INSTALLED bundles, but does not execute the remaining combined endpoint, hardware or package scenarios. Three configuration rows also have direct 47-case IDEA evidence.",
+  "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
       "inventoryIndex": 154,

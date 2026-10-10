@@ -26,6 +26,15 @@ IDEA 从仓库根 POM 导入，在 Maven 面板启用 `workspace` profile，配�
 
 用户数据默认保存在 `~/.kura-dev/macos` 或 `~/.kura-dev/linux`，可以设置 `KURA_DEV_HOME`；不允许放在本模块的 target 内。已有 snapshot/密钥不会因初始化或 Maven clean 被覆盖。日志位于数据目录的 `logs/`。
 
+IDEA 应用配置中的环境变量只传给启动的 JVM；`Before launch` 的 `Run Maven Goal`
+不会继承其中的 `KURA_DEV_HOME`。使用非默认数据目录时，先在终端显式传入
+`KURA_DEV_HOME` 执行上面的 Maven 组装命令，并核对 `target/runtime/jvm.args`
+中的 `kura.home`、`kura.data` 和 `kura.snapshots`，然后在个人复制的本地
+IDEA 配置中移除运行前 Maven 步骤再启动。不要在应用运行时重组装同一个
+`target/runtime`。
+隔离的 Mac IDEA 启动与重启验收记录见
+[2026-10-10 验收证据](../docs/testing/mac-idea-application-restart-validation-20261010.json)。
+
 支持 `KURA_HTTP_PORT`、`KURA_HTTPS_PORT`、`KURA_CLIENT_AUTH_PORT`（首次默认 8080/8443/8444）。已有 profile 默认沿用快照端口；显式环境变量覆盖会写入编号更大的快照，保留原文件、密钥及其他配置。端口占用会直接报错。初始模板禁止自动连接外部 MQTT，并禁用桌面不具备的时钟、看门狗和 GPS。
 
 CLI 调试可以运行 `python3 kura-dev-runtime/tools/runtime.py run --debug-port 5005`，仅监听本机，等待调试器连接。正常停止使用 Ctrl-C；Gogo `close` 只停框架，旧组件线程可能仍存活。

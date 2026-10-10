@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS aarch64",
+  "jdk": "Temurin 21.0.12.1",
+  "maven": "3.10.0",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "coreBaseline": "0c9ebd5876b009523910b25f157278edf093ad9f",
+  "productionFixes": [
+    "c20e03fa65",
+    "5efb27357c"
+  ],
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010",
+  "scope": "Local IDEA Run/Debug of the complete Maven development runtime with isolated KURA_DEV_HOME and isolated Equinox configuration area.",
+  "discovery": {
+    "issue": "IDEA Before launch Maven Goal did not inherit KURA_DEV_HOME from the application configuration; its first jvm.args pointed to the personal profile. The process was stopped and the protected personal files were hash checked.",
+    "protectedPersonalFiles": 14,
+    "personalProtectedChanged": [],
+    "personalProtectedNew": [],
+    "preFixRestart": {
+      "file": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/pre-fix-kura.log",
+      "sha256": "4187f87ba5220204f3c4cc13d5b1d398ec9efad012bcdc40ab8b1c5d4e597363",
+      "lines": 1695,
+      "errorLines": 5,
+      "duplicatePidLines": 2,
+      "connectorBindFailureLines": 3,
+      "startedConnectors": 6
+    }
+  },
+  "assembly": {
+    "command": "KURA_DEV_HOME=<archive>/profile mvn -Pworkspace -pl :kura-workspace,:kura-dev-runtime -am install -DskipTests -DskipITs -Dkura.dev.profile=macos -Dmaven.repo.local=<migration-m2>",
+    "result": "BUILD SUCCESS",
+    "duration": "02:25 min",
+    "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/fixed-assembly.log",
+    "sha256": "259152300b879b3ee8b31d4002fe9dab653ff0c166d5e2e9d2d5e7af4beda79b"
+  },
+  "regression": [
+    {
+      "suite": "org.eclipse.kura.core.configuration",
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/config-full-tests.log",
+      "sha256": "a6ff145a4f4849994e8437ccacd748efdedfed519f9f2f60f764c9f351624959"
+    },
+    {
+      "suite": "org.eclipse.kura.http.server.manager",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/http-full-tests.log",
+      "sha256": "ba8e09aae35f04ee2967bb7fed3b331e228925cf07bcc21c74b9447241d41ed1"
+    },
+    {
+      "suite": "ConfigurationServiceRuntimeIT actual Equinox/SCR/ConfigAdmin",
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "log": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/config-equinox-runtime-it.log",
+      "sha256": "4fded3062ff841ddc04eec8724d7cd9989ff12822521959e34e0003152f46569"
+    }
+  ],
+  "idea": {
+    "localConfiguration": "Kura macOS isolated acceptance (not stored as a project file)",
+    "beforeLaunchMavenRemoved": true,
+    "debug": {
+      "breakpoint": "Emulator.java:47",
+      "evaluation": "componentContext.getBundleContext().getBundle().getSymbolicName() = org.eclipse.kura.emulator",
+      "note": "Debugger breakpoint was checked before the production fixes; the later two fixed-code starts used IDEA Run."
+    },
+    "fixedFirst": {
+      "pid": 63203,
+      "httpRoot": "302 Location: /admin/console",
+      "configurationArea": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/fixed-equinox-configuration",
+      "log": {
+        "file": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/fixed-first-complete-kura.log",
+        "sha256": "ff95301b62ec7cc4c46fb91cc0b1ff712de8fbdb77901c60a032bd3f3da4fc58",
+        "lines": 560,
+        "errorLines": 0,
+        "duplicatePidLines": 0,
+        "connectorBindFailureLines": 0,
+        "startedConnectors": 3
+      }
+    },
+    "fixedRestart": {
+      "pid": 63544,
+      "httpRoot": "302 Location: /admin/console",
+      "gogo": "ss -s INSTALLED returned only the header and prompt; zero INSTALLED bundles",
+      "log": {
+        "file": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/fixed-second-complete-kura.log",
+        "sha256": "3f07aec9c450ebe0ddd0f8d3a75a76ff9a2dbb1de2a2bfd96ee5e3546caa9ea9",
+        "lines": 558,
+        "errorLines": 0,
+        "duplicatePidLines": 0,
+        "connectorBindFailureLines": 0,
+        "startedConnectors": 3
+      }
+    },
+    "stopped": {
+      "pidsExited": [
+        63203,
+        63544
+      ],
+      "tcp8080Released": true
+    }
+  },
+  "profile": {
+    "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-idea-application-20261010/profile",
+    "jvmProperties": [
+      "kura.home",
+      "kura.data",
+      "kura.snapshots"
+    ],
+    "snapshotAndKeystoreHashesStableAcrossRestart": true,
+    "protectedPersonalFilesChanged": []
+  },
+  "sources": {
+    "kura/org.eclipse.kura.core.configuration/src/main/java/org/eclipse/kura/core/configuration/ConfigurationServiceImpl.java": "e200764877de54396805cb2ad3700f16147858573d6f17816699a71495b1e313",
+    "kura/org.eclipse.kura.http.server.manager/src/main/java/org/eclipse/kura/http/server/manager/HttpService.java": "ccef8080e63e58eb08b947e4c0c02e015d2130bdd798551c3b227ef1d9195477"
+  },
+  "limits": [
+    "Development runtime on macOS, not a deployed Debian package or Linux/hardware acceptance.",
+    "HTTP redirect and bundle resolution show startup, not authenticated REST business flows or physical device scenarios.",
+    "The 47 deferredValidation inventory entries retain their scenario-specific boundaries."
+  ]
+}
