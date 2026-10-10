@@ -40,6 +40,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import org.eclipse.jetty.io.ssl.SslHandshakeListener;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -131,6 +132,32 @@ class HttpServiceTest {
         createKeystore(false);
         configure(Map.of("http.ports", new Integer[] { 0 }));
         assertEquals(1, server().getConnectors().length);
+        assertEquals(404, request(connector(0), false, false));
+    }
+
+    @Test
+    void repeatedKeystoreInjectionDuringStartupDoesNotOpenAnotherServer() throws Exception {
+        int port;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+        }
+        ExecutorService executor = (ExecutorService) TestUtil.getFieldValue(this.manager, "executorService");
+        CountDownLatch releaseStartup = new CountDownLatch(1);
+        Future<?> blocked = executor.submit(() -> {
+            releaseStartup.await();
+            return null;
+        });
+        try {
+            invoke("activate", Map.class, Map.of("http.ports", new Integer[] { port }));
+            createKeystore(false);
+            this.manager.getClass().getMethod("setKeystoreService", KeystoreService.class, Map.class)
+                    .invoke(this.manager, this.keystore, Map.of("kura.service.pid", "test-keystore"));
+        } finally {
+            releaseStartup.countDown();
+        }
+        blocked.get(5, TimeUnit.SECONDS);
+        drainManager();
+        assertEquals(port, connector(0).getLocalPort());
         assertEquals(404, request(connector(0), false, false));
     }
 

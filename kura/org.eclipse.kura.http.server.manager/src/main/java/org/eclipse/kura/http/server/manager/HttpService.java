@@ -45,6 +45,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     private String keystoreServicePid;
 
     private JettyServerHolder jettyServerHolder;
+    private boolean httpServiceStartRequested;
     private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private Future<?> restartTask = CompletableFuture.completedFuture(null);
 
@@ -56,7 +57,7 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         this.eventListener = eventListener;
     }
 
-    public void activate(Map<String, Object> properties) {
+    public synchronized void activate(Map<String, Object> properties) {
         logger.info("Activating {}", this.getClass().getSimpleName());
 
         this.options = new HttpServiceOptions(properties);
@@ -100,6 +101,10 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     }
 
     private synchronized void startHttpService(final HttpServiceOptions options) {
+        if (this.httpServiceStartRequested) {
+            return;
+        }
+        this.httpServiceStartRequested = true;
         this.executorService.submit(() -> {
             try {
                 logger.info("starting Jetty instance...");
@@ -107,17 +112,22 @@ public class HttpService implements ConfigurableComponent, EventHandler {
                         this.dispatcherServlet, this.eventListener);
                 logger.info("starting Jetty instance...done");
             } catch (final Exception e) {
+                synchronized (HttpService.this) {
+                    HttpService.this.httpServiceStartRequested = false;
+                }
                 logger.error("Could not start Jetty Web server", e);
             }
         });
     }
 
     private synchronized void stopHttpService() {
+        this.httpServiceStartRequested = false;
         this.executorService.submit(() -> {
             try {
                 logger.info("stopping Jetty instance...");
                 if (this.jettyServerHolder != null) {
                     this.jettyServerHolder.stop();
+                    this.jettyServerHolder = null;
                 }
             } catch (final Exception e) {
                 logger.error("Could not stop Jetty Web server", e);
@@ -181,11 +191,11 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         }, delaySeconds, TimeUnit.SECONDS);
     }
 
-    public void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
+    public synchronized void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
         this.keystoreService = keystoreService;
         this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
 
-        if (this.options != null && this.jettyServerHolder == null) {
+        if (this.options != null && !this.httpServiceStartRequested) {
             cancelRestartTask();
             logger.info("KeystoreService injected before HTTP service started. Starting now.");
             startHttpService(this.options);
