@@ -407,14 +407,14 @@ public class KeystoreRemoteService {
         @Override
         public void modifiedService(final ServiceReference<KeystoreService> reference, final KeystoreService service) {
             String kuraServicePid = (String) reference.getProperty(KURA_SERVICE_PID);
-            KeystoreRemoteService.this.keystoreServices.put(kuraServicePid,
-                    KeystoreRemoteService.this.bundleContext.getService(reference));
+            KeystoreRemoteService.this.keystoreServices.put(kuraServicePid, service);
         }
 
         @Override
         public void removedService(final ServiceReference<KeystoreService> reference, final KeystoreService service) {
             String kuraServicePid = (String) reference.getProperty(KURA_SERVICE_PID);
             KeystoreRemoteService.this.keystoreServices.remove(kuraServicePid);
+            KeystoreRemoteService.this.bundleContext.ungetService(reference);
         }
     }
 }
