@@ -1,0 +1,65 @@
+{
+  "tests": 6,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "newSparkplugInvocations": 1,
+  "previousCloudInvocations": 5,
+  "moduleUnitTests": {
+    "tests": 150,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS aarch64",
+  "execution": "JUnit 5 / Failsafe / real Equinox SCR, ConfigurationService, CryptoService, H2, DataService, MQTT",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/sparkplug-runtime-20261010",
+  "reportSha256": "990e3601feda008ceb712278ccb03e3daf956dc0e2e9047354fdebd139abc4fd",
+  "sources": {
+    "kura-cloud/runtime-tests/pom.xml": "8844b52835d84d42f6fcd9f51bb8d1feddef02ba286064b50d559347ddf8f137",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java": "53e752f0672bc90506cdf2200464777eb59e44facb868bd9ba5606415660c8a0",
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
+    "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/META-INF/MANIFEST.MF": "93bf96aedbeea8670849c1b44226e2d27cc730e9a6fd3d6a31706d2d24916c57"
+  },
+  "coreRevision": "ad4dba79e402ed89b56acebb18865c9023d24858",
+  "cloudRevision": "86cf5805605879dfd8ac39442c7387605114d5a2",
+  "productionFix": "1259c3e",
+  "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
+  "caseDurationsSeconds": {
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[1]": 1.832,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[2]": 1.549,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[3]": 7.666,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[4]": 7.666,
+    "serviceExistsThroughRealFactory(Scenario, EquinoxRuntime)[5]": 36.64,
+    "sparkplugFactoryPipeline(EquinoxRuntime)": 11.393
+  },
+  "ciReportReplay": {
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "beforeFix": {
+    "tests": 1,
+    "errors": 1,
+    "failures": 0,
+    "cause": "SCR activation failed: javax.net.ssl.SSLSocketFactory not visible to Sparkplug bundle"
+  },
+  "verified": [
+    "Explicit javax.net.ssl wiring to Equinox system bundle",
+    "Local custom service PID, Chinese cloud name and description, factory identity and two-child stack",
+    "Actual factory, SCR, ServiceTracker, ConfigurationService and H2-backed DataService assembly",
+    "Actual Sparkplug transport authenticates at loopback broker",
+    "NBIRTH, DBIRTH, DDATA, changed metric birth and reconnect birth with exact sequence/payload",
+    "Device and factory child service deletion"
+  ],
+  "boundaries": [
+    "Controlled system/status/watchdog host services",
+    "H2 in-memory; no filesystem durability or restart claim",
+    "TLS, keystore/CRL and Sparkplug-specific IDEA run remain unverified",
+    "No additional Linux or full workspace run"
+  ],
+  "counting": "Six final runtime invocations include the five previous scenarios; only one new scenario. Unit suite count is separate; historical full-workspace totals unchanged."
+}

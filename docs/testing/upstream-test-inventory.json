@@ -2946,10 +2946,12 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDataTransportTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDataTransportTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
     ],
     "execution": "surefire",
-    "reason": "All 16 upstream protocol cases use actual loopback Moquette/Paho and transport dispatch. Explicit negative subscriptions and dispatch completion barriers prevent vacuous asynchronous assertions. No remote DNS or fixed port; only random delay is controlled. See cloud-test-restoration.md.",
+    "reason": "All 16 upstream protocol cases use actual loopback Moquette/Paho and transport dispatch. Explicit negative subscriptions and dispatch completion barriers prevent vacuous asynchronous assertions. No remote DNS or fixed port; only random delay is controlled. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
     "validation": {
       "tests": 16,
       "failures": 0,
@@ -2959,8 +2961,17 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "Full Equinox/SCR/ConfigurationService assembly, real DataService persistence, TLS/authentication and IDEA runtime acceptance."
-    ]
+      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+    ],
+    "runtimeValidation": {
+      "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDeviceTest.java",
@@ -2973,10 +2984,12 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDeviceTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugDeviceTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
     ],
     "execution": "surefire",
-    "reason": "All seven upstream device cases exercise real device/endpoint/Paho/broker with a forwarding mock at the DataService persistence boundary and real ServiceTracker against a mocked registry. Changed-metric and reconnect checks require the second DBIRTH, exact sequence and payload. See cloud-test-restoration.md.",
+    "reason": "All seven upstream device cases exercise real device/endpoint/Paho/broker with a forwarding mock at the DataService persistence boundary and real ServiceTracker against a mocked registry. Changed-metric and reconnect checks require the second DBIRTH, exact sequence and payload. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
     "validation": {
       "tests": 7,
       "failures": 0,
@@ -2986,8 +2999,17 @@
       "jdk": "21"
     },
     "deferredScenarios": [
-      "Full Equinox/SCR/ConfigurationService assembly, real DataService persistence, TLS/authentication and IDEA runtime acceptance."
-    ]
+      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+    ],
+    "runtimeValidation": {
+      "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugIntegrationTest.java",
@@ -3000,13 +3022,24 @@
     "upstreamRepository": "kura",
     "upstreamRevision": "e500a68d7b3f4a970aca3e13c038947269278827",
     "localSources": [
-      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugIntegrationTest.java"
+      "kura-cloud/bundles/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/src/test/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/provider/test/SparkplugIntegrationTest.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/CloudFactoryRuntimeIT.java",
+      "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java"
     ],
     "execution": "surefire",
-    "reason": "Replaced static JUnit 4/SCR/fixed-port harness with per-class Jupiter loopback Moquette 0.18.0 and per-test real Paho/transport fixtures, random port and resource cleanup. Real Equinox service assembly remains deferred; it is not replaced by non-null mock assertions. See cloud-test-restoration.md.",
+    "reason": "Replaced static JUnit 4/SCR/fixed-port harness with per-class Jupiter loopback Moquette 0.18.0 and per-test real Paho/transport fixtures, random port and resource cleanup. The original real factory/SCR setup is now covered by CloudFactoryRuntimeIT.sparkplugFactoryPipeline, including the actual H2-backed DataService pipeline and local PID/name/description contract. See cloud-test-restoration.md. Actual factory/SCR/H2/DataService and authenticated MQTT lifecycle now also pass in the shared runtime scenario; see sparkplug-runtime-validation-20261010.json.",
     "deferredScenarios": [
-      "Original shouldBeSetup real ConfigurationService/factory/SCR service discovery and complete DataService pipeline; TLS/authentication and IDEA runtime acceptance."
-    ]
+      "TLS/filesystem keystore/CRL, file-backed DataService restart durability and Sparkplug-specific IDEA runtime acceptance."
+    ],
+    "runtimeValidation": {
+      "report": "docs/testing/sparkplug-runtime-validation-20261010.json",
+      "scenario": "CloudFactoryRuntimeIT.sparkplugFactoryPipeline",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Same single shared runtime scenario referenced by three upstream rows; do not sum row references."
+    }
   },
   {
     "source": "test/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider.test/src/main/java/org/eclipse/kura/cloudconnection/sparkplug/mqtt/subscriber/test/SparkplugSubscriberTest.java",

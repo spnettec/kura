@@ -483,3 +483,35 @@ physical hardware, TLS and file durability are not claimed. This resolves the
 remaining named tamper scenario for the legacy Kapua CloudService source. Other
 TLS/keystore/CRL, Sparkplug and REST runtime assembly items remain open. No additional
 Linux or full workspace validation is claimed.
+
+## Actual Sparkplug factory and MQTT pipeline (2026-10-10)
+
+The new `CloudFactoryRuntimeIT.sparkplugFactoryPipeline` uses real Equinox SCR,
+ConfigurationService, CryptoService, H2-backed DataService, Sparkplug endpoint/device,
+ServiceTracker and Paho. A random-port authenticated Moquette broker and external
+observer verify NBIRTH sequence 0, DBIRTH sequence 1, DDATA sequence 2, changed-metric
+DBIRTH sequence 3, then reconnect NBIRTH 0 and DBIRTH 1. Device payload assertions
+include Unicode body/string metric, timestamp, integer metric, QoS and retain.
+Factory deletion removes endpoint and both child services; device deletion is checked.
+
+The local factory contract is preserved: arbitrary `kura.service.pid`, independent
+Chinese `kura.cloud.factory.name`/`kura.cloud.factory.desc`, discovery by
+`service.factoryPid`, and the two-child stack list (unlike Kapua's three-element list).
+The controller does not load Kura business APIs. H2 remains in-memory; this covers
+actual persistence code on the message path, not filesystem restart durability.
+
+The initial run failed in SCR activation before connecting: Sparkplug could not load
+`javax.net.ssl.SSLSocketFactory`. The handwritten manifest imported `javax.net` but
+not its separate `javax.net.ssl` package. Production fix `1259c3e` adds only this
+explicit import. The generated JAR contains it, and the new test checks that Equinox
+provides the package. No boot delegation or controller-classloader workaround is used.
+Current [upstream Bnd instructions](https://github.com/eclipse-kura/kura/blob/e500a68d7b3f4a970aca3e13c038947269278827/kura/org.eclipse.kura.cloudconnection.sparkplug.mqtt.provider/bnd.bnd)
+end their imports with `*`; local handwritten metadata is retained rather than copying
+that build strategy. Historical upstream `f446b2bf7a` and local port `054738b` added
+only `javax.net` for Sparkplug, so they do not supply this explicit missing import.
+
+The standalone Sparkplug module passes 150 tests. Final container counts/checksums
+are recorded in [the validation report](sparkplug-runtime-validation-20261010.json).
+Earlier failing and passing trial runs are not added to the final count. TLS,
+filesystem keystore/CRL, durable restart and Sparkplug-specific IDEA execution remain
+unverified. No additional Linux or full-workspace validation is claimed.
