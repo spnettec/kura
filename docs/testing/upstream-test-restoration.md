@@ -904,3 +904,15 @@ logic; the full module passes 10 tests. See watchdog-critical-fixture-restoratio
 Inventory: 361 restored, 54 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **28 unreviewed** out of 465.
 Physical watchdog, actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## HTTP manager and legacy helper audit (2026-10-10)
+
+All ten HTTP manager scenarios pass with real Jetty, TLS, temporary keystores and
+CRL downloads; the module reports 13 tests. See http-server-manager-test-restoration.md.
+Eight existing helper adaptations are now explicitly mapped in the inventory (two
+restored helpers, six replaced harnesses). The descriptor fixture minimum-bound fix
+in kura-wires 4d304a9 passes all 49 existing REST wire tests. See legacy-test-helper-audit.md.
+
+Inventory: 362 restored, 56 helpers, fourteen replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **19 unreviewed** out of 465.
+Actual Kura SCR/runtime, hardware and IDEA acceptance remain open.
