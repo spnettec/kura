@@ -894,3 +894,13 @@ checks cover service references and executors; see keystore-endpoint-test-restor
 Inventory: 361 restored, 53 helpers, eight replaced harnesses, eight current-API
 exclusions, six removed-functionality exclusions and **29 unreviewed** out of 465.
 Actual Kura SCR/runtime and IDEA acceptance remain open.
+
+## Critical watchdog fixture continuation (2026-10-10)
+
+The manual no-checkin component is retained as a test-only helper. Its registration,
+30-second timeout, expiry and deactivation pass against real watchdog registration
+logic; the full module passes 10 tests. See watchdog-critical-fixture-restoration.md.
+
+Inventory: 361 restored, 54 helpers, eight replaced harnesses, eight current-API
+exclusions, six removed-functionality exclusions and **28 unreviewed** out of 465.
+Physical watchdog, actual Kura SCR/runtime and IDEA acceptance remain open.
