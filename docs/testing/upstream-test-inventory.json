@@ -4548,8 +4548,9 @@
       "jdk": "21"
     },
     "deferredValidation": [
-      "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
-    ]
+      "Actual SCR/persistent ConfigurationService/master-key assembly"
+    ],
+    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.configuration.provider.test/src/main/java/org/eclipse/kura/rest/configuration/provider/test/ConfigurationUtil.java",
@@ -4567,8 +4568,9 @@
     "execution": "JUnit Jupiter parameterized HTTP/MQTT endpoint scenarios with Failsafe verify",
     "reason": "All 102 upstream scenarios retained for both actual transports. Local localized metadata API and property update behavior preserved; ConfigurationService and CryptoService are controlled boundaries. See configuration-endpoint-test-restoration.md.",
     "deferredValidation": [
-      "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
-    ]
+      "Actual SCR/persistent ConfigurationService/master-key assembly"
+    ],
+    "macIdeaEvidence": "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
   },
   {
     "source": "test/org.eclipse.kura.rest.identity.provider.test/src/main/java/org/eclipse/kura/internal/rest/identity/provider/test/IdentityRestServiceV1DependenciesTest.java",

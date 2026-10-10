@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0.1 aarch64",
+  "ide": "IntelliJ IDEA 2026.2.3",
+  "jdk": "Temurin 21.0.12.1",
+  "junit": "5.14.4",
+  "module": "kura-endpoint-tests",
+  "class": "org.eclipse.kura.endpoint.ConfigurationEndpointsIT",
+  "launch": "IDEA editor context class Run in the imported core project",
+  "results": {
+    "passed": 204,
+    "total": 204,
+    "duration": "14 min 16 sec",
+    "processExited": true,
+    "exitCode": "not visible in retained console view"
+  },
+  "mavenPrior": {
+    "report": "/Users/heyoulin/iot-kura-develop/git/kura/kura-endpoint-tests/target/failsafe-reports/TEST-org.eclipse.kura.endpoint.ConfigurationEndpointsIT.xml",
+    "tests": 204,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "72709dca90c9a058677105b523fdee29fa9bcbd620248952ba29c13337044174"
+  },
+  "sharedRunConfiguration": ".run/Kura configuration endpoints JUnit.run.xml",
+  "sharedRunConfigurationSha256": "052880ea993da95e828fa074d576bf938b77c87cf83dc6553f48d55ec35a07fb",
+  "verified": [
+    "Direct Mac IDEA JUnit run of every ConfigurationEndpointsIT parameterized case, covering REST and MQTT transport variants",
+    "All 204 cases passed in the IDEA test runner; the launched JVM had exited when checked"
+  ],
+  "limits": [
+    "The endpoint test fixture activates services explicitly with controlled ConfigurationService and other dependencies; this is not the combined persistent ConfigurationService/master-key assembly",
+    "The shared run configuration was added after the passing editor-context invocation and was not itself rerun",
+    "No new Linux or installed Debian package validation"
+  ]
+}

@@ -2,7 +2,7 @@
   "date": "2026-10-10",
   "coreRevision": "0c9ebd5876b009523910b25f157278edf093ad9f",
   "count": 47,
-  "assessment": "All 47 rows retain a scenario-specific unverified boundary. The six core-protocol rows now have real MQTT GET request/reply through SCR-bound Configuration and Inventory handlers, with direct Mac IDEA JUnit evidence; deployed package assembly and broader protocol operations remain open. Existing Mac IDEA development-runtime, configuration and HTTP evidence is unchanged. Linux package enumeration is outside the current acceptance scope.",
+  "assessment": "All 47 rows retain a scenario-specific unverified boundary. Configuration endpoint rows 210 and 211 also have direct Mac IDEA JUnit evidence (204/204). The six core-protocol rows now have real MQTT GET request/reply through SCR-bound Configuration and Inventory handlers, with direct Mac IDEA JUnit evidence; deployed package assembly and broader protocol operations remain open. Existing Mac IDEA development-runtime, configuration and HTTP evidence is unchanged. Linux package enumeration is outside the current acceptance scope.",
   "macIdeaApplicationEvidence": "docs/testing/mac-idea-application-restart-validation-20261010.json",
   "rows": [
     {
@@ -190,10 +190,11 @@
       "group": "rest-configuration",
       "evidence": [
         "docs/testing/configuration-endpoint-test-restoration.md",
-        "docs/testing/configuration-runtime-test-restoration.md"
+        "docs/testing/configuration-runtime-test-restoration.md",
+        "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
       ],
-      "covered": "HTTP/MQTT endpoint assertions and separate actual SCR/ConfigAdmin/master-key scenarios passed.",
-      "remaining": "Combined endpoint plus persistent ConfigurationService/master-key assembly and direct IDEA execution remain unverified.",
+      "covered": "HTTP/MQTT endpoint assertions passed in prior Maven regression; actual SCR/ConfigAdmin/master-key scenarios passed separately. Mac IDEA directly ran the imported kura-endpoint-tests ConfigurationEndpointsIT class: 204/204 passed in 14 min 16 sec; test process exited.",
+      "remaining": "A combined HTTP/MQTT endpoint with persistent ConfigurationService and master-key assembly remains unverified.",
       "originalDeferredValidation": [
         "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
       ]
@@ -204,10 +205,11 @@
       "group": "rest-configuration",
       "evidence": [
         "docs/testing/configuration-endpoint-test-restoration.md",
-        "docs/testing/configuration-runtime-test-restoration.md"
+        "docs/testing/configuration-runtime-test-restoration.md",
+        "docs/testing/mac-idea-configuration-endpoints-validation-20261010.json"
       ],
-      "covered": "HTTP/MQTT endpoint assertions and separate actual SCR/ConfigAdmin/master-key scenarios passed.",
-      "remaining": "Combined endpoint plus persistent ConfigurationService/master-key assembly and direct IDEA execution remain unverified.",
+      "covered": "HTTP/MQTT endpoint assertions passed in prior Maven regression; actual SCR/ConfigAdmin/master-key scenarios passed separately. Mac IDEA directly ran the imported kura-endpoint-tests ConfigurationEndpointsIT class: 204/204 passed in 14 min 16 sec; test process exited.",
+      "remaining": "A combined HTTP/MQTT endpoint with persistent ConfigurationService and master-key assembly remains unverified.",
       "originalDeferredValidation": [
         "Actual SCR/persistent ConfigurationService/master-key assembly and IDEA execution"
       ]
