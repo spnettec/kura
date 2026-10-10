@@ -82,5 +82,6 @@
     "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/SparkplugRuntimeScenario.java": "09c4f9c710c69ef9b286d55ae3fe8f8559d96dcd2899d8c76f4333733b9a54a5",
     "kura-cloud/.run/Kura cloud Sparkplug runtime.run.xml": "cd1a413b67d9a8ddd43c29fff184aa2d3ca9a3e3c5349872623b512cce2ef468"
   },
-  "cloudValidationCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
+  "cloudValidationCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c",
+  "crossJvmFollowup": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json"
 }

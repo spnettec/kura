@@ -3010,6 +3010,16 @@
       "skipped": 0,
       "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
       "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
+    },
+    "crossJvmValidation": {
+      "report": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json",
+      "scenario": "DataServiceProcessRestartProbe.seedQueue/replayQueue",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
+      "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
     }
   },
   {
@@ -3068,6 +3078,16 @@
       "skipped": 0,
       "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
       "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
+    },
+    "crossJvmValidation": {
+      "report": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json",
+      "scenario": "DataServiceProcessRestartProbe.seedQueue/replayQueue",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
+      "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
     }
   },
   {
@@ -3118,6 +3138,16 @@
       "skipped": 0,
       "counting": "One WSS and one file durability runtime invocation; three Sparkplug rows reference the same durability invocation. IDEA Run and Debug are separate direct JUnit runs.",
       "cloudCommit": "4a9519576a27111ad28a4f9147bd11f0b7cba69c"
+    },
+    "crossJvmValidation": {
+      "report": "docs/testing/dataservice-cross-jvm-restart-validation-20261010.json",
+      "scenario": "DataServiceProcessRestartProbe.seedQueue/replayQueue",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "counting": "Two phase invocations total, shared by three Sparkplug rows; do not sum row references.",
+      "cloudCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97"
     }
   },
   {

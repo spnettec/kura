@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-10",
+  "scope": "DataService file-backed H2 queue recovery across two separate Java processes on macOS",
+  "coreRevisionBeforeEvidence": "11c6f405ec82fb4780154572058597be41612668",
+  "cloudTestCommit": "8bc95b8c8ed01216673e4af2d710bfc1416cfc97",
+  "maven": "3.10.0",
+  "jdk": "21.0.12.1",
+  "platform": "macOS-27.0.1-arm64",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/dataservice-process-restart-20261010-final",
+  "mavenRepository": "/Users/heyoulin/iot-kura-develop/migration-m2",
+  "invocations": [
+    {
+      "phase": "seed",
+      "selection": "-Dit.test=DataServiceProcessRestartProbe#seedQueue",
+      "jvmPid": 29140,
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "messageId": 1,
+      "h2BytesAfterPhase": 24576
+    },
+    {
+      "phase": "replay",
+      "selection": "-Dit.test=DataServiceProcessRestartProbe#replayQueue",
+      "jvmPid": 29361,
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "messageId": 1,
+      "h2BytesAfterPhase": 32768
+    }
+  ],
+  "invocationPattern": "Run each selection in a separate Maven 3.10 verify invocation from kura-cloud with JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home, -f runtime-tests/pom.xml, -Dmaven.repo.local=/Users/heyoulin/iot-kura-develop/migration-m2 and the same -Dkura.durability.dir=<archive>. Save the seed Failsafe XML before replay overwrites it. See kura-cloud/runtime-tests/README.md for reusable commands.",
+  "verified": [
+    "The seed Failsafe JVM exited before the replay Maven invocation, and the two Failsafe JVM PIDs differ",
+    "A real Equinox/SCR H2DbService and DataService factory stack recovered the same unpublished message ID from the filesystem H2 database",
+    "The queued message was absent from the broker before connect, then replayed with the exact Unicode payload, QoS 1 and retained=false",
+    "The recovered message ID left the unpublished queue after MQTT delivery",
+    "Both invocations completed with BUILD SUCCESS and one passing Failsafe test each"
+  ],
+  "limitations": [
+    "The probe launches two isolated Equinox/SCR processes; it does not restart a deployed Kura gateway or its system service",
+    "The external Moquette broker uses loopback and in-memory broker storage; only Kura's DataService H2 queue is file-backed",
+    "No Linux, hardware, YOFC, PLC4X or official OPC UA validation was added",
+    "The 42 currently deferredValidation inventory rows retain their other stated boundaries"
+  ],
+  "artifactsSha256": {
+    "seed.log": "bf17d68b1683e924192d47a6da517fbc8cadfddc4c0ce34b65ec20023615daaa",
+    "replay.log": "bfddbc24f5ed93ab1852d172d3039d1a6d5c94d687952e0da2086ce1386b511d",
+    "seed-failsafe.xml": "cd04f1d60c217985346617464cba0ee4b6b001874f64132fd0bd2d8a6f9e4d43",
+    "replay-failsafe.xml": "8294aaa1787922674522a24c06bff0f54177c8f908b377bde5cdfb981be73b51",
+    "durable-messages.mv.db": "8466c480dfa139d354d96e5200d639749e935c9b4a7f7ed6a9767266696be644",
+    "seed.properties": "a531918ea5698b3d227154b1609bb7a19573746d2e77cefb262817fe637ff883",
+    "replay.properties": "9d59397378b1f9a14cf79eb1d8f08f14520e91130688e2f275cb765bc3fef333"
+  },
+  "sourceSha256": {
+    "kura-cloud/runtime-tests/src/test/java/org/eclipse/kura/cloud/testing/DataServiceProcessRestartProbe.java": "28bcfdb3bcb96d7fb52788453c914348f355cbc2e59a69389edeea901fe0829c",
+    "kura-cloud/runtime-tests/README.md": "fb61e9a16372a00db1e35c249feb0d008873d313fbd5065d1582e7fbdfbb3008"
+  }
+}
