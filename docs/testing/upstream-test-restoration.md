@@ -2,6 +2,28 @@
 
 This is an in-progress audit, not a declaration that restoration is complete. Upstream snapshots and every reviewed/excluded source are recorded in `upstream-test-inventory.json`. YOFC and PLC4X test restoration is outside this task.
 
+## Current workspace gate and complete Mac application (2026-10-10)
+
+The actual CI wrapper passed in pinned dedicated checkouts: **5515 invocations,
+zero failures/errors, nine skips**, with all 407 report/source hashes verified.
+Core `adfac0954eb0`, cloud `d2da9b137fd7`; all 19 original repositories were
+audited. See [current workspace evidence](current-workspace-ci-validation-20261010.md).
+Historical runs below remain dated snapshots and are not summed with this run.
+
+A separate [complete Mac business probe](mac-full-runtime-business-validation-20261010.md)
+passed with production `SystemServiceImpl`, actual configuration/SCR factory
+create/update/delete, plaintext snapshot CDATA, EventAdmin and **three actual
+Timer-to-Logger envelopes**. Owned configurations, graph, route and service handles
+were cleaned up; its isolated application was stopped. This probe is separate
+from the existing direct IDEA Run/Debug/restart and JUnit evidence.
+
+The inventory still has **465 reviewed sources, zero unreviewed, zero deferred
+scenarios and 39 rows / 40 strings of deferred validation**. The relevant wording
+now scopes the unexecuted full upstream/deployed gateway paths while recording
+the complete Mac representative paths that passed. No remote Jenkins, installed
+Debian, hardware/GPU or additional Linux acceptance is claimed. Restoration
+remains in progress.
+
 ## Validated core batch
 
 Maven 3.10 and JDK 21 have executed 912 test invocations across the modules below, including the previously restored JWT and existing migration protection tests. There are zero failures/errors and one platform assumption: the Linux/root-only clock update scenario is not executed on macOS. Counts describe the combined latest passing per-module reports, not one claimed full workspace run. Stale reports for removed test classes are excluded.

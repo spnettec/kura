@@ -1,0 +1,164 @@
+{
+  "date": "2026-10-10",
+  "scope": "Complete macOS development application: real host SystemService, configuration/SCR, EventAdmin and Timer-to-Logger route",
+  "platform": "macOS 27.0.1 arm64",
+  "maven": "3.10.0",
+  "jdk": "Temurin 21.0.12.1",
+  "coreRevision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+  "dependencyRevisions": [
+    {
+      "repository": "kura",
+      "revision": "adfac0954eb06f9d9da5e4f894b4f7f99e35fc52",
+      "dirty": false
+    },
+    {
+      "repository": "kura-position",
+      "revision": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-opcua",
+      "revision": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+      "dirty": false
+    },
+    {
+      "repository": "kura-deployment",
+      "revision": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+      "dirty": false
+    },
+    {
+      "repository": "kura-networking",
+      "revision": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+      "dirty": false
+    },
+    {
+      "repository": "kura-wires",
+      "revision": "4774dd56f72680d5ada622c8d3345214d7060521",
+      "dirty": false
+    },
+    {
+      "repository": "kura-cloud",
+      "revision": "d2da9b137fd711d2aa70befd4c9c229c72224696",
+      "dirty": false
+    },
+    {
+      "repository": "kura-camel",
+      "revision": "30f158b0d6b6df12ca872b4bef2dd897489b1f79",
+      "dirty": false
+    },
+    {
+      "repository": "kura-artemis",
+      "revision": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+      "dirty": false
+    },
+    {
+      "repository": "kura-container",
+      "revision": "6483d04ad610b5046c53442378bcadeea44695d7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-triton",
+      "revision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+      "dirty": false
+    },
+    {
+      "repository": "kura-management-ui",
+      "revision": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+      "dirty": false
+    },
+    {
+      "repository": "kura-yofc-runtime",
+      "revision": "1852b4789087c16b8fd67922e6c34f500853b865",
+      "dirty": false
+    },
+    {
+      "repository": "yofc-iot",
+      "revision": "a5f61ec06f40b7b99583f422679e9d8ae994e2b8",
+      "dirty": false
+    }
+  ],
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-full-assembly-20261010",
+  "launch": {
+    "profile": "macos",
+    "dataHome": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-full-assembly-20261010/profile",
+    "ports": {
+      "KURA_HTTP_PORT": 18480,
+      "KURA_HTTPS_PORT": 18443,
+      "KURA_CLIENT_AUTH_PORT": 18444
+    }
+  },
+  "runner": "runtime.py run --profile macos; Gogo installs upstream configuration fixtures and starts the acceptance bundle",
+  "result": {
+    "passed": true,
+    "home": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-full-assembly-20261010/profile",
+    "bundleCount": 284,
+    "systemProvider": "org.eclipse.kura.core.system",
+    "systemImplementation": "org.eclipse.kura.core.system.SystemServiceImpl",
+    "configurationProvider": "org.eclipse.kura.core.configuration",
+    "eventProvider": "org.eclipse.equinox.event",
+    "snapshotId": 1791643328517,
+    "plaintextSnapshot": true,
+    "wireDeliveries": 3,
+    "singletonAndSelfConfigurationRead": true,
+    "factoryCreatedUpdatedDeleted": true,
+    "eventDelivered": true
+  },
+  "productionBundleEntriesBeforeFixtures": 277,
+  "installedBundleCountAfterFixtures": 284,
+  "stoppedAfterProbe": true,
+  "portsReleased": [
+    18480,
+    18443,
+    18444
+  ],
+  "cleanup": [
+    "Owned factory configuration deleted and PID absence asserted",
+    "Initial empty graph restored; zero components/wires asserted",
+    "WireAdmin zero routes asserted",
+    "Owned Timer/Logger configurable PIDs absent",
+    "Event handler unregistered and acquired service references released"
+  ],
+  "initialRouteTrial": {
+    "passed": false,
+    "cause": "Test log matcher compared logical kura.service.pid with the generated SCR service.pid carried by WireEnvelope",
+    "adjustment": "Match the unique Timer thread name plus the production Logger delivery message; preserve production PID semantics",
+    "archive": "probe-route-initial-result.json"
+  },
+  "sources": {
+    "kura-dev-runtime/acceptance/full-runtime-probe/pom.xml": "0dd1a0274a51380a733241b5fc3dd69324770ae3d4fa012b1713db0e76ade9a5",
+    "kura-dev-runtime/acceptance/full-runtime-probe/src/main/java/org/eclipse/kura/testing/fullruntime/FullRuntimeProbe.java": "63566bb1b1600856eaa7a9c5d374b53a77f5f0c043f3d8cd58a5d2e0e4c74ef5"
+  },
+  "artifacts": [
+    {
+      "file": "result.json",
+      "sha256": "4f5747d85b9367597e1153a3fe36681a1279905ec810110ac2ed364255ba0f35"
+    },
+    {
+      "file": "final-kura.log",
+      "sha256": "e9d09c36698ba9ec2091bb6052382fc4dc72eefce2ce4e056ab3d60e8a0aa5a2"
+    },
+    {
+      "file": "assembly.log",
+      "sha256": "8b4de7d3edd5ded5c66a428c02bbf2d51048639e9ae2ac45623778ff30063e0a"
+    },
+    {
+      "file": "probe-build.log",
+      "sha256": "81249bf3212813cd9b3687c0ef3d38fec890bd064d3cd145e680205b3721b4b0"
+    },
+    {
+      "file": "full-runtime-probe.jar",
+      "sha256": "bfc7bcd17b7aa4823c19dd96451fbed771832a1a387a1051217d0b83241881a4"
+    },
+    {
+      "file": "probe-route-initial-result.json",
+      "sha256": "0d63a6a59f35cf4c670003645fdae24153368ebcf8079667c362d364fe2b6f10"
+    }
+  ],
+  "counting": "This executable acceptance probe is not a JUnit test count and is not added to 5515 invocations.",
+  "limits": [
+    "CLI-launched complete Mac development application; existing separate Mac IDEA Run/Debug/restart evidence remains referenced, not repeated here.",
+    "Representative factory/singleton/self configuration paths and plaintext snapshot CDATA; the full 47-scenario configuration class remains isolated Equinox coverage.",
+    "Production Timer/Logger route, not historical test-only driver/emitter/receiver fixtures.",
+    "No installed Debian, additional Linux, physical device, YOFC/PLC4X expansion or OPC UA change."
+  ]
+}

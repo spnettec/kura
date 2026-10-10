@@ -26,7 +26,10 @@ Set `JAVA_HOME`, put Maven 3.10 on PATH or set `MVN` to its executable, and prov
 Python 3.8 or newer and Git. Optionally set `KURA_CI_AGENT_LABEL` to an actual
 configured Jenkins label; no new agent/tool installation name is presumed. Use a
 separate workspace for each job because the existing build cleans module targets.
-Never point the build at the user's active IDEA/runtime checkout.
+Never point the build at the user's active IDEA/runtime checkout. Set
+`KURA_DEV_HOME` to a dedicated job profile outside generated targets; runtime
+assembly otherwise prepares the default personal profile even without launching
+the application. Keep the same profile environment for assembly and launch.
 
 PLC4X remains an explicit independently built prerequisite. Install the matching
 source-built PLC4X artifacts in the selected Maven repository first. Preflight
@@ -42,7 +45,9 @@ bash tools/ci/verify-workspace.sh         # full build in the dedicated checkout
 ## Test evidence
 
 The collector only copies Surefire/Failsafe XML files newer than this build's start
-and backed by the exact current Java source. It handles nested classes and retains
+and backed by a corresponding current Java source. The separate validation
+evidence also hashes that source and compares it with the original audited
+checkout. It handles nested classes and retains
 the latest report per repository/module/class, avoiding repeated reactor counts.
 Reports from deleted sources are listed as excluded. The pipeline publishes this
 filtered set, rather than globbing every old target directory in the workspace.
@@ -65,10 +70,16 @@ runs, required workspace/toolchain checks, preserved build failure and old-repor
 cleanup. Jenkinsfile parses with the locally available Groovy 4.0.31 compiler;
 this is syntax validation, not Jenkins plugin/server execution.
 
-The collector was also replayed against the newly completed actual endpoint
-reports and returned **184 tests, zero failures/errors/skips**, matching their
-archived evidence. This replay does not rerun those tests. The full build command
-it wraps already passed in the [workspace regression](../testing/full-workspace-validation-20261010.md);
-the new wrapper was not used to repeat that expensive build. No Jenkins server
-run or additional Linux validation was performed. Deployment to a live CI service
-remains an environment integration step, not a claimed passing result.
+The earlier collector replay against endpoint reports returned 184 passing
+invocations. A later actual full wrapper run in 14 dedicated, pinned macOS
+checkouts completed with exit code 0: **5515 invocations, zero failures/errors,
+nine skips; 407 reports and zero exclusions**. Report digests and associated
+source digests matched the archive and original audited checkouts. See the
+[current workspace regression](../testing/current-workspace-ci-validation-20261010.md).
+All 14 validation worktrees remained clean, and hashes of the 33 protected
+personal profile files were unchanged, with no new or removed files.
+
+No Jenkins server run or additional Linux validation was performed. Deployment
+to a live CI service remains an environment integration step, not a claimed
+passing result. The complete Mac application business probe has its own evidence;
+the wrapper itself does not launch the application.
