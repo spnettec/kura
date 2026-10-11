@@ -62,7 +62,7 @@ else
 fi
 command -v python3 >/dev/null || die "未找到 python3（kura-dev-runtime/tools/runtime.py 需要 3.9+）"
 for repo in kura-cloud kura-camel kura-networking; do
-  [[ -d "$WS_ROOT/$repo" ]] || warn "缺少 sibling 仓库 $WS_ROOT/$repo（相关 .run 配置在其项目中，缺省不影响 kura 本体）"
+  [[ -d "$WS_ROOT/$repo" ]] || warn "缺少 sibling 仓库 ${WS_ROOT}/${repo}（相关 .run 配置在其项目中，缺省不影响 kura 本体）"
 done
 info ""
 
@@ -71,7 +71,7 @@ if [[ -z "$M2_REPO" ]]; then
   info "使用默认缓存 ~/.m2/repository（IDEA 与 CLI 均无需任何 override）"
   M2_REPO="$HOME/.m2/repository"
 else
-  info "使用指定缓存 $M2_REPO（IDEA 需在 Settings > Build Tools > Maven > Local repository 指向它）"
+  info "使用指定缓存 ${M2_REPO}（IDEA 需在 Settings > Build Tools > Maven > Local repository 指向它）"
 fi
 if compgen -G "$M2_REPO/org/apache/plc4x/plc4j-api/*/plc4j-api-*.jar" >/dev/null; then
   info "plc4x 产物已存在"
@@ -140,7 +140,7 @@ fi
   </configuration>
 </component>
 EOF
-    info "已生成: $RUN_FILE（.idea 被 git 排除，仅本机生效）"
+    info "已生成: ${RUN_FILE}（.idea 被 git 排除，仅本机生效）"
     info "该配置不含 Before launch 组装步骤：改用隔离目录重新组装时，先在终端带 KURA_DEV_HOME 执行 mvn 组装，再重启。"
   fi
 fi
