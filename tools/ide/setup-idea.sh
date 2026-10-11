@@ -104,6 +104,17 @@ if [[ "$BUILD_RUNTIME" -eq 1 || -n "$ISOLATED_HOME" ]]; then
     execute mvn -f "$KURA_ROOT/build-support/pom.xml" install -DskipTests -B \
       ${M2_REPO:+-Dmaven.repo.local=$M2_REPO}
   fi
+  # dev-runtime 用 dependency:copy 按坐标收集 yofc-iot-runtime（无 Maven 图依赖边，
+  # -am 拉不到）；全新缓存需先安装生产它的 kura-yofc-runtime 仓库。
+  if compgen -G "$M2_REPO/com/yofc/iot/yofc-iot-runtime/0.0.1-SNAPSHOT/yofc-iot-runtime-*.jar" >/dev/null; then
+    info "yofc-iot-runtime 已在缓存中，跳过 kura-yofc-runtime 安装"
+  elif [[ -f "$WS_ROOT/kura-yofc-runtime/pom.xml" ]]; then
+    info "安装 kura-yofc-runtime 到缓存（提供 dev-runtime 收集的 yofc-iot-runtime 等）"
+    execute mvn -f "$WS_ROOT/kura-yofc-runtime/pom.xml" install -DskipTests -DskipITs -B \
+      ${M2_REPO:+-Dmaven.repo.local=$M2_REPO}
+  else
+    warn "缺少 $WS_ROOT/kura-yofc-runtime，dev-runtime 收集 com.yofc.iot:yofc-iot-runtime 将失败"
+  fi
   # 与已提交 .run 配置的 Before-launch 目标完全一致；生成 jvm.args 与
   # configuration/kura.properties，路径只指向 target/runtime 和数据目录。
   execute env ${ISOLATED_HOME:+KURA_DEV_HOME="$ISOLATED_HOME"} \

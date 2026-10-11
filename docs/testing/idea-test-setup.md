@@ -123,6 +123,10 @@ Settings → Build, Execution, Deployment → Build Tools → Maven → Local re
 - **PLC4X 构建失败 `Could not find ... plc4x-code-generation-language-java`**：
   `plc4j` 只在 `-Pwith-java` profile 进 reactor，全新缓存要用
   `mvn install -Pwith-java -pl '!website' -DskipTests`（串行，不用 `-T 1C`）。
+- **组装报 `Could not find com.yofc.iot:yofc-iot-runtime`**：
+  dev-runtime 按坐标收集它（无 Maven 图依赖边），要先安装生产它的仓库：
+  `mvn -f kura-yofc-runtime/pom.xml install -DskipTests -DskipITs`；
+  `setup-idea.sh` 的组装步骤会自动检测并补装。
 - **模块名标红 / Main class 找不到**：Maven 导入未完成；等索引与依赖解析结束再运行。
 - **Before launch Maven 失败**：多为缺 `plc4x-yofc` 产物或未装 `build-support`（见上两条），或 `workspace` profile 未勾选。
 - **不要在运行中 clean**：Kura 运行或调试暂停时不要对 `kura-dev-runtime` 执行 package/clean，工具会拒绝替换正在使用的目录；先停止 Run/Debug。
