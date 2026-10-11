@@ -18,8 +18,19 @@ eight tests or claim that the legacy OSGi harness has executed.
 The last six are recorded as replaced legacy harness sources. Their global
 FrameworkUtil discovery, factory/graph-arrival chains and one-shot event futures
 are not brought back into the plain Maven test classpath. Production ServiceUtil
-is a separate retained implementation. Full SCR, ConfigurationAdmin factory arrival,
-EventAdmin routing and WireAdmin graph delivery remain runtime acceptance work.
+is a separate retained implementation. The initial helper review left full SCR,
+ConfigurationAdmin factory arrival, EventAdmin routing and WireAdmin graph delivery
+for runtime acceptance.
+
+The 2026-10-11 evidence reconciliation confirms that the later complete Mac
+application covered SCR/factory lifecycle, EventAdmin and production Timer-to-Logger
+routing (`mac-full-runtime-business-validation-20261010.json`). The isolated Mac
+WireAdmin service and route acceptance and the complete driver/OCD fixture acceptance
+are recorded in `mac-wire-scr-service-validation-20261010.json`,
+`mac-wire-route-scr-validation-20261010.json` and
+`mac-complete-wire-fixture-validation-20261010.json`. Deployed gateway and installed
+Debian sibling package acceptance remain deferred in the inventory. These existing
+results are not rerun or added to invocation totals by this reconciliation.
 
 Review found an upstream test-only descriptor-builder typo: withMin and withoutMin
 assigned max. kura-wires commit 4d304a9 corrects the helper and both REST descriptor

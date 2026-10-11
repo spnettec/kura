@@ -1,0 +1,261 @@
+{
+  "date": "2026-10-11",
+  "workspace": "/Users/heyoulin/iot-kura-develop/git",
+  "archive": "/Users/heyoulin/iot-kura-develop/migration-baseline/upstream-test-resume-audit-20261011",
+  "kind": "evidence-reconciliation-only",
+  "newKuraTestExecution": false,
+  "overallComplete": false,
+  "auditedBaselines": {
+    "kura": "35f846a9802d44c0c7235c9af9dd3fe88d263a27",
+    "kura-artemis": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+    "kura-camel": "53c7c7ae127c4c6b3d22bbfe5096181caa3a609b",
+    "kura-cloud": "2fc64e91eb32ed7d4ca78bbe73459ed9996474f0",
+    "kura-container": "6483d04ad610b5046c53442378bcadeea44695d7",
+    "kura-deployment": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+    "kura-docker": "971d6d6e010a0845d0af7253e3b552a1d621d6fa",
+    "kura-management-agent": "eeb262a1057006c279ae0892d8e5b09ebb11c6fa",
+    "kura-management-backend": "47831b1c7e0b02c8bf27115da07602940af8c209",
+    "kura-management-console": "cf8d9634c35d4c368b30a6cc15f335f62241ce90",
+    "kura-management-ui": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+    "kura-networking": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+    "kura-opcua": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+    "kura-position": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+    "kura-triton": "770f947624455dedb707e1d774afa0a828da84a5",
+    "kura-wires": "0886a09e0b9dcb7e14491a825c7016d0cef8882e",
+    "kura-yofc-runtime": "45472f0e9157e5c8fa1d1208ddbad26945c76dcb",
+    "plc4x-yofc": "2cb69312fbd76ab34c878e86b4e9efe72a4a210d",
+    "yofc-iot": "74fe3d54dcd1687cf6daa9879b001a976b544fa4"
+  },
+  "gitAudit": {
+    "repositories": 19,
+    "branch": "codex/maven-bundle-idea",
+    "allCleanBeforeReconciliation": true,
+    "sameNamedForkBranchesMatched": 15,
+    "plc4xForkBranch": "refs/heads/heyoulin",
+    "localOnlyRepositories": [
+      "kura-management-agent",
+      "kura-management-backend",
+      "kura-management-console"
+    ]
+  },
+  "inventory": {
+    "records": 465,
+    "statuses": {
+      "restored": 369,
+      "restored-helper": 60,
+      "not-applicable-current-api": 12,
+      "excluded-removed-functionality": 6,
+      "replaced-legacy-harness": 18
+    },
+    "unreviewed": 0,
+    "deferredScenarios": 0,
+    "deferredValidation": 22,
+    "excludedValidation": 9,
+    "sha256AfterWordingCorrection": "2b4c59e4c323f4fd37fc3cbda787e8c90c3e3274c8ca90d4a2b1672bde7022cb"
+  },
+  "references": {
+    "localSourceReferenceCount": 458,
+    "missingLocalSources": [],
+    "explicitEvidenceReferenceCount": 36,
+    "missingEvidence": [],
+    "invalidJson": []
+  },
+  "frozenAndFollowupChecks": {
+    "ci": {
+      "checks": 820,
+      "mismatches": [],
+      "totals": {
+        "tests": 5521,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 9
+      },
+      "reportCount": 409,
+      "revisions": [
+        {
+          "repository": "kura",
+          "recordedRevision": "578b32b17084b9800adc3b20fed88b81b67b5e41",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-position",
+          "recordedRevision": "4cb657c99f9b8957e514fcc016a8583e770896fb",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-opcua",
+          "recordedRevision": "c0241be777da0ee8b17d6af01c7cc1fd770f0ca2",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-deployment",
+          "recordedRevision": "c0b43c2e0538245b32f7126f4eccee88f39153a6",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-networking",
+          "recordedRevision": "7d9f138acc8840ac9650fc0daddc2c3aa4f24870",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-wires",
+          "recordedRevision": "0886a09e0b9dcb7e14491a825c7016d0cef8882e",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-cloud",
+          "recordedRevision": "aab00ff9643da835e71bd32ab025a96e99e1f7a0",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-camel",
+          "recordedRevision": "ae9ece56188a7cb71296431996b7d7eef045a457",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-artemis",
+          "recordedRevision": "69053d3ead3860955a4b7e9f3419b92e5f53e909",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-container",
+          "recordedRevision": "6483d04ad610b5046c53442378bcadeea44695d7",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-triton",
+          "recordedRevision": "cc037fade35ced2ad15921184d3d5a2d17ff11fb",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-management-ui",
+          "recordedRevision": "a3884357e2252c9a949ed564c869b66ad5e678a7",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "kura-yofc-runtime",
+          "recordedRevision": "45472f0e9157e5c8fa1d1208ddbad26945c76dcb",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        },
+        {
+          "repository": "yofc-iot",
+          "recordedRevision": "74fe3d54dcd1687cf6daa9879b001a976b544fa4",
+          "archiveHeadMatched": true,
+          "isCurrentHeadAncestor": true
+        }
+      ],
+      "currentTestSourcesChangedSinceCi": [],
+      "scope": "Frozen CI revisions only; no new test execution and no current-head full-CI claim."
+    },
+    "dataserviceCrossJvm": {
+      "artifactCount": 7,
+      "mismatches": [],
+      "verified": [
+        "The seed Failsafe JVM exited before the replay Maven invocation, and the two Failsafe JVM PIDs differ",
+        "A real Equinox/SCR H2DbService and DataService factory stack recovered the same unpublished message ID from the filesystem H2 database",
+        "The queued message was absent from the broker before connect, then replayed with the exact Unicode payload, QoS 1 and retained=false",
+        "The recovered message ID left the unpublished queue after MQTT delivery",
+        "Both invocations completed with BUILD SUCCESS and one passing Failsafe test each"
+      ]
+    },
+    "sparkplugInterruption": {
+      "checks": 22,
+      "mismatches": [],
+      "module": {
+        "tests": 155,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "runtime": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "idea": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "separateFromCi": true
+    },
+    "camelIdea": {
+      "checks": 3,
+      "mismatches": [],
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "separateFromCi": true
+    },
+    "packagedCamel": {
+      "resultCheck": {
+        "path": "/Users/heyoulin/iot-kura-develop/migration-baseline/mac-complete-camel-vertx-packaged-relocated-20261011/result.json",
+        "exists": true,
+        "matches": true
+      },
+      "productionOverlays": [],
+      "additionalProductionBundles": [],
+      "separateFromCi": true
+    }
+  },
+  "remainingBoundaryGroups": {
+    "installedDebianPackage": [
+      206,
+      217,
+      234,
+      248,
+      249,
+      250,
+      251,
+      252,
+      459,
+      460,
+      461,
+      462,
+      463,
+      464
+    ],
+    "systemAndNetwork": [
+      186,
+      189,
+      371
+    ],
+    "physicalWatchdog": [
+      247
+    ],
+    "externalSecurityServiceProvider": [
+      230,
+      231
+    ],
+    "deployedGateway": [
+      445,
+      454
+    ]
+  },
+  "metadataCorrections": [
+    "Row 464 now states that Mac WireAdmin service arrival is verified; installed Debian remains deferred.",
+    "Legacy helper audit distinguishes its initial runtime gap from the later Mac SCR/factory/EventAdmin/WireAdmin evidence."
+  ],
+  "limits": [
+    "Frozen CI totals apply only to its 14 recorded revisions; later production fixes retain separate proof and are not added to 5521.",
+    "No Linux or additional Triton validation; no new external provider or hardware/gateway environment was supplied.",
+    "No production code change, runtime rebuild, protected-runtime cleanup, YOFC/PLC4X expansion or OPC UA feature change."
+  ],
+  "sharedKnowledgeRepairArchive": "/Users/heyoulin/iot-kura-develop/migration-baseline/vault-migration-repair-20261011"
+}
