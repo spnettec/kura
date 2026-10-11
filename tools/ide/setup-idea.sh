@@ -50,6 +50,18 @@ if [[ -n "$M2_REPO" ]]; then
   maven_args+=("-Dmaven.repo.local=$M2_REPO")
 fi
 
+# 隔离数据目录：提前解析校验，第 3 步组装时会作为 KURA_DEV_HOME 传给 runtime.py。
+if [[ -n "$ISOLATED_HOME" ]]; then
+  if [[ -d "$ISOLATED_HOME" ]]; then
+    ISOLATED_HOME="$(cd "$ISOLATED_HOME" && pwd)"
+  elif [[ "$DRY_RUN" -eq 1 ]]; then
+    ISOLATED_HOME="$(python3 -c "import os,sys; print(os.path.abspath(sys.argv[1]))" "$ISOLATED_HOME")"
+  else
+    ISOLATED_HOME="$(mkdir -p "$ISOLATED_HOME" && cd "$ISOLATED_HOME" && pwd)"
+  fi
+  [[ "$ISOLATED_HOME" == "$KURA_ROOT"/* ]] && die "隔离数据目录不能放在 kura 仓库内（Maven clean 会清掉开发数据）"
+fi
+
 info "== 1/4 环境检查 =="
 [[ "$(uname -s)" == "Darwin" ]] || die "本脚本仅支持 macOS（开发测试只面向 Mac）"
 command -v mvn >/dev/null || die "未找到 mvn，请安装 Maven 3.10"
@@ -81,11 +93,21 @@ else
 fi
 info ""
 
-if [[ "$BUILD_RUNTIME" -eq 1 ]]; then
+if [[ "$BUILD_RUNTIME" -eq 1 || -n "$ISOLATED_HOME" ]]; then
   info "== 3/4 组装开发运行目录 target/runtime =="
+  # 全新缓存必须先安装 build-support（Maven 3.x 不从 reactor 解析 parent POM，
+  # 否则 sibling 报 Non-resolvable parent POM kura-build-parent）。
+  if ls "$M2_REPO/org/eclipse/kura/kura-build-parent/6.0.0-SNAPSHOT"/*.pom >/dev/null 2>&1; then
+    info "kura-build-parent 已在缓存中，跳过 build-support 安装"
+  else
+    info "安装 kura build-support 到缓存（首次必需，之后秒级）"
+    execute mvn -f "$KURA_ROOT/build-support/pom.xml" install -DskipTests -B \
+      ${M2_REPO:+-Dmaven.repo.local=$M2_REPO}
+  fi
   # 与已提交 .run 配置的 Before-launch 目标完全一致；生成 jvm.args 与
-  # configuration/kura.properties，路径只指向 target/runtime 和 ~/.kura-dev/macos。
-  execute mvn "${maven_args[@]}"
+  # configuration/kura.properties，路径只指向 target/runtime 和数据目录。
+  execute env ${ISOLATED_HOME:+KURA_DEV_HOME="$ISOLATED_HOME"} \
+    mvn "${maven_args[@]}"
   info ""
 else
   info "== 3/4 跳过运行目录组装（IDEA 中运行 Kura macOS 配置会自动组装；或加 --build-runtime）=="
@@ -104,19 +126,9 @@ if [[ -f "$RUNTIME_DIR/jvm.args" ]] && grep -q 'migration-baseline' "$RUNTIME_DI
   warn "重新执行 --build-runtime 或 IDEA Before launch 即可按当前机器/默认 profile 重新生成。"
 fi
 
-# 隔离数据目录的验收启动：先在终端组装（环境变量会传给 Maven，进而传给
-# runtime.py assemble），再写入本地 IDEA 运行配置（env 与组装一致）。
+# 隔离数据目录：第 3 步已带 KURA_DEV_HOME 完成组装，这里只生成本地 IDEA 运行配置。
 if [[ -n "$ISOLATED_HOME" ]]; then
-if [[ -d "$ISOLATED_HOME" ]]; then
-  ISOLATED_HOME="$(cd "$ISOLATED_HOME" && pwd)"
-elif [[ "$DRY_RUN" -eq 1 ]]; then
-  ISOLATED_HOME="$(python3 -c "import os,sys; print(os.path.abspath(sys.argv[1]))" "$ISOLATED_HOME")"
-else
-  ISOLATED_HOME="$(mkdir -p "$ISOLATED_HOME" && cd "$ISOLATED_HOME" && pwd)"
-fi
-  [[ "$ISOLATED_HOME" == "$KURA_ROOT"/* ]] && die "隔离数据目录不能放在 kura 仓库内（Maven clean 会清掉开发数据）"
   info "隔离数据目录: $ISOLATED_HOME"
-  execute env KURA_DEV_HOME="$ISOLATED_HOME" mvn "${maven_args[@]}"
   RUN_DIR='.idea/runConfigurations'
   RUN_FILE="$KURA_ROOT/$RUN_DIR/Kura macOS isolated acceptance.run.xml"
   mkdir_cmd=(mkdir -p "$KURA_ROOT/$RUN_DIR")

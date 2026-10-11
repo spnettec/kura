@@ -49,9 +49,11 @@ tools/ide/setup-idea.sh --build-runtime   # 需要提前组装 target/runtime �
 ```
 
 脚本只做检查、提示与本地生成，不修改任何已提交文件；`--dry-run` 可预览动作。
+`--build-runtime` 会先安装 kura `build-support`（全新缓存必需，见 §7 FAQ）再组装
+运行目录；`--isolated-home <dir>` 生成使用隔离数据目录的本地启动配置（见 §5）。
 可选参数：`--m2 <dir>` 使用隔离缓存（此时 IDEA 需在
 Settings → Build, Execution, Deployment → Build Tools → Maven → Local repository
-指向同一目录）；`--isolated-home <dir>` 生成使用隔离数据目录的本地启动配置（见 §5）。
+指向同一目录）。
 
 然后在 IDEA 中：
 
@@ -112,8 +114,17 @@ Settings → Build, Execution, Deployment → Build Tools → Maven → Local re
 
 ## 7. 常见问题
 
+- **全新缓存报 `Non-resolvable parent POM org.eclipse.kura:kura-build-parent`**：
+  Maven 3.x 不从 reactor 解析 parent POM，全新缓存要先执行一次
+  `mvn -f kura/build-support/pom.xml install -DskipTests`。`setup-idea.sh` 的
+  `--build-runtime` / `--isolated-home` 会自动完成（已装则跳过）。IDEA 里
+  `Kura macOS` 的 Before launch 目标在全新缓存上首次运行也会遇到同样错误，
+  先跑一次脚本即可。
+- **PLC4X 构建失败 `Could not find ... plc4x-code-generation-language-java`**：
+  `plc4j` 只在 `-Pwith-java` profile 进 reactor，全新缓存要用
+  `mvn install -Pwith-java -pl '!website' -DskipTests`（串行，不用 `-T 1C`）。
 - **模块名标红 / Main class 找不到**：Maven 导入未完成；等索引与依赖解析结束再运行。
-- **Before launch Maven 失败**：多为缺 `plc4x-yofc` 产物，按 §2 安装；或 `workspace` profile 未勾选。
+- **Before launch Maven 失败**：多为缺 `plc4x-yofc` 产物或未装 `build-support`（见上两条），或 `workspace` profile 未勾选。
 - **不要在运行中 clean**：Kura 运行或调试暂停时不要对 `kura-dev-runtime` 执行 package/clean，工具会拒绝替换正在使用的目录；先停止 Run/Debug。
 - **快照与密钥**：数据目录里已有的 snapshot/密钥不会被初始化或 Maven clean 覆盖。
 - **GWT**：`kura-management-ui` 保持 Java 11 编译目标，不要提到 21。
