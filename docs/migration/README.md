@@ -27,13 +27,7 @@
 
 ## 基线与回退
 
-`baseline-20261009.json` 记录仓库 revision、artifact SHA256 和基线缺口。完整 JAR、MANIFEST、资源逐项 hash 和源码配置备份保存在本机工作空间外：
-
-```
-/Users/heyoulin/iot-kura-develop/migration-baselines/20261009-maven-bundle-complete/
-```
-
-该目录是本机回退资料，不是构建输入；迁移脚本不能依赖它。可在其他机器重新执行：
+`baseline-20261009.json` 记录仓库 revision、artifact SHA256 和基线缺口。迁移期的逐项 hash 与源码配置备份保存在本机工作空间外的回退目录中（该目录随迁移收尾删除，不是构建输入）；如需重建基线，可在其他机器重新执行：
 
 ```bash
 python3 tools/migration/capture_baseline.py --workspace /path/to/git \
@@ -43,7 +37,7 @@ python3 tools/migration/bundle_audit.py /path/to/new.jar --baseline /path/to/old
 
 比较允许构建标识及 Bundle-Version qualifier 变化；Import/Export/DS/fragment/资源/嵌入 JAR 的任何变化都使比较失败，需逐项审查。ECJ 与 javac 的 class 字节差异不当作资源缺失，另由编译、业务测试和真实 OSGi 类加载验证。
 
-迁移验证缓存为 `/Users/heyoulin/iot-kura-develop/migration-m2`。P2 允许显式导入旧产物作启动试点；P6 必须使用另一个真正空的缓存并从 PLC4X 源码开始，不能把试点缓存当作冷构建证明。
+迁移验证曾使用本机独立 Maven 缓存（已随迁移收尾删除；现统一使用默认 `~/.m2/repository`）。P2 允许显式导入旧产物作启动试点；P6 必须使用另一个真正空的缓存并从 PLC4X 源码开始，不能把试点缓存当作冷构建证明。
 
 ## 已知基线问题
 
@@ -85,7 +79,7 @@ mvn -pl :org.eclipse.kura.core.token.jwt -am test
 mvn -Posgi-it -pl :kura-osgi-tests -am verify
 ```
 
-迁移验证另传 `-Dmaven.repo.local=/absolute/path/to/migration-m2`。该缓存有已记录的旧 runtime 产物，仍不是冷构建证明。P4 已完成，P5 正在推进；生产脚本和 sibling 仍处于混合构建期。
+迁移期另传过 `-Dmaven.repo.local` 指向当时的本机验证缓存（已删除）。该缓存有已记录的旧 runtime 产物，仍不是冷构建证明。P4 已完成，P5 正在推进；生产脚本和 sibling 仍处于混合构建期。
 
 
 ## P4 核心普通 Maven 构建（2026-10-09）
@@ -141,7 +135,7 @@ mvn -Pjavadocs,osgi-it install
 
 ## P6 本机验收记录（2026-10-09）
 
-- 独立空缓存 `migration-cold-m2-20261009`：先从 PLC4X 源码构建 97 个模块（2567 个 goal，7 分 7 秒），再执行 `RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0 ./build-all.sh`。14:51:38 全部成功，统一 qualifier `20261009cold`，Maven 3.10 / JDK 21，无 MILD。
+- 独立空缓存冷构建：先从 PLC4X 源码构建 97 个模块（2567 个 goal，7 分 7 秒），再执行 `RUN_TESTS=1 RUN_IT=1 BUILD_DOCKER=0 ./build-all.sh`。14:51:38 全部成功，统一 qualifier `20261009cold`，Maven 3.10 / JDK 21，无 MILD。（当时使用的独立缓存目录已随迁移收尾删除）
 - 75 项普通测试、6 项真实 Equinox 集成测试通过；6 项既有硬件/外部数据库测试保持禁用。另以 Maven 3.9.16 验证公共入口和代表性 JWT 模块。
 - 冷构建核心 ZIP 的 216 个 JAR 安装路径保持原样，每个文件 SHA256 均对应该独立 Maven 缓存的明确坐标。
 - 从冷构建产物分别生成 ARM64 和 AMD64 核心 deb 及 Alpine Docker 镜像。两个容器均实际启动，HTTP 健康检查通过，ConfigurationService / WireGraphService 已注册，重启后再次通过；不是只验证镜像构建。测试容器已停止。

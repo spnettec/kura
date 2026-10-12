@@ -9,7 +9,7 @@
 | YOFC OPC UA YAML 配置 | 私有 `lib/jackson-dataformat-yaml-3.2.0.jar` + `lib/snakeyaml-engine-3.0.1.jar` | 两个嵌入 JAR 逐字节一致；未改成外部导入 |
 | 核心发行目录的独立 YAML/JAXB 扩展 | `plugins/6/jackson-dataformat-yaml-3.2.0.jar`、`jackson-module-jaxb-annotations-3.2.0.jar` | 原样保留，不额外向公共运行集补库 |
 
-对照源是默认 Maven 仓库中 **11:15 生成的迁移前 gateway ZIP/deb**，已另存至工作空间外 `migration-baselines/original-distribution-1115/`。不是以新构建反推旧行为。原包 216 个 JAR 的路径和 SHA256 与转换前记录全部一致；其中 Jackson、JAXB、SnakeYAML 的字节均未因迁移改变。
+对照源是默认 Maven 仓库中 **11:15 生成的迁移前 gateway ZIP/deb**，迁移时曾另存至工作空间外备份目录（已随迁移收尾删除）。不是以新构建反推旧行为。原包 216 个 JAR 的路径和 SHA256 与转换前记录全部一致；其中 Jackson、JAXB、SnakeYAML 的字节均未因迁移改变。
 
 通过原发行包的 JAR 和原 Equinox 3.24.100，在隔离 framework storage 中运行真实解析器，独立的 YAML/JAXB 扩展同样分别缺少 `org.snakeyaml.engine.v2.*` / `javax.xml.bind` 公共包提供者。新 Docker 的相同诊断因此不能归因于迁移，也不代表 OPC UA 缺少 YAML 库：OPC UA 使用自己 bundle 的私有嵌入类。
 

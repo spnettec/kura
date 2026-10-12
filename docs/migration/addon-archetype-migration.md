@@ -46,11 +46,8 @@ not counted as passing.
 The final artifact audit verifies the handwritten headers, absence of implicit
 exports, class major 65, descriptor count, source bytes and Debian bundle bytes.
 See [machine-readable result](addon-archetype-validation-20261010.json).
-Logs, reports and artifacts are archived locally at:
-
-```
-/Users/heyoulin/iot-kura-develop/migration-baseline/addon-archetype-20261010/
-```
+Logs, reports and artifacts were archived locally outside the workspace; that
+local archive was removed when the migration was closed out.
 
 The test project is `/tmp/kura-addon-mbp-final-20261010/kura-addon-acceptance`.
 This is Maven/runtime evidence; a new generated-project IDEA GUI session was not

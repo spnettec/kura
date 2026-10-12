@@ -36,10 +36,6 @@ cd <工作空间>/plc4x-yofc
 mvn install -DskipTests
 ```
 
-> 迁移期的 `migration-baseline`、`migration-baselines`、
-> `migration-cold-m2-20261009`、`test-restoration` 目录都是原机器上的
-> 证据归档/对照快照，**新机器一概不需要**。
-
 ## 3. 快速开始
 
 ```sh
