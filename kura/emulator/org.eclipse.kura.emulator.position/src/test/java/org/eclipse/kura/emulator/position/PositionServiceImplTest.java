@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.kura.core.testutil.TestUtil;
-import org.eclipse.kura.position.NmeaPosition;
 import org.eclipse.kura.position.PositionLockedEvent;
 import org.junit.jupiter.api.Test;
 import org.osgi.framework.Bundle;
@@ -78,17 +77,12 @@ public class PositionServiceImplTest {
         }
         Position currentPosition = svc.getPosition();
         assertNotNull(currentPosition, "GPS worker did not publish the fixture position");
-        NmeaPosition currentNmeaPosition = svc.getNmeaPosition();
 
         double eps = 0.0000001;
         assertEquals(Math.toRadians(39.757509), currentPosition.getLatitude().getValue(), eps);
         assertEquals(Math.toRadians(-104.902044), currentPosition.getLongitude().getValue(), eps);
         assertEquals(1602.0, currentPosition.getAltitude().getValue(), eps);
 
-        eps *= 10.0;
-        assertEquals(39.757509, currentNmeaPosition.getLatitude(), eps);
-        assertEquals(-104.902044, currentNmeaPosition.getLongitude(), eps);
-        assertEquals(1602.0, currentNmeaPosition.getAltitude(), eps);
     }
 
     @Test

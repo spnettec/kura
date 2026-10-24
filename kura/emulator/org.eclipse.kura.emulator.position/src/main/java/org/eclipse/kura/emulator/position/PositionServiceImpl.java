@@ -121,30 +121,9 @@ public class PositionServiceImpl implements PositionService, ConfigurableCompone
     }
 
     @Override
-    public NmeaPosition getNmeaPosition() {
-        return this.currentNmeaPosition;
-    }
-
-    @Override
-    public String getNmeaTime() {
-        return this.currentTime.toString();
-    }
-
-    @Override
-    public String getNmeaDate() {
-        return this.currentTime.toString();
-    }
-
-    @Override
     public boolean isLocked() {
         // Always return true
         return true;
-    }
-
-    @Override
-    public String getLastSentence() {
-        // Not supported in emulator mode since this is not NMEA
-        return null;
     }
 
     public void start() {
