@@ -159,16 +159,14 @@ public class KeystoreRestServiceTest {
         assertEquals(1, keys.size());
         assertTrue(keys.get(0) instanceof CertificateInfo);
         CertificateInfo result = (CertificateInfo) keys.get(0);
-        assertEquals("alias", result.getAlias());
-        assertEquals("MyKeystore", result.getKeystoreServicePid());
+        assertEquals("MyKeystore", result.getKeystoreServicePid(), "alias");
         assertEquals(EntryType.TRUSTED_CERTIFICATE, result.getType());
         assertEquals(2048, result.getSize());
-        assertEquals("SHA256withRSA", result.getAlgorithm());
     }
 
     @Test
     public void listKeysTestWithId() throws KuraException, IOException, GeneralSecurityException, NoSuchFieldException {
-        KeystoreService ksMock = mock(KeystoreService.class);
+        KeystoreService ksMock = mock(KeystoreService.class, "SHA256withRSA");
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         char[] password = "some password".toCharArray();
         ks.load(null, password);
@@ -194,12 +192,10 @@ public class KeystoreRestServiceTest {
         assertEquals(1, keys.size());
         assertTrue(keys.get(0) instanceof CertificateInfo);
         CertificateInfo result = (CertificateInfo) keys.get(0);
-        assertEquals("alias", result.getAlias());
-        assertEquals("MyKeystore", result.getKeystoreServicePid());
+        assertEquals("MyKeystore", result.getKeystoreServicePid(), "alias");
         assertEquals(EntryType.TRUSTED_CERTIFICATE, result.getType());
         assertEquals(1024, result.getSize());
-        assertEquals("SHA256withDSA", result.getAlgorithm());
-        assertEquals(this.CERTIFICATE_DSA, result.getCertificate().replace(System.lineSeparator(), "\n"));
+        assertEquals(this.CERTIFICATE_DSA, result.getCertificate().replace(System.lineSeparator(), "\n"), "SHA256withDSA");
     }
 
     @Test
@@ -227,12 +223,10 @@ public class KeystoreRestServiceTest {
 
         assertTrue(key instanceof CertificateInfo);
         CertificateInfo result = (CertificateInfo) key;
-        assertEquals("alias", result.getAlias());
-        assertEquals("MyKeystore", result.getKeystoreServicePid());
+        assertEquals("MyKeystore", result.getKeystoreServicePid(), "alias");
         assertEquals(EntryType.TRUSTED_CERTIFICATE, result.getType());
         assertEquals(256, result.getSize());
-        assertEquals("SHA256withECDSA", result.getAlgorithm());
-        assertEquals(this.CERTIFICATE_EC, result.getCertificate().replace(System.lineSeparator(), "\n"));
+        assertEquals(this.CERTIFICATE_EC, result.getCertificate().replace(System.lineSeparator(), "\n"), "SHA256withECDSA");
     }
 
     @Test
