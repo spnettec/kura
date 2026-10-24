@@ -134,15 +134,7 @@ class SystemServiceTest extends SystemServiceTestBase {
                 SystemService.KEY_FILE_COMMAND_ZIP_MAX_NUMBER,
                 SystemService.KEY_OS_DISTRO,
                 SystemService.KEY_OS_DISTRO_VER,
-                SystemService.CONFIG_CONSOLE_DEVICE_MANAGE_SERVICE_IGNORE,
-                SystemService.DB_URL_PROPNAME,
-                SystemService.DB_CACHE_ROWS_PROPNAME,
-                SystemService.DB_LOB_FILE_PROPNAME,
-                SystemService.DB_DEFRAG_LIMIT_PROPNAME,
-                SystemService.DB_LOG_DATA_PROPNAME,
-                SystemService.DB_LOG_SIZE_PROPNAME,
-                SystemService.DB_NIO_PROPNAME,
-                SystemService.DB_WRITE_DELAY_MILLIES_PROPNAME);
+                SystemService.CONFIG_CONSOLE_DEVICE_MANAGE_SERVICE_IGNORE);
         for (String key : keys) { System.setProperty(key, "override:" + key); }
         SystemServiceImpl service = resourceService(Map.of());
         activate(service);
