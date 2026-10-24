@@ -638,6 +638,8 @@ public class FilesystemKeystoreServiceImplCrlIT {
                 if (manager.isPresent()) {
                     this.backgroundExecutors.add((ExecutorService) TestUtil.getFieldValue(manager.get(), "updateExecutor"));
                     this.backgroundExecutors.add((ExecutorService) TestUtil.getFieldValue(manager.get(), "downloadExecutor"));
+                    final Object store = TestUtil.getFieldValue(manager.get(), "store");
+                    this.backgroundExecutors.add((ExecutorService) TestUtil.getFieldValue(store, "executor"));
                 }
             } catch (NoSuchFieldException e) {
                 throw new AssertionError("CRL executor cleanup fixture no longer matches the implementation", e);
@@ -681,9 +683,10 @@ public class FilesystemKeystoreServiceImplCrlIT {
                 this.keystoreService.deactivate();
             } finally {
                 this.server.close();
-                // shutdownNow() is asynchronous, including for managers replaced by updated().
-                // Wait before JUnit deletes the directory a final store write may still use.
+                // Include the independent store executor and managers replaced by updated().
+                // Drain pending persistence before JUnit deletes the temporary directory.
                 for (final ExecutorService executor : this.backgroundExecutors) {
+                    executor.shutdown();
                     assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "CRL executor did not stop");
                 }
             }
