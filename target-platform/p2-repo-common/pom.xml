@@ -1,19 +1,17 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
-  
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
+
     SPDX-License-Identifier: EPL-2.0
- 
+
     Contributors:
      Eurotech
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.eclipse.kura</groupId>
@@ -23,129 +21,128 @@
     <artifactId>p2-repo-common</artifactId>
     <packaging>pom</packaging>
     <build>
-        <plugins> 
+        <plugins>
             <plugin>
-				<groupId>org.reficio</groupId>
-				<artifactId>p2-maven-plugin</artifactId>
-				<version>${p2-maven-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>generate-p2-site</id>
-						<phase>initialize</phase>
-						<goals>
-							<goal>site</goal>
-						</goals>
-						<configuration>
-							<artifacts>
-								<artifact>
-									<id>org.snakeyaml:snakeyaml-engine:${org.snakeyaml.engine.mvn.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-							<!-- vertx — shared bundles (kura-camel + others Import-Package these).
+                <groupId>org.reficio</groupId>
+                <artifactId>p2-maven-plugin</artifactId>
+                <version>${p2-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-p2-site</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <id>org.snakeyaml:snakeyaml-engine:${org.snakeyaml.engine.mvn.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <!-- vertx — shared bundles (kura-camel + others Import-Package these).
 							     yofc-only Vert.x bundles + fastjson2 + javacan shipped by kura-yofc-runtime sibling. -->
-								<artifact>
-									<id>io.vertx:vertx-core:${vertx.version}</id>
-									<source>true</source>
-									<transitive>true</transitive>
-									<instructions>
-										<Multi-Release>true</Multi-Release>
-									</instructions>
-								</artifact>
-								<!-- java-jwt wrapped as a real OSGi bundle so
+                                <artifact>
+                                    <id>io.vertx:vertx-core:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>true</transitive>
+                                    <instructions>
+                                        <Multi-Release>true</Multi-Release>
+                                    </instructions>
+                                </artifact>
+                                <!-- java-jwt wrapped as a real OSGi bundle so
 								     org.eclipse.kura.core.token.jwt can Import-Package it instead of
 								     embedding on Bundle-ClassPath (embed jars make Tycho emit a
 								     classifier-with-slash maven coordinate that Maven 3.10's
 								     resolver validator rejects). -->
-								<artifact>
-									<id>com.yofc.thirdparty:js-language-repack:24.2.1</id>
-									<source>false</source>
-									<transitive>false</transitive>
-									<instructions>
-										<Import-Package>!*</Import-Package>
-										<Bundle-SymbolicName>js-language-repack</Bundle-SymbolicName>
-										<Export-Package>com.oracle.js.parser.*,com.oracle.truffle.js.*</Export-Package>
-									</instructions>
-								</artifact>
-								<artifact>
-									<id>com.yofc.thirdparty:js-scriptengine-repack:24.2.1</id>
-									<source>false</source>
-									<transitive>false</transitive>
-									<instructions>
-										<Import-Package>!*</Import-Package>
-										<Bundle-SymbolicName>js-scriptengine-repack</Bundle-SymbolicName>
-										<Export-Package>com.oracle.truffle.js.scriptengine.*</Export-Package>
-									</instructions>
-								</artifact>
-								<artifact>
-									<id>com.yofc.thirdparty:c10n-repack:1.2</id>
-									<source>false</source>
-									<transitive>false</transitive>
-									<instructions>
-										<Import-Package>!*</Import-Package>
-										<Export-Package>com.github.rodionmoiseev.c10n,com.github.rodionmoiseev.c10n.annotations,com.github.rodionmoiseev.c10n.share,com.github.rodionmoiseev.c10n.share.utils</Export-Package>
-										<Bundle-SymbolicName>c10n-repack</Bundle-SymbolicName>
-									</instructions>
-								</artifact>
-								<artifact>
-									<id>com.auth0:java-jwt:4.6.0</id>
-									<source>false</source>
-									<transitive>false</transitive>
-									<instructions>
-										<Import-Package>!*</Import-Package>
-										<Export-Package>com.auth0.jwt.*</Export-Package>
-									</instructions>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-core-logging:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-web-common:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-web-client:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-auth-common:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>io.vertx:vertx-uri-template:${vertx.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
+                                <artifact>
+                                    <id>com.yofc.thirdparty:js-language-repack:24.2.1</id>
+                                    <source>false</source>
+                                    <transitive>false</transitive>
+                                    <instructions>
+                                        <Import-Package>!*</Import-Package>
+                                        <Bundle-SymbolicName>js-language-repack</Bundle-SymbolicName>
+                                        <Export-Package>com.oracle.js.parser.*,com.oracle.truffle.js.*</Export-Package>
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>com.yofc.thirdparty:js-scriptengine-repack:24.2.1</id>
+                                    <source>false</source>
+                                    <transitive>false</transitive>
+                                    <instructions>
+                                        <Import-Package>!*</Import-Package>
+                                        <Bundle-SymbolicName>js-scriptengine-repack</Bundle-SymbolicName>
+                                        <Export-Package>com.oracle.truffle.js.scriptengine.*</Export-Package>
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>com.yofc.thirdparty:c10n-repack:1.2</id>
+                                    <source>false</source>
+                                    <transitive>false</transitive>
+                                    <instructions>
+                                        <Import-Package>!*</Import-Package>
+                                        <Export-Package>com.github.rodionmoiseev.c10n,com.github.rodionmoiseev.c10n.annotations,com.github.rodionmoiseev.c10n.share,com.github.rodionmoiseev.c10n.share.utils</Export-Package>
+                                        <Bundle-SymbolicName>c10n-repack</Bundle-SymbolicName>
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>com.auth0:java-jwt:4.6.0</id>
+                                    <source>false</source>
+                                    <transitive>false</transitive>
+                                    <instructions>
+                                        <Import-Package>!*</Import-Package>
+                                        <Export-Package>com.auth0.jwt.*</Export-Package>
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>io.vertx:vertx-core-logging:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>io.vertx:vertx-web-common:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>io.vertx:vertx-web-client:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>io.vertx:vertx-auth-common:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>io.vertx:vertx-uri-template:${vertx.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
                                 <!-- Native jar only exports org.eclipse.paho.mqttv5.client; this override
                                      widens exports to include client.persist, common and common.packet
                                      (which are physically present in the jar) for downstream apps that need them. -->
-								<artifact>
-									<id>org.eclipse.paho:org.eclipse.paho.mqttv5.client:${org.eclipse.paho.client.mqttv3.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<Import-Package>*;resolution:=optional</Import-Package>
-										<Export-Package>org.eclipse.paho.mqttv5.client;version="1.2.5",
+                                <artifact>
+                                    <id>org.eclipse.paho:org.eclipse.paho.mqttv5.client:${org.eclipse.paho.client.mqttv3.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                    <override>true</override>
+                                    <instructions>
+                                        <Import-Package>*;resolution:=optional</Import-Package>
+                                        <Export-Package>org.eclipse.paho.mqttv5.client;version="1.2.5",
 														org.eclipse.paho.mqttv5.client.persist;version="1.2.5",
 														org.eclipse.paho.mqttv5.common;version="1.2.5",
 														org.eclipse.paho.mqttv5.common.packet;version="1.2.5"
 										</Export-Package>
-									</instructions>
-								</artifact>
-								
-								<artifact>
-									<id>junit:junit:${org.junit.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<Export-Package>junit.extensions;version="4.13.2",junit.framework;vers
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>junit:junit:${org.junit.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                    <override>true</override>
+                                    <instructions>
+                                        <Export-Package>junit.extensions;version="4.13.2",junit.framework;vers
 					                         ion="4.13.2",junit.runner;version="4.13.2",junit.textui;version="4.13
 					                         .2",org.junit;version="4.13.2",org.junit.experimental;version="4.13.2
 					                         ",org.junit.experimental.categories;version="4.13.2",org.junit.experi
@@ -167,20 +164,19 @@
 					                         ="4.13.2",org.junit.runners.model;version="4.13.2",org.junit.runners.
 					                         parameterized;version="4.13.2",org.junit.validator;version="4.13.2"
 				                        </Export-Package>
-										<Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
-									</instructions>
-								</artifact>
-								<artifactItem>
-									<id>io.moquette:moquette-broker:${moquette-broker.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifactItem>
-                                
+                                        <Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
+                                    </instructions>
+                                </artifact>
+                                <artifactItem>
+                                    <id>io.moquette:moquette-broker:${moquette-broker.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifactItem>
                             </artifacts>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -193,9 +189,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <exec executable="${project.basedir}/../install-to-m2.sh"
-                                      dir="${project.basedir}"
-                                      failonerror="true">
+                                <exec executable="${project.basedir}/../install-to-m2.sh" dir="${project.basedir}" failonerror="true">
                                     <arg value="${project.build.directory}/repository/plugins" />
                                     <arg value="p2.osgi.bundle" />
                                 </exec>
@@ -207,3 +201,4 @@
         </plugins>
     </build>
 </project>
+

@@ -1,36 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
-  
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
+
     SPDX-License-Identifier: EPL-2.0
- 
+
     Contributors:
      Eurotech
      Red Hat Inc
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.eclipse.kura</groupId>
     <artifactId>target-platform</artifactId>
     <version>6.0.0-SNAPSHOT</version>
-
     <packaging>pom</packaging>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <check.plugins.exist.remote>false</check.plugins.exist.remote>
         <skip.libsocket-can>true</skip.libsocket-can>
-
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-
         <!-- Plugins versions -->
         <exists-maven-plugin.version>0.12.0</exists-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
@@ -44,7 +37,6 @@
         <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
         <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
         <p2-maven-plugin.version>2.1.0</p2-maven-plugin.version>
-        
         <!-- START common dependencies -->
         <bluez-dbus-osgi.version>0.3.1</bluez-dbus-osgi.version>
         <com.eclipsesource.minimal-json.version>0.9.5</com.eclipsesource.minimal-json.version>
@@ -149,7 +141,6 @@
         <org.osgi.util.pushstream.version>1.1.0</org.osgi.util.pushstream.version>
         <org.osgi.util.xml.version>1.0.2</org.osgi.util.xml.version>
         <!-- END Equinox dependencies -->
-        
         <!-- START test dependencies -->
         <byte-buddy.version>1.18.10</byte-buddy.version>
         <io.dropwizard.metrics.version>3.2.2</io.dropwizard.metrics.version>
@@ -163,7 +154,6 @@
         <!-- END test dependencies -->
         <org.eclipse.soda.dk.comm.version>2.0.0-SNAPSHOT</org.eclipse.soda.dk.comm.version>
         <!--<org.moka7.version>2.0.0-SNAPSHOT</org.moka7.version>-->
-
         <vertx.version>5.2.1</vertx.version>
         <org.apache.groovy.version>5.0.5</org.apache.groovy.version>
         <commons-text.version>1.13.1</commons-text.version>
@@ -183,14 +173,12 @@
         <org.apache.commons.codec.version>1.21.0</org.apache.commons.codec.version>
         <jakarta.jms-api.version>3.1.0</jakarta.jms-api.version>
     </properties>
-
     <modules>
         <module>p2-repo-equinox</module>
         <module>p2-repo-common</module>
         <module>p2-repo-tests</module>
         <module>target-platform-pde-deps</module>
     </modules>
-
     <repositories>
         <repository>
             <id>Kura Releases</id>
@@ -213,13 +201,11 @@
         </repository>
     </repositories>
     <pluginRepositories>
-		<pluginRepository>
-			<id>reficio</id>
-			<url>http://repo.reficio.org/maven/</url>
-		</pluginRepository>
-	</pluginRepositories>
-
-
+        <pluginRepository>
+            <id>reficio</id>
+            <url>http://repo.reficio.org/maven/</url>
+        </pluginRepository>
+    </pluginRepositories>
     <profiles>
         <profile>
             <id>can</id>
@@ -240,7 +226,6 @@
             </properties>
         </profile>
     </profiles>
-
     <build>
         <plugins>
             <plugin>
@@ -252,8 +237,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>${maven-deploy-plugin.version}</version>
-                <configuration>
-                </configuration>
+                <configuration />
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -305,7 +289,6 @@
                 </executions>
             </plugin>
         </plugins>
-
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -338,7 +321,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -359,7 +342,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -378,7 +361,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -397,7 +380,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -416,7 +399,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -435,7 +418,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -446,3 +429,4 @@
         </pluginManagement>
     </build>
 </project>
+

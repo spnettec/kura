@@ -1,129 +1,122 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
-  
+
     This program and the accompanying materials are made
     available under the terms of the Eclipse Public License 2.0
     which is available at https://www.eclipse.org/legal/epl-2.0/
- 
+
     SPDX-License-Identifier: EPL-2.0
- 
+
     Contributors:
      Eurotech
 -->
-<project
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-    xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.eclipse.kura</groupId>
         <artifactId>target-platform</artifactId>
         <version>6.0.0-SNAPSHOT</version>
     </parent>
-
-	<artifactId>p2-repo-tests-deps</artifactId>
-	<packaging>pom</packaging>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.reficio</groupId>
-				<artifactId>p2-maven-plugin</artifactId>
-				<version>${p2-maven-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>generate-p2-site</id>
-						<phase>initialize</phase>
-						<goals>
-							<goal>site</goal>
-						</goals>
-						<configuration>
-							<artifacts>
-								<artifact>
-									<id>io.moquette:moquette-broker:${moquette-broker.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<!-- testutil bundle imports Require-Bundle: moquette-broker — match. -->
-										<Bundle-SymbolicName>moquette-broker</Bundle-SymbolicName>
-									</instructions>
-								</artifact>
-								<artifact>
-									<id>org.hamcrest:hamcrest:${org.hamcrest.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.hamcrest:hamcrest-core:${org.hamcrest.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
-									<id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-								</artifact>
-								<artifact>
+    <artifactId>p2-repo-tests-deps</artifactId>
+    <packaging>pom</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.reficio</groupId>
+                <artifactId>p2-maven-plugin</artifactId>
+                <version>${p2-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-p2-site</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <id>io.moquette:moquette-broker:${moquette-broker.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                    <override>true</override>
+                                    <instructions>
+                                        <!-- testutil bundle imports Require-Bundle: moquette-broker — match. -->
+                                        <Bundle-SymbolicName>moquette-broker</Bundle-SymbolicName>
+                                    </instructions>
+                                </artifact>
+                                <artifact>
+                                    <id>org.hamcrest:hamcrest:${org.hamcrest.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>org.hamcrest:hamcrest-core:${org.hamcrest.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
+                                    <id>org.hamcrest:hamcrest-library:${org.hamcrest.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                </artifact>
+                                <artifact>
                                     <id>org.mockito:mockito-core:${mockito-core.version}</id>
                                     <source>true</source>
-									<transitive>false</transitive>
+                                    <transitive>false</transitive>
                                 </artifact>
                                 <artifact>
                                     <id>io.dropwizard.metrics:metrics-core:${io.dropwizard.metrics.version}</id>
                                     <source>true</source>
-									<transitive>false</transitive>
+                                    <transitive>false</transitive>
                                 </artifact>
                                 <artifact>
                                     <id>net.bytebuddy:byte-buddy:${byte-buddy.version}</id>
                                     <source>true</source>
-									<transitive>false</transitive>
+                                    <transitive>false</transitive>
                                 </artifact>
                                 <artifact>
                                     <id>net.bytebuddy:byte-buddy-agent:${byte-buddy.version}</id>
                                     <source>true</source>
-									<transitive>false</transitive>
+                                    <transitive>false</transitive>
                                 </artifact>
-								<artifact>
-									<id>junit:junit:${org.junit.version}</id>
-									<source>true</source>
-									<transitive>false</transitive>
-									<override>true</override>
-									<instructions>
-										<Export-Package>junit.extensions;version="4.13.2",junit.framework;version="4.13.2",junit.runner;version="4.13.2",junit.textui;version="4.13.2",org.junit;version="4.13.2",org.junit.experimental;version="4.13.2",org.junit.experimental.categories;version="4.13.2",org.junit.experimental.max;version="4.13.2",org.junit.experimental.results;version="4.13.2",org.junit.experimental.runners;version="4.13.2",org.junit.experimental.theories;version="4.13.2",org.junit.experimental.theories.internal;version="4.13.2";x-internal:=true,org.junit.experimental.theories.suppliers;version="4.13.2",org.junit.internal;version="4.13.2";x-internal:=true,org.junit.internal.builders;version="4.13.2";x-internal:=true,org.junit.internal.matchers;version="4.13.2";x-internal:=true,org.junit.internal.requests;version="4.13.2";x-internal:=true,org.junit.internal.runners;version="4.13.2";x-internal:=true,org.junit.internal.runners.model;version="4.13.2";x-internal:=true,org.junit.internal.runners.rules;version="4.13.2";x-internal:=true,org.junit.internal.runners.statements;version="4.13.2";x-internal:=true,org.junit.matchers;version="4.13.2",org.junit.rules;version="4.13.2",org.junit.runner;version="4.13.2",org.junit.runner.manipulation;version="4.13.2",org.junit.runner.notification;version="4.13.2",org.junit.runners;version="4.13.2",org.junit.runners.model;version="4.13.2",org.junit.runners.parameterized;version="4.13.2",org.junit.validator;version="4.13.2"</Export-Package>
-										<Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
-									</instructions>
-								</artifact>
-							</artifacts>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>install-p2-bundles-to-local-m2</id>
-						<phase>install</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<exec executable="${project.basedir}/../install-to-m2.sh"
-								      dir="${project.basedir}"
-								      failonerror="true">
-									<arg value="${project.build.directory}/repository/plugins" />
-									<arg value="p2.osgi.bundle" />
-								</exec>
-							</target>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+                                <artifact>
+                                    <id>junit:junit:${org.junit.version}</id>
+                                    <source>true</source>
+                                    <transitive>false</transitive>
+                                    <override>true</override>
+                                    <instructions>
+                                        <Export-Package>junit.extensions;version="4.13.2",junit.framework;version="4.13.2",junit.runner;version="4.13.2",junit.textui;version="4.13.2",org.junit;version="4.13.2",org.junit.experimental;version="4.13.2",org.junit.experimental.categories;version="4.13.2",org.junit.experimental.max;version="4.13.2",org.junit.experimental.results;version="4.13.2",org.junit.experimental.runners;version="4.13.2",org.junit.experimental.theories;version="4.13.2",org.junit.experimental.theories.internal;version="4.13.2";x-internal:=true,org.junit.experimental.theories.suppliers;version="4.13.2",org.junit.internal;version="4.13.2";x-internal:=true,org.junit.internal.builders;version="4.13.2";x-internal:=true,org.junit.internal.matchers;version="4.13.2";x-internal:=true,org.junit.internal.requests;version="4.13.2";x-internal:=true,org.junit.internal.runners;version="4.13.2";x-internal:=true,org.junit.internal.runners.model;version="4.13.2";x-internal:=true,org.junit.internal.runners.rules;version="4.13.2";x-internal:=true,org.junit.internal.runners.statements;version="4.13.2";x-internal:=true,org.junit.matchers;version="4.13.2",org.junit.rules;version="4.13.2",org.junit.runner;version="4.13.2",org.junit.runner.manipulation;version="4.13.2",org.junit.runner.notification;version="4.13.2",org.junit.runners;version="4.13.2",org.junit.runners.model;version="4.13.2",org.junit.runners.parameterized;version="4.13.2",org.junit.validator;version="4.13.2"</Export-Package>
+                                        <Bundle-SymbolicName>org.junit</Bundle-SymbolicName>
+                                    </instructions>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>install-p2-bundles-to-local-m2</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <exec executable="${project.basedir}/../install-to-m2.sh" dir="${project.basedir}" failonerror="true">
+                                    <arg value="${project.build.directory}/repository/plugins" />
+                                    <arg value="p2.osgi.bundle" />
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
+

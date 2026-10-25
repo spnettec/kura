@@ -1,24 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.eclipse.kura</groupId><artifactId>kura-build-parent</artifactId>
-    <version>6.0.0-SNAPSHOT</version><relativePath>../kura-build-parent/pom.xml</relativePath>
-  </parent>
-  <artifactId>kura-test-support</artifactId>
-  <name>Kura plain Maven test fixtures</name>
-  <description>Test-only reflection, certificates and request assertions; no Eclipse workspace or test extender.</description>
-  <dependencies>
-    <!-- Service/API mocks need the OSGi API present on the plain test classpath. -->
-    <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.osgi</artifactId></dependency>
-    <!-- Kura API exception paths use Log4j; provided OSGi imports are not transitive in plain tests. -->
-    <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><scope>runtime</scope></dependency>
-    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
-    <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId></dependency>
-    <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId></dependency>
-    <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId></dependency>
-    <dependency><groupId>com.eclipsesource.minimal-json</groupId><artifactId>minimal-json</artifactId></dependency>
-    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId></dependency>
-    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId><scope>test</scope></dependency>
-  </dependencies>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.eclipse.kura</groupId>
+        <artifactId>kura-build-parent</artifactId>
+        <version>6.0.0-SNAPSHOT</version>
+        <relativePath>../kura-build-parent/pom.xml</relativePath>
+    </parent>
+    <artifactId>kura-test-support</artifactId>
+    <name>Kura plain Maven test fixtures</name>
+    <description>Test-only reflection, certificates and request assertions; no Eclipse workspace or test extender.</description>
+    <dependencies>
+        <!-- Service/API mocks need the OSGi API present on the plain test classpath. -->
+        <dependency>
+            <groupId>org.eclipse.platform</groupId>
+            <artifactId>org.eclipse.osgi</artifactId>
+        </dependency>
+        <!-- Kura API exception paths use Log4j; provided OSGi imports are not transitive in plain tests. -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcutil-jdk18on</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.eclipsesource.minimal-json</groupId>
+            <artifactId>minimal-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
+
