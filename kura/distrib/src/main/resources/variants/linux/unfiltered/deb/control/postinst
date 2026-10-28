@@ -140,9 +140,9 @@ function postInstall {
         # Restore only whole sibling directories that were not unpacked again.
         for sibling in "${PRESERVE_DIR}"/siblings/*; do
             [ -d "${sibling}" ] || continue
-            name=${sibling##*/}
-            if [ ! -e "${INSTALL_DIR}/kura/siblings/${name}" ]; then
-                cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${name}" >> ${LOG} 2>&1 || RESTORE_OK=0
+            sibling_name=${sibling##*/}
+            if [ ! -e "${INSTALL_DIR}/kura/siblings/${sibling_name}" ]; then
+                cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${sibling_name}" >> ${LOG} 2>&1 || RESTORE_OK=0
             fi
         done
         # Restore the sibling install-order registry so gen_config_ini.sh
