@@ -127,10 +127,22 @@ function postInstall {
         WAS_UPGRADE=1
         echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
         RESTORE_OK=1
-        for d in user data packages siblings; do
+        for d in user data packages; do
             if [ -d "${PRESERVE_DIR}/${d}" ]; then
                 mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
                 cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+        done
+        # dpkg unpacks every package in a transaction before configuring the
+        # core. A sibling directory already present here therefore contains
+        # the newly unpacked package; copying the backup over it would silently
+        # revert its bundles while dpkg records the new version as installed.
+        # Restore only whole sibling directories that were not unpacked again.
+        for sibling in "${PRESERVE_DIR}"/siblings/*; do
+            [ -d "${sibling}" ] || continue
+            name=${sibling##*/}
+            if [ ! -e "${INSTALL_DIR}/kura/siblings/${name}" ]; then
+                cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${name}" >> ${LOG} 2>&1 || RESTORE_OK=0
             fi
         done
         # Restore the sibling install-order registry so gen_config_ini.sh
