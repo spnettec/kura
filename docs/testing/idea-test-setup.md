@@ -33,7 +33,7 @@
 
 ```sh
 cd <工作空间>/plc4x-yofc
-mvn install -DskipTests
+mvn install -Pwith-java -pl '!website' -DskipTests -DskipITs=true
 ```
 
 ## 3. 快速开始

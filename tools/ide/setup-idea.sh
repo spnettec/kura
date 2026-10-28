@@ -85,11 +85,28 @@ if [[ -z "$M2_REPO" ]]; then
 else
   info "使用指定缓存 ${M2_REPO}（IDEA 需在 Settings > Build Tools > Maven > Local repository 指向它）"
 fi
-if compgen -G "$M2_REPO/org/apache/plc4x/plc4j-api/*/plc4j-api-*.jar" >/dev/null; then
-  info "plc4x 产物已存在"
+PLC4X_CONSUMER_POM="$WS_ROOT/yofc-iot/com.yofc.iot.apps/com.yofc.iot.apps.opcuaserver/pom.xml"
+PLC4X_REQUIRED_VERSION=""
+if [[ -f "$PLC4X_CONSUMER_POM" ]]; then
+  PLC4X_REQUIRED_VERSION="$(python3 - "$PLC4X_CONSUMER_POM" <<'PYCODE'
+import sys
+import xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+for dep in root.findall('./m:dependencies/m:dependency', ns):
+    if dep.findtext('m:groupId', namespaces=ns) == 'org.apache.plc4x' and dep.findtext('m:artifactId', namespaces=ns) == 'plc4j-api':
+        print(dep.findtext('m:version', default='', namespaces=ns))
+        break
+PYCODE
+)"
+fi
+if [[ -z "$PLC4X_REQUIRED_VERSION" ]]; then
+  warn "无法从 yofc-iot POM 确定 PLC4X 版本，请检查下游依赖"
+elif compgen -G "$M2_REPO/org/apache/plc4x/plc4j-api/$PLC4X_REQUIRED_VERSION/plc4j-api-*.jar" >/dev/null; then
+  info "yofc-iot 所需 PLC4X ${PLC4X_REQUIRED_VERSION} 已在缓存中"
 else
-  warn "Maven 缓存中缺少 plc4x-yofc 产物，Kura 构建会失败。请先执行："
-  warn "  cd $WS_ROOT/plc4x-yofc && mvn install -DskipTests${M2_REPO:+ -Dmaven.repo.local=$M2_REPO}"
+  warn "Maven 缓存中缺少 yofc-iot 所需 PLC4X ${PLC4X_REQUIRED_VERSION}。请先执行："
+  warn "  cd $WS_ROOT/plc4x-yofc && mvn install -Pwith-java -pl '!website' -DskipTests -DskipITs=true -Dmaven.repo.local=$M2_REPO"
 fi
 info ""
 
