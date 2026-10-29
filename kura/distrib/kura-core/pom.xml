@@ -114,6 +114,14 @@
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
                                 <data>
+                                    <src>${project.basedir}/src/main/resources/deb-config/preserved-state.conf</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/etc/kura</prefix>
+                                    </mapper>
+                                </data>
+                                <data>
                                     <src>${basedir}/target/kura_${project.version}_linux</src>
                                     <type>directory</type>
                                     <mapper>

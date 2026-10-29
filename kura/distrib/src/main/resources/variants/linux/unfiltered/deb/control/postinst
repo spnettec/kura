@@ -31,6 +31,46 @@ function installedSiblings {
         | tr '\n' ' '
 }
 
+# Keep the snapshot master-key setting across upgrades while still installing
+# the new service template. Never log the key or write it to a public temp file.
+function restoreUpgradeSecret {
+    python3 - "$1" "$2" <<'PY'
+import os
+import re
+import stat
+import sys
+import tempfile
+
+saved, target = sys.argv[1:]
+pattern = re.compile(rb'^\s*Environment\s*=.*\bKURA_CRYPTO_SECRET_KEY=')
+environment_file = re.compile(rb'^\s*EnvironmentFile\s*=')
+with open(saved, 'rb') as f:
+    original = f.read().splitlines(keepends=True)
+with open(target, 'rb') as f:
+    current = f.read().splitlines(keepends=True)
+secret_lines = [line for line in original if pattern.match(line)]
+file_lines = [line for line in original if environment_file.match(line) and line not in current]
+positions = [i for i, line in enumerate(current) if pattern.match(line)]
+if not positions and (secret_lines or file_lines):
+    raise RuntimeError('The new Kura service unit has no place for the preserved key setting')
+if positions:
+    first = positions[0]
+    current = [line for i, line in enumerate(current) if i not in positions]
+    current[first:first] = secret_lines + file_lines
+    st = os.stat(target)
+    fd, path = tempfile.mkstemp(prefix='.kura-service-', dir=os.path.dirname(target))
+    try:
+        os.fchmod(fd, stat.S_IMODE(st.st_mode))
+        os.fchown(fd, st.st_uid, st.st_gid)
+        with os.fdopen(fd, 'wb') as f:
+            f.writelines(current)
+        os.replace(path, target)
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+PY
+}
+
 # Run postInstall function and start watchdog if needed
 function runPostInstall {
     if [ -f "${WD_TMP_FILE}" ]; then
@@ -64,6 +104,7 @@ function runPostInstall {
             sleep $REFRESH_TIME
         done
     fi
+    wait "$PID" || return 1
 }
 
 # Deactivate watchdog device if possible
@@ -122,17 +163,43 @@ function postInstall {
     # the user's state. Staging is left in place if the copy-back fails, so
     # nothing is lost.
     PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+    RETAINED_DIR=/var/lib/kura-retained
     WAS_UPGRADE=0
+    WAS_REINSTALL=0
+    if [ -e "${PRESERVE_DIR}" ] && [ -e "${RETAINED_DIR}" ]; then
+        echo "ERROR: both upgrade and removal recovery copies exist; neither will be overwritten." >> ${LOG} 2>&1
+        return 1
+    fi
+    if [ -d "${RETAINED_DIR}" ]; then
+        PRESERVE_DIR=${RETAINED_DIR}
+        WAS_REINSTALL=1
+    fi
     if [ -d "${PRESERVE_DIR}" ]; then
-        WAS_UPGRADE=1
+        if [ "${WAS_REINSTALL}" = "0" ]; then
+            WAS_UPGRADE=1
+        fi
         echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
         RESTORE_OK=1
-        for d in user data packages; do
+        for d in user data packages log; do
             if [ -d "${PRESERVE_DIR}/${d}" ]; then
                 mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
                 cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
             fi
         done
+        # Keep newly unpacked helpers when siblings are upgraded in the same
+        # transaction; restore missing hooks after a core-only upgrade.
+        if [ -d "${PRESERVE_DIR}/addon-data" ]; then
+            mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1
+            cp -a -n "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
+        fi
+        if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
+            if [ "${WAS_REINSTALL}" = "1" ]; then
+                cp -a "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
+            else
+                restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
+        fi
         # dpkg unpacks every package in a transaction before configuring the
         # core. A sibling directory already present here therefore contains
         # the newly unpacked package; copying the backup over it would silently
@@ -154,12 +221,21 @@ function postInstall {
         if [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
             cp "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || true
         fi
-        chown -R kurad:kurad "${INSTALL_DIR}/kura/user" "${INSTALL_DIR}/kura/data" "${INSTALL_DIR}/kura/packages" >> ${LOG} 2>&1 || true
+        # The retained copy is outside /opt, so its original ownership has not
+        # been changed by the installer. Keep it on reinstall, including
+        # intentionally root-owned keys. Preserve the existing upgrade policy.
+        if [ "${WAS_REINSTALL}" = "0" ]; then
+            chown -R kurad:kurad "${INSTALL_DIR}/kura/user" "${INSTALL_DIR}/kura/data" "${INSTALL_DIR}/kura/packages" "${INSTALL_DIR}/kura/log" >> ${LOG} 2>&1 || true
+        fi
         if [ "${RESTORE_OK}" = "1" ]; then
-            rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1
+            if ! rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1; then
+                echo "ERROR: restored data but could not remove its recovery copy at ${PRESERVE_DIR}." >> ${LOG} 2>&1
+                return 1
+            fi
             echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
         else
-            echo "WARNING: could not fully restore preserved data; kept at ${PRESERVE_DIR} for manual recovery" >> ${LOG} 2>&1
+            echo "ERROR: could not fully restore preserved data; kept at ${PRESERVE_DIR} for recovery" >> ${LOG} 2>&1
+            return 1
         fi
     fi
 
@@ -182,6 +258,8 @@ function postInstall {
             echo "misbehaves."
             echo "****************************************************************"
         fi
+    elif [ "${WAS_REINSTALL}" = "1" ]; then
+        echo "Finished. KURA has been reinstalled at ${INSTALL_DIR}/kura; previous user data was restored."
     else
         echo "Finished. KURA has been installed to ${INSTALL_DIR}/kura and will start automatically after a reboot"
     fi
@@ -199,13 +277,14 @@ function postInstall {
 # POST INSTALL SCRIPT
 ##############################################
 
-# Handle abort-upgrade case
-if [ "$1" = "abort-upgrade" ]; then
-    echo "postinst called with abort-upgrade: nothing to do."
+# A failed remove or upgrade has not completed the installation workflow.
+# In particular, do not overwrite a recovery copy after prerm aborts.
+if [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-remove" ]; then
+    echo "postinst called with $1: preserving the existing installation."
     exit 0
 fi
 
-runPostInstall
+runPostInstall || exit 1
 exit 0
 #############################################
 # END POST INSTALL SCRIPT

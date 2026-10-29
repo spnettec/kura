@@ -13,6 +13,7 @@
 #
 
 INSTALL_DIR=/opt/eclipse
+RETAINED_DIR=/var/lib/kura-retained
 
 case "$1" in
     purge|remove)
@@ -26,6 +27,13 @@ case "$1" in
             echo "  Timestamp: $(date)"
             echo "  Install directory: ${INSTALL_DIR}/kura"
         } 2>&1 | tee -a "$LOG" | systemd-cat -t Kura
+
+        # A remove preserves user state in prerm before dpkg removes files.
+        # If that safeguard was bypassed, retain the tree instead of losing it.
+        if [ "$1" = "remove" ] && [ -d "${INSTALL_DIR}/kura" ] && [ ! -d "${RETAINED_DIR}" ]; then
+            echo "Refusing to remove Kura's installation tree without a retained user-data copy." >&2
+            exit 1
+        fi
 
         # Remove kura installation tree (plugins/ + siblings/)
         if [ -d "${INSTALL_DIR}/kura" ] ; then
@@ -49,6 +57,17 @@ case "$1" in
 
         rm -rf /tmp/.kura /tmp/kura
         rm -f /var/run/kura.pid
+        if [ "$1" = "purge" ]; then
+            rm -rf "${RETAINED_DIR}" "${INSTALL_DIR}/.kura-preserve" || exit 1
+            rm -rf /etc/systemd/system/kura.service.d || exit 1
+            rm -f /etc/systemd/system/kura.service || exit 1
+            rm -f /var/log/kura*.log* /var/log/kura*.gz /var/log/kura*.hprof || exit 1
+            rm -rf /var/log/kura || exit 1
+            for retained_tmp in /var/lib/.kura-retained.tmp.*; do
+                [ -e "${retained_tmp}" ] || continue
+                rm -rf "${retained_tmp}" || exit 1
+            done
+        fi
         ;;
     upgrade|failed-upgrade)
         ;;

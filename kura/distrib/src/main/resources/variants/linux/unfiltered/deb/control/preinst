@@ -23,10 +23,27 @@ TIMEOUT_TIME=300
 # Captured here at top level because preInstall() runs as a background job and
 # bash functions shadow the positional parameters.
 ACTION="$1"
+case "${ACTION}" in
+    install|upgrade) ;;
+    abort-upgrade) exit 0 ;;
+    *) echo "Unsupported Kura preinst action: ${ACTION}" >&2; exit 1 ;;
+esac
 # Staging area for data preserved across an in-place upgrade. NOTE: the name
 # must NOT start with "kura" so the "rm -fr /opt/eclipse/kura*" wipe below skips
 # it (the glob only matches paths beginning literally with "kura").
 PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+RETAINED_DIR=/var/lib/kura-retained
+
+# Do not erase an interrupted upgrade recovery copy or overwrite a retained
+# removal copy while upgrading an existing installation.
+if [ -e "${PRESERVE_DIR}" ]; then
+    echo "Cannot install Kura: an upgrade recovery copy already exists at ${PRESERVE_DIR}." >&2
+    exit 1
+fi
+if [ "${ACTION}" = "upgrade" ] && [ -e "${RETAINED_DIR}" ]; then
+    echo "Cannot upgrade Kura: a removal recovery copy already exists at ${RETAINED_DIR}." >&2
+    exit 1
+fi
 
 ##############################################
 # UTILITY FUNCTIONS
@@ -73,6 +90,7 @@ function runPreInstall {
             sleep $REFRESH_TIME
         done
     fi
+    wait "$PID" || return 1
 }
 
 # Deactivate watchdog device if possible
@@ -96,19 +114,28 @@ function preInstall {
     # snapshots can no longer be decrypted.
     if [ "${ACTION}" = "upgrade" ] && [ -e "${INSTALL_DIR}/kura" ]; then
         echo "Upgrade detected: preserving user/, data/, packages/ and siblings/ (snapshots, keys, deployment packages, sibling bundles)" >> "${LOG}" 2>&1
-        rm -rf "${PRESERVE_DIR}" >> "${LOG}" 2>&1
-        mkdir -p "${PRESERVE_DIR}" >> "${LOG}" 2>&1
+        mkdir -m 700 "${PRESERVE_DIR}" >> "${LOG}" 2>&1 || return 1
         # cp -a follows into the symlinked kura dir and keeps perms/ownership.
-        for d in user data packages siblings; do
+        for d in user data packages siblings log; do
             if [ -d "${INSTALL_DIR}/kura/${d}" ]; then
-                cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1
+                cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1 || return 1
             fi
         done
+        # Sibling packages also install their removal scripts and network
+        # recovery helpers under .data. A core-only upgrade must not strand
+        # those installed packages without their removal hooks.
+        if [ -d "${INSTALL_DIR}/kura/.data" ]; then
+            cp -a "${INSTALL_DIR}/kura/.data" "${PRESERVE_DIR}/addon-data" >> "${LOG}" 2>&1 || return 1
+        fi
+        if [ -f /lib/systemd/system/kura.service ]; then
+            mkdir -p "${PRESERVE_DIR}/systemd" >> "${LOG}" 2>&1 || return 1
+            cp -a /lib/systemd/system/kura.service "${PRESERVE_DIR}/systemd/kura.service" >> "${LOG}" 2>&1 || return 1
+        fi
         # Preserve the sibling install-order registry so gen_config_ini.sh
         # maintains the correct bundle precedence after the upgrade.
         if [ -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
-            mkdir -p "${PRESERVE_DIR}/framework" >> "${LOG}" 2>&1
-            cp -a "${INSTALL_DIR}/kura/framework/sibling-install-order" "${PRESERVE_DIR}/framework/sibling-install-order" >> "${LOG}" 2>&1
+            mkdir -p "${PRESERVE_DIR}/framework" >> "${LOG}" 2>&1 || return 1
+            cp -a "${INSTALL_DIR}/kura/framework/sibling-install-order" "${PRESERVE_DIR}/framework/sibling-install-order" >> "${LOG}" 2>&1 || return 1
         fi
     fi
 
@@ -118,7 +145,6 @@ function preInstall {
     rm -fr /tmp/.kura/ >> "${LOG}" 2>&1
     rm -f /etc/init.d/firewall >> "${LOG}" 2>&1
     rm -f /tmp/coninfo-* >> "${LOG}" 2>&1
-    rm -f /var/log/kura.log >> "${LOG}" 2>&1
     rm -f kura-*.zip >> "${LOG}" 2>&1
     rm -f kura_*.zip >> "${LOG}" 2>&1
     echo ""
@@ -164,7 +190,7 @@ if [ -f "/var/run/kura.pid" ] ; then
   done
 fi
 
-runPreInstall
+runPreInstall || exit 1
 ##############################################
 # END PRE-INSTALL SCRIPT
 ##############################################

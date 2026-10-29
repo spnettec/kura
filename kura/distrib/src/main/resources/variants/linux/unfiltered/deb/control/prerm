@@ -18,6 +18,43 @@ REFRESH_TIME=5
 TIMEOUT_TIME=300
 TIMESTAMP=$(date +%Y%m%d%H%M)
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log
+RETAINED_DIR=/var/lib/kura-retained
+
+# Save mutable state before dpkg removes any package-owned files.  Stage into
+# a private directory and publish it only after every copy succeeds; never
+# replace an earlier recovery copy from an interrupted operation.
+function preserveUserData {
+    [ -d "${INSTALL_DIR}/kura" ] || return 0
+    if [ -e "${RETAINED_DIR}" ]; then
+        echo "Cannot remove Kura: ${RETAINED_DIR} already exists; preserve it for recovery." >&2
+        return 1
+    fi
+    local retained_tmp
+    retained_tmp=$(mktemp -d "/var/lib/.kura-retained.tmp.XXXXXXXX") || return 1
+    for retained_tree in user data packages log; do
+        if [ -d "${INSTALL_DIR}/kura/${retained_tree}" ]; then
+            if ! cp -a "${INSTALL_DIR}/kura/${retained_tree}" "${retained_tmp}/${retained_tree}"; then
+                echo "Cannot remove Kura: failed to preserve ${retained_tree}." >&2
+                rm -rf "${retained_tmp}"
+                return 1
+            fi
+        fi
+    done
+    # The snapshot master key may be configured in the generated service unit.
+    # prerm removes that unit, so it must travel with the snapshots and keys.
+    if [ -f /lib/systemd/system/kura.service ]; then
+        if ! mkdir -p "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
+            echo "Cannot remove Kura: failed to preserve the systemd service configuration." >&2
+            rm -rf "${retained_tmp}"
+            return 1
+        fi
+    fi
+    if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
+        echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
+        rm -rf "${retained_tmp}"
+        return 1
+    fi
+}
 
 ##############################################
 # UTILITY FUNCTIONS
@@ -83,17 +120,7 @@ function preRemove {
     rm -f  /etc/logrotate-kura.conf
     rm -f  /etc/cron.d/logrotate-kura
 
-    for log_file in /var/log/kura*.log /var/log/kura*.gz
-    do
-        [ -e "${log_file}" ] || continue
-        case "$(basename "${log_file}")" in
-            kura_*_install_*.log)
-                ;;
-            *)
-                rm -f "${log_file}"
-                ;;
-        esac
-    done
+    # Runtime and audit logs are user data; leave them until purge.
     rm -rf /tmp/.kura
     rm -rf /tmp/kura
 
@@ -108,6 +135,12 @@ function preRemove {
 ##############################################
 
 # Stop a running Kura before either an upgrade or a removal.
+if [ "$1" = "remove" ] && [ -f /lib/systemd/system/kura.service ]; then
+    if ! systemctl stop kura.service; then
+        echo "Cannot remove Kura: the service could not be stopped safely." >&2
+        exit 1
+    fi
+fi
 PIDS=`pgrep java`
 
 if [ -f "/var/run/kura.pid" ] ; then
@@ -134,6 +167,10 @@ fi
 # A failed upgrade is recovered by the new package's scripts; nothing to tear down.
 if [ "$1" == "failed-upgrade" ]; then
     exit 0
+fi
+
+if [ "$1" = "remove" ]; then
+    preserveUserData || exit 1
 fi
 
 echo ""
