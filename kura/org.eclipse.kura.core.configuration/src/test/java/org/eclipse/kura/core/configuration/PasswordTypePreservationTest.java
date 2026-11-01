@@ -61,6 +61,67 @@ public class PasswordTypePreservationTest {
     private ComponentConfiguration readBackConfiguration;
 
     @Test
+    public void conditionalUpdateUsesTheRealCoreWriterAndSnapshotsOmittedPasswords(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Throwable {
+        var captured = new java.util.concurrent.atomic.AtomicReference<XmlComponentConfigurations>();
+        givenConfigurationService(snapshotFixture(captured));
+        givenFactoryConfigurationWithPassword();
+        givenRegisteredMetatypeWithoutThePasswordAttributeDefinition();
+        configureSnapshotDirectory(directory);
+
+        String revision = this.configurationService.readRevision(PID).revision();
+        this.configurationService.updateRevision(PID, revision, Map.of(OTHER_PROPERTY, OTHER_VALUE));
+        whenConfigurationIsReadBack();
+        thenReadBackPropertyIsAPassword(SECRET);
+        assertEquals(OTHER_VALUE, this.storedProperties.get(OTHER_PROPERTY));
+        assertEquals(1, this.configurationService.getSnapshots().size());
+        assertTrue(captured.get().getConfigurations().stream().anyMatch(config -> PID.equals(config.getPid())
+                && OTHER_VALUE.equals(config.getConfigurationProperties().get(OTHER_PROPERTY))));
+        org.junit.jupiter.api.Assertions.assertNotEquals(revision, this.configurationService.readRevision(PID).revision());
+        var rejected = org.junit.jupiter.api.Assertions.assertThrows(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected.class,
+                () -> this.configurationService.updateRevision(PID, revision, Map.of(OTHER_PROPERTY, "stale")));
+        assertEquals(org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.CONFLICT, rejected.getReason());
+        assertEquals(OTHER_VALUE, this.storedProperties.get(OTHER_PROPERTY));
+    }
+
+    @Test
+    public void conditionalPasswordUpdateRetainsTheCallerValueAndReadsBackTheNewPassword(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Throwable {
+        givenConfigurationService(snapshotFixture(new java.util.concurrent.atomic.AtomicReference<>()));
+        givenFactoryConfigurationWithPassword();
+        givenRegisteredMetatype(PASSWORD_PROPERTY, Tscalar.PASSWORD);
+        configureSnapshotDirectory(directory);
+        Password callerPassword = new Password(NEW_SECRET);
+        String revision = this.configurationService.readRevision(PID).revision();
+        this.configurationService.updateRevision(PID, revision, Map.of(PASSWORD_PROPERTY, callerPassword));
+        whenConfigurationIsReadBack();
+        thenReadBackPropertyIsAPassword(NEW_SECRET);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(NEW_SECRET.toCharArray(), callerPassword.getPassword());
+        assertTrue(this.configurationService.readRevision(PID).revision().matches("[0-9a-f]{64}"));
+    }
+
+    private ConfigurationServiceImpl snapshotFixture(
+            java.util.concurrent.atomic.AtomicReference<XmlComponentConfigurations> captured) {
+        return new ConfigurationServiceImpl() {
+            @Override protected void marshal(java.io.OutputStream out, Object value) throws KuraException {
+                captured.set((XmlComponentConfigurations) value);
+                try { out.write("<snapshot/>".getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+                catch (java.io.IOException e) { throw KuraException.internalError(e); }
+            }
+        };
+    }
+
+    private void configureSnapshotDirectory(java.nio.file.Path directory) {
+        var system = mock(org.eclipse.kura.system.SystemService.class);
+        when(system.getKuraSnapshotsDirectory()).thenReturn(directory.toString());
+        when(system.getKuraSnapshotsCount()).thenReturn(10);
+        var properties = new java.util.Properties(); properties.setProperty("kura.snapshots.encrypt", "false");
+        when(system.getProperties()).thenReturn(properties);
+        this.configurationService.setSystemService(system);
+    }
+
+    @Test
     public void passwordSurvivesConfigurationAdminWhenMetatypeIsNotTrackedYet() throws Throwable {
         givenConfigurationService();
         givenFactoryConfigurationWithPassword();
@@ -203,7 +264,11 @@ public class PasswordTypePreservationTest {
     }
 
     private void givenConfigurationService() throws Throwable {
-        this.configurationService = new ConfigurationServiceImpl();
+        givenConfigurationService(new ConfigurationServiceImpl());
+    }
+
+    private void givenConfigurationService(ConfigurationServiceImpl service) throws Throwable {
+        this.configurationService = service;
 
         this.configurationAdmin = mock(ConfigurationAdmin.class);
         this.configurationService.setConfigurationAdmin(this.configurationAdmin);

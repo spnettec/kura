@@ -13,6 +13,7 @@
     <name>Kura standalone development runtime</name>
     <properties>
         <kura.dev.profile>auto</kura.dev.profile>
+        <kura.dev.network-provider>none</kura.dev.network-provider>
     </properties>
     <dependencies>
         <dependency>
@@ -701,6 +702,18 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.kura</groupId>
+            <artifactId>org.eclipse.kura.management.bridge</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <type>pom</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.misc.cloudcat</artifactId>
             <version>3.0.0-SNAPSHOT</version>
             <type>pom</type>
@@ -715,6 +728,18 @@
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.net.configuration</artifactId>
             <version>3.0.0-SNAPSHOT</version>
+            <type>pom</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>org.eclipse.kura.netplan</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
             <type>pom</type>
             <exclusions>
                 <exclusion>
@@ -2237,6 +2262,12 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
+                                    <artifactId>org.eclipse.kura.management.bridge</artifactId>
+                                    <version>1.0.0-SNAPSHOT</version>
+                                    <destFileName>org.eclipse.kura-org.eclipse.kura.management.bridge-1.0.0-SNAPSHOT.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.kura</groupId>
                                     <artifactId>org.eclipse.kura.misc.cloudcat</artifactId>
                                     <version>3.0.0-SNAPSHOT</version>
                                     <destFileName>org.eclipse.kura-org.eclipse.kura.misc.cloudcat-3.0.0-SNAPSHOT.jar</destFileName>
@@ -2246,6 +2277,12 @@
                                     <artifactId>org.eclipse.kura.net.configuration</artifactId>
                                     <version>3.0.0-SNAPSHOT</version>
                                     <destFileName>org.eclipse.kura-org.eclipse.kura.net.configuration-3.0.0-SNAPSHOT.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.kura</groupId>
+                                    <artifactId>org.eclipse.kura.netplan</artifactId>
+                                    <version>1.0.0-SNAPSHOT</version>
+                                    <destFileName>org.eclipse.kura-org.eclipse.kura.netplan-1.0.0-SNAPSHOT.jar</destFileName>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.eclipse.kura</groupId>
@@ -2967,6 +3004,8 @@
                                 <argument>assemble</argument>
                                 <argument>--profile</argument>
                                 <argument>${kura.dev.profile}</argument>
+                                <argument>--network-provider</argument>
+                                <argument>${kura.dev.network-provider}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -2975,4 +3014,3 @@
         </plugins>
     </build>
 </project>
-

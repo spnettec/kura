@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0">
+    <OCD id="org.eclipse.kura.management.revisionFixture" name="Configuration revision test fixture">
+        <AD id="count" name="Count" type="Long" cardinality="0" required="true" default="1"/>
+        <AD id="password" name="Password" type="Password" cardinality="0" required="true" default="fixture-initial"/>
+        <AD id="enabled" name="Enabled" type="Boolean" cardinality="0" required="true" default="false"/>
+        <AD id="labels" name="Labels" type="String" cardinality="4" required="false"/>
+    </OCD>
+    <Designate pid="org.eclipse.kura.management.revisionFixture"><Object ocdref="org.eclipse.kura.management.revisionFixture"/></Designate>
+</MetaData>

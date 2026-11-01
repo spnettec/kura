@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Keep the explicit Maven artifact copy list in sync with runtime.json."""
 import argparse
-import json
 from pathlib import Path
+from xml.dom import minidom
+from network_profiles import collection_spec
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -12,7 +13,7 @@ def filename(coordinates):
 
 
 def pom():
-    spec = json.loads((ROOT / 'runtime.json').read_text())
+    spec = collection_spec(ROOT)
     coordinates = {item['coordinates'] for item in spec['bundles']} | {spec['framework'], spec['launcher']}
     # Explicit POM dependencies impose reactor order without importing transitive
     # runtime artifacts or flattening the OSGi classloader boundary.
@@ -27,7 +28,7 @@ def pom():
         parts = coordinate.split(':')
         classifier = f'<classifier>{parts[3]}</classifier>' if len(parts) > 3 else ''
         items.append(f'                <artifactItem><groupId>{parts[0]}</groupId><artifactId>{parts[1]}</artifactId><version>{parts[2]}</version>{classifier}<destFileName>{filename(coordinate)}</destFileName></artifactItem>')
-    return '''<?xml version="1.0" encoding="UTF-8"?>
+    text = '''<?xml version="1.0" encoding="UTF-8"?>
 <!-- Artifact list generated from runtime.json by tools/generate_pom.py. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -38,7 +39,7 @@ def pom():
   <artifactId>kura-dev-runtime</artifactId>
   <packaging>pom</packaging>
   <name>Kura standalone development runtime</name>
-  <properties><kura.dev.profile>auto</kura.dev.profile></properties>
+  <properties><kura.dev.profile>auto</kura.dev.profile><kura.dev.network-provider>none</kura.dev.network-provider></properties>
   <dependencies>
 ''' + '\n'.join(dependencies) + '''
   </dependencies>
@@ -70,7 +71,7 @@ def pom():
           <id>assemble-runtime</id><phase>package</phase><goals><goal>exec</goal></goals>
           <configuration>
             <executable>python3</executable>
-            <arguments><argument>${project.basedir}/tools/runtime.py</argument><argument>assemble</argument><argument>--profile</argument><argument>${kura.dev.profile}</argument></arguments>
+            <arguments><argument>${project.basedir}/tools/runtime.py</argument><argument>assemble</argument><argument>--profile</argument><argument>${kura.dev.profile}</argument><argument>--network-provider</argument><argument>${kura.dev.network-provider}</argument></arguments>
           </configuration>
         </execution></executions>
       </plugin>
@@ -78,6 +79,9 @@ def pom():
   </build>
 </project>
 '''
+    # Keep the checked-in Maven/IDEA formatting while making --check reproducible.
+    formatted = minidom.parseString(text).toprettyxml(indent='    ', encoding='UTF-8').decode()
+    return '\n'.join(line for line in formatted.splitlines() if line.strip()) + '\n'
 
 
 if __name__ == '__main__':

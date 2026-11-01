@@ -18,6 +18,7 @@ from xml.sax.saxutils import escape
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 from generate_pom import filename
+from network_profiles import PROVIDERS, profile_spec
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / 'target/runtime'
@@ -31,8 +32,15 @@ def profile_name(value):
     return value
 
 
-def data_home(profile):
-    path = Path(os.environ.get('KURA_DEV_HOME', str(Path.home() / '.kura-dev' / profile))).expanduser().resolve()
+def runtime_directory(network_provider='none'):
+    if network_provider not in PROVIDERS:
+        raise ValueError('Supported network providers: none, netplan')
+    return RUNTIME if network_provider == 'none' else RUNTIME.with_name('runtime-' + network_provider)
+
+
+def data_home(profile, network_provider='none'):
+    suffix = '' if network_provider == 'none' else '-' + network_provider
+    path = Path(os.environ.get('KURA_DEV_HOME', str(Path.home() / '.kura-dev' / (profile + suffix)))).expanduser().resolve()
     if path.is_relative_to(ROOT / 'target'):
         raise ValueError('KURA_DEV_HOME must be outside target: Maven clean must not remove development data')
     return path
@@ -137,11 +145,12 @@ def digest(path):
     return value.hexdigest()
 
 
-def guard(profile=None):
+def guard(profile=None, network_provider=None):
     # Port checks alone miss a JVM suspended before Jetty starts (IDEA Debug).
     processes = subprocess.run(['ps', '-axo', 'pid=,command='], check=True, capture_output=True, text=True)
+    directories = [runtime_directory(p) for p in PROVIDERS] if network_provider is None else [runtime_directory(network_provider)]
     for line in processes.stdout.splitlines():
-        if ' -jar ' in line and str(RUNTIME / 'launcher.jar') in line:
+        if ' -jar ' in line and any(str(directory / 'launcher.jar') in line for directory in directories):
             pid = line.strip().split(None, 1)[0]
             raise ValueError(f'Runtime is in use by JVM {pid}; stop Run/Debug before building or cleaning')
 
@@ -164,9 +173,9 @@ def initialize(home, values):
             stream.write(text)
 
 
-def import_data(profile, source, old_home=None):
-    guard(profile)
-    home = data_home(profile)
+def import_data(profile, source, old_home=None, network_provider='none'):
+    guard(profile, network_provider)
+    home = data_home(profile, network_provider)
     source_argument = Path(source).expanduser().absolute()
     source = source_argument.resolve()
     if home.exists() and any(home.iterdir()):
@@ -244,21 +253,47 @@ def properties_escape(value):
     return str(value).replace('\\', '\\\\').replace(':', '\\:')
 
 
-def prepare(profile):
-    guard(profile)
-    home = data_home(profile)
+def bridge_options(network_provider):
+    if network_provider != 'netplan':
+        return []
+    agent_socket = os.environ.get('KURA_MANAGEMENT_SOCKET', '/run/kura-management-agent/control.sock')
+    if not Path(agent_socket).is_absolute() or '\n' in agent_socket or '\r' in agent_socket:
+        raise ValueError('KURA_MANAGEMENT_SOCKET must be an absolute socket path')
+    agent_user = os.environ.get('KURA_MANAGEMENT_AGENT_USER', 'root')
+    if not re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_.-]*\$?', agent_user):
+        raise ValueError('KURA_MANAGEMENT_AGENT_USER must be a local OS user name')
+    return [f'-Dkura.management.socket={agent_socket}', f'-Dkura.management.agent.user={agent_user}']
+
+
+def prepare(profile, network_provider='none'):
+    guard(profile, network_provider)
+    directory = runtime_directory(network_provider)
+    _, framework_properties = profile_spec(network_provider, ROOT)
+    agent_options = bridge_options(network_provider)
+    if network_provider != 'none':
+        # Never relabel a copied legacy runtime by adding only JVM flags.
+        saved = json.loads((directory / 'profile.json').read_text())
+        if saved.get('networkProvider') != network_provider:
+            raise ValueError('Assemble the selected network profile before prepare/run')
+        configuration = (directory / 'configuration/config.ini').read_text().splitlines()
+        if any(f'{key}={value}' not in configuration for key, value in framework_properties.items()):
+            raise ValueError('Assembled runtime is missing its network owner reservation')
+    home = data_home(profile, network_provider)
     values = ports(home)
     check_ports(values)
     initialize(home, values)
     apply_port_overrides(home, values)
-    configuration = RUNTIME / 'configuration'
+    configuration = directory / 'configuration'
     configuration.mkdir(exist_ok=True)
     template = (ROOT / 'src/main/resources/kura.properties').read_text()
-    (configuration / 'kura.properties').write_text(template.replace('@KURA_DEV_HOME@', properties_escape(home)))
+    template = template.replace('@KURA_DEV_HOME@', properties_escape(home))
+    if network_provider == 'netplan':
+        template = template.replace('kura.have.net.admin=false', 'kura.have.net.admin=true')
+    (configuration / 'kura.properties').write_text(template)
     shutil.copy2(ROOT / 'src/main/resources/log4j.xml', configuration / 'log4j.xml')
     mode = 'macosx' if profile == 'macos' else 'emulator'
     options = ['-Xms256m', '-Xmx2g', '-Dosgi.noShutdown=true', '-Declipse.ignoreApp=true',
-               '-Dkura.have.net.admin=false', '-Dlog4j2.disable.jmx=true',
+               '-Dkura.have.net.admin=' + str(network_provider == 'netplan').lower(), '-Dlog4j2.disable.jmx=true',
                '-Dio.netty.tryReflectionSetAccessible=true', '-Dpolyglot.engine.WarnInterpreterOnly=false',
                '-Dorg.eclipse.equinox.http.jetty.customizer.class=org.eclipse.kura.jetty.customizer.KuraJettyCustomizer',
                f'-Dorg.eclipse.kura.mode={mode}', f'-Dkura.configuration={(configuration / "kura.properties").as_uri()}',
@@ -268,16 +303,20 @@ def prepare(profile):
                f'-Dfelix.fileinstall.dir={home / "load"}',
                f'-Dorg.osgi.service.http.port={values["KURA_HTTP_PORT"]}',
                '--add-modules=ALL-SYSTEM']
+    options += agent_options
     options += ['--add-opens=java.base/' + package + '=ALL-UNNAMED' for package in
                 ['jdk.internal.misc', 'java.lang', 'javax.net.ssl', 'java.nio', 'java.security', 'java.io']]
-    (RUNTIME / 'jvm.args').write_text('\n'.join('"' + option.replace('\\', '\\\\').replace('"', '\\"') + '"' for option in options) + '\n')
-    (RUNTIME / 'launch.json').write_text(json.dumps({'profile': profile, 'dataHome': str(home), 'ports': values}, indent=2) + '\n')
+    (directory / 'jvm.args').write_text('\n'.join('"' + option.replace('\\', '\\\\').replace('"', '\\"') + '"' for option in options) + '\n')
+    (directory / 'launch.json').write_text(json.dumps({'profile': profile, 'networkProvider': network_provider,
+                                                    'dataHome': str(home), 'ports': values}, indent=2) + '\n')
 
 
-def assemble(profile):
-    guard(profile)
-    check_ports(ports(data_home(profile)))
-    spec = json.loads((ROOT / 'runtime.json').read_text())
+def assemble(profile, network_provider='none'):
+    guard(profile, network_provider)
+    directory = runtime_directory(network_provider)
+    bridge_options(network_provider)  # Validate before replacing a runtime or initializing data.
+    check_ports(ports(data_home(profile, network_provider)))
+    spec, framework_properties = profile_spec(network_provider, ROOT)
     sources = {coordinate: ROOT / 'target/bundle-cache' / filename(coordinate) for coordinate in
                {x['coordinates'] for x in spec['bundles']} | {spec['framework'], spec['launcher']}}
     missing = [coordinate for coordinate, path in sources.items() if not path.is_file()]
@@ -317,26 +356,30 @@ def assemble(profile):
                  'osgi.startLevel=' + str(spec['frameworkStartLevel']), 'osgi.configuration.cascaded=false',
                  'eclipse.ignoreApp=true', 'osgi.noShutdown=true']
         (staging / 'configuration/config.ini').write_text('\n'.join(lines) + '\n')
+        with (staging / 'configuration/config.ini').open('a') as stream:
+            stream.write(''.join(f'{key}={value}\n' for key, value in framework_properties.items()))
+        (staging / 'profile.json').write_text(json.dumps({'schemaVersion': 1, 'networkProvider': network_provider}, indent=2) + '\n')
         (staging / 'inventory.json').write_text(json.dumps(inventory, indent=2) + '\n')
-        if RUNTIME.exists():
-            shutil.rmtree(RUNTIME)
-        staging.rename(RUNTIME)
+        if directory.exists():
+            shutil.rmtree(directory)
+        staging.rename(directory)
     finally:
         if staging.exists():
             shutil.rmtree(staging)
-    prepare(profile)
-    print(f'Assembled {len(spec["bundles"])} bundles: {RUNTIME}; data: {data_home(profile)}')
+    prepare(profile, network_provider)
+    print(f'Assembled {len(spec["bundles"])} bundles: {directory}; data: {data_home(profile, network_provider)}')
 
 
-def run(profile, debug_port):
-    prepare(profile)
+def run(profile, debug_port, network_provider='none'):
+    prepare(profile, network_provider)
+    directory = runtime_directory(network_provider)
     java = Path(os.environ['JAVA_HOME']) / 'bin/java' if os.environ.get('JAVA_HOME') else Path(shutil.which('java') or 'java')
-    command = [str(java), '@' + str(RUNTIME / 'jvm.args')]
+    command = [str(java), '@' + str(directory / 'jvm.args')]
     if debug_port:
         command.append(f'-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:{debug_port}')
-    command += ['-jar', str(RUNTIME / 'launcher.jar'), '-configuration', str(RUNTIME / 'configuration'),
-                '-data', str(data_home(profile) / 'data'), '-consoleLog', '-console']
-    os.chdir(RUNTIME)
+    command += ['-jar', str(directory / 'launcher.jar'), '-configuration', str(directory / 'configuration'),
+                '-data', str(data_home(profile, network_provider) / 'data'), '-consoleLog', '-console']
+    os.chdir(directory)
     os.execvpe(str(java), command, os.environ)
 
 
@@ -344,6 +387,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['assemble', 'prepare', 'run', 'guard', 'import-data'])
     parser.add_argument('--profile', default='auto')
+    parser.add_argument('--network-provider', choices=PROVIDERS, default=os.environ.get('KURA_DEV_NETWORK_PROVIDER', 'none'))
     parser.add_argument('--debug-port', type=int)
     parser.add_argument('--source', help='Explicit old Kura data home, used only by import-data')
     parser.add_argument('--old-home', help='Previous absolute data-home prefix to relocate during import')
@@ -353,11 +397,13 @@ def main():
         if args.command == 'import-data':
             if not args.source:
                 raise ValueError('import-data requires --source')
-            import_data(profile, args.source, args.old_home)
+            import_data(profile, args.source, args.old_home, args.network_provider)
         elif args.command == 'run':
-            run(profile, args.debug_port)
+            run(profile, args.debug_port, args.network_provider)
+        elif args.command == 'guard':
+            guard(profile)  # Maven clean removes every output, so protect all variants.
         else:
-            globals()[args.command](profile)
+            globals()[args.command](profile, args.network_provider)
     except (ValueError, OSError, KeyError) as exc:
         print(f'Kura runtime: {exc}', file=sys.stderr)
         raise SystemExit(1) from exc

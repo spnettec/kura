@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.eclipse.kura</groupId><artifactId>distrib</artifactId><version>6.0.0-SNAPSHOT</version><relativePath>..</relativePath></parent>
+  <artifactId>gateway-netplan</artifactId>
+  <packaging>pom</packaging>
+  <name>Kura core for the explicit Netplan profile</name>
+  <properties>
+    <dist.assembly.name>netplan-input</dist.assembly.name>
+    <dist.assembly.skip>false</dist.assembly.skip>
+    <dist.linux.bundles.skip>false</dist.linux.bundles.skip>
+    <dist.linux.family.skip>false</dist.linux.family.skip>
+    <!-- Clock control belongs to the OS; the JVM gets no system capability. -->
+    <dist.network.resources.skip>true</dist.network.resources.skip>
+    <target.device>linux</target.device>
+  </properties>
+  <build><plugins>
+    <plugin><artifactId>maven-assembly-plugin</artifactId><executions><execution><id>make-distribution-zip</id><phase>none</phase></execution></executions></plugin>
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId>
+      <executions>
+        <execution><id>create-installer-script</id><phase>none</phase></execution>
+        <execution><id>create-build-catalog</id><phase>none</phase></execution>
+        <execution><id>netplan-package-tests</id><phase>test</phase><goals><goal>exec</goal></goals><configuration>
+          <executable>python3</executable><arguments><argument>-m</argument><argument>unittest</argument><argument>discover</argument><argument>-s</argument><argument>${project.basedir}/tools</argument><argument>-p</argument><argument>test_*.py</argument></arguments>
+        </configuration></execution>
+        <execution><id>stage-netplan-core</id><phase>package</phase><goals><goal>exec</goal></goals><configuration>
+          <executable>python3</executable><arguments><argument>${project.basedir}/tools/stage.py</argument><argument>--build-dir</argument><argument>${project.build.directory}</argument><argument>--version</argument><argument>${package.version}-${package.revision}</argument><argument>--arch</argument><argument>${deb.arch}</argument></arguments>
+        </configuration></execution>
+      </executions>
+    </plugin>
+    <plugin><groupId>org.vafer</groupId><artifactId>jdeb</artifactId><version>${jdeb-version}</version><executions><execution>
+      <id>netplan-core-deb</id><phase>package</phase><goals><goal>jdeb</goal></goals><configuration>
+        <deb>${project.build.directory}/kura-core-netplan_${package.version}-${package.revision}_${deb.arch}.deb</deb>
+        <controlDir>${project.build.directory}/netplan-control</controlDir><skipPOMs>false</skipPOMs>
+        <dataSet>
+          <data><src>${project.build.directory}/netplan-root</src><type>directory</type><mapper><type>perm</type><prefix>/</prefix><user>root</user><group>root</group><filemode>644</filemode><dirmode>755</dirmode></mapper></data>
+          <data><type>link</type><linkName>/opt/eclipse/kura/user</linkName><linkTarget>/var/lib/kura-netplan/user</linkTarget><symlink>true</symlink></data>
+          <data><type>link</type><linkName>/opt/eclipse/kura/data</linkName><linkTarget>/var/lib/kura-netplan/data</linkTarget><symlink>true</symlink></data>
+          <data><type>link</type><linkName>/opt/eclipse/kura/packages</linkName><linkTarget>/var/lib/kura-netplan/packages</linkTarget><symlink>true</symlink></data>
+          <data><type>link</type><linkName>/opt/eclipse/kura/load</linkName><linkTarget>/var/lib/kura-netplan/load</linkTarget><symlink>true</symlink></data>
+        </dataSet>
+      </configuration>
+    </execution></executions></plugin>
+  </plugins></build>
+</project>

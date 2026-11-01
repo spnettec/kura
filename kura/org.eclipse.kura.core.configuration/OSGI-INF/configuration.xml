@@ -24,6 +24,7 @@
 
     <service>
         <provide interface="org.eclipse.kura.configuration.ConfigurationService"/>
+        <provide interface="org.eclipse.kura.configuration.ConfigurationRevisionService"/>
         <provide interface="org.eclipse.kura.configuration.metatype.OCDService"/>
     </service>
 
@@ -78,6 +79,13 @@
               name="SelfConfiguringComponent"
               policy="dynamic"
               unbind="removeSelfConfiguringComponent" />
+
+   <reference bind="addExternalConfigurationHandler"
+              cardinality="0..n"
+              interface="org.eclipse.kura.configuration.ExternalConfigurationHandler"
+              name="ExternalConfigurationHandler"
+              policy="dynamic"
+              unbind="removeExternalConfigurationHandler" />
 
    <reference bind="setXmlUnmarshaller"
               cardinality="1..1"

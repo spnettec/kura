@@ -22,6 +22,38 @@ IDEA 从仓库根 POM 导入，在 Maven 面板启用 `workspace` profile，配�
 这两个开关。即使 Maven 面板同时选中了 `osgi-it`，启动前仍只做增量打包。
 测试验收另外执行 `mvn -Posgi-it verify` 或 `RUN_TESTS=1 RUN_IT=1 ./build-all.sh`。
 
+## 独立 agent 的 Netplan 网络配置
+
+默认 `none` 继续使用现有仿真运行集。显式选择 `netplan` 时，在相同核心、sibling 和 YOFC
+清单上加入 `org.eclipse.kura.management.bridge` 与 `org.eclipse.kura.netplan`，启动前固定
+`kura.networking.provider=netplan` 和原网络配置 PID 的外部归属。旧 NM、linux.net、防火墙、
+threat manager 不允许同时进入该变体（NM 内含 ModemManager/GNSS 实现）；清单冲突直接失败。
+`network-providers.json` 是此选择的来源，Maven 收集两个变体明确列出的 artifact，默认不激活新 provider。
+
+Netplan 运行集位于 `target/runtime-netplan/`，默认数据目录为 `~/.kura-dev/<profile>-netplan`，
+与原 `target/runtime/` 及数据目录分开。联调建议指定新的隔离数据目录：
+
+```sh
+KURA_DEV_HOME=/absolute/isolated/kura-home \
+KURA_MANAGEMENT_SOCKET=/run/kura-management-agent/control.sock \
+KURA_MANAGEMENT_AGENT_USER=root \
+  mvn -f kura-dev-runtime/pom.xml package \
+  -Dmaven.repo.local=/absolute/cache -Dkura.dev.profile=linux -Dkura.dev.network-provider=netplan
+
+KURA_DEV_HOME=/absolute/isolated/kura-home KURA_DEV_NETWORK_PROVIDER=netplan \
+  kura-dev-runtime/run.sh --no-build
+```
+
+macOS 使用 `-Dkura.dev.profile=macos`，并指定实际 agent socket 和 OS 用户。
+`KURA_HTTP_PORT`、`KURA_HTTPS_PORT` 和 `KURA_CLIENT_AUTH_PORT` 同原机制；构建、prepare/run 时
+须传入相同环境。`run.sh --network-provider netplan` 也会让前置 Maven 和启动器选择相同变体。
+Maven clean 会检查两个运行目录，任一 JVM 运行或暂停时均拒绝清理。
+
+本机桥接默认验证 agent 的 OS 用户 `root`，不使用 Kura Web 账号。agent 侧仍须登记实际 Kura UID；
+未配置 `AGENT_KURA_NETWORK_INTERFACES` 时拒绝网络委托，显式空值仅供观测，非空值仅能是已受管接口子集。
+启用此 Kura profile 不会修改 Netplan、授予接口管理权或自动停用 NM/cloud-init。
+这是明确的开发运行变体；正式 deb 选择、包生命周期及实际发行矩阵另行验收。
+
 `target/runtime/` 内包含 launcher、framework、plugins、生成配置与 `inventory.json`（坐标、bundle 版本、SHA256）。可直接比对清单确认加载来源。停止 Run/Debug 后再执行 package/clean；即使 JVM 暂停在 Jetty 启动之前，工具也拒绝替换正在使用的目录。
 
 用户数据默认保存在 `~/.kura-dev/macos` 或 `~/.kura-dev/linux`，可以设置 `KURA_DEV_HOME`；不允许放在本模块的 target 内。已有 snapshot/密钥不会因初始化或 Maven clean 被覆盖。日志位于数据目录的 `logs/`。

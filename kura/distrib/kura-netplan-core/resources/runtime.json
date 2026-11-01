@@ -1,0 +1,5 @@
+{
+  "socket": "/run/kura-management-agent/control.sock",
+  "agentUser": "root",
+  "memory": "512m"
+}

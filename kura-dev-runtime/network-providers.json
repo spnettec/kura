@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "netplan": {
+    "bundles": [
+      {
+        "startLevel": 5,
+        "start": true,
+        "coordinates": "org.eclipse.kura:org.eclipse.kura.management.bridge:1.0.0-SNAPSHOT",
+        "module": "kura-networking/bundles/org.eclipse.kura.management.bridge",
+        "symbolicName": "org.eclipse.kura.management.bridge"
+      },
+      {
+        "startLevel": 5,
+        "start": true,
+        "coordinates": "org.eclipse.kura:org.eclipse.kura.netplan:1.0.0-SNAPSHOT",
+        "module": "kura-networking/bundles/org.eclipse.kura.netplan",
+        "symbolicName": "org.eclipse.kura.netplan"
+      }
+    ],
+    "frameworkProperties": {
+      "kura.networking.provider": "netplan",
+      "kura.configuration.external.pids": "org.eclipse.kura.net.admin.NetworkConfigurationService"
+    },
+    "forbiddenSymbolicNames": [
+      "org.eclipse.kura.nm",
+      "org.eclipse.kura.linux.net",
+      "org.eclipse.kura.net.admin.firewall",
+      "org.eclipse.kura.network.threat.manager"
+    ]
+  }
+}

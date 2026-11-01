@@ -31,6 +31,12 @@ public class ConfigurationServiceAuditFacade extends ConfigurationServiceImpl {
     private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
 
     @Override
+    public synchronized void updateRevision(String pid, String expectedRevision, Map<String, Object> properties)
+            throws KuraException {
+        audit(() -> super.updateRevision(pid, expectedRevision, properties), "Conditional configuration update: " + pid);
+    }
+
+    @Override
     public synchronized void createFactoryConfiguration(String factoryPid, String pid, Map<String, Object> properties,
             boolean takeSnapshot) throws KuraException {
         audit(() -> super.createFactoryConfiguration(factoryPid, pid, properties, takeSnapshot),
