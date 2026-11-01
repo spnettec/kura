@@ -26,7 +26,8 @@ public final class ConfigurationRemoteProbe implements BundleActivator {
     private void observe(BundleContext context) {
         Path root = Path.of(System.getProperty("kura.configuration.remote.probe.root"));
         try {
-            if (!Files.isRegularFile(root.resolve(".configuration-update-owned"))) { throw new IllegalStateException(); }
+            if (!Files.isRegularFile(root.resolve(".configuration-update-owned"))
+                    && !Files.isRegularFile(root.resolve(".outcome-snapshot-owned"))) { throw new IllegalStateException(); }
             while (!Thread.currentThread().isInterrupted()) {
                 String stage = Files.readString(root.resolve("stage")).trim();
                 if (!Set.of("initial", "keep", "set", "rejected", "restart").contains(stage)) { throw new IllegalStateException(); }
