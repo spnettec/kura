@@ -42,6 +42,31 @@ public interface ConfigurationRevisionService {
     Read readRevision(String pid) throws KuraException;
 
     /**
+     * Classifies the configuration view used by {@link #readRevision(String)}.
+     * {@code SELF_CONFIGURING} means the component owns that view. This does not
+     * authorize a remote update and does not lock direct ConfigurationAdmin writers.
+     *
+     * @since 1.5.0
+     */
+    Applicability applicability(String pid) throws KuraException;
+
+    /** @since 1.5.0 */
+    enum ComponentKind { CONFIGURABLE, SELF_CONFIGURING }
+
+    /**
+     * @since 1.5.0
+     */
+    record Applicability(ComponentKind kind, boolean componentOwnsView) {
+        public Applicability {
+            if (kind == null || componentOwnsView != (kind == ComponentKind.SELF_CONFIGURING)) {
+                throw new IllegalArgumentException("inconsistent configuration applicability");
+            }
+        }
+
+        @Override public String toString() { return "ConfigurationRevisionService.Applicability[" + kind + "]"; }
+    }
+
+    /**
      * Sets only the supplied properties and preserves omitted values, including
      * passwords. Nulls, property deletion and factory creation are not implied.
      * On acceptance the ordinary ConfigurationService update and snapshot policy

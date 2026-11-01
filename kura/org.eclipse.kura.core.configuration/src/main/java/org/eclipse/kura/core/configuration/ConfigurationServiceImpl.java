@@ -57,8 +57,11 @@ import org.eclipse.kura.KuraIOException;
 import org.eclipse.kura.KuraPartialSuccessException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
 import org.eclipse.kura.configuration.ConfigurableComponent;
+import org.eclipse.kura.configuration.ConfigurationConstraints;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.ConfigurationRevisionService;
+import org.eclipse.kura.configuration.ConfigurationRevisionService.Applicability;
+import org.eclipse.kura.configuration.ConfigurationRevisionService.ComponentKind;
 import org.eclipse.kura.configuration.ConfigurationRevisionService.Reason;
 import org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected;
 import org.eclipse.kura.configuration.ExternalConfigurationHandler;
@@ -451,6 +454,22 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     @Override
+    public synchronized Applicability applicability(String pid) throws KuraException {
+        if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                || pid.codePoints().anyMatch(Character::isISOControl)) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        if (this.externalConfigurations.owns(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+        if (this.activatedSelfConfigComponents.contains(pid)) {
+            return new Applicability(ComponentKind.SELF_CONFIGURING, true);
+        }
+        if (this.allActivatedPids.contains(pid) || this.servicePidByPid.containsKey(pid)) {
+            return new Applicability(ComponentKind.CONFIGURABLE, false);
+        }
+        throw new Rejected(Reason.NOT_FOUND);
+    }
+
+    @Override
     public synchronized void updateRevision(String pid, String expectedRevision, Map<String, Object> properties)
             throws KuraException {
         if (expectedRevision == null || !expectedRevision.matches("[0-9a-f]{64}")) {
@@ -470,16 +489,27 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                     .contains(entry.getKey()) || attribute == null || !ConfigurationRevision.accepts(attribute, entry.getValue())) {
                 throw new Rejected(Reason.INVALID_ARGUMENT);
             }
+            var constraint = ConfigurationConstraints.value(attribute, entry.getValue());
+            if (constraint == ConfigurationConstraints.Status.UNSUPPORTED) { throw new Rejected(Reason.UNSUPPORTED); }
+            if (constraint != ConfigurationConstraints.Status.SATISFIED) { throw new Rejected(Reason.INVALID_ARGUMENT); }
         }
+        if (!revisionTargetTracked(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+        Map<String, Object> submission = this.activatedSelfConfigComponents.contains(pid)
+                ? ConfigurationRevision.overlay(before.configuration().getConfigurationProperties(), patch)
+                : ConfigurationRevision.copyPatch(patch);
         // Invalidate admission even if the legacy update later reports a partial failure.
         this.revisionAdmissions.merge(pid, 1L, Long::sum);
         try {
-            updateConfiguration(pid, ConfigurationRevision.copyPatch(patch), true);
+            updateConfiguration(pid, submission, true);
         } catch (KuraException | RuntimeException e) {
             this.revisionUncertain.add(pid);
             throw e;
         }
         this.revisionPending.put(pid, patch);
+    }
+
+    protected boolean revisionTargetTracked(String pid) {
+        return this.allActivatedPids.contains(pid) && getRegisteredOCD(pid) != null;
     }
 
     @Override
@@ -656,7 +686,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     // ----------------------------------------------------------------
 
     @Override
-    public long snapshot() throws KuraException {
+    public synchronized long snapshot() throws KuraException {
         logger.info("Writing snapshot - Getting component configurations...");
 
         List<ComponentConfiguration> configs = buildCurrentConfiguration(null);

@@ -31,6 +31,8 @@ class ConfigurationRevisionAdmissionTest {
         Map<String, Object> delayed;
         boolean delay;
         boolean failAfterWrite;
+        boolean tracked = true;
+        Map<String, Object> submitted;
         int writes;
         final AtomicLong changeCount = new AtomicLong();
 
@@ -49,10 +51,13 @@ class ConfigurationRevisionAdmissionTest {
         @Override public synchronized void updateConfiguration(String pid, Map<String, Object> patch, boolean snapshot)
                 throws KuraException {
             assertEquals(PID, pid); assertTrue(snapshot); this.writes++; this.changeCount.incrementAndGet();
+            this.submitted = new HashMap<>(patch);
             if (this.delay) { this.delayed = new HashMap<>(patch); }
             else { this.current.putAll(patch); }
             if (this.failAfterWrite) { throw new KuraException(org.eclipse.kura.KuraErrorCode.CONFIGURATION_UPDATE); }
         }
+
+        @Override protected boolean revisionTargetTracked(String pid) { return this.tracked && PID.equals(pid); }
     }
 
     @Test void concurrentReadersCannotBothCommitAndOmittedPasswordsSurvive() throws Exception {
@@ -123,5 +128,29 @@ class ConfigurationRevisionAdmissionTest {
         assertEquals(Reason.INVALID_ARGUMENT, assertThrows(Rejected.class,
                 () -> service.updateRevision(PID, "invalid", Map.of("name", "bad"))).getReason());
         assertEquals(0, service.writes);
+    }
+
+    @Test void untrackedComponentDoesNotBurnAdmission() throws Exception {
+        var service = new Fixture(); service.tracked = false;
+        String revision = service.readRevision(PID).revision();
+        var rejected = assertThrows(Rejected.class, () -> service.updateRevision(PID, revision, Map.of("name", "no-write")));
+        assertEquals(Reason.UNSUPPORTED, rejected.getReason());
+        assertEquals(0, service.writes);
+        service.tracked = true;
+        service.updateRevision(PID, revision, Map.of("name", "kept"));
+        assertEquals("kept", service.current.get("name"));
+    }
+
+    @Test void selfConfiguringUpdatePreservesOmittedObservedValues() throws Exception {
+        var service = new Fixture();
+        var field = ConfigurationServiceImpl.class.getDeclaredField("activatedSelfConfigComponents");
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked") var self = (java.util.Set<String>) field.get(service);
+        self.add(PID);
+        String revision = service.readRevision(PID).revision();
+        service.updateRevision(PID, revision, Map.of("name", "from-view"));
+        assertEquals("from-view", service.submitted.get("name"));
+        assertArrayEquals("original".toCharArray(), ((Password) service.submitted.get("password")).getPassword());
+        assertEquals("from-view", service.current.get("name"));
     }
 }

@@ -168,6 +168,17 @@ final class ConfigurationRevision {
 
     private static Rejected unsupported() { return new Rejected(Reason.UNSUPPORTED); }
 
+    static Map<String, Object> overlay(Map<String, Object> current, Map<String, Object> patch) throws Rejected {
+        if (current == null || current.size() > 512 || current.containsKey(null)) { throw unsupported(); }
+        Map<String, Object> merged = new HashMap<>();
+        for (var entry : current.entrySet()) {
+            if (entry.getValue() != null) { merged.put(entry.getKey(), copy(entry.getValue(), true)); }
+        }
+        merged.putAll(patch);
+        if (merged.size() > 512) { throw unsupported(); }
+        return merged;
+    }
+
     static boolean accepts(AD attribute, Object value) {
         int cardinality = attribute.getCardinality();
         if (cardinality == 0) { return scalar(attribute.getType(), value); }
