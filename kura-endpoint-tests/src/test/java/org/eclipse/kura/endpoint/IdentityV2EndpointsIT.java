@@ -53,6 +53,7 @@ class IdentityV2EndpointsIT extends EndpointTestBase {
     private IdentityDTO identity;
     private IdentityConfigurationRequestDTO identityConfigurationRequestDTO;
     private IdentityConfigurationDTO identityConfiguration;
+    private String identityConfigurationJson;
     private PasswordConfigurationDTO passwordConfiguration;
     private AdditionalConfigurationsDTO additionalConfigurations;
     private PermissionConfigurationDTO permissionConfiguration;
@@ -132,6 +133,56 @@ class IdentityV2EndpointsIT extends EndpointTestBase {
         for (var extension : this.extensions.values()) {
             assertEquals(Map.of("foo", "bar"), extension.configurations.get(this.testUsername).getConfigurationProperties());
         }
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void shouldRejectUpdateWithStringPasswordChangeNeeded(TransportType type) throws Exception {
+        useTransport(type, MQTT_APP_ID, REST_APP_ID);
+        givenExistingIdentity(new IdentityDTO(this.testUsername));
+        givenPasswordConfigurationJson("\"passwordChangeNeeded\":\"asd\",\"passwordAuthEnabled\":true");
+
+        whenRequestIsPerformed(new MethodSpec(METHOD_SPEC_PUT), "/identities", this.identityConfigurationJson);
+
+        thenResponseCodeIs(400);
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void shouldRejectUpdateWithStringPasswordAuthEnabled(TransportType type) throws Exception {
+        useTransport(type, MQTT_APP_ID, REST_APP_ID);
+        givenExistingIdentity(new IdentityDTO(this.testUsername));
+        givenPasswordConfigurationJson("\"passwordChangeNeeded\":false,\"passwordAuthEnabled\":\"true\"");
+
+        whenRequestIsPerformed(new MethodSpec(METHOD_SPEC_PUT), "/identities", this.identityConfigurationJson);
+
+        thenResponseCodeIs(400);
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void shouldRejectUpdateWithNullPasswordChangeNeeded(TransportType type) throws Exception {
+        useTransport(type, MQTT_APP_ID, REST_APP_ID);
+        givenExistingIdentity(new IdentityDTO(this.testUsername));
+        givenPasswordConfigurationJson("\"passwordChangeNeeded\":null,\"passwordAuthEnabled\":false");
+
+        whenRequestIsPerformed(new MethodSpec(METHOD_SPEC_PUT), "/identities", this.identityConfigurationJson);
+
+        thenResponseCodeIs(400);
+        thenResponseBodyEqualsJson("{\"message\":\"Missing 'passwordChangeNeeded' property\"}");
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void shouldRejectUpdateWithoutPasswordAuthEnabled(TransportType type) throws Exception {
+        useTransport(type, MQTT_APP_ID, REST_APP_ID);
+        givenExistingIdentity(new IdentityDTO(this.testUsername));
+        givenPasswordConfigurationJson("\"passwordChangeNeeded\":false");
+
+        whenRequestIsPerformed(new MethodSpec(METHOD_SPEC_PUT), "/identities", this.identityConfigurationJson);
+
+        thenResponseCodeIs(400);
+        thenResponseBodyEqualsJson("{\"message\":\"Missing 'passwordAuthEnabled' property\"}");
     }
 
     @ParameterizedTest
@@ -368,6 +419,11 @@ class IdentityV2EndpointsIT extends EndpointTestBase {
 
     private void givenMockIdentityConfigurationExtension(final String pid) {
         this.extensions.put(pid, new MockExtensionHolder(pid));
+    }
+
+    private void givenPasswordConfigurationJson(String passwordConfigurationFields) {
+        this.identityConfigurationJson = "{\"identity\":{\"name\":\"" + this.testUsername
+                + "\"},\"passwordConfiguration\":{" + passwordConfigurationFields + "}}";
     }
 
     private void givenIdentityConfigurationRequestDTO() {
