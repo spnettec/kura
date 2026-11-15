@@ -24,16 +24,15 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_key_store import Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEVELOPMENT, Refused
-from kura_key_service_lifecycle import Lifecycle, validate_record, Refused as LifecycleRefused
+from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEVELOPMENT, Refused,
+                            GENERATION_FORMAT, RING_PATH, RING_MAGIC, GENERATION_RECEIPT_PATH,
+                            key_generations as parse_key_generations, generation_receipt as parse_generation_receipt)
+from kura_key_service_lifecycle import (Lifecycle, validate_record, Refused as LifecycleRefused,
+                                       Unresolved as LifecycleUnresolved)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
 FORMAT = "yofc-kura-gateway-master-key-v1"
-GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
-RING_PATH = "/etc/kura/credentials/kura_encryption_keyring"
-GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
-RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 MAX_FRAME = 65536
 MAX_OPERATIONS = 256
 CIPHER = ["/usr/bin/java", "-Xms16m", "-Xmx96m", "-XX:MaxMetaspaceSize=64m",
@@ -120,30 +119,10 @@ def receipt(value, key=None):
 
 
 def key_generations(raw):
-    """Validate the Java reader's exact binary credential; never guess a key."""
-    require(isinstance(raw, bytes) and len(RING_MAGIC) + 3 <= len(raw) <= 512)
-    require(raw.startswith(RING_MAGIC))
-    count, active, legacy = raw[len(RING_MAGIC):len(RING_MAGIC) + 3]
-    require(2 <= count <= 8 and active < count and legacy < count and active != legacy)
-    offset = len(RING_MAGIC) + 3
-    keys = []
-    ids = []
-    for number in range(count):
-        require(offset < len(raw))
-        size = raw[offset]
-        offset += 1
-        require(size in (16, 24, 32) and offset + size <= len(raw))
-        require(number != active or size == 32)
-        key = raw[offset:offset + size]
-        offset += size
-        identity = hashlib.sha256(key).hexdigest()
-        require(identity not in ids)
-        keys.append(key)
-        ids.append(identity)
-    require(offset == len(raw))
-    metadata = dict(ringSha256=hashlib.sha256(raw).hexdigest(), activeKeySha256=ids[active],
-                    legacyKeySha256=ids[legacy], keySha256s=ids)
-    return keys[active], metadata
+    try:
+        return parse_key_generations(raw)
+    except Refused:
+        raise Failure("INVALID_ARGUMENT") from None
 
 
 class Manager:
@@ -248,24 +227,11 @@ class Manager:
     def generation_receipt(self):
         self.directory(self.store.path("/etc/kura/credentials"), private=True)
         try:
-            proof = decode(self.read(self.store.path(GENERATION_RECEIPT_PATH), 2048))
+            return parse_generation_receipt(self.read(self.store.path(GENERATION_RECEIPT_PATH), 2048))
         except FileNotFoundError:
             raise Failure("KEY_GENERATIONS_MISSING") from None
-        except OSError:
+        except (OSError, Refused):
             raise Failure("UNSAFE_FILESYSTEM") from None
-        fields(proof, {"schema", "purpose", "ringSha256", "activeKeySha256", "legacyKeySha256", "keySha256s"})
-        require(type(proof["schema"]) is int and proof["schema"] == 1
-                and proof["purpose"] == GENERATION_FORMAT, "UNSAFE_FILESYSTEM")
-        for name in ("ringSha256", "activeKeySha256", "legacyKeySha256"):
-            digest(proof[name])
-        ids = proof["keySha256s"]
-        require(isinstance(ids, list) and 2 <= len(ids) <= 8, "UNSAFE_FILESYSTEM")
-        for identity in ids:
-            digest(identity)
-        require(len(set(ids)) == len(ids) and proof["activeKeySha256"] in ids
-                and proof["legacyKeySha256"] in ids
-                and proof["activeKeySha256"] != proof["legacyKeySha256"], "UNSAFE_FILESYSTEM")
-        return {k: v for k, v in proof.items() if k not in ("schema", "purpose")}
 
     def generations(self):
         current, proof = self.canonical(allow_generations=True)
@@ -381,6 +347,78 @@ class Manager:
         except LifecycleRefused:
             raise Failure("UNSAFE_JOURNAL") from None
 
+    def settled(self):
+        try:
+            Lifecycle(self.root, self.owner).check_records()
+        except LifecycleUnresolved:
+            raise Failure("UNRESOLVED_OPERATION") from None
+        except LifecycleRefused:
+            raise Failure("UNSAFE_JOURNAL") from None
+
+    @staticmethod
+    def generation_restore_supported():
+        return sys.platform == "linux" and hasattr(ctypes.CDLL(None), "renameat2")
+
+    def generation_restore_state(self, raw, metadata):
+        active, _ = key_generations(raw)
+        current, proof = self.canonical(True, allow_generations=True)
+        trusted = self.generation_receipt()
+        require(trusted["activeKeySha256"] == proof["keySha256"], "UNSAFE_FILESYSTEM")
+        require(metadata == trusted, "CONFLICT")
+        require(current is None or hmac.compare_digest(current, active), "CONFLICT")
+        try:
+            ring = self.read(self.store.path(RING_PATH), 512)
+        except FileNotFoundError:
+            ring = None
+        except OSError:
+            raise Failure("UNSAFE_FILESYSTEM") from None
+        require(ring is None or hmac.compare_digest(ring, raw), "CONFLICT")
+        return active, current, ring, proof
+
+    def restore_generations(self, request, *, recovery_only):
+        fields(request, {"schema", "action", "operationId", "passphrase", "backup", "expectedRingSha256"})
+        identity = operation_id(request["operationId"])
+        password = passphrase(request["passphrase"])
+        expected = digest(request["expectedRingSha256"])
+        with self.lock(self.state / "admission.lock", True):
+            self.maintenance()
+            secret = self.read(self.state / "journal.key", 32)
+            require(len(secret) == 32, "UNSAFE_JOURNAL")
+            tag = hmac.new(secret, encode(request), hashlib.sha256).hexdigest()
+            prior = self.record(identity)
+            if prior is not None:
+                require(hmac.compare_digest(prior["requestTag"], tag), "CONFLICT")
+                return self.public_record(prior)
+            self.settled()
+            self.journal_admission()
+            with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), True):
+                raw, metadata, _ = self.unpack_generations(request["backup"], password)
+                require(metadata["ringSha256"] == expected, "CONFLICT")
+                active, current, ring, proof = self.generation_restore_state(raw, metadata)
+                missing = current is None or ring is None
+                require(not recovery_only or missing, "CONFLICT")
+                require(not missing or self.generation_restore_supported(), "UNSUPPORTED")
+                record = dict(schema=1, operationId=identity, action="generation-restore",
+                              requestTag=tag, state="INTENT", response=None)
+                try:
+                    self.atomic(self.operations / (identity + ".json"), encode(record))
+                    # Only missing, strictly original bytes may be published. No overwrite or new generation.
+                    if ring is None:
+                        self.atomic(self.store.path(RING_PATH), raw, mode=0o400, no_replace=True)
+                    if current is None:
+                        self.atomic(self.store.path(KEY_PATH), active, mode=0o400, no_replace=True)
+                    restored, observed, observed_proof = self.generations()
+                    require(restored == raw and observed == metadata and observed_proof == proof, "UNKNOWN")
+                    response = dict(schema=1, operationId=identity, action="generation-restore", state="SUCCEEDED",
+                                    ringSha256=metadata["ringSha256"], activeKeySha256=metadata["activeKeySha256"],
+                                    activeKeyRestored=current is None, keyringRestored=ring is None,
+                                    existingReceiptPreserved=True)
+                    record.update(state="SUCCEEDED", response=response)
+                    self.atomic(self.operations / (identity + ".json"), encode(record))
+                    return response
+                except (OSError, Failure, Refused):
+                    raise Failure("UNKNOWN") from None
+
     def create_generation_backup(self, request):
         fields(request, {"schema", "action", "operationId", "passphrase"})
         identity = operation_id(request["operationId"])
@@ -394,6 +432,7 @@ class Manager:
             if existing is not None:
                 require(hmac.compare_digest(existing["requestTag"], tag), "CONFLICT")
                 return self.public_record(existing)
+            self.settled()
             self.journal_admission()
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                 raw, _, proof = self.generations()
@@ -418,7 +457,20 @@ class Manager:
         require(isinstance(request, dict) and type(request.get("schema")) is int and request["schema"] == 1)
         action = request.get("action")
         if recovery_only:
-            require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info'), 'FORBIDDEN')
+            require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
+        if action == "generation-start-admission":
+            fields(request, {"schema", "action", "ringSha256", "activeKeySha256"})
+            digest(request["ringSha256"]); digest(request["activeKeySha256"])
+            with self.lock(self.state / "admission.lock", False):
+                self.maintenance()
+                self.settled()
+                with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
+                    _, metadata, _ = self.generations()
+                    require(all(request[k] == metadata[k] for k in ("ringSha256", "activeKeySha256")), "CONFLICT")
+                    return dict(schema=1, state="GENERATION_READY", ringSha256=metadata["ringSha256"],
+                                activeKeySha256=metadata["activeKeySha256"])
+        if action == "generation-restore":
+            return self.restore_generations(request, recovery_only=recovery_only)
         if action == "generation-backup-create":
             return self.create_generation_backup(request)
         if action == "generation-backup-inspect":
@@ -426,14 +478,29 @@ class Manager:
             password = passphrase(request["passphrase"])
             with self.lock(self.state / "admission.lock", False):
                 self.maintenance()
+                blocked = False
+                try:
+                    self.settled()
+                except Failure as failure:
+                    if failure.reason != "UNRESOLVED_OPERATION":
+                        raise
+                    blocked = True
                 with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                     current = self.generation_receipt()
                     key, proof = self.canonical(True, allow_generations=True)
                     require(current["activeKeySha256"] == proof["keySha256"], "UNSAFE_FILESYSTEM")
-                    _, metadata, data = self.unpack_generations(request["backup"], password)
+                    raw, metadata, data = self.unpack_generations(request["backup"], password)
+                    compatible = current == metadata
+                    allowed = False
+                    ring_ready = False
+                    if compatible:
+                        _, key, ring, _ = self.generation_restore_state(raw, metadata)
+                        ring_ready = ring is not None
+                        allowed = not blocked and self.generation_restore_supported() and (not recovery_only or key is None or ring is None)
                     return dict(schema=1, backupOperationId=data["operationId"], createdAt=data["createdAt"],
-                                **metadata, matchesRetainedReceipt=current == metadata,
-                                activeKeyReady=key is not None, restoreSupported=False)
+                                **metadata, matchesRetainedReceipt=compatible, activeKeyReady=key is not None,
+                                keyringReady=ring_ready, restoreSupported=self.generation_restore_supported(),
+                                restoreAllowed=allowed, restoreBlockedByUnresolvedOperation=blocked)
         if action in ("core-start", "core-start-read", "core-start-plan", "core-start-after-maintenance"):
             from kura_key_recovery_start import Starter
             return Starter(self).handle(request)
@@ -468,7 +535,7 @@ class Manager:
             with self.lock(self.state / "admission.lock", False):
                 self.maintenance()
                 record = self.record(identity)
-                require(not recovery_only or record is None or record['action'] == 'restore', 'FORBIDDEN')
+                require(not recovery_only or record is None or record['action'] in ('restore', 'generation-restore'), 'FORBIDDEN')
                 return self.public_record(record)
         if action == "backup-inspect":
             fields(request, {"schema", "action", "backup", "passphrase"})

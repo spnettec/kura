@@ -355,7 +355,7 @@ class KeyServiceTest(unittest.TestCase):
         self.assertNotIn(service.CORE_DEFAULT, journal)
         inspected = self.generation_inspect(result["backup"])
         self.assertTrue(inspected["matchesRetainedReceipt"])
-        self.assertFalse(inspected["restoreSupported"])
+        self.assertEqual(self.manager.generation_restore_supported(), inspected["restoreSupported"])
         self.assertNotIn("keyring", inspected)
         self.assertNotIn("receipt", inspected)
 
@@ -368,7 +368,7 @@ class KeyServiceTest(unittest.TestCase):
         result = self.generation_inspect(backup)
         self.assertTrue(result["matchesRetainedReceipt"])
         self.assertFalse(result["activeKeyReady"])
-        self.assertFalse(result["restoreSupported"])
+        self.assertEqual(self.manager.generation_restore_supported(), result["restoreSupported"])
         self.assertFalse(self.key_path.exists())
         self.assertFalse((self.directory / "kura_encryption_keyring").exists())
         self.assertEqual(before, sorted(p.name for p in (self.state / "operations").iterdir()))
@@ -407,7 +407,7 @@ class KeyServiceTest(unittest.TestCase):
         result = self.generation_inspect(backup)
         self.assertFalse(result["matchesRetainedReceipt"])
         self.assertEqual(self.proof["keySha256"], result["activeKeySha256"])
-        self.assertFalse(result["restoreSupported"])
+        self.assertEqual(self.manager.generation_restore_supported(), result["restoreSupported"])
 
     def test_generation_backup_rejects_wrong_password_tampering_and_external_id(self):
         self.generation_fixture()
@@ -492,7 +492,7 @@ class KeyServiceTest(unittest.TestCase):
 
     def test_recovery_peer_cannot_export_a_generation_set(self):
         self.generation_fixture()
-        for action in ("generation-backup-create", "generation-backup-inspect"):
+        for action in ("generation-backup-create", "generation-start-admission"):
             self.refused("FORBIDDEN", lambda: self.manager.handle(dict(schema=1, action=action), recovery_only=True))
         self.assertEqual([], list((self.state / "operations").iterdir()))
 
@@ -508,6 +508,179 @@ class KeyServiceTest(unittest.TestCase):
             with self.subTest(size=len(value)):
                 with self.assertRaises(service.Failure):
                     service.key_generations(value)
+
+
+    def generation_restore(self, backup, *, recovery_only=False, identity=None, expected=None):
+        request = self.request("generation-restore", operationId=identity or str(uuid.uuid4()),
+                               backup=backup, passphrase=PASSWORD,
+                               expectedRingSha256=expected or self.manager.generation_receipt()["ringSha256"])
+        return self.manager.handle(request, recovery_only=recovery_only)
+
+    def generation_boot_admission(self):
+        metadata = self.manager.generation_receipt()
+        return self.manager.handle(self.request("generation-start-admission", ringSha256=metadata["ringSha256"],
+                                               activeKeySha256=metadata["activeKeySha256"]))
+
+    def test_generation_restore_of_existing_identical_set_preserves_all_inodes(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        before = self.generation_identity()
+        result = self.generation_restore(backup)
+        self.assertFalse(result["activeKeyRestored"])
+        self.assertFalse(result["keyringRestored"])
+        self.assertTrue(result["existingReceiptPreserved"])
+        self.assertEqual(before, self.generation_identity())
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Original result is read-only")):
+            read = self.manager.handle(self.request("operation-read", operationId=result["operationId"]), recovery_only=True)
+        self.assertEqual(result, read)
+        self.assertEqual("GENERATION_READY", self.generation_boot_admission()["state"])
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux atomic original-credential publication")
+    def test_generation_restore_publishes_only_missing_original_pair(self):
+        raw = self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        receipts = [self.receipt_path, self.directory / "key-generations.json"]
+        originals = [self.identity(p) for p in receipts]
+        self.key_path.unlink()
+        ring = self.directory / "kura_encryption_keyring"
+        ring.unlink()
+        request = self.request("generation-backup-inspect", backup=backup, passphrase=PASSWORD)
+        inspected = self.manager.handle(request, recovery_only=True)
+        self.assertTrue(inspected["restoreAllowed"])
+        self.assertFalse(inspected["activeKeyReady"])
+        self.assertFalse(inspected["keyringReady"])
+        result = self.generation_restore(backup, recovery_only=True)
+        self.assertTrue(result["activeKeyRestored"])
+        self.assertTrue(result["keyringRestored"])
+        self.assertEqual(self.key, self.key_path.read_bytes())
+        self.assertEqual(raw, ring.read_bytes())
+        self.assertEqual(0o400, stat.S_IMODE(ring.stat().st_mode))
+        self.assertEqual(0o400, stat.S_IMODE(self.key_path.stat().st_mode))
+        self.assertEqual(1, ring.stat().st_nlink)
+        self.assertEqual(originals, [self.identity(p) for p in receipts])
+        self.assertEqual("GENERATION_READY", self.generation_boot_admission()["state"])
+        self.refused("CONFLICT", lambda: self.generation_restore(backup, recovery_only=True))
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux atomic original-credential publication")
+    def test_generation_restore_keeps_the_existing_half_byte_and_metadata_exact(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        ring = self.directory / "kura_encryption_keyring"
+        for missing, retained in ((ring, self.key_path), (self.key_path, ring)):
+            with self.subTest(missing=missing.name):
+                missing.unlink()
+                original = self.identity(retained)
+                result = self.generation_restore(backup)
+                self.assertEqual(missing == ring, result["keyringRestored"])
+                self.assertEqual(missing == self.key_path, result["activeKeyRestored"])
+                self.assertEqual(original, self.identity(retained))
+
+    def test_generation_restore_refuses_a_different_complete_set_before_intent(self):
+        raw = self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        altered = bytearray(raw)
+        altered[len(service.RING_MAGIC) + 4] ^= 1
+        _, metadata = service.key_generations(bytes(altered))
+        self.write(self.directory / "key-generations.json",
+                   service.encode(dict(schema=1, purpose=service.GENERATION_FORMAT, **metadata)), 0o600)
+        before = self.generation_identity()
+        self.refused("CONFLICT", lambda: self.generation_restore(backup))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual(1, len(list((self.state / "operations").iterdir())))
+
+    def test_generation_restore_never_replaces_an_existing_wrong_keyring(self):
+        raw = self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        ring = self.directory / "kura_encryption_keyring"
+        self.write(ring, raw[:-1] + bytes([raw[-1] ^ 1]), 0o400)
+        before = self.generation_identity()
+        self.refused("CONFLICT", lambda: self.generation_restore(backup))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual(1, len(list((self.state / "operations").iterdir())))
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux atomic original-credential publication")
+    def test_partial_generation_restore_is_unknown_and_fences_startup_and_new_ids(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        self.key_path.unlink()
+        ring = self.directory / "kura_encryption_keyring"
+        ring.unlink()
+        identity = str(uuid.uuid4())
+        atomic = self.manager.atomic
+        def lose_key(path, value, **options):
+            if path == self.key_path:
+                raise OSError("Fixture loses publication of the second original credential")
+            return atomic(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_key):
+            self.refused("UNKNOWN", lambda: self.generation_restore(backup, identity=identity))
+        self.assertTrue(ring.is_file())
+        self.assertFalse(self.key_path.exists())
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("UNKNOWN must not dispatch")):
+            self.assertEqual("UNKNOWN", self.generation_restore(backup, identity=identity)["state"])
+            self.refused("UNRESOLVED_OPERATION", lambda: self.generation_restore(backup))
+        self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+        inspected = self.generation_inspect(backup)
+        self.assertTrue(inspected["matchesRetainedReceipt"])
+        self.assertFalse(inspected["restoreAllowed"])
+        self.assertTrue(inspected["restoreBlockedByUnresolvedOperation"])
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux atomic original-credential publication")
+    def test_present_keys_do_not_settle_a_generation_restore_with_a_lost_result(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        self.key_path.unlink()
+        (self.directory / "kura_encryption_keyring").unlink()
+        identity = str(uuid.uuid4())
+        atomic = self.manager.atomic
+        def lose_result(path, value, **options):
+            if path.parent == self.state / "operations" and service.decode(value)["state"] == "SUCCEEDED":
+                raise OSError("Fixture loses the final restore result")
+            return atomic(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_result):
+            self.refused("UNKNOWN", lambda: self.generation_restore(backup, identity=identity))
+        before = self.generation_identity()
+        inspected = self.generation_inspect(backup)
+        self.assertTrue(inspected["activeKeyReady"])
+        self.assertTrue(inspected["keyringReady"])
+        self.assertFalse(inspected["restoreAllowed"])
+        self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+        self.assertEqual("UNKNOWN", self.manager.handle(self.request("operation-read", operationId=identity))["state"])
+        self.assertEqual(before, self.generation_identity())
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux atomic original-credential publication")
+    def test_generation_restore_no_replace_survives_a_concurrent_foreign_key(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        self.key_path.unlink()
+        (self.directory / "kura_encryption_keyring").unlink()
+        foreign = secrets.token_bytes(32)
+        atomic = self.manager.atomic
+        def race(path, value, **options):
+            if path == self.key_path:
+                self.write(path, foreign, 0o400)
+            return atomic(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=race):
+            self.refused("UNKNOWN", lambda: self.generation_restore(backup))
+        self.assertEqual(foreign, self.key_path.read_bytes())
+        self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+
+    def test_generation_startup_and_restore_are_fenced_by_an_original_unknown_start(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        starts = self.state / "startups"
+        starts.mkdir(mode=0o700)
+        identity = str(uuid.uuid4())
+        record = dict(schema=1, operationId=identity, restoreOperationId=str(uuid.uuid4()),
+                      keySha256=self.proof["keySha256"], requestTag="1" * 64, state="INTENT", response=None)
+        self.write(starts / (identity + ".json"), service.encode(record), 0o600)
+        before = self.generation_identity()
+        self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+        self.refused("UNRESOLVED_OPERATION", self.generation_backup)
+        self.refused("UNRESOLVED_OPERATION", lambda: self.generation_restore(backup))
+        inspected = self.generation_inspect(backup)
+        self.assertFalse(inspected["restoreAllowed"])
+        self.assertTrue(inspected["restoreBlockedByUnresolvedOperation"])
+        self.assertEqual(before, self.generation_identity())
 
 
 if __name__ == "__main__":

@@ -30,6 +30,9 @@ ASSETS = COLD_V1_ASSETS | frozenset(('bin/kura_key_recovery_start.py',))
 class Refused(RuntimeError):
     pass
 
+class Unresolved(Refused):
+    pass
+
 
 def require(ok, message="Invalid key-service state; preserve keys and operation receipts"):
     if not ok:
@@ -74,7 +77,7 @@ def validate_record(record, identity):
     require(isinstance(record, dict) and set(record) ==
             {"schema", "operationId", "action", "requestTag", "state", "response"})
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
-            and record["operationId"] == identity and record["action"] in ("backup-create", "generation-backup-create", "restore")
+            and record["operationId"] == identity and record["action"] in ("backup-create", "generation-backup-create", "restore", "generation-restore")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
     if record["state"] == "INTENT":
@@ -82,8 +85,10 @@ def validate_record(record, identity):
         return record
     names = {"schema", "operationId", "state", "action"}
     backup = record["action"] in ("backup-create", "generation-backup-create")
-    names |= ({"backup"} if backup
-              else {"keySha256", "keyChanged", "existingReceiptPreserved"})
+    modern_restore = record["action"] == "generation-restore"
+    names |= ({"backup"} if backup else
+              {"ringSha256", "activeKeySha256", "activeKeyRestored", "keyringRestored", "existingReceiptPreserved"}
+              if modern_restore else {"keySha256", "keyChanged", "existingReceiptPreserved"})
     require(isinstance(response, dict) and set(response) == names)
     require(type(response["schema"]) is int and response["schema"] == 1
             and response["operationId"] == identity and response["state"] == "SUCCEEDED"
@@ -98,6 +103,10 @@ def validate_record(record, identity):
             require(bool(base64.b64decode(envelope["encrypted"], validate=True)))
         except ValueError:
             raise Refused("Invalid encrypted operation receipt") from None
+    elif modern_restore:
+        require(is_digest(response["ringSha256"]) and is_digest(response["activeKeySha256"])
+                and type(response["activeKeyRestored"]) is bool and type(response["keyringRestored"]) is bool
+                and response["existingReceiptPreserved"] is True)
     else:
         require(is_digest(response["keySha256"]) and type(response["keyChanged"]) is bool
                 and response["existingReceiptPreserved"] is True)
@@ -244,7 +253,8 @@ class Lifecycle:
         for path in paths:
             require(path.name.endswith(".json") and canonical_id(path.name[:-5]))
             record = validate_record(decode(self.read(path)), path.name[:-5])
-            require(record["state"] == "SUCCEEDED", "Unresolved key operation; preserve original UUID and package state")
+            if record["state"] != "SUCCEEDED":
+                raise Unresolved("Unresolved key operation; preserve original UUID and package state")
         startups=self.state/'startups'
         if os.path.lexists(startups):
             self.directory(startups,private=True)
@@ -252,7 +262,8 @@ class Lifecycle:
             for path in starts:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 record=validate_start(decode(self.read(path)),path.name[:-5])
-                require(record['state']=='SUCCEEDED','Unresolved Core start; retain original UUID')
+                if record['state'] != 'SUCCEEDED':
+                    raise Unresolved('Unresolved Core start; retain original UUID')
         history=self.state/'package-history'
         if os.path.lexists(history):
             self.directory(history,private=True)

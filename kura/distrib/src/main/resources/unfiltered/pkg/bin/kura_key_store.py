@@ -10,6 +10,7 @@ from pathlib import Path
 import pwd
 import secrets
 import shlex
+import socket
 import stat
 import struct
 import sys
@@ -20,6 +21,11 @@ CORE_DEFAULT = b"rv;ipse329183!@#"
 OLD_DEVELOPMENT = b"kura-dev-key-005"
 KEY_PATH = "/etc/kura/credentials/" + CREDENTIAL
 RECEIPT_PATH = "/etc/kura/credentials/provisioned.json"
+RING_CREDENTIAL = "kura_encryption_keyring"
+RING_PATH = "/etc/kura/credentials/" + RING_CREDENTIAL
+GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
+GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
+RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 
 class Refused(RuntimeError):
     pass
@@ -30,6 +36,62 @@ def require(ok, message):
 
 def effective_key(value):
     return value if len(value) in (16, 24, 32) else CORE_DEFAULT
+
+def generation_require(ok):
+    require(ok, "Invalid key-generation credential or retained receipt")
+
+def key_generations(raw):
+    """The exact Java reader credential, shared by Root backup and startup policy."""
+    generation_require(isinstance(raw, bytes) and len(RING_MAGIC) + 3 <= len(raw) <= 512)
+    generation_require(raw.startswith(RING_MAGIC))
+    count, active, legacy = raw[len(RING_MAGIC):len(RING_MAGIC) + 3]
+    generation_require(2 <= count <= 8 and active < count and legacy < count and active != legacy)
+    offset = len(RING_MAGIC) + 3
+    keys, ids = [], []
+    for number in range(count):
+        generation_require(offset < len(raw))
+        size = raw[offset]
+        offset += 1
+        generation_require(size in (16, 24, 32) and offset + size <= len(raw))
+        generation_require(number != active or size == 32)
+        key = raw[offset:offset + size]
+        offset += size
+        identity = hashlib.sha256(key).hexdigest()
+        generation_require(identity not in ids)
+        keys.append(key)
+        ids.append(identity)
+    generation_require(offset == len(raw))
+    return keys[active], dict(ringSha256=hashlib.sha256(raw).hexdigest(), activeKeySha256=ids[active],
+                             legacyKeySha256=ids[legacy], keySha256s=ids)
+
+def generation_pairs(items):
+    value = {}
+    for key, item in items:
+        generation_require(key not in value)
+        value[key] = item
+    return value
+
+def generation_receipt(raw):
+    generation_require(isinstance(raw, bytes) and 0 < len(raw) <= 2048)
+    try:
+        proof = json.loads(raw.decode("utf-8"), object_pairs_hook=generation_pairs,
+                           parse_constant=lambda _: generation_require(False))
+    except (ValueError, UnicodeError, RecursionError):
+        raise Refused("Invalid retained generation receipt; preserve keys and data") from None
+    generation_require(isinstance(proof, dict) and set(proof) ==
+                       {"schema", "purpose", "ringSha256", "activeKeySha256", "legacyKeySha256", "keySha256s"})
+    generation_require(type(proof["schema"]) is int and proof["schema"] == 1 and proof["purpose"] == GENERATION_FORMAT)
+    def digest(value):
+        generation_require(isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value))
+    for name in ("ringSha256", "activeKeySha256", "legacyKeySha256"):
+        digest(proof[name])
+    ids = proof["keySha256s"]
+    generation_require(isinstance(ids, list) and 2 <= len(ids) <= 8)
+    for identity in ids:
+        digest(identity)
+    generation_require(len(set(ids)) == len(ids) and proof["activeKeySha256"] in ids
+                       and proof["legacyKeySha256"] in ids and proof["activeKeySha256"] != proof["legacyKeySha256"])
+    return {k: v for k, v in proof.items() if k not in ("schema", "purpose")}
 
 class Store:
     def __init__(self, root=Path("/"), owner=None):
@@ -306,6 +368,27 @@ class Store:
                                 and all(c in "0123456789abcdef" for c in x)
                                 for x in receipt["unitDigests"]),
                         "Encryption-key receipt is inconsistent")
+            if any(os.path.lexists(self.path(p)) for p in (RING_PATH, GENERATION_RECEIPT_PATH)):
+                # Never generate a replacement or resolve retired legacy sources in a generation-aware store.
+                require(current is not None and receipt is not None and type(receipt["schema"]) is int,
+                        "Generation credentials are incomplete; restore the original set")
+                active, metadata = key_generations(self.read(self.path(RING_PATH), private=True, limit=512))
+                trusted = generation_receipt(self.read(self.path(GENERATION_RECEIPT_PATH), private=True, limit=2048))
+                generation_require(active == current and metadata == trusted)
+                # The installed entrypoint uses -I; its sibling directory is not on sys.path.
+                # Embedded legacy capture has no __file__ and uses the fixed installed helper path.
+                helper = Path(globals().get("__file__", self.path("/opt/eclipse/kura/bin/kura_key_store.py"))).resolve().parent
+                if str(helper) not in sys.path:
+                    sys.path.insert(0, str(helper))
+                from kura_key_service_lifecycle import Lifecycle, Refused as LifecycleRefused
+                lifecycle = Lifecycle(self.root, self.owner)
+                try:
+                    lifecycle.check_records()
+                    require(action != "auto" or lifecycle.fence() is None, "Generation maintenance is not complete")
+                except LifecycleRefused:
+                    raise Refused("Unresolved or unsafe generation operation; preserve original UUID and credentials") from None
+                self.stable()
+                return dict(keyReady=True, source=receipt["origin"], legacyKey=receipt["legacyKey"])
             units = [self.path(x) for x in ("/usr/lib/systemd/system/kura.service",
                                           "/lib/systemd/system/kura.service")]
             units = list(dict.fromkeys(p.resolve() for p in units if os.path.lexists(p)))
@@ -400,33 +483,79 @@ def loaded_permissions_private(fd, metadata, reader_uid=None):
     return entries == [(1,4,undefined),(2,4,reader_uid),(4,0,undefined),
                        (16,4,undefined),(32,0,undefined)]
 
-def check_loaded():
-    directory = os.environ.get("CREDENTIALS_DIRECTORY","")
-    require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
-    source = Path(directory)/CREDENTIAL
+def read_loaded(directory, name, limit):
+    source = directory / name
     fd = os.open(source,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
     try:
         m = os.fstat(fd)
         require(stat.S_ISREG(m.st_mode) and m.st_nlink==1 and loaded_permissions_private(fd,m)
                 and m.st_uid in (0,os.geteuid()),
                 "Unsafe loaded Kura encryption credential")
-        value = os.read(fd,33)
+        value = os.read(fd, limit + 1)
         current = os.fstat(fd)
         path_state = source.lstat()
-        require(len(value) in (16,24,32) and m.st_size==len(value),
+        require(0 < len(value) <= limit and m.st_size==len(value),
                 "Invalid loaded Kura encryption credential")
         require((m.st_dev,m.st_ino,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
                 == (current.st_dev,current.st_ino,current.st_size,current.st_mtime_ns,current.st_ctime_ns)
                 and (m.st_dev,m.st_ino)==(path_state.st_dev,path_state.st_ino),
                 "Loaded Kura encryption credential changed")
+        return value
     finally:
         os.close(fd)
+
+def generation_start_admission(metadata):
+    # Fixed local read-only RPC. No keys, commands, paths or retry are transmitted.
+    require(sys.platform == "linux", "Generation startup admission requires the supported local Root service")
+    expected = {name: metadata[name] for name in ("ringSha256", "activeKeySha256")}
+    request = dict(schema=1, action="generation-start-admission", **expected)
+    def read_exact(connection, size):
+        value = bytearray()
+        while len(value) < size:
+            chunk = connection.recv(size - len(value))
+            require(bool(chunk), "Incomplete Root generation admission response")
+            value.extend(chunk)
+        return bytes(value)
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(3)
+            connection.connect("/run/kura-key-service/control.sock")
+            peer = connection.getsockopt(socket.SOL_SOCKET, getattr(socket, "SO_PEERCRED", 17), struct.calcsize("3i"))
+            require(struct.unpack("3i", peer)[1] == 0, "Root generation admission peer is not trusted")
+            raw = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("ascii")
+            connection.sendall(struct.pack("!I", len(raw)) + raw)
+            connection.shutdown(socket.SHUT_WR)
+            size = struct.unpack("!I", read_exact(connection, 4))[0]
+            require(0 < size <= 2048, "Invalid Root generation admission response")
+            response = json.loads(read_exact(connection, size).decode("utf-8"), object_pairs_hook=generation_pairs,
+                                  parse_constant=lambda _: generation_require(False))
+            require(connection.recv(1) == b"", "Trailing Root generation admission response")
+    except (OSError, ValueError, UnicodeError, RecursionError):
+        raise Refused("Root generation startup admission unavailable; preserve original operation and keys") from None
+    require(isinstance(response, dict) and type(response.get("schema")) is int
+            and response == dict(schema=1, state="GENERATION_READY", **expected),
+            "Root generation startup admission refused; preserve original operation and keys")
+
+def check_loaded(require_generations=False):
+    directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
+    require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
+    directory = Path(directory)
+    value = read_loaded(directory, CREDENTIAL, 32)
+    require(len(value) in (16, 24, 32), "Invalid loaded Kura encryption credential")
+    names = (RING_CREDENTIAL, "key-generations.json")
+    present = any(os.path.lexists(directory / name) for name in names)
+    if require_generations or present:
+        raw = read_loaded(directory, RING_CREDENTIAL, 512)
+        active, metadata = key_generations(raw)
+        proof = generation_receipt(read_loaded(directory, "key-generations.json", 2048))
+        generation_require(active == value and metadata == proof)
+        generation_start_admission(metadata)
 
 def main(argv):
     try:
         require(bool(argv), "Missing key-policy command")
-        if argv == ["check-loaded"]:
-            check_loaded()
+        if argv in (["check-loaded"], ["check-loaded-generations"]):
+            check_loaded(require_generations=argv == ["check-loaded-generations"])
             return 0
         require(os.geteuid()==0, "Key provisioning requires the package administrator")
         store = Store()
