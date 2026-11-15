@@ -23,6 +23,10 @@ import subprocess
 import sys
 import uuid
 
+# Lazy helpers must share this entrypoint's exception and protocol classes.
+if __name__ == '__main__':
+    sys.modules['kura_key_service'] = sys.modules[__name__]
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEVELOPMENT, Refused,
                             GENERATION_FORMAT, RING_PATH, RING_MAGIC, GENERATION_RECEIPT_PATH,
@@ -213,7 +217,15 @@ class Manager:
         self.directory(directory, private=True)
         # A single-key artifact must never be offered as a complete rotated-key backup.
         # lexists also fences malformed entries and dangling links; no fallback to v1.
-        require(allow_generations or not any(os.path.lexists(self.store.path(path))
+        published = os.path.lexists(self.state / 'generation-current.json')
+        if not allow_generations and not published and self.operations.is_dir():
+            for path in self.operations.iterdir():
+                require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+                record = self.record(operation_id(path.name[:-5]))
+                if record['action'] == 'generation-publish' and record['state'] == 'SUCCEEDED':
+                    published = True
+                    break
+        require(allow_generations or not published and not any(os.path.lexists(self.store.path(path))
                                             for path in (RING_PATH, GENERATION_RECEIPT_PATH)), "GENERATION_REQUIRED")
         proof = receipt(decode(self.read(self.store.path(RECEIPT_PATH), 8192)))
         try:
@@ -470,6 +482,29 @@ class Manager:
         except (OSError, ValueError, LifecycleRefused):
             raise Failure('COHORT_UNAVAILABLE') from None
 
+    def generation_component(self):
+        policy = Lifecycle(self.root, self.owner)
+        binding = self.require_generation_cohort()
+        home = self.store.path('/opt/eclipse/kura').resolve(strict=True)
+        raw = policy.read(home / 'libexec/key-backup/manifest.json', private=False)
+        require(hashlib.sha256(raw).hexdigest() == binding['manifestSha256'], 'COHORT_CHANGED')
+        name = 'bin/kura_key_generation.py'
+        expected = decode(raw)['generation']['files'][name]
+        source = policy.read(home / name, limit=65536, private=False)
+        require(hashlib.sha256(source).hexdigest() == expected, 'COHORT_CHANGED')
+        namespace = {'__name__': 'kura_key_generation', '__file__': str(home / name)}
+        exec(compile(source, str(home / name), 'exec'), namespace)
+        return namespace['Generations'](self), binding
+
+    def generation_start_authorized(self, source, cohort):
+        if not os.path.lexists(self.state / 'generation-current.json'):
+            records = [self.record(p.name[:-5]) for p in self.operations.iterdir()]
+            if all(record['action'] != 'generation-publish' for record in records):
+                return
+        component, binding = self.generation_component()
+        require(cohort is None or binding == cohort, 'COHORT_CHANGED')
+        component.require_start(source, binding)
+
     @staticmethod
     def writer_process(pid):
         require(type(pid) is int and pid > 0, 'INVALID_WRITER')
@@ -529,7 +564,10 @@ class Manager:
     def writer_registration(self, pid):
         process = self.writer_process(pid)
         require(process is not None, 'WRITER_UNREGISTERED')
-        value = self.writer_record(self.writer_directory() / (str(pid) + '-' + process[1] + '.json'))
+        try:
+            value = self.writer_record(self.writer_directory() / (str(pid) + '-' + process[1] + '.json'))
+        except FileNotFoundError:
+            raise Failure('WRITER_UNREGISTERED') from None
         require(value['uid'] == process[0]
                 and value['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(), 'UNSAFE_WRITER_STATE')
         return value
@@ -561,6 +599,7 @@ class Manager:
             with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
                 _, _, _, _, _, source = self.generation_source()
                 require(all(request[k] == source[k] for k in source), 'CONFLICT')
+                self.generation_start_authorized(source, cohort)
                 fd = self.writer_lock(create=True)
                 accepted = False
                 try:
@@ -744,6 +783,12 @@ class Manager:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
         if action in ("generation-prepare", "generation-backup-verify"):
             return self.stage_generation(request, verify=action == "generation-backup-verify")
+        if action in ('generation-publication-plan', 'generation-publish', 'generation-core-start'):
+            try:
+                component, _ = self.generation_component()
+                return component.request(request, start=action == 'generation-core-start')
+            except LifecycleRefused:
+                raise Failure('UNSAFE_JOURNAL') from None
         if action == "credential-start-admission":
             fields(request, {"schema", "action", "keySha256", "ringSha256"})
             digest(request["keySha256"])
@@ -758,8 +803,8 @@ class Manager:
                     except OSError:
                         raise Failure("UNSAFE_FILESYSTEM") from None
                     require(all(request[k] == source[k] for k in ("keySha256", "ringSha256")), "CONFLICT")
-                    if source['ringSha256'] is not None:
-                        self.require_generation_cohort()
+                    cohort = self.require_generation_cohort() if source['ringSha256'] is not None else None
+                    self.generation_start_authorized(source, cohort)
                     return dict(schema=1, state="CREDENTIAL_READY", **source)
         if action == "generation-start-admission":
             fields(request, {"schema", "action", "ringSha256", "activeKeySha256"})
@@ -770,7 +815,8 @@ class Manager:
                 with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                     _, metadata, _ = self.generations()
                     require(all(request[k] == metadata[k] for k in ("ringSha256", "activeKeySha256")), "CONFLICT")
-                    self.require_generation_cohort()
+                    cohort = self.require_generation_cohort()
+                    self.generation_start_authorized(dict(keySha256=metadata['activeKeySha256'], ringSha256=metadata['ringSha256']), cohort)
                     return dict(schema=1, state="GENERATION_READY", ringSha256=metadata["ringSha256"],
                                 activeKeySha256=metadata["activeKeySha256"])
         if action == "generation-restore":

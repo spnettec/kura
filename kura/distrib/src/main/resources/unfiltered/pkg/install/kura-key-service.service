@@ -24,6 +24,7 @@ AmbientCapabilities=
 ProtectSystem=strict
 ReadOnlyPaths=/opt/eclipse
 ReadWritePaths=/etc/kura/credentials /var/lib/kura-key-service
+ReadWritePaths=-/etc/systemd/system/kura.service.d
 ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true

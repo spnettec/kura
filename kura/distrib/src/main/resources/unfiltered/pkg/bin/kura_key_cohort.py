@@ -34,7 +34,8 @@ ROLES = {
 LAUNCHERS = ("start_kura.sh", "start_kura_background.sh", "start_kura_debug.sh")
 OFFLINE = "libexec/key-recovery/kura-offline-recovery.jar"
 TEMPLATES = "libexec/key-backup/launchers/"
-FIXED_FILES = frozenset(("bin/kura_key_cohort.py", "bin/kura_credential_env.sh", *[TEMPLATES + n for n in LAUNCHERS]))
+FIXED_FILES = frozenset(("bin/kura_key_cohort.py", "bin/kura_credential_env.sh", "bin/kura_key_generation.py",
+                         "install/kura-key-generations.conf", *[TEMPLATES + n for n in LAUNCHERS]))
 
 
 def headers(raw):
@@ -170,6 +171,7 @@ def managed_unit(raw):
     require(starts and shlex.split(starts[0]) == ["/usr/bin/python3", "-I", "/opt/eclipse/kura/bin/kura_key_store.py", "check-loaded-managed"])
     require(values.get(("[Service]", "ExecStart")) == ["/bin/sh /opt/eclipse/kura/bin/start_kura_background.sh"])
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
+    require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
 
 
 def catalog(home, owner=None):

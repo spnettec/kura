@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import secrets
 import stat
 import subprocess
@@ -118,11 +119,31 @@ def validate_record(record, identity):
             {"schema", "operationId", "action", "requestTag", "state", "response"})
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
             and record["operationId"] == identity and record["action"] in
-            ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify")
+              ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify",
+               "generation-publish", "generation-core-start")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
     if record["state"] == "INTENT":
         require(response is None)
+        return record
+    if record['action'] in ('generation-publish', 'generation-core-start'):
+        names = {'schema', 'operationId', 'state', 'action', 'ringSha256', 'activeKeySha256', 'cohortSha256'}
+        publish = record['action'] == 'generation-publish'
+        names |= ({'preparationId', 'verificationId', 'publicationSha256', 'coreStopped', 'requiresExplicitStart'}
+                  if publish else {'publicationId', 'scope', 'jobPath'})
+        require(isinstance(response, dict) and set(response) == names
+                and type(response['schema']) is int and response['schema'] == 1
+                and response['operationId'] == identity and response['state'] == 'SUCCEEDED'
+                and response['action'] == record['action']
+                and all(is_digest(response[k]) for k in ('ringSha256', 'activeKeySha256', 'cohortSha256')))
+        if publish:
+            require(canonical_id(response['preparationId']) and canonical_id(response['verificationId'])
+                    and is_digest(response['publicationSha256']) and response['coreStopped'] is True
+                    and response['requiresExplicitStart'] is True)
+        else:
+            require(canonical_id(response['publicationId']) and response['scope'] == 'SYSTEMD_JOB_ACCEPTED'
+                    and isinstance(response['jobPath'], str)
+                    and re.fullmatch(r'/org/freedesktop/systemd1/job/[0-9]+', response['jobPath']) is not None)
         return record
     if record["action"] in ("generation-prepare", "generation-backup-verify"):
         validate_preparation_response(response, record["action"], identity)
@@ -212,7 +233,7 @@ class Lifecycle:
         for part in ("", *path.relative_to(self.root).parts):
             current = current / part
             if create and not os.path.lexists(current):
-                current.mkdir(mode=0o700 if current in (self.state, self.state / "operations", self.state / "startups", self.state / "package-history") else 0o755)
+                current.mkdir(mode=0o700 if private and current == path or current in (self.state, self.state / "operations", self.state / "startups", self.state / "package-history") else 0o755)
             m = current.lstat()
             require(stat.S_ISDIR(m.st_mode) and m.st_uid == self.owner and not m.st_mode & 0o022,
                     "Unsafe key-service directory; preserve state")
@@ -536,6 +557,11 @@ class Lifecycle:
         manifest=self.assets()
         with self.locked():
             self.check_records()
+            if manifest.get('schema') == 2:
+                directory = self.path('/etc/systemd/system/kura.service.d')
+                if not os.path.lexists(directory):
+                    self.directory(directory, private=True, create=True)
+                    self.sync(directory.parent)
             # Created only after unpack: old prerm must still recognize the old journal.
             if frozenset(manifest["files"]) == ASSETS:
                 self.directory(self.state / "startups", private=True, create=True)
@@ -547,7 +573,7 @@ class Lifecycle:
             from kura_key_service import Manager
             manager = Manager(self.root, self.owner)
             with manager.lock(manager.store.path("/etc/kura/credentials/.provision.lock"), False):
-                _,proof=manager.canonical()
+                _,_,_,_,proof,_=manager.generation_source()
             if fence is not None and fence['firstAction'] in ('install','upgrade') and frozenset(manifest['files'])==ASSETS:
                 # The existing installer stops Main synchronously. Record its terminal
                 # predecessor set under the package lock, never infer UNKNOWN from Main0.
