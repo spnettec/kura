@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
-"""Core-owned gateway AES key backup/recovery. No shell, user paths or key rotation."""
+"""Core-owned AES backup/recovery and staged generations. No active-key publication."""
 import base64
 import contextlib
 import ctypes
@@ -26,7 +26,8 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEVELOPMENT, Refused,
                             GENERATION_FORMAT, RING_PATH, RING_MAGIC, GENERATION_RECEIPT_PATH,
-                            key_generations as parse_key_generations, generation_receipt as parse_generation_receipt)
+                            key_generations as parse_key_generations, generation_receipt as parse_generation_receipt,
+                            key_generation_entries, encode_key_generations)
 from kura_key_service_lifecycle import (Lifecycle, validate_record, Refused as LifecycleRefused,
                                        Unresolved as LifecycleUnresolved)
 
@@ -453,11 +454,159 @@ class Manager:
                 except (OSError, Failure, Refused):
                     raise Failure("UNKNOWN") from None
 
+    def generation_source(self):
+        if any(os.path.lexists(self.store.path(p)) for p in (RING_PATH, GENERATION_RECEIPT_PATH)):
+            raw, metadata, proof = self.generations()
+            keys, _, legacy = key_generation_entries(raw)
+        else:
+            current, proof = self.canonical()
+            keys, legacy, raw, metadata = [current], 0, None, None
+        source = dict(keySha256=proof["keySha256"], ringSha256=metadata["ringSha256"] if metadata else None)
+        return keys, legacy, raw, metadata, proof, source
+
+    def prepared_generation(self, identity):
+        record = self.record(identity)
+        require(record is not None and record["action"] == "generation-prepare"
+                and record["state"] == "SUCCEEDED", "CONFLICT")
+        response = record["response"]
+        directory = self.state / "generations" / identity
+        self.directory(directory, private=True)
+        history_bytes = self.read(directory / "history.json", 8192)
+        require(hashlib.sha256(history_bytes).hexdigest() == response["historySha256"], "UNSAFE_JOURNAL")
+        history = decode(history_bytes)
+        fields(history, {"schema", "purpose", "preparationId", "createdAt", "source", "sourceReceipt",
+                         "sourceGenerationReceipt", "provisioned", "generation", "backupSha256"})
+        require(type(history["schema"]) is int and history["schema"] == 1
+                and history["purpose"] == "yofc-kura-prepared-generation-v1"
+                and history["preparationId"] == identity and history["source"] == response["source"]
+                and history["generation"] == response["generation"]
+                and hashlib.sha256(encode(response["backup"])).hexdigest() == history["backupSha256"], "UNSAFE_JOURNAL")
+        raw = self.read(directory / "keyring", 512)
+        active, metadata = key_generations(raw)
+        require(metadata == history["generation"], "UNSAFE_JOURNAL")
+        receipt(history["provisioned"], active)
+        keys, _, legacy = key_generation_entries(raw)
+        source = history["source"]
+        if source["ringSha256"] is None:
+            require(len(keys) == 2 and legacy == 0 and history["sourceGenerationReceipt"] is None
+                    and not os.path.lexists(directory / "source-keyring"), "UNSAFE_JOURNAL")
+            previous = keys[0]
+        else:
+            original = self.read(directory / "source-keyring", 512)
+            previous, original_metadata = key_generations(original)
+            old_keys, _, old_legacy = key_generation_entries(original)
+            require(keys[:-1] == old_keys and legacy == old_legacy
+                    and original_metadata == history["sourceGenerationReceipt"]
+                    and original_metadata["ringSha256"] == source["ringSha256"], "UNSAFE_JOURNAL")
+        receipt(history["sourceReceipt"], previous)
+        require(source["keySha256"] == history["sourceReceipt"]["keySha256"], "UNSAFE_JOURNAL")
+        return raw, history, response
+
+    def stage_generation(self, request, *, verify=False):
+        expected = {"schema", "action", "operationId", "passphrase"}
+        expected |= {"preparationId", "expectedRingSha256", "backup"} if verify else {"expectedSource"}
+        fields(request, expected)
+        identity = operation_id(request["operationId"])
+        password = passphrase(request["passphrase"])
+        if verify:
+            preparation = operation_id(request["preparationId"])
+            digest(request["expectedRingSha256"])
+        else:
+            fields(request["expectedSource"], {"keySha256", "ringSha256"})
+            digest(request["expectedSource"]["keySha256"])
+            if request["expectedSource"]["ringSha256"] is not None:
+                digest(request["expectedSource"]["ringSha256"])
+        with self.lock(self.state / "admission.lock", True):
+            self.maintenance()
+            journal_key = self.read(self.state / "journal.key", 32)
+            require(len(journal_key) == 32, "UNSAFE_JOURNAL")
+            tag = hmac.new(journal_key, encode(request), hashlib.sha256).hexdigest()
+            existing = self.record(identity)
+            if existing is not None:
+                require(hmac.compare_digest(existing["requestTag"], tag), "CONFLICT")
+                return self.public_record(existing)
+            self.settled()
+            self.journal_admission()
+            with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
+                keys, legacy, original_ring, original_metadata, proof, source = self.generation_source()
+                if verify:
+                    try:
+                        raw, history, prepared = self.prepared_generation(preparation)
+                    except OSError:
+                        raise Failure("UNSAFE_FILESYSTEM") from None
+                    require(history["source"] == source and history["sourceReceipt"] == proof
+                            and history["sourceGenerationReceipt"] == original_metadata, "CONFLICT")
+                    require(request["expectedRingSha256"] == history["generation"]["ringSha256"]
+                            and request["backup"] == prepared["backup"], "BACKUP_REJECTED")
+                    uploaded, _, data = self.unpack_generations(request["backup"], password)
+                    require(uploaded == raw and data["receipt"] == history["provisioned"]
+                            and data["operationId"] == preparation and data["createdAt"] == history["createdAt"], "BACKUP_REJECTED")
+                    for path in self.operations.iterdir():
+                        prior = self.record(operation_id(path.name[:-5]))
+                        require(prior["action"] != "generation-backup-verify"
+                                or prior["response"]["preparationId"] != preparation, "ALREADY_VERIFIED")
+                else:
+                    require(request["expectedSource"] == source, "CONFLICT")
+                    require(len(keys) < 8, "CAPACITY")
+                    require(self.generation_restore_supported(), "UNSUPPORTED")
+                    parent = self.state / "generations"
+                    if os.path.lexists(parent):
+                        self.directory(parent, private=True)
+                        require(not any(parent.iterdir()), "PREPARATION_PENDING")
+                record = dict(schema=1, operationId=identity, action=request["action"],
+                              requestTag=tag, state="INTENT", response=None)
+                try:
+                    self.atomic(self.operations / (identity + ".json"), encode(record))
+                    if verify:
+                        response = dict(schema=1, operationId=identity, state="SUCCEEDED", action=request["action"],
+                                        preparationId=preparation, ringSha256=history["generation"]["ringSha256"],
+                                        backupSha256=history["backupSha256"], published=False, requiresExplicitCommit=True)
+                    else:
+                        fresh = secrets.token_bytes(32)
+                        require(fresh not in keys and fresh not in (CORE_DEFAULT, OLD_DEVELOPMENT), "UNKNOWN")
+                        raw = encode_key_generations([*keys, fresh], len(keys), legacy)
+                        _, metadata = key_generations(raw)
+                        proposed = receipt(dict(schema=1, keySha256=metadata["activeKeySha256"], origin="canonical",
+                                                legacyKey=False, unitDigests=proof["unitDigests"]), fresh)
+                        created = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                        payload = dict(schema=1, purpose=GENERATION_FORMAT, operationId=identity, createdAt=created,
+                                       keyring=base64.b64encode(raw).decode("ascii"), receipt=proposed)
+                        encrypted = self.crypt(True, password, encode(payload))
+                        backup = dict(format=GENERATION_FORMAT, operationId=identity,
+                                      encrypted=base64.b64encode(encrypted).decode("ascii"))
+                        history = dict(schema=1, purpose="yofc-kura-prepared-generation-v1", preparationId=identity,
+                                       createdAt=created, source=source, sourceReceipt=proof, sourceGenerationReceipt=original_metadata,
+                                       provisioned=proposed, generation=metadata, backupSha256=hashlib.sha256(encode(backup)).hexdigest())
+                        # Immutable private staging only. Canonical credentials/receipts and units stay untouched.
+                        parent.mkdir(mode=0o700, exist_ok=True)
+                        self.directory(parent, private=True)
+                        self.sync(self.state)
+                        directory = parent / identity
+                        directory.mkdir(mode=0o700)
+                        self.sync(parent)
+                        self.atomic(directory / "keyring", raw, mode=0o400, no_replace=True)
+                        if original_ring is not None:
+                            self.atomic(directory / "source-keyring", original_ring, mode=0o400, no_replace=True)
+                        history_bytes = encode(history)
+                        self.atomic(directory / "history.json", history_bytes, mode=0o400, no_replace=True)
+                        require(self.read(directory / "keyring", 512) == raw
+                                and self.read(directory / "history.json", 8192) == history_bytes, "UNKNOWN")
+                        response = dict(schema=1, operationId=identity, state="SUCCEEDED", action=request["action"],
+                                        source=source, generation=metadata, historySha256=hashlib.sha256(history_bytes).hexdigest(),
+                                        backup=backup, published=False, requiresExplicitCommit=True)
+                    record.update(state="SUCCEEDED", response=response)
+                    self.atomic(self.operations / (identity + ".json"), encode(record))
+                    return response
+                except (OSError, Failure, Refused):
+                    raise Failure("UNKNOWN") from None
+
     def handle(self, request, *, recovery_only=False):
         require(isinstance(request, dict) and type(request.get("schema")) is int and request["schema"] == 1)
         action = request.get("action")
         if recovery_only:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
+        if action in ("generation-prepare", "generation-backup-verify"):
+            return self.stage_generation(request, verify=action == "generation-backup-verify")
         if action == "generation-start-admission":
             fields(request, {"schema", "action", "ringSha256", "activeKeySha256"})
             digest(request["ringSha256"]); digest(request["activeKeySha256"])

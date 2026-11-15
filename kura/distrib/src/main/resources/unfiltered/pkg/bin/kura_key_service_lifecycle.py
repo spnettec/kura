@@ -73,15 +73,59 @@ def is_digest(value):
     return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
 
 
+def validate_generation_metadata(value):
+    require(isinstance(value, dict) and set(value) ==
+            {"ringSha256", "activeKeySha256", "legacyKeySha256", "keySha256s"})
+    require(all(is_digest(value[k]) for k in ("ringSha256", "activeKeySha256", "legacyKeySha256")))
+    keys = value["keySha256s"]
+    require(isinstance(keys, list) and 2 <= len(keys) <= 8 and all(is_digest(k) for k in keys)
+            and len(set(keys)) == len(keys) and value["activeKeySha256"] == keys[-1]
+            and value["legacyKeySha256"] in keys[:-1])
+
+
+def validate_preparation_response(response, action, identity):
+    names = {"schema", "operationId", "state", "action", "published", "requiresExplicitCommit"}
+    names |= ({"source", "generation", "historySha256", "backup"} if action == "generation-prepare" else
+              {"preparationId", "ringSha256", "backupSha256"})
+    require(isinstance(response, dict) and set(response) == names
+            and type(response["schema"]) is int and response["schema"] == 1
+            and response["operationId"] == identity and response["state"] == "SUCCEEDED"
+            and response["action"] == action and response["published"] is False
+            and response["requiresExplicitCommit"] is True)
+    if action == "generation-prepare":
+        source = response["source"]
+        require(isinstance(source, dict) and set(source) == {"keySha256", "ringSha256"}
+                and is_digest(source["keySha256"])
+                and (source["ringSha256"] is None or is_digest(source["ringSha256"]))
+                and is_digest(response["historySha256"]))
+        validate_generation_metadata(response["generation"])
+        require(source["keySha256"] in response["generation"]["keySha256s"][:-1])
+        envelope = response["backup"]
+        require(isinstance(envelope, dict) and set(envelope) == {"format", "operationId", "encrypted"}
+                and envelope["format"] == GENERATION_FORMAT and envelope["operationId"] == identity
+                and isinstance(envelope["encrypted"], str) and 0 < len(envelope["encrypted"]) <= 32768)
+        try:
+            require(bool(base64.b64decode(envelope["encrypted"], validate=True)))
+        except ValueError:
+            raise Refused("Invalid encrypted preparation receipt") from None
+    else:
+        require(canonical_id(response["preparationId"]) and is_digest(response["ringSha256"])
+                and is_digest(response["backupSha256"]))
+
+
 def validate_record(record, identity):
     require(isinstance(record, dict) and set(record) ==
             {"schema", "operationId", "action", "requestTag", "state", "response"})
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
-            and record["operationId"] == identity and record["action"] in ("backup-create", "generation-backup-create", "restore", "generation-restore")
+            and record["operationId"] == identity and record["action"] in
+            ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
     if record["state"] == "INTENT":
         require(response is None)
+        return record
+    if record["action"] in ("generation-prepare", "generation-backup-verify"):
+        validate_preparation_response(response, record["action"], identity)
         return record
     names = {"schema", "operationId", "state", "action"}
     backup = record["action"] in ("backup-create", "generation-backup-create")

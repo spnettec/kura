@@ -40,8 +40,8 @@ def effective_key(value):
 def generation_require(ok):
     require(ok, "Invalid key-generation credential or retained receipt")
 
-def key_generations(raw):
-    """The exact Java reader credential, shared by Root backup and startup policy."""
+def key_generation_entries(raw):
+    """Strict private codec; never infer a missing generation or try alternate keys."""
     generation_require(isinstance(raw, bytes) and len(RING_MAGIC) + 3 <= len(raw) <= 512)
     generation_require(raw.startswith(RING_MAGIC))
     count, active, legacy = raw[len(RING_MAGIC):len(RING_MAGIC) + 3]
@@ -61,6 +61,21 @@ def key_generations(raw):
         keys.append(key)
         ids.append(identity)
     generation_require(offset == len(raw))
+    return keys, active, legacy
+
+def encode_key_generations(keys, active, legacy):
+    generation_require(isinstance(keys, list) and 2 <= len(keys) <= 8
+                       and type(active) is int and type(legacy) is int
+                       and 0 <= active < len(keys) and 0 <= legacy < len(keys))
+    generation_require(all(isinstance(key, bytes) and len(key) in (16, 24, 32) for key in keys))
+    raw = RING_MAGIC + bytes((len(keys), active, legacy)) + b"".join(bytes((len(key),)) + key for key in keys)
+    key_generation_entries(raw)
+    return raw
+
+def key_generations(raw):
+    """The exact Java reader credential, shared by Root backup and startup policy."""
+    keys, active, legacy = key_generation_entries(raw)
+    ids = [hashlib.sha256(key).hexdigest() for key in keys]
     return keys[active], dict(ringSha256=hashlib.sha256(raw).hexdigest(), activeKeySha256=ids[active],
                              legacyKeySha256=ids[legacy], keySha256s=ids)
 

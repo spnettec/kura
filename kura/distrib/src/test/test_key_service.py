@@ -682,6 +682,240 @@ class KeyServiceTest(unittest.TestCase):
         self.assertTrue(inspected["restoreBlockedByUnresolvedOperation"])
         self.assertEqual(before, self.generation_identity())
 
+    def prepare_request(self, identity=None):
+        ring = self.directory / "kura_encryption_keyring"
+        source = dict(keySha256=self.proof["keySha256"], ringSha256=None)
+        if os.path.lexists(ring):
+            source["ringSha256"] = hashlib.sha256(ring.read_bytes()).hexdigest()
+        return self.request("generation-prepare", operationId=identity or str(uuid.uuid4()),
+                            expectedSource=source, passphrase=PASSWORD)
+
+    def verification_request(self, prepared, identity=None):
+        return self.request("generation-backup-verify", operationId=identity or str(uuid.uuid4()),
+                            preparationId=prepared["operationId"], passphrase=PASSWORD,
+                            expectedRingSha256=prepared["generation"]["ringSha256"], backup=prepared["backup"])
+
+    def test_generation_encoder_keeps_order_and_rejects_invalid_indices_lengths_and_duplicates(self):
+        keys = [service.CORE_DEFAULT, secrets.token_bytes(24), self.key]
+        raw = service.encode_key_generations(keys, 2, 0)
+        self.assertEqual((keys, 2, 0), service.key_generation_entries(raw))
+        for entries, active, legacy in ((keys, True, 0), (keys, 2, 2), ([self.key, self.key], 1, 0),
+                                        ([b"short", self.key], 1, 0), (keys, 0, 2)):
+            with self.subTest(active=active, legacy=legacy), self.assertRaises(service.Refused):
+                service.encode_key_generations(entries, active, legacy)
+
+    def test_generation_preparation_rejects_unbound_source_and_recovery_peer_before_any_intent(self):
+        request = self.prepare_request()
+        request["expectedSource"]["keySha256"] = "a" * 64
+        self.refused("CONFLICT", lambda: self.manager.handle(request))
+        request = self.prepare_request()
+        request["expectedSource"]["ringSha256"] = "b" * 64
+        self.refused("CONFLICT", lambda: self.manager.handle(request))
+        for action in ("generation-prepare", "generation-backup-verify"):
+            self.refused("FORBIDDEN", lambda: self.manager.handle(self.request(action), recovery_only=True))
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+        self.assertFalse((self.state / "generations").exists())
+
+    def test_generation_preparation_refuses_capacity_without_retiring_any_old_key(self):
+        keys = [service.CORE_DEFAULT, *[secrets.token_bytes(32) for _ in range(6)], self.key]
+        raw = service.encode_key_generations(keys, 7, 0)
+        self.write(self.directory / "kura_encryption_keyring", raw, 0o400)
+        _, metadata = service.key_generations(raw)
+        self.write(self.directory / "key-generations.json", service.encode(dict(schema=1, purpose=service.GENERATION_FORMAT, **metadata)), 0o600)
+        before = self.generation_identity()
+        self.refused("CAPACITY", lambda: self.manager.handle(self.prepare_request()))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_prepare_and_verify_legacy_key_retains_all_material_without_changing_canonical_state(self):
+        self.key = service.CORE_DEFAULT
+        self.proof.update(keySha256=hashlib.sha256(self.key).hexdigest(), legacyKey=True, origin="legacy")
+        self.write(self.key_path, self.key, 0o400)
+        self.write(self.receipt_path, service.encode(self.proof), 0o600)
+        before = self.generation_identity()
+        prepared = self.manager.handle(self.prepare_request())
+        raw, history, _ = self.manager.prepared_generation(prepared["operationId"])
+        keys, active, legacy = service.key_generation_entries(raw)
+        self.assertEqual([16, 32], [len(key) for key in keys])
+        self.assertEqual(self.key, keys[legacy])
+        self.assertEqual(1, active)
+        self.assertNotEqual(self.key, keys[active])
+        self.assertFalse(prepared["published"])
+        self.assertTrue(prepared["requiresExplicitCommit"])
+        self.assertEqual(self.proof, history["sourceReceipt"])
+        self.assertFalse(history["provisioned"]["legacyKey"])
+        directory = self.state / "generations" / prepared["operationId"]
+        for path in directory.iterdir():
+            self.assertEqual(0o400, stat.S_IMODE(path.stat().st_mode))
+            self.assertEqual(1, path.stat().st_nlink)
+        saved = (self.state / "operations" / (prepared["operationId"] + ".json")).read_bytes()
+        for secret in [PASSWORD.encode(), *[base64.b64encode(key) for key in keys]]:
+            self.assertNotIn(secret, saved)
+            self.assertNotIn(secret, (directory / "history.json").read_bytes())
+        verified = self.manager.handle(self.verification_request(prepared))
+        self.assertEqual(hashlib.sha256(service.encode(prepared["backup"])).hexdigest(), verified["backupSha256"])
+        self.assertFalse(verified["published"])
+        self.assertEqual(before, self.generation_identity())
+        self.manager.settled()
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_prepare_existing_generations_preserves_exact_original_ring_order_and_legacy_selector(self):
+        original = self.generation_fixture()
+        before = self.generation_identity()
+        prepared = self.manager.handle(self.prepare_request())
+        raw, _, _ = self.manager.prepared_generation(prepared["operationId"])
+        old_keys, _, old_legacy = service.key_generation_entries(original)
+        keys, active, legacy = service.key_generation_entries(raw)
+        self.assertEqual(old_keys, keys[:-1])
+        self.assertEqual(old_legacy, legacy)
+        self.assertEqual(len(old_keys), active)
+        self.assertEqual(original, (self.state / "generations" / prepared["operationId"] / "source-keyring").read_bytes())
+        self.manager.handle(self.verification_request(prepared))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual(self.proof["keySha256"], self.generation_boot_admission()["activeKeySha256"])
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_preparation_result_read_never_generates_again_or_replaces_immutable_history(self):
+        request = self.prepare_request()
+        prepared = self.manager.handle(request)
+        directory = self.state / "generations" / prepared["operationId"]
+        before = {p.name: self.identity(p) for p in directory.iterdir()}
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Result read must not encrypt")), \
+                patch.object(service.secrets, "token_bytes", side_effect=AssertionError("Result read must not generate")):
+            self.assertEqual(prepared, self.manager.handle(request))
+            self.assertEqual(prepared, self.manager.handle(self.request("operation-read", operationId=prepared["operationId"])))
+            self.refused("PREPARATION_PENDING", lambda: self.manager.handle(self.prepare_request()))
+        self.assertEqual(before, {p.name: self.identity(p) for p in directory.iterdir()})
+        changed = dict(request, passphrase="a different fixture passphrase")
+        self.refused("CONFLICT", lambda: self.manager.handle(changed))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_preparation_partial_write_stays_unknown_and_blocks_new_ids_startup_and_package(self):
+        self.generation_fixture()
+        request = self.prepare_request()
+        before = self.generation_identity()
+        original = self.manager.atomic
+        def lose_history(path, value, **options):
+            if path.name == "history.json":
+                raise OSError("fixture interrupted history publication")
+            return original(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_history):
+            self.refused("UNKNOWN", lambda: self.manager.handle(request))
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Unknown must not dispatch")), \
+                patch.object(service.secrets, "token_bytes", side_effect=AssertionError("Unknown must not generate")):
+            self.assertEqual("UNKNOWN", self.manager.handle(request)["state"])
+            self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.prepare_request()))
+            self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+        self.assertEqual(before, self.generation_identity())
+        self.assertTrue((self.state / "generations" / request["operationId"] / "keyring").is_file())
+        with self.assertRaises(service.LifecycleUnresolved):
+            service.Lifecycle(self.root, os.geteuid()).check_records()
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_preparation_lost_final_result_does_not_infer_success_from_present_keys(self):
+        request = self.prepare_request()
+        original = self.manager.atomic
+        def lose_result(path, value, **options):
+            if path.parent == self.state / "operations" and service.decode(value)["state"] == "SUCCEEDED":
+                raise OSError("fixture lost final receipt")
+            return original(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_result):
+            self.refused("UNKNOWN", lambda: self.manager.handle(request))
+        directory = self.state / "generations" / request["operationId"]
+        self.assertEqual({"keyring", "history.json"}, {p.name for p in directory.iterdir()})
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Unknown must not dispatch")):
+            self.assertEqual("UNKNOWN", self.manager.handle(request)["state"])
+            self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.prepare_request()))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_prepare_worker_failure_is_unknown_and_does_not_change_active_credentials(self):
+        before = self.generation_identity()
+        request = self.prepare_request()
+        with patch.object(self.manager, "crypt", side_effect=service.Failure("BACKUP_REJECTED")):
+            self.refused("UNKNOWN", lambda: self.manager.handle(request))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual("UNKNOWN", self.manager.handle(self.request("operation-read", operationId=request["operationId"]))["state"])
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_verification_refuses_wrong_password_tampering_and_relabelled_or_wrong_backup_before_intent(self):
+        self.generation_fixture()
+        prepared = self.manager.handle(self.prepare_request())
+        request = self.verification_request(prepared)
+        attempts = [dict(request, passphrase="wrong fixture passphrase"), dict(request, expectedRingSha256="b" * 64)]
+        changed = bytearray(base64.b64decode(prepared["backup"]["encrypted"]))
+        changed[-1] ^= 1
+        attempts += [dict(request, backup=dict(prepared["backup"], encrypted=base64.b64encode(changed).decode())),
+                     dict(request, backup=dict(prepared["backup"], operationId=str(uuid.uuid4())))]
+        original_backup = self.generation_backup()["backup"]
+        attempts.append(dict(request, backup=original_backup))
+        before = {p.name: p.read_bytes() for p in (self.state / "operations").iterdir()}
+        for candidate in attempts:
+            self.refused("BACKUP_REJECTED", lambda: self.manager.handle(candidate))
+        self.assertEqual(before, {p.name: p.read_bytes() for p in (self.state / "operations").iterdir()})
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_verification_is_durable_original_result_only_and_does_not_reopen_a_preparation(self):
+        prepared = self.manager.handle(self.prepare_request())
+        request = self.verification_request(prepared)
+        result = self.manager.handle(request)
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Verification read must not decrypt")):
+            self.assertEqual(result, self.manager.handle(request))
+            self.assertEqual(result, self.manager.handle(self.request("operation-read", operationId=request["operationId"])))
+        self.refused("ALREADY_VERIFIED", lambda: self.manager.handle(self.verification_request(prepared)))
+        self.refused("PREPARATION_PENDING", lambda: self.manager.handle(self.prepare_request()))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_verification_rejects_stale_source_receipt_and_linked_or_changed_prepared_material(self):
+        prepared = self.manager.handle(self.prepare_request())
+        request = self.verification_request(prepared)
+        proof = dict(self.proof, unitDigests=["a" * 64])
+        self.write(self.receipt_path, service.encode(proof), 0o600)
+        self.refused("CONFLICT", lambda: self.manager.handle(request))
+        self.write(self.receipt_path, service.encode(self.proof), 0o600)
+        directory = self.state / "generations" / prepared["operationId"]
+        ring = directory / "keyring"
+        raw = ring.read_bytes()
+        other = directory / "other"
+        self.write(other, raw, 0o400)
+        ring.unlink()
+        ring.symlink_to(other.name)
+        self.refused("UNSAFE_FILESYSTEM", lambda: self.manager.handle(request))
+        ring.unlink()
+        self.write(ring, raw[:-1] + bytes([raw[-1] ^ 1]), 0o400)
+        self.refused("UNSAFE_JOURNAL", lambda: self.manager.handle(request))
+        self.assertEqual(1, len(list((self.state / "operations").iterdir())))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_verification_lost_final_result_fences_all_new_ids(self):
+        prepared = self.manager.handle(self.prepare_request())
+        request = self.verification_request(prepared)
+        original = self.manager.atomic
+        def lose_result(path, value, **options):
+            if path.parent == self.state / "operations" and service.decode(value)["state"] == "SUCCEEDED":
+                raise OSError("fixture lost verified receipt")
+            return original(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_result):
+            self.refused("UNKNOWN", lambda: self.manager.handle(request))
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("Unknown must not dispatch")):
+            self.assertEqual("UNKNOWN", self.manager.handle(request)["state"])
+            self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.verification_request(prepared)))
+            self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.prepare_request()))
+
+    @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
+    def test_preparation_receipt_cannot_claim_publication_or_weaken_required_confirmation(self):
+        prepared = self.manager.handle(self.prepare_request())
+        path = self.state / "operations" / (prepared["operationId"] + ".json")
+        original = path.read_bytes()
+        for field, value in (("published", True), ("published", 0), ("requiresExplicitCommit", False),
+                             ("requiresExplicitCommit", 1)):
+            record = service.decode(original)
+            record["response"][field] = value
+            self.write(path, service.encode(record), 0o600)
+            self.refused("UNSAFE_JOURNAL", lambda: self.manager.record(prepared["operationId"]))
+        self.write(path, original, 0o600)
+        self.manager.settled()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
