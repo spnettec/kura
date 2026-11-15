@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="kura-recovery-csrf" content="KURA_RECOVERY_CSRF">
+ <title>Kura · 密钥恢复</title>
+ <link rel="stylesheet" href="/recovery.css">
+ <script src="/recovery.js" defer></script>
+</head>
+<body>
+ <main>
+  <header><span>YOFC Kura</span><label><span data-i18n="language">语言</span> <select id="language" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select></label></header>
+  <h1 data-i18n="title">恢复网关原密钥</h1>
+  <p data-i18n="intro">上传此前下载的加密备份并输入口令。网关将校验保留的原指纹，只补回与本网关匹配的密钥。</p>
+  <section aria-label="Key status">
+   <button id="refresh" type="button" data-i18n="refresh">读取密钥状态</button>
+   <p id="status" role="status" aria-live="polite"></p>
+   <p><span data-i18n="fingerprint">网关保留的原指纹（SHA-256）</span><br><code id="fingerprint"></code></p>
+  </section>
+  <section aria-label="Recovery material">
+   <label for="backup" data-i18n="file">加密备份 JSON 文件</label>
+   <input id="backup" type="file" accept="application/json,.json">
+   <label for="password" data-i18n="password">备份解密口令</label>
+   <input id="password" type="password" autocomplete="off" maxlength="512" spellcheck="false">
+   <p class="hint" data-i18n="privacy">口令仅用于本次核验和恢复，不保存在页面或操作记录中。</p>
+   <button id="inspect" type="button" data-i18n="inspect">核验备份</button>
+   <p id="review" aria-live="polite"></p>
+   <label class="check"><input id="confirm" type="checkbox"><span data-i18n="confirm">我已核对指纹，确认补回本网关的原密钥。</span></label>
+   <button id="restore" type="button" data-i18n="restore">恢复原密钥</button>
+  </section>
+  <section aria-label="Core start handoff">
+   <p data-i18n="startIntro">确认原密钥恢复回执后，可在此启动 Kura。系统接收启动请求后，请进入控制台检查是否就绪。</p>
+   <label id="upgrade-confirm-row" class="check" hidden><input id="upgrade-confirm" type="checkbox"><span data-i18n="upgradeConfirm">我确认安装升级已停止 Kura，并为本次维护创建新的启动请求。</span></label>
+   <button id="start-core" type="button" data-i18n="startCore">启动 Kura</button>
+   <p><span data-i18n="startOperation">启动操作编号</span><br><code id="start-operation"></code></p>
+   <p id="start-notice" role="status" aria-live="polite"></p>
+   <button id="query-start" type="button" data-i18n="queryStart">查询原启动回执</button>
+   <button id="complete" type="button" data-i18n="complete">确认启动回执并结束恢复</button>
+  </section>
+  <section aria-label="Original operation">
+   <p id="notice" role="status" aria-live="polite"></p>
+   <p><span data-i18n="operation">恢复操作编号</span><br><code id="operation"></code></p>
+   <button id="query-pending" type="button" data-i18n="queryPending">查询待确认的原操作</button>
+   <button id="acknowledge" type="button" data-i18n="acknowledge">确认此结果</button>
+   <label for="original" data-i18n="original">原恢复操作编号</label>
+   <input id="original" type="text" autocomplete="off" spellcheck="false" maxlength="36">
+   <button id="query-original" type="button" data-i18n="queryOriginal">查询此原操作</button>
+   <p><a id="console" data-i18n="console">返回网关控制台</a></p>
+  </section>
+ </main>
+</body>
+</html>

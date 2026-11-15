@@ -342,6 +342,22 @@ if [ "${ACTION}" = "upgrade" ] && [ -e "${RETAINED_DIR}" ]; then
     exit 1
 fi
 
+# The exact packaged Python helper is embedded here during prepare-package.
+# It runs after ordinary-boot admission and before any stop, copy or wipe.
+keyServicePackageAdmission() {
+    python3 -I - "$@" <<'PYKURAKEYSERVICE'
+raise RuntimeError("Kura key-service lifecycle was not embedded")
+PYKURAKEYSERVICE
+}
+keyServicePackageAdmission --enter "${ACTION}" || exit 1
+
+provisionCryptoKey() {
+    python3 -I - "$@" <<'PYKURAKEY'
+raise RuntimeError("Kura key provisioner was not embedded")
+PYKURAKEY
+}
+provisionCryptoKey prepare "${ACTION}" || exit 1
+
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
@@ -353,6 +369,29 @@ function installedSiblings {
     dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
         | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
         | tr '\n' ' '
+}
+
+# A plain JVM signal leaves Restart=on-failure armed while files are replaced.
+# A synchronous manager stop cancels both the process and any queued restart.
+function stopKuraForPackage {
+    local state main control status property value
+    if ! systemctl stop kura.service; then
+        echo "Cannot change Kura: systemd could not stop the service safely." >&2
+        return 1
+    fi
+    status=$(systemctl show kura.service --property=ActiveState --property=MainPID --property=ControlPID) || return 1
+    state= main= control=
+    while IFS='=' read -r property value; do
+        case "$property" in
+            ActiveState) state="$value" ;;
+            MainPID) main="$value" ;;
+            ControlPID) control="$value" ;;
+        esac
+    done <<< "$status"
+    if [ "$state" != "inactive" ] || [ "$main" != "0" ] || [ "$control" != "0" ]; then
+        echo "Cannot change Kura: the service has not fully stopped." >&2
+        return 1
+    fi
 }
 
 # Run preInstall function and start watchdog if needed
@@ -418,6 +457,7 @@ function preInstall {
                 cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1 || return 1
             fi
         done
+        provisionCryptoKey archive "${PRESERVE_DIR}/encryption" >> "${LOG}" 2>&1 || return 1
         # Sibling packages also install their removal scripts and network
         # recovery helpers under .data. A core-only upgrade must not strand
         # those installed packages without their removal hooks.
@@ -475,8 +515,12 @@ fi
 echo "Installing Kura..."
 echo "Installing Kura..." >> "${LOG}" 2>&1
 
-# Kill Kura for installation
-if [ -f "/var/run/kura.pid" ] ; then
+# Key capture above must precede the manager stop. This also cancels restart
+# jobs left behind by an older package's prerm before any runtime copy or wipe.
+if [ -f /lib/systemd/system/kura.service ]; then
+    stopKuraForPackage || exit 1
+# Legacy non-systemd installations keep their existing stop path.
+elif [ -f "/var/run/kura.pid" ] ; then
   KURA_PID=`cat /var/run/kura.pid`
 
   for pid in "${PIDS[@]}"

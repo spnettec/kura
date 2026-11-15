@@ -14,6 +14,9 @@
 
 INSTALL_DIR=/opt/eclipse
 RETAINED_DIR=/var/lib/kura-retained
+# Canonical AES credentials and /var/lib/kura-key-service intentionally survive
+# remove/purge. Never delete the original backup journal or initialize a new key.
+# Recovery TLS identity, private recovery journal and its locked UID/GID also survive.
 
 case "$1" in
     purge|remove)
@@ -37,7 +40,8 @@ case "$1" in
 
         # Remove kura installation tree (plugins/ + siblings/)
         if [ -d "${INSTALL_DIR}/kura" ] ; then
-            ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -u 2>/dev/null || true
+            # prerm completed account/policy cleanup using tracked root code.
+            # The retained mutable .data copy is never a privileged callback.
             TARGET=$(readlink -f "${INSTALL_DIR}/kura" 2>/dev/null || echo "")
             rm -rf "${INSTALL_DIR}/kura"
             case "${TARGET}" in

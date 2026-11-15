@@ -35,6 +35,29 @@ final class ConfigurationRevision {
 
     ConfigurationRevision() { new SecureRandom().nextBytes(this.key); }
 
+    /** Stored dictionaries have no editable OCD. Keep their HMAC domain separate. */
+    String storedToken(String pid, boolean present, Map<String,Object> properties, long changes, long admissions)
+            throws Rejected {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(this.key, "HmacSHA256"));
+            DataOutputStream out = bounded(new OutputStream() {
+                @Override public void write(int value) { mac.update((byte)value); }
+                @Override public void write(byte[] bytes, int offset, int length) { mac.update(bytes, offset, length); }
+            });
+            text(out, "kura.configuration.stored.revision.v1");
+            text(out, pid); out.writeBoolean(present); out.writeLong(changes); out.writeLong(admissions);
+            if (properties == null || properties.size() > 512 || properties.keySet().stream().anyMatch(k -> k == null)) {
+                throw unsupported();
+            }
+            out.writeInt(properties.size());
+            for (var entry : new TreeMap<>(properties).entrySet()) {
+                text(out, entry.getKey()); value(out, entry.getValue(), true);
+            }
+            return "stored:" + HexFormat.of().formatHex(mac.doFinal());
+        } catch (IOException | GeneralSecurityException e) { throw unsupported(); }
+    }
+
     String token(ComponentConfiguration configuration, long changes, long admissions) throws Rejected {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");

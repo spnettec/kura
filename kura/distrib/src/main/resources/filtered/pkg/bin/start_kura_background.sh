@@ -3,6 +3,8 @@
 # Kura should be installed to the @kura.install.dir@ directory.
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/opt/jvm/bin:/usr/java/bin:$PATH
 export MALLOC_ARENA_MAX=1
+# Keep PID, logs and generated runtime files private regardless of caller mask.
+umask 077
 
 DIR=$(cd $(dirname $0)/..; pwd)
 cd $DIR
@@ -24,6 +26,9 @@ if [ -n "${KURA_JVM_ARGS_FILE:-}" ]; then
 fi
 
 # set up the configuration area
+# Use the same credential for the installed service and direct launchers.
+. "${DIR}/bin/kura_credential_env.sh" || exit 1
+
 mkdir -p /tmp/.kura/configuration
 ${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/siblings > /tmp/.kura/configuration/config.ini
 

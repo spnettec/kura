@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -498,6 +499,151 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
         return new ConfigurationRevisionService.Read(current, this.configurationRevision.token(current, changes,
                 this.revisionAdmissions.getOrDefault(pid, 0L)));
+    }
+
+    @Override
+    public synchronized ComponentConfiguration readExternalConfirmedConfiguration(String pid) throws KuraException {
+        if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                || pid.codePoints().anyMatch(Character::isISOControl)) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        if (!this.externalConfigurations.owns(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+        ComponentConfiguration confirmed = this.externalConfigurations.confirmed(pid);
+        Map<String,Object> properties = ConfigurationRevision.copyEditProperties(confirmed.getConfigurationProperties());
+        return new ComponentConfiguration() {
+            @Override public String getPid() { return pid; }
+            @Override public OCD getDefinition() { return confirmed.getDefinition(); }
+            @Override public OCD getLocalizedDefinition(String locale) { return confirmed.getLocalizedDefinition(locale); }
+            @Override public Map<String,Object> getConfigurationProperties() { return properties; }
+            @Override public String toString() { return "ExternalConfirmedConfiguration[redacted]"; }
+        };
+    }
+
+    @Override
+    public synchronized Map<String, ConfigurationRevisionService.StoredReadView> readStoredRevisionViews(Set<String> pids)
+            throws KuraException {
+        if (pids == null || pids.isEmpty() || pids.size() > 16) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+        Set<String> selected = new TreeSet<>();
+        for (String pid : pids) {
+            if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                    || pid.codePoints().anyMatch(Character::isISOControl)) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            selected.add(pid);
+        }
+        if (this.configurationAdmin == null) { throw new Rejected(Reason.UNSUPPORTED); }
+        if (this.intentJournal != null && this.intentJournal.revisionsBlocked()) { throw new Rejected(Reason.CONFLICT); }
+        for (String pid : selected) {
+            if (this.externalConfigurations.owns(pid) || !this.allActivatedPids.contains(pid)
+                    || !pid.equals(this.servicePidByPid.get(pid)) || this.factoryPidByPid.containsKey(pid)) {
+                throw new Rejected(Reason.UNSUPPORTED);
+            }
+            if (this.revisionUncertain.contains(pid) || this.revisionPending.containsKey(pid)
+                    || this.rollbackConvergence.containsKey(pid)) { throw new Rejected(Reason.CONFLICT); }
+        }
+        Map<String, ConfigurationRevisionService.StoredReadView> result = new LinkedHashMap<>();
+        for (String pid : selected) { result.put(pid, storedRevisionView(pid)); }
+        // No SCC callbacks or CM creations occur in either pass. Independent CM
+        // writers cannot silently substitute a different member of this cohort.
+        for (String pid : selected) {
+            var after = storedRevisionView(pid);
+            if (!result.get(pid).revision().equals(after.revision()) || result.get(pid).present() != after.present()) {
+                throw new Rejected(Reason.CONFLICT);
+            }
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
+    private ConfigurationRevisionService.StoredReadView storedRevisionView(String pid) throws KuraException {
+        StringBuilder escaped = new StringBuilder();
+        for (char ch : pid.toCharArray()) {
+            switch (ch) {
+                case '*' -> escaped.append("\\2a");
+                case '(' -> escaped.append("\\28");
+                case ')' -> escaped.append("\\29");
+                case '\\' -> escaped.append("\\5c");
+                default -> escaped.append(ch);
+            }
+        }
+        try {
+            Configuration[] entries = this.configurationAdmin.listConfigurations("(service.pid=" + escaped + ")");
+            if (entries != null && entries.length > 1) { throw new Rejected(Reason.CONFLICT); }
+            long changes = -1;
+            boolean present = false;
+            Map<String, Object> properties = new HashMap<>();
+            if (entries != null && entries.length == 1) {
+                Configuration entry = entries[0];
+                if (entry == null || !pid.equals(entry.getPid()) || entry.getFactoryPid() != null) {
+                    throw new Rejected(Reason.CONFLICT);
+                }
+                long before = entry.getChangeCount();
+                Dictionary<String, Object> dictionary = entry.getProperties();
+                if (dictionary != null) {
+                    for (Enumeration<String> names = dictionary.keys(); names.hasMoreElements();) {
+                        String name = names.nextElement();
+                        if (name == null) { throw new Rejected(Reason.UNSUPPORTED); }
+                        properties.put(name, dictionary.get(name));
+                    }
+                    properties = ConfigurationRevision.copyEditProperties(properties);
+                    present = true;
+                }
+                changes = entry.getChangeCount();
+                if (before != changes || changes < 0) { throw new Rejected(Reason.CONFLICT); }
+            }
+            ComponentConfiguration detached = new ComponentConfigurationImpl(pid, null,
+                    Collections.unmodifiableMap(properties));
+            // Separate domain:these original-storage observations grant no
+            // generic configuration update admission,even for identical values.
+            String revision = this.configurationRevision.storedToken(pid, present, properties, changes,
+                    this.revisionAdmissions.getOrDefault(pid, 0L));
+            return new ConfigurationRevisionService.StoredRead(detached, revision, present);
+        } catch (IOException | org.osgi.framework.InvalidSyntaxException e) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
+        }
+    }
+
+    @Override
+    public synchronized ConfigurationRevisionService.ReadView readLogicalRevisionView(String pid) throws KuraException {
+        // readRevision uses the existing explicit CM/SCC password-source rules.
+        var original = readRevision(pid);
+        var configuration = original.configuration();
+        Map<String,Object> properties = ConfigurationRevision.copyEditProperties(configuration.getConfigurationProperties());
+        ComponentConfiguration detached = new ComponentConfiguration() {
+            @Override public String getPid() { return pid; }
+            @Override public OCD getDefinition() { return configuration.getDefinition(); }
+            @Override public OCD getLocalizedDefinition(String locale) { return configuration.getLocalizedDefinition(locale); }
+            @Override public Map<String,Object> getConfigurationProperties() { return properties; }
+            @Override public String toString() { return "LogicalRevisionExport[redacted]"; }
+        };
+        long changes = -1;
+        String servicePid = this.servicePidByPid.get(pid);
+        if (servicePid != null && this.configurationAdmin != null) {
+            try { changes = this.configurationAdmin.getConfiguration(servicePid, "?").getChangeCount(); }
+            catch (IOException e) { throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e); }
+        }
+        if (!original.revision().equals(this.configurationRevision.token(detached, changes,
+                this.revisionAdmissions.getOrDefault(pid,0L)))) { throw new Rejected(Reason.CONFLICT); }
+        return new ConfigurationRevisionService.Read(detached, original.revision());
+    }
+
+    @Override
+    public synchronized Map<String, ComponentConfiguration> readExternalConfirmedConfigurations(Set<String> pids)
+            throws KuraException {
+        if (pids == null || pids.isEmpty() || pids.size() > 16) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        Set<String> selected = new TreeSet<>();
+        for (String pid : pids) {
+            if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                    || pid.codePoints().anyMatch(Character::isISOControl)) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+            selected.add(pid);
+        }
+        for (String pid : selected) {
+            if (!this.externalConfigurations.owns(pid)) {
+                throw new Rejected(Reason.UNSUPPORTED);
+            }
+        }
+        return this.externalConfigurations.confirmedBatch(selected);
     }
 
     @Override

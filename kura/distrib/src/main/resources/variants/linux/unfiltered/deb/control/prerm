@@ -20,6 +20,29 @@ TIMESTAMP=$(date +%Y%m%d%H%M)
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log
 RETAINED_DIR=/var/lib/kura-retained
 
+# A plain JVM signal leaves Restart=on-failure armed while files are replaced.
+# A synchronous manager stop cancels both the process and any queued restart.
+function stopKuraForPackage {
+    local state main control status property value
+    if ! systemctl stop kura.service; then
+        echo "Cannot change Kura: systemd could not stop the service safely." >&2
+        return 1
+    fi
+    status=$(systemctl show kura.service --property=ActiveState --property=MainPID --property=ControlPID) || return 1
+    state= main= control=
+    while IFS='=' read -r property value; do
+        case "$property" in
+            ActiveState) state="$value" ;;
+            MainPID) main="$value" ;;
+            ControlPID) control="$value" ;;
+        esac
+    done <<< "$status"
+    if [ "$state" != "inactive" ] || [ "$main" != "0" ] || [ "$control" != "0" ]; then
+        echo "Cannot change Kura: the service has not fully stopped." >&2
+        return 1
+    fi
+}
+
 # Save mutable state before dpkg removes any package-owned files.  Stage into
 # a private directory and publish it only after every copy succeeds; never
 # replace an earlier recovery copy from an interrupted operation.
@@ -46,6 +69,12 @@ function preserveUserData {
         if ! mkdir -p "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
             echo "Cannot remove Kura: failed to preserve the systemd service configuration." >&2
             rm -rf "${retained_tmp}"
+            return 1
+        fi
+    fi
+    if [ -f /etc/kura/credentials/kura_encryption_key ]; then
+        if ! python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" archive "${retained_tmp}/encryption"; then
+            echo "Cannot remove Kura: encryption-key recovery copy failed; preserve the installation." >&2
             return 1
         fi
     fi
@@ -134,15 +163,22 @@ function preRemove {
 # PRE-REMOVE SCRIPT
 ##############################################
 
-# Stop a running Kura before either an upgrade or a removal.
-if [ "$1" = "remove" ] && [ -f /lib/systemd/system/kura.service ]; then
-    if ! systemctl stop kura.service; then
-        echo "Cannot remove Kura: the service could not be stopped safely." >&2
-        exit 1
-    fi
+# A failed upgrade does not authorize stopping or tearing down the old runtime.
+if [ "$1" = "failed-upgrade" ]; then
+    exit 0
 fi
+# Exclude active/unknown key operations before stopping Core or copying data.
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --enter "$1" || exit 1
+# Preserve live-only legacy key sources before a managed stop on future upgrades.
+if [ "$1" = "upgrade" ]; then
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare upgrade || exit 1
+fi
+# Stop synchronously on both paths; never fall through to a raw JVM signal when
+# a managed stop failed or the manager still reports live/start/stop processes.
+if [ -f /lib/systemd/system/kura.service ]; then
+    stopKuraForPackage || exit 1
+else
 PIDS=`pgrep java`
-
 if [ -f "/var/run/kura.pid" ] ; then
   KURA_PID=`cat /var/run/kura.pid`
 
@@ -152,6 +188,7 @@ if [ -f "/var/run/kura.pid" ] ; then
       `kill $pid` >> "$LOG" 2>&1
     fi
   done
+fi
 fi
 
 # In-place upgrade: just stop the running instance. The host integration
@@ -164,13 +201,13 @@ if [ "$1" == "upgrade" ]; then
     exit 0
 fi
 
-# A failed upgrade is recovered by the new package's scripts; nothing to tear down.
-if [ "$1" == "failed-upgrade" ]; then
-    exit 0
-fi
-
 if [ "$1" = "remove" ]; then
     preserveUserData || exit 1
+    # Revoke the paired su grant while package helpers are still available.
+    # Upgrade keeps the installed policy until the new package reconciles it.
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_su_pam.py" remove || exit 1
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --remove-units || exit 1
+    bash "${INSTALL_DIR}/kura/bin/manage_kura_users.sh" -u || exit 1
 fi
 
 echo ""

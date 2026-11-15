@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory;
 public class ExecutorUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutorUtil.class);
-    private static final String COMMAND_MESSAGE = "Command ";
     private static final String FAILED_TO_GET_PID_MESSAGE = "Failed to get pid for command '{}'";
     private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"));
     private static final String DEFAULT_COMMAND_USERNAME = "kura";
@@ -77,23 +76,32 @@ public class ExecutorUtil {
     }
 
     public CommandStatus executeUnprivileged(Command command) {
-        CommandLine commandLine = buildUnprivilegedCommand(command);
-        return executeSync(command, commandLine);
+        try {
+            return executeSync(command, buildUnprivilegedCommand(command), false);
+        } catch (IllegalArgumentException e) {
+            return rejectedCommand(command, e.getMessage());
+        }
     }
 
     public void executeUnprivileged(Command command, Consumer<CommandStatus> callback) {
-        CommandLine commandLine = buildUnprivilegedCommand(command);
-        executeAsync(command, commandLine, callback);
+        final CommandLine commandLine;
+        try {
+            commandLine = buildUnprivilegedCommand(command);
+        } catch (IllegalArgumentException e) {
+            callback.accept(rejectedCommand(command, e.getMessage()));
+            return;
+        }
+        executeAsync(command, commandLine, callback, false);
     }
 
     public CommandStatus executePrivileged(Command command) {
         CommandLine commandLine = buildPrivilegedCommand(command);
-        return executeSync(command, commandLine);
+        return executeSync(command, commandLine, true);
     }
 
     public void executePrivileged(Command command, Consumer<CommandStatus> callback) {
         CommandLine commandLine = buildPrivilegedCommand(command);
-        executeAsync(command, commandLine, callback);
+        executeAsync(command, commandLine, callback, true);
     }
 
     public boolean stopUnprivileged(Pid pid, Signal signal) {
@@ -230,7 +238,7 @@ public class ExecutorUtil {
         return Arrays.stream(tokens).parallel().allMatch(line::contains);
     }
 
-    private CommandStatus executeSync(Command command, CommandLine commandLine) {
+    private CommandStatus executeSync(Command command, CommandLine commandLine, boolean applyLaunchEnvironment) {
         CommandStatus commandStatus = new CommandStatus(command, new LinuxExitStatus(0));
         commandStatus.setOutputStream(command.getOutputStream());
         commandStatus.setErrorStream(command.getErrorStream());
@@ -239,9 +247,10 @@ public class ExecutorUtil {
         Executor executor = configureExecutor(command);
 
         int exitStatus = 0;
-        logger.debug("Executing: {}", commandLine);
+        logger.debug("Executing command with {} arguments", command.getCommandLine().length);
         try {
-            Map<String, String> environment = command.getEnvironment();
+            // Unprivileged environment belongs after the identity change, not on su.
+            Map<String, String> environment = applyLaunchEnvironment ? command.getEnvironment() : null;
             if (environment != null && !environment.isEmpty()) {
                 Map<String, String> currentEnv = EnvironmentUtils.getProcEnvironment();
                 currentEnv.putAll(environment);
@@ -251,10 +260,10 @@ public class ExecutorUtil {
             }
         } catch (ExecuteException e) {
             exitStatus = e.getExitValue();
-            logger.debug(COMMAND_MESSAGE + " {} returned error code {}", commandLine, exitStatus, e);
+            logger.debug("Command returned error code {}", exitStatus, e);
         } catch (IOException e) {
             exitStatus = 1;
-            logger.debug(COMMAND_MESSAGE + " {} failed", commandLine, e);
+            logger.debug("Command execution failed", e);
         } finally {
             stopStreamHandler(executor);
             commandStatus.setExitStatus(new LinuxExitStatus(exitStatus));
@@ -299,7 +308,8 @@ public class ExecutorUtil {
         return new DefaultExecutor();
     }
 
-    private void executeAsync(Command command, CommandLine commandLine, Consumer<CommandStatus> callback) {
+    private void executeAsync(Command command, CommandLine commandLine, Consumer<CommandStatus> callback,
+            boolean applyLaunchEnvironment) {
         CommandStatus commandStatus = new CommandStatus(command, new LinuxExitStatus(0));
         commandStatus.setOutputStream(command.getOutputStream());
         commandStatus.setErrorStream(command.getErrorStream());
@@ -310,9 +320,9 @@ public class ExecutorUtil {
         LinuxResultHandler resultHandler = new LinuxResultHandler(callback, executor);
         resultHandler.setStatus(commandStatus);
 
-        logger.debug("Executing: {}", commandLine);
+        logger.debug("Executing command with {} arguments", command.getCommandLine().length);
         try {
-            Map<String, String> environment = command.getEnvironment();
+            Map<String, String> environment = applyLaunchEnvironment ? command.getEnvironment() : null;
             if (environment != null && !environment.isEmpty()) {
                 Map<String, String> currentEnv = EnvironmentUtils.getProcEnvironment();
                 currentEnv.putAll(environment);
@@ -323,7 +333,7 @@ public class ExecutorUtil {
         } catch (IOException e) {
             stopStreamHandler(executor);
             commandStatus.setExitStatus(new LinuxExitStatus(1));
-            logger.error(COMMAND_MESSAGE + commandLine + " failed", e);
+            logger.error("Command execution failed", e);
         }
     }
 
@@ -336,33 +346,86 @@ public class ExecutorUtil {
     }
 
     private CommandLine buildUnprivilegedCommand(Command command) {
-        // Build the command as follows:
-        // su <command_user> -c "VARS... timeout -s <signal> <timeout> <command>"
-        // or su <command_user> c "VARS... sh -c <command>"
-        // The timeout command is added because the commons-exec doesn't allow to set the signal to send for killing a
-        // process after a timeout
-        CommandLine commandLine = new CommandLine("su");
-        commandLine.addArgument(this.commandUsername);
-        commandLine.addArgument("-c");
+        if (this.commandUsername == null || this.commandUsername.isEmpty()) {
+            throw new IllegalArgumentException("Command username must be specified");
+        }
+        requireArgument(this.commandUsername);
+        String[] arguments = command.getCommandLine();
+        if (arguments == null || arguments.length == 0 || arguments[0] == null || arguments[0].isEmpty()) {
+            throw new IllegalArgumentException("Command executable must be specified");
+        }
+        for (String argument : arguments) {
+            requireArgument(argument);
+        }
 
-        List<String> c = new ArrayList<>();
+        // These trusted launchers run before the requested PATH/environment is applied.
+        List<String> c = new ArrayList<>(Arrays.asList("/usr/bin/env", "--"));
         Map<String, String> env = command.getEnvironment();
         if (env != null && !env.isEmpty()) {
-            env.entrySet().stream().forEach(entry -> c.add(entry.getKey() + "=" + entry.getValue()));
+            for (Map.Entry<String, String> entry : env.entrySet()) {
+                String name = entry.getKey();
+                requireArgument(name);
+                requireArgument(entry.getValue());
+                if (name.isEmpty() || name.indexOf('=') >= 0) {
+                    throw new IllegalArgumentException("Invalid command environment name");
+                }
+                c.add(name + "=" + entry.getValue());
+            }
         }
-
         int timeout = command.getTimeout();
-        if (timeout != -1) {
-            c.add("timeout");
-            c.add("-s");
-            c.add(((LinuxSignal) command.getSignal()).name());
+        if (timeout > 0) {
+            c.add("/usr/bin/timeout");
+            Signal signal = command.getSignal() == null ? LinuxSignal.SIGTERM : command.getSignal();
+            c.add("--signal=" + signal.getSignalNumber());
+            c.add("--");
             c.add(Integer.toString(timeout));
         }
-
-        Arrays.asList(command.getCommandLine()).stream().forEach(c::add);
-        commandLine.addArgument(String.join(" ", c), false);
-
+        if (command.isExecutedInAShell()) {
+            c.add("/bin/sh");
+            c.add("-c");
+            c.add(command.toString());
+        } else {
+            // Give env a fixed executable so a command name containing '=' is
+            // never mistaken for another environment assignment.
+            c.add("/bin/sh");
+            c.add("-c");
+            c.add("exec \"$@\"");
+            c.add("kura-command");
+            c.addAll(Arrays.asList(arguments));
+        }
+        String script = "exec " + c.stream().map(ExecutorUtil::shellArgument).collect(Collectors.joining(" "));
+        CommandLine commandLine = new CommandLine("/usr/bin/su");
+        commandLine.addArgument("--shell=/bin/sh", false);
+        commandLine.addArgument("--command", false);
+        commandLine.addArgument(script, false);
+        commandLine.addArgument("--", false);
+        commandLine.addArgument(this.commandUsername, false);
         return commandLine;
+    }
+
+    private static void requireArgument(String value) {
+        if (value == null || value.indexOf('\0') >= 0) {
+            throw new IllegalArgumentException("Command arguments must be non-null and contain no NUL");
+        }
+    }
+
+    private static String shellArgument(String value) {
+        return "'" + value.replace("'", "'\"'\"'") + "'";
+    }
+
+    private CommandStatus rejectedCommand(Command command, String message) {
+        CommandStatus status = new CommandStatus(command, new LinuxExitStatus(1));
+        status.setOutputStream(command.getOutputStream());
+        status.setErrorStream(command.getErrorStream());
+        status.setInputStream(command.getInputStream());
+        if (command.getErrorStream() != null) {
+            try {
+                command.getErrorStream().write(message.getBytes(UTF_8));
+            } catch (IOException e) {
+                logger.debug("Cannot report rejected command", e);
+            }
+        }
+        return status;
     }
 
     private CommandLine buildPrivilegedCommand(Command command) {

@@ -33,6 +33,7 @@
     <name>distrib</name>
     <url>https://eclipse.dev/kura/</url>
     <modules>
+        <module>kura-key-crypto</module>
         <module>kura-core</module>
     </modules>
     <properties>

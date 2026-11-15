@@ -48,4 +48,17 @@ class ProviderPasswordRepresentationTest {
         var test=new SnapshotPasswordSourcesTest();test.directory=directory;var core=test.new Fixture();core.scc("stored");
         var value=new ComponentConfigurationImpl("stored",null,Map.of("secret",new Password("encrypted:logical")));value.setLogicalPasswords(false);core.save(List.of(value),List.of());assertEquals("logical",core.secret("stored","secret").toString());
     }
+    @Test void logicalExportNormalizesOnlyExplicitStorageValuesAndBindsTheExactDetachedView()throws Exception {
+        for(boolean logical:new boolean[]{false,true}) {
+            try(var core=new RollbackConvergenceTest.Fixture(directory.resolve(Boolean.toString(logical)))) {
+                var crypto=RollbackConvergenceTest.crypto();core.setCryptoService(crypto);var provider=install(core,logical);
+                var read=core.readLogicalRevisionView(RollbackPreflightTest.FIRST);
+                assertEquals(logical?"encrypted:logical":"logical",read.configuration().getConfigurationProperties().get("secret").toString());
+                assertEquals(read.revision(),core.readRevision(RollbackPreflightTest.FIRST).revision());
+                read.configuration().getConfigurationProperties().put("secret",new Password("caller changed"));
+                assertEquals("encrypted:logical",provider.getConfigurationProperties().get("secret").toString());
+                if(logical)verify(crypto,never()).decryptAes(any(char[].class));
+            }
+        }
+    }
 }

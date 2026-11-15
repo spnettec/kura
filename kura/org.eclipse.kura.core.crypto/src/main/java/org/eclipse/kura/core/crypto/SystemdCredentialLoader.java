@@ -17,6 +17,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.Optional;
 
 public class SystemdCredentialLoader {
@@ -50,6 +53,23 @@ public class SystemdCredentialLoader {
             }
 
             return Optional.of(out.toByteArray());
+        }
+    }
+
+    /** Fixed credential names only; fail closed for present unsafe or oversized files. */
+    Optional<byte[]> loadCredential(final String name, final int maximumBytes) throws IOException {
+        if (!name.matches("[A-Za-z0-9_.-]{1,128}") || maximumBytes <= 0) {
+            throw new IOException("Invalid bounded credential request");
+        }
+        Path path = this.credentialRoot.toPath().resolve(name);
+        if (Files.notExists(path, LinkOption.NOFOLLOW_LINKS)) { return Optional.empty(); }
+        if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+            throw new IOException("Credential must be a regular file");
+        }
+        try (InputStream in = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
+            byte[] data = in.readNBytes(maximumBytes + 1);
+            if (data.length > maximumBytes) { throw new IOException("Credential size exceeds bound"); }
+            return Optional.of(data);
         }
     }
 

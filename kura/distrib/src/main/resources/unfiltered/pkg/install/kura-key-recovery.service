@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura original-key HTTPS recovery
+Requires=kura-key-service.socket
+After=kura-key-service.socket network.target
+ConditionPathExists=/etc/kura/credentials/provisioned.json
+ConditionPathExists=|!/etc/kura/credentials/kura_encryption_key
+ConditionPathExists=|/var/lib/kura-key-recovery/pending.json
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Service]
+Type=simple
+User=kura-key-recovery
+Group=kura-key-recovery
+SupplementaryGroups=kura-key-control
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_key_recovery.py --serve
+LoadCredential=tls.crt:/etc/kura/recovery-tls/server.crt
+LoadCredential=tls.key:/etc/kura/recovery-tls/server.key
+StateDirectory=kura-key-recovery
+StateDirectoryMode=0700
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadOnlyPaths=/opt/eclipse
+ReadWritePaths=/var/lib/kura-key-recovery
+InaccessiblePaths=/etc/kura/credentials /etc/kura/recovery-tls /var/lib/kura-key-service /opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
+LimitCORE=0
+LimitMEMLOCK=0
+MemoryMax=96M
+TasksMax=16
+TimeoutStopSec=30
+KillMode=control-group
+Restart=on-failure
+RestartSec=2
+RestartPreventExitStatus=2
+
+[Install]
+WantedBy=multi-user.target

@@ -23,6 +23,17 @@ systemctl_if_present() {
 
 IS_NETWORKING_PROFILE=false
 INSTALL_DIR=/opt/eclipse
+DEFER_KEY_SERVICE=false
+case "${1-}" in
+    '') ;;
+    --defer-key-service) DEFER_KEY_SERVICE=true ;;
+    *) echo "Unsupported Kura installer argument" >&2; exit 1 ;;
+esac
+
+# Standalone invocation must reject an unsupported backend before any changes.
+bash "$(dirname "$0")/manage_kura_users.sh" --check-polkit || exit 1
+bash "$(dirname "$0")/manage_kura_users.sh" --check-pam || exit 1
+python3 -I "$(dirname "$0")/../bin/kura_key_service_lifecycle.py" --enter install || exit 1
 
 # If ${INSTALL_DIR}/kura already exists as a real directory (e.g. an addon .deb such as
 # kura-management-ui was unpacked before kura's setup ran), merge its files into the
@@ -37,6 +48,10 @@ fi
 
 # create known kura install location
 ln -snf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
+
+# Reuse preinst's captured key, or provision a fresh standalone-installer key.
+# Failure must precede replacing the installed service or changing user state.
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare auto || exit 1
 
 # set up kura init
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
@@ -64,7 +79,20 @@ systemctl_if_present disable chrony
 # set up users and grant permissions
 cp ${INSTALL_DIR}/kura/install/manage_kura_users.sh ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
 chmod 700 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
-${INSTALL_DIR}/kura/.data/manage_kura_users.sh -i
+# Retain the historical copy for recovery; execute the installed code only.
+bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -i || exit 1
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_recovery_setup.py" --install || exit 1
+for key_unit in kura-key-service.socket kura-key-service.service kura-key-recovery.service; do
+    install -o root -g root -m 0644 "${INSTALL_DIR}/kura/install/${key_unit}" "/lib/systemd/system/${key_unit}" || exit 1
+done
+
+# D-Bus may have loaded package policies before their accounts were created.
+# Reload after account/policy installation, then require the packaged daemon.
+if [ -d /run/systemd/system ]; then
+    busctl --system call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig || exit 1
+    systemctl start polkit.service || exit 1
+    systemctl is-active --quiet polkit.service || exit 1
+fi
 
 bash "${INSTALL_DIR}/kura/install/customize-installation.sh" ${IS_NETWORKING_PROFILE}
 
@@ -95,12 +123,8 @@ fi
 # set up systemd-tmpfiles
 cp ${INSTALL_DIR}/kura/install/kura-tmpfiles.conf /etc/tmpfiles.d/kura.conf
 
-# set up kura files permissions
-chmod 700 ${INSTALL_DIR}/kura/bin/*.sh
-chown -R kurad:kurad /opt/eclipse
-chmod -R go-rwx /opt/eclipse
+# The final ownership pass follows generation of private runtime files.
 chmod a+rx /opt/eclipse
-find /opt/eclipse/kura -type d -exec chmod u+x "{}" \;
 
 # Ensure UTF-8 locale is available before generating the certificate, otherwise
 # Chinese characters in the DN will be corrupted (replaced by '?' fallback chars).
@@ -113,4 +137,19 @@ if ! locale -a 2>/dev/null | grep -qi 'en_US.utf8\|en_US.UTF-8'; then
 fi
 export LC_ALL=en_US.UTF-8
 
-keytool -genkey -alias localhost -keyalg RSA -keysize 2048 -keystore /opt/eclipse/kura/user/security/httpskeystore.ks -deststoretype pkcs12 -dname "CN=YOFC, OU=信息技术部, O=长飞光纤光缆股份有限公司, L=武汉, S=湖北, C=中国" -ext ku=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,keyAgreement,keyCertSign -ext eku=serverAuth,clientAuth,codeSigning,timeStamping -validity 1000 -storepass changeit -keypass changeit
+# Existing HTTPS identity belongs to the gateway and must survive upgrades.
+HTTPS_KEYSTORE="${INSTALL_DIR}/kura/user/security/httpskeystore.ks"
+if [ -L "${HTTPS_KEYSTORE}" ] || { [ -e "${HTTPS_KEYSTORE}" ] && [ ! -f "${HTTPS_KEYSTORE}" ]; }; then
+    echo "Refusing an unsafe existing HTTPS keystore; retain the gateway state." >&2
+    exit 1
+fi
+if [ ! -f "${HTTPS_KEYSTORE}" ]; then
+    keytool -genkey -alias localhost -keyalg RSA -keysize 2048 -keystore "${HTTPS_KEYSTORE}" -deststoretype pkcs12 -dname "CN=YOFC, OU=信息技术部, O=长飞光纤光缆股份有限公司, L=武汉, S=湖北, C=中国" -ext ku=digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,keyAgreement,keyCertSign -ext eku=serverAuth,clientAuth,codeSigning,timeStamping -validity 1000 -storepass changeit -keypass changeit || exit 1
+fi
+python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" || exit 1
+if [ "${DEFER_KEY_SERVICE}" = false ]; then
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --leave || exit 1
+    systemctl daemon-reload || exit 1
+    systemctl enable --now kura-key-service.socket || exit 1
+    systemctl enable --now kura-key-recovery.service || exit 1
+fi

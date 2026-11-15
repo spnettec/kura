@@ -30,6 +30,15 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface CryptoService {
 
     /**
+     * Reports a valid explicitly configured encryption key rather than the
+     * legacy well-known compatibility key. It does not reveal key bytes or
+     * attest entropy, authorization or signing-key custody. Older providers
+     * cannot attest this property and return false.
+     * @since 1.5.0
+     */
+    default boolean hasCustomEncryptionKey() { return false; }
+
+    /**
      * Returns an AES encrypted char array based on the provided value.
      *
      * @param value

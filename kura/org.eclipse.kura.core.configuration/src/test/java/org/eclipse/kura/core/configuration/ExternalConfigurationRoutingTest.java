@@ -251,6 +251,73 @@ class ExternalConfigurationRoutingTest {
         assertTrue(this.service.getSnapshots().isEmpty());
     }
 
+    @Test
+    void externalOwnerReadRequiresActualStartupReservationInsteadOfCurrentPropertyOrCmMirror() throws Exception {
+        System.clearProperty(ExternalConfigurations.RESERVED_PIDS_PROPERTY);
+        var unreserved = new Fixture();
+        unreserved.setConfigurationAdmin(this.admin);
+        System.setProperty(ExternalConfigurations.RESERVED_PIDS_PROPERTY, PID);
+        var rejection = assertThrows(org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected.class,
+                () -> unreserved.readExternalConfirmedConfiguration(PID));
+        assertEquals(org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED, rejection.getReason());
+        verifyNoInteractions(this.admin);
+    }
+
+    @Test
+    void externalOwnerReadReturnsDetachedConfirmedValuesWithoutApplyingOrWritingCm() throws Exception {
+        var values = new HashMap<String,Object>(); values.put("array",new String[]{"retained"});
+        when(this.owner.getConfirmedConfiguration()).thenReturn(new ComponentConfigurationImpl(PID,null,values));
+        var read = this.service.readExternalConfirmedConfiguration(PID);
+        ((String[])read.getConfigurationProperties().get("array"))[0] = "caller change";
+        assertEquals("retained",((String[])values.get("array"))[0]);
+        assertEquals(PID,read.getPid());
+        assertFalse(read.toString().contains("retained"));
+        verifyNoInteractions(this.admin);
+        verify(this.owner, never()).applyConfiguration(anyMap(),any());
+    }
+
+    @Test
+    void externalOwnerReadRefusesMissingAmbiguousOrReplacedHandler() throws Exception {
+        this.service.removeExternalConfigurationHandler(this.owner);
+        assertThrows(KuraException.class,()->this.service.readExternalConfirmedConfiguration(PID));
+        this.service.addExternalConfigurationHandler(this.owner);
+        var duplicate=mock(ExternalConfigurationHandler.class);when(duplicate.getPid()).thenReturn(PID);
+        this.service.addExternalConfigurationHandler(duplicate);
+        assertThrows(KuraException.class,()->this.service.readExternalConfirmedConfiguration(PID));
+        this.service.removeExternalConfigurationHandler(duplicate);
+        when(this.owner.getConfirmedConfiguration()).thenAnswer(call->{
+            this.service.removeExternalConfigurationHandler(this.owner);
+            this.service.addExternalConfigurationHandler(duplicate);
+            return config(PID,"old provider result");
+        });
+        assertThrows(KuraException.class,()->this.service.readExternalConfirmedConfiguration(PID));
+        verifyNoInteractions(this.admin);
+    }
+
+    @Test
+    void externalOwnerReadRefusesMalformedOwnerViewAndOldProvidersRemainUnsupported() throws Exception {
+        when(this.owner.getConfirmedConfiguration()).thenReturn(config(OTHER,"wrong PID"));
+        assertThrows(KuraException.class,()->this.service.readExternalConfirmedConfiguration(PID));
+        var older=mock(org.eclipse.kura.configuration.ConfigurationRevisionService.class,
+                org.mockito.Answers.CALLS_REAL_METHODS);
+        var rejection=assertThrows(org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected.class,
+                ()->older.readExternalConfirmedConfiguration(PID));
+        assertEquals(org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED,rejection.getReason());
+        verifyNoInteractions(this.admin);
+    }
+
+    @Test
+    void ordinaryConfirmedReadNeverReturnsTheResultOfAHandlerReplacedDuringTheRead() throws Exception {
+        var replacement=mock(ExternalConfigurationHandler.class);when(replacement.getPid()).thenReturn(PID);
+        when(this.owner.getConfirmedConfiguration()).thenAnswer(call->{
+            this.service.removeExternalConfigurationHandler(this.owner);
+            this.service.addExternalConfigurationHandler(replacement);
+            return config(PID,"obsolete confirmed state");
+        });
+        assertThrows(KuraException.class,()->this.service.getComponentConfiguration(PID));
+        verifyNoInteractions(this.admin);
+    }
+
     private void seed(List<ComponentConfiguration> configurations) throws IOException {
         this.service.historical = configurations;
         Files.writeString(this.snapshots.resolve("snapshot_1.xml"), "old-snapshot-file");

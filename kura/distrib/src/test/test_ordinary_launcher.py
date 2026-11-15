@@ -33,6 +33,14 @@ class OrdinaryLauncherTests(unittest.TestCase):
         for key, value in {'kura.mem.size': '512m', 'kura.os.version': 'linux', 'kura.arch': 'arm64', 'target.device': 'linux', 'org.eclipse.equinox.launcher.version': 'fixture'}.items():
             source = source.replace('@' + key + '@', value)
         (self.bin / 'start_kura_background.sh').write_text(source)
+        resources = SCRIPT.parents[3] / 'unfiltered/pkg/bin'
+        for name in ['kura_key_store.py', 'kura_credential_env.sh']:
+            shutil.copyfile(resources / name, self.bin / name)
+        self.credentials = self.root / 'credentials'
+        self.credentials.mkdir(mode=0o700)
+        self.credential = self.credentials / 'kura_encryption_key'
+        self.credential.write_bytes(bytes(range(32)))
+        self.credential.chmod(0o400)
         (self.bin / 'gen_config_ini.sh').write_text('#!/bin/sh\ntouch "' + str(self.generator) + '"\nprintf "osgi.bundles=\\n"\n')
         (self.fake / 'ps').write_text('#!/bin/sh\nexit 0\n')
         (self.fake / 'nohup').write_text('#!/bin/sh\nexec "$@"\n')
@@ -44,6 +52,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
     def launch(self, argument_file=None):
         env = dict(os.environ, YOFC_LAUNCH_ARGUMENTS=str(self.record))
         env.pop('KURA_JVM_ARGS_FILE', None)
+        env['CREDENTIALS_DIRECTORY'] = str(self.credentials)
         if argument_file is not None:
             env['KURA_JVM_ARGS_FILE'] = str(argument_file)
         return subprocess.run(['/bin/sh', str(self.bin / 'start_kura_background.sh')], env=env, capture_output=True, text=True, timeout=5)
@@ -73,6 +82,14 @@ class OrdinaryLauncherTests(unittest.TestCase):
         args = self.args()
         self.assertEqual(args[:2], ['@' + str(argument_file), '-Xms512m'])
         self.assertEqual(sum(arg.startswith('@') for arg in args), 1)
+
+    def test_missing_credential_refuses_before_generator_or_java(self):
+        self.credential.unlink()
+        result = self.launch()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(self.generator.exists())
+        self.assertFalse(self.record.exists())
+        self.assertFalse((self.root / 'kura.pid').exists())
 
     def test_invalid_argument_sources_fail_before_generator_or_java(self):
         target = self.root / 'real.args'

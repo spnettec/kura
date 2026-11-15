@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura gateway key management socket
+ConditionPathExists=/etc/kura/credentials/provisioned.json
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Socket]
+ListenStream=/run/kura-key-service/control.sock
+SocketUser=root
+SocketGroup=kura-key-control
+SocketMode=0660
+DirectoryMode=0755
+RemoveOnStop=true
+
+[Install]
+WantedBy=sockets.target

@@ -40,6 +40,15 @@ public interface ConfigurationRevisionService {
         @Override public String toString() { return "ConfigurationRevisionService.Read[redacted]"; }
     }
 
+    /** An actual stored singleton CM entry;absence is distinct from empty values. @since 1.9.0 */
+    interface StoredReadView extends ReadView {
+        boolean present();
+    }
+
+    record StoredRead(ComponentConfiguration configuration, String revision, boolean present) implements StoredReadView {
+        @Override public String toString() { return "ConfigurationRevisionService.StoredRead[redacted]"; }
+    }
+
     enum Reason { INVALID_ARGUMENT, NOT_FOUND, CONFLICT, UNSUPPORTED }
 
     /** A rejection before calling the configuration write operation. */
@@ -56,6 +65,60 @@ public interface ConfigurationRevisionService {
     }
 
     Read readRevision(String pid) throws KuraException;
+
+    /**
+     * Captures actual stored CM dictionaries for registered fixed singleton PIDs,
+     * with explicit absence and stored-only opaque revisions. No component-owned
+     * getter,default seeding,CM creation or logical Password decoding is performed.
+     * The typed values retain their storage representation. Revisions cannot be
+     * used for generic updates. Startup-reserved external-owner PIDs are forbidden.
+     * Reads are serialized with this provider and rechecked as a cohort;direct CM
+     * writers remain independent and may change values after return. Older
+     * providers reject without falling back to a self-configuring/live view.
+     * @since 1.9.0
+     */
+    default Map<String, StoredReadView> readStoredRevisionViews(java.util.Set<String> pids) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * A detached paired export view whose Password values are explicitly logical
+     * plaintext values, including values which themselves resemble ciphertext.
+     * The returned revision authenticates these exact typed property values.
+     * No storage-prefix guessing, remote-write grant or fallback to an older
+     * provider's unmarked password representation is permitted.
+     * @since 1.9.0
+     */
+    default ReadView readLogicalRevisionView(String pid) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Reads the confirmed state of an actual external owner reserved before this
+     * ConfigurationService instance started. A unique, still-bound handler must
+     * supply the returned configuration. A JVM property changed after startup,
+     * ConfigAdmin mirror or generic component view is never an ownership proof.
+     * This read does not grant writes or produce a generic configuration revision.
+     * Returned property containers are detached. Older providers reject it.
+     * @since 1.9.0
+     */
+    default ComponentConfiguration readExternalConfirmedConfiguration(String pid) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Reads every requested startup-reserved external handler from one stable
+     * registration cohort. Missing,ambiguous,removed or rebound handlers reject
+     * the whole read;there is no generic CM fallback or partial result. Returned
+     * typed property containers are detached. This is not an atomic backend
+     * transaction:callers must also check the providers' confirmed generations
+     * and their original-operation bindings. Older providers reject this method.
+     * @since 1.9.0
+     */
+    default Map<String, ComponentConfiguration> readExternalConfirmedConfigurations(java.util.Set<String> pids)
+            throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
 
     /**
      * Provides the same paired read to callers whose compiler baseline predates

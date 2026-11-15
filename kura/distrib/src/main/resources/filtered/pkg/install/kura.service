@@ -1,4 +1,5 @@
 [Unit]
+OnFailure=kura-key-recovery.service
 Description=Kura
 Wants=NetworkManager.service ModemManager.service dbus.service
 After=NetworkManager.service ModemManager.service dbus.service
@@ -6,16 +7,27 @@ After=NetworkManager.service ModemManager.service dbus.service
 [Service]
 User=kurad
 Group=kurad
+UMask=0077
 Type=forking
+ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded
+ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
 ExecStopPost=/bin/sh -c 'if [ -f /tmp/watchdog ]; then echo w > `cat /tmp/watchdog`; fi'
 PIDFile=/var/run/kura.pid
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143
-KillMode=process
+KillMode=control-group
 AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_sys_boot cap_kill cap_sys_module cap_sys_time cap_sys_tty_config cap_syslog
-Environment=KURA_CRYPTO_SECRET_KEY=kura-dev-key-005
+# su needs setuid/setgid in its bounding set, but the JVM receives neither.
+CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_sys_boot cap_kill cap_sys_module cap_sys_time cap_sys_tty_config cap_syslog cap_setuid cap_setgid
+# DAC capabilities must not make installed code or canonical credentials writable.
+# Keep ownership markers readable and let their external writers update them.
+ReadOnlyPaths=/opt/eclipse /etc/kura
+# Core uses the typed socket, never the independent service's journal or HMAC key.
+InaccessiblePaths=/var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls
+ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data
+LoadCredential=kura_encryption_key:/etc/kura/credentials/kura_encryption_key
 
 [Install]
 WantedBy=multi-user.target

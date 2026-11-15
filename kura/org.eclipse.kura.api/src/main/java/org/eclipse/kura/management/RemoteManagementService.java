@@ -30,6 +30,24 @@ public interface RemoteManagementService {
         throw new Failure(Reason.UNSUPPORTED);
     }
 
+    /** Optional renewal capability. A null operationId reads eligibility for a NEW
+     * operation. A non-null ID reads only that original operation's immutable result;
+     * current identity or channel state must never settle an uncertain renewal. */
+    default Map<String,String> getIdentityRenewalStatus(String operationId) throws KuraException {
+        throw new Failure(Reason.UNSUPPORTED);
+    }
+
+    /** One explicitly confirmed renewal, with a caller-persisted operation ID.
+     * All arguments are public references; key bytes and filesystem paths are forbidden.
+     * operator comes from the authenticated local application. Success keeps the
+     * remote channel OFF. UNKNOWN requires an original-ID read, never a retry. */
+    default Map<String,String> renewIdentity(String operationId,String expectedRevision,
+            String previousReceiptSha256,String requestId,String expectedStageSha256,
+            String centerOperationId,String centerPreviousCertificateSha256,String centerCertificateSha256,
+            long centerPreviousBindingGeneration,long centerBindingGeneration,String operator) throws KuraException {
+        throw new Failure(Reason.UNSUPPORTED);
+    }
+
     enum Reason { INVALID_ARGUMENT, FORBIDDEN, CONFLICT, UNAVAILABLE, UNSUPPORTED, PROTOCOL_MISMATCH, UNKNOWN }
     final class Failure extends KuraException {
         private static final long serialVersionUID = 1L;
