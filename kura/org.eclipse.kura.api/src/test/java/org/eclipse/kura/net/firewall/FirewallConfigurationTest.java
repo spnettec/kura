@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.kura.net.IP4Address;
+import org.eclipse.kura.net.IP6Address;
 import org.eclipse.kura.net.NetConfig;
 import org.eclipse.kura.net.NetProtocol;
 import org.eclipse.kura.net.NetworkPair;
@@ -457,6 +458,23 @@ public class FirewallConfigurationTest {
         } catch (UnknownHostException e) {
             fail("unexpected exception");
         }
+    }
+
+    @Test
+    public void testIpv6PortForwardPropertiesContainAParseableHostAddress() throws UnknownHostException {
+        FirewallConfiguration conf = new FirewallConfiguration();
+        IP6Address target = (IP6Address) IP6Address.parseHostAddress("2001:db8:2::2");
+        conf.addConfig(FirewallPortForwardConfigIP6.builder()
+                .withInboundIface("wan0").withOutboundIface("lan0").withAddress(target)
+                .withProtocol(NetProtocol.tcp).withInPort(18088).withOutPort(18089).withMasquerade(true)
+                .withPermittedNetwork(new NetworkPair<>(
+                        (IP6Address) IP6Address.parseHostAddress("2001:db8:1::2"), (short) 128))
+                .withPermittedMac("02:00:00:00:00:02").withSourcePortRange("20005:20006").build());
+
+        String exported = (String) conf.getConfigurationProperties().get(FirewallConfiguration.PORT_FORWARDING_PROP_NAME);
+        assertEquals("wan0,lan0,2001:db8:2:0:0:0:0:2,tcp,18088,18089,true,"
+                + "2001:db8:1:0:0:0:0:2/128,02:00:00:00:00:02,20005:20006,#", exported);
+        assertEquals(target, IP6Address.parseHostAddress(exported.split(",")[2]));
     }
 
     @Test

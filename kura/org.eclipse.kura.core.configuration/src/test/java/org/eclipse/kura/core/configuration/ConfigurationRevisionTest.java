@@ -21,6 +21,26 @@ import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.junit.jupiter.api.Test;
 
 class ConfigurationRevisionTest {
+    @Test void cmListNormalizationKeepsRevisionAndPasswordComparisonWithoutAliasing() throws Exception {
+        var signer = new ConfigurationRevision();
+        var vector = new Vector<>(List.of(1L, 2L, 1L));
+        var list = new java.util.ArrayList<>(vector);
+        assertEquals(signer.token(component(Map.of("items", vector)), 1, 2),
+                signer.token(component(Map.of("items", list)), 1, 2));
+        list.set(1, 3L);
+        assertNotEquals(signer.token(component(Map.of("items", vector)), 1, 2),
+                signer.token(component(Map.of("items", list)), 1, 2));
+        assertTrue(ConfigurationRevision.accepts(attribute("items", Scalar.LONG, -4), list));
+        assertFalse(ConfigurationRevision.accepts(attribute("items", Scalar.LONG, 4), list));
+        Password original = new Password("canary");
+        var passwords = new java.util.ArrayList<>(List.of(original));
+        var patch = ConfigurationRevision.copyPatch(Map.of("passwords", passwords));
+        original.getPassword()[0] = 'X'; passwords.clear();
+        assertTrue(ConfigurationRevision.sameValue(new Vector<>(List.of(new Password("canary"))), patch.get("passwords")));
+        var cycle = new java.util.ArrayList<>(); cycle.add(cycle);
+        assertThrows(Rejected.class, () -> ConfigurationRevision.copyPatch(Map.of("items", cycle)));
+    }
+
     static AD attribute(String id, Scalar type, int cardinality) {
         AD value = mock(AD.class);
         when(value.getId()).thenReturn(id); when(value.getType()).thenReturn(type);

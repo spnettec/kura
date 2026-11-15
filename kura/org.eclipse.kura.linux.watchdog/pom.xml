@@ -27,6 +27,11 @@
     <packaging>bundle</packaging>
     <dependencies>
         <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.kura</groupId>
             <artifactId>org.eclipse.kura.api</artifactId>
             <version>3.0.0-SNAPSHOT</version>

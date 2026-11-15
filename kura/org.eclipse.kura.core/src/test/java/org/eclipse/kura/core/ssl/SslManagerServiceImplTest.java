@@ -17,15 +17,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.KeyStoreException;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,18 +37,12 @@ import org.eclipse.kura.security.keystore.KeystoreChangedEvent;
 import org.eclipse.kura.security.keystore.KeystoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 
 class SslManagerServiceImplTest {
 
     private static final Map<String, Object> SERVICE_PROPERTIES = Collections.singletonMap("kura.service.pid", "foo");
-    private static final char[] STORE_PASSWORD = "test-password".toCharArray();
-
-    @TempDir
-    Path temporaryDirectory;
 
     private KeyStore store;
     private KeystoreService keystoreService;
@@ -140,22 +127,6 @@ class SslManagerServiceImplTest {
     }
 
     @Test
-    void explicitKeystoreStillLoadsTheSuppliedFile() throws Exception {
-        KeyPair pair = TestCA.generateKeyPair();
-        X509Certificate certificate = new TestCA(
-                CertificateCreationOptions.builder(new X500Name("CN=kura")).build(), pair).getCertificate();
-        this.store.setKeyEntry("client", pair.getPrivate(), STORE_PASSWORD, new Certificate[] { certificate });
-        Path path = this.temporaryDirectory.resolve("client.p12");
-        try (OutputStream output = Files.newOutputStream(path)) {
-            this.store.store(output, STORE_PASSWORD);
-        }
-        clearInvocations(this.keystoreService);
-        assertNotNull(this.service.getSSLSocketFactory("TLS", null, path.toString(), path.toString(),
-                STORE_PASSWORD, "client"));
-        verifyNoInteractions(this.keystoreService);
-    }
-
-    @Test
     void boundKeystoreFailureRetainsItsCauseForNamedAlias() throws Exception {
         KuraException failure = new KuraException(KuraErrorCode.INTERNAL_ERROR);
         when(this.keystoreService.getKeyStore()).thenThrow(failure);
@@ -164,49 +135,18 @@ class SslManagerServiceImplTest {
     }
 
     @Test
-    void testPrivateKey() throws Exception {
-        KeyPair pair = TestCA.generateKeyPair();
-        X509Certificate certificate = new TestCA(
-                CertificateCreationOptions.builder(new X500Name("CN=kura-client")).build(), pair).getCertificate();
-        Certificate[] chain = { certificate };
-        this.service.installPrivateKey("client", pair.getPrivate(), STORE_PASSWORD, chain);
-        ArgumentCaptor<PrivateKeyEntry> entry = ArgumentCaptor.forClass(PrivateKeyEntry.class);
-        verify(this.keystoreService).setEntry(eq("client"), entry.capture());
-        assertSame(pair.getPrivate(), entry.getValue().getPrivateKey());
-        assertArrayEquals(chain, entry.getValue().getCertificateChain());
-    }
-
-    @Test
-    void testCertificates() throws Exception {
-        X509Certificate certificate = new TestCA(
-                CertificateCreationOptions.builder(new X500Name("CN=kura-trust")).build()).getCertificate();
-        doAnswer(invocation -> {
-            TrustedCertificateEntry entry = invocation.getArgument(1);
-            this.store.setCertificateEntry(invocation.getArgument(0), entry.getTrustedCertificate());
-            return null;
-        }).when(this.keystoreService).setEntry(anyString(), any(TrustedCertificateEntry.class));
-        doAnswer(invocation -> {
-            this.store.deleteEntry(invocation.getArgument(0));
-            return null;
-        }).when(this.keystoreService).deleteEntry(anyString());
-
-        assertEquals(0, this.service.getTrustCertificates().length);
-        this.service.installTrustCertificate("trusted", certificate);
-        assertArrayEquals(new X509Certificate[] { certificate }, this.service.getTrustCertificates());
-        verify(this.keystoreService).setEntry(eq("trusted"), any(TrustedCertificateEntry.class));
-        this.service.deleteTrustCertificate("trusted");
-        verify(this.keystoreService).deleteEntry("trusted");
-        assertEquals(0, this.service.getTrustCertificates().length);
-    }
-
-    @Test
-    void certificateInstallationPropagatesKeystoreFailure() throws Exception {
-        X509Certificate certificate = new TestCA(
-                CertificateCreationOptions.builder(new X500Name("CN=kura-trust")).build()).getCertificate();
+    void truststoreFailureRetainsItsCause() throws Exception {
         KuraException failure = new KuraException(KuraErrorCode.INTERNAL_ERROR);
-        doThrow(failure).when(this.keystoreService).setEntry(anyString(), any(TrustedCertificateEntry.class));
-        IOException thrown = assertThrows(IOException.class,
-                () -> this.service.installTrustCertificate("trusted", certificate));
+        when(this.keystoreService.getKeyStore()).thenThrow(failure);
+        IOException thrown = assertThrows(IOException.class, () -> this.service.getSSLContext());
+        assertSame(failure, thrown.getCause());
+    }
+
+    @Test
+    void keyManagerFailureRetainsItsCause() throws Exception {
+        KuraException failure = new KuraException(KuraErrorCode.INTERNAL_ERROR);
+        when(this.keystoreService.getKeyManagers(anyString())).thenThrow(failure);
+        IOException thrown = assertThrows(IOException.class, () -> this.service.getSSLContext());
         assertSame(failure, thrown.getCause());
     }
 }

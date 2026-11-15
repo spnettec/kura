@@ -26,6 +26,41 @@ import org.osgi.service.cm.ConfigurationAdmin;
 class ConfigurationRevisionAdmissionTest {
     private static final String PID = "fixture.revision";
 
+    @Test void oneCardinalityWritesRetainCurrentShapeAndRejectedSwapsDoNotBurnRevision() throws Exception {
+        for (int cardinality : new int[] {1, -1}) {
+            var ad = mock(org.eclipse.kura.configuration.metatype.AD.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+            when(ad.getId()).thenReturn("field"); when(ad.getType()).thenReturn(org.eclipse.kura.configuration.metatype.Scalar.INTEGER);
+            when(ad.getCardinality()).thenReturn(cardinality);
+            var definition = mock(org.eclipse.kura.core.configuration.metatype.Tocd.class);
+            when(definition.getAD()).thenReturn(java.util.List.of(ad));
+            class ShapeFixture extends ConfigurationServiceImpl {
+                final Map<String, Object> values = new HashMap<>(Map.of("field", 7)); int writes;
+                @Override public ComponentConfiguration getComponentConfiguration(String pid) {
+                    return new ComponentConfigurationImpl(PID, definition, this.values);
+                }
+                @Override protected boolean revisionTargetTracked(String pid) { return true; }
+                @Override public synchronized void updateConfiguration(String pid, Map<String, Object> patch, boolean snapshot) {
+                    this.writes++; this.values.putAll(patch);
+                }
+            }
+            var service = new ShapeFixture(); String revision = service.readRevision(PID).revision();
+            Object container = cardinality > 0 ? new int[] {8} : new java.util.ArrayList<>(java.util.List.of(8));
+            assertThrows(Rejected.class, () -> service.updateRevision(PID, revision, Map.of("field", container)));
+            assertEquals(revision, service.readRevision(PID).revision()); assertEquals(0, service.writes);
+            service.updateRevision(PID, revision, Map.of("field", 8)); assertEquals(8, service.values.get("field"));
+            // Observe the submitted value before simulating an independent legacy shape change.
+            service.readRevision(PID);
+            service.values.put("field", container);
+            String containerRevision = service.readRevision(PID).revision();
+            assertThrows(Rejected.class, () -> service.updateRevision(PID, containerRevision, Map.of("field", 9)));
+            assertEquals(containerRevision, service.readRevision(PID).revision()); assertEquals(1, service.writes);
+            service.updateRevision(PID, containerRevision, Map.of("field", container)); assertEquals(2, service.writes);
+            String legacy = service.readRevision(PID).revision();
+            when(ad.isScalarCardinality()).thenReturn(false);
+            assertNotEquals(legacy, service.readRevision(PID).revision());
+        }
+    }
+
     private static final class Fixture extends ConfigurationServiceImpl {
         Map<String, Object> current = new HashMap<>(Map.of("name", "initial", "password", new Password("original")));
         Map<String, Object> delayed;

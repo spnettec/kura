@@ -17,4 +17,6 @@
    <implementation class="org.eclipse.kura.internal.rest.tamper.detection.TamperDetectionRequestHandler"/>
       <reference bind="setTamperDetectionService" cardinality="0..n" interface="org.eclipse.kura.security.tamper.detection.TamperDetectionService" name="TamperDetectionService" policy="dynamic" unbind="unsetTamperDetectionService"/>
       <reference bind="setRequestHandlerRegistry" cardinality="0..n" interface="org.eclipse.kura.cloudconnection.request.RequestHandlerRegistry" name="RequestHandlerRegistry" policy="dynamic" unbind="unsetRequestHandlerRegistry"/>
+   <!-- Optional dynamic registry observation survives endpoint removal. -->
+   <property name=".kura.configuration.deletion.observers" type="String" value="RequestHandlerRegistry"/>
 </scr:component>

@@ -138,15 +138,14 @@ public class SelfConfiguringComponentRegistrationTest {
     }
 
     @Test
-    public void multipleServicePidsUseTheLastEntryAsInTheCurrentFork() throws Throwable {
+    public void multipleServicePidsWithoutUniqueConfigurationAreRejected() throws Throwable {
         givenConfigurationService();
         givenConfigurableComponentReference(CONFIGURABLE_KURA_PID, Arrays.asList(SERVICE_PID, "anotherServicePid"));
 
         whenConfigurableComponentIsAdded();
 
-        // Local registration deliberately selects the last PID from a list.
-        thenPidIsTracked(CONFIGURABLE_KURA_PID);
-        thenServicePidOf(CONFIGURABLE_KURA_PID, "anotherServicePid");
+        // An unbound list cannot choose an arbitrary CM configuration.
+        thenNoPidIsTracked();
     }
 
     private void givenConfigurationService() throws Throwable {

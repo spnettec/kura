@@ -13,6 +13,7 @@
 package org.eclipse.kura.core.configuration.util;
 
 import java.util.Collections;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -63,6 +64,15 @@ public class CollectionsUtil {
                     map.put(key, new Password((char[]) value));
                 } else if (value instanceof String[]) {
                     map.put(key, convertStringsToPasswords((String[]) value));
+                } else if (value instanceof Collection<?> collection) {
+                    Collection<Password> passwords = newCollectionLike(collection);
+                    for (Object item : collection) {
+                        if (!(item instanceof String text)) {
+                            throw new IllegalArgumentException("Invalid password collection representation");
+                        }
+                        passwords.add(new Password(text));
+                    }
+                    map.put(key, passwords);
                 } else {
                     map.put(key, new Password(value.toString()));
                 }
@@ -81,11 +91,21 @@ public class CollectionsUtil {
         Set<String> names = new java.util.HashSet<>();
         for (Map.Entry<String, Object> property : properties.entrySet()) {
             Object value = property.getValue();
-            if (value instanceof Password || value instanceof Password[]) {
+            if (value instanceof Password || value instanceof Password[] || isPasswordCollection(value)) {
                 names.add(property.getKey());
             }
         }
         return names;
+    }
+
+    public static boolean isPasswordCollection(Object value) {
+        return value instanceof Collection<?> collection && !collection.isEmpty()
+                && collection.stream().allMatch(Password.class::isInstance);
+    }
+
+    /** CM collection ordering is retained; legacy Vector remains a Vector. */
+    public static <T> Collection<T> newCollectionLike(Collection<?> source) {
+        return source instanceof java.util.Vector<?> ? new java.util.Vector<>() : new java.util.ArrayList<>();
     }
 
     private static boolean isPasswordProperty(String key, AD ad, Set<String> knownPasswordProperties) {
@@ -130,6 +150,11 @@ public class CollectionsUtil {
                     for (int i = 0; i < passwordArray.length; i++) {
                         passwords[i] = passwordArray[i].toString();
                     }
+                    dictionary.put(key, passwords);
+                } else if (isPasswordCollection(value)) {
+                    Collection<?> collection = (Collection<?>) value;
+                    Collection<String> passwords = newCollectionLike(collection);
+                    for (Object item : collection) { passwords.add(item.toString()); }
                     dictionary.put(key, passwords);
                 } else {
                     dictionary.put(key, value);

@@ -35,6 +35,16 @@ public class ComponentConfigurationImpl implements ComponentConfiguration {
 
     protected Map<String, Object> properties;
 
+    // Internal decoded-snapshot provenance; never inferred from password contents.
+    private Boolean logicalPasswords;
+
+    public boolean hasLogicalPasswords() { return Boolean.TRUE.equals(this.logicalPasswords); }
+
+    public boolean hasPasswordRepresentation() { return this.logicalPasswords != null; }
+
+    public void setLogicalPasswords(boolean logical) { this.logicalPasswords = logical; }
+
+
     /**
      * Default constructor. Does not initialize any of the fields.
      */
@@ -86,6 +96,9 @@ public class ComponentConfigurationImpl implements ComponentConfiguration {
     public OCD getLocalizedDefinition(String locale) {
         if (this.definition == null) {
             return null;
+        }
+        if (this.definition instanceof ProviderDefinition provider) {
+            return provider.localized(locale);
         }
         ResourceBundle rb = ComponentUtil.getResourceBundle(this.definition.getLocalization(), locale,
                 this.definition.getLocaleUrls());

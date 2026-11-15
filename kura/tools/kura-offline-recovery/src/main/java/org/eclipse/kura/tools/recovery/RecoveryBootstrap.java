@@ -1,0 +1,394 @@
+/* SPDX-License-Identifier: EPL-2.0 */
+package org.eclipse.kura.tools.recovery;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
+import org.eclipse.kura.core.configuration.ConfigurationRestore;
+import org.eclipse.kura.core.configuration.ControlledRecovery;
+import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
+import org.eclipse.kura.core.configuration.util.ComponentUtil;
+import org.eclipse.kura.core.crypto.CryptoServiceImpl;
+import org.eclipse.kura.internal.xml.marshaller.unmarshaller.XmlJavaComponentConfigurationsMapper;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.startlevel.FrameworkStartLevel;
+import org.osgi.service.cm.ConfigurationAdmin;
+
+/** Optional in-framework gate. Standalone validate never starts this or any OSGi framework. */
+public final class RecoveryBootstrap implements BundleActivator {
+    private RecoveryVerifier verifier;
+    private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryVerificationService> verificationRegistration;
+    private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryCompletionService> completionRegistration;
+    @Override public void start(BundleContext context) throws Exception {
+        String request = System.getProperty(ControlledRecovery.REQUEST_PROPERTY);
+        if (request == null) { return; }
+        Path receipt = null;
+        Map<String,String> manifest = null;
+        try {
+            var level = context.getBundle(0).adapt(FrameworkStartLevel.class);
+            require(level.getStartLevel() <= 1 && "5".equals(context.getProperty("osgi.startLevel")));
+            Bundle scr = bundle(context,"org.apache.felix.scr");
+            Map<Bundle,Integer> held = new java.util.LinkedHashMap<>();
+            for (Bundle candidate : context.getBundles()) {
+                if (candidate.getBundleId()!=0 && candidate!=context.getBundle()) {
+                    BundleStartLevel start=candidate.adapt(BundleStartLevel.class);
+                    if (start!=null && (start.getStartLevel()>=5 || candidate==scr)) {
+                        held.put(candidate,start.getStartLevel());
+                        if (candidate.getState()==Bundle.ACTIVE || candidate.getState()==Bundle.STARTING) {
+                            candidate.stop(Bundle.STOP_TRANSIENT);
+                        }
+                        start.setStartLevel(50);
+                    }
+                }
+            }
+            scr.start(); // Persist intended autostart, held above the launcher's target level.
+            Set<String> infrastructure=Set.of("org.eclipse.equinox.cm", "org.apache.aries.spifly.dynamic.bundle",
+                    "org.apache.logging.log4j.core", "org.apache.logging.log4j.slf4j2.impl",
+                    "org.apache.logging.log4j.api", "slf4j.api");
+            for (Bundle candidate : context.getBundles()) {
+                if (candidate.getBundleId()!=0 && candidate!=context.getBundle() && candidate.getState()==Bundle.ACTIVE) {
+                    require(infrastructure.contains(candidate.getSymbolicName()));
+                }
+            }
+            // External authority must be injected from current Rust revision, not an old Kura snapshot.
+            // Until that adapter is wired, reject the profile rather than replaying or silently skipping it.
+            require(System.getProperty("kura.configuration.external.pids", "").isBlank());
+            manifest = manifest(Path.of(request));
+            receipt = Path.of(manifest.get("receipt.path"));
+            privateParent(receipt);
+            require(!Files.exists(receipt,LinkOption.NOFOLLOW_LINKS)); // Never replay a retained decision.
+            StringBuilder ledger=new StringBuilder("schema=1\n");
+            for(var entry:held.entrySet()) { ledger.append(entry.getKey().getBundleId()).append('=').append(entry.getValue()).append('\n'); }
+            publish(receipt.resolveSibling(receipt.getFileName()+".bundle-levels"),ledger.toString().getBytes(StandardCharsets.UTF_8));
+            // Start only logging/SPI infrastructure before touching classes with static loggers.
+            // It is independent of SCR/business and prevents a permanently cached NOP provider.
+            for(String name:List.of("org.apache.aries.spifly.dynamic.bundle","org.apache.logging.log4j.core",
+                    "org.apache.logging.log4j.slf4j2.impl","org.apache.logging.log4j.api","slf4j.api")) {
+                Bundle logging=bundle(context,name);logging.adapt(BundleStartLevel.class).setStartLevel(1);
+                if(logging.getState()!=Bundle.ACTIVE){logging.start(Bundle.START_TRANSIENT);}
+            }
+
+            Path snapshot=Path.of(manifest.get("snapshot.path"));
+            privateParent(snapshot);
+            ControlledRecovery.verifyArtifact(snapshot,manifest.get("snapshot.sha256"));
+            byte[] artifact=read(snapshot,32<<20);
+            require(hash(artifact).equals(manifest.get("snapshot.sha256")));
+            byte[] key=manifest.containsKey("crypto.key.file") ? privateKey(Path.of(manifest.get("crypto.key.file"))) : null;
+            CryptoServiceImpl crypto;
+            try { crypto=CryptoServiceImpl.forSnapshotRecovery(key,key==null); }
+            finally { if(key!=null){Arrays.fill(key,(byte)0);} }
+            byte[] xml=artifact;
+            if(manifest.get("snapshot.mode").equals("aes-gcm")) {
+                try(InputStream input=crypto.aesDecryptingStream(new ByteArrayInputStream(artifact))){
+                    xml=input.readNBytes((32<<20)+1);require(xml.length<=32<<20);
+                }
+            }
+            List<ComponentConfiguration> target;
+            List<ComponentConfiguration> previousIntent;
+            try {
+                previousIntent=compensationIntent(manifest,crypto);
+                // Empty targets are exclusively the authenticated original CM backup of an inverse.
+                var decoded=previousIntent==null ? (manifest.get("snapshot.mode").equals("aes-gcm")
+                        ? SnapshotTool.decodeAuthenticatedArtifact(xml,crypto,manifest.get("password.policy"))
+                        : SnapshotTool.decode(xml,crypto,manifest.get("password.policy")))
+                        : SnapshotTool.decodeRetainedCmBackup(xml,crypto,manifest.get("password.policy"));
+                target=new ArrayList<>();
+                for(var configuration:decoded.configurations()) {
+                    Map<String,Object> properties=new HashMap<>(configuration.getConfigurationProperties());
+                    ComponentUtil.encryptConfigurationProperties(properties,crypto);
+                    // The legacy helper drops failed password fields: never accept that lossy result here.
+                    require(properties.keySet().equals(configuration.getConfigurationProperties().keySet()));
+                    target.add(new ComponentConfigurationImpl(configuration.getPid(),null,properties));
+                }
+            } finally { Arrays.fill(xml,(byte)0);Arrays.fill(artifact,(byte)0); }
+            Bundle cm=bundle(context,"org.eclipse.equinox.cm");
+            cm.adapt(BundleStartLevel.class).setStartLevel(1);
+            if(cm.getState()!=Bundle.ACTIVE){cm.start(Bundle.START_TRANSIENT);}
+            var reference=context.getServiceReference(ConfigurationAdmin.class);
+            require(reference!=null);
+            ConfigurationAdmin admin=context.getService(reference);require(admin!=null);
+            if (manifest.containsKey("verification.mode")) {
+                try {
+                    var verificationExpected=normalLoadSource(manifest,crypto);
+                    ConfigurationRestore.verify(admin,verificationExpected);
+                    Path observed=receipt.resolveSibling(receipt.getFileName()+".cm-observed.aes");
+                    backup(observed,ConfigurationRestore.capture(admin),crypto);
+                    ControlledRecovery.admitNormalLoad(request,manifest.get("restore.id"),snapshot,manifest.get("snapshot.sha256"));
+                    publish(receipt,("schema=1\nstatus=NORMAL_BOOT_ADMITTED\nrestore.id="+manifest.get("restore.id")
+                            +"\nsnapshot.sha256="+manifest.get("snapshot.sha256")
+                            +"\nsource.receipt.sha256="+manifest.get("verification.source.receipt.sha256")
+                            +"\nsource.applied.sha256="+manifest.get("verification.source.applied.sha256")
+                            +"\nobserved.sha256="+hash(read(observed,32<<20))
+                            +"\nfullRecoveryVerified=false\nnormalBootVerified=false\nbusinessHealth=UNVERIFIED\n")
+                            .getBytes(StandardCharsets.UTF_8));
+                    this.verifier=new RecoveryVerifier(context,verificationExpected);
+                    this.verificationRegistration=context.registerService(
+                            org.eclipse.kura.configuration.RecoveryVerificationService.class,this.verifier,null);
+                    String completionPolicy=System.getProperty("kura.management.recovery.completion.enabled","false");
+                    require(completionPolicy.equals("true") || completionPolicy.equals("false"));
+                    if(completionPolicy.equals("true")) {
+                        this.completionRegistration=context.registerService(
+                                org.eclipse.kura.configuration.RecoveryCompletionService.class,
+                                new RecoveryWriteRelease(this.verifier,receipt),null);
+                    }
+                } finally { context.ungetService(reference); }
+            } else {
+                Path backup=receipt.resolveSibling(receipt.getFileName()+".cm-backup.aes");
+                ConfigurationRestore.Applied result;
+                Path applied=receipt.resolveSibling(receipt.getFileName()+".cm-applied.aes");
+                Path intended=receipt.resolveSibling(receipt.getFileName()+".cm-intended.aes");
+                Path plan=receipt.resolveSibling(receipt.getFileName()+".cm-plan.properties");
+                backup(intended,ConfigurationRestore.expected(target),crypto);
+                final Map<String,String> admittedManifest=manifest;
+                try {
+                    ConfigurationRestore.Backup checkpoint=old->{
+                        backup(backup,old,crypto);
+                        // A durable pre-mutation anchor also survives partial CM failure or process death.
+                        publish(plan,("schema=1\nrestore.id="+admittedManifest.get("restore.id")
+                                +"\nsnapshot.sha256="+admittedManifest.get("snapshot.sha256")
+                                +"\nbackup.sha256="+hash(read(backup,64<<20))
+                                +"\nintended.sha256="+hash(read(intended,64<<20))+"\n").getBytes(StandardCharsets.UTF_8));
+                    };
+                    result=previousIntent==null ? ConfigurationRestore.apply(admin,target,checkpoint)
+                            : ConfigurationRestore.compensate(admin,target,previousIntent,checkpoint);
+                    // Persist the exact CM representation, including randomized password ciphertext.
+                    // Re-decoding/re-encrypting the source snapshot cannot reconstruct these bytes.
+                    backup(applied,ConfigurationRestore.capture(admin),crypto);
+                } finally { context.ungetService(reference); }
+                if(previousIntent==null) {
+                    ControlledRecovery.admit(request,manifest.get("restore.id"),snapshot,manifest.get("snapshot.sha256"),target);
+                } else {
+                    ControlledRecovery.admitCompensation(request,manifest.get("restore.id"),snapshot,manifest.get("snapshot.sha256"),target);
+                }
+                String report="schema=1\nstatus=CM_APPLIED\nrestore.id="+manifest.get("restore.id")
+                        +"\nsnapshot.sha256="+manifest.get("snapshot.sha256")
+                        +"\nfullRecoveryVerified=false\nbusinessHealth=UNVERIFIED\nbackup.sha256="+hash(read(backup,64<<20))
+                        +"\napplied.sha256="+hash(read(applied,64<<20))+"\n";
+                report+=actions("replaced",result.replaced())+actions("created",result.created())+actions("deleted",result.deleted());
+                publish(receipt,report.getBytes(StandardCharsets.UTF_8));
+            }
+            // Only the CM application decision is durable. Agent still must verify bridge/business and finalize.
+            // The launcher, not an activator racing with it, owns the framework transition to 5.
+            for(var entry:held.entrySet()) {
+                if(!infrastructure.contains(entry.getKey().getSymbolicName())) {
+                    entry.getKey().adapt(BundleStartLevel.class).setStartLevel(entry.getKey()==scr ? 5 : entry.getValue());
+                }
+            }
+        } catch(Exception failure) {
+            if(receipt!=null && manifest!=null && !Files.exists(receipt,LinkOption.NOFOLLOW_LINKS)) {
+                try { publish(receipt,("schema=1\nstatus=RECOVERY_REQUIRED\nrestore.id="+manifest.get("restore.id")
+                        +"\nfullRecoveryVerified=false\nbusinessHealth=BLOCKED\n").getBytes(StandardCharsets.UTF_8)); }
+                catch(Exception ignored) { /* Preserve original request and state. No fallback or cleanup. */ }
+            }
+            // A startup error must not let the standard launcher activate any unheld business bundle.
+            try { context.getBundle(0).stop(); } catch(Exception ignored) { }
+            // Do not attach parser/crypto exception messages to framework logs.
+            throw new BundleException("Controlled recovery failed; business start level remains blocked");
+        }
+    }
+    @Override public void stop(BundleContext context) {
+        if(this.completionRegistration!=null){this.completionRegistration.unregister();}
+        if(this.verificationRegistration!=null){this.verificationRegistration.unregister();}
+        if(this.verifier!=null){this.verifier.close();}
+        // No implicit acknowledgement or state clearing.
+    }
+
+    private static String actions(String kind,List<String> pids) {
+        StringBuilder result=new StringBuilder(kind+".count="+pids.size()+"\n");
+        for(int i=0;i<pids.size();i++){
+            result.append(kind).append('.').append(i).append('=').append(java.util.Base64.getEncoder()
+                    .encodeToString(pids.get(i).getBytes(StandardCharsets.UTF_8))).append('\n');
+        }
+        return result.toString();
+    }
+    private static void backup(Path path,List<ComponentConfiguration> old,CryptoServiceImpl crypto) throws Exception {
+        XmlComponentConfigurations values=new XmlComponentConfigurations();values.setConfigurations(old);
+        BoundedOutput xml=new BoundedOutput(),encrypted=new BoundedOutput();
+        try {
+            new XmlJavaComponentConfigurationsMapper(crypto).marshal(xml,values);
+            try(var output=crypto.aesEncryptingStream(encrypted)){xml.writeTo(output);}
+            // Also bounded by the offline reader's artifact limit, so every backup is consumable.
+            // This is our encrypted API-level backup, never CM's private database layout.
+            publish(path,encrypted.toByteArray());
+        } finally {xml.wipe();encrypted.wipe();}
+    }
+    private static final class BoundedOutput extends ByteArrayOutputStream {
+        @Override public synchronized void write(int value) {
+            require(size()<(32<<20));super.write(value);
+        }
+        @Override public synchronized void write(byte[] value,int offset,int length) {
+            require(length<=(32<<20)-size());super.write(value,offset,length);
+        }
+        void wipe(){Arrays.fill(this.buf,(byte)0);reset();}
+    }
+    private static Bundle bundle(BundleContext context,String name) {
+        List<Bundle> found=Arrays.stream(context.getBundles()).filter(b->name.equals(b.getSymbolicName())).toList();
+        require(found.size()==1);return found.getFirst();
+    }
+    static List<ComponentConfiguration> compensationIntent(Map<String,String> manifest,CryptoServiceImpl crypto)
+            throws Exception {
+        String source=manifest.get("compensation.source.receipt");
+        if(source==null){return null;}
+        require("aes-gcm".equals(manifest.get("snapshot.mode")));
+        Path receipt=Path.of(source);privateParent(receipt);
+        byte[] receiptBytes=read(receipt,1<<20);
+        require(hash(receiptBytes).equals(manifest.get("compensation.source.receipt.sha256")));
+        Map<String,String> decision=properties(receiptBytes);
+        require("1".equals(decision.get("schema")) && Set.of("CM_APPLIED","RECOVERY_REQUIRED").contains(decision.get("status")));
+        Path plan=receipt.resolveSibling(receipt.getFileName()+".cm-plan.properties");
+        byte[] planBytes=read(plan,4096);
+        require(hash(planBytes).equals(manifest.get("compensation.source.plan.sha256")));
+        Map<String,String> anchor=properties(planBytes);
+        require(anchor.keySet().equals(Set.of("schema","restore.id","snapshot.sha256","backup.sha256","intended.sha256"))
+                && "1".equals(anchor.get("schema")) && anchor.get("restore.id").matches("rec-[0-9a-f-]{36}")
+                && anchor.get("restore.id").equals(decision.get("restore.id"))
+                && !anchor.get("restore.id").equals(manifest.get("restore.id"))
+                && anchor.get("snapshot.sha256").matches("[0-9a-f]{64}")
+                && anchor.get("backup.sha256").equals(manifest.get("snapshot.sha256"))
+                && anchor.get("intended.sha256").matches("[0-9a-f]{64}"));
+        if("CM_APPLIED".equals(decision.get("status"))) {
+            require(anchor.get("snapshot.sha256").equals(decision.get("snapshot.sha256"))
+                    && anchor.get("backup.sha256").equals(decision.get("backup.sha256")));
+        }
+        Path backup=receipt.resolveSibling(receipt.getFileName()+".cm-backup.aes");
+        require(hash(read(backup,32<<20)).equals(anchor.get("backup.sha256")));
+        byte[] intended=read(receipt.resolveSibling(receipt.getFileName()+".cm-intended.aes"),32<<20);
+        require(hash(intended).equals(anchor.get("intended.sha256")));
+        byte[] xml;
+        try(InputStream input=crypto.aesDecryptingStream(new ByteArrayInputStream(intended))){
+            xml=input.readNBytes((32<<20)+1);require(xml.length<=32<<20);
+        } finally {Arrays.fill(intended,(byte)0);}
+        try { return SnapshotTool.decode(xml,crypto,"authenticated").configurations(); }
+        finally {Arrays.fill(xml,(byte)0);}
+    }
+    /** Authenticate the exact restored CM before SCR or any business bundle can run. */
+    static List<ComponentConfiguration> normalLoadSource(Map<String,String> manifest,CryptoServiceImpl crypto)
+            throws Exception {
+        require("normal-read-only".equals(manifest.get("verification.mode")));
+        Path source=Path.of(manifest.get("verification.source.receipt"));privateParent(source);
+        byte[] receipt=read(source,1<<20);
+        require(hash(receipt).equals(manifest.get("verification.source.receipt.sha256")));
+        Map<String,String> decision=properties(receipt);
+        require("1".equals(decision.get("schema")) && "CM_APPLIED".equals(decision.get("status"))
+                && "false".equals(decision.get("fullRecoveryVerified"))
+                && "UNVERIFIED".equals(decision.get("businessHealth"))
+                && decision.get("restore.id").matches("rec-[0-9a-f-]{36}")
+                && !decision.get("restore.id").equals(manifest.get("restore.id"))
+                && manifest.get("verification.source.applied.sha256").equals(decision.get("applied.sha256")));
+        byte[] encrypted=read(source.resolveSibling(source.getFileName()+".cm-applied.aes"),32<<20);
+        require(hash(encrypted).equals(manifest.get("verification.source.applied.sha256")));
+        byte[] xml;
+        try(InputStream input=crypto.aesDecryptingStream(new ByteArrayInputStream(encrypted))){
+            xml=input.readNBytes((32<<20)+1);require(xml.length<=32<<20);
+        } finally { Arrays.fill(encrypted,(byte)0); }
+        try { return SnapshotTool.decode(xml,crypto,"authenticated").configurations(); }
+        finally { Arrays.fill(xml,(byte)0); }
+    }
+    private static Map<String,String> properties(byte[] bytes) {
+        Map<String,String> result=new HashMap<>();
+        for(String line:new String(bytes,StandardCharsets.UTF_8).split("\\n")) {
+            if(line.isEmpty()){continue;}
+            int equals=line.indexOf('=');require(equals>0);
+            String key=line.substring(0,equals),value=line.substring(equals+1);
+            require(!value.isEmpty() && value.chars().noneMatch(Character::isISOControl)
+                    && result.putIfAbsent(key,value)==null);
+        }
+        return result;
+    }
+    static Map<String,String> manifest(Path path) throws Exception {
+        byte[] bytes=read(path,16*1024);require(Files.getPosixFilePermissions(path,LinkOption.NOFOLLOW_LINKS)
+                .stream().noneMatch(p->p.name().startsWith("GROUP")||p.name().startsWith("OTHERS")));
+        privateParent(path);
+        Map<String,String> result=new HashMap<>();
+        for(String line:new String(bytes,StandardCharsets.UTF_8).split("\\n")) {
+            if(line.isEmpty()){continue;}
+            int equals=line.indexOf('=');require(equals>0);
+            String key=line.substring(0,equals),value=line.substring(equals+1);
+            require(!value.isEmpty() && value.chars().noneMatch(Character::isISOControl)
+                    && result.putIfAbsent(key,value)==null);
+        }
+        Set<String> required=Set.of("schema","restore.id","snapshot.path","snapshot.sha256","snapshot.mode","password.policy","receipt.path");
+        Set<String> allowed=new HashSet<>(required);allowed.addAll(Set.of("crypto.key.file","crypto.default"));
+        Set<String> compensation=Set.of("compensation.source.receipt","compensation.source.receipt.sha256","compensation.source.plan.sha256");
+        allowed.addAll(compensation);
+        Set<String> normal=Set.of("verification.mode","verification.source.receipt",
+                "verification.source.receipt.sha256","verification.source.applied.sha256");
+        allowed.addAll(normal);
+        require(result.keySet().containsAll(required)&&allowed.containsAll(result.keySet())&&result.get("schema").equals("1")
+                &&result.get("restore.id").matches("rec-[0-9a-f-]{36}")&&result.get("snapshot.sha256").matches("[0-9a-f]{64}")
+                &&Set.of("plain","aes-gcm").contains(result.get("snapshot.mode"))
+                &&Set.of("authenticated","legacy","logical-v1").contains(result.get("password.policy"))
+                &&result.containsKey("crypto.key.file")!=result.containsKey("crypto.default"));
+        if(result.containsKey("crypto.default")){require(result.get("crypto.default").equals("true"));}
+        if(compensation.stream().anyMatch(result::containsKey)) {
+            require(result.keySet().containsAll(compensation)
+                    && result.get("compensation.source.receipt.sha256").matches("[0-9a-f]{64}")
+                    && result.get("compensation.source.plan.sha256").matches("[0-9a-f]{64}"));
+        }
+        if(normal.stream().anyMatch(result::containsKey)) {
+            require(result.keySet().containsAll(normal) && compensation.stream().noneMatch(result::containsKey)
+                    && "normal-read-only".equals(result.get("verification.mode"))
+                    && Path.of(result.get("verification.source.receipt")).isAbsolute()
+                    && !result.get("verification.source.receipt").equals(result.get("receipt.path"))
+                    && result.get("verification.source.receipt.sha256").matches("[0-9a-f]{64}")
+                    && result.get("verification.source.applied.sha256").matches("[0-9a-f]{64}"));
+        }
+        return result;
+    }
+    private static byte[] privateKey(Path path) throws Exception {
+        privateParent(path);
+        require(Files.getPosixFilePermissions(path,LinkOption.NOFOLLOW_LINKS).stream()
+                .noneMatch(p->p.name().startsWith("GROUP")||p.name().startsWith("OTHERS")));
+        byte[] result=read(path,32);require(result.length==16||result.length==24||result.length==32);return result;
+    }
+    private static byte[] read(Path path,int limit) throws Exception {
+        require(path.isAbsolute()&&Files.isRegularFile(path,LinkOption.NOFOLLOW_LINKS));
+        try(InputStream input=Files.newInputStream(path,StandardOpenOption.READ,LinkOption.NOFOLLOW_LINKS)) {
+            byte[] result=input.readNBytes(limit+1);require(result.length>0&&result.length<=limit);return result;
+        }
+    }
+    private static void privateParent(Path path) throws Exception {
+        require(path.isAbsolute()&&Files.isDirectory(path.getParent(),LinkOption.NOFOLLOW_LINKS));
+        Set<PosixFilePermission> permissions=Files.getPosixFilePermissions(path.getParent(),LinkOption.NOFOLLOW_LINKS);
+        require(!permissions.contains(PosixFilePermission.GROUP_WRITE)&&!permissions.contains(PosixFilePermission.OTHERS_WRITE));
+    }
+    static void publish(Path path,byte[] bytes) throws Exception {
+        privateParent(path);require(bytes.length<=64<<20);
+        try(FileChannel output=FileChannel.open(path,Set.of(StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE),
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))) {
+            ByteBuffer buffer=ByteBuffer.wrap(bytes);while(buffer.hasRemaining()){output.write(buffer);}output.force(true);
+        }
+        try(FileChannel directory=FileChannel.open(path.getParent(),StandardOpenOption.READ)){directory.force(true);}
+    }
+    private static String hash(byte[] bytes) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+    }
+    private static void require(boolean condition) {
+        if(!condition){throw new IllegalStateException("Invalid controlled recovery contract");}
+    }
+}

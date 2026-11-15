@@ -57,6 +57,7 @@ public abstract class AbstractJwtRestScenario {
     protected static final String ACCESS_TOKEN_DURATION = "auth.jwt.access.token.duration";
     protected static final String REFRESH_TOKEN_DURATION = "auth.jwt.refresh.token.duration";
     protected static final String USED_REFRESH_TOKEN_RETENTION = "auth.jwt.used.refresh.token.retention";
+    protected static final String REFRESH_TOKEN_FAMILY_RETENTION = USED_REFRESH_TOKEN_RETENTION;
     protected static final String ISSUING_SERVICE_TARGET = "TokenIssuingService.target";
     protected static final String VERIFICATION_SERVICE_TARGET = "TokenVerificationService.target";
     protected static final String DEFAULT_VERIFICATION_SERVICE_TARGET = //
@@ -213,6 +214,26 @@ public abstract class AbstractJwtRestScenario {
         case DELETED -> this.identities.delete(IDENTITY);
         case REQUIRED_TO_CHANGE_PASSWORD -> this.identities.requirePasswordChange(IDENTITY);
         }
+    }
+
+    protected void givenTheIdentityChangedItsPasswordTo(final String newPassword) throws Exception {
+        HttpResponse<String> login = sendRequest("POST", "session/v1/login/password",
+                Map.of("Content-Type", "application/json"),
+                Json.object().add("username", IDENTITY).add("password", PASSWORD).toString());
+        assertEquals(200, login.statusCode(), login.body());
+        HttpResponse<String> xsrfResponse = sendRequest("GET", "session/v1/xsrfToken", Map.of(), null);
+        assertEquals(200, xsrfResponse.statusCode(), xsrfResponse.body());
+        String xsrf = Json.parse(xsrfResponse.body()).asObject().get("xsrfToken").asString();
+        HttpResponse<String> changed = sendRequest("POST", "session/v1/changePassword",
+                Map.of("Content-Type", "application/json", "X-XSRF-Token", xsrf),
+                Json.object().add("currentPassword", PASSWORD).add("newPassword", newPassword).toString());
+        assertEquals(204, changed.statusCode(), changed.body());
+        this.identities.service.checkPassword(IDENTITY, newPassword.toCharArray());
+        this.cookies.getCookieStore().removeAll();
+    }
+
+    protected int lastResponseStatus() {
+        return this.response.statusCode();
     }
 
     protected void givenATokenPairIssuedToTheIdentity() {

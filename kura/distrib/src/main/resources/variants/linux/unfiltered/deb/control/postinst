@@ -12,6 +12,303 @@
 #  Eurotech
 #
 
+# YOFC ORDINARY BOOT INSTALL GUARD V1
+guardOrdinaryBootPolicy() {
+    python3 - "$0" "$@" <<'PYGUARD'
+import fcntl, hashlib, json, os, stat, subprocess, sys, uuid
+from pathlib import Path
+marker = Path('/etc/kura/ordinary-boot-policy.json')
+def read(path):
+    m = path.parent.lstat()
+    if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o022:
+        raise RuntimeError('Unsafe ordinary boot evidence directory; preserve state')
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        m = os.fstat(fd)
+        if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o077 or m.st_size > 1024 * 1024:
+            raise RuntimeError('Unsafe ordinary boot policy evidence; preserve state')
+        with os.fdopen(fd, 'rb', closefd=False) as source:
+            return source.read(1024 * 1024 + 1)
+    finally:
+        os.close(fd)
+root = Path('/var/lib/kura-management-agent/ordinary-boot')
+if os.path.lexists(marker):
+    route = json.loads(read(marker))
+    state_root = route.get('stateRoot', '')
+    if set(route) != {'schema', 'stateRoot'} or route['schema'] != 1 or not state_root.startswith('/') or any(x in ['', '.', '..'] for x in state_root[1:].split('/')):
+        raise RuntimeError('Invalid Core ordinary boot policy registration')
+    root = Path(state_root) / 'ordinary-boot'
+def record(path):
+    j = json.loads(read(path))
+    expected = {'schema', 'id', 'token', 'state', 'expiresAt', 'request', 'target', 'retired', 'actionIntents', 'receiptSha256', 'previousConfirmedSha256'}
+    optional = {'commandDecisions', 'issuedCommand'}
+    if set(j) - optional != expected or j.get('schema') != 1:
+        raise RuntimeError('Invalid ordinary boot policy journal')
+    commands = j.get('commandDecisions', {})
+    if not isinstance(commands, dict) or len(commands) > 64:
+        raise RuntimeError('Invalid boot command decision map')
+    bindings = {}
+    for command_id, digest in commands.items():
+        if str(uuid.UUID(command_id)) != command_id or not isinstance(digest, str) or len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest):
+            raise RuntimeError('Invalid boot command identity/digest')
+        raw_decision = read(root / 'commands' / (command_id + '.json'))
+        decision = json.loads(raw_decision)
+        binding = decision.get('binding', {})
+        if hashlib.sha256(raw_decision).hexdigest() != digest or decision.get('schema') != 1 or decision.get('transactionId') != j['id'] or set(binding) != {'commandId', 'requestSha256', 'operation'} or binding.get('commandId') != command_id or binding.get('operation') not in (16, 17, 18, 19) or not isinstance(binding.get('requestSha256'), str) or len(binding['requestSha256']) != 64 or any(c not in '0123456789abcdef' for c in binding['requestSha256']):
+            raise RuntimeError('Boot command decision changed; preserve state')
+        bindings[command_id] = binding
+    issued = j.get('issuedCommand')
+    if issued is not None and (not isinstance(issued, dict) or set(issued) != {'commandId', 'requestSha256', 'operation'} or issued.get('operation') != 17 or bindings.get(issued.get('commandId')) != issued):
+        raise RuntimeError('Invalid issued boot command')
+    ident = j['id']
+    if not ident.startswith('boot-') or str(uuid.UUID(ident[5:])) != ident[5:] or str(uuid.UUID(j['token'])) != j['token']:
+        raise RuntimeError('Invalid ordinary boot policy identity')
+    if j['state'] == 'CANCELLED' and j['actionIntents'] == [] and j['receiptSha256'] is None:
+        return j
+    if j['state'] != 'BOOT_POLICY_COMMITTED':
+        raise RuntimeError('Unresolved ordinary boot adoption; settle it before Core package changes')
+    raw = read(root / 'receipts' / (ident + '.json'))
+    receipt = json.loads(raw)
+    if receipt.get('issuedCommand') != j.get('issuedCommand') or hashlib.sha256(raw).hexdigest() != j['receiptSha256'] or any(receipt.get(k) != v for k, v in {
+        'id': ident, 'request': j['request'], 'targetBefore': j['target'],
+        'retiredBefore': j['retired'], 'actionIntents': j['actionIntents'],
+        'status': 'BOOT_POLICY_COMMITTED', 'bootVerified': False,
+        'kuraRecoveryVerified': False,
+    }.items()):
+        raise RuntimeError('Ordinary boot policy receipt changed; preserve state')
+    return j
+def guard_cancelled_handoff(root):
+    """Pure validation of an explicitly cancelled unissued ordinary handoff."""
+    path = root / 'transaction.json'
+    if not os.path.lexists(path):
+        return
+    def read(p):
+        m = p.parent.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077:
+            raise RuntimeError('Unsafe ordinary cancellation evidence directory')
+        fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            m = os.fstat(fd)
+            if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) != 0o600 or m.st_size > 1024 * 1024:
+                raise RuntimeError('Unsafe ordinary cancellation evidence')
+            with os.fdopen(fd, 'rb', closefd=False) as source:
+                return source.read(1024 * 1024 + 1)
+        finally:
+            os.close(fd)
+    def decode(raw):
+        def pairs(values):
+            result = {}
+            for k, v in values:
+                if k in result:
+                    raise RuntimeError('Duplicate cancellation evidence field')
+                result[k] = v
+            return result
+        return json.loads(raw, object_pairs_hook=pairs)
+    # Existing terminal recovery formats retain their established validation.
+    j = json.loads(path.read_text())
+    if j.get('state') != 'ORDINARY_CANCELLED':
+        return
+    j = decode(read(path))
+    def require(ok):
+        if not ok:
+            raise RuntimeError('Unproven ordinary cancellation; preserve state')
+    def digest(raw):
+        return hashlib.sha256(raw).hexdigest()
+    def equal(a, b):
+        return json.dumps(a, sort_keys=True, separators=(',', ':')) == json.dumps(b, sort_keys=True, separators=(',', ':'))
+    def canonical(s, prefix=''):
+        try:
+            return isinstance(s, str) and s.startswith(prefix) and str(uuid.UUID(s[len(prefix):])) == s[len(prefix):]
+        except (ValueError, AttributeError):
+            return False
+    def sha(s):
+        return isinstance(s, str) and len(s) == 64 and all(c in '0123456789abcdef' for c in s)
+    p = j.get('ordinary')
+    require(isinstance(p, dict) and canonical(p.get('id'), 'handoff-') and canonical(j.get('id'), 'rec-'))
+    require(p.get('cancelled') is True and p.get('issued') is False and p.get('verified') is False and p.get('issued_command') is None and p.get('observation') is None)
+    f = lambda suffix: root / 'receipts' / (p['id'] + suffix)
+    raw = read(f('.ordinary-source.json')); require(digest(raw) == p['source_sha256']); original = decode(raw)
+    strip = lambda v: {k: x for k, x in v.items() if k not in ('state', 'error', 'ordinary')}
+    require(original.get('state') == 'COMPLETED_APPROVED_CHECKS' and original.get('ordinary') is None and equal(strip(original), strip(j)))
+    raw = read(f('.ordinary-grant.json')); require(digest(raw) == p['grant_sha256']); grant = decode(raw)
+    require(grant.get('schema') == 1 and grant.get('unit') == p.get('unit') and grant.get('profileId') == p.get('profile_id'))
+    hashes = [digest(raw)] + [v['sha256'] for v in grant['profileFiles']]
+    require(all(sha(s) for s in hashes) and digest('\n'.join(hashes).encode()) == p['profile_digest'])
+    result = dict(id=p['id'], unit=p['unit'], profileId=p['profile_id'], state='ORDINARY_CANCELLED', cancelled=True, issued=False, ordinaryUnitHandedOff=False, scope='administrator-selected-checks', kuraRecoveryVerified=False, normalBootVerified=False)
+    binding = p.get('cancel_command'); commands = p.get('command_decisions', {})
+    require(isinstance(commands, dict) and len(commands) <= 2)
+    if binding is not None:
+        require(binding.get('operation') == 29 and binding.get('commandId') in commands)
+    for command_id, h in commands.items():
+        require(canonical(command_id) and sha(h)); raw = read(root / 'commands' / (command_id + '.json')); require(digest(raw) == h); d = decode(raw); a = d['binding']
+        require(set(d) == {'schema', 'binding', 'recoveryId', 'handoffId', 'result'} and d['schema'] == 1 and d['recoveryId'] == j['id'] and d['handoffId'] == p['id'])
+        require(set(a) == {'commandId', 'operation', 'requestSha256'} and a['commandId'] == command_id and sha(a['requestSha256']) and a['operation'] in (21, 29))
+        if a['operation'] == 21:
+            expected_prepare = dict(transactionId=p['id'], confirmToken=p['confirm_token'], state='ORDINARY_PREPARED', scope='administrator-selected-checks', kuraRecoveryVerified=False, normalBootVerified=False, profileId=p['profile_id'], unit=p['unit'], profileDigest=p['profile_digest'], grantSha256=p['grant_sha256'], sourceJournalSha256=p['source_sha256'], snapshotSha256=p['highest_sha256'], expiresAtUnixMs=p['expires_at'], previousPid=p['old_normal_pid'], componentPids=grant['componentPids'], checkIds=grant['checkIds'])
+            require(equal(d['result'], expected_prepare))
+        if a['operation'] == 29:
+            require(equal(a, binding) and equal(d['result'], result))
+    expected = dict(schema='yofc.agent.ordinary-cancel.v1', result=result, sourceJournalSha256=p['source_sha256'], grantSha256=p['grant_sha256'], profileDigest=p['profile_digest'], cancellationCommand=binding)
+    raw = read(f('.ordinary-cancel.json')); require(sha(p['receipt_sha256']) and digest(raw) == p['receipt_sha256'] and equal(decode(raw), expected))
+
+def guard_system_control(root):
+    def fail(reason):
+        raise RuntimeError('System control evidence: ' + reason + '; preserve state')
+
+    def directory(path):
+        m = path.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077:
+            fail('unsafe private directory')
+
+    def read(path):
+        directory(path.parent)
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            m = os.fstat(fd)
+            if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) != 0o600 or m.st_size > 1024 * 1024:
+                fail('unsafe private record')
+            with os.fdopen(fd, 'rb', closefd=False) as source:
+                data = source.read(1024 * 1024 + 1)
+            if len(data) > 1024 * 1024:
+                fail('record exceeds limit')
+            return data
+        finally:
+            os.close(fd)
+
+    def canonical(value):
+        return isinstance(value, str) and str(uuid.UUID(value)) == value
+
+    def digest(value):
+        return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+    def binding(value):
+        return isinstance(value, dict) and set(value) == {'commandId', 'operation', 'requestSha256'} and canonical(value['commandId']) and value['operation'] in (24, 25, 26, 27, 28) and digest(value['requestSha256'])
+
+    journal = root / 'transaction.json'
+    if not os.path.lexists(journal):
+        for name in ('commands', 'receipts', 'history'):
+            path = root / name
+            if os.path.lexists(path):
+                directory(path)
+                if any(path.iterdir()):
+                    fail('journal missing with retained records')
+        return
+    j = json.loads(read(journal))
+    expected = {'schema', 'id', 'token', 'state', 'action', 'configSha256', 'definitionSha256', 'unit', 'before', 'beforeBootId', 'expiresAt', 'profile', 'snapshots', 'probe', 'issuedCommand', 'issued', 'issuedAt', 'requestAccepted', 'scheduledUnit', 'after', 'afterBootId', 'observation', 'outcome', 'receiptSha256', 'error', 'commandDecisions'}
+    if set(j) != expected or j.get('schema') != 1 or not isinstance(j.get('id'), str) or not j['id'].startswith('system-') or not canonical(j['id'][7:]) or not canonical(j['token']) or not canonical(j['beforeBootId']) or not digest(j['configSha256']) or not digest(j['definitionSha256']) or j['action'] not in ('restart', 'reboot'):
+        fail('invalid journal identity')
+    if j['state'] not in ('COMPLETED', 'CANCELLED'):
+        fail('unresolved transaction')
+    raw = read(root / 'receipts' / (j['id'] + '.config.json'))
+    config = json.loads(raw)
+    if hashlib.sha256(raw).hexdigest() != j['configSha256'] or config.get('schema') != 1 or config.get('unit') != j['unit'] or config.get('unitDefinitionSha256') != j['definitionSha256']:
+        fail('archived grant changed')
+    commands = j['commandDecisions']
+    if not isinstance(commands, dict) or len(commands) > 2:
+        fail('invalid command map')
+    decisions = {}
+    for ident, sha in commands.items():
+        if not canonical(ident) or not digest(sha):
+            fail('invalid command identity')
+        raw = read(root / 'commands' / (ident + '.json'))
+        decision = json.loads(raw)
+        if hashlib.sha256(raw).hexdigest() != sha or set(decision) != {'schema', 'binding', 'planId', 'result'} or decision['schema'] != 1 or decision['planId'] != j['id'] or not binding(decision['binding']) or decision['binding']['commandId'] != ident:
+            fail('original command changed')
+        if decision['binding']['operation'] in (25, 27) and decision['binding'] != j['issuedCommand']:
+            fail('unbound issued command')
+        decisions[ident] = decision
+    issued = j['issuedCommand']
+    if issued is not None and (not binding(issued) or issued['operation'] != (25 if j['action'] == 'restart' else 27) or decisions.get(issued['commandId'], {}).get('binding') != issued):
+        fail('invalid issued command')
+    if j['state'] == 'CANCELLED':
+        if j['issued'] is not False or j['requestAccepted'] is not False or issued is not None or j['issuedAt'] is not None or j['receiptSha256'] is not None or j['after'] is not None or j['afterBootId'] is not None or j['observation'] is not None or j['scheduledUnit'] is not None:
+            fail('cancelled plan contains issued intent')
+        return
+    raw = read(root / 'receipts' / (j['id'] + '.completed.json'))
+    result = json.loads(raw)
+    value = result.get('value', {})
+    if hashlib.sha256(raw).hexdigest() != j['receiptSha256'] or result != j['outcome'] or result.get('state') not in (4, 5) or j['issued'] is not True or j['requestAccepted'] is not True or type(j['issuedAt']) is not int or not canonical(j['afterBootId']) or not isinstance(j['observation'], dict):
+        fail('completion receipt changed')
+    if issued is not None and decisions[issued['commandId']]['result'] != result:
+        fail('original execution outcome changed')
+    for key, expected_value in {'id': j['id'], 'state': 'COMPLETED', 'action': 'service.restart' if j['action'] == 'restart' else 'system.reboot', 'unit': j['unit'], 'before': j['before'], 'beforeBootId': j['beforeBootId'], 'after': j['after'], 'afterBootId': j['afterBootId'], 'issued': True, 'requestAccepted': True, 'application': j['observation'], 'kuraRecoveryVerified': False, 'normalBootVerified': False}.items():
+        if value.get(key) != expected_value:
+            fail('completion stages changed')
+    if j['action'] == 'restart' and (value.get('processRestartVerified') is not True or j['afterBootId'] != j['beforeBootId'] or value.get('hostRebootVerified') is not False):
+        fail('process transition unproven')
+    if j['action'] == 'reboot' and (value.get('hostRebootVerified') is not True or j['afterBootId'] == j['beforeBootId']):
+        fail('host transition unproven')
+
+# The supervisor owns non-inherited locks through the entire maintainer script.
+# The child re-entry marker is private process control, not a privilege boundary;
+# maintainer scripts already require the operator's root privileges.
+locks = []
+if len(sys.argv) > 1 and os.environ.get('_YOFC_CORE_BOOT_GUARD_CHILD') != '1':
+    paths = [Path('/run/lock/kura-ordinary-boot.lock')]
+    if root.parent.exists():
+        m = root.parent.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o022:
+            raise RuntimeError('Unsafe registered agent state directory')
+        paths.append(root.parent / 'system-change.lock')
+    for path in paths:
+        fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        m = os.fstat(fd)
+        if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o077:
+            raise RuntimeError('Unsafe Core boot maintenance lock')
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        locks.append(fd)
+guard_system_control(root.parent / 'system-control')
+guard_cancelled_handoff(root.parent / 'recovery')
+for subsystem, terminal in [('network', ('COMMITTED', 'ROLLED_BACK')),
+                            ('firewall', ('COMMITTED', 'ROLLED_BACK')),
+                            ('recovery', ('SUCCEEDED', 'FAILED', 'COMPLETED_APPROVED_CHECKS', 'ORDINARY_ACTIVE_APPROVED_CHECKS', 'ORDINARY_CANCELLED'))]:
+    other = root.parent / subsystem / 'transaction.json'
+    if subsystem == 'recovery' and not os.path.lexists(other):
+        commands = other.parent / 'commands'
+        if os.path.lexists(commands):
+            m = commands.lstat()
+            if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077 or any(commands.iterdir()):
+                raise RuntimeError('Recovery journal missing with handoff command evidence; preserve state')
+    if os.path.lexists(other) and json.loads(read(other)).get('state') not in terminal:
+        raise RuntimeError('Unresolved managed transaction; settle it before Core package changes')
+for name in ['remote-management-pending.json', 'remote-management-resolution.json', 'identity-enrollment-pending.json']:
+    if os.path.lexists(root.parent / name):
+        raise RuntimeError('Unresolved identity or remote management control; preserve state')
+p = root / 'transaction.json'
+if os.path.lexists(p):
+    j = record(p)
+    confirmed = root / 'confirmed.json'
+    policy = record(confirmed) if os.path.lexists(confirmed) else None
+    if policy is not None and policy['state'] != 'BOOT_POLICY_COMMITTED':
+        raise RuntimeError('Invalid confirmed boot policy')
+    if j['state'] == 'BOOT_POLICY_COMMITTED' and {k: v for k, v in j.items() if k != 'commandDecisions'} != ({k: v for k, v in policy.items() if k != 'commandDecisions'} if policy else None):
+        raise RuntimeError('Confirmed ordinary boot policy changed')
+    if policy is not None and policy['target']['unit'] != 'kura.service':
+        raise RuntimeError('Core installation would re-enable a different Kura startup entry; reconcile the ordinary boot policy first')
+else:
+    if os.path.lexists(root / 'confirmed.json') or any(path.is_dir() and any(path.iterdir()) for path in [root / 'receipts', root / 'history', root / 'commands']):
+        raise RuntimeError('Ordinary boot journal missing with retained evidence; preserve state')
+if locks:
+    env = dict(os.environ, _YOFC_CORE_BOOT_GUARD_CHILD='1')
+    # close_fds is deliberate: background grandchildren cannot extend this lock.
+    result = subprocess.run(['/bin/bash', sys.argv[1], *sys.argv[2:]], env=env, close_fds=True)
+    sys.exit(result.returncode)
+
+PYGUARD
+}
+case "$1" in
+    abort-upgrade|abort-remove|failed-upgrade) ;;
+    *)
+        if [ "${_YOFC_CORE_BOOT_GUARD_CHILD:-}" = "1" ]; then
+            guardOrdinaryBootPolicy "$@" || exit 1
+        else
+            guardOrdinaryBootPolicy "$@"
+            exit "$?"
+        fi
+        ;;
+esac
+# END YOFC ORDINARY BOOT INSTALL GUARD V1
+
 INSTALL_DIR=/opt/eclipse
 TIMESTAMP=`date +%Y%m%d%H%M%S`
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log

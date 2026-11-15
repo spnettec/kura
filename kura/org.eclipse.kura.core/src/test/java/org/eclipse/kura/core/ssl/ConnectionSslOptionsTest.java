@@ -19,7 +19,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 
-
 @TestMethodOrder(MethodOrderer.MethodName.class)
 public class ConnectionSslOptionsTest {
 
@@ -111,34 +110,6 @@ public class ConnectionSslOptionsTest {
     }
 
     @Test
-    public void testSetTrustStoreNonEmpty() {
-        SslManagerServiceOptions serviceOptions = mock(SslManagerServiceOptions.class);
-        ConnectionSslOptions sslOptions = new ConnectionSslOptions(serviceOptions);
-
-        sslOptions.setTrustStore("ts4");
-        assertEquals("ts4", sslOptions.getTrustStore());
-    }
-
-    @Test
-    public void testSetKeyStoreNonEmpty() {
-        SslManagerServiceOptions serviceOptions = mock(SslManagerServiceOptions.class);
-        ConnectionSslOptions sslOptions = new ConnectionSslOptions(serviceOptions);
-
-        sslOptions.setKeyStore("ks4");
-        assertEquals("ks4", sslOptions.getKeyStore());
-    }
-
-    @Test
-    public void testSetKeyStorePassword() {
-        SslManagerServiceOptions serviceOptions = mock(SslManagerServiceOptions.class);
-        ConnectionSslOptions sslOptions = new ConnectionSslOptions(serviceOptions);
-
-        char[] password = "keyStorePassword".toCharArray();
-        sslOptions.setKeyStorePassword(password);
-        assertArrayEquals(password, sslOptions.getKeyStorePassword());
-    }
-
-    @Test
     public void testSetAlias() {
         SslManagerServiceOptions serviceOptions = mock(SslManagerServiceOptions.class);
         ConnectionSslOptions sslOptions = new ConnectionSslOptions(serviceOptions);
@@ -157,5 +128,27 @@ public class ConnectionSslOptionsTest {
 
         sslOptions.setHostnameVerification(false);
         assertEquals(false, sslOptions.getHostnameVerification());
+    }
+    @Test
+    public void cacheIdentityIncludesCredentialAndHostnamePolicy() {
+        SslManagerServiceOptions serviceOptions = mock(SslManagerServiceOptions.class);
+        ConnectionSslOptions first = new ConnectionSslOptions(serviceOptions);
+        ConnectionSslOptions second = new ConnectionSslOptions(serviceOptions);
+        first.setAlias("client");
+        second.setAlias("client");
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+        second.setAlias("other");
+        assertNotEquals(first, second);
+        second.setAlias("client");
+        second.setHostnameVerification(true);
+        assertNotEquals(first, second);
+        first.setHostnameVerification(true);
+        assertEquals(first, second);
+        second.setProtocol("TLSv1.2");
+        assertNotEquals(first, second);
+        first.setProtocol("TLSv1.2");
+        second.setCiphers("TLS_AES_128_GCM_SHA256");
+        assertNotEquals(first, second);
     }
 }

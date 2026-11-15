@@ -7,6 +7,22 @@ export MALLOC_ARENA_MAX=1
 DIR=$(cd $(dirname $0)/..; pwd)
 cd $DIR
 
+# YOFC-KURA-ORDINARY-JVM-ARGS-V1
+# Optional administrator-owned argument file. With no setting the historical
+# launcher remains unchanged; this is independent of management-agent presence.
+set --
+if [ -n "${KURA_JVM_ARGS_FILE:-}" ]; then
+  case "$KURA_JVM_ARGS_FILE" in
+    /*) ;;
+    *) echo "KURA_JVM_ARGS_FILE must be absolute" >&2; exit 1 ;;
+  esac
+  if [ ! -f "$KURA_JVM_ARGS_FILE" ] || [ -L "$KURA_JVM_ARGS_FILE" ] || [ ! -r "$KURA_JVM_ARGS_FILE" ]; then
+    echo "KURA_JVM_ARGS_FILE must be a readable regular file" >&2
+    exit 1
+  fi
+  set -- "@$KURA_JVM_ARGS_FILE"
+fi
+
 # set up the configuration area
 mkdir -p /tmp/.kura/configuration
 ${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/siblings > /tmp/.kura/configuration/config.ini
@@ -14,7 +30,8 @@ ${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/s
 KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
 
 if [ -z "$KURA_RUNNING" ] ; then
-  nohup java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
+  nohup java "$@" \
+        -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
         -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
         -XX:ErrorFile=/var/log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \

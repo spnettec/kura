@@ -43,10 +43,13 @@ final class ConfigurationRevision {
                 @Override public void write(int value) { mac.update((byte) value); }
                 @Override public void write(byte[] bytes, int offset, int length) { mac.update(bytes, offset, length); }
             });
-            text(out, "kura.configuration.revision.v1");
+            text(out, "kura.configuration.revision.v2");
             text(out, configuration.getPid());
             out.writeLong(changes);
             out.writeLong(admissions);
+              if (configuration.getDefinition() instanceof ProviderDefinition provider) {
+                  text(out, "dynamic-provider"); text(out, provider.generation());
+              }
             var properties = configuration.getConfigurationProperties();
             if (properties == null || properties.size() > 512 || properties.keySet().stream().anyMatch(k -> k == null)) {
                 throw unsupported();
@@ -59,7 +62,8 @@ final class ConfigurationRevision {
             out.writeInt(attributes.size());
             for (AD attribute : attributes.values()) {
                 text(out, attribute.getId()); text(out, attribute.getType() == null ? null : attribute.getType().name());
-                out.writeInt(attribute.getCardinality()); out.writeBoolean(attribute.isRequired());
+                out.writeInt(attribute.getCardinality()); out.writeBoolean(attribute.isScalarCardinality());
+                out.writeBoolean(attribute.isRequired());
                 text(out, attribute.getDefault()); text(out, attribute.getMin()); text(out, attribute.getMax());
                 // Options influence validation even though defaults/options are not exported to the browser.
                 var options = attribute.getOption();
@@ -108,14 +112,28 @@ final class ConfigurationRevision {
         return result;
     }
 
+    static Map<String, Object> copyEditProperties(Map<String, Object> properties) throws Rejected {
+        if (properties == null || properties.size() > 512) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+        Map<String, Object> result = new HashMap<>();
+        for (var entry : properties.entrySet()) {
+            String name = entry.getKey();
+            if (name == null || name.isBlank() || name.getBytes(StandardCharsets.UTF_8).length > 512
+                    || name.codePoints().anyMatch(Character::isISOControl)) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+            result.put(name, copy(entry.getValue(), true));
+        }
+        return result;
+    }
+
     private static Object copy(Object value, boolean container) throws Rejected {
         if (value instanceof Password password) {
             return new Password(password.getPassword() == null ? null : password.getPassword().clone());
         }
-        if (value instanceof Vector<?> vector) {
-            if (!container || vector.size() > 256) { throw unsupported(); }
-            Vector<Object> result = new Vector<>();
-            for (Object item : vector) { result.add(copy(item, false)); }
+        if (value instanceof java.util.Collection<?> collection) {
+            if (!container || collection.size() > 256) { throw unsupported(); }
+            java.util.Collection<Object> result = value instanceof Vector<?> ? new Vector<>() : new java.util.ArrayList<>();
+            for (Object item : collection) { result.add(copy(item, false)); }
             return result;
         }
         if (value != null && value.getClass().isArray()) {
@@ -147,10 +165,10 @@ final class ConfigurationRevision {
         else if (value instanceof Float number && Float.isFinite(number)) { out.writeByte(8); out.writeFloat(number); }
         else if (value instanceof Double number && Double.isFinite(number)) { out.writeByte(9); out.writeDouble(number); }
         else if (value instanceof Character ch) { out.writeByte(10); out.writeChar(ch); }
-        else if (container && value instanceof Vector<?> vector) {
-            if (vector.size() > 256) { throw unsupported(); }
-            out.writeByte(11); out.writeInt(vector.size());
-            for (Object item : vector) { value(out, item, false); }
+        else if (container && value instanceof java.util.Collection<?> collection) {
+            if (collection.size() > 256) { throw unsupported(); }
+            out.writeByte(11); out.writeInt(collection.size());
+            for (Object item : collection) { value(out, item, false); }
         } else if (container && value.getClass().isArray()) {
             int size = Array.getLength(value);
             if (size > 256) { throw unsupported(); }
@@ -169,9 +187,10 @@ final class ConfigurationRevision {
     private static Rejected unsupported() { return new Rejected(Reason.UNSUPPORTED); }
 
     static Map<String, Object> overlay(Map<String, Object> current, Map<String, Object> patch) throws Rejected {
-        if (current == null || current.size() > 512 || current.containsKey(null)) { throw unsupported(); }
+        if (current == null || current.size() > 512) { throw unsupported(); }
         Map<String, Object> merged = new HashMap<>();
         for (var entry : current.entrySet()) {
+            if (entry.getKey() == null) { throw unsupported(); }
             if (entry.getValue() != null) { merged.put(entry.getKey(), copy(entry.getValue(), true)); }
         }
         merged.putAll(patch);
@@ -181,10 +200,12 @@ final class ConfigurationRevision {
 
     static boolean accepts(AD attribute, Object value) {
         int cardinality = attribute.getCardinality();
-        if (cardinality == 0) { return scalar(attribute.getType(), value); }
-        if (cardinality < 0 && value instanceof Vector<?> vector) {
-            return vector.size() <= Math.min(256L, -(long) cardinality)
-                    && vector.stream().allMatch(item -> scalar(attribute.getType(), item));
+        if (org.eclipse.kura.configuration.ConfigurationConstraints.isScalarValue(attribute, value)) {
+            return scalar(attribute.getType(), value);
+        }
+        if (cardinality < 0 && value instanceof java.util.Collection<?> collection) {
+            return collection.size() <= Math.min(256L, -(long) cardinality)
+                    && collection.stream().allMatch(item -> scalar(attribute.getType(), item));
         }
         if (cardinality > 0 && value != null && value.getClass().isArray()) {
             int length = Array.getLength(value);
@@ -215,9 +236,10 @@ final class ConfigurationRevision {
         if (left instanceof Password password) {
             return right instanceof Password other && java.util.Arrays.equals(password.getPassword(), other.getPassword());
         }
-        if (left instanceof Vector<?> vector) {
-            if (!(right instanceof Vector<?> other) || vector.size() != other.size()) { return false; }
-            for (int i = 0; i < vector.size(); i++) { if (!sameValue(vector.get(i), other.get(i))) { return false; } }
+        if (left instanceof java.util.Collection<?> collection) {
+            if (!(right instanceof java.util.Collection<?> other) || collection.size() != other.size()) { return false; }
+            var leftValues = collection.iterator(); var rightValues = other.iterator();
+            while (leftValues.hasNext()) { if (!sameValue(leftValues.next(), rightValues.next())) { return false; } }
             return true;
         }
         if (left != null && left.getClass().isArray()) {
