@@ -21,13 +21,13 @@ def require(ok):
 
 
 ROLES = {
-    "crypto": ("org.eclipse.kura.core.crypto", ("kura.crypto.key.generations",),
+    "crypto": ("org.eclipse.kura.core.crypto", ("kura.crypto.key.generations", "kura.crypto.key.generations.paired"),
                ("org/eclipse/kura/core/crypto/CryptoServiceImpl.class", "org/eclipse/kura/core/crypto/EncryptionKeyRing.class")),
     "configuration": ("org.eclipse.kura.core.configuration", ("kura.configuration.password.sources", "kura.configuration.dispatch.release"),
                       ("org/eclipse/kura/core/configuration/ConfigurationServiceImpl.class",)),
     "snapshot": ("org.eclipse.kura.xml.marshaller.unmarshaller.provider", ("kura.configuration.snapshot.codec",),
                  ("org/eclipse/kura/internal/xml/marshaller/unmarshaller/XmlJavaComponentConfigurationsMapper.class",)),
-    "offline": ("org.eclipse.kura.recovery.bootstrap", (),
+    "offline": ("org.eclipse.kura.recovery.bootstrap", ("kura.crypto.systemd.recovery",),
                 ("org/eclipse/kura/tools/recovery/SnapshotTool.class", "org/eclipse/kura/tools/recovery/RecoveryBootstrap.class",
                  "org/eclipse/kura/tools/recovery/RecoveryCrypto.class")),
 }
@@ -130,7 +130,8 @@ def jar(path, owner=None, role=None):
                     if role == "offline":
                         require(values.get("main-class") == "org.eclipse.kura.tools.recovery.SnapshotTool")
                         required = clauses(values.get("require-capability", ""))
-                        for capability in ("kura.crypto.key.generations", "kura.configuration.dispatch.release", "kura.configuration.snapshot.codec"):
+                        for capability in ("kura.crypto.key.generations", "kura.crypto.key.generations.paired",
+                                           "kura.configuration.dispatch.release", "kura.configuration.snapshot.codec"):
                             require(capability in required and 'filter:="(&(version>=1.0.0)(!(version>=2.0.0)))"' in required[capability])
         except (KeyError, ValueError, zipfile.BadZipFile, RuntimeError, EOFError, zlib.error):
             raise Refused("Invalid generation-reader JAR") from None
@@ -224,6 +225,8 @@ def validate(home, manifest, read, owner=None, base_files=frozenset(), unit=None
     """Attest actual readers and installer-normalized launchers; return exact runtime hashes."""
     require(isinstance(manifest.get("readers"), dict) and set(manifest["readers"]) == set(ROLES))
     require(type(manifest.get('writerProtocol')) is int and manifest['writerProtocol'] == 1)
+    native = read(home / 'bin/kura_key_store.py')
+    require(re.search(rb'(?m)^LOADED_CREDENTIAL_PROOF_PROTOCOL = 1$', native) is not None)
     managed_unit(unit)
     roles, libraries = reader_files(home, owner)
     require(roles == manifest["readers"])

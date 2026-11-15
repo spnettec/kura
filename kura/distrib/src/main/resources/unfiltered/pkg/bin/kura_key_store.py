@@ -18,6 +18,7 @@ import struct
 import sys
 
 CREDENTIAL = "kura_encryption_key"
+LOADED_CREDENTIAL_PROOF_PROTOCOL = 1
 PROPERTY = "org.eclipse.kura.core.crypto.secretKey"
 CORE_DEFAULT = b"rv;ipse329183!@#"
 OLD_DEVELOPMENT = b"kura-dev-key-005"
@@ -500,7 +501,7 @@ def loaded_permissions_private(fd, metadata, reader_uid=None):
     return entries == [(1,4,undefined),(2,4,reader_uid),(4,0,undefined),
                        (16,4,undefined),(32,0,undefined)]
 
-def read_loaded(directory, name, limit):
+def read_loaded(directory, name, limit, *, with_metadata=False):
     source = directory / name
     fd = os.open(source,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
     try:
@@ -517,9 +518,19 @@ def read_loaded(directory, name, limit):
                 == (current.st_dev,current.st_ino,current.st_size,current.st_mtime_ns,current.st_ctime_ns)
                 and (m.st_dev,m.st_ino)==(path_state.st_dev,path_state.st_ino),
                 "Loaded Kura encryption credential changed")
-        return value
+        return (value,m) if with_metadata else value
     finally:
         os.close(fd)
+
+def loaded_credential_proof(name):
+    """ACL/identity receipt for the same-UID Java reader. No raw bytes or Root RPC."""
+    limits={CREDENTIAL:32,RING_CREDENTIAL:512}
+    require(name in limits,'Unsupported loaded credential')
+    directory=os.environ.get('CREDENTIALS_DIRECTORY','')
+    require(directory and Path(directory).is_absolute(),'Kura encryption credential is unavailable')
+    value,m=read_loaded(Path(directory),name,limits[name],with_metadata=True)
+    identity=(m.st_dev,m.st_ino,m.st_uid,m.st_gid,m.st_mode,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
+    print(':'.join(map(str,('v'+str(LOADED_CREDENTIAL_PROOF_PROTOCOL),name,*identity,hashlib.sha256(value).hexdigest()))))
 
 def root_exchange(request, *, descriptor=False):
     # Fixed local RPC. No keys, commands, user paths or retry are transmitted.
@@ -646,6 +657,9 @@ def main(argv):
         require(bool(argv), "Missing key-policy command")
         if argv[0] == 'exec-java':
             exec_java(argv[1:])
+            return 0
+        if len(argv)==2 and argv[0]=='loaded-credential-proof':
+            loaded_credential_proof(argv[1])
             return 0
         if argv in (["check-loaded"], ["check-loaded-generations"], ["check-loaded-managed"]):
             check_loaded(require_generations=argv == ["check-loaded-generations"], require_root=argv == ["check-loaded-managed"])

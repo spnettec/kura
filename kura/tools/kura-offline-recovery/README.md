@@ -143,7 +143,9 @@ receipt.path=/absolute/private/applied.properties
 crypto.key.file=/absolute/private/original-kura-key
 ```
 
-Use exactly one of `crypto.key.file` or explicit `crypto.default=true`. Existing
+Use exactly one of `crypto.key.file`, explicit `crypto.default=true`, an explicitly
+bound `crypto.keyring.file`, or `crypto.systemd.credentials=true` with both
+`crypto.key.sha256` and `crypto.ring.sha256` (`none` or a digest). Existing
 key and password-policy semantics are the same as standalone validation. Paths
 must be absolute, leaf symlinks are rejected, and immediate parent directories
 must not be group/other writable. Administrators must also control ancestor
@@ -268,15 +270,48 @@ The optional bootstrap additionally requires snapshot.codec 1.x, whose provider
 requires password.sources 1.x. This format support does not authorize business
 health, write release or ordinary unit handoff.
 
-The generation-aware bootstrap also requires `kura.crypto.key.generations` 1.x.
+The generation-aware bootstrap requires `kura.crypto.key.generations` and
+`kura.crypto.key.generations.paired` 1.x; it provides `kura.crypto.systemd.recovery`
+1.x. The paired capability distinguishes the active/ring consistency interface
+from older Crypto bundles with the same bundle version.
 Its private request may explicitly select `crypto.keyring.file` and
 `crypto.keyring.sha256` instead of `crypto.key.file` or `crypto.default`; the
-same bounded private reader validates the material. The current agent request
-allowlist remains single-key and cannot produce this new selection yet. Complete
-package/cohort acceptance and a Core-owned delegation path remain release gates.
+same bounded private reader validates the material. The current agent Core-owned
+validator can produce the PID1-loaded credential selection; it supplies only the
+original key/ring fingerprints, without granting agent access to the key files.
+Complete runtime/grant/least-privilege admission and package acceptance remain
+release gates; generation publication still refuses an installed agent.
 
 When a logical-V1 snapshot is converted to CM properties, every logical Password
 is encrypted exactly once, including an empty value or text that happens to be
 valid ciphertext. Scalar, array, Vector and List representations retain their
 logical values without modifying the source. Unmarked authenticated ciphertext
 retains its original representation through the existing CM conversion helper.
+
+## PID1 credential ACLs (2026-11-16 candidate)
+
+`crypto.systemd.credentials` selects only fixed credential names below PID1's
+`CREDENTIALS_DIRECTORY`; a manifest cannot select that directory or a helper path.
+Some systemd versions use root-owned `0440` files with an ACL naming only the
+service UID. Their group bits encode the ACL mask, not owning-group access.
+The managed reader accepts this case only on a read-only credential filesystem,
+using the installed native policy's exact ACL validation. Ordinary private files
+and legacy explicit key selections retain their existing strict permission checks.
+
+The Java reader launches the fixed native `loaded-credential-proof` operation with
+only a fixed credential ID and a cleared environment retaining the credential
+directory. This read-only helper returns version 1, file identity/metadata and a
+SHA-256 digest; it returns no key bytes and makes no Root-service RPC. Java compares
+every metadata field with its own stable file/path checks and verifies the content hash.
+Unknown versions, stale inode/time/ownership/mode/size, wrong digest, unexpected
+output, nonzero exit, stderr or a five-second helper timeout refuse recovery.
+Plain group-readable files or ACLs for extra/wrong users remain refused. Cohort
+validation also requires the native version-1 declaration, so refreshing outer
+file hashes cannot make an older native helper compatible.
+
+The disposable systemd reader matrix uses two actual permission profiles and
+32 JVM invocations: single/multiple keys, plain/old/new encrypted snapshots,
+missing/malformed/mismatched credentials, and stale/version/digest proof faults.
+It exercises this production loader and native ACL policy with actual PID1 mounts.
+It does not start Main Core, apply Configuration Admin changes, settle operations
+or retire old keys. The complete controlled Core startup remains a separate gate.

@@ -173,6 +173,39 @@ class GenerationPackageTest(unittest.TestCase):
         with self.assertRaises(lifecycle.Refused):
             self.policy.generation_assets()
 
+    def test_old_crypto_cannot_supply_managed_recovery_even_when_both_copies_match(self):
+        runtime=self.generation['readers']['crypto']
+        private=next(name for name in self.generation['files'] if name.startswith('libexec/key-recovery/lib/org.eclipse.kura.core.crypto-'))
+        def old_manifest(raw):
+            raw=raw.replace(b'\r\n',b'\n').replace(b'\n ',b'')
+            self.assertEqual(1,raw.count(b'kura.crypto.key.generations.paired'))
+            return raw.replace(b'kura.crypto.key.generations.paired',b'test.crypto.old.generations.paired')
+        for name in (runtime,private):self.rewrite_jar(name,old_manifest)
+        self.assertEqual((self.home/runtime).read_bytes(),(self.home/private).read_bytes())
+        self.assertEqual(2,self.policy.assets()['protocol'])
+        with self.assertRaises(lifecycle.Refused):self.policy.generation_assets()
+
+    def test_offline_reader_requires_the_active_pair_interface_and_managed_loader(self):
+        path=self.home/cohort.OFFLINE;original=path.read_bytes()
+        for capability in (b'kura.crypto.key.generations.paired',b'kura.crypto.systemd.recovery'):
+            path.write_bytes(original)
+            def old_manifest(raw):
+                raw=raw.replace(b'\r\n',b'\n').replace(b'\n ',b'')
+                self.assertEqual(1,raw.count(capability))
+                return raw.replace(capability,b'test.reader.old.capability')
+            self.rewrite_jar(cohort.OFFLINE,old_manifest)
+            self.assertEqual(2,self.policy.assets()['protocol'])
+            with self.assertRaises(lifecycle.Refused):self.policy.generation_assets()
+
+    def test_old_native_credential_reader_is_refused_after_outer_hash_refresh(self):
+        path=self.home/'bin/kura_key_store.py'
+        raw=path.read_bytes();self.assertEqual(1,raw.count(b'LOADED_CREDENTIAL_PROOF_PROTOCOL = 1'))
+        raw=raw.replace(b'LOADED_CREDENTIAL_PROOF_PROTOCOL = 1',b'LOADED_CREDENTIAL_PROOF_PROTOCOL = 0')
+        path.write_bytes(raw)
+        self.manifest['files']['bin/kura_key_store.py']=hashlib.sha256(raw).hexdigest();self.save_manifest()
+        self.assertEqual(2,self.policy.assets()['protocol'])
+        with self.assertRaises(lifecycle.Refused):self.policy.generation_assets()
+
     def test_actual_installer_heap_adjustment_is_allowed_and_changes_exact_runtime_binding(self):
         before = self.policy.generation_assets()
         for name in cohort.LAUNCHERS:

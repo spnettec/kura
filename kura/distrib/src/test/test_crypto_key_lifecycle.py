@@ -1,5 +1,7 @@
 """Core key lifecycle contracts: preserve encrypted data, reject ambiguous upgrades."""
 import hashlib
+import contextlib
+import io
 import importlib.util
 import json
 import os
@@ -272,7 +274,7 @@ class LoadedCredentialAclTests(unittest.TestCase):
         self.original_fstat = os.fstat
 
     def run_check(self,entries=None,version=2,missing_acl=False,truncate=False,
-                  privileged_capture=False,capture_uid=None):
+                  privileged_capture=False,capture_uid=None,proof=False):
         raw = struct.pack("<I",version)+b"".join(struct.pack("<HHI",*entry)
             for entry in (self.entries if entries is None else entries))
         if truncate:
@@ -287,7 +289,20 @@ class LoadedCredentialAclTests(unittest.TestCase):
                 patch.object(policy.os,"fstat",side_effect=native_stat), \
                 patch.object(policy.os,"getxattr",return_value=raw,create=True,
                     side_effect=OSError("No ACL") if missing_acl else None):
-            if privileged_capture:
+            if proof:
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output),contextlib.redirect_stderr(io.StringIO()):
+                    result=policy.main(['loaded-credential-proof',policy.CREDENTIAL])
+                if proof=='refused':
+                    self.assertEqual(1,result);self.assertEqual('',output.getvalue());return
+                self.assertEqual(0,result)
+                values=output.getvalue().strip().split(':')
+                self.assertEqual(12,len(values));self.assertEqual(['v1',policy.CREDENTIAL],values[:2])
+                self.assertEqual('0',values[4])
+                self.assertEqual(str(0o100440),values[6])
+                self.assertEqual(hashlib.sha256(bytes(range(32))).hexdigest(),values[11])
+                self.assertNotIn(bytes(range(32)).hex(),output.getvalue())
+            elif privileged_capture:
                 store=policy.Store(self.folder,owner=0)
                 self.assertEqual(store.read(self.key,private=True,owners={0},loaded_for_uid=capture_uid),bytes(range(32)))
                 store.stable()
@@ -305,6 +320,10 @@ class LoadedCredentialAclTests(unittest.TestCase):
 
     def test_native_systemd_acl_grants_only_the_service_user(self):
         self.run_check()
+
+    def test_java_proof_is_readonly_available_to_the_service_uid_and_contains_no_key(self):
+        self.run_check(proof=True)
+        self.run_check(proof='refused',missing_acl=True)
 
     def test_plain_group_readable_key_is_still_refused(self):
         with self.assertRaises(policy.Refused):
