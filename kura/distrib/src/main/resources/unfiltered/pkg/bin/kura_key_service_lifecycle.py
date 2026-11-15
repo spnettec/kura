@@ -358,7 +358,9 @@ class Lifecycle:
         if generation_binding:
             require(modern, 'This package has no complete generation-reader cohort')
             generation = manifest['generation']
-            require(set(generation) == {'files', 'readers', 'unitSha256'} and isinstance(generation['files'], dict)
+            require(set(generation) == {'files', 'readers', 'unitSha256', 'writerProtocol'}
+                    and type(generation['writerProtocol']) is int and generation['writerProtocol'] == 1
+                    and isinstance(generation['files'], dict)
                     and 1 <= len(generation['files']) <= 512 and is_digest(generation['unitSha256']))
             for name, expected in generation['files'].items():
                 require(isinstance(name, str) and name and not Path(name).is_absolute()

@@ -80,10 +80,10 @@ if [[ $IS_DEBUG_MODE == "true" ]]; then
     -consoleLog"
 fi
 
-KURA_LAUNCH_COMMAND="exec java"
+KURA_LAUNCH_COMMAND="exec python3 -I \"${DIR}/bin/kura_key_store.py\" exec-java"
 
 if [[ $IS_DETACHED_MODE == "true" ]]; then
-    KURA_LAUNCH_COMMAND="nohup java"
+    KURA_LAUNCH_COMMAND="nohup python3 -I \"${DIR}/bin/kura_key_store.py\" exec-java"
 fi
 
 KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \

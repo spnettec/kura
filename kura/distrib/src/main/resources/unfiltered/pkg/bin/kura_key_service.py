@@ -466,9 +466,140 @@ class Manager:
 
     def require_generation_cohort(self):
         try:
-            Lifecycle(self.root, self.owner).generation_assets()
+            return Lifecycle(self.root, self.owner).generation_assets()
         except (OSError, ValueError, LifecycleRefused):
             raise Failure('COHORT_UNAVAILABLE') from None
+
+    @staticmethod
+    def writer_process(pid):
+        require(type(pid) is int and pid > 0, 'INVALID_WRITER')
+        path = Path('/proc') / str(pid)
+        try:
+            owner = path.stat().st_uid
+            raw = (path / 'stat').read_text()
+        except FileNotFoundError:
+            return None
+        parts = raw.rsplit(')', 1)[1].split()
+        require(len(parts) >= 20 and parts[19].isdigit(), 'INVALID_WRITER')
+        return owner, parts[19]
+
+    def writer_directory(self, *, create=False):
+        parent = self.store.path('/run/kura-key-service')
+        self.directory(parent)
+        path = parent / 'writers'
+        if create and not os.path.lexists(path):
+            path.mkdir(mode=0o700)
+            self.sync(parent)
+        self.directory(path, private=True)
+        return path
+
+    def writer_lock(self, *, create=False):
+        path = self.writer_directory(create=create) / 'lease.lock'
+        if create and not os.path.lexists(path):
+            self.atomic(path, b'', no_replace=True)
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
+        try:
+            value = os.fstat(fd)
+            require(stat.S_ISREG(value.st_mode) and value.st_uid == self.owner and value.st_nlink == 1
+                    and stat.S_IMODE(value.st_mode) == 0o600 and value.st_size == 0
+                    and (value.st_dev, value.st_ino) == (path.lstat().st_dev, path.lstat().st_ino), 'UNSAFE_WRITER_STATE')
+            return fd
+        except BaseException:
+            os.close(fd)
+            raise
+
+    def writer_record(self, path):
+        value = decode(self.read(path, 4096))
+        fields(value, {'schema', 'state', 'pid', 'startTicks', 'bootId', 'uid', 'keySha256', 'ringSha256', 'lockDevice', 'lockInode', 'cohortSha256'})
+        require(type(value['schema']) is int and value['schema'] == 1 and value['state'] == 'LEASE_GRANTED'
+                and type(value['pid']) is int and 0 < value['pid'] <= 0x7fffffff
+                and isinstance(value['startTicks'], str) and re.fullmatch(r'[0-9]{1,20}', value['startTicks']) is not None
+                and path.name == str(value['pid']) + '-' + value['startTicks'] + '.json'
+                and type(value['uid']) is int and 0 <= value['uid'] < 0xffffffff
+                and isinstance(value['bootId'], str)
+                and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', value['bootId']) is not None
+                and type(value['lockDevice']) is int and value['lockDevice'] >= 0
+                and type(value['lockInode']) is int and value['lockInode'] > 0, 'UNSAFE_WRITER_STATE')
+        digest(value['keySha256'])
+        digest(value['cohortSha256'])
+        if value['ringSha256'] is not None:
+            digest(value['ringSha256'])
+        return value
+
+    def writer_registration(self, pid):
+        process = self.writer_process(pid)
+        require(process is not None, 'WRITER_UNREGISTERED')
+        value = self.writer_record(self.writer_directory() / (str(pid) + '-' + process[1] + '.json'))
+        require(value['uid'] == process[0]
+                and value['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(), 'UNSAFE_WRITER_STATE')
+        return value
+
+    @contextlib.contextmanager
+    def exclusive_writers(self):
+        fd = self.writer_lock()
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise Failure('WRITERS_ACTIVE') from None
+            yield os.fstat(fd)
+        finally:
+            os.close(fd)
+
+    def acquire_writer_lease(self, request, pid, uid):
+        fields(request, {'schema', 'action', 'keySha256', 'ringSha256'})
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == 'writer-lease-acquire' and sys.platform == 'linux', 'INVALID_ARGUMENT')
+        digest(request['keySha256'])
+        if request['ringSha256'] is not None:
+            digest(request['ringSha256'])
+        process = self.writer_process(pid)
+        require(process is not None and type(uid) is int and uid == process[0], 'INVALID_WRITER')
+        with self.lock(self.state / 'admission.lock', True):
+            self.maintenance(); self.settled()
+            cohort = self.require_generation_cohort()
+            with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
+                _, _, _, _, _, source = self.generation_source()
+                require(all(request[k] == source[k] for k in source), 'CONFLICT')
+                fd = self.writer_lock(create=True)
+                accepted = False
+                try:
+                    try:
+                        fcntl.flock(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    except BlockingIOError:
+                        raise Failure('WRITERS_FENCED') from None
+                    root = self.writer_directory()
+                    records = [p for p in root.iterdir() if p.name != 'lease.lock']
+                    require(len(records) <= 64, 'CAPACITY')
+                    boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+                    live = 0
+                    for path in records:
+                        require(re.fullmatch(r'[1-9][0-9]*-[0-9]+\.json', path.name) is not None, 'UNSAFE_WRITER_STATE')
+                        prior = self.writer_record(path)
+                        current = self.writer_process(prior['pid'])
+                        if prior['bootId'] != boot or current is None or current != (prior['uid'], prior['startTicks']):
+                            # Only ephemeral runtime cache is pruned, never an operation/result journal.
+                            path.unlink()
+                            self.sync(root)
+                        else:
+                            live += 1
+                    require(live < 64, 'CAPACITY')
+                    # Runtime registrations have no operation IDs and never settle key/start intents.
+                    metadata = os.fstat(fd)
+                    value = dict(schema=1, state='LEASE_GRANTED', pid=pid, startTicks=process[1], uid=uid,
+                                 bootId=boot,
+                                 lockDevice=metadata.st_dev, lockInode=metadata.st_ino, cohortSha256=cohort['cohortSha256'], **source)
+                    path = root / (str(pid) + '-' + process[1] + '.json')
+                    require(not os.path.lexists(path), 'WRITER_ALREADY_REGISTERED')
+                    self.atomic(path, encode(value), no_replace=True)
+                    require(self.writer_process(pid) == process, 'INVALID_WRITER')
+                    response = dict(schema=1, state='WRITER_LEASE_GRANTED', peerPid=pid, startTicks=process[1],
+                                    lockDevice=metadata.st_dev, lockInode=metadata.st_ino, cohortSha256=cohort['cohortSha256'], **source)
+                    accepted = True
+                    return response, fd
+                finally:
+                    if not accepted:
+                        os.close(fd)
 
     def prepared_generation(self, identity):
         record = self.record(identity)
@@ -800,6 +931,16 @@ def send_frame(stream, value):
     stream.sendall(struct.pack("!I", len(data)) + data)
 
 
+def send_descriptor_frame(stream, value, descriptor):
+    data = encode(value)
+    require(len(data) <= MAX_FRAME, 'PROTOCOL_MISMATCH')
+    frame = struct.pack('!I', len(data)) + data
+    sent = stream.sendmsg([frame], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, struct.pack('i', descriptor))])
+    require(sent > 0, 'PROTOCOL_MISMATCH')
+    if sent < len(frame):
+        stream.sendall(frame[sent:])
+
+
 def peer(stream):
     require(sys.platform == "linux" and hasattr(socket, "SO_PEERCRED"), "UNSUPPORTED")
     return struct.unpack("3i", stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
@@ -834,21 +975,32 @@ def serve():
         connection, _ = listener.accept()
         with connection:
             connection.settimeout(3)
+            descriptor = None
             try:
-                _, uid, _ = peer(connection)
+                pid, uid, _ = peer(connection)
                 require(uid in (0, daemon) or recovery is not None and uid == recovery, "FORBIDDEN")
                 request = decode(read_frame(connection))
                 require(connection.recv(1) == b"", "PROTOCOL_MISMATCH")
                 require(uid != daemon or request.get("action") not in ("core-start", "core-start-after-maintenance"), "FORBIDDEN")
-                response = manager.handle(request, recovery_only=recovery is not None and uid == recovery)
+                if request.get('action') == 'writer-lease-acquire':
+                    require(recovery is None or uid != recovery, 'FORBIDDEN')
+                    response, descriptor = manager.acquire_writer_lease(request, pid, uid)
+                else:
+                    response = manager.handle(request, recovery_only=recovery is not None and uid == recovery)
             except Failure as failure:
                 response = {"schema": 1, "error": failure.reason}
             except (OSError, Refused, KeyError):
                 response = {"schema": 1, "error": "UNAVAILABLE"}
             try:
-                send_frame(connection, response)
+                if descriptor is None:
+                    send_frame(connection, response)
+                else:
+                    send_descriptor_frame(connection, response, descriptor)
             except (OSError, Failure):
                 pass  # Original durable UUID can be read; never repeat a mutation here.
+            finally:
+                if descriptor is not None:
+                    os.close(descriptor)
 
 
 def client():

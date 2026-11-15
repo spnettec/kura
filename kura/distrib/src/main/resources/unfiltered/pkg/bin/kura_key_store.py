@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Private Core encryption-key provisioning; never rotate existing encrypted data."""
+import array
 import contextlib
 import fcntl
 import hashlib
@@ -8,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import secrets
 import shlex
 import socket
@@ -519,13 +521,27 @@ def read_loaded(directory, name, limit):
     finally:
         os.close(fd)
 
-def root_start_admission(request, expected_response):
-    # Fixed local read-only RPC. No keys, commands, paths or retry are transmitted.
+def root_exchange(request, *, descriptor=False):
+    # Fixed local RPC. No keys, commands, user paths or retry are transmitted.
     require(sys.platform == "linux", "Credential startup admission requires the supported local Root service")
+    descriptors = []
+    def receive(connection, size):
+        if not descriptor:
+            return connection.recv(size)
+        data, ancillary, flags, _ = connection.recvmsg(size, socket.CMSG_SPACE(4 * array.array('i').itemsize), socket.MSG_CMSG_CLOEXEC)
+        for level, kind, raw in ancillary:
+            require(level == socket.SOL_SOCKET and kind == socket.SCM_RIGHTS, 'Unexpected Root lease control message')
+            values = array.array('i')
+            require(len(raw) % values.itemsize == 0, 'Invalid Root lease descriptor')
+            values.frombytes(raw)
+            descriptors.extend(values)
+        require(not flags & (socket.MSG_CTRUNC | socket.MSG_TRUNC) and len(descriptors) <= 1,
+                'Ambiguous Root lease descriptor')
+        return data
     def read_exact(connection, size):
         value = bytearray()
         while len(value) < size:
-            chunk = connection.recv(size - len(value))
+            chunk = receive(connection, size - len(value))
             require(bool(chunk), "Incomplete Root generation admission response")
             value.extend(chunk)
         return bytes(value)
@@ -542,9 +558,21 @@ def root_start_admission(request, expected_response):
             require(0 < size <= 2048, "Invalid Root generation admission response")
             response = json.loads(read_exact(connection, size).decode("utf-8"), object_pairs_hook=generation_pairs,
                                   parse_constant=lambda _: generation_require(False))
-            require(connection.recv(1) == b"", "Trailing Root generation admission response")
+            require(receive(connection, 1) == b"", "Trailing Root generation admission response")
+        require(isinstance(response, dict) and type(response.get('schema')) is int and response['schema'] == 1,
+                'Invalid Root admission response')
+        if descriptor:
+            require(len(descriptors) == 1 and 'error' not in response, 'Root writer lease was not granted')
+            return response, descriptors.pop()
+        return response
     except (OSError, ValueError, UnicodeError, RecursionError):
-        raise Refused("Root generation startup admission unavailable; preserve original operation and keys") from None
+        raise Refused("Root startup admission unavailable; preserve original operation and keys") from None
+    finally:
+        for received in descriptors:
+            os.close(received)
+
+def root_start_admission(request, expected_response):
+    response = root_exchange(request)
     require(isinstance(response, dict) and type(response.get("schema")) is int
             and response == expected_response,
             "Root generation startup admission refused; preserve original operation and keys")
@@ -559,7 +587,7 @@ def credential_start_admission(key_sha256, ring_sha256):
     root_start_admission(dict(schema=1, action="credential-start-admission", **expected),
                          dict(schema=1, state="CREDENTIAL_READY", **expected))
 
-def check_loaded(require_generations=False, require_root=False):
+def loaded_binding(require_generations=False):
     directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
     require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
     directory = Path(directory)
@@ -573,14 +601,52 @@ def check_loaded(require_generations=False, require_root=False):
         active, metadata = key_generations(raw)
         proof = generation_receipt(read_loaded(directory, "key-generations.json", 2048))
         generation_require(active == value and metadata == proof)
-        if not require_root:
-            generation_start_admission(metadata)
+    return dict(keySha256=hashlib.sha256(value).hexdigest(), ringSha256=metadata['ringSha256'] if metadata else None), metadata
+
+def check_loaded(require_generations=False, require_root=False):
+    binding, metadata = loaded_binding(require_generations)
     if require_root:
-        credential_start_admission(hashlib.sha256(value).hexdigest(), metadata["ringSha256"] if metadata else None)
+        credential_start_admission(binding['keySha256'], binding['ringSha256'])
+    elif metadata is not None:
+        generation_start_admission(metadata)
+
+def exec_java(arguments):
+    require(bool(arguments), 'Missing managed Java arguments')
+    binding, _ = loaded_binding()
+    response, descriptor = root_exchange(dict(schema=1, action='writer-lease-acquire', **binding), descriptor=True)
+    try:
+        names = {'schema', 'state', 'peerPid', 'startTicks', 'lockDevice', 'lockInode', 'keySha256', 'ringSha256', 'cohortSha256'}
+        require(set(response) == names and response['state'] == 'WRITER_LEASE_GRANTED'
+                and type(response['peerPid']) is int and response['peerPid'] == os.getpid()
+                and isinstance(response['startTicks'], str) and response['startTicks'].isdigit()
+                and all(response[k] == binding[k] for k in binding)
+                and type(response['lockDevice']) is int and response['lockDevice'] >= 0
+                and type(response['lockInode']) is int and response['lockInode'] > 0,
+                'Invalid Root writer lease')
+        generation_require(isinstance(response['cohortSha256'], str) and re.fullmatch('[0-9a-f]{64}', response['cohortSha256']) is not None)
+        metadata = os.fstat(descriptor)
+        require(stat.S_ISREG(metadata.st_mode) and metadata.st_uid == 0 and metadata.st_nlink == 1
+                and stat.S_IMODE(metadata.st_mode) == 0o600 and metadata.st_size == 0
+                and metadata.st_dev == response['lockDevice'] and metadata.st_ino == response['lockInode']
+                and fcntl.fcntl(descriptor, fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY,
+                'Invalid Root writer descriptor')
+        # One reserved, inheritable descriptor carries the kernel lease across exec.
+        if descriptor != 9:
+            os.dup2(descriptor, 9, inheritable=True)
+            os.close(descriptor)
+            descriptor = 9
+        else:
+            os.set_inheritable(descriptor, True)
+        os.execvp('java', ['java', *arguments])
+    finally:
+        os.close(descriptor)
 
 def main(argv):
     try:
         require(bool(argv), "Missing key-policy command")
+        if argv[0] == 'exec-java':
+            exec_java(argv[1:])
+            return 0
         if argv in (["check-loaded"], ["check-loaded-generations"], ["check-loaded-managed"]):
             check_loaded(require_generations=argv == ["check-loaded-generations"], require_root=argv == ["check-loaded-managed"])
             return 0

@@ -18,7 +18,7 @@ ${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/s
 KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
 
 if [ -z "$KURA_RUNNING" ] ; then
-        exec java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
+        exec python3 -I "${DIR}/bin/kura_key_store.py" exec-java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
         -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/var/log/kura-gc.log \
         -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M \
         -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \

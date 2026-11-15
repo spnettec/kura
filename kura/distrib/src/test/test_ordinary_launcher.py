@@ -38,8 +38,8 @@ class OrdinaryLauncherTests(unittest.TestCase):
         for name in ['kura_key_store.py', 'kura_credential_env.sh']:
             shutil.copyfile(resources / name, self.bin / name)
         # These tests record shell/JVM arguments; the native suite separately exercises
-        # the actual Linux Root peer and isolated interpreter. Replace only that IPC
-        # boundary in this disposable copy, keeping the shipped credential reader.
+        # the actual Linux Root peer, descriptor and JVM lifetime. Isolate those
+        # boundaries here; these tests exercise shipped shell arguments/early refusal.
         actual_policy = self.bin / 'key_policy_actual.py'
         (self.bin / 'kura_key_store.py').rename(actual_policy)
         self.admission = self.root / 'root-admission-called'
@@ -53,6 +53,11 @@ def root_admission(request,expected):
     if os.environ.get('YOFC_TEST_ADMISSION_DENY') == '1':
         raise module['Refused']('fixture Root has an unresolved original operation')
 module['main'].__globals__['root_start_admission']=root_admission
+def exec_java(arguments):
+    assert Path(os.environ['YOFC_TEST_ADMISSION_RECORD']).is_file()
+    Path(os.environ['YOFC_TEST_LEASE_RECORD']).write_text('managed Java entrypoint invoked')
+    os.execvp('java',['java',*arguments])
+module['main'].__globals__['exec_java']=exec_java
 sys.exit(module['main'](sys.argv[1:]))
 '''
         (self.bin / 'kura_key_store.py').write_text(shim)
@@ -76,6 +81,7 @@ sys.exit(module['main'](sys.argv[1:]))
         env['CREDENTIALS_DIRECTORY'] = str(self.credentials)
         env['YOFC_TEST_ADMISSION_RECORD'] = str(self.admission)
         env['YOFC_TEST_ADMISSION_DENY'] = '1' if root_denies else '0'
+        env['YOFC_TEST_LEASE_RECORD'] = str(self.root / 'lease-entry-called')
         if argument_file is not None:
             env['KURA_JVM_ARGS_FILE'] = str(argument_file)
         interpreter = '/bin/bash' if script == 'start_kura.sh' else '/bin/sh'
@@ -97,6 +103,7 @@ sys.exit(module['main'](sys.argv[1:]))
         self.assertIn('-jar', args)
         self.assertTrue(self.generator.exists())
         self.assertTrue(self.admission.exists())
+        self.assertTrue((self.root / 'lease-entry-called').exists())
         self.assertNotIn('kura-management-agent', SCRIPT.read_text())
 
     def test_explicit_argument_file_is_one_quoted_argument_before_historical_options(self):
@@ -108,6 +115,7 @@ sys.exit(module['main'](sys.argv[1:]))
         self.assertEqual(args[:2], ['@' + str(argument_file), '-Xms512m'])
         self.assertEqual(sum(arg.startswith('@') for arg in args), 1)
         self.assertTrue(self.admission.exists())
+        self.assertTrue((self.root / 'lease-entry-called').exists())
 
     def test_root_unknown_refuses_before_generator_or_java_even_with_a_valid_credential(self):
         before = self.credential.read_bytes()

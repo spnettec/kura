@@ -73,7 +73,7 @@ def prepare(assembly, cipher_target, offline_target):
     generation_files = set(cohort.FIXED_FILES) | set(readers.values()) | set(libraries)
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     generation = dict(files={name: digest(assembly / name) for name in sorted(generation_files)}, readers=readers,
-                      unitSha256=digest(main_unit))
+                      unitSha256=digest(main_unit), writerProtocol=1)
     manifest = dict(schema=2, protocol=2, files={name: digest(assembly / name) for name in sorted(base_files)},
                     units={name: digest(assembly / "install" / name) for name in units if name != 'kura.service'}, generation=generation)
     cohort.validate(assembly, generation, Path.read_bytes, os.geteuid(), unit=unit_bytes)

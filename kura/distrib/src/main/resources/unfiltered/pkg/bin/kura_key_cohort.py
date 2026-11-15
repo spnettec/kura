@@ -220,6 +220,7 @@ def reader_files(home, owner=None):
 def validate(home, manifest, read, owner=None, base_files=frozenset(), unit=None):
     """Attest actual readers and installer-normalized launchers; return exact runtime hashes."""
     require(isinstance(manifest.get("readers"), dict) and set(manifest["readers"]) == set(ROLES))
+    require(type(manifest.get('writerProtocol')) is int and manifest['writerProtocol'] == 1)
     managed_unit(unit)
     roles, libraries = reader_files(home, owner)
     require(roles == manifest["readers"])
@@ -230,5 +231,6 @@ def validate(home, manifest, read, owner=None, base_files=frozenset(), unit=None
         path = "bin/" + name
         raw = read(home / path)
         require(heap_template(raw) == heap_template(read(home / (TEMPLATES + name))))
+        require(b'kura_key_store.py' in raw and b'exec-java' in raw)
         observed[path] = hashlib.sha256(raw).hexdigest()
     return observed
