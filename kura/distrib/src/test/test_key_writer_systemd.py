@@ -21,6 +21,7 @@ import test_key_writer_lease as writer
 
 service = package.service
 JAVA = None
+CORE_CAPABILITIES = False
 
 
 class SystemdWriterTest(unittest.TestCase):
@@ -86,6 +87,19 @@ PrivateTmp=true
 MemoryMax=192M
 KillMode=control-group
 '''
+        if CORE_CAPABILITIES:
+            source_unit = (package.SOURCE / 'filtered/pkg/install/kura.service').read_text().splitlines()
+            for setting in ('AmbientCapabilities=', 'CapabilityBoundingSet='):
+                values = [line for line in source_unit if line.startswith(setting)]
+                self.assertEqual(1, len(values))
+                unit = unit.replace(setting+'\n', values[0]+'\n')
+            unit = unit.replace('NoNewPrivileges=true', 'NoNewPrivileges=false')
+            wrapper = self.home / 'libexec/exec-lease-probe.py'
+            wrapper.write_text('import json, os, sys\n'
+                               'print("LEASE_KERNEL_METADATA " + json.dumps(dict(procOwner=os.stat("/proc/self").st_uid, effectiveUid=os.geteuid())), flush=True)\n'
+                               'os.execv("/usr/bin/python3", ["python3", "-I", "-B", "/opt/eclipse/kura/bin/kura_key_store.py", "exec-java", *sys.argv[1:]])\n')
+            wrapper.chmod(0o644)
+            unit = unit.replace('/opt/eclipse/kura/bin/kura_key_store.py exec-java', str(wrapper))
         Path('/etc/systemd/system/kura-lease-probe.service').write_text(unit)
         self.command('/usr/bin/systemctl', 'daemon-reload')
         self.command('/usr/bin/systemctl', 'start', 'kura-key-service.socket')
@@ -119,6 +133,9 @@ KillMode=control-group
         self.assertEqual(str(pid), self.command('/usr/bin/systemctl', 'show', 'kura-lease-probe.service', '--property=MainPID', '--value').strip())
         registration = self.manager.writer_registration(pid)
         self.assertGreater(registration['uid'], 0)
+        status = dict(line.split(':', 1) for line in Path('/proc', str(pid), 'status').read_text().splitlines() if ':' in line)
+        self.assertEqual(CORE_CAPABILITIES, int(status['CapEff'].strip(), 16) != 0)
+        self.assertEqual('0' if CORE_CAPABILITIES else '1', status['NoNewPrivs'].strip())
         mounts = Path('/proc', str(pid), 'mountinfo').read_text().splitlines()
         actual = Path('/proc', str(pid), 'root/run/kura-key-service')
         self.assertTrue(os.statvfs(actual).f_flag & os.ST_RDONLY,
@@ -144,9 +161,11 @@ if __name__ == '__main__':
     parser.add_argument('--repository', type=Path, required=True)
     parser.add_argument('--java', type=Path, required=True)
     parser.add_argument('--disposable-fixture', action='store_true', required=True)
+    parser.add_argument('--core-capabilities', action='store_true')
     args, remaining = parser.parse_known_args()
     package.CONFIG = args.repository.resolve()
     JAVA = args.java.resolve()
+    CORE_CAPABILITIES = args.core_capabilities
     if JAVA != Path('/java/bin/java'):
         parser.error('The disposable fixture requires the explicit read-only /java toolchain mount')
     unittest.main(argv=[sys.argv[0], *remaining])

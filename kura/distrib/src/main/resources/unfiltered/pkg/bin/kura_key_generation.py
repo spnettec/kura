@@ -15,7 +15,7 @@ from kura_key_service import (Failure, require, fields, digest, operation_id, en
 from kura_key_service_lifecycle import Lifecycle, Refused, validate_generation_metadata
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
-TEMPLATE = 'install/kura-key-generations.conf'
+TEMPLATE = 'share/key-management/key-generations.conf'
 CURRENT = 'generation-current.json'
 PURPOSE = 'yofc-kura-published-generation-v1'
 PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'MainPID', 'ControlPID', 'User', 'Group',

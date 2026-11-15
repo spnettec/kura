@@ -97,6 +97,12 @@ class GenerationPackageTest(unittest.TestCase):
         self.assertEqual(binding, self.policy.generation_assets())
         self.assertEqual(before, {p: (p.stat().st_ino, p.stat().st_mtime_ns, p.stat().st_ctime_ns) for p in before})
 
+    def test_actual_postinst_install_directory_cleanup_keeps_generation_cohort(self):
+        binding = self.policy.generation_assets()
+        shutil.rmtree(self.home / 'install')
+        self.assertEqual(2, self.policy.assets()['protocol'])
+        self.assertEqual(binding, self.policy.generation_assets())
+
     def test_broken_core_reader_keeps_cold_base_available_but_refuses_real_generation_boot_admission(self):
         directory = self.root / 'etc/kura/credentials'
         directory.mkdir(parents=True, mode=0o700)
