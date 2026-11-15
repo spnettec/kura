@@ -607,6 +607,21 @@ class Manager:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
         if action in ("generation-prepare", "generation-backup-verify"):
             return self.stage_generation(request, verify=action == "generation-backup-verify")
+        if action == "credential-start-admission":
+            fields(request, {"schema", "action", "keySha256", "ringSha256"})
+            digest(request["keySha256"])
+            if request["ringSha256"] is not None:
+                digest(request["ringSha256"])
+            with self.lock(self.state / "admission.lock", False):
+                self.maintenance()
+                self.settled()
+                with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
+                    try:
+                        _, _, _, _, _, source = self.generation_source()
+                    except OSError:
+                        raise Failure("UNSAFE_FILESYSTEM") from None
+                    require(all(request[k] == source[k] for k in ("keySha256", "ringSha256")), "CONFLICT")
+                    return dict(schema=1, state="CREDENTIAL_READY", **source)
         if action == "generation-start-admission":
             fields(request, {"schema", "action", "ringSha256", "activeKeySha256"})
             digest(request["ringSha256"]); digest(request["activeKeySha256"])

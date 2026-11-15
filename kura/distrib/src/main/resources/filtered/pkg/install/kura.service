@@ -2,14 +2,15 @@
 OnFailure=kura-key-recovery.service
 Description=Kura
 Wants=NetworkManager.service ModemManager.service dbus.service
-After=NetworkManager.service ModemManager.service dbus.service
+Requires=kura-key-service.socket
+After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
 
 [Service]
 User=kurad
 Group=kurad
 UMask=0077
 Type=forking
-ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded
+ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
 ExecStopPost=/bin/sh -c 'if [ -f /tmp/watchdog ]; then echo w > `cat /tmp/watchdog`; fi'

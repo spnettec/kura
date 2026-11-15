@@ -519,11 +519,9 @@ def read_loaded(directory, name, limit):
     finally:
         os.close(fd)
 
-def generation_start_admission(metadata):
+def root_start_admission(request, expected_response):
     # Fixed local read-only RPC. No keys, commands, paths or retry are transmitted.
-    require(sys.platform == "linux", "Generation startup admission requires the supported local Root service")
-    expected = {name: metadata[name] for name in ("ringSha256", "activeKeySha256")}
-    request = dict(schema=1, action="generation-start-admission", **expected)
+    require(sys.platform == "linux", "Credential startup admission requires the supported local Root service")
     def read_exact(connection, size):
         value = bytearray()
         while len(value) < size:
@@ -548,10 +546,20 @@ def generation_start_admission(metadata):
     except (OSError, ValueError, UnicodeError, RecursionError):
         raise Refused("Root generation startup admission unavailable; preserve original operation and keys") from None
     require(isinstance(response, dict) and type(response.get("schema")) is int
-            and response == dict(schema=1, state="GENERATION_READY", **expected),
+            and response == expected_response,
             "Root generation startup admission refused; preserve original operation and keys")
 
-def check_loaded(require_generations=False):
+def generation_start_admission(metadata):
+    expected = {name: metadata[name] for name in ("ringSha256", "activeKeySha256")}
+    root_start_admission(dict(schema=1, action="generation-start-admission", **expected),
+                         dict(schema=1, state="GENERATION_READY", **expected))
+
+def credential_start_admission(key_sha256, ring_sha256):
+    expected = dict(keySha256=key_sha256, ringSha256=ring_sha256)
+    root_start_admission(dict(schema=1, action="credential-start-admission", **expected),
+                         dict(schema=1, state="CREDENTIAL_READY", **expected))
+
+def check_loaded(require_generations=False, require_root=False):
     directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
     require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
     directory = Path(directory)
@@ -559,18 +567,22 @@ def check_loaded(require_generations=False):
     require(len(value) in (16, 24, 32), "Invalid loaded Kura encryption credential")
     names = (RING_CREDENTIAL, "key-generations.json")
     present = any(os.path.lexists(directory / name) for name in names)
+    metadata = None
     if require_generations or present:
         raw = read_loaded(directory, RING_CREDENTIAL, 512)
         active, metadata = key_generations(raw)
         proof = generation_receipt(read_loaded(directory, "key-generations.json", 2048))
         generation_require(active == value and metadata == proof)
-        generation_start_admission(metadata)
+        if not require_root:
+            generation_start_admission(metadata)
+    if require_root:
+        credential_start_admission(hashlib.sha256(value).hexdigest(), metadata["ringSha256"] if metadata else None)
 
 def main(argv):
     try:
         require(bool(argv), "Missing key-policy command")
-        if argv in (["check-loaded"], ["check-loaded-generations"]):
-            check_loaded(require_generations=argv == ["check-loaded-generations"])
+        if argv in (["check-loaded"], ["check-loaded-generations"], ["check-loaded-managed"]):
+            check_loaded(require_generations=argv == ["check-loaded-generations"], require_root=argv == ["check-loaded-managed"])
             return 0
         require(os.geteuid()==0, "Key provisioning requires the package administrator")
         store = Store()

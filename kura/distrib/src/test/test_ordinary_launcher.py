@@ -22,20 +22,40 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.fake.mkdir()
         self.record = self.root / 'arguments.json'
         self.generator = self.root / 'generator-called'
-        source = SCRIPT.read_text()
-        # Only isolate the test's PATH and existing global output paths. The
-        # shipped optional argument handling and Java invocation stay verbatim.
-        source = source.replace('export PATH=', '# original export PATH=', 1)
-        source = source.replace('export MALLOC_ARENA_MAX=1', 'export PATH="' + str(self.fake) + ':/usr/bin:/bin"\nexport MALLOC_ARENA_MAX=1', 1)
-        source = source.replace('/tmp/.kura/configuration', str(self.root / 'configuration'))
-        source = source.replace('/var/run/kura.pid', str(self.root / 'kura.pid'))
-        source = source.replace('/var/log/', str(self.root) + '/')
-        for key, value in {'kura.mem.size': '512m', 'kura.os.version': 'linux', 'kura.arch': 'arm64', 'target.device': 'linux', 'org.eclipse.equinox.launcher.version': 'fixture'}.items():
-            source = source.replace('@' + key + '@', value)
-        (self.bin / 'start_kura_background.sh').write_text(source)
+        for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
+            source = (SCRIPT.parent / name).read_text()
+            # Only isolate the test's PATH and existing global output paths. The
+            # shipped credential admission and Java invocation stay verbatim.
+            source = source.replace('export PATH=', '# original export PATH=', 1)
+            source = source.replace('export MALLOC_ARENA_MAX=1', 'export PATH="' + str(self.fake) + ':/usr/bin:/bin"\nexport MALLOC_ARENA_MAX=1', 1)
+            source = source.replace('/tmp/.kura/configuration', str(self.root / 'configuration'))
+            source = source.replace('/var/run/kura.pid', str(self.root / 'kura.pid'))
+            source = source.replace('/var/log/', str(self.root) + '/')
+            for key, value in {'kura.mem.size': '512m', 'kura.os.version': 'linux', 'kura.arch': 'arm64', 'target.device': 'linux', 'org.eclipse.equinox.launcher.version': 'fixture'}.items():
+                source = source.replace('@' + key + '@', value)
+            (self.bin / name).write_text(source)
         resources = SCRIPT.parents[3] / 'unfiltered/pkg/bin'
         for name in ['kura_key_store.py', 'kura_credential_env.sh']:
             shutil.copyfile(resources / name, self.bin / name)
+        # These tests record shell/JVM arguments; the native suite separately exercises
+        # the actual Linux Root peer and isolated interpreter. Replace only that IPC
+        # boundary in this disposable copy, keeping the shipped credential reader.
+        actual_policy = self.bin / 'key_policy_actual.py'
+        (self.bin / 'kura_key_store.py').rename(actual_policy)
+        self.admission = self.root / 'root-admission-called'
+        shim = '''import hashlib,os,runpy,sys
+from pathlib import Path
+module=runpy.run_path(sys.argv[0].replace('kura_key_store.py','key_policy_actual.py'),run_name='launcher_key_policy')
+def root_admission(request,expected):
+    assert request == dict(schema=1,action='credential-start-admission',keySha256=hashlib.sha256(bytes(range(32))).hexdigest(),ringSha256=None)
+    assert expected == dict(schema=1,state='CREDENTIAL_READY',keySha256=request['keySha256'],ringSha256=None)
+    Path(os.environ['YOFC_TEST_ADMISSION_RECORD']).write_text('read-only managed request')
+    if os.environ.get('YOFC_TEST_ADMISSION_DENY') == '1':
+        raise module['Refused']('fixture Root has an unresolved original operation')
+module['main'].__globals__['root_start_admission']=root_admission
+sys.exit(module['main'](sys.argv[1:]))
+'''
+        (self.bin / 'kura_key_store.py').write_text(shim)
         self.credentials = self.root / 'credentials'
         self.credentials.mkdir(mode=0o700)
         self.credential = self.credentials / 'kura_encryption_key'
@@ -43,19 +63,23 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.credential.chmod(0o400)
         (self.bin / 'gen_config_ini.sh').write_text('#!/bin/sh\ntouch "' + str(self.generator) + '"\nprintf "osgi.bundles=\\n"\n')
         (self.fake / 'ps').write_text('#!/bin/sh\nexit 0\n')
+        (self.fake / 'pgrep').write_text('#!/bin/sh\nexit 1\n')
         (self.fake / 'nohup').write_text('#!/bin/sh\nexec "$@"\n')
         interpreter = shutil.which('python3')
         (self.fake / 'java').write_text('#!' + interpreter + '\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ["YOFC_LAUNCH_ARGUMENTS"]).write_text(json.dumps(sys.argv[1:]))\n')
         for path in [self.bin / 'gen_config_ini.sh', *self.fake.iterdir()]:
             path.chmod(0o700)
 
-    def launch(self, argument_file=None):
+    def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh'):
         env = dict(os.environ, YOFC_LAUNCH_ARGUMENTS=str(self.record))
         env.pop('KURA_JVM_ARGS_FILE', None)
         env['CREDENTIALS_DIRECTORY'] = str(self.credentials)
+        env['YOFC_TEST_ADMISSION_RECORD'] = str(self.admission)
+        env['YOFC_TEST_ADMISSION_DENY'] = '1' if root_denies else '0'
         if argument_file is not None:
             env['KURA_JVM_ARGS_FILE'] = str(argument_file)
-        return subprocess.run(['/bin/sh', str(self.bin / 'start_kura_background.sh')], env=env, capture_output=True, text=True, timeout=5)
+        interpreter = '/bin/bash' if script == 'start_kura.sh' else '/bin/sh'
+        return subprocess.run([interpreter, str(self.bin / script)], env=env, capture_output=True, text=True, timeout=5)
 
     def args(self):
         for _ in range(100):
@@ -72,6 +96,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.assertFalse(any(arg.startswith('@') for arg in args))
         self.assertIn('-jar', args)
         self.assertTrue(self.generator.exists())
+        self.assertTrue(self.admission.exists())
         self.assertNotIn('kura-management-agent', SCRIPT.read_text())
 
     def test_explicit_argument_file_is_one_quoted_argument_before_historical_options(self):
@@ -82,6 +107,20 @@ class OrdinaryLauncherTests(unittest.TestCase):
         args = self.args()
         self.assertEqual(args[:2], ['@' + str(argument_file), '-Xms512m'])
         self.assertEqual(sum(arg.startswith('@') for arg in args), 1)
+        self.assertTrue(self.admission.exists())
+
+    def test_root_unknown_refuses_before_generator_or_java_even_with_a_valid_credential(self):
+        before = self.credential.read_bytes()
+        for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
+            with self.subTest(launcher=name):
+                self.admission.unlink(missing_ok=True)
+                result = self.launch(root_denies=True, script=name)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertTrue(self.admission.exists())
+                self.assertFalse(self.generator.exists())
+                self.assertFalse(self.record.exists())
+                self.assertFalse((self.root / 'kura.pid').exists())
+        self.assertEqual(before, self.credential.read_bytes())
 
     def test_missing_credential_refuses_before_generator_or_java(self):
         self.credential.unlink()

@@ -166,6 +166,163 @@ class GenerationStartupTest(unittest.TestCase):
         self.assertEqual(before, self.identity())
         self.assertEqual(record, service.decode(p.read_bytes()))
 
+    def single_key(self, value=None):
+        for name in (policy.RING_CREDENTIAL, "key-generations.json"):
+            (self.directory / name).unlink()
+        self.active = value if value is not None else self.active
+        self.put(policy.CREDENTIAL, self.active)
+        self.put("provisioned.json", service.encode(dict(schema=1, keySha256=hashlib.sha256(self.active).hexdigest(),
+                                                        origin="canonical", legacyKey=self.active == policy.CORE_DEFAULT,
+                                                        unitDigests=[])))
+
+    def credential_request(self, ring=True):
+        return dict(schema=1, action="credential-start-admission", keySha256=hashlib.sha256(self.active).hexdigest(),
+                    ringSha256=self.metadata["ringSha256"] if ring else None)
+
+    def test_root_admission_accepts_only_the_original_single_key_without_modifying_state(self):
+        self.single_key(policy.CORE_DEFAULT)
+        before = self.identity()
+        manager = service.Manager(self.root, owner=os.geteuid())
+        result = manager.handle(self.credential_request(False))
+        self.assertEqual(dict(schema=1, state="CREDENTIAL_READY", keySha256=hashlib.sha256(self.active).hexdigest(),
+                              ringSha256=None), result)
+        self.assertEqual(before, self.identity())
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    def test_root_admission_never_accepts_missing_loaded_generations_or_a_different_key(self):
+        manager = service.Manager(self.root, owner=os.geteuid())
+        self.assertEqual("CREDENTIAL_READY", manager.handle(self.credential_request())["state"])
+        for request in (self.credential_request(False), dict(self.credential_request(), keySha256="a" * 64),
+                        dict(self.credential_request(), ringSha256="b" * 64)):
+            with self.assertRaises(service.Failure) as caught:
+                manager.handle(request)
+            self.assertEqual("CONFLICT", caught.exception.reason)
+
+    def test_root_admission_refuses_an_unknown_key_or_start_operation_even_in_single_key_state(self):
+        self.single_key()
+        manager = service.Manager(self.root, owner=os.geteuid())
+        identity = str(uuid.uuid4())
+        operation = self.state / "operations" / (identity + ".json")
+        pending = dict(schema=1, operationId=identity, action="generation-prepare", requestTag="1" * 64,
+                       state="INTENT", response=None)
+        operation.write_bytes(service.encode(pending)); operation.chmod(0o600)
+        before = self.identity()
+        with self.assertRaises(service.Failure) as caught:
+            manager.handle(self.credential_request(False))
+        self.assertEqual("UNRESOLVED_OPERATION", caught.exception.reason)
+        operation.unlink()
+        startups = self.state / "startups"
+        startups.mkdir(mode=0o700)
+        pending = dict(schema=1, operationId=identity, restoreOperationId=str(uuid.uuid4()),
+                       keySha256=hashlib.sha256(self.active).hexdigest(), requestTag="2" * 64, state="INTENT", response=None)
+        operation = startups / (identity + ".json")
+        operation.write_bytes(service.encode(pending)); operation.chmod(0o600)
+        with self.assertRaises(service.Failure) as caught:
+            manager.handle(self.credential_request(False))
+        self.assertEqual("UNRESOLVED_OPERATION", caught.exception.reason)
+        self.assertEqual(before, self.identity())
+        self.assertEqual(pending, service.decode(operation.read_bytes()))
+
+    def test_root_admission_never_falls_back_from_incomplete_or_unbound_canonical_generation_files(self):
+        manager = service.Manager(self.root, owner=os.geteuid())
+        for name in (policy.RING_CREDENTIAL, "key-generations.json"):
+            path = self.directory / name
+            original = path.read_bytes()
+            path.unlink()
+            with self.assertRaises(service.Failure):
+                manager.handle(self.credential_request(False))
+            self.put(name, original)
+
+    def test_managed_entrypoint_sends_single_and_generation_fingerprints_through_the_same_root_gate(self):
+        before = self.identity()
+        with patch.object(policy, "credential_start_admission") as managed, \
+                patch.object(policy, "generation_start_admission", side_effect=AssertionError("No second legacy admission")):
+            self.assertEqual(0, policy.main(["check-loaded-managed"]))
+        managed.assert_called_once_with(hashlib.sha256(self.active).hexdigest(), self.metadata["ringSha256"])
+        self.assertEqual(before, self.identity())
+        self.single_key()
+        with patch.object(policy, "credential_start_admission") as managed:
+            self.assertEqual(0, policy.main(["check-loaded-managed"]))
+        managed.assert_called_once_with(hashlib.sha256(self.active).hexdigest(), None)
+
+    def test_managed_entrypoint_rejects_bad_loaded_material_before_root_and_never_uses_environment_replacement(self):
+        self.put(policy.CREDENTIAL, secrets.token_bytes(32))
+        before = self.identity()
+        with patch.dict(os.environ, {policy.PROPERTY: self.active.hex()}), \
+                patch.object(policy, "credential_start_admission") as managed:
+            with self.assertRaises(policy.Refused):
+                policy.check_loaded(require_root=True)
+            managed.assert_not_called()
+        self.assertEqual(before, self.identity())
+
+    def test_cold_recovery_peer_cannot_request_the_managed_boot_gate(self):
+        manager = service.Manager(self.root, owner=os.geteuid())
+        with self.assertRaises(service.Failure) as caught:
+            manager.handle(self.credential_request(), recovery_only=True)
+        self.assertEqual("FORBIDDEN", caught.exception.reason)
+
+    @unittest.skipUnless(sys.platform == "linux" and os.geteuid() == 0, "Isolated Linux Root socket only")
+    def test_real_isolated_managed_entrypoint_blocks_original_unknown_before_any_core_start(self):
+        self.single_key()
+        path = Path("/run/kura-key-service/control.sock")
+        if os.path.lexists(path) or not path.parent.is_dir():
+            self.skipTest("Requires an empty private socket directory in the disposable test container")
+        manager = service.Manager(self.root, owner=os.geteuid())
+        calls, errors = [], []
+        before = self.identity()
+        def run_entry():
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener:
+                listener.bind(str(path)); listener.listen(1); listener.settimeout(3)
+                inode = path.lstat().st_ino
+                def serve_one():
+                    try:
+                        connection, _ = listener.accept()
+                        with connection:
+                            connection.settimeout(3)
+                            request = service.decode(service.read_frame(connection))
+                            self.assertEqual(b"", connection.recv(1))
+                            self.assertEqual(self.credential_request(False), request)
+                            calls.append(request)
+                            try:
+                                reply = manager.handle(request)
+                            except service.Failure as failure:
+                                reply = dict(schema=1, error=failure.reason)
+                            service.send_frame(connection, reply)
+                    except Exception as error:
+                        errors.append(error)
+                thread = threading.Thread(target=serve_one, daemon=True)
+                thread.start()
+                try:
+                    result = subprocess.run([sys.executable, "-I", "-B", policy.__file__, "check-loaded-managed"],
+                                            capture_output=True, text=True, timeout=5)
+                finally:
+                    thread.join(4)
+                    if path.lstat().st_ino == inode:
+                        path.unlink()
+                self.assertFalse(thread.is_alive())
+                self.assertEqual([], errors)
+                return result
+        result = run_entry()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        identity = str(uuid.uuid4())
+        record = dict(schema=1, operationId=identity, action="generation-prepare", requestTag="3" * 64,
+                      state="INTENT", response=None)
+        journal = self.state / "operations" / (identity + ".json")
+        journal.write_bytes(service.encode(record)); journal.chmod(0o600)
+        # Negative control: the historical single-key entrypoint never asks Root.
+        old = subprocess.run([sys.executable, "-I", "-B", policy.__file__, "check-loaded"],
+                             capture_output=True, text=True, timeout=5)
+        self.assertEqual(0, old.returncode, old.stderr)
+        result = run_entry()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("preserve original operation and keys", result.stderr)
+        self.assertEqual("", result.stdout)
+        self.assertNotIn(self.active.hex(), result.stderr)
+        self.assertEqual(2, len(calls))
+        self.assertEqual(before, self.identity())
+        self.assertEqual(record, service.decode(journal.read_bytes()))
+
     @unittest.skipUnless(sys.platform == "linux" and os.geteuid() == 0, "Isolated Linux Root socket only")
     def test_real_root_peer_admits_only_the_loaded_original_generation(self):
         path = Path("/run/kura-key-service/control.sock")
@@ -258,6 +415,48 @@ class GenerationAdmissionClientTest(unittest.TestCase):
                        Connection(b"x" * 2049)]
         for connection in connections:
             with self.assertRaises(policy.Refused): self.run_client(connection)
+
+
+class ManagedAdmissionClientTest(unittest.TestCase):
+    def run_client(self, connection, ring=None):
+        with patch.object(policy.sys, "platform", "linux"), patch.object(policy.socket, "socket", return_value=connection):
+            policy.credential_start_admission("1" * 64, ring)
+
+    def test_single_or_generation_requests_contain_only_fixed_public_fingerprints(self):
+        for ring in (None, "2" * 64):
+            expected = dict(keySha256="1" * 64, ringSha256=ring)
+            connection = Connection(service.encode(dict(schema=1, state="CREDENTIAL_READY", **expected)))
+            self.run_client(connection, ring)
+            self.assertEqual(dict(schema=1, action="credential-start-admission", **expected), json.loads(connection.sent[4:]))
+
+    def test_wrong_peer_or_unavailable_root_never_admits_or_retries(self):
+        connection = Connection(service.encode(dict(schema=1, state="CREDENTIAL_READY", keySha256="1" * 64, ringSha256=None)), uid=1000)
+        with self.assertRaises(policy.Refused):
+            self.run_client(connection)
+        self.assertEqual(b"", connection.sent)
+        with patch.object(policy.sys, "platform", "linux"), patch.object(policy.socket, "socket", side_effect=OSError("fixture unavailable")) as factory:
+            with self.assertRaises(policy.Refused):
+                policy.credential_start_admission("1" * 64, None)
+        factory.assert_called_once()
+
+    def test_unknown_wrong_mode_schema_key_or_extra_fields_are_refused(self):
+        reply = dict(schema=1, state="CREDENTIAL_READY", keySha256="1" * 64, ringSha256=None)
+        replies = [dict(schema=1, error="UNRESOLVED_OPERATION"), dict(reply, schema=True),
+                   dict(reply, ringSha256="2" * 64), dict(reply, keySha256="3" * 64),
+                   dict(reply, state="GENERATION_READY"), dict(reply, extra=True)]
+        for value in replies:
+            with self.assertRaises(policy.Refused):
+                self.run_client(Connection(service.encode(value)))
+
+    def test_duplicate_truncated_and_trailing_frames_cannot_claim_managed_admission(self):
+        reply = service.encode(dict(schema=1, state="CREDENTIAL_READY", keySha256="1" * 64, ringSha256=None))
+        connections = [Connection(b'{"schema":1,' + reply[1:]), Connection(reply, suffix=b"x"), Connection(b"x" * 2049)]
+        truncated = Connection(reply)
+        truncated.wire = truncated.wire[:-5]
+        connections.append(truncated)
+        for connection in connections:
+            with self.assertRaises(policy.Refused):
+                self.run_client(connection)
 
 
 if __name__ == "__main__":

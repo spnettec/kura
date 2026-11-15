@@ -5,5 +5,5 @@ if [ -z "${CREDENTIALS_DIRECTORY:-}" ]; then
     CREDENTIALS_DIRECTORY=/etc/kura/credentials
     export CREDENTIALS_DIRECTORY
 fi
-python3 -I "${DIR}/bin/kura_key_store.py" check-loaded
+python3 -I "${DIR}/bin/kura_key_store.py" check-loaded-managed
 
