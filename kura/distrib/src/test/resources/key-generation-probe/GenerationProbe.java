@@ -44,6 +44,7 @@ public final class GenerationProbe {
             throw new IllegalStateException("Required real provider is not active");
         }
         result.setProperty(role + "Bundle", bundle.getSymbolicName());
+        result.setProperty(role + "Class", type.getName());
         result.setProperty(role + "Version", bundle.getVersion().toString());
         result.setProperty(role + "State", Integer.toString(bundle.getState()));
         try (InputStream resource = type.getResourceAsStream("/" + type.getName().replace('.', '/') + ".class")) {

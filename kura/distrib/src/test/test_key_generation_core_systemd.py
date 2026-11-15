@@ -141,7 +141,7 @@ class CoreGenerationTest(unittest.TestCase):
         self.expected_classes = {}
         roles = json.loads((self.home/'libexec/key-backup/manifest.json').read_text())['generation']['readers']
         for role, name in (('crypto', 'org/eclipse/kura/core/crypto/CryptoServiceImpl.class'),
-                           ('configuration', 'org/eclipse/kura/core/configuration/ConfigurationServiceImpl.class')):
+                           ('configuration', 'org/eclipse/kura/core/configuration/ConfigurationServiceAuditFacade.class')):
             with zipfile.ZipFile(self.home/roles[role]) as archive:
                 self.expected_classes[role] = hashlib.sha256(archive.read(name)).hexdigest()
 
@@ -175,7 +175,7 @@ class CoreGenerationTest(unittest.TestCase):
 
     def assert_providers(self, value):
         for role, expected in self.expected_classes.items():
-            self.assertEqual(expected, value[role+'ClassSha256'])
+            self.assertEqual(expected, value[role+'ClassSha256'], role + ' provider/audit facade must match the actual package')
             self.assertEqual('32', value[role+'State'])
         self.assertEqual('32', value['snapshotState'])
         self.assertEqual('true', value['originalDecrypted'])
