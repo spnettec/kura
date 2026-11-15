@@ -21,11 +21,10 @@ def require(ok):
 def prepare(assembly, cipher_target, offline_target):
     require(assembly.is_dir() and not assembly.is_symlink())
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
-               'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py',
-               'bin/kura_key_cohort.py', 'bin/kura_credential_env.sh']
+               'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py']
     static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css']]
     units = ["kura-key-service.socket", "kura-key-service.service", 'kura-key-recovery.service', 'kura.service']
-    for name in helpers + static + ["install/" + unit for unit in units]:
+    for name in helpers + static + ['bin/kura_key_cohort.py', 'bin/kura_credential_env.sh'] + ["install/" + unit for unit in units]:
         require((assembly / name).is_file() and not (assembly / name).is_symlink())
     # prerm runs account/policy teardown while tracked root code still exists.
     # postrm must never execute the daemon-writable historical .data copy.
@@ -71,12 +70,13 @@ def prepare(assembly, cipher_target, offline_target):
     readers, libraries = cohort.reader_files(assembly, os.geteuid())
     base_files = set(helpers + static + ["libexec/key-backup/kura-key-crypto.jar",
                                       "libexec/key-backup/lib/bcprov-jdk18on-1.86.jar"])
-    assets = set(base_files)
-    assets |= set(cohort.FIXED_FILES) | set(readers.values()) | set(libraries)
+    generation_files = set(cohort.FIXED_FILES) | set(readers.values()) | set(libraries)
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
-    manifest = dict(schema=2, protocol=2, files={name: digest(assembly / name) for name in sorted(assets)},
-                    units={name: digest(assembly / "install" / name) for name in units}, readers=readers)
-    cohort.validate(assembly, manifest, Path.read_bytes, os.geteuid(), base_files, unit_bytes)
+    generation = dict(files={name: digest(assembly / name) for name in sorted(generation_files)}, readers=readers,
+                      unitSha256=digest(main_unit))
+    manifest = dict(schema=2, protocol=2, files={name: digest(assembly / name) for name in sorted(base_files)},
+                    units={name: digest(assembly / "install" / name) for name in units if name != 'kura.service'}, generation=generation)
+    cohort.validate(assembly, generation, Path.read_bytes, os.geteuid(), unit=unit_bytes)
     (destination / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n")
     return manifest
 

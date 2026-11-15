@@ -52,6 +52,10 @@ class GenerationStartupTest(unittest.TestCase):
         self.environment = patch.dict(os.environ, {"CREDENTIALS_DIRECTORY": str(self.directory)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        # This suite isolates credential/journal/Root transport behavior. The separate
+        # real-JAR cohort suite verifies package acceptance and refusal without mocks.
+        pairing = patch.object(service.Manager, 'require_generation_cohort')
+        pairing.start(); self.addCleanup(pairing.stop)
 
     def put(self, name, data):
         p = self.directory / name

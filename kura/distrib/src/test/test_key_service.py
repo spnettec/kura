@@ -49,6 +49,10 @@ class KeyServiceTest(unittest.TestCase):
         self.command = [CONFIG.java, "-Xms16m", "-Xmx96m", "-XX:ActiveProcessorCount=1",
                         "-XX:+DisableAttachMechanism", "-jar", CONFIG.cipher_jar]
         self.manager = service.Manager(self.root, owner=os.geteuid(), cipher=self.command)
+        # Storage/crypto fixtures have no installed Core. Real package/boot pairing
+        # (including refusal) is covered with actual built JARs in the cohort suite.
+        pairing = patch.object(self.manager, 'require_generation_cohort')
+        pairing.start(); self.addCleanup(pairing.stop)
 
     @staticmethod
     def write(path, value, mode):

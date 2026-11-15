@@ -336,12 +336,12 @@ class Lifecycle:
         manifest_raw = self.read(physical / "libexec/key-backup/manifest.json", private=False)
         manifest = decode(manifest_raw)
         modern = type(manifest.get("schema")) is int and manifest["schema"] == 2
-        require(set(manifest) == {"schema", "protocol", "files", "units"} | ({"readers"} if modern else set())
+        require(set(manifest) == {"schema", "protocol", "files", "units"} | ({"generation"} if modern else set())
                 and type(manifest["schema"]) is int and manifest["schema"] == (2 if modern else 1)
                 and type(manifest["protocol"]) is int and manifest["protocol"] == (2 if modern else 1)
                 and isinstance(manifest["files"], dict) and isinstance(manifest["units"], dict))
         profile = (frozenset(manifest['files']), frozenset(manifest['units']))
-        require((profile[1] == frozenset((*UNITS, 'kura.service')) and ASSETS <= profile[0] and len(profile[0]) <= 512)
+        require((profile == (ASSETS, frozenset(UNITS)) and isinstance(manifest['generation'], dict))
                 if modern else profile in ((LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, frozenset(UNITS)), (ASSETS, frozenset(UNITS))),
                 'Unrecognized key-service package profile')
         for name, expected in manifest["files"].items():
@@ -355,22 +355,31 @@ class Lifecycle:
             unit = self.path("/lib/systemd/system/" + name).resolve(strict=True)
             require(hashlib.sha256(self.read(unit, private=False)).hexdigest() == expected,
                     "Installed key-service unit differs from its package manifest")
-        if modern:
+        if generation_binding:
+            require(modern, 'This package has no complete generation-reader cohort')
+            generation = manifest['generation']
+            require(set(generation) == {'files', 'readers', 'unitSha256'} and isinstance(generation['files'], dict)
+                    and 1 <= len(generation['files']) <= 512 and is_digest(generation['unitSha256']))
+            for name, expected in generation['files'].items():
+                require(isinstance(name, str) and name and not Path(name).is_absolute()
+                        and str(Path(name)) == name and all(p not in ('.', '..') for p in Path(name).parts)
+                        and is_digest(expected))
+                require(hashlib.sha256(self.read(physical / name, limit=16*1024*1024, private=False)).hexdigest() == expected,
+                        'Installed generation reader differs from its package manifest')
+            unit = self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False)
+            require(hashlib.sha256(unit).hexdigest() == generation['unitSha256'], 'Installed generation Core unit is not paired')
             # Embedded preinst must still inspect old protocol-1 packages without this
             # new helper. Execute only the source bytes already attested above, never pyc.
             name = 'bin/kura_key_cohort.py'
-            require(name in manifest['files'])
+            require(name in generation['files'])
             source = self.read(physical / name, limit=65536, private=False)
-            require(hashlib.sha256(source).hexdigest() == manifest['files'][name])
+            require(hashlib.sha256(source).hexdigest() == generation['files'][name])
             namespace = {'__name__': 'kura_key_cohort', '__file__': str(physical / name)}
             exec(compile(source, str(physical / name), 'exec'), namespace)
             try:
-                observed = namespace['validate'](physical, manifest, lambda p: self.read(p, private=False), self.owner, ASSETS,
-                                                 self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False))
+                observed = namespace['validate'](physical, generation, lambda p: self.read(p, private=False), self.owner, unit=unit)
             except namespace['Refused']:
                 raise Refused('Generation-reader package is not paired; preserve keys and original operation IDs') from None
-        if generation_binding:
-            require(modern, 'This package has no complete generation-reader cohort')
             binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
                            manifestSha256=hashlib.sha256(manifest_raw).hexdigest(),
                            launcherSha256s={Path(name).name: value for name, value in observed.items()})

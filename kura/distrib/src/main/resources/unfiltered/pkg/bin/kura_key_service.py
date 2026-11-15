@@ -464,6 +464,12 @@ class Manager:
         source = dict(keySha256=proof["keySha256"], ringSha256=metadata["ringSha256"] if metadata else None)
         return keys, legacy, raw, metadata, proof, source
 
+    def require_generation_cohort(self):
+        try:
+            Lifecycle(self.root, self.owner).generation_assets()
+        except (OSError, ValueError, LifecycleRefused):
+            raise Failure('COHORT_UNAVAILABLE') from None
+
     def prepared_generation(self, identity):
         record = self.record(identity)
         require(record is not None and record["action"] == "generation-prepare"
@@ -621,6 +627,8 @@ class Manager:
                     except OSError:
                         raise Failure("UNSAFE_FILESYSTEM") from None
                     require(all(request[k] == source[k] for k in ("keySha256", "ringSha256")), "CONFLICT")
+                    if source['ringSha256'] is not None:
+                        self.require_generation_cohort()
                     return dict(schema=1, state="CREDENTIAL_READY", **source)
         if action == "generation-start-admission":
             fields(request, {"schema", "action", "ringSha256", "activeKeySha256"})
@@ -631,6 +639,7 @@ class Manager:
                 with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                     _, metadata, _ = self.generations()
                     require(all(request[k] == metadata[k] for k in ("ringSha256", "activeKeySha256")), "CONFLICT")
+                    self.require_generation_cohort()
                     return dict(schema=1, state="GENERATION_READY", ringSha256=metadata["ringSha256"],
                                 activeKeySha256=metadata["activeKeySha256"])
         if action == "generation-restore":
