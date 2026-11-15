@@ -51,14 +51,15 @@ public final class RecoveryBootstrap implements BundleActivator {
         Path receipt = null;
         Map<String,String> manifest = null;
         try {
-            var level = context.getBundle(0).adapt(FrameworkStartLevel.class);
-            require(level.getStartLevel() <= 1 && "5".equals(context.getProperty("osgi.startLevel")));
-            Bundle scr = bundle(context,"org.apache.felix.scr");
+            Set<String> infrastructure=Set.of("org.eclipse.equinox.cm", "org.apache.aries.spifly.dynamic.bundle",
+                    "org.apache.logging.log4j.core", "org.apache.logging.log4j.slf4j2.impl",
+                    "org.apache.logging.log4j.api", "slf4j.api");
             Map<Bundle,Integer> held = new java.util.LinkedHashMap<>();
             for (Bundle candidate : context.getBundles()) {
-                if (candidate.getBundleId()!=0 && candidate!=context.getBundle()) {
+                if (candidate.getBundleId()!=0 && candidate!=context.getBundle()
+                        && !infrastructure.contains(String.valueOf(candidate.getSymbolicName()))) {
                     BundleStartLevel start=candidate.adapt(BundleStartLevel.class);
-                    if (start!=null && (start.getStartLevel()>=5 || candidate==scr)) {
+                    if (start!=null) {
                         held.put(candidate,start.getStartLevel());
                         if (candidate.getState()==Bundle.ACTIVE || candidate.getState()==Bundle.STARTING) {
                             candidate.stop(Bundle.STOP_TRANSIENT);
@@ -67,10 +68,13 @@ public final class RecoveryBootstrap implements BundleActivator {
                     }
                 }
             }
+            // Fence first: stopping a framework while its initial start is still
+            // in progress does not prevent the launcher from advancing it later.
+            var level = context.getBundle(0).adapt(FrameworkStartLevel.class);
+            int frameworkTarget=startupTarget(context.getProperty("osgi.startLevel"));
+            require(level.getStartLevel() <= 1);
+            Bundle scr = bundle(context,"org.apache.felix.scr");
             scr.start(); // Persist intended autostart, held above the launcher's target level.
-            Set<String> infrastructure=Set.of("org.eclipse.equinox.cm", "org.apache.aries.spifly.dynamic.bundle",
-                    "org.apache.logging.log4j.core", "org.apache.logging.log4j.slf4j2.impl",
-                    "org.apache.logging.log4j.api", "slf4j.api");
             for (Bundle candidate : context.getBundles()) {
                 if (candidate.getBundleId()!=0 && candidate!=context.getBundle() && candidate.getState()==Bundle.ACTIVE) {
                     require(infrastructure.contains(candidate.getSymbolicName()));
@@ -187,13 +191,13 @@ public final class RecoveryBootstrap implements BundleActivator {
                 publish(receipt,report.getBytes(StandardCharsets.UTF_8));
             }
             // Only the CM application decision is durable. Agent still must verify bridge/business and finalize.
-            // The launcher, not an activator racing with it, owns the framework transition to 5.
+            // The launcher owns the framework transition to the explicitly declared target.
             for(var entry:held.entrySet()) {
                 if(!infrastructure.contains(entry.getKey().getSymbolicName())) {
-                    entry.getKey().adapt(BundleStartLevel.class).setStartLevel(entry.getKey()==scr ? 5 : entry.getValue());
+                    entry.getKey().adapt(BundleStartLevel.class).setStartLevel(entry.getKey()==scr ? frameworkTarget : entry.getValue());
                 }
             }
-        } catch(Exception failure) {
+        } catch(Exception | LinkageError failure) {
             if(receipt!=null && manifest!=null && !Files.exists(receipt,LinkOption.NOFOLLOW_LINKS)) {
                 try { publish(receipt,("schema=1\nstatus=RECOVERY_REQUIRED\nrestore.id="+manifest.get("restore.id")
                         +"\nfullRecoveryVerified=false\nbusinessHealth=BLOCKED\n").getBytes(StandardCharsets.UTF_8)); }
@@ -204,6 +208,11 @@ public final class RecoveryBootstrap implements BundleActivator {
             // Do not attach parser/crypto exception messages to framework logs.
             throw new BundleException("Controlled recovery failed; business start level remains blocked");
         }
+    }
+
+    static int startupTarget(String value) {
+        require(value!=null && value.matches("[5-9]"));
+        return Integer.parseInt(value);
     }
     @Override public void stop(BundleContext context) {
         if(this.completionRegistration!=null){this.completionRegistration.unregister();}

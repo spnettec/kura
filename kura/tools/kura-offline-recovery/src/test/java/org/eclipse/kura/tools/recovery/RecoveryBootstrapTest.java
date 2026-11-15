@@ -47,6 +47,43 @@ class RecoveryBootstrapTest {
             verify(framework).stop();verify(context,never()).getServiceReference(org.osgi.service.cm.ConfigurationAdmin.class);
         } finally {if(prior==null){System.clearProperty(ControlledRecovery.REQUEST_PROPERTY);}else{System.setProperty(ControlledRecovery.REQUEST_PROPERTY,prior);}}
     }
+
+    @Test void invalidTargetFencesLowLevelBusinessEvenWhenFrameworkCannotStopDuringInitialStart() throws Exception {
+        String prior=System.getProperty(ControlledRecovery.REQUEST_PROPERTY);
+        System.setProperty(ControlledRecovery.REQUEST_PROPERTY,directory.resolve("missing-request").toString());
+        try {
+            for(String target:new String[]{null,"4","unconfigured"}) {
+                BundleContext context=mock(BundleContext.class);
+                var framework=mock(org.osgi.framework.Bundle.class);var gate=mock(org.osgi.framework.Bundle.class);
+                var business=mock(org.osgi.framework.Bundle.class);var scr=mock(org.osgi.framework.Bundle.class);
+                when(gate.getBundleId()).thenReturn(9L);when(business.getBundleId()).thenReturn(2L);when(scr.getBundleId()).thenReturn(3L);
+                when(business.getSymbolicName()).thenReturn("fixture.low.level.business");when(scr.getSymbolicName()).thenReturn("org.apache.felix.scr");
+                when(business.getState()).thenReturn(org.osgi.framework.Bundle.ACTIVE);
+                var businessLevel=mock(org.osgi.framework.startlevel.BundleStartLevel.class);
+                var scrLevel=mock(org.osgi.framework.startlevel.BundleStartLevel.class);
+                when(businessLevel.getStartLevel()).thenReturn(3);when(scrLevel.getStartLevel()).thenReturn(1);
+                when(business.adapt(org.osgi.framework.startlevel.BundleStartLevel.class)).thenReturn(businessLevel);
+                when(scr.adapt(org.osgi.framework.startlevel.BundleStartLevel.class)).thenReturn(scrLevel);
+                when(context.getBundle(0)).thenReturn(framework);when(context.getBundle()).thenReturn(gate);
+                when(context.getBundles()).thenReturn(new org.osgi.framework.Bundle[]{framework,gate,business,scr});
+                when(context.getProperty("osgi.startLevel")).thenReturn(target);
+                doThrow(new org.osgi.framework.BundleException("initial start still in progress")).when(framework).stop();
+                assertThrows(org.osgi.framework.BundleException.class,()->new RecoveryBootstrap().start(context));
+                verify(business).stop(org.osgi.framework.Bundle.STOP_TRANSIENT);
+                verify(businessLevel).setStartLevel(50);verify(scrLevel).setStartLevel(50);
+                verify(businessLevel,never()).setStartLevel(3);verify(scr,never()).start();
+                verify(context,never()).getServiceReference(org.osgi.service.cm.ConfigurationAdmin.class);
+            }
+        } finally {if(prior==null){System.clearProperty(ControlledRecovery.REQUEST_PROPERTY);}else{System.setProperty(ControlledRecovery.REQUEST_PROPERTY,prior);}}
+    }
+
+    @Test void declaredFrameworkTargetSupportsTheCompleteLevelSixProfileWithoutAnImplicitDefault() {
+        assertEquals(5,RecoveryBootstrap.startupTarget("5"));assertEquals(6,RecoveryBootstrap.startupTarget("6"));
+        assertEquals(9,RecoveryBootstrap.startupTarget("9"));
+        for(String value:new String[]{null,"","4","10","06","6 trailing"}) {
+            assertThrows(Exception.class,()->RecoveryBootstrap.startupTarget(value));
+        }
+    }
     @Test void manifestRejectsDuplicateUnknownMissingAmbiguousAndUnprotectedInputs() throws Exception {
         assertEquals("1",RecoveryBootstrap.manifest(file(valid())).get("schema"));
         for(String content:java.util.List.of(valid()+"schema=1\n",valid()+"unknown=value\n",valid().replace("schema=1\n",""),

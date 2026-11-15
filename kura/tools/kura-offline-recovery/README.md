@@ -119,7 +119,12 @@ business health and transaction finalization are still pending.
 
 This is an experimental startup profile, not an installed release. The bootstrap
 must run at framework level 1 before business activation, with the standard
-launcher targeting level 5. It holds SCR and business bundles at level 50,
+launcher explicitly declaring `osgi.startLevel` from 5 through 9. The complete
+Core test profile declares level 6; an absent target is never treated as level 5.
+Before validating that target or the request, it holds SCR and every
+non-infrastructure bundle at level 50, including bundles originally below level 5.
+An early rejection therefore retains the fence even when a framework stop during
+initial launch cannot prevent the launcher from continuing. It
 initializes only the required logging and Configuration Admin infrastructure,
 then uses Configuration Admin APIs to replace Kura-managed records. It retains
 factory identities when compatible, removes missing managed instances and stale
@@ -166,7 +171,7 @@ without merging old CM values or falling back to older snapshots. Ordinary
 configuration, factory, snapshot and rollback writes remain blocked for the
 entire controlled JVM lifetime; no implicit acknowledgement is provided.
 
-Any failure stops the framework, retains state and attempts a create-only
+On failure it attempts to stop the framework, retains state and attempts a create-only
 `RECOVERY_REQUIRED` receipt. Existing receipts/ledgers/backups are never
 replayed or overwritten. A partial CM mutation requires explicit compensation;
 Agent transaction integration for API-level compensation, bridge/business health
@@ -315,3 +320,11 @@ missing/malformed/mismatched credentials, and stale/version/digest proof faults.
 It exercises this production loader and native ACL policy with actual PID1 mounts.
 It does not start Main Core, apply Configuration Admin changes, settle operations
 or retire old keys. The complete controlled Core startup remains a separate gate.
+
+`kura/distrib/src/test/test_managed_core_recovery_systemd.py` is a separate,
+explicitly disposable installed-Core fixture for that gate. It uses the actual
+Main service, PID1-loaded ring, an unchanged copied level-1 bootstrap, real CM
+and the ordinary-write guard. It seeds synthetic pre-existing keys before any
+JVM; it never calls generation prepare, publication, completion or write release.
+Its selected CM and original-cipher checks do not establish complete provider
+recovery or authorize retirement of any original key.
