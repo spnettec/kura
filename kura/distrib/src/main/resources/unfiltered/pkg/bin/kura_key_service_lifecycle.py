@@ -16,6 +16,7 @@ import sys
 import uuid
 
 FORMAT = "yofc-kura-gateway-master-key-v1"
+GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 STATE = "/var/lib/kura-key-service"
 LEGACY_UNITS = ("kura-key-service.socket", "kura-key-service.service")
 UNITS = (*LEGACY_UNITS, 'kura-key-recovery.service')
@@ -73,23 +74,25 @@ def validate_record(record, identity):
     require(isinstance(record, dict) and set(record) ==
             {"schema", "operationId", "action", "requestTag", "state", "response"})
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
-            and record["operationId"] == identity and record["action"] in ("backup-create", "restore")
+            and record["operationId"] == identity and record["action"] in ("backup-create", "generation-backup-create", "restore")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
     if record["state"] == "INTENT":
         require(response is None)
         return record
     names = {"schema", "operationId", "state", "action"}
-    names |= ({"backup"} if record["action"] == "backup-create"
+    backup = record["action"] in ("backup-create", "generation-backup-create")
+    names |= ({"backup"} if backup
               else {"keySha256", "keyChanged", "existingReceiptPreserved"})
     require(isinstance(response, dict) and set(response) == names)
     require(type(response["schema"]) is int and response["schema"] == 1
             and response["operationId"] == identity and response["state"] == "SUCCEEDED"
             and response["action"] == record["action"])
-    if record["action"] == "backup-create":
+    if backup:
         envelope = response["backup"]
+        expected_format = GENERATION_FORMAT if record["action"] == "generation-backup-create" else FORMAT
         require(isinstance(envelope, dict) and set(envelope) == {"format", "operationId", "encrypted"}
-                and envelope["format"] == FORMAT and envelope["operationId"] == identity
+                and envelope["format"] == expected_format and envelope["operationId"] == identity
                 and isinstance(envelope["encrypted"], str) and 0 < len(envelope["encrypted"]) <= 32768)
         try:
             require(bool(base64.b64decode(envelope["encrypted"], validate=True)))

@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "main/resources/unfiltered/pkg/bin"))
@@ -313,6 +314,200 @@ class KeyServiceTest(unittest.TestCase):
         query = self.request("operation-read", operationId=intent[0]["operationId"])
         self.assertEqual("UNKNOWN", self.manager.handle(query)["state"])
         self.refused("UNRESOLVED_OPERATION", self.backup)
+
+
+    def generation_fixture(self):
+        keys = [service.CORE_DEFAULT, secrets.token_bytes(24), self.key]
+        raw = service.RING_MAGIC + bytes([3, 2, 0]) + b"".join(bytes([len(key)]) + key for key in keys)
+        self.write(self.directory / "kura_encryption_keyring", raw, 0o400)
+        _, metadata = service.key_generations(raw)
+        self.write(self.directory / "key-generations.json",
+                   service.encode(dict(schema=1, purpose=service.GENERATION_FORMAT, **metadata)), 0o600)
+        return raw
+
+    def generation_backup(self, identity=None):
+        return self.manager.handle(self.request("generation-backup-create", operationId=identity or str(uuid.uuid4()),
+                                                passphrase=PASSWORD))
+
+    def generation_inspect(self, backup, password=PASSWORD):
+        return self.manager.handle(self.request("generation-backup-inspect", backup=backup, passphrase=password))
+
+    def generation_identity(self):
+        return tuple(self.identity(self.directory / name) if (self.directory / name).exists() else None for name in
+                     ("kura_encryption_key", "provisioned.json", "kura_encryption_keyring", "key-generations.json"))
+
+    def test_generation_backup_keeps_every_key_and_does_not_modify_credentials(self):
+        raw = self.generation_fixture()
+        before = self.generation_identity()
+        paths = [self.directory / name for name in ("kura_encryption_keyring", "key-generations.json")]
+        original = [(p.read_bytes(), p.stat().st_ino, p.stat().st_mode, p.stat().st_mtime_ns) for p in paths]
+        result = self.generation_backup()
+        self.assertEqual(service.GENERATION_FORMAT, result["backup"]["format"])
+        recovered, metadata, _ = self.manager.unpack_generations(result["backup"], PASSWORD.encode())
+        self.assertEqual(raw, recovered)
+        self.assertEqual(3, len(metadata["keySha256s"]))
+        self.assertEqual(hashlib.sha256(service.CORE_DEFAULT).hexdigest(), metadata["legacyKeySha256"])
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual(original, [(p.read_bytes(), p.stat().st_ino, p.stat().st_mode, p.stat().st_mtime_ns) for p in paths])
+        journal = (self.state / "operations" / (result["operationId"] + ".json")).read_bytes()
+        self.assertNotIn(base64.b64encode(raw), journal)
+        self.assertNotIn(self.key, journal)
+        self.assertNotIn(service.CORE_DEFAULT, journal)
+        inspected = self.generation_inspect(result["backup"])
+        self.assertTrue(inspected["matchesRetainedReceipt"])
+        self.assertFalse(inspected["restoreSupported"])
+        self.assertNotIn("keyring", inspected)
+        self.assertNotIn("receipt", inspected)
+
+    def test_generation_inspection_matches_retained_binding_when_keys_are_missing(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        (self.directory / "kura_encryption_keyring").unlink()
+        self.key_path.unlink()
+        before = sorted(p.name for p in (self.state / "operations").iterdir())
+        result = self.generation_inspect(backup)
+        self.assertTrue(result["matchesRetainedReceipt"])
+        self.assertFalse(result["activeKeyReady"])
+        self.assertFalse(result["restoreSupported"])
+        self.assertFalse(self.key_path.exists())
+        self.assertFalse((self.directory / "kura_encryption_keyring").exists())
+        self.assertEqual(before, sorted(p.name for p in (self.state / "operations").iterdir()))
+        self.refused("GENERATION_REQUIRED", self.backup)
+
+    def test_generation_binding_is_required_before_backup_and_never_synthesized(self):
+        self.generation_fixture()
+        binding = self.directory / "key-generations.json"
+        binding.unlink()
+        before = self.generation_identity()
+        self.refused("KEY_GENERATIONS_MISSING", self.generation_backup)
+        self.assertFalse(binding.exists())
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    def test_generation_backup_rejects_an_unbound_key_or_generation_set(self):
+        raw = self.generation_fixture()
+        ring = self.directory / "kura_encryption_keyring"
+        self.write(ring, raw[:-32] + secrets.token_bytes(32), 0o400)
+        self.refused("UNSAFE_FILESYSTEM", self.generation_backup)
+        # Keep the same active key; replacing an older generation is still a conflict.
+        altered = bytearray(raw)
+        altered[len(service.RING_MAGIC) + 3 + 1] ^= 1
+        self.write(ring, bytes(altered), 0o400)
+        self.refused("UNSAFE_FILESYSTEM", self.generation_backup)
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    def test_generation_inspect_distinguishes_same_active_key_from_same_complete_set(self):
+        raw = self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        altered = bytearray(raw)
+        altered[len(service.RING_MAGIC) + 3 + 1] ^= 1
+        _, metadata = service.key_generations(bytes(altered))
+        self.write(self.directory / "key-generations.json",
+                   service.encode(dict(schema=1, purpose=service.GENERATION_FORMAT, **metadata)), 0o600)
+        result = self.generation_inspect(backup)
+        self.assertFalse(result["matchesRetainedReceipt"])
+        self.assertEqual(self.proof["keySha256"], result["activeKeySha256"])
+        self.assertFalse(result["restoreSupported"])
+
+    def test_generation_backup_rejects_wrong_password_tampering_and_external_id(self):
+        self.generation_fixture()
+        backup = self.generation_backup()["backup"]
+        self.refused("BACKUP_REJECTED", lambda: self.generation_inspect(backup, PASSWORD + "wrong"))
+        altered = dict(backup)
+        ciphertext = bytearray(base64.b64decode(backup["encrypted"]))
+        ciphertext[-1] ^= 1
+        altered["encrypted"] = base64.b64encode(ciphertext).decode()
+        self.refused("BACKUP_REJECTED", lambda: self.generation_inspect(altered))
+        altered = dict(backup, operationId=str(uuid.uuid4()))
+        self.refused("BACKUP_REJECTED", lambda: self.generation_inspect(altered))
+        self.assertEqual(1, len(list((self.state / "operations").iterdir())))
+
+    def test_generation_backup_purpose_cannot_be_relabelled_as_a_single_key_backup(self):
+        single = self.backup()[1]["backup"]
+        self.generation_fixture()
+        multiple = self.generation_backup()["backup"]
+        with self.assertRaises(service.Failure):
+            self.generation_inspect(dict(single, format=service.GENERATION_FORMAT))
+        with self.assertRaises(service.Failure):
+            self.manager.unpack(dict(multiple, format=service.FORMAT), PASSWORD.encode())
+        self.assertEqual(2, len(list((self.state / "operations").iterdir())))
+
+    def test_generation_backup_original_result_reads_do_not_reencrypt(self):
+        self.generation_fixture()
+        identity = str(uuid.uuid4())
+        original = self.generation_backup(identity)
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("No cipher on original-result reads")):
+            self.assertEqual(original, self.manager.handle(self.request("operation-read", operationId=identity)))
+            self.assertEqual(original, self.generation_backup(identity))
+        self.refused("CONFLICT", lambda: self.manager.handle(self.request("generation-backup-create", operationId=identity,
+                                                                        passphrase=PASSWORD + "different")))
+
+    def test_generation_backup_ambiguous_result_remains_unknown_and_fences_new_ids(self):
+        self.generation_fixture()
+        identity = str(uuid.uuid4())
+        before = self.generation_identity()
+        original_atomic = self.manager.atomic
+        def lose_result(path, value, **options):
+            if service.decode(value).get("state") == "SUCCEEDED":
+                raise OSError("Fixture simulates a lost result before final journal publication")
+            return original_atomic(path, value, **options)
+        with patch.object(self.manager, "atomic", side_effect=lose_result):
+            self.refused("UNKNOWN", lambda: self.generation_backup(identity))
+        with patch.object(self.manager, "crypt", side_effect=AssertionError("UNKNOWN must not dispatch")):
+            result = self.manager.handle(self.request("operation-read", operationId=identity))
+            self.assertEqual("UNKNOWN", result["state"])
+            self.assertEqual(result, self.generation_backup(identity))
+            self.refused("UNRESOLVED_OPERATION", self.generation_backup)
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual([identity + ".json"], [p.name for p in (self.state / "operations").iterdir()])
+
+    def test_generation_journal_cannot_be_downgraded_to_single_key_format(self):
+        self.generation_fixture()
+        original = self.generation_backup()
+        path = self.state / "operations" / (original["operationId"] + ".json")
+        record = service.decode(path.read_bytes())
+        record["response"]["backup"]["format"] = service.FORMAT
+        self.write(path, service.encode(record), 0o600)
+        self.refused("UNSAFE_JOURNAL", lambda: self.manager.handle(self.request("operation-read", operationId=original["operationId"])))
+        self.refused("UNSAFE_JOURNAL", self.generation_backup)
+
+    def test_single_key_backup_and_restore_are_fenced_even_when_ring_is_missing(self):
+        backup = self.backup()[1]["backup"]
+        self.generation_fixture()
+        (self.directory / "kura_encryption_keyring").unlink()
+        before = self.generation_identity()
+        self.refused("GENERATION_REQUIRED", self.backup)
+        self.refused("GENERATION_REQUIRED", lambda: self.restore(backup))
+        self.assertEqual(before, self.generation_identity())
+        self.assertEqual(1, len(list((self.state / "operations").iterdir())))
+
+    def test_generation_ring_symlinks_and_dangling_entries_never_allow_single_key_fallback(self):
+        self.generation_fixture()
+        ring = self.directory / "kura_encryption_keyring"
+        ring.unlink()
+        ring.symlink_to(self.directory / "does-not-exist")
+        self.refused("GENERATION_REQUIRED", self.backup)
+        self.refused("UNSAFE_FILESYSTEM", self.generation_backup)
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    def test_recovery_peer_cannot_export_a_generation_set(self):
+        self.generation_fixture()
+        for action in ("generation-backup-create", "generation-backup-inspect"):
+            self.refused("FORBIDDEN", lambda: self.manager.handle(dict(schema=1, action=action), recovery_only=True))
+        self.assertEqual([], list((self.state / "operations").iterdir()))
+
+    def test_generation_ring_codec_rejects_ambiguous_or_incomplete_generations(self):
+        raw = self.generation_fixture()
+        prefix = service.RING_MAGIC
+        duplicate = prefix + bytes([2, 0, 1, 32]) + self.key + bytes([32]) + self.key
+        legacy_active = prefix + bytes([2, 0, 1, 16]) + service.CORE_DEFAULT + bytes([32]) + self.key
+        for value in (b"", raw[:len(prefix) + 2], raw[:-1], raw + b"x", raw + b"x" * 512,
+                      b"x" + raw[1:], prefix + bytes([1, 0, 0]) + raw[len(prefix) + 3:],
+                      prefix + bytes([9, 0, 1]) + raw[len(prefix) + 3:],
+                      prefix + bytes([3, 2, 2]) + raw[len(prefix) + 3:], duplicate, legacy_active):
+            with self.subTest(size=len(value)):
+                with self.assertRaises(service.Failure):
+                    service.key_generations(value)
 
 
 if __name__ == "__main__":
