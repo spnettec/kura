@@ -40,6 +40,31 @@ final class RecoveryCrypto {
         }
     }
 
+    /** Only PID1's credential directory is selected by production callers, never a manifest path. */
+    static CryptoServiceImpl loadManaged(Path directory, String keySha256, String ringSha256) throws Exception {
+        require(directory != null && directory.isAbsolute() && directory.normalize().equals(directory)
+                && Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS));
+        require(keySha256 != null && keySha256.matches("[0-9a-f]{64}"));
+        require(ringSha256 != null && (ringSha256.equals("none") || ringSha256.matches("[0-9a-f]{64}")));
+        Path activePath = directory.resolve("kura_encryption_key");
+        Path ringPath = directory.resolve("kura_encryption_keyring");
+        byte[] active = readPrivate(activePath, 32);
+        byte[] ring = null;
+        try {
+            require(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(active)).equals(keySha256));
+            if (ringSha256.equals("none")) {
+                require(Files.notExists(ringPath, LinkOption.NOFOLLOW_LINKS));
+                return CryptoServiceImpl.forSnapshotRecovery(active, false);
+            }
+            ring = readPrivate(ringPath, 512);
+            require(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(ring)).equals(ringSha256));
+            return CryptoServiceImpl.forKeyRingRecovery(ring, active);
+        } finally {
+            Arrays.fill(active, (byte) 0);
+            if (ring != null) { Arrays.fill(ring, (byte) 0); }
+        }
+    }
+
     private static byte[] readPrivate(Path path, int limit) throws Exception {
         require(path.isAbsolute() && Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS));
         require(Files.isDirectory(path.getParent(), LinkOption.NOFOLLOW_LINKS));

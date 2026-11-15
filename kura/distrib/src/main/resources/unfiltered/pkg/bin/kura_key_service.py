@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Core-owned AES backup/recovery and staged generations. No active-key publication."""
 import base64
+import array
 import contextlib
 import ctypes
 import datetime
@@ -482,19 +483,28 @@ class Manager:
         except (OSError, ValueError, LifecycleRefused):
             raise Failure('COHORT_UNAVAILABLE') from None
 
-    def generation_component(self):
+    def generation_module(self, name):
+        require(name in ('kura_key_generation', 'kura_key_validation'))
         policy = Lifecycle(self.root, self.owner)
         binding = self.require_generation_cohort()
         home = self.store.path('/opt/eclipse/kura').resolve(strict=True)
         raw = policy.read(home / 'libexec/key-backup/manifest.json', private=False)
         require(hashlib.sha256(raw).hexdigest() == binding['manifestSha256'], 'COHORT_CHANGED')
-        name = 'bin/kura_key_generation.py'
-        expected = decode(raw)['generation']['files'][name]
-        source = policy.read(home / name, limit=65536, private=False)
+        relative = 'bin/' + name + '.py'
+        expected = decode(raw)['generation']['files'][relative]
+        source = policy.read(home / relative, limit=65536, private=False)
         require(hashlib.sha256(source).hexdigest() == expected, 'COHORT_CHANGED')
-        namespace = {'__name__': 'kura_key_generation', '__file__': str(home / name)}
-        exec(compile(source, str(home / name), 'exec'), namespace)
+        namespace = {'__name__': name, '__file__': str(home / relative)}
+        exec(compile(source, str(home / relative), 'exec'), namespace)
+        return namespace, binding
+
+    def generation_component(self):
+        namespace, binding = self.generation_module('kura_key_generation')
         return namespace['Generations'](self), binding
+
+    def validation_component(self):
+        namespace, _ = self.generation_module('kura_key_validation')
+        return namespace['Validation'](self)
 
     def generation_start_authorized(self, source, cohort):
         if not os.path.lexists(self.state / 'generation-current.json'):
@@ -783,6 +793,8 @@ class Manager:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
         if action in ("generation-prepare", "generation-backup-verify"):
             return self.stage_generation(request, verify=action == "generation-backup-verify")
+        if action == 'core-validation-info':
+            return self.validation_component().info(request)
         if action in ('generation-publication-plan', 'generation-publish', 'generation-core-start'):
             try:
                 component, _ = self.generation_component()
@@ -971,6 +983,75 @@ def read_frame(stream):
     return read_exact(stream, length)
 
 
+def read_request_frame(stream):
+    """Receive at most one CLOEXEC input FD, including on fragmented frames/EOF."""
+    descriptors = []
+    accepted = False
+
+    def part(count):
+        value, ancillary, flags, _ = stream.recvmsg(count, socket.CMSG_SPACE(8), socket.MSG_CMSG_CLOEXEC)
+        valid = True
+        for level, kind, raw in ancillary:
+            if level != socket.SOL_SOCKET or kind != socket.SCM_RIGHTS:
+                valid = False
+                continue
+            fds = array.array('i')
+            fds.frombytes(raw[:len(raw) - len(raw) % fds.itemsize])
+            descriptors.extend(fds)
+        require(valid and not flags & (socket.MSG_CTRUNC | socket.MSG_TRUNC) and len(descriptors) <= 1,
+                'PROTOCOL_MISMATCH')
+        return value
+
+    def exact(count):
+        value = bytearray()
+        while len(value) < count:
+            chunk = part(count - len(value))
+            require(bool(chunk), 'PROTOCOL_MISMATCH')
+            value.extend(chunk)
+        return bytes(value)
+
+    try:
+        length = struct.unpack('!I', exact(4))[0]
+        require(0 < length <= MAX_FRAME, 'PROTOCOL_MISMATCH')
+        value = decode(exact(length))
+        require(part(1) == b'', 'PROTOCOL_MISMATCH')
+        accepted = True
+        return value, descriptors[0] if descriptors else None
+    finally:
+        if not accepted:
+            for fd in descriptors:
+                os.close(fd)
+
+
+def agent_peer(pid):
+    # The packaged Root agent must not use the administrative key/backup protocol.
+    # ProtectControlGroups on its unit prevents moving a child out of this cgroup.
+    try:
+        raw = Path('/proc/' + str(pid) + '/cgroup').read_text()
+    except OSError:
+        raise Failure('FORBIDDEN') from None
+    lines = raw.splitlines()
+    require(len(lines) == 1 and lines[0].startswith('0::/'), 'FORBIDDEN')
+    path = lines[0][3:]
+    base = '/system.slice/kura-management-agent.service'
+    return path == base or path.startswith(base + '/')
+
+
+def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):
+    action = request.get('action')
+    require(not agent_peer(pid) or action in ('core-validation-info', 'core-snapshot-validate'), 'FORBIDDEN')
+    require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance'), 'FORBIDDEN')
+    if action == 'core-snapshot-validate':
+        require(uid in (0, daemon) and (recovery is None or uid != recovery), 'FORBIDDEN')
+        require(input_descriptor is not None, 'PROTOCOL_MISMATCH')
+        return manager.validation_component().validate(request, input_descriptor, uid, core_uid=daemon), None
+    require(input_descriptor is None, 'PROTOCOL_MISMATCH')
+    if action == 'writer-lease-acquire':
+        require(recovery is None or uid != recovery, 'FORBIDDEN')
+        return manager.acquire_writer_lease(request, pid, uid)
+    return manager.handle(request, recovery_only=recovery is not None and uid == recovery), None
+
+
 def send_frame(stream, value):
     data = encode(value)
     require(len(data) <= MAX_FRAME, "PROTOCOL_MISMATCH")
@@ -1022,17 +1103,12 @@ def serve():
         with connection:
             connection.settimeout(3)
             descriptor = None
+            input_descriptor = None
             try:
                 pid, uid, _ = peer(connection)
                 require(uid in (0, daemon) or recovery is not None and uid == recovery, "FORBIDDEN")
-                request = decode(read_frame(connection))
-                require(connection.recv(1) == b"", "PROTOCOL_MISMATCH")
-                require(uid != daemon or request.get("action") not in ("core-start", "core-start-after-maintenance"), "FORBIDDEN")
-                if request.get('action') == 'writer-lease-acquire':
-                    require(recovery is None or uid != recovery, 'FORBIDDEN')
-                    response, descriptor = manager.acquire_writer_lease(request, pid, uid)
-                else:
-                    response = manager.handle(request, recovery_only=recovery is not None and uid == recovery)
+                request, input_descriptor = read_request_frame(connection)
+                response, descriptor = serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor)
             except Failure as failure:
                 response = {"schema": 1, "error": failure.reason}
             except (OSError, Refused, KeyError):
@@ -1047,6 +1123,8 @@ def serve():
             finally:
                 if descriptor is not None:
                     os.close(descriptor)
+                if input_descriptor is not None:
+                    os.close(input_descriptor)
 
 
 def client():

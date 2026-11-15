@@ -328,7 +328,8 @@ public final class RecoveryBootstrap implements BundleActivator {
         }
         Set<String> required=Set.of("schema","restore.id","snapshot.path","snapshot.sha256","snapshot.mode","password.policy","receipt.path");
         Set<String> allowed=new HashSet<>(required);allowed.addAll(Set.of("crypto.key.file","crypto.default",
-                "crypto.keyring.file","crypto.keyring.sha256"));
+                "crypto.keyring.file","crypto.keyring.sha256","crypto.systemd.credentials",
+                "crypto.key.sha256","crypto.ring.sha256"));
         Set<String> compensation=Set.of("compensation.source.receipt","compensation.source.receipt.sha256","compensation.source.plan.sha256");
         allowed.addAll(compensation);
         Set<String> normal=Set.of("verification.mode","verification.source.receipt",
@@ -339,8 +340,17 @@ public final class RecoveryBootstrap implements BundleActivator {
                 &&Set.of("plain","aes-gcm").contains(result.get("snapshot.mode"))
                 &&Set.of("authenticated","legacy","logical-v1").contains(result.get("password.policy"))
                 &&(result.containsKey("crypto.key.file") ? 1 : 0)+(result.containsKey("crypto.default") ? 1 : 0)
-                        +(result.containsKey("crypto.keyring.file") ? 1 : 0)==1
+                        +(result.containsKey("crypto.keyring.file") ? 1 : 0)
+                        +(result.containsKey("crypto.systemd.credentials") ? 1 : 0)==1
                 &&result.containsKey("crypto.keyring.file")==result.containsKey("crypto.keyring.sha256"));
+        boolean managed=result.containsKey("crypto.systemd.credentials");
+        require(managed==result.containsKey("crypto.key.sha256") && managed==result.containsKey("crypto.ring.sha256"));
+        if(managed) {
+            require("true".equals(result.get("crypto.systemd.credentials"))
+                    &&result.get("crypto.key.sha256").matches("[0-9a-f]{64}")
+                    &&(result.get("crypto.ring.sha256").equals("none")
+                        ||result.get("crypto.ring.sha256").matches("[0-9a-f]{64}")));
+        }
         if(result.containsKey("crypto.keyring.file")) {
             require(Path.of(result.get("crypto.keyring.file")).isAbsolute()
                     &&result.get("crypto.keyring.sha256").matches("[0-9a-f]{64}"));
@@ -362,6 +372,11 @@ public final class RecoveryBootstrap implements BundleActivator {
         return result;
     }
     static CryptoServiceImpl recoveryCrypto(Map<String,String> manifest) throws Exception {
+        if("true".equals(manifest.get("crypto.systemd.credentials"))) {
+            String directory=System.getenv("CREDENTIALS_DIRECTORY");
+            require(directory!=null && !directory.isBlank());
+            return RecoveryCrypto.loadManaged(Path.of(directory),manifest.get("crypto.key.sha256"),manifest.get("crypto.ring.sha256"));
+        }
         return RecoveryCrypto.load(
                 manifest.containsKey("crypto.key.file") ? Path.of(manifest.get("crypto.key.file")) : null,
                 manifest.containsKey("crypto.keyring.file") ? Path.of(manifest.get("crypto.keyring.file")) : null,

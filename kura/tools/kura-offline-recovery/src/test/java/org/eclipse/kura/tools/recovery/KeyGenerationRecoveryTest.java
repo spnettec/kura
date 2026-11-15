@@ -146,6 +146,39 @@ class KeyGenerationRecoveryTest {
         }
     }
 
+    @Test void managedRecoveryBindsPid1ActiveAndRingCredentialsWithoutManifestKeyPaths() throws Exception {
+        byte[] raw=ring(legacy,previous,active);
+        privateFile("kura_encryption_key",active); privateFile("kura_encryption_keyring",raw);
+        var crypto=RecoveryCrypto.loadManaged(directory,sha(active),sha(raw));
+        assertEquals(3,SnapshotTool.decode(mixedSnapshot(),crypto,"authenticated").report().authenticated);
+        assertThrows(Exception.class,()->RecoveryCrypto.loadManaged(directory,sha(active),"none"));
+        assertThrows(Exception.class,()->RecoveryCrypto.loadManaged(directory,"0".repeat(64),sha(raw)));
+        byte[] wrong=ring(legacy,previous,repeated(32,(byte)20));
+        Files.write(directory.resolve("kura_encryption_keyring"),wrong);
+        assertThrows(Exception.class,()->RecoveryCrypto.loadManaged(directory,sha(active),sha(wrong)));
+        Files.delete(directory.resolve("kura_encryption_keyring"));
+        var single=RecoveryCrypto.loadManaged(directory,sha(active),"none");
+        var encrypted=single.encryptAes("single-canary".toCharArray());
+        assertArrayEquals("single-canary".toCharArray(),single.decryptAes(encrypted));
+        assertThrows(Exception.class,()->RecoveryCrypto.loadManaged(directory,sha(active),sha(raw)));
+    }
+
+    @Test void managedManifestRequiresCompleteExclusiveFingerprintSelection() throws Exception {
+        String base=request(directory.resolve("unused"),"0".repeat(64)).replaceAll("crypto.keyring[^\\n]+\\n","");
+        String managed=base+"crypto.systemd.credentials=true\ncrypto.key.sha256="+sha(active)+"\ncrypto.ring.sha256=none\n";
+        assertTrue(RecoveryBootstrap.manifest(privateFile("managed-request",managed.getBytes(StandardCharsets.UTF_8)))
+                .containsKey("crypto.systemd.credentials"));
+        for(String invalid:List.of(managed+"crypto.default=true\n",managed+"crypto.key.file=/key\n",
+                managed.replace("crypto.ring.sha256=none\n",""),managed.replace("crypto.systemd.credentials=true\n",""),
+                managed.replace("crypto.systemd.credentials=true","crypto.systemd.credentials=false"),
+                managed.replace("crypto.ring.sha256=none","crypto.ring.sha256=bad"))) {
+            assertThrows(Exception.class,()->RecoveryBootstrap.manifest(privateFile("invalid-managed",invalid.getBytes(StandardCharsets.UTF_8))));
+        }
+        // No environment credential directory is installed in unit tests; no implicit fallback.
+        assertThrows(Exception.class,()->RecoveryBootstrap.recoveryCrypto(Map.of("crypto.systemd.credentials","true",
+                "crypto.key.sha256",sha(active),"crypto.ring.sha256","none")));
+    }
+
     @Test void privateGenerationInputsRejectLinksHardlinksAndPublicPermissions() throws Exception {
         byte[] raw = ring(legacy, previous, active);
         Path credential = privateFile("generations", raw);

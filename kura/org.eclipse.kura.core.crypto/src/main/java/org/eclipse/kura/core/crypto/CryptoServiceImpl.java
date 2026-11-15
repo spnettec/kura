@@ -99,8 +99,16 @@ public class CryptoServiceImpl implements CryptoService {
 
     /** Explicit private recovery material; no default key, environment or trial decryption. */
     public static CryptoServiceImpl forKeyRingRecovery(byte[] credential) {
+        return forKeyRingRecovery(credential, null);
+    }
+
+    /** Pair the ring with a separately loaded active credential; never select a different writer key. */
+    public static CryptoServiceImpl forKeyRingRecovery(byte[] credential, byte[] expectedActiveKey) {
         CryptoServiceImpl result = new CryptoServiceImpl();
         result.keyRing = EncryptionKeyRing.parse(credential);
+        if (expectedActiveKey != null && !MessageDigest.isEqual(expectedActiveKey, result.keyRing.activeBytes())) {
+            throw new IllegalArgumentException("Active recovery credential does not match key ring");
+        }
         result.secretKey = Optional.of(result.keyRing.activeBytes());
         return result;
     }
