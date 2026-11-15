@@ -43,6 +43,12 @@
             <version>6.0.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>kura-offline-recovery</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -133,6 +139,7 @@
                                     <arg value="${project.basedir}/prepare-key-service.py"/>
                                     <arg value="${project.build.directory}/${dist.assembly.name}"/>
                                     <arg value="${project.basedir}/../kura-key-crypto/target"/>
+                                    <arg value="${project.basedir}/../../tools/kura-offline-recovery/target"/>
                                 </exec>
                             </target>
                         </configuration>

@@ -327,21 +327,26 @@ class Lifecycle:
                 and value["state"] == "MAINTENANCE" and value["firstAction"] in ("install", "upgrade", "remove"))
         return value
 
-    def assets(self):
+    def assets(self, *, generation_binding=False):
         logical = self.path("/opt/eclipse/kura")
         physical = logical.resolve(strict=True)
         require(physical.parent == self.path("/opt/eclipse") and physical.is_dir())
         if logical.is_symlink():
             require(logical.lstat().st_uid == self.owner)
-        manifest = decode(self.read(physical / "libexec/key-backup/manifest.json", private=False))
-        require(set(manifest) == {"schema", "protocol", "files", "units"}
-                and type(manifest["schema"]) is int and manifest["schema"] == 1
-                and type(manifest["protocol"]) is int and manifest["protocol"] == 1
+        manifest_raw = self.read(physical / "libexec/key-backup/manifest.json", private=False)
+        manifest = decode(manifest_raw)
+        modern = type(manifest.get("schema")) is int and manifest["schema"] == 2
+        require(set(manifest) == {"schema", "protocol", "files", "units"} | ({"readers"} if modern else set())
+                and type(manifest["schema"]) is int and manifest["schema"] == (2 if modern else 1)
+                and type(manifest["protocol"]) is int and manifest["protocol"] == (2 if modern else 1)
                 and isinstance(manifest["files"], dict) and isinstance(manifest["units"], dict))
         profile = (frozenset(manifest['files']), frozenset(manifest['units']))
-        require(profile in ((LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, frozenset(UNITS)), (ASSETS, frozenset(UNITS))),
+        require((profile[1] == frozenset((*UNITS, 'kura.service')) and ASSETS <= profile[0] and len(profile[0]) <= 512)
+                if modern else profile in ((LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, frozenset(UNITS)), (ASSETS, frozenset(UNITS))),
                 'Unrecognized key-service package profile')
         for name, expected in manifest["files"].items():
+            require(isinstance(name, str) and name and not Path(name).is_absolute()
+                    and str(Path(name)) == name and all(p not in ('.', '..') for p in Path(name).parts))
             require(is_digest(expected))
             require(hashlib.sha256(self.read(physical / name, limit=16*1024*1024, private=False)).hexdigest() == expected,
                     "Installed key-service asset differs from its package manifest")
@@ -350,7 +355,30 @@ class Lifecycle:
             unit = self.path("/lib/systemd/system/" + name).resolve(strict=True)
             require(hashlib.sha256(self.read(unit, private=False)).hexdigest() == expected,
                     "Installed key-service unit differs from its package manifest")
+        if modern:
+            # Embedded preinst must still inspect old protocol-1 packages without this
+            # new helper. Execute only the source bytes already attested above, never pyc.
+            name = 'bin/kura_key_cohort.py'
+            require(name in manifest['files'])
+            source = self.read(physical / name, limit=65536, private=False)
+            require(hashlib.sha256(source).hexdigest() == manifest['files'][name])
+            namespace = {'__name__': 'kura_key_cohort', '__file__': str(physical / name)}
+            exec(compile(source, str(physical / name), 'exec'), namespace)
+            try:
+                observed = namespace['validate'](physical, manifest, lambda p: self.read(p, private=False), self.owner, ASSETS,
+                                                 self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False))
+            except namespace['Refused']:
+                raise Refused('Generation-reader package is not paired; preserve keys and original operation IDs') from None
+        if generation_binding:
+            require(modern, 'This package has no complete generation-reader cohort')
+            binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                           manifestSha256=hashlib.sha256(manifest_raw).hexdigest(),
+                           launcherSha256s={Path(name).name: value for name, value in observed.items()})
+            return dict(binding, cohortSha256=hashlib.sha256(encoded(binding)).hexdigest())
         return manifest
+
+    def generation_assets(self):
+        return self.assets(generation_binding=True)
 
     @contextlib.contextmanager
     def recovery_locked(self):
