@@ -3089,6 +3089,11 @@
                                 <resource>
                                     <directory>${kura.distrib.basedir}/src/main/resources/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>
@@ -3130,6 +3135,11 @@
                                 <resource>
                                     <directory>${kura.distrib.basedir}/src/main/resources/variants/linux-shared/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>
@@ -3171,6 +3181,11 @@
                                 <resource>
                                     <directory>${variant.resources.dir}/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>

@@ -136,6 +136,7 @@
                                          value="${kura.key.lifecycle.source}"
                                          failOnNoReplacements="true"/>
                                 <exec executable="python3" failonerror="true">
+                                    <arg value="-B"/>
                                     <arg value="${project.basedir}/prepare-key-service.py"/>
                                     <arg value="${project.build.directory}/${dist.assembly.name}"/>
                                     <arg value="${project.basedir}/../kura-key-crypto/target"/>
