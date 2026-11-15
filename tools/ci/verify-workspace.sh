@@ -11,7 +11,9 @@ fi
 version="$("$MVN" --version)"
 printf '%s\n' "$version"
 [[ "$version" =~ Apache\ Maven\ 3\.10\. ]] || { echo 'CI requires Maven 3.10.x' >&2; exit 2; }
-[[ "$version" =~ Java\ version:\ 21[.,] ]] || { echo 'CI requires Maven to run on JDK 21' >&2; exit 2; }
+[[ "$version" =~ Java\ version:\ ([0-9]+)([.,-]|$) ]] \
+    && (( 10#${BASH_REMATCH[1]} >= 21 )) \
+    || { echo 'CI requires Maven to run on JDK 21 or newer' >&2; exit 2; }
 command -v python3 >/dev/null
 repos=(kura-position kura-opcua kura-deployment kura-networking kura-wires kura-cloud
        kura-camel kura-artemis kura-container kura-triton kura-management-ui kura-yofc-runtime yofc-iot)

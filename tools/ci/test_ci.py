@@ -107,6 +107,22 @@ class WorkspaceEntryTest(unittest.TestCase):
         self.assertEqual(2, self.run_entry().returncode)
         self.assertFalse(self.marker.exists())
 
+    def test_jdk21_and_newer_including_early_access_pass_read_only_preflight(self):
+        for java in ("21", "21.0.13", "22.0.2", "25.0.1", "27-ea", "27.0.1.0.2"):
+            with self.subTest(java=java):
+                self.version("3.10.0", java)
+                self.assertEqual(0, self.run_entry("--check").returncode)
+                self.assertFalse(self.marker.exists())
+
+    def test_older_or_unparseable_java_is_rejected_before_any_build(self):
+        for java in ("1.8.0_442", "11.0.33", "17.0.21", "20.0.2", "unavailable", "x21.0.13"):
+            with self.subTest(java=java):
+                self.version("3.10.0", java)
+                result = self.run_entry("--check")
+                self.assertEqual(2, result.returncode)
+                self.assertIn("JDK 21 or newer", result.stderr)
+                self.assertFalse(self.marker.exists())
+
     def test_build_failure_preserved_and_old_reports_cleared(self):
         output = self.root / "target/ci"
         (output / "test-reports").mkdir(parents=True)
