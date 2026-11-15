@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
 import org.eclipse.kura.core.configuration.ConfigurationRestore;
 import org.eclipse.kura.core.configuration.ControlledRecovery;
@@ -98,10 +99,7 @@ public final class RecoveryBootstrap implements BundleActivator {
             ControlledRecovery.verifyArtifact(snapshot,manifest.get("snapshot.sha256"));
             byte[] artifact=read(snapshot,32<<20);
             require(hash(artifact).equals(manifest.get("snapshot.sha256")));
-            byte[] key=manifest.containsKey("crypto.key.file") ? privateKey(Path.of(manifest.get("crypto.key.file"))) : null;
-            CryptoServiceImpl crypto;
-            try { crypto=CryptoServiceImpl.forSnapshotRecovery(key,key==null); }
-            finally { if(key!=null){Arrays.fill(key,(byte)0);} }
+            CryptoServiceImpl crypto=recoveryCrypto(manifest);
             byte[] xml=artifact;
             if(manifest.get("snapshot.mode").equals("aes-gcm")) {
                 try(InputStream input=crypto.aesDecryptingStream(new ByteArrayInputStream(artifact))){
@@ -119,11 +117,7 @@ public final class RecoveryBootstrap implements BundleActivator {
                         : SnapshotTool.decodeRetainedCmBackup(xml,crypto,manifest.get("password.policy"));
                 target=new ArrayList<>();
                 for(var configuration:decoded.configurations()) {
-                    Map<String,Object> properties=new HashMap<>(configuration.getConfigurationProperties());
-                    ComponentUtil.encryptConfigurationProperties(properties,crypto);
-                    // The legacy helper drops failed password fields: never accept that lossy result here.
-                    require(properties.keySet().equals(configuration.getConfigurationProperties().keySet()));
-                    target.add(new ComponentConfigurationImpl(configuration.getPid(),null,properties));
+                    target.add(new ComponentConfigurationImpl(configuration.getPid(),null,targetProperties(configuration,crypto)));
                 }
             } finally { Arrays.fill(xml,(byte)0);Arrays.fill(artifact,(byte)0); }
             Bundle cm=bundle(context,"org.eclipse.equinox.cm");
@@ -333,7 +327,8 @@ public final class RecoveryBootstrap implements BundleActivator {
                     && result.putIfAbsent(key,value)==null);
         }
         Set<String> required=Set.of("schema","restore.id","snapshot.path","snapshot.sha256","snapshot.mode","password.policy","receipt.path");
-        Set<String> allowed=new HashSet<>(required);allowed.addAll(Set.of("crypto.key.file","crypto.default"));
+        Set<String> allowed=new HashSet<>(required);allowed.addAll(Set.of("crypto.key.file","crypto.default",
+                "crypto.keyring.file","crypto.keyring.sha256"));
         Set<String> compensation=Set.of("compensation.source.receipt","compensation.source.receipt.sha256","compensation.source.plan.sha256");
         allowed.addAll(compensation);
         Set<String> normal=Set.of("verification.mode","verification.source.receipt",
@@ -343,7 +338,13 @@ public final class RecoveryBootstrap implements BundleActivator {
                 &&result.get("restore.id").matches("rec-[0-9a-f-]{36}")&&result.get("snapshot.sha256").matches("[0-9a-f]{64}")
                 &&Set.of("plain","aes-gcm").contains(result.get("snapshot.mode"))
                 &&Set.of("authenticated","legacy","logical-v1").contains(result.get("password.policy"))
-                &&result.containsKey("crypto.key.file")!=result.containsKey("crypto.default"));
+                &&(result.containsKey("crypto.key.file") ? 1 : 0)+(result.containsKey("crypto.default") ? 1 : 0)
+                        +(result.containsKey("crypto.keyring.file") ? 1 : 0)==1
+                &&result.containsKey("crypto.keyring.file")==result.containsKey("crypto.keyring.sha256"));
+        if(result.containsKey("crypto.keyring.file")) {
+            require(Path.of(result.get("crypto.keyring.file")).isAbsolute()
+                    &&result.get("crypto.keyring.sha256").matches("[0-9a-f]{64}"));
+        }
         if(result.containsKey("crypto.default")){require(result.get("crypto.default").equals("true"));}
         if(compensation.stream().anyMatch(result::containsKey)) {
             require(result.keySet().containsAll(compensation)
@@ -360,11 +361,53 @@ public final class RecoveryBootstrap implements BundleActivator {
         }
         return result;
     }
-    private static byte[] privateKey(Path path) throws Exception {
-        privateParent(path);
-        require(Files.getPosixFilePermissions(path,LinkOption.NOFOLLOW_LINKS).stream()
-                .noneMatch(p->p.name().startsWith("GROUP")||p.name().startsWith("OTHERS")));
-        byte[] result=read(path,32);require(result.length==16||result.length==24||result.length==32);return result;
+    static CryptoServiceImpl recoveryCrypto(Map<String,String> manifest) throws Exception {
+        return RecoveryCrypto.load(
+                manifest.containsKey("crypto.key.file") ? Path.of(manifest.get("crypto.key.file")) : null,
+                manifest.containsKey("crypto.keyring.file") ? Path.of(manifest.get("crypto.keyring.file")) : null,
+                manifest.get("crypto.keyring.sha256"), "true".equals(manifest.get("crypto.default")));
+    }
+    static Map<String,Object> targetProperties(ComponentConfiguration configuration,CryptoServiceImpl crypto) throws Exception {
+        Map<String,Object> properties=new HashMap<>(configuration.getConfigurationProperties());
+        if(configuration instanceof ComponentConfigurationImpl impl && impl.hasLogicalPasswords()) {
+            for(var entry:properties.entrySet()) {
+                entry.setValue(encryptLogicalPassword(entry.getValue(),crypto));
+            }
+        } else {
+            ComponentUtil.encryptConfigurationProperties(properties,crypto);
+        }
+        // The legacy helper drops failed password fields: never accept that lossy result here.
+        require(properties.keySet().equals(configuration.getConfigurationProperties().keySet()));
+        return properties;
+    }
+    private static Object encryptLogicalPassword(Object value,CryptoServiceImpl crypto) throws Exception {
+        if(value instanceof Password password) {
+            require(password.getPassword()!=null);
+            char[] plain=password.getPassword().clone();
+            try {
+                char[] encrypted=crypto.encryptAes(plain);
+                require(encrypted!=null && encrypted.length>0);
+                return new Password(encrypted);
+            } finally { Arrays.fill(plain,'\0'); }
+        }
+        if(value instanceof Password[] passwords) {
+            Password[] result=new Password[passwords.length];
+            for(int n=0;n<passwords.length;n++) {
+                require(passwords[n]!=null);
+                result[n]=(Password)encryptLogicalPassword(passwords[n],crypto);
+            }
+            return result;
+        }
+        if(value instanceof java.util.Collection<?> values && values.stream().anyMatch(Password.class::isInstance)) {
+            require(values instanceof List<?>);
+            java.util.Collection<Object> result=value instanceof java.util.Vector<?> ? new java.util.Vector<>() : new ArrayList<>();
+            for(Object item:values) {
+                require(item instanceof Password);
+                result.add(encryptLogicalPassword(item,crypto));
+            }
+            return result;
+        }
+        return value;
     }
     private static byte[] read(Path path,int limit) throws Exception {
         require(path.isAbsolute()&&Files.isRegularFile(path,LinkOption.NOFOLLOW_LINKS));

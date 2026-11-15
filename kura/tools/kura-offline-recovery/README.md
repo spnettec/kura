@@ -68,12 +68,22 @@ changes the running deployment key. Whole-snapshot encryption requires
 `--mode aes-gcm`; auto-detection and plaintext fallback are intentionally absent.
 Decryption is authenticated and bounded in memory, with no plaintext temporary file.
 
+The generation-aware internal validator additionally accepts an explicit
+`--keyring-file` and `--keyring-sha256` pair instead of `--key-file` or
+`--default-key`. The binary ring follows the Core generation-reader contract and
+is bounded to 512 bytes. Its independently supplied lowercase SHA-256 must match;
+there is no adjacent-file discovery or fallback. Key/ring files must have one
+hard link, private permissions and stable metadata, inside a directory with no
+group/other write permission. These are internal validator parameters, not a
+released gateway installation or GUI rotation procedure. The agent's current
+single-key preflight has not been extended to acquire Root-owned generation keys.
+
 The default `--password-policy authenticated` requires every Password
 value to authenticate with the selected key, including direct AES and the Kura
 Base64-wrapped AES representation. A zero-value scalar denotes null; a zero-value
 array/collection denotes an empty container. Neither contributes an authenticated password. For audited historical
 snapshots containing cleartext or Base64-only Password values, explicitly add
-`--password-policy legacy`. Ciphertext with a normal AES IV prefix still must
+`--password-policy legacy`. Ciphertext with a normal AES IV or versioned KURA prefix still must
 authenticate; wrong-key ciphertext is never reclassified as a legacy password.
 Legacy compatibility does not establish that every password is encrypted.
 
@@ -87,7 +97,7 @@ non-finite floating values, DTD/entities/processing instructions and excessive
 structure are rejected before the real mapper converts values. Limits are 32 MiB
 input/decrypted bytes, depth 5, 400,000 XML events, 4,096 configurations,
 65,536 total properties/values and 1 MiB text per value. Keys have a separate 32-byte
-limit. Files are read-only; symlinks at the input/key leaf are refused.
+limit (512 bytes for the explicit generation ring). Files are read-only; symlinks at the input/key leaf are refused.
 
 Exit 0 writes one JSON report with artifact SHA-256 and counts; exit 2 writes only
 `{"error":"SNAPSHOT_VALIDATION_FAILED"}` to stderr. XML values, passwords, paths and
@@ -257,3 +267,16 @@ Normal-startup validation needs its own appropriate fixed policy as before.
 The optional bootstrap additionally requires snapshot.codec 1.x, whose provider
 requires password.sources 1.x. This format support does not authorize business
 health, write release or ordinary unit handoff.
+
+The generation-aware bootstrap also requires `kura.crypto.key.generations` 1.x.
+Its private request may explicitly select `crypto.keyring.file` and
+`crypto.keyring.sha256` instead of `crypto.key.file` or `crypto.default`; the
+same bounded private reader validates the material. The current agent request
+allowlist remains single-key and cannot produce this new selection yet. Complete
+package/cohort acceptance and a Core-owned delegation path remain release gates.
+
+When a logical-V1 snapshot is converted to CM properties, every logical Password
+is encrypted exactly once, including an empty value or text that happens to be
+valid ciphertext. Scalar, array, Vector and List representations retain their
+logical values without modifying the source. Unmarked authenticated ciphertext
+retains its original representation through the existing CM conversion helper.

@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,15 +48,10 @@ public final class SnapshotTool {
     static int run(String[] args, PrintStream out, PrintStream err) {
         try {
             Map<String, String> options = options(args);
-            byte[] key = options.containsKey("--key-file") ? readKey(Path.of(options.get("--key-file"))) : null;
-            CryptoServiceImpl crypto;
-            try {
-                crypto = CryptoServiceImpl.forSnapshotRecovery(key, options.containsKey("--default-key"));
-            } finally {
-                if (key != null) {
-                    Arrays.fill(key, (byte) 0);
-                }
-            }
+            CryptoServiceImpl crypto = RecoveryCrypto.load(
+                    options.containsKey("--key-file") ? Path.of(options.get("--key-file")) : null,
+                    options.containsKey("--keyring-file") ? Path.of(options.get("--keyring-file")) : null,
+                    options.get("--keyring-sha256"), options.containsKey("--default-key"));
             byte[] artifact = read(Path.of(options.get("--input")), LIMIT);
             byte[] xml = artifact;
             boolean encrypted = options.get("--mode").equals("aes-gcm");
@@ -96,7 +90,8 @@ public final class SnapshotTool {
         Map<String, String> result = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
             String name = args[i];
-            require(Set.of("--input", "--mode", "--key-file", "--default-key", "--password-policy").contains(name));
+            require(Set.of("--input", "--mode", "--key-file", "--keyring-file", "--keyring-sha256",
+                    "--default-key", "--password-policy").contains(name));
             require(!result.containsKey(name));
             if (name.equals("--default-key")) {
                 result.put(name, "true");
@@ -106,25 +101,11 @@ public final class SnapshotTool {
             }
         }
         require(result.containsKey("--input") && Set.of("plain", "aes-gcm").contains(result.getOrDefault("--mode", "")));
-        require(result.containsKey("--key-file") != result.containsKey("--default-key"));
+        require((result.containsKey("--key-file") ? 1 : 0) + (result.containsKey("--keyring-file") ? 1 : 0)
+                + (result.containsKey("--default-key") ? 1 : 0) == 1);
+        require(result.containsKey("--keyring-file") == result.containsKey("--keyring-sha256"));
         require(Set.of("authenticated", "legacy", "logical-v1").contains(result.getOrDefault("--password-policy", "authenticated")));
         return result;
-    }
-
-    private static byte[] readKey(Path path) throws Exception {
-        Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(path, LinkOption.NOFOLLOW_LINKS);
-        require(!permissions.contains(PosixFilePermission.GROUP_READ)
-                && !permissions.contains(PosixFilePermission.GROUP_WRITE)
-                && !permissions.contains(PosixFilePermission.GROUP_EXECUTE)
-                && !permissions.contains(PosixFilePermission.OTHERS_READ)
-                && !permissions.contains(PosixFilePermission.OTHERS_WRITE)
-                && !permissions.contains(PosixFilePermission.OTHERS_EXECUTE));
-        byte[] key = read(path, 32);
-        if (key.length != 16 && key.length != 24 && key.length != 32) {
-            Arrays.fill(key, (byte) 0);
-            throw new IllegalArgumentException();
-        }
-        return key;
     }
 
     private static byte[] read(Path path, int limit) throws Exception {
@@ -278,7 +259,7 @@ public final class SnapshotTool {
             candidate = new String(crypto.decodeBase64(candidate));
         }
         // A ciphertext-shaped value must authenticate even with explicit legacy compatibility.
-        if (candidate.matches("(?s)[A-Za-z0-9+/]{16}-.*")) {
+        if (candidate.matches("(?s)[A-Za-z0-9+/]{16}-.*") || candidate.matches("(?s)KURA[0-9]+\\..*")) {
             char[] plaintext = crypto.decryptAes(candidate.toCharArray());
             Arrays.fill(plaintext, '\0');
             return true;
