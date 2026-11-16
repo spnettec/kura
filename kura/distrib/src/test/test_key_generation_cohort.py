@@ -150,6 +150,15 @@ class GenerationPackageTest(unittest.TestCase):
         with self.assertRaises(lifecycle.Refused):
             self.policy.generation_assets()
 
+    def test_original_journal_profile_still_requires_its_complete_generation_reader_cohort(self):
+        self.manifest['files'].pop('share/key-recovery/archive.js')
+        (self.home/'share/key-recovery/archive.js').unlink();self.save_manifest()
+        self.assertEqual(lifecycle.JOURNAL_V1_ASSETS,frozenset(self.policy.assets()['files']))
+        self.assertEqual(1,self.policy.generation_assets()['schema'])
+        role=self.manifest['generation']['readers']['crypto']
+        (self.home/role).write_bytes(b'changed original reader')
+        with self.assertRaises(lifecycle.Refused):self.policy.generation_assets()
+
     def test_declared_capability_without_the_actual_reader_class_is_refused(self):
         self.rewrite_jar(cohort.OFFLINE, remove="org/eclipse/kura/tools/recovery/RecoveryCrypto.class")
         with self.assertRaises(lifecycle.Refused):

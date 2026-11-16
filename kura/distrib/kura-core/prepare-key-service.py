@@ -22,7 +22,7 @@ def prepare(assembly, cipher_target, offline_target):
     require(assembly.is_dir() and not assembly.is_symlink())
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
                'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py', 'bin/kura_key_journal.py']
-    static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css']]
+    static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css', 'archive.js']]
     units = ["kura-key-service.socket", "kura-key-service.service", 'kura-key-recovery.service', 'kura.service']
     for name in helpers + static + ['bin/kura_key_cohort.py', 'bin/kura_credential_env.sh'] + ["install/" + unit for unit in units]:
         require((assembly / name).is_file() and not (assembly / name).is_symlink())

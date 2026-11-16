@@ -599,10 +599,16 @@ class Controller:
         return dict(result, state='INSPECTED')
 
     def archive(self,value):
+        if value.get('command')=='list':
+            protocol.fields(value,{'command','cursor'})
+            try:
+                with self.journal.lock():return self.journal.history().list(value['cursor'])
+            except Refused:fail('UNRESOLVED_OPERATION')
         command=value.get('command');kind=value.get('kind');identity=protocol.operation_id(value.get('operationId'))
         protocol.require(command in ('preview','query','archive','continue') and kind in ('RESTORE','START','ADMISSION'))
         mutate=command in ('archive','continue');extra={'senderKind'} if kind=='ADMISSION' else set()
-        protocol.fields(value,{'command','kind','operationId'}|extra|({'backupJson','passphrase'} if mutate else set()))
+        protocol.fields(value,{'command','kind','operationId'}|extra|({'backupJson','passphrase','reviewSha256'} if mutate else set()))
+        if mutate:protocol.digest(value['reviewSha256'])
         step=value.get('senderKind');protocol.require(step in ('restore','start') if kind=='ADMISSION' else step is None)
         try:
             with self.journal.lock():
@@ -614,7 +620,7 @@ class Controller:
                         and hashlib.sha256(protocol.encode(backup)).hexdigest()==restore['backupSha256'],'BACKUP_REJECTED')
                     checked=self.inspect(dict(backupJson=value['backupJson'],passphrase=value['passphrase']))
                     protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
-                return history.archive(kind,identity,step,preview=not mutate,continue_metadata=command=='continue')
+                return history.confirm(kind,identity,step,value['reviewSha256'],continue_metadata=command=='continue') if mutate else history.review(kind,identity,step)
         except Refused:fail('UNRESOLVED_OPERATION')
 
     def original(self, identity, expected=None):
@@ -1087,7 +1093,7 @@ class HandoffController:
 
     def execute(self, value):
         command = value.get('command')
-        if command in ('archive-preview','archive-query','archive-confirm','archive-continue'):return self.archive(value)
+        if command in ('archive-list','archive-preview','archive-query','archive-confirm','archive-continue'):return self.archive(value)
         if command in ('start-renew','renewal-close'): return self.renew_start(value)
         if command == 'revoke':
             protocol.fields(value, {'token', 'command'}); token = self.token(value['token'])
@@ -1128,8 +1134,15 @@ class HandoffController:
             return self.sender.submit('handoff-start' if command == 'start' else command, identity, request, forward)
 
     def archive(self,value):
+        if value.get('command')=='archive-list':
+            protocol.fields(value,{'token','command','cursor'});token=self.token(value['token'])
+            try:
+                with self.journal.lock():return self.journal.history().list(value['cursor'],handoff_id=self.info(token)['handoffId'])
+            except Refused:fail('UNRESOLVED_OPERATION')
         kind=value.get('kind');protocol.require(kind in ('HANDOFF','ADMISSION'))
-        protocol.fields(value,{'token','command','kind','operationId'}|({'senderKind'} if kind=='ADMISSION' else set()))
+        mutate=value.get('command') in ('archive-confirm','archive-continue')
+        protocol.fields(value,{'token','command','kind','operationId'}|({'senderKind'} if kind=='ADMISSION' else set())|({'reviewSha256'} if mutate else set()))
+        if mutate:protocol.digest(value['reviewSha256'])
         token=self.token(value['token']);identity=protocol.operation_id(value['operationId']);step=value.get('senderKind')
         protocol.require(step in ('publish','continue','handoff-start','handoff-renewal') if kind=='ADMISSION' else step is None)
         try:
@@ -1137,8 +1150,7 @@ class HandoffController:
                 info=self.info(token);history=self.journal.history();snapshot=history.format.snapshot(kind,identity,step)
                 protocol.require(identity==info['handoffId'] and snapshot['metadata']==self.binding(info) if kind=='HANDOFF'
                     else snapshot['attempt']['request']['handoffId']==info['handoffId'],'CONFLICT')
-                return history.archive(kind,identity,step,preview=value['command'] in ('archive-preview','archive-query'),
-                    continue_metadata=value['command']=='archive-continue')
+                return history.confirm(kind,identity,step,value['reviewSha256'],continue_metadata=value['command']=='archive-continue') if mutate else history.review(kind,identity,step)
         except Refused:fail('UNRESOLVED_OPERATION')
 
 
@@ -1226,6 +1238,7 @@ class Handler(BaseHTTPRequestHandler):
             mapping = {'/': ('index.html', 'text/html; charset=utf-8'),
                        '/handoff': ('index.html', 'text/html; charset=utf-8'),
                        '/recovery.js': ('recovery.js', 'text/javascript; charset=utf-8'),
+                       '/archive.js': ('archive.js', 'text/javascript; charset=utf-8'),
                        '/recovery.css': ('recovery.css', 'text/css; charset=utf-8')}
             protocol.require(self.path in mapping, 'INVALID_ARGUMENT')
             name, kind = mapping[self.path]

@@ -365,6 +365,84 @@ class RecoveryPrivateArchive:
         else:require(observed['state']=='ARCHIVABLE')
         return observed
 
+    def list(self,cursor=None,*,handoff_id=None):
+        require(cursor is None or isinstance(cursor,str) and len(cursor)<=80)
+        def selector(row):return row['kind']+':'+row['operationId']+(':'+row['senderKind'] if row['senderKind'] else '')
+        if cursor:
+            parts=cursor.split(':');require(len(parts) in (2,3));self.format.selector(parts[0],parts[1],parts[2] if len(parts)==3 else None)
+        rows=[];self.format.directory(self.state)
+        for kind,name in (('RESTORE','operations'),('START','starts'),('HANDOFF','handoffs'),('ADMISSION','admissions')):
+            if (kind in ('RESTORE','START')) and handoff_id is not None or kind=='HANDOFF' and handoff_id is None:continue
+            parent=self.state/name
+            if not os.path.lexists(parent):continue
+            self.format.directory(parent)
+            for path in parent.iterdir():
+                step=None;name=path.name
+                if kind in ('RESTORE','START'):
+                    require(name.endswith('.json'));identity=name[:-5];self.format.selector(kind,identity)
+                    self.format.snapshot(kind,identity)
+                elif kind=='HANDOFF':
+                    identity=name;self.format.selector(kind,identity);self.format.directory(path)
+                    metadata=decode(self.format.read(path/'binding.json',8192));validate_handoff_binding(metadata);require(metadata['handoffId']==identity)
+                    if identity!=handoff_id:continue
+                else:
+                    require(len(name)>37 and name[36]=='-');identity,step=name[:36],name[37:];self.format.selector(kind,identity,step)
+                    if (step in ('restore','start'))!=(handoff_id is None):continue
+                    metadata=self.format.admission(identity,step)['attempt']['request']
+                    if handoff_id is not None and metadata.get('handoffId')!=handoff_id:continue
+                row=dict(kind=kind,operationId=identity,senderKind=step)
+                if cursor and selector(row)<=cursor:continue
+                rows.append(row);rows.sort(key=selector)
+                if len(rows)>21:rows.pop()
+        more=len(rows)>20
+        if more:rows.pop()
+        return dict(schema=1,state='ARCHIVE_HISTORY',records=rows,nextCursor=selector(rows[-1]) if more else None)
+
+    def review(self,kind,identity,step=None):
+        snapshot=self.format.snapshot(kind,identity,step);path=self.format.path(kind,identity,step);marker=None
+        if os.path.lexists(path):
+            saved=decode(self.format.read(path,65536));namespace=saved['binding']
+            binding=self.format.binding({key:namespace[key] for key in ('schema','namespaceSha256','rootDevice','rootInode')})
+            marker,snapshot=self.format.marker(kind,identity,step,binding)
+        view=dict(schema=1,kind=kind,operationId=identity,senderKind=step,state='UNAVAILABLE',privateAttempt=marker is not None,
+            archiveId=marker['request']['archiveId'] if marker else None,reviewSha256=None,archiveAllowed=False,continueAllowed=False,archived=False)
+        try:
+            binding=self.format.binding(self.call(dict(schema=1,action='gwt-sender-namespace')))
+            if marker is not None:
+                require(marker['binding']==binding);observed=self.check(kind,identity,step,marker,snapshot,binding)
+            else:
+                observed=self.lookup(snapshot,binding);self.format.correlate(kind,identity,step,snapshot,observed['correlation'],binding)
+            proof=observed['archive']
+            if proof is not None:
+                self.request_from_view(proof,binding)
+                require(observed['state']==proof['state'] and observed['entry'] in proof['entries'])
+                if marker is None:view['archiveId']=proof['archiveId']
+            done=observed['state']=='ARCHIVE_RECORDED'
+            view.update(state='UNKNOWN' if marker and proof is None else observed['state'],
+                archiveAllowed=marker is None and (observed['state']!='UNKNOWN' or observed['continuationAllowed']),
+                continueAllowed=marker is not None and not done and proof is not None and marker['continuationAllowed'] and observed['continuationAllowed'],
+                archived=marker is not None and done)
+            fingerprint=dict(kind=kind,operationId=identity,senderKind=step,privateFiles=snapshot['files'],binding=binding,observed=observed,localIntent=marker)
+            view['reviewSha256']=hashlib.sha256(encoded(fingerprint)).hexdigest()
+        except Exception:
+            view.update(state='UNAVAILABLE',reviewSha256=None,archiveAllowed=False,continueAllowed=False,archived=False)
+        return view
+
+    def confirm(self,kind,identity,step,expected,*,continue_metadata=False):
+        require(is_digest(expected));view=self.review(kind,identity,step)
+        if view['archived']:return view
+        if expected!=view['reviewSha256']:
+            view.update(error='STALE_REVIEW',archiveAllowed=False,continueAllowed=False);return view
+        if not view['continueAllowed' if continue_metadata else 'archiveAllowed']:
+            view.update(error='ARCHIVE_NOT_ALLOWED',archiveAllowed=False,continueAllowed=False);return view
+        try:self.archive(kind,identity,step,continue_metadata=continue_metadata)
+        except Exception:
+            # One original metadata dispatch only. A missing reply can authorize reads, never a late first send.
+            result=self.review(kind,identity,step)
+            if not result['archived']:result['error']='ARCHIVE_UNCONFIRMED' if result['privateAttempt'] else 'ARCHIVE_PREFLIGHT_REFUSED'
+            return result
+        return self.review(kind,identity,step)
+
     def archive(self,kind,identity,step=None,*,preview=False,continue_metadata=False):
         path=self.format.path(kind,identity,step);binding=self.format.binding(self.call(dict(schema=1,action='gwt-sender-namespace')))
         if os.path.lexists(path):

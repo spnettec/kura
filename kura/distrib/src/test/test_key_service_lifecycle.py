@@ -197,6 +197,30 @@ class LifecycleTest(unittest.TestCase):
         with self.assertRaises(lifecycle.Refused):self.policy.leave()
         self.assertTrue((self.policy.state / "maintenance.json").exists())
 
+    def test_archive_script_is_attested_before_package_can_leave_maintenance(self):
+        self.policy.enter('install');before=self.data_identity()
+        self.write(self.physical/'share/key-recovery/archive.js',b'changed archive browser asset',0o640)
+        with self.assertRaises(lifecycle.Refused):self.policy.leave()
+        self.assertIsNotNone(self.policy.fence());self.assertEqual(before,self.data_identity())
+
+    def journal_v1_profile(self):
+        path=self.physical/'libexec/key-backup/manifest.json';value=json.loads(path.read_bytes())
+        value['files'].pop('share/key-recovery/archive.js');(self.physical/'share/key-recovery/archive.js').unlink()
+        self.write(path,lifecycle.encoded(value),0o640)
+        self.assertEqual(lifecycle.JOURNAL_V1_ASSETS,frozenset(self.policy.assets()['files']))
+
+    def test_original_journal_package_profile_still_records_its_positive_package_handoff(self):
+        self.journal_v1_profile();before=self.data_identity();marker=self.policy.enter('upgrade');self.policy.leave()
+        record=json.loads((self.policy.state/'package-history'/(marker['id']+'.json')).read_bytes())
+        self.assertEqual(marker['id'],record['maintenanceId']);self.assertEqual('upgrade',record['firstAction'])
+        self.assertTrue((self.policy.state/'startups').is_dir());self.assertIsNone(self.policy.fence());self.assertEqual(before,self.data_identity())
+
+    def test_original_journal_package_profile_does_not_bypass_unknown_admission(self):
+        self.journal_v1_profile();self.policy.enter('install');self.policy.leave();self.calls.clear()
+        self.operation(pending=True);before=self.data_identity()
+        with self.assertRaises(lifecycle.Refused):self.policy.enter('upgrade')
+        self.assertTrue(all(call[1]=='show' for call in self.calls));self.assertIsNone(self.policy.fence());self.assertEqual(before,self.data_identity())
+
     def test_missing_canonical_key_cannot_unfence_the_online_service(self):
         self.policy.enter("install")
         path=self.root / "etc/kura/credentials/kura_encryption_key"

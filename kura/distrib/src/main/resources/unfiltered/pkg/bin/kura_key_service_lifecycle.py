@@ -30,7 +30,8 @@ LEGACY_ASSETS = frozenset(("bin/kura_key_store.py", "bin/kura_key_service.py", "
 COLD_V1_ASSETS = LEGACY_ASSETS | frozenset(('bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py',
     'share/key-recovery/index.html', 'share/key-recovery/recovery.js', 'share/key-recovery/recovery.css'))
 PRE_JOURNAL_ASSETS = COLD_V1_ASSETS | frozenset(('bin/kura_key_recovery_start.py',))
-ASSETS = PRE_JOURNAL_ASSETS | frozenset(('bin/kura_key_journal.py',))
+JOURNAL_V1_ASSETS = PRE_JOURNAL_ASSETS | frozenset(('bin/kura_key_journal.py',))
+ASSETS = JOURNAL_V1_ASSETS | frozenset(('share/key-recovery/archive.js',))
 
 
 class Refused(RuntimeError):
@@ -1356,8 +1357,8 @@ class Lifecycle:
                 and type(manifest["protocol"]) is int and manifest["protocol"] == (2 if modern else 1)
                 and isinstance(manifest["files"], dict) and isinstance(manifest["units"], dict))
         profile = (frozenset(manifest['files']), frozenset(manifest['units']))
-        require((profile in ((ASSETS,frozenset(UNITS)),(PRE_JOURNAL_ASSETS,frozenset(UNITS))) and isinstance(manifest['generation'], dict))
-                if modern else profile in ((LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, frozenset(UNITS)), (PRE_JOURNAL_ASSETS, frozenset(UNITS)), (ASSETS, frozenset(UNITS))),
+        require((profile in tuple((files,frozenset(UNITS)) for files in (ASSETS,JOURNAL_V1_ASSETS,PRE_JOURNAL_ASSETS)) and isinstance(manifest['generation'], dict))
+                if modern else profile in ((LEGACY_ASSETS,frozenset(LEGACY_UNITS)),(COLD_V1_ASSETS,frozenset(UNITS)),(PRE_JOURNAL_ASSETS,frozenset(UNITS)),(JOURNAL_V1_ASSETS,frozenset(UNITS)),(ASSETS,frozenset(UNITS))),
                 'Unrecognized key-service package profile')
         for name, expected in manifest["files"].items():
             require(isinstance(name, str) and name and not Path(name).is_absolute()
@@ -1643,7 +1644,7 @@ class Lifecycle:
                     self.directory(directory, private=True, create=True)
                     self.sync(directory.parent)
             # Created only after unpack: old prerm must still recognize the old journal.
-            if frozenset(manifest["files"]) == ASSETS:
+            if frozenset(manifest["files"]) in (JOURNAL_V1_ASSETS,ASSETS):
                 self.directory(self.state / "startups", private=True, create=True)
                 self.sync(self.state)
             require(len(self.read(self.state / "journal.key", limit=32)) == 32)
@@ -1654,7 +1655,7 @@ class Lifecycle:
             manager = Manager(self.root, self.owner)
             with manager.lock(manager.store.path("/etc/kura/credentials/.provision.lock"), False):
                 _,_,_,_,proof,_=manager.generation_source()
-            if fence is not None and frozenset(manifest['files'])==ASSETS:
+            if fence is not None and frozenset(manifest['files']) in (JOURNAL_V1_ASSETS,ASSETS):
                 # The existing installer stops Main synchronously. Record its terminal
                 # predecessor set under the package lock, never infer UNKNOWN from Main0.
                 # A reinstall completes the retained remove fence under its original UUID.

@@ -53,10 +53,16 @@ class RecoveryHandoffArchiveTest(unittest.TestCase):
     def inventory(self):
         return self.history.format.inventory(lifecycle.Lifecycle(self.manager.root,self.manager.owner),dict(schema=1,**self.manager.gwt_namespace()))
 
+    def confirmed_archive(self,token,kind,identity,step=None):
+        request=dict(token=token,command='archive-preview',kind=kind,operationId=identity)
+        if step is not None:request['senderKind']=step
+        view=self.controller.execute(request)
+        return self.controller.execute(dict(request,command='archive-confirm',reviewSha256=view['reviewSha256']))
+
     def test_completed_handoff_archive_keeps_both_native_operations_and_receiver_terminal(self):
         request,token=self.local(completed=True);before=self.base.originals();private={str(p):p.read_bytes() for p in self.directory.rglob('*') if p.is_file()}
-        result=self.controller.execute(dict(token=token,command='archive-confirm',kind='HANDOFF',operationId=request['handoffId']))
-        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual('COMPLETED',result['correlation']['outcome'])
+        result=self.confirmed_archive(token,'HANDOFF',request['handoffId'])
+        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertTrue(result['archived'])
         self.assertIn(('HANDOFF',request['handoffId'],None),self.inventory());after=self.base.originals()
         self.assertEqual(before,{k:after[k] for k in before})
         for name,raw in private.items():self.assertEqual(raw,Path(name).read_bytes())
@@ -89,8 +95,18 @@ class RecoveryHandoffArchiveTest(unittest.TestCase):
 
     def test_wrong_original_bearer_cannot_authorize_another_private_history(self):
         first,token=self.local();second=dict(first,**{k:str(uuid.uuid4()) for k in ('handoffId','publicationId','startOperationId')});self.local(request=second)
-        with self.assertRaises(service.Failure):self.controller.execute(dict(token=token,command='archive-confirm',kind='HANDOFF',operationId=second['handoffId']))
+        with self.assertRaises(service.Failure):self.controller.execute(dict(token=token,command='archive-preview',kind='HANDOFF',operationId=second['handoffId']))
         self.assertFalse((self.directory/'archives').exists());self.assertFalse(any(c['action']=='journal-archive' for c in self.calls))
+
+    def test_history_list_is_scoped_to_the_original_grant_without_exposing_another_grant(self):
+        first,token=self.local();own,_=self.negative_admission(first,'publish')
+        second=dict(first,**{k:str(uuid.uuid4()) for k in ('handoffId','publicationId','startOperationId')})
+        self.local(request=second);foreign,_=self.negative_admission(second,'publish')
+        value=self.controller.execute(dict(token=token,command='archive-list',cursor=None))
+        self.assertEqual({first['handoffId'],own},{row['operationId'] for row in value['records']})
+        self.assertNotIn(foreign,str(value));self.assertNotIn(second['handoffId'],str(value))
+        self.assertEqual([],self.history.list()['records'])
+        self.assertFalse(any(call['action']=='journal-archive' for call in self.calls))
 
     def negative_admission(self,grant,step,*,completed=False):
         identity=str(uuid.uuid4()) if step=='handoff-renewal' else grant['startOperationId' if step=='handoff-start' else 'publicationId']
@@ -113,16 +129,16 @@ class RecoveryHandoffArchiveTest(unittest.TestCase):
         grant,token=self.local()
         for step in ('publish','handoff-start','handoff-renewal'):
             identity,_=self.negative_admission(grant,step)
-            result=self.controller.execute(dict(token=token,command='archive-confirm',kind='ADMISSION',operationId=identity,senderKind=step))
-            self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual('NOT_ADMITTED',result['correlation']['outcome'])
+            result=self.confirmed_archive(token,'ADMISSION',identity,step)
+            self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertTrue(result['archived'])
             self.assertIn(('ADMISSION',identity,step),self.inventory())
         self.assertEqual(3,sum(c['action']=='journal-archive' for c in self.calls))
 
     def test_completed_continuation_archive_requires_original_success_and_preserves_intake(self):
         grant,token=self.local(completed=True);identity,slot=self.negative_admission(grant,'continue',completed=True)
         before=self.base.originals()
-        result=self.controller.execute(dict(token=token,command='archive-confirm',kind='ADMISSION',operationId=identity,senderKind='continue'))
-        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual('COMPLETED',result['correlation']['outcome'])
+        result=self.confirmed_archive(token,'ADMISSION',identity,'continue')
+        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertTrue(result['archived'])
         self.assertIn(('ADMISSION',identity,'continue'),self.inventory());after=self.base.originals()
         self.assertEqual(before,{k:after[k] for k in before});self.assertEqual(1,sum(c['action']=='journal-archive' for c in self.calls))
 

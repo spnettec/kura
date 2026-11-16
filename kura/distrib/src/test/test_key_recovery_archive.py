@@ -77,14 +77,14 @@ class RecoveryPrivateArchiveTest(unittest.TestCase):
             keySha256=self.key,requestTag=self.manager.sender_admissions.tag(native),state='SUCCEEDED',response=response)))
         return identity,local
 
-    def negative(self,kind='restore',identity=None,*,owning=False,closed=False):
+    def negative(self,kind='restore',identity=None,*,owning=False,closed=False,backup=None,restore_identity=None):
         identity=str(uuid.uuid4()) if identity is None else identity
         if kind=='restore':
             if owning:identity,local,_=self.restore(native=False,identity=identity)
-            else:local=dict(schema=1,operationId=identity,expectedKeySha256=self.key,backupSha256='2'*64)
+            else:local=dict(schema=1,operationId=identity,expectedKeySha256=self.key,backupSha256=hashlib.sha256(service.encode(backup)).hexdigest() if backup else '2'*64)
             metadata=dict(local,action='restore')
         else:
-            metadata=dict(schema=1,action='core-start',operationId=identity,restoreOperationId=str(uuid.uuid4()),expectedKeySha256=self.key)
+            metadata=dict(schema=1,action='core-start',operationId=identity,restoreOperationId=restore_identity or str(uuid.uuid4()),expectedKeySha256=self.key)
             if owning:self.journal.write_new(self.journal.starts/(identity+'.json'),{k:v for k,v in metadata.items() if k!='action'})
         admission=str(uuid.uuid4());attempt=dict(schema=1,purpose='yofc.kura.sender-attempt.v1',admissionId=admission,kind=kind,nativeOperationId=identity,request=metadata)
         parent=self.directory/'admissions';parent.mkdir(mode=0o700,exist_ok=True);slot=parent/(identity+'-'+kind);slot.mkdir(mode=0o700)
@@ -190,7 +190,8 @@ class RecoveryPrivateArchiveTest(unittest.TestCase):
 
     def test_mutating_api_requires_exact_original_backup_and_root_key_check_and_keeps_secrets_out(self):
         identity,local,backup=self.restore();controller=recovery.Controller(self.client,self.journal)
-        request=dict(command='archive',kind='RESTORE',operationId=identity,backupJson=json.dumps(backup),passphrase='synthetic archive authorization only 52!')
+        preview=controller.archive(dict(command='preview',kind='RESTORE',operationId=identity))
+        request=dict(command='archive',kind='RESTORE',operationId=identity,reviewSha256=preview['reviewSha256'],backupJson=json.dumps(backup),passphrase='synthetic archive authorization only 52!')
         wrong=copy.deepcopy(backup);wrong['encrypted']='Yg=='
         with patch.object(controller,'inspect',return_value=dict(sameDeviceKey=True,keySha256=self.key)) as inspect:
             with self.assertRaises(service.Failure):controller.archive(dict(request,backupJson=json.dumps(wrong)))
@@ -202,9 +203,9 @@ class RecoveryPrivateArchiveTest(unittest.TestCase):
     def test_readonly_api_needs_no_secret_and_wrong_key_authorization_cannot_archive(self):
         identity,local,backup=self.restore();controller=recovery.Controller(self.client,self.journal)
         with patch.object(controller,'inspect',side_effect=AssertionError('Preview cannot inspect a backup')):
-            self.assertEqual('ARCHIVABLE',controller.archive(dict(command='preview',kind='RESTORE',operationId=identity))['state'])
+            preview=controller.archive(dict(command='preview',kind='RESTORE',operationId=identity));self.assertEqual('ARCHIVABLE',preview['state'])
         with patch.object(controller,'inspect',return_value=dict(sameDeviceKey=False,keySha256='f'*64)):
-            with self.assertRaises(service.Failure):controller.archive(dict(command='archive',kind='RESTORE',operationId=identity,backupJson=json.dumps(backup),passphrase='synthetic wrong recovery material 52!'))
+            with self.assertRaises(service.Failure):controller.archive(dict(command='archive',kind='RESTORE',operationId=identity,reviewSha256=preview['reviewSha256'],backupJson=json.dumps(backup),passphrase='synthetic wrong recovery material 52!'))
         self.assertFalse((self.directory/'archives').exists())
 
     def test_actual_https_route_checks_origin_csrf_cookie_and_material_before_archive(self):
@@ -226,11 +227,44 @@ class RecoveryPrivateArchiveTest(unittest.TestCase):
             return response.status,json.loads(raw)
         preview=dict(command='preview',kind='RESTORE',operationId=identity)
         for headers in [{'Origin':'https://foreign.invalid'},{'X-Kura-Recovery-CSRF':'wrong'},{'Cookie':'unrelated=value'}]:self.assertEqual(400,post(preview,headers)[0])
-        self.assertEqual([],self.calls);self.assertEqual('ARCHIVABLE',post(preview)[1]['state'])
-        request=dict(preview,command='archive',backupJson=json.dumps(backup),passphrase='synthetic HTTPS authorization material 52!')
+        self.assertEqual([],self.calls);view=post(preview)[1];self.assertEqual('ARCHIVABLE',view['state'])
+        request=dict(preview,command='archive',reviewSha256=view['reviewSha256'],backupJson=json.dumps(backup),passphrase='synthetic HTTPS authorization material 52!')
         wrong=dict(backup,operationId=str(uuid.uuid4()));self.assertEqual(400,post(dict(request,backupJson=json.dumps(wrong)))[0])
         self.assertFalse((self.directory/'archives').exists());status,result=post(request)
         self.assertEqual(200,status);self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual(1,sum(v['action']=='journal-archive' for v in self.calls))
+
+    def test_browser_review_is_redacted_read_only_and_stale_confirmation_never_sends(self):
+        identity,_,_=self.restore();before=self.files();view=self.history.review('RESTORE',identity)
+        self.assertTrue(view['archiveAllowed']);self.assertFalse(view['privateAttempt']);self.assertEqual(before,self.files())
+        self.assertEqual({'schema','kind','operationId','senderKind','state','privateAttempt','archiveId','reviewSha256','archiveAllowed','continueAllowed','archived'},set(view))
+        native=self.manager.operations/(identity+'.json');document=service.decode(native.read_bytes());document['response']['existingReceiptPreserved']=False
+        self.manager.atomic(native,service.encode(document));result=self.history.confirm('RESTORE',identity,None,view['reviewSha256'])
+        self.assertEqual('STALE_REVIEW',result['error']);self.assertFalse(result['archiveAllowed']);self.assertFalse((self.directory/'archives').exists())
+        self.assertFalse(any(v['action']=='journal-archive' for v in self.calls))
+
+    def test_browser_lost_before_root_original_is_query_only_with_original_id_visible_offline(self):
+        identity,_,_=self.restore();view=self.history.review('RESTORE',identity);self.lose='before'
+        pending=self.history.confirm('RESTORE',identity,None,view['reviewSha256']);self.assertTrue(pending['privateAttempt']);self.assertEqual('UNKNOWN',pending['state'])
+        self.assertFalse(pending['archiveAllowed']);self.assertFalse(pending['continueAllowed']);original=pending['archiveId'];self.assertIsNotNone(original)
+        self.lose=None;again=self.history.confirm('RESTORE',identity,None,pending['reviewSha256']);self.assertEqual('ARCHIVE_NOT_ALLOWED',again['error'])
+        with patch.object(self.history,'client',side_effect=OSError('modeled offline Root')):
+            offline=self.history.review('RESTORE',identity)
+        self.assertEqual(original,offline['archiveId']);self.assertEqual('UNAVAILABLE',offline['state']);self.assertFalse(offline['archiveAllowed']);self.assertFalse(offline['continueAllowed'])
+        self.assertEqual(1,sum(v['action']=='journal-archive' for v in self.calls))
+
+    def test_browser_history_pages_physical_originals_without_root_requests(self):
+        identities={self.restore()[0] for _ in range(23)};before=self.files();calls=len(self.calls)
+        first=self.history.list();second=self.history.list(first['nextCursor']);self.assertEqual(20,len(first['records']));self.assertEqual(3,len(second['records']))
+        self.assertIsNone(second['nextCursor']);self.assertEqual(identities,{r['operationId'] for r in first['records']+second['records']})
+        self.assertEqual(calls,len(self.calls));self.assertEqual(before,self.files())
+        with self.assertRaises(lifecycle.Refused):self.history.list('RESTORE:../../key')
+
+    def test_confirmation_digest_is_required_before_backup_or_root_access(self):
+        identity,_,backup=self.restore();controller=recovery.Controller(self.client,self.journal)
+        request=dict(command='archive',kind='RESTORE',operationId=identity,backupJson=json.dumps(backup),passphrase='synthetic archive authorization only 52!')
+        for extra in ({},{'reviewSha256':'wrong'}):
+            with self.assertRaises(service.Failure):controller.archive(dict(request,**extra))
+        self.assertEqual([],self.calls);self.assertFalse((self.directory/'archives').exists())
 
 
 if __name__=='__main__':unittest.main()
