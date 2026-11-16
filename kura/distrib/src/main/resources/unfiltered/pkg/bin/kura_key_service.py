@@ -33,7 +33,7 @@ from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEV
                             GENERATION_FORMAT, RING_PATH, RING_MAGIC, GENERATION_RECEIPT_PATH,
                             key_generations as parse_key_generations, generation_receipt as parse_generation_receipt,
                             key_generation_entries, encode_key_generations)
-from kura_key_service_lifecycle import (Lifecycle, validate_record, Refused as LifecycleRefused,
+from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_publication, Refused as LifecycleRefused,
                                        Unresolved as LifecycleUnresolved)
 
 SOCKET = "/run/kura-key-service/control.sock"
@@ -333,9 +333,15 @@ class Manager:
         except FileNotFoundError:
             return None
         try:
-            return validate_record(record, identity)
+            record = validate_record(record, identity)
         except LifecycleRefused:
             raise Failure("UNSAFE_JOURNAL") from None
+        if record['action'] == 'generation-cancel':
+            original = dict(schema=1, action='generation-cancel', operationId=identity, **record['intent'])
+            secret = self.read(self.state / 'journal.key', 32)
+            require(len(secret) == 32 and hmac.compare_digest(record['requestTag'],
+                    hmac.new(secret, encode(original), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
+        return record
 
     def public_record(self, record):
         if record is None:
@@ -712,6 +718,256 @@ class Manager:
                             source=history['source'], generation=history['generation'],
                             historySha256=prepared['historySha256'], backupSha256=history['backupSha256'])
 
+    def preparation_records(self):
+        self.directory(self.operations, private=True)
+        paths = list(self.operations.iterdir())
+        require(len(paths) <= MAX_OPERATIONS, 'UNSAFE_JOURNAL')
+        result = {}
+        for path in paths:
+            require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+            identity = operation_id(path.name[:-5])
+            record = self.record(identity)
+            require(record is not None, 'UNSAFE_JOURNAL')
+            result[identity] = record
+        return result
+
+    def preparation_ids(self, records):
+        result = {identity for identity, record in records.items() if record['action'] == 'generation-prepare'}
+        parent = self.state / 'generations'
+        if os.path.lexists(parent):
+            self.directory(parent, private=True)
+            paths = list(parent.iterdir())
+            require(len(paths) <= MAX_OPERATIONS, 'UNSAFE_JOURNAL')
+            for path in paths:
+                try:
+                    identity = operation_id(path.name)
+                except Failure:
+                    raise Failure('UNSAFE_JOURNAL') from None
+                self.directory(path, private=True)
+                result.add(identity)
+        return sorted(result)
+
+    def preparation_state(self, identity, records=None):
+        """Historical events only; current canonical credentials and business health are independent."""
+        records = self.preparation_records() if records is None else records
+        preparation = records.get(identity)
+        if preparation is None:
+            return dict(preparationId=identity, state='ORPHANED')
+        require(preparation['action'] == 'generation-prepare', 'UNSAFE_JOURNAL')
+        if preparation['state'] == 'INTENT':
+            return dict(preparationId=identity, state='UNKNOWN')
+        _, history, prepared = self.prepared_generation(identity)
+        result = dict(preparationId=identity, state='PREPARED', createdAt=history['createdAt'],
+                      source=history['source'], generation=history['generation'],
+                      historySha256=prepared['historySha256'], backupSha256=history['backupSha256'])
+        directory = self.state / 'generations' / identity
+        cancelled = [record for record in records.values() if record['action'] == 'generation-cancel'
+                     and record['intent']['preparationId'] == identity]
+        published = [record for record in records.values() if record['action'] == 'generation-publish'
+                     and record['state'] == 'SUCCEEDED' and record['response']['preparationId'] == identity]
+        require(len(cancelled) <= 1 and len(published) <= 1, 'UNSAFE_JOURNAL')
+        cancellation = directory / 'cancellation.json'
+        publication = directory / 'publication.json'
+        has_cancel = os.path.lexists(cancellation)
+        has_publish = os.path.lexists(publication)
+        require(not ((has_cancel or cancelled) and (has_publish or published)), 'UNSAFE_JOURNAL')
+        if has_cancel:
+            raw = self.read(cancellation, 8192)
+            value = decode(raw)
+            fields(value, {'schema', 'purpose', 'operationId', 'preparationId', 'historySha256',
+                           'ringSha256', 'source', 'createdAt', 'receiptTag'})
+            require(type(value['schema']) is int and value['schema'] == 1
+                    and value['purpose'] == 'yofc-kura-generation-cancel-v1'
+                    and value['preparationId'] == identity and value['source'] == history['source']
+                    and value['historySha256'] == prepared['historySha256']
+                    and value['ringSha256'] == history['generation']['ringSha256']
+                    and isinstance(value['createdAt'], str) and 0 < len(value['createdAt']) <= 64,
+                    'UNSAFE_JOURNAL')
+            digest(value['receiptTag'])
+            body = {name: item for name, item in value.items() if name != 'receiptTag'}
+            secret = self.read(self.state / 'journal.key', 32)
+            require(len(secret) == 32 and raw == encode(value)
+                    and hmac.compare_digest(value['receiptTag'], hmac.new(secret,
+                        b'yofc-kura-cancel-receipt-v1\0' + encode(body), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
+            require(len(cancelled) == 1 and cancelled[0]['operationId'] == value['operationId'], 'UNSAFE_JOURNAL')
+            record = cancelled[0]
+            require(record['intent'] == dict(preparationId=identity,
+                    expectedHistorySha256=prepared['historySha256'],
+                    expectedRingSha256=history['generation']['ringSha256']), 'UNSAFE_JOURNAL')
+            fingerprint = hashlib.sha256(raw).hexdigest()
+            if record['state'] == 'SUCCEEDED':
+                require(record['response']['cancellationSha256'] == fingerprint, 'UNSAFE_JOURNAL')
+            result.update(state='CANCELLED' if record['state'] == 'SUCCEEDED' else 'UNKNOWN',
+                          cancellationId=record['operationId'], cancellationSha256=fingerprint)
+        elif cancelled:
+            require(cancelled[0]['state'] == 'INTENT', 'UNSAFE_JOURNAL')
+            result.update(state='UNKNOWN', cancellationId=cancelled[0]['operationId'])
+        elif has_publish:
+            raw = self.read(publication, 8192)
+            try:
+                value = validate_publication(decode(raw))
+            except LifecycleRefused:
+                raise Failure('UNSAFE_JOURNAL') from None
+            require(value['preparationId'] == identity and value['historySha256'] == prepared['historySha256']
+                    and value['source'] == history['source'] and value['generation'] == history['generation'],
+                    'UNSAFE_JOURNAL')
+            record = records.get(value['operationId'])
+            require(record is not None and record['action'] == 'generation-publish', 'UNSAFE_JOURNAL')
+            fingerprint = hashlib.sha256(raw).hexdigest()
+            if record['state'] == 'SUCCEEDED':
+                response = record['response']
+                require(len(published) == 1 and published[0]['operationId'] == record['operationId']
+                        and response['publicationSha256'] == fingerprint
+                        and all(response[k] == value[k] for k in ('preparationId', 'verificationId', 'cohortSha256'))
+                        and response['ringSha256'] == history['generation']['ringSha256']
+                        and response['activeKeySha256'] == history['generation']['activeKeySha256'], 'UNSAFE_JOURNAL')
+            result.update(state='PUBLISHED' if record['state'] == 'SUCCEEDED' else 'UNKNOWN',
+                          publicationId=record['operationId'], publicationSha256=fingerprint)
+        elif published:
+            raise Failure('UNSAFE_JOURNAL')
+        if result['state'] == 'PREPARED':
+            verified = [record for record in records.values() if record['action'] == 'generation-backup-verify'
+                        and record['state'] == 'SUCCEEDED' and record['response']['preparationId'] == identity]
+            require(len(verified) <= 1, 'UNSAFE_JOURNAL')
+            if verified:
+                response = verified[0]['response']
+                require(response['ringSha256'] == history['generation']['ringSha256']
+                        and response['backupSha256'] == history['backupSha256'], 'UNSAFE_JOURNAL')
+                result.update(state='VERIFIED', verificationId=verified[0]['operationId'])
+        return result
+
+    def require_open_preparation(self, identity):
+        state = self.preparation_state(identity)['state']
+        require(state != 'CANCELLED', 'PREPARATION_CANCELLED')
+        require(state != 'PUBLISHED', 'ALREADY_PUBLISHED')
+        require(state in ('PREPARED', 'VERIFIED'), 'UNRESOLVED_OPERATION')
+
+    def require_closed_preparations(self):
+        records = self.preparation_records()
+        for identity in self.preparation_ids(records):
+            require(self.preparation_state(identity, records)['state'] in ('CANCELLED', 'PUBLISHED'),
+                    'PREPARATION_PENDING')
+
+    def preparation_history(self, request):
+        fields(request, {'schema', 'action', 'afterPreparationId', 'limit'})
+        require(request['action'] == 'generation-history', 'INVALID_ARGUMENT')
+        require(type(request['limit']) is int and 1 <= request['limit'] <= 16, 'INVALID_ARGUMENT')
+        cursor = request['afterPreparationId']
+        if cursor is not None:
+            operation_id(cursor)
+        with self.lock(self.state / 'admission.lock', False):
+            self.maintenance()
+            with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
+                records = self.preparation_records()
+                identities = self.preparation_ids(records)
+                require(cursor is None or cursor in identities, 'CONFLICT')
+                unresolved = False
+                try:
+                    self.settled()
+                except Failure as failure:
+                    if failure.reason != 'UNRESOLVED_OPERATION':
+                        raise
+                    unresolved = True
+                rows = []
+                for identity in identities:
+                    try:
+                        row = self.preparation_state(identity, records)
+                    except (OSError, Failure, Refused, LifecycleRefused):
+                        row = dict(preparationId=identity, state='UNAVAILABLE', reason='UNSAFE_JOURNAL')
+                    rows.append(row)
+                offset = 0 if cursor is None else identities.index(cursor) + 1
+                page = rows[offset:offset + request['limit']]
+                more = offset + len(page) < len(rows)
+                response = dict(schema=1, action=request['action'], scope='HISTORICAL_EVENTS_ONLY',
+                                entries=page, hasUnresolvedRecords=unresolved,
+                                historyRevision=hashlib.sha256(encode(rows)).hexdigest(),
+                                nextAfterPreparationId=page[-1]['preparationId'] if more else None)
+                require(len(encode(response)) <= MAX_FRAME, 'CAPACITY')
+                return response
+
+    def cancel_preparation(self, request, *, recover=False):
+        names = {'schema', 'action', 'operationId'} | ({'expectedCancellationSha256'} if recover else
+                {'preparationId', 'expectedHistorySha256', 'expectedRingSha256'})
+        fields(request, names)
+        require(request['action'] == ('generation-cancel-recover' if recover else 'generation-cancel'), 'INVALID_ARGUMENT')
+        identity = operation_id(request['operationId'])
+        for name in ('expectedCancellationSha256',) if recover else ('expectedHistorySha256', 'expectedRingSha256'):
+            digest(request[name])
+        if not recover:
+            operation_id(request['preparationId'])
+            require(request['preparationId'] != identity, 'INVALID_ARGUMENT')
+        with self.lock(self.state / 'admission.lock', True):
+            self.maintenance()
+            secret = self.read(self.state / 'journal.key', 32)
+            require(len(secret) == 32, 'UNSAFE_JOURNAL')
+            tag = hmac.new(secret, encode(request), hashlib.sha256).hexdigest()
+            record = self.record(identity)
+            if not recover and record is not None:
+                require(hmac.compare_digest(record['requestTag'], tag), 'CONFLICT')
+                return self.public_record(record)
+            if recover:
+                require(record is not None and record['action'] == 'generation-cancel', 'CONFLICT')
+                if record['state'] == 'SUCCEEDED':
+                    require(record['response']['cancellationSha256'] == request['expectedCancellationSha256'], 'CONFLICT')
+                    return self.public_record(record)
+                try:
+                    Lifecycle(self.root, self.owner).check_records(recovering_cancel=identity)
+                except LifecycleUnresolved:
+                    raise Failure('UNRESOLVED_OPERATION') from None
+                except LifecycleRefused:
+                    raise Failure('UNSAFE_JOURNAL') from None
+                intent = record['intent']
+            else:
+                self.settled()
+                self.journal_admission()
+                intent = {name: request[name] for name in ('preparationId', 'expectedHistorySha256', 'expectedRingSha256')}
+            with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
+                preparation = intent['preparationId']
+                row = self.preparation_state(preparation)
+                _, history, prepared = self.prepared_generation(preparation)
+                require(intent['expectedHistorySha256'] == prepared['historySha256']
+                        and intent['expectedRingSha256'] == history['generation']['ringSha256'], 'CONFLICT')
+                _, _, _, metadata, proof, source = self.generation_source()
+                require(source == history['source'] and proof == history['sourceReceipt']
+                        and metadata == history['sourceGenerationReceipt'], 'CONFLICT')
+                directory = self.state / 'generations' / preparation
+                path = directory / 'cancellation.json'
+                if recover:
+                    require(row['state'] == 'UNKNOWN' and row.get('cancellationId') == identity, 'CONFLICT')
+                    if 'cancellationSha256' not in row:
+                        return self.public_record(record)  # Never recreate a missing original receipt.
+                    require(row['cancellationSha256'] == request['expectedCancellationSha256'], 'CONFLICT')
+                    raw = self.read(path, 8192)
+                else:
+                    require(row['state'] != 'CANCELLED', 'ALREADY_CANCELLED')
+                    require(row['state'] != 'PUBLISHED', 'ALREADY_PUBLISHED')
+                    require(row['state'] in ('PREPARED', 'VERIFIED'), 'UNRESOLVED_OPERATION')
+                    value = dict(schema=1, purpose='yofc-kura-generation-cancel-v1', operationId=identity,
+                                 preparationId=preparation, historySha256=prepared['historySha256'],
+                                 ringSha256=history['generation']['ringSha256'], source=source,
+                                 createdAt=datetime.datetime.now(datetime.timezone.utc).isoformat())
+                    value['receiptTag'] = hmac.new(secret,
+                        b'yofc-kura-cancel-receipt-v1\0' + encode(value), hashlib.sha256).hexdigest()
+                    raw = encode(value)
+                    record = dict(schema=1, operationId=identity, action='generation-cancel', requestTag=tag,
+                                  state='INTENT', response=None, intent=intent)
+                try:
+                    if not recover:
+                        self.atomic(self.operations / (identity + '.json'), encode(record))
+                        self.atomic(path, raw, mode=0o400, no_replace=True)
+                    else:
+                        self.sync(directory)  # Original file bytes/inode remain unchanged.
+                    response = dict(schema=1, operationId=identity, action='generation-cancel', state='SUCCEEDED',
+                                    preparationId=preparation, historySha256=prepared['historySha256'],
+                                    ringSha256=history['generation']['ringSha256'],
+                                    cancellationSha256=hashlib.sha256(raw).hexdigest(),
+                                    credentialsChanged=False, historyRetained=True)
+                    record.update(state='SUCCEEDED', response=response)
+                    self.atomic(self.operations / (identity + '.json'), encode(record))
+                    return response
+                except (OSError, Failure, Refused):
+                    raise Failure('UNKNOWN') from None
+
     def stage_generation(self, request, *, verify=False):
         expected = {"schema", "action", "operationId", "passphrase"}
         expected |= {"preparationId", "expectedRingSha256", "backup"} if verify else {"expectedSource"}
@@ -744,6 +1000,7 @@ class Manager:
                         raw, history, prepared = self.prepared_generation(preparation)
                     except OSError:
                         raise Failure("UNSAFE_FILESYSTEM") from None
+                    self.require_open_preparation(preparation)
                     require(history["source"] == source and history["sourceReceipt"] == proof
                             and history["sourceGenerationReceipt"] == original_metadata, "CONFLICT")
                     require(request["expectedRingSha256"] == history["generation"]["ringSha256"]
@@ -760,9 +1017,7 @@ class Manager:
                     require(len(keys) < 8, "CAPACITY")
                     require(self.generation_restore_supported(), "UNSUPPORTED")
                     parent = self.state / "generations"
-                    if os.path.lexists(parent):
-                        self.directory(parent, private=True)
-                        require(not any(parent.iterdir()), "PREPARATION_PENDING")
+                    self.require_closed_preparations()
                 record = dict(schema=1, operationId=identity, action=request["action"],
                               requestTag=tag, state="INTENT", response=None)
                 try:
@@ -817,6 +1072,10 @@ class Manager:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
         if action == 'generation-preparation-read':
             return self.read_preparation(request)
+        if action == 'generation-history':
+            return self.preparation_history(request)
+        if action in ('generation-cancel', 'generation-cancel-recover'):
+            return self.cancel_preparation(request, recover=action == 'generation-cancel-recover')
         if action in ("generation-prepare", "generation-backup-verify"):
             return self.stage_generation(request, verify=action == "generation-backup-verify")
         if action == 'core-validation-info':

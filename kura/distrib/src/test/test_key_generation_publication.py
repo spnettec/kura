@@ -154,6 +154,56 @@ class GenerationPublicationTest(unittest.TestCase):
         self.assertEqual(commands, self.commands)
         self.refused('START_ALREADY_AUTHORIZED', lambda: self.component.request(self.start_request(), start=True))
 
+    def test_preparation_history_published_round_allows_new_staging_without_discarding_original_material(self):
+        result = self.publish()
+        directory = self.state / 'generations' / self.preparation
+        before = {p.name:(p.stat().st_ino, p.read_bytes()) for p in directory.iterdir()}
+        source = self.manager.generation_source()[-1]
+        request = dict(schema=1, action='generation-prepare', operationId=str(uuid.uuid4()),
+                       expectedSource=source, passphrase=self.password)
+        second = self.manager.handle(request)
+        self.assertEqual(3, len(second['generation']['keySha256s']))
+        self.assertEqual(before, {p.name:(p.stat().st_ino, p.read_bytes()) for p in directory.iterdir()})
+        history = self.manager.handle(dict(schema=1, action='generation-history', afterPreparationId=None, limit=16))
+        rows = {row['preparationId']:row for row in history['entries']}
+        self.assertEqual('PUBLISHED', rows[self.preparation]['state'])
+        self.assertEqual(result['publicationSha256'], rows[self.preparation]['publicationSha256'])
+        self.assertEqual('PREPARED', rows[second['operationId']]['state'])
+
+    def test_preparation_history_missing_original_publication_never_admits_another_round(self):
+        self.publish()
+        (self.state / 'generations' / self.preparation / 'publication.json').unlink()
+        history = self.manager.handle(dict(schema=1, action='generation-history', afterPreparationId=None, limit=16))
+        self.assertEqual('UNAVAILABLE', history['entries'][0]['state'])
+        source = self.manager.generation_source()[-1]
+        self.refused('UNSAFE_JOURNAL', lambda:self.manager.handle(dict(schema=1,
+            action='generation-prepare', operationId=str(uuid.uuid4()), expectedSource=source, passphrase=self.password)))
+
+    def test_preparation_history_original_unknown_publication_is_not_classified_as_published(self):
+        original = self.manager.atomic
+        def lost(path, raw, **options):
+            if path == self.manager.operations / (self.publish_request['operationId'] + '.json') and b'"state":"SUCCEEDED"' in raw:
+                raise OSError('Fixture lost original publication result')
+            return original(path, raw, **options)
+        with patch.object(self.manager, 'atomic', side_effect=lost):
+            self.refused('UNKNOWN', self.publish)
+        history = self.manager.handle(dict(schema=1, action='generation-history', afterPreparationId=None, limit=16))
+        self.assertTrue(history['hasUnresolvedRecords'])
+        self.assertEqual('UNKNOWN', history['entries'][0]['state'])
+        self.assertEqual(self.publish_request['operationId'], history['entries'][0]['publicationId'])
+        self.assertEqual(1, self.count_stops())
+
+    def test_preparation_history_cancelled_round_cannot_be_published_or_planned(self):
+        self.manager.handle(dict(schema=1, action='generation-cancel', operationId=str(uuid.uuid4()),
+            preparationId=self.preparation, expectedHistorySha256=self.prepared['historySha256'],
+            expectedRingSha256=self.prepared['generation']['ringSha256']))
+        self.refused('PREPARATION_CANCELLED', self.publish)
+        request = {k:v for k,v in self.publish_request.items() if k not in ('operationId','expectedCohortSha256')}
+        request['action'] = 'generation-publication-plan'
+        self.refused('PREPARATION_CANCELLED', lambda:self.component.request(request))
+        self.assertEqual(0, self.count_stops())
+        self.assertFalse((self.manager.operations / (self.publish_request['operationId'] + '.json')).exists())
+
     def test_unverified_archive_refuses_before_intent_or_stop(self):
         self.refused('BACKUP_NOT_VERIFIED', lambda: self.publish(dict(self.publish_request, verificationId=str(uuid.uuid4()))))
         self.assertEqual(0, self.count_stops())

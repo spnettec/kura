@@ -114,17 +114,64 @@ def validate_preparation_response(response, action, identity):
                 and is_digest(response["backupSha256"]))
 
 
+def validate_publication(value):
+    require(isinstance(value, dict) and set(value) == {
+        'schema', 'purpose', 'operationId', 'preparationId', 'verificationId', 'historySha256',
+        'source', 'generation', 'cohortSha256', 'stoppedWriter'})
+    require(type(value['schema']) is int and value['schema'] == 1
+            and value['purpose'] == 'yofc-kura-published-generation-v1')
+    require(all(canonical_id(value[name]) for name in ('operationId', 'preparationId', 'verificationId')))
+    validate_generation_metadata(value['generation'])
+    source = value['source']
+    require(isinstance(source, dict) and set(source) == {'keySha256', 'ringSha256'}
+            and is_digest(source['keySha256'])
+            and (source['ringSha256'] is None or is_digest(source['ringSha256']))
+            and is_digest(value['historySha256']) and is_digest(value['cohortSha256']))
+    writer = value['stoppedWriter']
+    require(isinstance(writer, dict) and set(writer) == {
+        'pid', 'startTicks', 'bootId', 'invocationId', 'lockDevice', 'lockInode'})
+    require(type(writer['pid']) is int and writer['pid'] > 0
+            and isinstance(writer['startTicks'], str) and writer['startTicks'].isdigit()
+            and isinstance(writer['bootId'], str)
+            and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', writer['bootId']) is not None
+            and isinstance(writer['invocationId'], str)
+            and re.fullmatch(r'[0-9a-f]{32}', writer['invocationId']) is not None
+            and type(writer['lockDevice']) is int and writer['lockDevice'] >= 0
+            and type(writer['lockInode']) is int and writer['lockInode'] > 0)
+    return value
+
+
 def validate_record(record, identity):
+    cancel = isinstance(record, dict) and record.get('action') == 'generation-cancel'
     require(isinstance(record, dict) and set(record) ==
-            {"schema", "operationId", "action", "requestTag", "state", "response"})
+            {"schema", "operationId", "action", "requestTag", "state", "response"} | ({'intent'} if cancel else set()))
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
             and record["operationId"] == identity and record["action"] in
               ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify",
-               "generation-publish", "generation-core-start")
+                 "generation-publish", "generation-core-start", "generation-cancel")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
+    if cancel:
+        intent = record['intent']
+        require(isinstance(intent, dict) and set(intent) == {
+            'preparationId', 'expectedHistorySha256', 'expectedRingSha256'})
+        require(canonical_id(intent['preparationId']) and intent['preparationId'] != identity
+                and is_digest(intent['expectedHistorySha256']) and is_digest(intent['expectedRingSha256']))
     if record["state"] == "INTENT":
         require(response is None)
+        return record
+    if cancel:
+        require(isinstance(response, dict) and set(response) == {
+            'schema', 'operationId', 'state', 'action', 'preparationId', 'historySha256', 'ringSha256',
+            'cancellationSha256', 'credentialsChanged', 'historyRetained'})
+        require(type(response['schema']) is int and response['schema'] == 1
+                and response['operationId'] == identity and response['state'] == 'SUCCEEDED'
+                and response['action'] == 'generation-cancel'
+                and response['preparationId'] == intent['preparationId']
+                and response['historySha256'] == intent['expectedHistorySha256']
+                and response['ringSha256'] == intent['expectedRingSha256']
+                and is_digest(response['cancellationSha256'])
+                and response['credentialsChanged'] is False and response['historyRetained'] is True)
         return record
     if record['action'] in ('generation-publish', 'generation-core-start'):
         names = {'schema', 'operationId', 'state', 'action', 'ringSha256', 'activeKeySha256', 'cohortSha256'}
@@ -311,7 +358,7 @@ class Lifecycle:
         finally:
             os.close(fd)
 
-    def check_records(self):
+    def check_records(self, *, recovering_cancel=None):
         self.directory(self.state / "operations", private=True)
         paths = list((self.state / "operations").iterdir())
         require(len(paths) <= 256)
@@ -319,6 +366,8 @@ class Lifecycle:
             require(path.name.endswith(".json") and canonical_id(path.name[:-5]))
             record = validate_record(decode(self.read(path)), path.name[:-5])
             if record["state"] != "SUCCEEDED":
+                if path.name[:-5] == recovering_cancel and record['action'] == 'generation-cancel':
+                    continue
                 raise Unresolved("Unresolved key operation; preserve original UUID and package state")
         startups=self.state/'startups'
         if os.path.lexists(startups):

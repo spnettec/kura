@@ -12,7 +12,7 @@ import subprocess
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_service_lifecycle import Lifecycle, Refused, validate_generation_metadata
+from kura_key_service_lifecycle import Lifecycle, Refused, validate_publication
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
@@ -123,26 +123,10 @@ class Generations:
     def current(self):
         manager = self.manager
         value = decode(manager.read(manager.state / CURRENT, 8192))
-        fields(value, {'schema', 'purpose', 'operationId', 'preparationId', 'verificationId', 'historySha256',
-                       'source', 'generation', 'cohortSha256', 'stoppedWriter'})
-        require(type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == PURPOSE, 'UNSAFE_JOURNAL')
-        for name in ('operationId', 'preparationId', 'verificationId'):
-            operation_id(value[name])
-        validate_generation_metadata(value['generation'])
-        fields(value['source'], {'keySha256', 'ringSha256'})
-        digest(value['source']['keySha256'])
-        if value['source']['ringSha256'] is not None:
-            digest(value['source']['ringSha256'])
-        digest(value['historySha256']); digest(value['cohortSha256'])
-        writer = value['stoppedWriter']
-        fields(writer, {'pid', 'startTicks', 'bootId', 'invocationId', 'lockDevice', 'lockInode'})
-        require(type(writer['pid']) is int and writer['pid'] > 0
-                and isinstance(writer['startTicks'], str) and writer['startTicks'].isdigit()
-                and isinstance(writer['bootId'], str) and isinstance(writer['invocationId'], str)
-                and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', writer['bootId']) is not None
-                and re.fullmatch(r'[0-9a-f]{32}', writer['invocationId']) is not None
-                and type(writer['lockDevice']) is int and writer['lockDevice'] >= 0
-                and type(writer['lockInode']) is int and writer['lockInode'] > 0, 'UNSAFE_JOURNAL')
+        try:
+            validate_publication(value)
+        except Refused:
+            raise Failure('UNSAFE_JOURNAL') from None
         raw = encode(value)
         immutable = manager.state / 'generations' / value['preparationId'] / 'publication.json'
         require(manager.read(immutable, 8192) == raw, 'UNSAFE_JOURNAL')
@@ -175,6 +159,7 @@ class Generations:
     def prepared(self, request):
         manager = self.manager
         raw, history, prepared = manager.prepared_generation(request['preparationId'])
+        manager.require_open_preparation(request['preparationId'])
         verification = manager.record(request['verificationId'])
         require(verification is not None and verification['action'] == 'generation-backup-verify'
                 and verification['state'] == 'SUCCEEDED', 'BACKUP_NOT_VERIFIED')
