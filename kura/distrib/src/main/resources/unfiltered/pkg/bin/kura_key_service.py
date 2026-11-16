@@ -367,9 +367,13 @@ class Manager:
         except LifecycleRefused:
             raise Failure("UNSAFE_JOURNAL") from None
 
-    def settled(self):
+    def settled(self, *, recovering_publication=None):
         try:
-            Lifecycle(self.root, self.owner).check_records()
+            policy = Lifecycle(self.root, self.owner)
+            if recovering_publication is None:
+                policy.check_records()
+            else:
+                policy.check_records(recovering_publication=recovering_publication)
         except LifecycleUnresolved:
             raise Failure("UNRESOLVED_OPERATION") from None
         except LifecycleRefused:
@@ -1080,9 +1084,14 @@ class Manager:
             return self.stage_generation(request, verify=action == "generation-backup-verify")
         if action == 'core-validation-info':
             return self.validation_component().info(request)
-        if action in ('generation-publication-plan', 'generation-publish', 'generation-core-start'):
+        if action in ('generation-publication-read', 'generation-publication-recover',
+                      'generation-publication-plan', 'generation-publish', 'generation-core-start'):
             try:
                 component, _ = self.generation_component()
+                if action == 'generation-publication-read':
+                    return component.publication_read(request)
+                if action == 'generation-publication-recover':
+                    return component.recover_publication(request)
                 return component.request(request, start=action == 'generation-core-start')
             except LifecycleRefused:
                 raise Failure('UNSAFE_JOURNAL') from None
@@ -1325,7 +1334,7 @@ def agent_peer(pid):
 def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):
     action = request.get('action')
     require(not agent_peer(pid) or action in ('core-validation-info', 'core-snapshot-validate'), 'FORBIDDEN')
-    require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance'), 'FORBIDDEN')
+    require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance', 'generation-publication-recover'), 'FORBIDDEN')
     if action == 'core-snapshot-validate':
         require(uid in (0, daemon) and (recovery is None or uid != recovery), 'FORBIDDEN')
         require(input_descriptor is not None, 'PROTOCOL_MISMATCH')

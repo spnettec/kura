@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pwd
 import re
+import stat
 import subprocess
 
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
@@ -18,6 +19,9 @@ DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
 CURRENT = 'generation-current.json'
 PURPOSE = 'yofc-kura-published-generation-v1'
+RECOVERY = 'publication-recovery.json'
+RECOVERY_PURPOSE = 'yofc-kura-publication-recovery-v1'
+RECOVERY_CONTEXT = b'yofc-kura-publication-recovery-v1\0'
 PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'MainPID', 'ControlPID', 'User', 'Group',
               'KillMode', 'FragmentPath', 'DropInPaths', 'NeedDaemonReload', 'ControlGroup', 'InvocationID')
 SYSTEMCTL = ('/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager')
@@ -37,18 +41,19 @@ class Generations:
                 'SYSTEMD_UNAVAILABLE')
         return result.stdout
 
-    def unit(self, *, generation_mode):
+    def unit(self, *, generation_mode, recovery=False):
         raw = self.command((*SYSTEMCTL, 'show', 'kura.service', *['--property=' + p for p in PROPERTIES]))
         lines = raw.splitlines()
         require(len(lines) == len(PROPERTIES) and all('=' in line for line in lines), 'UNMANAGED_CORE')
         result = dict(line.split('=', 1) for line in lines)
         require(set(result) == set(PROPERTIES), 'UNMANAGED_CORE')
         require(all(result[k] == v for k, v in dict(Id='kura.service', LoadState='loaded', User='kurad', Group='kurad',
-                                                  KillMode='control-group', NeedDaemonReload='no').items()), 'UNMANAGED_CORE')
+                                                  KillMode='control-group').items())
+                and result['NeedDaemonReload'] in (('no', 'yes') if recovery else ('no',)), 'UNMANAGED_CORE')
         require(result['FragmentPath'] in ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
                 and self.manager.store.path(result['FragmentPath']).resolve(strict=True)
                 == self.manager.store.path('/lib/systemd/system/kura.service').resolve(strict=True), 'UNMANAGED_CORE')
-        require(result['DropInPaths'] == (DROPIN if generation_mode else ''), 'UNMANAGED_CORE')
+        require(result['DropInPaths'] in (('', DROPIN) if recovery else ((DROPIN if generation_mode else ''),)), 'UNMANAGED_CORE')
         require(all(re.fullmatch(r'[0-9]{1,10}', result[k]) is not None for k in ('MainPID', 'ControlPID')), 'UNMANAGED_CORE')
         require(result['ControlGroup'] in ('', '/system.slice/kura.service')
                 and re.fullmatch(r'(?:[0-9a-f]{32})?', result['InvocationID']) is not None, 'UNMANAGED_CORE')
@@ -197,11 +202,232 @@ class Generations:
         require(not self.cgroup_empty(required=True), 'CORE_NOT_ACTIVE')
         return unit, writer
 
-    def stopped(self, *, generation_mode, uid):
-        unit = self.unit(generation_mode=generation_mode)
+    def stopped(self, *, generation_mode, uid, recovery=False):
+        unit = self.unit(generation_mode=generation_mode, recovery=recovery)
         require(unit['ActiveState'] == 'inactive' and unit['SubState'] == 'dead'
                 and unit['MainPID'] == '0' and unit['ControlPID'] == '0' and self.cgroup_empty(), 'CORE_NOT_DRAINED')
         self.no_foreign_processes(uid)
+
+    def publication_paths(self):
+        manager = self.manager
+        return dict(ring=manager.store.path(RING_PATH), activeKey=manager.store.path(KEY_PATH),
+                    provisioned=manager.store.path(RECEIPT_PATH), generationReceipt=manager.store.path(GENERATION_RECEIPT_PATH),
+                    dropin=manager.store.path(DROPIN), current=manager.state / CURRENT)
+
+    def file_snapshot(self, path):
+        try:
+            before = path.lstat()
+        except FileNotFoundError:
+            return None
+        raw = self.manager.read(path, 8192)
+        after = path.lstat()
+        def metadata(value):
+            return dict(device=value.st_dev, inode=value.st_ino, uid=value.st_uid, gid=value.st_gid,
+                        mode=stat.S_IMODE(value.st_mode), nlink=value.st_nlink, size=value.st_size,
+                        mtimeNs=value.st_mtime_ns, ctimeNs=value.st_ctime_ns)
+        require(metadata(before) == metadata(after), 'UNSAFE_FILESYSTEM')
+        return dict(metadata(after), sha256=hashlib.sha256(raw).hexdigest())
+
+    def recovery_receipt(self, identity):
+        manager = self.manager
+        records = manager.record(identity)
+        require(records is not None and records['action'] == 'generation-publish', 'CONFLICT')
+        # Find only the checkpoint belonging to this original operation. No path
+        # or replacement publication/preparation ID is accepted from the caller.
+        matches = []
+        for preparation in manager.preparation_ids(manager.preparation_records()):
+            path = manager.state / 'generations' / preparation / RECOVERY
+            if not os.path.lexists(path):
+                continue
+            raw = manager.read(path, 8192)
+            value = decode(raw)
+            fields(value, {'schema', 'purpose', 'publication', 'sourceFiles', 'writerUid', 'receiptTag'})
+            require(type(value['schema']) is int and value['schema'] == 1
+                    and value['purpose'] == RECOVERY_PURPOSE and raw == encode(value), 'UNSAFE_JOURNAL')
+            digest(value['receiptTag'])
+            body = {key: item for key, item in value.items() if key != 'receiptTag'}
+            secret = manager.read(manager.state / 'journal.key', 32)
+            require(len(secret) == 32 and hmac.compare_digest(value['receiptTag'],
+                    hmac.new(secret, RECOVERY_CONTEXT + encode(body), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
+            try:
+                publication = validate_publication(value['publication'])
+            except Refused:
+                raise Failure('UNSAFE_JOURNAL') from None
+            require(publication['preparationId'] == preparation and stat.S_IMODE(path.lstat().st_mode) == 0o400,
+                    'UNSAFE_JOURNAL')
+            files = value['sourceFiles']
+            fields(files, set(self.publication_paths()))
+            require(type(value['writerUid']) is int and value['writerUid'] >= 0, 'UNSAFE_JOURNAL')
+            for name, metadata in files.items():
+                if metadata is None:
+                    require(name not in ('activeKey', 'provisioned'), 'UNSAFE_JOURNAL')
+                    continue
+                fields(metadata, {'device', 'inode', 'uid', 'gid', 'mode', 'nlink', 'size', 'mtimeNs', 'ctimeNs', 'sha256'})
+                digest(metadata['sha256'])
+                require(all(type(metadata[key]) is int and metadata[key] >= 0 for key in metadata if key != 'sha256')
+                        and metadata['inode'] > 0 and metadata['uid'] == manager.owner and metadata['nlink'] == 1
+                        and metadata['mode'] in (0o400, 0o600) and metadata['size'] <= 8192, 'UNSAFE_JOURNAL')
+            if publication['operationId'] == identity:
+                request = dict(schema=1, action='generation-publish', operationId=identity,
+                               preparationId=preparation, verificationId=publication['verificationId'],
+                               expectedRingSha256=publication['generation']['ringSha256'],
+                               expectedCohortSha256=publication['cohortSha256'])
+                require(hmac.compare_digest(records['requestTag'],
+                        hmac.new(secret, encode(request), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
+                matches.append((raw, value, request))
+        require(len(matches) <= 1, 'UNSAFE_JOURNAL')
+        return matches[0] if matches else None
+
+    def publication_read(self, request):
+        fields(request, {'schema', 'action', 'operationId'})
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == 'generation-publication-read', 'INVALID_ARGUMENT')
+        identity = operation_id(request['operationId'])
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            record = manager.record(identity)
+            require(record is not None and record['action'] == 'generation-publish', 'CONFLICT')
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                receipt = self.recovery_receipt(identity)
+                return dict(schema=1, action=request['action'], operationId=identity,
+                            state='SUCCEEDED' if record['state'] == 'SUCCEEDED' else 'UNKNOWN',
+                            scope='ORIGINAL_PUBLICATION_ONLY',
+                            recoveryReceiptSha256=hashlib.sha256(receipt[0]).hexdigest() if receipt else None,
+                            originalResult=manager.public_record(record), startupAuthorized=False)
+
+    def publication_targets(self, value, raw, history, template):
+        active, metadata = key_generations(raw)
+        publication = encode(value)
+        return dict(ring=(raw, 0o400), activeKey=(active, 0o400), provisioned=(encode(history['provisioned']), 0o600),
+                    generationReceipt=(encode(dict(schema=1, purpose=GENERATION_FORMAT, **metadata)), 0o600),
+                    dropin=(template, 0o400), current=(publication, 0o600))
+
+    def publication_progress(self, value, targets, source_files):
+        manager = self.manager
+        paths = self.publication_paths()
+        paths['publication'] = manager.state / 'generations' / value['preparationId'] / 'publication.json'
+        expected = dict(targets, publication=(encode(value), 0o400))
+        states = {}
+        old_seen = False
+        for name in ('ring', 'activeKey', 'provisioned', 'generationReceipt', 'dropin', 'publication', 'current'):
+            current = self.file_snapshot(paths[name])
+            data, mode = expected[name]
+            before = source_files.get(name)
+            new = current is not None and current['sha256'] == hashlib.sha256(data).hexdigest() and current['mode'] == mode
+            old = current == before
+            require(new or old, 'CONFLICT')
+            # Durable operations have a fixed order. A later receipt cannot
+            # authorize filling a foreign gap in an earlier completed step.
+            if new and not old:
+                require(not old_seen, 'UNSAFE_JOURNAL')
+            elif old and not new:
+                old_seen = True
+            states[name] = new
+        return paths, expected, states
+
+    def finish_publication(self, value, raw, history, cohort, template, record, source_files, uid, *, recovering=False):
+        manager = self.manager
+        targets = self.publication_targets(value, raw, history, template)
+        paths, expected, done = self.publication_progress(value, targets, source_files)
+        for name in ('ring', 'activeKey', 'provisioned', 'generationReceipt', 'dropin'):
+            if not done[name]:
+                data, mode = expected[name]
+                manager.atomic(paths[name], data, mode=mode, no_replace=source_files[name] is None)
+        if recovering:
+            unit = self.unit(generation_mode=True, recovery=True)
+            reload_needed = unit['NeedDaemonReload'] == 'yes' or unit['DropInPaths'] != DROPIN
+        else:
+            reload_needed = True
+        if reload_needed:
+            self.command((*SYSTEMCTL, 'daemon-reload'))
+        self.stopped(generation_mode=True, uid=uid)
+        require(manager.generations()[1] == value['generation'] and manager.require_generation_cohort() == cohort, 'COHORT_CHANGED')
+        self.dropin(generation_mode=True)
+        for name in ('publication', 'current'):
+            if not done[name]:
+                data, mode = expected[name]
+                manager.atomic(paths[name], data, mode=mode, no_replace=name == 'publication' or source_files.get(name) is None)
+        # Reconcile a visible rename whose directory sync was interrupted.
+        for directory in {path.parent for path in paths.values()}:
+            manager.sync(directory)
+        publication = encode(value)
+        response = dict(schema=1, operationId=value['operationId'], action='generation-publish', state='SUCCEEDED',
+                        preparationId=value['preparationId'], verificationId=value['verificationId'],
+                        ringSha256=value['generation']['ringSha256'], activeKeySha256=value['generation']['activeKeySha256'],
+                        cohortSha256=cohort['cohortSha256'], publicationSha256=hashlib.sha256(publication).hexdigest(),
+                        coreStopped=True, requiresExplicitStart=True)
+        record.update(state='SUCCEEDED', response=response)
+        manager.atomic(manager.operations / (value['operationId'] + '.json'), encode(record))
+        return response
+
+    def recover_publication(self, request):
+        fields(request, {'schema', 'action', 'operationId', 'expectedRecoveryReceiptSha256'})
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == 'generation-publication-recover', 'INVALID_ARGUMENT')
+        identity = operation_id(request['operationId'])
+        digest(request['expectedRecoveryReceiptSha256'])
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance()
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), True):
+                record = manager.record(identity)
+                require(record is not None and record['action'] == 'generation-publish', 'CONFLICT')
+                receipt = self.recovery_receipt(identity)
+                if receipt is None:
+                    return manager.public_record(record)  # Never fabricate a stop/lock handoff proof.
+                receipt_raw, checkpoint, _ = receipt
+                require(hashlib.sha256(receipt_raw).hexdigest() == request['expectedRecoveryReceiptSha256'], 'CONFLICT')
+                if record['state'] == 'SUCCEEDED':
+                    return manager.public_record(record)
+                manager.settled(recovering_publication=identity)
+                value = checkpoint['publication']
+                raw, history, prepared = manager.prepared_generation(value['preparationId'])
+                require(prepared['historySha256'] == value['historySha256']
+                        and history['generation'] == value['generation'] and history['source'] == value['source'], 'CONFLICT')
+                directory = manager.state / 'generations' / value['preparationId']
+                require(not os.path.lexists(directory / 'cancellation.json'), 'CONFLICT')
+                verification = manager.record(value['verificationId'])
+                require(verification is not None and verification['action'] == 'generation-backup-verify'
+                        and verification['state'] == 'SUCCEEDED'
+                        and verification['response']['preparationId'] == value['preparationId']
+                        and verification['response']['ringSha256'] == value['generation']['ringSha256']
+                        and verification['response']['backupSha256'] == history['backupSha256'], 'BACKUP_NOT_VERIFIED')
+                files = checkpoint['sourceFiles']
+                require(hashlib.sha256(manager.read(directory / 'source-active-key', 32)).hexdigest()
+                        == files['activeKey']['sha256'] == value['source']['keySha256'], 'CONFLICT')
+                proof = manager.read(directory / 'source-provisioned.json', 8192)
+                require(hashlib.sha256(proof).hexdigest() == files['provisioned']['sha256']
+                        and decode(proof) == history['sourceReceipt'], 'CONFLICT')
+                generation = value['source']['ringSha256'] is not None
+                require((files['ring'] is not None) == (files['generationReceipt'] is not None) == generation
+                        and (files['dropin'] is not None) == generation, 'CONFLICT')
+                if generation:
+                    old_ring = manager.read(directory / 'source-keyring', 512)
+                    old_receipt = manager.read(directory / 'source-generation-receipt.json', 2048)
+                    require(hashlib.sha256(old_ring).hexdigest() == files['ring']['sha256'] == value['source']['ringSha256']
+                            and hashlib.sha256(old_receipt).hexdigest() == files['generationReceipt']['sha256']
+                            and decode(old_receipt) == dict(schema=1, purpose=GENERATION_FORMAT,
+                                                           **history['sourceGenerationReceipt']), 'CONFLICT')
+                cohort = manager.require_generation_cohort()
+                require(cohort['cohortSha256'] == value['cohortSha256'], 'COHORT_CHANGED')
+                self.no_optional_agent()
+                template = self.dropin(generation_mode=os.path.lexists(manager.store.path(DROPIN)))
+                require(value['stoppedWriter']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                        'UNSAFE_WRITER_STATE')
+                uid = checkpoint['writerUid']
+                require(uid == pwd.getpwnam('kurad').pw_uid, 'UNMANAGED_CORE')
+                self.stopped(generation_mode=generation, uid=uid, recovery=True)
+                with manager.exclusive_writers() as locked:
+                    require((locked.st_dev, locked.st_ino) == (value['stoppedWriter']['lockDevice'],
+                            value['stoppedWriter']['lockInode']), 'UNSAFE_WRITER_STATE')
+                    self.stopped(generation_mode=generation, uid=uid, recovery=True)
+                    self.publication_progress(value, self.publication_targets(value, raw, history, template), files)
+                    try:
+                        manager.sync(directory)
+                        return self.finish_publication(value, raw, history, cohort, template, record, files, uid, recovering=True)
+                    except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
+                        raise Failure('UNKNOWN') from None
 
     def request(self, request, *, start=False):
         manager = self.manager
@@ -267,28 +493,17 @@ class Generations:
                                      cohortSha256=cohort['cohortSha256'], stoppedWriter=dict(pid=writer['pid'],
                                      startTicks=writer['startTicks'], bootId=writer['bootId'], invocationId=unit['InvocationID'],
                                      lockDevice=writer['lockDevice'], lockInode=writer['lockInode']))
-                        # Canonical state is boot-fenced by the original INTENT until its final receipt is durable.
-                        manager.atomic(manager.store.path(RING_PATH), raw, mode=0o400)
-                        manager.atomic(manager.store.path(KEY_PATH), active, mode=0o400)
-                        manager.atomic(manager.store.path(RECEIPT_PATH), encode(history['provisioned']))
-                        manager.atomic(manager.store.path(GENERATION_RECEIPT_PATH), encode(dict(schema=1, purpose=GENERATION_FORMAT, **metadata)))
-                        if source['ringSha256'] is None:
-                            manager.atomic(manager.store.path(DROPIN), template, mode=0o400, no_replace=True)
-                        self.command((*SYSTEMCTL, 'daemon-reload'))
-                        self.stopped(generation_mode=True, uid=writer['uid'])
-                        require(manager.generations()[1] == metadata and manager.require_generation_cohort() == cohort, 'COHORT_CHANGED')
-                        self.dropin(generation_mode=True)
-                        publication = encode(value)
-                        manager.atomic(directory / 'publication.json', publication, mode=0o400, no_replace=True)
-                        manager.atomic(manager.state / CURRENT, publication)
-                        response = dict(schema=1, operationId=identity, action=request['action'], state='SUCCEEDED',
-                                        preparationId=request['preparationId'], verificationId=request['verificationId'],
-                                        ringSha256=metadata['ringSha256'], activeKeySha256=metadata['activeKeySha256'],
-                                        cohortSha256=cohort['cohortSha256'], publicationSha256=hashlib.sha256(publication).hexdigest(),
-                                        coreStopped=True, requiresExplicitStart=True)
-                        record.update(state='SUCCEEDED', response=response)
-                        manager.atomic(manager.operations / (identity + '.json'), encode(record))
-                        return response
+                        # Only a completed original StopUnit plus the exclusive
+                        # kernel writer handoff may authorize local continuation.
+                        # A crash before this immutable proof stays UNKNOWN.
+                        source_files = {name: self.file_snapshot(path) for name, path in self.publication_paths().items()}
+                        checkpoint = dict(schema=1, purpose=RECOVERY_PURPOSE, publication=value,
+                                          sourceFiles=source_files, writerUid=writer['uid'])
+                        checkpoint['receiptTag'] = hmac.new(secret, RECOVERY_CONTEXT + encode(checkpoint), hashlib.sha256).hexdigest()
+                        manager.atomic(directory / RECOVERY, encode(checkpoint), mode=0o400, no_replace=True)
+                        # Canonical state stays boot-fenced by this same original
+                        # INTENT until all fixed steps and the final result sync.
+                        return self.finish_publication(value, raw, history, cohort, template, record, source_files, writer['uid'])
                 except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
                     raise Failure('UNKNOWN') from None
 

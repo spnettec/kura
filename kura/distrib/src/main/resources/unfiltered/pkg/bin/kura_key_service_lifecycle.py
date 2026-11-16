@@ -358,7 +358,7 @@ class Lifecycle:
         finally:
             os.close(fd)
 
-    def check_records(self, *, recovering_cancel=None):
+    def check_records(self, *, recovering_cancel=None, recovering_publication=None):
         self.directory(self.state / "operations", private=True)
         paths = list((self.state / "operations").iterdir())
         require(len(paths) <= 256)
@@ -367,6 +367,8 @@ class Lifecycle:
             record = validate_record(decode(self.read(path)), path.name[:-5])
             if record["state"] != "SUCCEEDED":
                 if path.name[:-5] == recovering_cancel and record['action'] == 'generation-cancel':
+                    continue
+                if path.name[:-5] == recovering_publication and record['action'] == 'generation-publish':
                     continue
                 raise Unresolved("Unresolved key operation; preserve original UUID and package state")
         startups=self.state/'startups'
