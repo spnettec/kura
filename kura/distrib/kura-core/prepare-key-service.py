@@ -92,7 +92,21 @@ def embed_journal_reader(preinst, reader):
     preinst.write_text(content)
 
 
+def embed_policy_readers(preinst,lifecycle,journal):
+    token='raise RuntimeError("Kura key-policy readers were not embedded")'
+    require(preinst.is_file() and not preinst.is_symlink())
+    assignments=[]
+    for name,path in (('_KURA_EMBEDDED_LIFECYCLE_SOURCE',lifecycle),('_KURA_EMBEDDED_JOURNAL_SOURCE',journal)):
+        require(path.is_file() and not path.is_symlink())
+        source=path.read_bytes();require(0<len(source)<=131072);compile(source,str(path),'exec',dont_inherit=True)
+        assignments.append(name+' = '+repr(source))
+    content=preinst.read_text();require(content.count(token)==1)
+    preinst.write_text(content.replace(token,'\n'.join(assignments)))
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
+    embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
+        Path(sys.argv[1])/'bin/kura_key_journal.py')

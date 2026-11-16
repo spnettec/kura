@@ -16,6 +16,7 @@ import socket
 import stat
 import struct
 import sys
+import types
 
 CREDENTIAL = "kura_encryption_key"
 LOADED_CREDENTIAL_PROOF_PROTOCOL = 1
@@ -42,6 +43,40 @@ def effective_key(value):
 
 def generation_require(ok):
     require(ok, "Invalid key-generation credential or retained receipt")
+
+
+def paired_lifecycle():
+    """Incoming policy uses incoming bytes; installed policy reads checked source only."""
+    embedded=any(name in globals() for name in ('_KURA_EMBEDDED_LIFECYCLE_SOURCE','_KURA_EMBEDDED_JOURNAL_SOURCE'))
+    journal=None
+    if embedded:
+        source=globals().get('_KURA_EMBEDDED_LIFECYCLE_SOURCE');journal=globals().get('_KURA_EMBEDDED_JOURNAL_SOURCE')
+        require(isinstance(source,bytes) and 0<len(source)<=131072 and isinstance(journal,bytes) and 0<len(journal)<=131072,
+            'Incoming key policy is not paired with its package readers')
+    else:
+        filename=globals().get('__file__')
+        require(isinstance(filename,str) and Path(filename).is_absolute(),'Key policy has no protected source identity')
+        anchor=Path(filename).resolve(strict=True);owner=anchor.lstat().st_uid;path=anchor.with_name('kura_key_service_lifecycle.py')
+        for entry,regular in ((anchor.parent,False),(anchor,True),(path,True)):
+            m=entry.lstat();require((stat.S_ISREG(m.st_mode) if regular else stat.S_ISDIR(m.st_mode))
+                and m.st_uid==owner and not m.st_mode&0o022 and (not regular or m.st_nlink==1),
+                'Key policy companion is not protected')
+        identity=lambda m:(m.st_dev,m.st_ino,m.st_uid,m.st_gid,m.st_mode,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
+        try:
+            before=os.fstat(fd);require(stat.S_ISREG(before.st_mode) and before.st_uid==owner and before.st_nlink==1
+                and not before.st_mode&0o022 and 0<before.st_size<=131072,'Unsafe key policy companion source')
+            source=os.read(fd,131073)
+            require(len(source)==before.st_size and identity(before)==identity(os.fstat(fd))==identity(path.lstat()),
+                'Key policy companion source changed')
+        finally:os.close(fd)
+    module=types.ModuleType('_kura_key_policy_lifecycle');module.__file__='<paired key-policy lifecycle>'
+    if embedded:module.__dict__['_KURA_EMBEDDED_JOURNAL_SOURCE']=journal
+    exec(compile(source,module.__file__,'exec',dont_inherit=True),module.__dict__)
+    require(isinstance(getattr(module,'Lifecycle',None),type) and isinstance(getattr(module,'Refused',None),type)
+        and issubclass(module.Refused,RuntimeError) and all(callable(getattr(module.Lifecycle,name,None)) for name in ('check_records','fence')),
+        'Unsupported key policy companion interface')
+    return module
 
 def key_generation_entries(raw):
     """Strict private codec; never infer a missing generation or try alternate keys."""
@@ -362,7 +397,7 @@ class Store:
         return value
 
     def prepare(self, action):
-        require(action in ("install","upgrade","auto"), "Unsupported key provisioning action")
+        require(action in ("install","upgrade","auto","package"), "Unsupported key provisioning action")
         self.observed.clear()
         with self.locked():
             self.dropins_safe()
@@ -386,6 +421,19 @@ class Store:
                                 and all(c in "0123456789abcdef" for c in x)
                                 for x in receipt["unitDigests"]),
                         "Encryption-key receipt is inconsistent")
+            if action == "package":
+                # Post-unpack may only consume preinst's complete original credentials.
+                # It cannot create a missing key or borrow ordinary startup authority.
+                require(current is not None and receipt is not None,
+                        "Package installation requires the original provisioned key")
+                api=paired_lifecycle();lifecycle=api.Lifecycle(self.root,self.owner)
+                try:
+                    lifecycle.check_records()
+                    fence=lifecycle.fence()
+                    require(fence is not None and fence["firstAction"] in ("install","upgrade"),
+                            "Package key preparation requires installation maintenance")
+                except api.Refused:
+                    raise Refused("Unresolved or unsafe package operation; preserve original UUID and credentials") from None
             if any(os.path.lexists(self.path(p)) for p in (RING_PATH, GENERATION_RECEIPT_PATH)):
                 # Never generate a replacement or resolve retired legacy sources in a generation-aware store.
                 require(current is not None and receipt is not None and type(receipt["schema"]) is int,
@@ -393,18 +441,17 @@ class Store:
                 active, metadata = key_generations(self.read(self.path(RING_PATH), private=True, limit=512))
                 trusted = generation_receipt(self.read(self.path(GENERATION_RECEIPT_PATH), private=True, limit=2048))
                 generation_require(active == current and metadata == trusted)
-                # The installed entrypoint uses -I; its sibling directory is not on sys.path.
-                # Embedded legacy capture has no __file__ and uses the fixed installed helper path.
-                helper = Path(globals().get("__file__", self.path("/opt/eclipse/kura/bin/kura_key_store.py"))).resolve().parent
-                if str(helper) not in sys.path:
-                    sys.path.insert(0, str(helper))
-                from kura_key_service_lifecycle import Lifecycle, Refused as LifecycleRefused
-                lifecycle = Lifecycle(self.root, self.owner)
+                # Pre-unpack must validate with the incoming package, never an old
+                # installed helper, sys.modules, bytecode cache or the working directory.
+                api=paired_lifecycle();lifecycle = api.Lifecycle(self.root, self.owner)
                 try:
                     lifecycle.check_records()
                     require(action != "auto" or lifecycle.fence() is None, "Generation maintenance is not complete")
-                except LifecycleRefused:
+                except api.Refused:
                     raise Refused("Unresolved or unsafe generation operation; preserve original UUID and credentials") from None
+                self.stable()
+                return dict(keyReady=True, source=receipt["origin"], legacyKey=receipt["legacyKey"])
+            if action == "package":
                 self.stable()
                 return dict(keyReady=True, source=receipt["origin"], legacyKey=receipt["legacyKey"])
             units = [self.path(x) for x in ("/usr/lib/systemd/system/kura.service",

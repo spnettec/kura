@@ -24,9 +24,10 @@ systemctl_if_present() {
 IS_NETWORKING_PROFILE=false
 INSTALL_DIR=/opt/eclipse
 DEFER_KEY_SERVICE=false
+KEY_PROVISION_ACTION=auto
 case "${1-}" in
     '') ;;
-    --defer-key-service) DEFER_KEY_SERVICE=true ;;
+    --defer-key-service) DEFER_KEY_SERVICE=true; KEY_PROVISION_ACTION=package ;;
     *) echo "Unsupported Kura installer argument" >&2; exit 1 ;;
 esac
 
@@ -49,9 +50,10 @@ fi
 # create known kura install location
 ln -snf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 
-# Reuse preinst's captured key, or provision a fresh standalone-installer key.
+# Package mode requires preinst's captured key and maintenance fence. Standalone
+# bootstrap retains its separate fresh-key and ordinary-startup checks.
 # Failure must precede replacing the installed service or changing user state.
-python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare auto || exit 1
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare "${KEY_PROVISION_ACTION}" || exit 1
 
 # set up kura init
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
