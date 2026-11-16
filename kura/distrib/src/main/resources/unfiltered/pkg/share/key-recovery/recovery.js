@@ -1,4 +1,125 @@
 'use strict';
+// The shared reservation panel is separate from every key writer and uses only metadata endpoints.
+(() => {
+ const el=id=>document.getElementById('admission-'+id),handoff=document.body.dataset.view==='handoff';
+ const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(v);
+ const hash=v=>typeof v==='string'&&/^[0-9a-f]{64}$/.test(v);
+ const tokenPattern=/^KURA-HANDOFF-1\.[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.[0-9a-f]{64}$/;
+ const store={restore:'yofc.kura.cold-key-recovery.intent.v1',start:'yofc.kura.cold-key-recovery.start.v1'};
+ const words={
+  zh:{title:'核对原预留',help:'回复丢失后，只按原编号核对。关闭仅适用于尚未发送密钥操作的预留，原编号会永久保留且不再发送。',kind:'原操作类型',restore:'原密钥恢复',start:'Kura 启动',step:'原交接步骤',publish:'发布',continue:'原认证续接（仅核对）',identity:'原操作编号',read:'核对原预留',authorize:'授权关闭此原预留',file:'原加密备份 JSON 文件（必填）',password:'原备份解密口令（必填）',privacy:'仅使用原备份和口令核验授权，不恢复或替换密钥，也不保存口令。',handoffMaterial:'关闭须使用上方输入的原交接授权。备份口令不能代替交接授权。',close:'确认未发送并关闭',acknowledge:'保留原记录并返回原流程',confirmTitle:'关闭此原预留？',confirmHelp:'服务端将核实原请求尚未进入密钥处理，永久阻止此原编号。此操作不会恢复密钥、发布或启动 Kura。',keep:'保留预留',reserved:'原预留已核对。关闭前须核验原授权材料。',unknown:'原结果尚不确定，或已有发送记录。保留原编号，只能继续核对，禁止关闭或重发。',missing:'尚无可确认的原预留。保留原编号，不要重新提交。',terminal:'已有匹配的原结果，请在原流程查询。',notAdmitted:'已确认未发送；完成授权关闭后，才能确认此原记录。',closed:'已确认未发送，原编号已永久保留。可确认此原记录，再返回原流程手动创建新申请。',closedHandoff:'已确认未发送，原编号已永久保留。此原授权不能再次发送该步骤；请在管理端处理原授权，原记录仍保留。',unavailable:'暂时无法核实原预留。保留原编号，重新核对；没有重发密钥请求。',busy:'服务正在处理核验，请稍后重新核对。',invalidFile:'请选择原加密备份 JSON 文件（最大 48 KiB）。',invalidPassword:'口令须为 12–256 个字符。',invalidToken:'请在上方输入完整的原交接授权。',authorizationFailed:'原备份或口令未通过核验，未关闭预留。',storage:'浏览器中的原记录不匹配或无法保存，保留原编号。',returned:'原记录已确认。请返回原恢复或启动流程，手动创建新申请。'},
+  en:{title:'Check original reservation',help:'After a lost reply, check only the original ID. Only a confirmed unsent key request can be closed; its original ID is permanently retained and never sent again.',kind:'Original operation type',restore:'Original-key recovery',start:'Kura startup',step:'Original handoff step',publish:'Publication',continue:'Original authenticated continuation (read only)',identity:'Original operation ID',read:'Check original reservation',authorize:'Authorize closing this original reservation',file:'Original encrypted backup JSON file (required)',password:'Original backup passphrase (required)',privacy:'The original backup and passphrase verify authorization only. No key is restored or replaced, and the passphrase is not saved.',handoffMaterial:'Closing requires the original handoff authorization entered above. A backup passphrase cannot replace it.',close:'Confirm not sent and close',acknowledge:'Retain the original record and return',confirmTitle:'Close this original reservation?',confirmHelp:'The server checks that the original request never entered key processing, then permanently blocks its ID. This does not restore keys, publish or start Kura.',keep:'Keep reservation',reserved:'The original reservation is confirmed. Closing requires verification of the original authorization material.',unknown:'The original outcome is unconfirmed or a send record exists. Retain the original ID; closing and resending are blocked.',missing:'No original reservation can be confirmed. Retain the ID and do not resubmit.',terminal:'A matching original result exists. Read it in the original workflow.',notAdmitted:'Confirmed not sent. Complete authorized closure before acknowledging this original record.',closed:'Confirmed not sent; the original ID is permanently retained. Acknowledge this original record, then return to manually make a new request.',closedHandoff:'Confirmed not sent; the original ID is permanently retained. This original authorization cannot send that step again. Retain it for resolution in the management console.',unavailable:'The original reservation could not be confirmed. Retain the ID and check again; no key request was resent.',busy:'Verification is busy. Check the original reservation again later.',invalidFile:'Select the original encrypted backup JSON file (at most 48 KiB).',invalidPassword:'Use a passphrase of 12–256 characters.',invalidToken:'Enter the complete original handoff authorization above.',authorizationFailed:'The original backup or passphrase was not verified. The reservation was not closed.',storage:'The original browser record does not match or cannot be saved. Retain the ID.',returned:'The original record is acknowledged. Return to the original recovery or startup workflow to manually make a new request.'}
+ };
+ let current=null,busy=false,epoch=0,fileEpoch=0,raw='',proposal=null,noticeKey='';
+ const language=()=>document.getElementById('language').value==='en'?'en':'zh';
+ const text=key=>words[language()][key]||'';
+ const kind=()=>handoff?document.querySelector('input[name=admission-step]:checked').value:document.querySelector('input[name=admission-kind]:checked').value;
+ const backendKind=()=>handoff&&kind()==='start'?'handoff-start':kind();
+ const notice=key=>{noticeKey=key;el('notice').textContent=text(key);};
+ function clearMaterial(){raw='';fileEpoch++;el('backup').value='';el('password').value='';el('backup').setCustomValidity('');el('password').setCustomValidity('');}
+ function render(){
+  for(const node of el('read-form').querySelectorAll('input,button'))node.disabled=busy||(handoff&&node.id==='admission-reference');
+  el('cold-kinds').disabled=handoff||busy;el('handoff-kinds').disabled=!handoff||busy;
+  el('progress').hidden=!busy;el('flow').setAttribute('aria-busy',String(busy));
+  const allowed=!!current&&current.closeAllowed===true;
+  el('close-form').hidden=!allowed;el('close').disabled=busy||!allowed;
+  el('backup').disabled=handoff||busy||!allowed;el('password').disabled=handoff||busy||!allowed;
+  el('acknowledge').hidden=handoff||!current||current.phase!=='NOT_ADMITTED'||!current.closed;
+  el('acknowledge').disabled=busy;el('operation').textContent=current?current.operationId:'';
+ }
+ function reset(){epoch++;busy=false;current=null;proposal=null;clearMaterial();if(el('confirm').open){el('confirm').returnValue='';el('confirm').close();}notice('');render();}
+ function selectStored(){
+  if(handoff)return;
+  try{const value=JSON.parse(localStorage.getItem(store[kind()]));el('reference').value=value&&uuid(value.operationId)?value.operationId:'';}
+  catch(_){el('reference').value='';}
+ }
+ function validate(value){
+  const names=['schema','state','kind','operationId','phase','closeAllowed','closed','expectedKeySha256','restoreOperationId'];
+  if(!value||Object.keys(value).some(n=>!names.includes(n))||value.schema!==1||value.state!=='SENDER_ADMISSION'||value.kind!==backendKind()
+   ||!uuid(value.operationId)||!['UNKNOWN','NOT_RECORDED','RESERVED','INTAKE','TERMINAL','NOT_ADMITTED'].includes(value.phase)
+   ||typeof value.closeAllowed!=='boolean'||typeof value.closed!=='boolean'||(!handoff&&value.operationId!==el('reference').value)
+   ||(value.expectedKeySha256!==undefined&&!hash(value.expectedKeySha256))||(value.restoreOperationId!==undefined&&!uuid(value.restoreOperationId))
+   ||(value.closed&&value.phase!=='NOT_ADMITTED')||(value.closeAllowed&&!['RESERVED','NOT_ADMITTED'].includes(value.phase)))throw Error();
+  return value;
+ }
+ function authorization(){
+  const value=document.getElementById('handoff-token').value;
+  if(!tokenPattern.test(value)){document.getElementById('handoff-token').focus();notice('invalidToken');throw Error('invalidToken');}
+  return value;
+ }
+ async function api(command,material={}){
+  const body=handoff?{command:'admission-'+command,step:kind(),token:authorization()}:{command,kind:kind(),operationId:el('reference').value,...material};
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  try{
+   const response=await fetch(handoff?'/api/handoff':'/api/admission',{method:'POST',credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal,
+    headers:{'Content-Type':'application/json','X-Kura-Recovery-CSRF':document.querySelector('meta[name=kura-recovery-csrf]').content},body:JSON.stringify(body)});
+   const raw=await response.text();if(raw.length>65536)throw Error();const value=JSON.parse(raw);
+   if(!response.ok||value.error)throw Error(value.error==='BUSY'?'busy':value.error==='BACKUP_REJECTED'?'authorizationFailed':'unavailable');
+   return validate(value);
+  }finally{clearTimeout(timer);if('passphrase'in body)body.passphrase='';}
+ }
+ function apply(value){current=value;notice(value.closed?handoff?'closedHandoff':'closed':value.phase==='RESERVED'&&value.closeAllowed?'reserved':value.phase==='NOT_ADMITTED'?'notAdmitted':value.phase==='NOT_RECORDED'?'missing':value.phase==='TERMINAL'?'terminal':'unknown');}
+ async function read(){
+  if(busy)return;const generation=++epoch;busy=true;current=null;notice('');render();
+  try{const value=await api('read');if(generation===epoch)apply(value);}
+  catch(error){if(generation===epoch)notice(['busy','invalidToken'].includes(error.message)?error.message:'unavailable');}
+  finally{if(generation===epoch){busy=false;render();}}
+ }
+ function passwordValid(value){const chars=Array.from(value);return chars.length>=12&&chars.length<=256&&!value.includes('\0')&&chars.every(c=>c.length!==1||c.charCodeAt(0)<0xd800||c.charCodeAt(0)>0xdfff)&&new TextEncoder().encode(value).length<=1024;}
+ function confirm(){
+  if(busy||!current||!current.closeAllowed)return;
+  if(!handoff){
+   el('backup').setCustomValidity(raw?'':text('invalidFile'));el('password').setCustomValidity(passwordValid(el('password').value)?'':text('invalidPassword'));
+   if(!el('close-form').reportValidity())return;
+  }else{try{authorization();}catch(_){return;}}
+  if(typeof el('confirm').showModal!=='function'){notice('unavailable');return;}
+  proposal={generation:epoch,kind:kind(),identity:current.operationId};el('confirm-id').textContent=current.operationId;el('confirm').returnValue='';el('confirm').showModal();
+ }
+ async function close(selected){
+  if(!selected||busy||selected.generation!==epoch||selected.kind!==kind()||!current||selected.identity!==current.operationId)return;
+  const generation=++epoch,material=handoff?{}:{backupJson:raw,passphrase:el('password').value};busy=true;current=null;clearMaterial();notice('');render();
+  try{const value=await api('close',material);if(value.phase!=='NOT_ADMITTED'||!value.closed)throw Error();if(generation===epoch)apply(value);}
+  catch(error){if(generation===epoch)notice(['busy','authorizationFailed','invalidToken'].includes(error.message)?error.message:'unavailable');}
+  finally{material.passphrase='';if(generation===epoch){busy=false;render();}}
+ }
+ el('read-form').addEventListener('submit',event=>{event.preventDefault();read();});
+ el('close-form').addEventListener('submit',event=>{event.preventDefault();confirm();});
+ el('confirm').addEventListener('close',()=>{const chosen=el('confirm').returnValue,selected=proposal;el('confirm').returnValue='';proposal=null;if(chosen==='close')close(selected);else el('password').value='';});
+ el('reference').addEventListener('input',reset);
+ for(const field of document.querySelectorAll('input[name=admission-kind],input[name=admission-step]'))field.addEventListener('change',()=>{reset();selectStored();});
+ for(const input of [el('backup'),el('password')]){
+  input.addEventListener('invalid',()=>input.setAttribute('aria-invalid','true'));
+  input.addEventListener('input',()=>{input.setCustomValidity('');input.removeAttribute('aria-invalid');});
+ }
+ el('backup').addEventListener('change',async()=>{
+  const generation=++fileEpoch;raw='';el('password').value='';el('backup').setCustomValidity('');const file=el('backup').files[0];
+  if(!file||file.size<1||file.size>49152){el('backup').setCustomValidity(text('invalidFile'));return;}
+  try{const value=await file.text();if(generation===fileEpoch)raw=value;}catch(_){if(generation===fileEpoch)el('backup').setCustomValidity(text('invalidFile'));}
+ });
+ el('acknowledge').addEventListener('click',()=>{
+  if(busy||handoff||!current||!current.closed||current.phase!=='NOT_ADMITTED')return;
+  try{
+   const name=store[kind()],raw=localStorage.getItem(name),saved=JSON.parse(raw);
+   const modern=kind()==='start'&&saved&&saved.schema===2;
+   const names=kind()==='restore'?'expectedKeySha256,operationId,schema':modern?'expectedKeySha256,maintenanceId,manifestSha256,operationId,predecessorStartOperationId,restoreOperationId,schema':'expectedKeySha256,operationId,restoreOperationId,schema';
+   if(!saved||Object.keys(saved).sort().join(',')!==names||(!modern&&saved.schema!==1)
+    ||(modern&&(!uuid(saved.maintenanceId)||!uuid(saved.predecessorStartOperationId)||!hash(saved.manifestSha256))))throw Error();
+   if(saved.operationId!==current.operationId||saved.expectedKeySha256!==current.expectedKeySha256
+    ||(kind()==='start'&&saved.restoreOperationId!==current.restoreOperationId)||localStorage.getItem(name)!==raw)throw Error();
+   localStorage.removeItem(name);if(localStorage.getItem(name)!==null)throw Error();current=null;render();notice('returned');window.dispatchEvent(new Event('kura-recovery-intent-changed'));
+  }catch(_){notice('storage');}
+ });
+ function translate(){for(const node of document.querySelectorAll('[data-admission-i18n]'))node.textContent=text(node.dataset.admissionI18n);el('progress').setAttribute('aria-label',text('read'));el('notice').textContent=text(noticeKey);}
+ document.getElementById('language').addEventListener('change',translate);
+ if(handoff)document.getElementById('handoff-token').addEventListener('input',reset);
+ window.addEventListener('storage',event=>{if(Object.values(store).includes(event.key)){reset();selectStored();}});
+ window.addEventListener('pagehide',()=>{epoch++;busy=false;current=null;proposal=null;clearMaterial();if(el('confirm').open){el('confirm').returnValue='';el('confirm').close();}render();});
+ el('cold-kinds').hidden=handoff;el('handoff-kinds').hidden=!handoff;el('reference-row').hidden=handoff;
+ el('backup-material').hidden=handoff;el('handoff-material').hidden=!handoff;
+ if(!handoff){try{if(localStorage.getItem(store.start)!==null)document.querySelector('input[name=admission-kind][value=start]').checked=true;}catch(_){}}
+ selectStored();translate();render();
+})();
+
 (() => {
  if (document.body.dataset.view === 'handoff') return;
  const el = id => document.getElementById(id);
@@ -222,6 +343,7 @@
   for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = text(node.dataset.i18n);render();
  });
  window.addEventListener('storage', event => {if(event.key===startStoreKey){startIntent=readStartIntent();startResult=null;render();} if (event.key === storeKey) {intent = readIntent();result = null;el('password').value = '';invalidate();}});
+ window.addEventListener('kura-recovery-intent-changed',()=>{intent=readIntent();startIntent=readStartIntent();result=null;startResult=null;raw='';el('backup').value='';el('password').value='';invalidate();status();});
  window.addEventListener('pagehide', () => {el('password').value = '';raw = '';});
  el('console').href = `https://${location.hostname.includes(':') ? '[' + location.hostname.replace(/^\[|\]$/g,'') + ']' : location.hostname}/admin/console`;
  intent = readIntent();startIntent=readStartIntent();

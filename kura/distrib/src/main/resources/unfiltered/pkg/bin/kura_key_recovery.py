@@ -28,7 +28,8 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
-from kura_key_service_lifecycle import HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding, Refused
+from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
+    validate_sender_attempt, validate_sender_closed, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -47,6 +48,93 @@ class SenderAdmission:
     def __init__(self, client, journal):
         self.client, self.journal = client, journal
         self.directory = journal.directory/'admissions'
+
+    def path(self, kind, identity):
+        protocol.operation_id(identity)
+        protocol.require(kind in ('restore','start','publish','continue','handoff-start'))
+        return self.directory/(identity+'-'+kind)
+
+    def has_attempt(self, kind, identity):
+        try:self.path(kind,identity).lstat();return True
+        except FileNotFoundError:return False
+
+    def has_key_intent(self, identity):
+        protocol.operation_id(identity)
+        if self.journal.record(identity) is not None or self.journal.start_record(identity) is not None:return True
+        pending=self.journal.pending()
+        if pending is not None and pending['operationId']==identity:return True
+        directory=self.journal.directory/'handoffs'
+        try:directory.lstat()
+        except FileNotFoundError:return False
+        self.journal.check_directory(directory);slots=list(directory.iterdir());protocol.require(len(slots)<=MAX_OPERATIONS,'UNSAFE_JOURNAL')
+        for slot in slots:
+            self.journal.check_directory(slot);protocol.operation_id(slot.name)
+            names={p.name for p in slot.iterdir()};protocol.require(names<=HandoffController.FILES,'UNSAFE_JOURNAL')
+            saved=protocol.decode(self.journal.read(slot/'binding.json',8192))
+            try:validate_handoff_binding(saved)
+            except Refused:fail('UNSAFE_JOURNAL')
+            protocol.require(saved['handoffId']==slot.name,'UNSAFE_JOURNAL')
+            if names=={'binding.json'} and identity in (saved['publicationId'],saved['startOperationId']):return True
+            if identity==saved['publicationId'] and names&{'publish.json','continue.json'}:return True
+            if identity==saved['startOperationId'] and 'start.json' in names:return True
+        return False
+
+    def load(self, kind, identity):
+        if not self.has_attempt(kind,identity):return None
+        slot=self.path(kind,identity);self.journal.check_directory(self.directory);self.journal.check_directory(slot)
+        names={p.name for p in slot.iterdir()}
+        protocol.require(names in ({'intent.json'}, {'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}), 'UNSAFE_JOURNAL')
+        try:value=validate_sender_attempt(protocol.decode(self.journal.read(slot/'intent.json',12288)),'recovery')
+        except Refused:fail('UNSAFE_JOURNAL')
+        protocol.require(value['kind']==kind and value['nativeOperationId']==identity,'CONFLICT')
+        namespace=None;closed=False
+        if 'namespace.json' in names:
+            namespace=protocol.decode(self.journal.read(slot/'namespace.json',4096));protocol.fields(namespace,{'schema','namespaceSha256'})
+            protocol.require(type(namespace['schema']) is int and namespace['schema']==1,'UNSAFE_JOURNAL');protocol.digest(namespace['namespaceSha256'])
+        if 'closed.json' in names:
+            try:validate_sender_closed(protocol.decode(self.journal.read(slot/'closed.json',4096)),value,namespace)
+            except Refused:fail('UNSAFE_JOURNAL')
+            closed=True
+        return value,namespace,closed
+
+    def view(self, kind, identity, *, close=False):
+        saved=self.load(kind,identity)
+        result=dict(schema=1,state='SENDER_ADMISSION',kind=kind,operationId=identity,phase='UNKNOWN',closeAllowed=False,closed=False)
+        if saved is None:return dict(result,phase='NOT_RECORDED')
+        attempt,namespace,closed=saved;metadata=attempt['request']
+        for name in ('expectedKeySha256','restoreOperationId'):
+            if name in metadata:result[name]=metadata[name]
+        if namespace is None:
+            protocol.require(not close,'UNRESOLVED_OPERATION');return result
+        try:
+            realm=self.client(dict(schema=1,action='gwt-sender-namespace'))
+            protocol.fields(realm,{'schema','namespaceSha256','rootDevice','rootInode'})
+            protocol.require(type(realm['schema']) is int and realm['schema']==1 and realm['namespaceSha256']==namespace['namespaceSha256'],'CONFLICT')
+            query=dict(schema=1,action='sender-admission-close' if close else 'sender-admission-read',admissionId=attempt['admissionId'],source='recovery',namespaceSha256=namespace['namespaceSha256'])
+            reply=self.client(query)
+            protocol.fields(reply,{'schema','admissionId','state','source','namespaceSha256','nativeOperationId','nativeAction','newlyReserved'})
+            action='generation-core-start' if kind=='handoff-start' else 'generation-publish' if kind in ('publish','continue') else metadata['action']
+            protocol.require(type(reply['schema']) is int and reply['schema']==1 and reply['admissionId']==attempt['admissionId']
+                and reply['source']=='recovery' and reply['namespaceSha256']==namespace['namespaceSha256'] and reply['nativeOperationId']==identity
+                and reply['nativeAction']==action and reply['newlyReserved'] is False
+                and reply['state'] in ('RESERVED','INTAKE','TERMINAL','NOT_ADMITTED'),'PROTOCOL_MISMATCH')
+            if close:
+                protocol.require(reply['state']=='NOT_ADMITTED','UNRESOLVED_OPERATION')
+                if not closed:
+                    self.journal.write_new(self.path(kind,identity)/'closed.json',dict(schema=1,purpose='yofc.kura.sender-not-admitted.v1',
+                        admissionId=attempt['admissionId'],kind=kind,nativeOperationId=identity,namespaceSha256=namespace['namespaceSha256']))
+                closed=True
+            result.update(phase='UNKNOWN' if reply['state']=='INTAKE' else reply['state'],closed=closed and reply['state']=='NOT_ADMITTED',
+                closeAllowed=not closed and kind!='continue' and reply['state'] in ('RESERVED','NOT_ADMITTED'))
+            return result
+        except (protocol.Failure,OSError,ValueError,KeyError,TypeError):
+            if close:raise
+            return result
+
+    def close(self, kind, identity):
+        current=self.view(kind,identity)
+        protocol.require(current['closeAllowed'] or current['phase']=='NOT_ADMITTED' and current['closed'],'UNRESOLVED_OPERATION')
+        return self.view(kind,identity,close=True)
 
     @classmethod
     def wrap(cls, request):
@@ -330,6 +418,30 @@ class Controller:
         protocol.require(isinstance(backup['encrypted'], str) and 0 < len(backup['encrypted']) <= 32768,
                          'BACKUP_REJECTED')
         return backup
+
+    def admission(self, value):
+        command=value.get('command');protocol.require(command in ('read','close'))
+        protocol.fields(value,{'command','kind','operationId'} | ({'backupJson','passphrase'} if command=='close' else set()))
+        kind=value['kind'];protocol.require(kind in ('restore','start'));identity=protocol.operation_id(value['operationId'])
+        with self.journal.lock():
+            current=self.sender.view(kind,identity)
+            owning=self.sender.has_key_intent(identity)
+            if owning:current['closeAllowed']=False
+            if command=='read':return current
+            protocol.require(not owning and (current['closeAllowed'] or current['phase']=='NOT_ADMITTED' and current['closed']),'UNRESOLVED_OPERATION')
+            saved=self.sender.load(kind,identity);protocol.require(saved is not None,'UNRESOLVED_OPERATION');metadata=saved[0]['request']
+            backup=self.material(value);backup_sha=hashlib.sha256(protocol.encode(backup)).hexdigest()
+            if kind=='start':
+                restore=self.journal.record(metadata['restoreOperationId'])
+                protocol.require(restore is not None and restore['expectedKeySha256']==metadata['expectedKeySha256'],'CONFLICT')
+                expected_backup=restore['backupSha256']
+            else:expected_backup=metadata['backupSha256']
+            protocol.require(backup_sha==expected_backup,'BACKUP_REJECTED')
+            checked=self.inspect(dict(backupJson=value['backupJson'],passphrase=value['passphrase']))
+            protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
+            original=self.call('operation-read' if kind=='restore' else 'core-start-read',operationId=identity)
+            protocol.fields(original,{'schema','state'});protocol.require(type(original['schema']) is int and original['schema']==1 and original['state']=='NOT_FOUND','UNRESOLVED_OPERATION')
+            return self.sender.close(kind,identity)
 
     def inspect(self, value, *, throttle=True):
         protocol.fields(value, {'backupJson', 'passphrase'})
@@ -646,11 +758,31 @@ class HandoffController:
         allowed = dict(publish=available and info['mutationWindowOpen'] and not flags['publish'] and publication['state'] == 'NOT_RECORDED',
             start=available and info['mutationWindowOpen'] and not flags['start'] and publication['state'] == 'SUCCEEDED' and start['state'] == 'NOT_RECORDED',
             **{'continue': available and not flags['continue'] and not flags['start'] and publication['state'] == 'UNKNOWN' and publication['recoveryReceiptSha256'] is not None})
+        for command,kind,identity in (('publish','publish',info['publicationId']),('continue','continue',info['publicationId']),('start','handoff-start',info['startOperationId'])):
+            if self.sender.has_attempt(kind,identity):allowed[command]=False
         return dict(schema=1, state='HANDOFF_STATUS', handoff=info, publication=publication, start=start,
             senderIntents=flags, completed=completed, allowed=allowed, originalRecoveryPending=original_recovery_pending)
 
+    def admission(self, token, step, *, close=False):
+        protocol.require(step in ('publish','continue','start'))
+        info=self.info(token);flags,_,_=self.local(info)
+        kind='handoff-start' if step=='start' else step;identity=info['startOperationId' if step=='start' else 'publicationId']
+        current=self.sender.view(kind,identity)
+        saved=self.sender.load(kind,identity)
+        if saved is not None:protocol.require(saved[0]['request']['handoffId']==info['handoffId'],'CONFLICT')
+        owning=self.sender.has_key_intent(identity)
+        if owning or step=='continue':current['closeAllowed']=False
+        if not close:return current
+        protocol.require(not owning and step!='continue','UNRESOLVED_OPERATION')
+        original=self.original(token,info,start=step=='start')
+        protocol.require(original['state']=='NOT_RECORDED' and original['resultSource']=='ROOT_ABSENCE','UNRESOLVED_OPERATION')
+        return self.sender.close(kind,identity)
+
     def execute(self, value):
         command = value.get('command')
+        if command in ('admission-read','admission-close'):
+            protocol.fields(value,{'token','command','step'});token=self.token(value['token'])
+            with self.journal.lock():return self.admission(token,value['step'],close=command=='admission-close')
         protocol.require(command in ('query', 'publish', 'continue', 'start', 'complete'), 'INVALID_ARGUMENT')
         extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else set()
         protocol.fields(value, {'token', 'command'} | extra); token = self.token(value['token'])
@@ -812,6 +944,8 @@ class Handler(BaseHTTPRequestHandler):
                 protocol.fields(value, set());result = self.server.controller.status()
             elif self.path == '/api/inspect':
                 result = self.server.controller.inspect(value)
+            elif self.path == '/api/admission':
+                result = self.server.controller.admission(value)
             elif self.path == '/api/original':
                 protocol.fields(value, {'operationId'})
                 result = self.server.controller.original(value['operationId'])
@@ -842,7 +976,7 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     with self.server.controller.journal.lock():
                         read = self.server.controller.journal.start_record if writer == "start" else self.server.controller.journal.record
-                        admitted = read(identity) is not None
+                        admitted = read(identity) is not None or self.server.controller.sender.has_attempt(writer,identity)
                     if admitted:
                         self.send(200, protocol.encode((self.server.controller.start_original if writer == "start" else self.server.controller.original)(identity)))
                         return

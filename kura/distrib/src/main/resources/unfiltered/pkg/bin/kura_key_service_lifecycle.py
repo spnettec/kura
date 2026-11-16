@@ -138,6 +138,14 @@ def validate_sender_attempt(value, source):
     return value
 
 
+def validate_sender_closed(value, attempt, namespace):
+    require(isinstance(value, dict) and set(value) == {'schema','purpose','admissionId','kind','nativeOperationId','namespaceSha256'}
+        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == 'yofc.kura.sender-not-admitted.v1'
+        and all(value[key] == attempt[key] for key in ('admissionId','kind','nativeOperationId'))
+        and value['namespaceSha256'] == namespace['namespaceSha256'])
+    return value
+
+
 def check_sender_attempt(policy, value, namespace, source, uid):
     validate_sender_attempt(value, source)
     require(isinstance(namespace, dict) and set(namespace) == {'schema', 'namespaceSha256'}
@@ -997,10 +1005,15 @@ class Lifecycle:
             if os.path.lexists(state/'admissions'):
                 directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
                 for slot in slots:
-                    directory(slot); require({p.name for p in slot.iterdir()} == {'intent.json', 'namespace.json'})
+                    directory(slot); names = {p.name for p in slot.iterdir()}
+                    require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}))
                     value = validate_sender_attempt(decode(read(slot/'intent.json', 12288)), 'recovery')
                     require(slot.name == value['nativeOperationId']+'-'+value['kind'])
-                    check_sender_attempt(self, value, decode(read(slot/'namespace.json', 4096)), 'recovery', account.pw_uid)
+                    namespace = decode(read(slot/'namespace.json', 4096))
+                    original = check_sender_attempt(self, value, namespace, 'recovery', account.pw_uid)
+                    if 'closed.json' in names:
+                        validate_sender_closed(decode(read(slot/'closed.json', 4096)), value, namespace)
+                        require(original['state'] == 'NOT_ADMITTED', 'Closed receiver attempt has no Root not-admitted original')
             yield
         finally:os.close(fd)
 

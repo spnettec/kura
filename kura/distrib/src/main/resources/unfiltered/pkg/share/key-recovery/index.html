@@ -92,6 +92,47 @@
     <form method="dialog"><button value="cancel" autofocus data-handoff-i18n="cancel">取消</button><button id="handoff-confirm-accept" value="accept" data-handoff-i18n="accept">确认本次操作</button></form>
    </dialog>
   </div>
+  <section id="admission-flow" aria-labelledby="admission-title">
+   <h2 id="admission-title" data-admission-i18n="title">核对原预留</h2>
+   <p data-admission-i18n="help">回复丢失后，只按原编号核对。关闭仅适用于尚未发送密钥操作的预留，原编号会永久保留且不再发送。</p>
+   <form id="admission-read-form" method="post" action="/api/admission" aria-labelledby="admission-title">
+    <fieldset id="admission-cold-kinds"><legend data-admission-i18n="kind">原操作类型</legend>
+     <label class="check"><input type="radio" name="admission-kind" value="restore" checked><span data-admission-i18n="restore">原密钥恢复</span></label>
+     <label class="check"><input type="radio" name="admission-kind" value="start"><span data-admission-i18n="start">Kura 启动</span></label>
+    </fieldset>
+    <fieldset id="admission-handoff-kinds" hidden><legend data-admission-i18n="step">原交接步骤</legend>
+     <label class="check"><input type="radio" name="admission-step" value="publish" checked><span data-admission-i18n="publish">发布</span></label>
+     <label class="check"><input type="radio" name="admission-step" value="start"><span data-admission-i18n="start">Kura 启动</span></label>
+     <label class="check"><input type="radio" name="admission-step" value="continue"><span data-admission-i18n="continue">原认证续接（仅核对）</span></label>
+    </fieldset>
+    <div id="admission-reference-row"><label for="admission-reference" data-admission-i18n="identity">原操作编号</label>
+     <input id="admission-reference" name="operationId" type="text" required maxlength="36" pattern="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <button id="admission-read" type="submit" data-admission-i18n="read">核对原预留</button>
+   </form>
+   <progress id="admission-progress" hidden aria-label="Reading original reservation"></progress>
+   <p><code id="admission-operation"></code></p>
+   <p id="admission-notice" role="status" aria-atomic="true"></p>
+   <form id="admission-close-form" method="post" action="/api/admission" aria-labelledby="admission-close-title" hidden>
+    <h3 id="admission-close-title" data-admission-i18n="authorize">授权关闭此原预留</h3>
+    <div id="admission-backup-material">
+     <label for="admission-backup" data-admission-i18n="file">原加密备份 JSON 文件（必填）</label>
+     <input id="admission-backup" name="backupJson" type="file" accept="application/json,.json" required aria-describedby="admission-privacy">
+     <label for="admission-password" data-admission-i18n="password">原备份解密口令（必填）</label>
+     <input id="admission-password" name="passphrase" type="password" autocomplete="current-password" required minlength="12" maxlength="512" aria-describedby="admission-privacy">
+     <p id="admission-privacy" class="hint" data-admission-i18n="privacy">仅使用原备份和口令核验授权，不恢复或替换密钥，也不保存口令。</p>
+    </div>
+    <p id="admission-handoff-material" hidden data-admission-i18n="handoffMaterial">关闭须使用上方输入的原交接授权。备份口令不能代替交接授权。</p>
+    <button id="admission-close" type="submit" data-admission-i18n="close">确认未发送并关闭</button>
+   </form>
+   <button id="admission-acknowledge" type="button" hidden data-admission-i18n="acknowledge">保留原记录并返回原流程</button>
+   <dialog id="admission-confirm" aria-labelledby="admission-confirm-title">
+    <h2 id="admission-confirm-title" data-admission-i18n="confirmTitle">关闭此原预留？</h2>
+    <p data-admission-i18n="confirmHelp">服务端将核实原请求尚未进入密钥处理，永久阻止此原编号。此操作不会恢复密钥、发布或启动 Kura。</p>
+    <p><code id="admission-confirm-id"></code></p>
+    <form method="dialog"><button value="cancel" autofocus data-admission-i18n="keep">保留预留</button><button value="close" data-admission-i18n="close">确认未发送并关闭</button></form>
+   </dialog>
+  </section>
  </main>
 </body>
 </html>

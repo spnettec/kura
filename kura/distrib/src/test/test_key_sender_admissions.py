@@ -240,5 +240,17 @@ class SenderAdmissionsTest(unittest.TestCase):
                     with self.subTest(uid=uid,action=action),self.assertRaises(service.Failure):
                         service.serve_request(self.manager,dict(schema=1,action=action),111,uid,self.core,self.recovery,None)
 
+    def test_receiver_closed_receipt_cannot_settle_a_missing_or_intaken_root_original(self):
+        request=self.request('recovery');self.reserve(request);self.read(request,close=True);native=self.original(request)
+        attempt=dict(schema=1,purpose='yofc.kura.sender-attempt.v1',admissionId=request['admissionId'],kind='restore',
+            nativeOperationId=native['operationId'],request=dict(schema=1,action='restore',operationId=native['operationId'],expectedKeySha256='1'*64,backupSha256='2'*64))
+        namespace=dict(schema=1,namespaceSha256=request['namespaceSha256'])
+        closed=dict(schema=1,purpose='yofc.kura.sender-not-admitted.v1',admissionId=attempt['admissionId'],kind='restore',nativeOperationId=native['operationId'],namespaceSha256=request['namespaceSha256'])
+        lifecycle.validate_sender_closed(closed,attempt,namespace)
+        self.assertEqual('NOT_ADMITTED',lifecycle.check_sender_attempt(self.fixture.policy,attempt,namespace,'recovery',self.recovery)['state'])
+        self.coordinator.write(dict(self.coordinator.load(request['admissionId']),state='INTAKE'))
+        with self.assertRaises(lifecycle.Unresolved):lifecycle.check_sender_attempt(self.fixture.policy,attempt,namespace,'recovery',self.recovery)
+        with self.assertRaises(lifecycle.Refused):lifecycle.validate_sender_closed(dict(closed,admissionId=str(uuid.uuid4())),attempt,namespace)
+
 
 if __name__=='__main__':unittest.main()
