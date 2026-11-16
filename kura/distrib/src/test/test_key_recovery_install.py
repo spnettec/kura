@@ -29,7 +29,7 @@ class PeerPolicy(Temporary):
     def setUp(self):
         super().setUp();self.manager=service.Manager(self.root,os.geteuid())
         self.manager.lock=lambda *_:contextlib.nullcontext();self.manager.maintenance=lambda:None
-        self.manager.read=lambda *_:b'j'*32;self.manager.record=lambda _:None;self.manager.journal_admission=lambda:None
+        self.manager.read=lambda *_:b'j'*32;self.manager.record=lambda _:None;self.manager.journal_admission=lambda request:None
         self.key=b'k'*32;self.sha=hashlib.sha256(self.key).hexdigest()
         self.proof=dict(schema=1,keySha256=self.sha,origin='fresh',legacyKey=False,unitDigests=[])
         self.manager.canonical=lambda *_:(self.key,self.proof)
