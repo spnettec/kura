@@ -119,7 +119,7 @@ class Starter:
             current = group[parent]
         require(len(visited) == len(group), 'UNSAFE_JOURNAL')
         head = self.package_head()
-        if head is None or head['firstAction'] != 'upgrade':
+        if head is None or head['firstAction'] not in ('upgrade','remove'):
             return result
         if head['keySha256'] != expected or head['manifestSha256'] != self.manifest_digest():
             return result

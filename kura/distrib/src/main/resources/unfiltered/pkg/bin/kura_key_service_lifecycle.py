@@ -953,7 +953,7 @@ def validate_maintenance(record, identity):
     require(set(record)=={'schema','maintenanceId','firstAction','manifestSha256',
             'keySha256','precedingStartupIds','previousMaintenanceId'}|({'precedingArchiveId','precedingArchiveSha256'} if record['schema']==2 else set()))
     require(canonical_id(identity)
-            and record['maintenanceId']==identity and record['firstAction'] in ('install','upgrade')
+            and record['maintenanceId']==identity and record['firstAction'] in ('install','upgrade','remove')
             and is_digest(record['manifestSha256']) and is_digest(record['keySha256'])
             and (record['previousMaintenanceId'] is None or canonical_id(record['previousMaintenanceId']))
             and record['previousMaintenanceId']!=identity)
@@ -1654,9 +1654,10 @@ class Lifecycle:
             manager = Manager(self.root, self.owner)
             with manager.lock(manager.store.path("/etc/kura/credentials/.provision.lock"), False):
                 _,_,_,_,proof,_=manager.generation_source()
-            if fence is not None and fence['firstAction'] in ('install','upgrade') and frozenset(manifest['files'])==ASSETS:
+            if fence is not None and frozenset(manifest['files'])==ASSETS:
                 # The existing installer stops Main synchronously. Record its terminal
                 # predecessor set under the package lock, never infer UNKNOWN from Main0.
+                # A reinstall completes the retained remove fence under its original UUID.
                 if self.path('/run/systemd/system').is_dir():
                     info=dict(line.split('=',1) for line in self.command(['show','kura.service','--property=ActiveState',
                         '--property=MainPID','--property=ControlPID']).splitlines() if '=' in line)

@@ -57,6 +57,12 @@ class Maintenance(unittest.TestCase):
         self.assertEqual(before,{str(f):f.read_bytes() for folder in (self.history,self.starter.directory) for f in folder.iterdir()})
         self.assertEqual(1,len(self.base.calls))
 
+    def test_completed_reinstall_can_plan_an_explicit_new_start_with_the_original_remove_fence(self):
+        path=self.history/(self.maintenance_id+'.json');record=json.loads(path.read_bytes());record['firstAction']='remove'
+        self.manager.atomic(path,protocol.encode(record));before=path.read_bytes()
+        plan=self.plan();self.assertTrue(plan['startAllowed']);self.assertEqual(self.maintenance_id,plan['maintenanceId'])
+        self.assertEqual(before,path.read_bytes());self.assertEqual(1,len(self.base.calls))
+
     def test_explicit_new_start_once_preserves_old_original_and_consumes_maintenance(self):
         original=self.starter.record(self.first['operationId']);result=self.dispatch()
         self.assertEqual('core-start-after-maintenance',result['action']);self.assertEqual(self.maintenance_id,result['maintenanceId'])
@@ -137,6 +143,14 @@ class PackageArchive(unittest.TestCase):
         self.assertEqual([],record['precedingStartupIds']);self.assertIsNone(record['previousMaintenanceId'])
         self.assertEqual(0o700,path.parent.stat().st_mode&0o777);self.assertEqual(0o600,path.stat().st_mode&0o777)
         before=path.read_bytes();policy.leave();self.assertEqual(before,path.read_bytes())
+
+    def test_reinstall_records_completion_without_rewriting_the_original_remove_fence_identity(self):
+        policy=self.base.policy;fence=policy.enter('remove');before=self.base.data_identity()
+        self.assertEqual(fence,policy.enter('install'))
+        self.assertFalse((policy.state/'package-history').exists(),'Removal alone is not completed installation authority')
+        policy.leave();path=policy.state/'package-history'/(fence['id']+'.json');record=json.loads(path.read_bytes())
+        self.assertEqual('remove',record['firstAction']);self.assertEqual(fence['id'],record['maintenanceId'])
+        self.assertEqual(before,self.base.data_identity());self.assertFalse((policy.state/'maintenance.json').exists())
 
     def test_running_core_refuses_archive_and_preserves_maintenance_fence(self):
         policy=self.base.policy;policy.enter('upgrade');self.base.states['kura.service']='active'

@@ -430,7 +430,7 @@ class Store:
                 try:
                     lifecycle.check_records()
                     fence=lifecycle.fence()
-                    require(fence is not None and fence["firstAction"] in ("install","upgrade"),
+                    require(fence is not None,
                             "Package key preparation requires installation maintenance")
                 except api.Refused:
                     raise Refused("Unresolved or unsafe package operation; preserve original UUID and credentials") from None

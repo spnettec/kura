@@ -122,12 +122,16 @@ print('PAIRED_PREUNPACK_POLICY_OK')
         result=self.run_policy(action='package');self.assertEqual(0,result.returncode,result.stderr)
         self.assertEqual(before,self.fixture.identity());self.assertEqual(raw,marker.read_bytes());self.assertFalse(self.marker.exists())
 
-    def test_package_refuses_absent_or_remove_fence_and_incomplete_original_credentials(self):
+    def test_package_refuses_absent_fence_and_incomplete_original_credentials(self):
         before=self.fixture.identity();result=self.run_policy(action='package');self.assertNotEqual(0,result.returncode);self.assertEqual(before,self.fixture.identity())
-        marker=self.maintenance('remove');result=self.run_policy(action='package');self.assertNotEqual(0,result.returncode);self.assertEqual(before,self.fixture.identity())
-        marker.unlink();self.maintenance()
+        self.maintenance()
         (self.fixture.directory/original.policy.CREDENTIAL).unlink();before=self.fixture.identity()
         result=self.run_policy(action='package');self.assertNotEqual(0,result.returncode);self.assertEqual(before,self.fixture.identity())
+
+    def test_package_reinstall_consumes_the_original_remove_fence_without_replacing_it(self):
+        marker=self.maintenance('remove');raw=marker.read_bytes();before=self.fixture.identity()
+        result=self.run_policy(action='package');self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual(before,self.fixture.identity());self.assertEqual(raw,marker.read_bytes())
 
     def test_package_single_key_is_preserved_but_unknown_still_blocks_without_repair(self):
         for name in (original.policy.RING_CREDENTIAL,'key-generations.json'):(self.fixture.directory/name).unlink()

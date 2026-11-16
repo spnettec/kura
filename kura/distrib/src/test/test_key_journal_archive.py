@@ -63,11 +63,19 @@ class JournalArchiveTest(unittest.TestCase):
         parent=self.manager.state/'startups';parent.mkdir(mode=0o700,exist_ok=True)
         self.manager.atomic(parent/(identity+'.json'),service.encode(value));return value
 
-    def maintenance(self,identity,parent=None):
-        value=dict(schema=1,maintenanceId=identity,firstAction='upgrade',manifestSha256='e'*64,
+    def maintenance(self,identity,parent=None,first_action='upgrade'):
+        value=dict(schema=1,maintenanceId=identity,firstAction=first_action,manifestSha256='e'*64,
             keySha256=self.manager.canonical()[1]['keySha256'],precedingStartupIds=[],previousMaintenanceId=parent)
         directory=self.manager.state/'package-history';directory.mkdir(mode=0o700,exist_ok=True)
         self.manager.atomic(directory/(identity+'.json'),service.encode(value));return value
+
+    def test_completed_reinstall_history_can_be_archived_without_rewriting_the_original_remove_identity(self):
+        identity=str(uuid.uuid4());self.maintenance(identity,first_action='remove')
+        path=self.manager.state/'package-history'/(identity+'.json');before=path.read_bytes()
+        request,result=self.archive(self.ref('package-history',identity))
+        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual(before,path.read_bytes())
+        self.assertEqual(result,self.query(request['archiveId']));self.assertEqual(identity,service.decode(path.read_bytes())['maintenanceId'])
+        lifecycle.Lifecycle(self.manager.root,self.manager.owner).check_records()
 
     def test_preview_and_unknown_archive_queries_preserve_every_original_and_make_no_directory(self):
         identities=self.backups(4);before=self.base.snapshot();calls=list(self.base.commands)
