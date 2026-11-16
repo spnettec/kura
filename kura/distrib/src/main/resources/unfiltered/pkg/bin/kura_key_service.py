@@ -270,7 +270,7 @@ class SenderAdmissions:
 
     def settled(self, value):
         if value['state'] == 'NOT_ADMITTED':
-            require(self.native(value['target']) is None, 'UNSAFE_JOURNAL'); return True
+            self.require_no_native(value['target']['operationId'], 'UNSAFE_JOURNAL'); return True
         native = self.native(value['target'])
         success = native is not None and (value['target']['directory'] == 'handoffs' or native.get('state') == 'SUCCEEDED')
         if value['state'] == 'TERMINAL': require(success, 'UNSAFE_JOURNAL')
@@ -279,6 +279,14 @@ class SenderAdmissions:
             if value['state'] == 'INTAKE': value.update(self.write(dict(value, state='TERMINAL')))
             return True
         return False
+
+    def require_no_native(self, identity, reason='UNRESOLVED_OPERATION'):
+        # A closed original must not conceal a different native action/directory.
+        operation_id(identity)
+        for name in ('operations', 'startups', 'handoffs'):
+            parent = self.manager.state/name
+            if os.path.lexists(parent): self.manager.directory(parent, private=True)
+            require(not os.path.lexists(parent/(identity+'.json')), reason)
 
     def require_settled(self):
         if not os.path.lexists(self.directory): return
@@ -342,6 +350,7 @@ class SenderAdmissions:
             if close:
                 # Only an explicit close can seal a reservation; reads never settle missing native originals.
                 require(value['state'] in ('RESERVED', 'NOT_ADMITTED') and self.native(value['target']) is None, 'UNRESOLVED_OPERATION')
+                self.require_no_native(value['target']['operationId'])
                 if value['state'] == 'RESERVED': value = self.write(dict(value, state='NOT_ADMITTED'))
             elif self.settled(value) and value['state'] not in ('TERMINAL', 'NOT_ADMITTED'):
                 value = self.write(dict(value, state='TERMINAL'))

@@ -92,6 +92,27 @@ class SenderAdmissionsTest(unittest.TestCase):
         self.assertEqual('NOT_ADMITTED',self.reserve(self.request('recovery'))['state'])
         self.assertEqual([1],calls);self.assertEqual([],list(self.manager.operations.iterdir()))
 
+    def test_closing_a_reservation_rejects_any_other_native_directory_using_its_uuid(self):
+        for directory in ('startups','handoffs'):
+            request=self.request('recovery');self.reserve(request);identity=self.original(request)['operationId']
+            parent=self.manager.state/directory;parent.mkdir(mode=0o700,exist_ok=True)
+            path=parent/(identity+'.json');self.manager.atomic(path,b'{}')
+            with self.assertRaises(service.Failure) as failure:self.read(request,close=True)
+            self.assertEqual('UNRESOLVED_OPERATION',failure.exception.reason)
+            self.assertEqual('RESERVED',self.coordinator.load(request['admissionId'])['state'])
+            self.assertEqual(b'{}',path.read_bytes())
+            path.unlink()  # Dispose this synthetic collision, retaining the original reservation.
+            self.read(request,close=True)
+
+    def test_closed_reservation_is_not_a_proof_over_a_later_cross_directory_collision(self):
+        request=self.request('recovery');self.reserve(request);self.read(request,close=True)
+        identity=self.original(request)['operationId'];parent=self.manager.state/'handoffs';parent.mkdir(mode=0o700)
+        path=parent/(identity+'.json');self.manager.atomic(path,b'{}')
+        with self.assertRaises(service.Failure) as failure:self.read(request)
+        self.assertEqual('UNSAFE_JOURNAL',failure.exception.reason)
+        with self.assertRaises(lifecycle.Refused):lifecycle.check_sender_original(lifecycle.Lifecycle(self.manager.root,self.manager.owner),self.coordinator.load(request['admissionId']),self.coordinator.secret())
+        self.assertEqual(b'{}',path.read_bytes())
+
     def test_read_never_closes_an_unconsumed_reservation_and_explicit_close_forbids_late_forward(self):
         request=self.request();self.reserve(request)
         self.assertEqual('RESERVED',self.read(request)['state'])

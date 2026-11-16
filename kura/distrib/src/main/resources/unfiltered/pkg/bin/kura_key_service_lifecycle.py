@@ -146,6 +146,22 @@ def validate_sender_closed(value, attempt, namespace):
     return value
 
 
+def validate_gwt_closed(value, attempt, namespace):
+    validate_sender_attempt(attempt, 'gwt')
+    require(isinstance(value, dict) and set(value) == {'schema','purpose','admissionId','kind','nativeOperationId','namespaceSha256','files'}
+        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == 'yofc.kura.gwt-unconsumed-intent.v1'
+        and all(value[k] == attempt[k] for k in ('admissionId','kind','nativeOperationId'))
+        and value['namespaceSha256'] == namespace['namespaceSha256'])
+    identity = attempt['nativeOperationId']; files = value['files']
+    require(isinstance(files, dict) and 1 <= len(files) <= 5 and all(is_digest(v) for v in files.values()))
+    if attempt['kind'] == 'LEGACY':
+        names = {'request.json','request-complete','submitted','result.json','result-complete'}
+        require({'request.json','request-complete'} <= set(files) <= names)
+    else:
+        require(set(files) == {'intent'})
+    return value
+
+
 def receiver_start_intent(attempt):
     """The complete private startup metadata implied by its original reservation."""
     validate_sender_attempt(attempt, 'recovery')
@@ -185,6 +201,10 @@ def check_sender_attempt(policy, value, namespace, source, uid):
     root = validate_sender_admission(decode(raw), identity, secret)
     require(root['source'] == source and root['owner']['uid'] == uid and root['target']['operationId'] == value['nativeOperationId']
         and root['namespaceSha256'] == namespace['namespaceSha256'])
+    if source == 'gwt':
+        require(root['target']['action'] == value['request']['action'] and root['target']['continuation'] is False
+            and root['target']['directory'] == ('handoffs' if value['kind'] == 'HANDOFF' else 'operations'),
+            'GWT reservation does not match the original intent type and action')
     if source == 'recovery' and value['kind'] == 'restore':
         require(root['target']['directory'] == 'operations' and root['target']['action'] == 'restore'
             and root['target']['continuation'] is False, 'Recovery reservation has a different native target')
@@ -204,6 +224,11 @@ def check_sender_original(policy, value, secret):
     except FileNotFoundError: native = None
     if value['state'] == 'NOT_ADMITTED':
         require(native is None, 'A closed sender reservation cannot conceal a native original')
+        for name in ('operations', 'startups', 'handoffs'):
+            parent = policy.state/name
+            if os.path.lexists(parent): policy.directory(parent, private=True)
+            require(not os.path.lexists(parent/(target['operationId']+'.json')),
+                'A closed sender reservation cannot conceal another native action or directory')
         return
     if value['state'] == 'RESERVED' or native is None:
         raise Unresolved('Unresolved sender admission; preserve original IDs and receipts')
@@ -574,12 +599,13 @@ def validate_start(record, identity):
 
 class GwtSenderInventory:
     """Full-privilege package reader only; the no-capability Root daemon never uses it."""
-    JOURNALS = {'LEGACY': ('gateway-key-operations', '.admission.lock', 64),
+    JOURNALS = {'LEGACY': ('gateway-key-operations', '.key.lock', 64),
                 'GENERATION': ('gateway-key-generations', '.generation.lock', 64),
                 'HANDOFF': ('gateway-key-handoffs', '.handoff.lock', 32)}
 
     def __init__(self, policy, binding):
         self.policy, self.binding = policy, validate_gwt_binding(binding)
+        self.closed = {}
         self.data = policy.path(binding['dataDirectory'])
         require(self.data.resolve(strict=True) == self.data, 'Effective Core data directory moved or aliased')
         m = self.data.lstat()
@@ -672,6 +698,21 @@ class GwtSenderInventory:
                 and document['schema'] == 'yofc.kura.gateway-key.result.v1' and document['requestSha256'] == digest.decode().strip())
             local = document['result']; require(isinstance(local, dict) and local.get('operationId') == slot.name
                 and local.get('action') == intent['action'])
+        if slot.name in self.closed:
+            kind, original = self.closed[slot.name]
+            require(kind == 'LEGACY' and original == intent)
+            if local is not None:
+                require(local.get('state') == 'REJECTED' and local.get('resultSource') in ('SERVER_PREFLIGHT','ROOT_PREFLIGHT')
+                    and set(local) in ({'operationId','action','state','resultSource','error'},
+                        {'operationId','action','state','resultSource','error','blockingOperationId'})
+                    and isinstance(local.get('error'), str))
+                if local['resultSource'] == 'SERVER_PREFLIGHT':
+                    require(local['error'] in {'INVALID_ARGUMENT','UNAVAILABLE','BUSY','UNRESOLVED_OPERATION'})
+                if 'blockingOperationId' in local:
+                    require(local['resultSource'] == 'SERVER_PREFLIGHT' and local['error'] == 'UNRESOLVED_OPERATION'
+                        and canonical_id(local['blockingOperationId']))
+            self.absent(slot.name)
+            return slot.name
         if local is not None and local.get('state') == 'REJECTED' and local.get('resultSource') == 'SERVER_PREFLIGHT':
             require(set(local) in ({'operationId', 'action', 'state', 'resultSource', 'error'},
                 {'operationId', 'action', 'state', 'resultSource', 'error', 'blockingOperationId'}))
@@ -697,6 +738,34 @@ class GwtSenderInventory:
                 'A local no-dispatch receipt cannot conceal an original Root record')
         require(identity not in self.authority_ids, 'A local no-dispatch receipt cannot conceal a reserved handoff UUID')
 
+    def closed_attempts(self):
+        self.closed = {}; parent = self.data/'gateway-key-admissions'
+        if not os.path.lexists(parent): return
+        self.directory(parent); slots = list(parent.iterdir()); require(len(slots) <= 256)
+        for slot in slots:
+            require(canonical_id(slot.name)); self.directory(slot); names = {p.name for p in slot.iterdir()}
+            require(names in ({'intent.json','complete','namespace.json'}, {'intent.json','complete','namespace.json','closed.json'}))
+            raw = self.read(slot/'intent.json',12288)
+            require(self.read(slot/'complete',65) == hashlib.sha256(raw).hexdigest().encode('ascii')+b'\n')
+            attempt = validate_sender_attempt(decode(raw),'gwt'); require(attempt['nativeOperationId'] == slot.name)
+            namespace = decode(self.read(slot/'namespace.json',4096))
+            root = check_sender_attempt(self.policy,attempt,namespace,'gwt',self.binding['dataUid'])
+            if 'closed.json' not in names: continue
+            receipt = validate_gwt_closed(decode(self.read(slot/'closed.json',12288)),attempt,namespace)
+            require(root['state'] == 'NOT_ADMITTED', 'A retained GWT intent requires the original Root non-admission')
+            self.absent(slot.name)
+            for name, fingerprint in receipt['files'].items():
+                if attempt['kind'] == 'LEGACY': path = self.data/'gateway-key-operations'/slot.name/name
+                else:
+                    folder = 'gateway-key-generations' if attempt['kind'] == 'GENERATION' else 'gateway-key-handoffs'
+                    path = self.data/folder/(slot.name+'.json')
+                require(hashlib.sha256(self.read(path,65536)).hexdigest() == fingerprint,
+                    'Retained GWT intent bytes have changed')
+            if attempt['kind'] == 'LEGACY':
+                directory = self.data/'gateway-key-operations'/slot.name
+                require({p.name for p in directory.iterdir()} == set(receipt['files']))
+            self.closed[slot.name] = (attempt['kind'], attempt['request'])
+
     def check(self):
         marker = decode(self.read(self.data/'gateway-key-namespace.json', 8192))
         require(marker == self.binding, 'Core and Root sender namespaces differ')
@@ -710,6 +779,7 @@ class GwtSenderInventory:
                 authority = validate_handoff_authority(decode(raw), path.name[:-5], self.policy.read(self.policy.state/'journal.key', 32))
                 require(raw == encoded(authority) and stat.S_IMODE(path.lstat().st_mode) == 0o400)
                 self.authority_ids.update(authority['request'][k] for k in HANDOFF_IDS)
+        self.closed_attempts()
         owning = set()
         for kind, (directory, lock, limit) in self.JOURNALS.items():
             parent = self.data/directory
@@ -721,7 +791,9 @@ class GwtSenderInventory:
                     require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                     intent = decode(self.read(path, 8192 if kind == 'HANDOFF' else 4096))
                     identity = validate_gwt_intent(kind, intent); require(identity == path.name[:-5])
-                    if kind == 'GENERATION': self.original(identity, intent)
+                    if identity in self.closed:
+                        require(self.closed[identity] == (kind,intent)); self.absent(identity)
+                    elif kind == 'GENERATION': self.original(identity, intent)
                     else:
                         authority_path = self.policy.state/'handoffs'/(identity+'.json')
                         raw = self.policy.read(authority_path, 8192)
@@ -743,16 +815,7 @@ class GwtSenderInventory:
                     and all(receipt[k] == self.binding[k] for k in ('dataDirectory', 'dataDevice', 'dataInode'))
                     and validate_gwt_intent(receipt['kind'], receipt['request']) == slot.name)
                 self.absent(slot.name)
-        attempts = self.data/'gateway-key-admissions'
-        if os.path.lexists(attempts):
-            self.directory(attempts); slots = list(attempts.iterdir()); require(len(slots) <= 256)
-            for slot in slots:
-                require(canonical_id(slot.name)); self.directory(slot)
-                require({p.name for p in slot.iterdir()} == {'intent.json', 'complete', 'namespace.json'})
-                raw = self.read(slot/'intent.json', 12288)
-                require(self.read(slot/'complete', 65) == hashlib.sha256(raw).hexdigest().encode('ascii')+b'\n')
-                value = validate_sender_attempt(decode(raw), 'gwt'); require(value['nativeOperationId'] == slot.name)
-                check_sender_attempt(self.policy, value, decode(self.read(slot/'namespace.json', 4096)), 'gwt', self.binding['dataUid'])
+        require(set(self.closed) <= owning, 'A closed GWT admission cannot conceal missing original intent files')
         return len(owning)
 
 
