@@ -170,7 +170,7 @@ class Starter:
                 require(plan['startAllowed'] and all(plan[k] == request[k] for k in extra), 'CONFLICT')
             else:
                 require(all(r['restoreOperationId'] != restore_id for r in records), 'CONFLICT')
-            manager.journal_admission()
+            manager.journal_admission(request, directory='startups')
             self.original_restore(restore_id, expected)
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
                 _, proof = manager.canonical()

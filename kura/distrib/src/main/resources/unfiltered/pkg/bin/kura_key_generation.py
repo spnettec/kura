@@ -17,7 +17,7 @@ from kura_key_service import (Failure, require, fields, digest, operation_id, en
                               GENERATION_FORMAT, key_generations)
 from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
-    validate_start_lease, START_LEASE_CONTEXT)
+    validate_start_lease, START_LEASE_CONTEXT, handoff_operation_request)
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
@@ -462,7 +462,7 @@ class Generations:
                     return manager.public_record(prior)
             manager.settled()
             if not plan:
-                manager.journal_admission()
+                manager.journal_admission(request)
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), not plan and not start):
                 if start:
                     return self.start(request, identity, tag, expected_owner=expected_owner)
@@ -774,6 +774,7 @@ class Handoffs:
                 for name in ('publicationId', 'startOperationId'):
                     require(manager.record(request[name]) is None
                             and not os.path.lexists(manager.state / 'startups' / (request[name] + '.json')), 'CONFLICT')
+                manager.sender_admissions.require_capacity(handoff=request)
                 owner, source, history, prepared = self.owner(request, pid, uid, daemon)
                 issued = self.clock(); wall = int(time.time())
                 value = dict(schema=1, purpose=HANDOFF_PURPOSE, request=dict(request),
@@ -807,15 +808,7 @@ class Handoffs:
 
     @staticmethod
     def operation_request(value, *, start=False):
-        request = value['request']
-        result = dict(schema=1, action='generation-core-start' if start else 'generation-publish',
-                      operationId=request['startOperationId' if start else 'publicationId'],
-                      expectedRingSha256=request['expectedRingSha256'], expectedCohortSha256=request['expectedCohortSha256'])
-        if start:
-            result['publicationId'] = request['publicationId']
-        else:
-            result.update(preparationId=request['preparationId'], verificationId=request['verificationId'])
-        return result
+        return handoff_operation_request(value, start=start)
 
     def original(self, value, *, start=False):
         identity = value['request']['startOperationId' if start else 'publicationId']
@@ -940,7 +933,7 @@ class Handoffs:
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
                 published = self.renewal_preflight(value)
                 require(published == request['expectedPublicationSha256'], 'CONFLICT')
-                manager.journal_admission()
+                manager.journal_admission(native)
                 issued = self.clock(); wall = int(time.time())
                 lease = dict(schema=1, operationId=identity, action='generation-start-lease', state='SUCCEEDED',
                     purpose='yofc.kura.generation-start-lease.v1', scope='ORIGINAL_FIRST_START_ONLY',

@@ -38,7 +38,8 @@ from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_pub
                                        Unresolved as LifecycleUnresolved, GWT_BINDING_PURPOSE, GWT_DATA_FIELDS,
                                        GWT_NAMESPACE_FIELDS, gwt_namespace, validate_gwt_data, validate_gwt_binding,
                                        validate_sender_admission, validate_start, validate_handoff_authority,
-                                       SENDER_ADMISSION_PURPOSE, SENDER_ADMISSION_CONTEXT, handoff_revocations)
+                                       SENDER_ADMISSION_PURPOSE, SENDER_ADMISSION_CONTEXT, handoff_revocations,
+                                       handoff_operation_request)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
@@ -204,6 +205,97 @@ class SenderAdmissions:
             value = self.load(operation_id(path.name[:-5])); require(value is not None, 'UNSAFE_JOURNAL'); result.append(value)
         return result
 
+    def native_target(self, request, *, directory='operations'):
+        return dict(directory=directory, operationId=operation_id(request['operationId']),
+            action=request['action'], requestTag=self.tag(request), continuation=False)
+
+    def require_capacity(self, *, admission=None, handoff=None, native=None):
+        """Project both journals under the sender/admission locks, without reserving a writer.
+
+        Immutable grants promise their missing fixed operations. An unmaterialized
+        RESERVED/INTAKE issuer promises two anonymous slots in each journal, so
+        the sender-private intent gap cannot spend them. Neither time nor absence
+        releases a promise. Positive unused revocation permanently fences both IDs.
+        Existing originals consume promises; their durable rows still count.
+        """
+        manager = self.manager
+        records = self.records()
+        if admission is not None:
+            require(all(row['admissionId'] != admission['admissionId'] for row in records), 'CONFLICT')
+            records.append(admission)
+        present = {}
+        for directory in ('operations', 'startups'):
+            parent = manager.state/directory
+            paths = []
+            if os.path.lexists(parent):
+                manager.directory(parent, private=True); paths = list(parent.iterdir())
+            identities = set()
+            for path in paths:
+                require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+                identities.add(operation_id(path.name[:-5]))
+            present[directory] = identities
+        authorities = {}
+        parent = manager.state/'handoffs'
+        if os.path.lexists(parent):
+            manager.directory(parent, private=True); paths = list(parent.iterdir())
+            require(len(paths) <= 32, 'CAPACITY')
+            for path in paths:
+                require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+                identity = operation_id(path.name[:-5]); raw = manager.read(path, 8192)
+                try: value = validate_handoff_authority(decode(raw), identity, self.secret())
+                except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+                require(raw == encode(value) and stat.S_IMODE(path.lstat().st_mode) == 0o400, 'UNSAFE_JOURNAL')
+                authorities[identity] = value
+        if handoff is not None:
+            require(handoff['handoffId'] not in authorities, 'CONFLICT')
+            authorities[handoff['handoffId']] = dict(request=handoff, requestTag=self.tag(handoff))
+        try: revoked = handoff_revocations(manager)
+        except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+        fixed = {}; promised = {'operations': set(), 'startups': set()}; shared = set()
+        other_ids = {value['request'][key] for value in authorities.values()
+            for key in ('handoffId', 'preparationId', 'verificationId')}
+        for identity, value in authorities.items():
+            for start in (False, True):
+                target = self.native_target(handoff_operation_request(value, start=start))
+                key = target['operationId']
+                require(key not in fixed and key not in other_ids, 'CONFLICT')
+                fixed[key] = (target, identity in revoked)
+                for directory in ('startups', 'handoffs'):
+                    require(not os.path.lexists(manager.state/directory/(key+'.json')), 'CONFLICT')
+                original = self.native(target)
+                matches = [row for row in records if row['target']['operationId'] == key]
+                require(all(all(row['target'][k] == target[k] for k in
+                    ('directory', 'operationId', 'action', 'requestTag')) for row in matches), 'CONFLICT')
+                if identity in revoked:
+                    require(original is None and all(row['state'] in ('RESERVED', 'NOT_ADMITTED') for row in matches), 'UNSAFE_JOURNAL')
+                elif original is None:
+                    promised['operations'].add(key)
+                    if not matches: shared.add(key)
+        anonymous = 0
+        for row in records:
+            target = row['target']; identity = target['operationId']
+            if target['directory'] == 'handoffs':
+                if identity in authorities:
+                    require(target['requestTag'] == authorities[identity]['requestTag']
+                        and row['state'] in ('RESERVED', 'INTAKE', 'TERMINAL'), 'CONFLICT')
+                elif row['state'] in ('RESERVED', 'INTAKE'):
+                    anonymous += 1
+            elif row['state'] in ('RESERVED', 'INTAKE') and not (identity in fixed and fixed[identity][1]):
+                if self.native(target) is None: promised[target['directory']].add(identity)
+        if native is not None:
+            identity = native['operationId']
+            if identity in fixed:
+                target, retired = fixed[identity]
+                require(not retired and all(native[k] == target[k] for k in
+                    ('directory', 'operationId', 'action', 'requestTag')), 'CONFLICT')
+            if self.native(native) is None: promised[native['directory']].add(identity)
+        used = dict(operations=len(present['operations'])+len(promised['operations'])+2*anonymous,
+            startups=len(present['startups'])+len(promised['startups']),
+            admissions=len(records)+len(shared)+2*anonymous, handoffs=len(authorities)+anonymous)
+        require(used['operations'] <= MAX_OPERATIONS and used['admissions'] <= 256
+            and used['startups'] <= 32 and used['handoffs'] <= 32, 'CAPACITY')
+        return used
+
     def owner(self, source, pid, uid, daemon, recovery):
         require(source in ('gwt', 'recovery', 'local-admin'), 'FORBIDDEN')
         if source == 'gwt': self.manager.gwt_sender_owner(pid, uid, daemon)
@@ -316,7 +408,7 @@ class SenderAdmissions:
                     and previous['requestTag'] == tag and previous['target'] == target, 'CONFLICT')
                 return self.view(previous)
             self.manager.require_unrevoked_operation(target['operationId'])
-            records = self.records(); require(len(records) < 256, 'CAPACITY'); parent = None; denied = False
+            records = self.records(); parent = None; denied = False
             for value in records:
                 same = all(value['target'][k] == target[k] for k in ('directory', 'operationId', 'action', 'requestTag'))
                 if same and target['continuation'] and not value['target']['continuation'] and value['state'] == 'INTAKE':
@@ -336,7 +428,9 @@ class SenderAdmissions:
             value = dict(schema=1, purpose=SENDER_ADMISSION_PURPOSE, admissionId=identity, source=request['source'],
                 namespaceSha256=request['namespaceSha256'], owner=owner, requestTag=tag, target=target,
                 parentAdmissionId=parent, state='NOT_ADMITTED' if denied else 'RESERVED')
-            return self.view(self.write(value, create=True), fresh=not denied)
+            with self.manager.lock(self.manager.state/'admission.lock', False):
+                self.require_capacity(admission=value)
+                return self.view(self.write(value, create=True), fresh=not denied)
 
     def read(self, request, pid, uid, daemon, recovery, *, close=False):
         fields(request, {'schema', 'action', 'admissionId', 'source', 'namespaceSha256'})
@@ -371,7 +465,11 @@ class SenderAdmissions:
             self.context.current = value
             try:
                 self.require_settled()
-                value = self.write(dict(value, state='INTAKE')); self.context.current = value
+                with self.manager.lock(self.manager.state/'admission.lock', False):
+                    # Also cover reservations saved by an older version: no new
+                    # INTAKE is allowed to discover capacity only in its writer.
+                    self.require_capacity()
+                    value = self.write(dict(value, state='INTAKE')); self.context.current = value
                 # Persist intake before any native handler, even one that fails its own preflight.
                 result = dispatch(request['request'])
                 if self.settled(value) and value['parentAdmissionId'] is not None:
@@ -675,15 +773,15 @@ class Manager:
         require(isinstance(record["response"], dict), "UNSAFE_JOURNAL")
         return record["response"]
 
-    def journal_admission(self):
+    def journal_admission(self, request, *, directory='operations'):
         self.directory(self.operations, private=True)
         names = list(self.operations.iterdir())
-        require(len(names) < MAX_OPERATIONS, "CAPACITY")
         for path in names:
             require(path.name.endswith(".json"), "UNSAFE_JOURNAL")
             identity = operation_id(path.name[:-5])
             record = self.record(identity)
             require(record is not None and record["state"] != "INTENT", "UNRESOLVED_OPERATION")
+        self.sender_admissions.require_capacity(native=self.sender_admissions.native_target(request, directory=directory))
 
     def maintenance(self):
         try:
@@ -739,7 +837,7 @@ class Manager:
                 require(hmac.compare_digest(prior["requestTag"], tag), "CONFLICT")
                 return self.public_record(prior)
             self.settled()
-            self.journal_admission()
+            self.journal_admission(request)
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), True):
                 raw, metadata, _ = self.unpack_generations(request["backup"], password)
                 require(metadata["ringSha256"] == expected, "CONFLICT")
@@ -782,7 +880,7 @@ class Manager:
                 require(hmac.compare_digest(existing["requestTag"], tag), "CONFLICT")
                 return self.public_record(existing)
             self.settled()
-            self.journal_admission()
+            self.journal_admission(request)
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                 raw, _, proof = self.generations()
                 record = dict(schema=1, operationId=identity, action="generation-backup-create",
@@ -1253,7 +1351,7 @@ class Manager:
                 intent = record['intent']
             else:
                 self.settled()
-                self.journal_admission()
+                self.journal_admission(request)
                 intent = {name: request[name] for name in ('preparationId', 'expectedHistorySha256', 'expectedRingSha256')}
             with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
                 preparation = intent['preparationId']
@@ -1326,7 +1424,7 @@ class Manager:
                 require(hmac.compare_digest(existing["requestTag"], tag), "CONFLICT")
                 return self.public_record(existing)
             self.settled()
-            self.journal_admission()
+            self.journal_admission(request)
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), False):
                 keys, legacy, original_ring, original_metadata, proof, source = self.generation_source()
                 if verify:
@@ -1553,7 +1651,7 @@ class Manager:
             if existing is not None:
                 require(hmac.compare_digest(existing["requestTag"], tag), "CONFLICT")
                 return self.public_record(existing)
-            self.journal_admission()
+            self.journal_admission(request)
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), action == "restore"):
                 current, proof = self.canonical(action == "restore")
                 require(not recovery_only or current is None, 'CONFLICT')

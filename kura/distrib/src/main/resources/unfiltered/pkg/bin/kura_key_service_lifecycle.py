@@ -343,6 +343,19 @@ def validate_handoff_authority(value, identity, secret):
     return value
 
 
+def handoff_operation_request(value, *, start=False):
+    """The two fixed native requests covered by one authenticated authority."""
+    request = value['request']
+    result = dict(schema=1, action='generation-core-start' if start else 'generation-publish',
+        operationId=request['startOperationId' if start else 'publicationId'],
+        expectedRingSha256=request['expectedRingSha256'], expectedCohortSha256=request['expectedCohortSha256'])
+    if start:
+        result['publicationId'] = request['publicationId']
+    else:
+        result.update(preparationId=request['preparationId'], verificationId=request['verificationId'])
+    return result
+
+
 HANDOFF_IDS = ('handoffId', 'preparationId', 'verificationId', 'publicationId', 'startOperationId')
 HANDOFF_BINDING = frozenset(('schema', 'operator', 'ringSha256', 'cohortSha256', 'historySha256', *HANDOFF_IDS))
 HANDOFF_REVOCATION_PURPOSE = 'yofc.kura.unused-handoff-revocation.v1'
