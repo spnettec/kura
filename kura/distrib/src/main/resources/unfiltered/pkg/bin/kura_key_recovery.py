@@ -29,7 +29,8 @@ from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
-    validate_sender_attempt, validate_sender_closed, receiver_start_intent, Refused)
+    validate_sender_attempt, validate_sender_closed, receiver_start_intent, receiver_restore_intent,
+    receiver_restore_pending, validate_receiver_pending, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -58,13 +59,15 @@ class SenderAdmission:
         try:self.path(kind,identity).lstat();return True
         except FileNotFoundError:return False
 
-    def has_key_intent(self, identity, *, permitted_start=None):
+    def has_key_intent(self, identity, *, permitted_start=None, permitted_restore=None, permitted_pending=None):
         protocol.operation_id(identity)
-        if self.journal.record(identity) is not None:return True
+        restore=self.journal.record(identity)
+        if restore is not None and restore!=permitted_restore:return True
         start=self.journal.start_record(identity)
         if start is not None and start!=permitted_start:return True
+        if permitted_restore is not None and any(r['restoreOperationId']==identity for r in self.journal.start_records()):return True
         pending=self.journal.pending()
-        if pending is not None and pending['operationId']==identity:return True
+        if pending is not None and pending['operationId']==identity and pending!=permitted_pending:return True
         directory=self.journal.directory/'handoffs'
         try:directory.lstat()
         except FileNotFoundError:return False
@@ -85,7 +88,8 @@ class SenderAdmission:
         if not self.has_attempt(kind,identity):return None
         slot=self.path(kind,identity);self.journal.check_directory(self.directory);self.journal.check_directory(slot)
         names={p.name for p in slot.iterdir()}
-        protocol.require(names in ({'intent.json'}, {'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}), 'UNSAFE_JOURNAL')
+        protocol.require(names in ({'intent.json'}, {'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'})
+            or kind=='restore' and names=={'intent.json','namespace.json','closed.json','pending.json'}, 'UNSAFE_JOURNAL')
         try:value=validate_sender_attempt(protocol.decode(self.journal.read(slot/'intent.json',12288)),'recovery')
         except Refused:fail('UNSAFE_JOURNAL')
         protocol.require(value['kind']==kind and value['nativeOperationId']==identity,'CONFLICT')
@@ -97,6 +101,9 @@ class SenderAdmission:
             try:validate_sender_closed(protocol.decode(self.journal.read(slot/'closed.json',4096)),value,namespace)
             except Refused:fail('UNSAFE_JOURNAL')
             closed=True
+        if 'pending.json' in names:
+            try:validate_receiver_pending(protocol.decode(self.journal.read(slot/'pending.json')),value)
+            except Refused:fail('UNSAFE_JOURNAL')
         return value,namespace,closed
 
     def view(self, kind, identity, *, close=False):
@@ -233,7 +240,7 @@ class Journal:
         protocol.require(stat.S_ISDIR(st.st_mode) and st.st_uid == self.owner
                          and stat.S_IMODE(st.st_mode) == 0o700, 'UNSAFE_JOURNAL')
 
-    def read(self, path, limit=4096):
+    def read(self, path, limit=4096, *, durable=False):
         self.check_directory(path.parent)
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
         try:
@@ -242,7 +249,15 @@ class Journal:
                              and st.st_nlink == 1 and stat.S_IMODE(st.st_mode) == 0o600
                              and st.st_size <= limit, 'UNSAFE_JOURNAL')
             data = os.read(fd, limit + 1)
-            protocol.require(len(data) <= limit, 'UNSAFE_JOURNAL')
+            if durable:os.fsync(fd)
+            after=os.fstat(fd)
+            try:current=path.lstat()
+            except FileNotFoundError:fail('UNSAFE_JOURNAL')
+            protocol.require(len(data)==st.st_size and len(data)<=limit
+                and (st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns)==
+                    (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)
+                and (st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns)==
+                    (current.st_dev,current.st_ino,current.st_size,current.st_mtime_ns,current.st_ctime_ns), 'UNSAFE_JOURNAL')
             return data
         finally:
             os.close(fd)
@@ -323,6 +338,15 @@ class Journal:
             protocol.require(existing==value,'UNRESOLVED_OPERATION')
             return
         self.write_new(self.directory/'pending.json',value)
+
+    def retire_pending(self, destination, expected):
+        source=self.directory/'pending.json'
+        raw=self.read(source,durable=True)
+        protocol.require(self.pending()==expected,'CONFLICT')
+        self.check_directory(destination.parent)
+        protocol.rename_no_replace(source,destination)
+        self.sync(destination.parent);self.sync(self.directory)
+        protocol.require(self.read(destination)==raw,'UNSAFE_JOURNAL')
 
     def write_new(self, path, value):
         self.check_directory(path.parent)
@@ -446,6 +470,41 @@ class Controller:
             records.append(record)
         return records
 
+    def restore_marker_state(self, attempt):
+        expected=receiver_restore_intent(attempt);identity=expected['operationId']
+        local=self.journal.record(identity)
+        if local is not None and local!=expected:return 'CONFLICT'
+        archive=self.sender.path('restore',identity)/'pending.json'
+        try:retired=protocol.decode(self.journal.read(archive))
+        except FileNotFoundError:retired=None
+        if retired is not None:
+            try:validate_receiver_pending(retired,attempt)
+            except Refused:fail('UNSAFE_JOURNAL')
+        pending=self.journal.pending()
+        if pending is not None and pending['operationId']==identity:
+            return 'ACTIVE' if retired is None and pending==receiver_restore_pending(attempt) else 'CONFLICT'
+        return 'CONFLICT' if local is not None and retired is None else 'RETIRED'
+
+    def active_restore_records(self):
+        records=[]
+        for record in self.journal.records():
+            identity=record['operationId']
+            if self.sender.has_attempt('restore',identity):
+                saved=self.sender.load('restore',identity)
+                if saved is not None and saved[2]:
+                    protocol.require(record==receiver_restore_intent(saved[0]),'CONFLICT')
+                    current=self.sender.view('restore',identity)
+                    if (current['phase']=='NOT_ADMITTED' and current['closed']
+                        and self.restore_marker_state(saved[0])=='RETIRED'
+                        and not self.sender.has_key_intent(identity,permitted_restore=record)):
+                        original=self.call('operation-read',operationId=identity)
+                        protocol.fields(original,{'schema','state'})
+                        protocol.require(type(original['schema']) is int and original['schema']==1
+                            and original['state']=='NOT_FOUND','UNRESOLVED_OPERATION')
+                        continue
+            records.append(record)
+        return records
+
     def admission(self, value):
         command=value.get('command');protocol.require(command in ('read','close'))
         protocol.fields(value,{'command','kind','operationId'} | ({'backupJson','passphrase'} if command=='close' else set()))
@@ -453,12 +512,19 @@ class Controller:
         with self.journal.lock():
             current=self.sender.view(kind,identity)
             saved=self.sender.load(kind,identity)
-            permitted=None
+            permitted=None;restore=None;pending=None;marker='RETIRED'
             if kind=='start' and saved is not None:
                 try:permitted=receiver_start_intent(saved[0])
                 except Refused:fail('UNSAFE_JOURNAL')
-            owning=self.sender.has_key_intent(identity,permitted_start=permitted)
+            if kind=='restore' and saved is not None:
+                try:restore=receiver_restore_intent(saved[0]);pending=receiver_restore_pending(saved[0])
+                except Refused:fail('UNSAFE_JOURNAL')
+                marker=self.restore_marker_state(saved[0])
+            owning=marker=='CONFLICT' or self.sender.has_key_intent(identity,permitted_start=permitted,
+                permitted_restore=restore,permitted_pending=pending)
             if owning:current.update(closeAllowed=False,closed=False)
+            elif marker=='ACTIVE' and current['phase']=='NOT_ADMITTED' and current['closed']:
+                current.update(closeAllowed=True,closed=False)
             if command=='read':return current
             protocol.require(not owning and (current['closeAllowed'] or current['phase']=='NOT_ADMITTED' and current['closed']),'UNRESOLVED_OPERATION')
             protocol.require(saved is not None,'UNRESOLVED_OPERATION');metadata=saved[0]['request']
@@ -473,7 +539,10 @@ class Controller:
             protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
             original=self.call('operation-read' if kind=='restore' else 'core-start-read',operationId=identity)
             protocol.fields(original,{'schema','state'});protocol.require(type(original['schema']) is int and original['schema']==1 and original['state']=='NOT_FOUND','UNRESOLVED_OPERATION')
-            return self.sender.close(kind,identity)
+            result=self.sender.close(kind,identity)
+            if kind=='restore' and marker=='ACTIVE':
+                self.journal.retire_pending(self.sender.path(kind,identity)/'pending.json',pending)
+            return result
 
     def inspect(self, value, *, throttle=True):
         protocol.fields(value, {'backupJson', 'passphrase'})
@@ -531,8 +600,10 @@ class Controller:
             if original.get('state') != 'NOT_FOUND':
                 return self.original(identity, expected)
             protocol.fields(original, {'schema', 'state'})
-            records = self.journal.records()
-            protocol.require(len(records) < MAX_OPERATIONS, 'CAPACITY')
+            records = self.active_restore_records()
+            protocol.require(len(self.journal.records()) < MAX_OPERATIONS, 'CAPACITY')
+            for record in self.active_start_records():
+                protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
             for record in records:
                 protocol.require(self.original(record['operationId'], record['expectedKeySha256'])['state'] == 'SUCCEEDED',
                                  'UNRESOLVED_OPERATION')

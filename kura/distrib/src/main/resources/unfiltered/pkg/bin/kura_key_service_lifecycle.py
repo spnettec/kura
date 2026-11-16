@@ -155,6 +155,24 @@ def receiver_start_intent(attempt):
         **{key: value for key, value in request.items() if key not in ('schema', 'action')})
 
 
+def receiver_restore_intent(attempt):
+    validate_sender_attempt(attempt, 'recovery')
+    require(attempt['kind'] == 'restore')
+    return dict(schema=1, **{key: attempt['request'][key]
+        for key in ('operationId', 'expectedKeySha256', 'backupSha256')})
+
+
+def receiver_restore_pending(attempt):
+    intent = receiver_restore_intent(attempt)
+    return {key: intent[key] for key in ('schema', 'operationId', 'expectedKeySha256')}
+
+
+def validate_receiver_pending(value, attempt):
+    require(isinstance(value, dict) and type(value.get('schema')) is int
+        and value == receiver_restore_pending(attempt), 'Retired recovery marker does not match its original request')
+    return value
+
+
 def check_sender_attempt(policy, value, namespace, source, uid):
     validate_sender_attempt(value, source)
     require(isinstance(namespace, dict) and set(namespace) == {'schema', 'namespaceSha256'}
@@ -167,6 +185,9 @@ def check_sender_attempt(policy, value, namespace, source, uid):
     root = validate_sender_admission(decode(raw), identity, secret)
     require(root['source'] == source and root['owner']['uid'] == uid and root['target']['operationId'] == value['nativeOperationId']
         and root['namespaceSha256'] == namespace['namespaceSha256'])
+    if source == 'recovery' and value['kind'] == 'restore':
+        require(root['target']['directory'] == 'operations' and root['target']['action'] == 'restore'
+            and root['target']['continuation'] is False, 'Recovery reservation has a different native target')
     if source == 'recovery' and value['kind'] == 'start':
         tag = hmac.new(secret, encoded(value['request']), hashlib.sha256).hexdigest()
         require(root['target']['directory'] == 'startups' and root['target']['action'] == value['request']['action']
@@ -952,21 +973,27 @@ class Lifecycle:
         try:
             try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError:raise Refused('Cold recovery is active; package change refused') from None
-            closed_starts = {}
+            closed_starts = {}; closed_restores = {}
             if os.path.lexists(state/'admissions'):
                 directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
                 for slot in slots:
                     directory(slot); names = {p.name for p in slot.iterdir()}
-                    require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}))
+                    require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'},
+                        {'intent.json','namespace.json','closed.json','pending.json'}))
                     value = validate_sender_attempt(decode(read(slot/'intent.json', 12288)), 'recovery')
                     require(slot.name == value['nativeOperationId']+'-'+value['kind'])
                     namespace = decode(read(slot/'namespace.json', 4096))
                     original = check_sender_attempt(self, value, namespace, 'recovery', account.pw_uid)
+                    archived = None
+                    if 'pending.json' in names:
+                        archived = validate_receiver_pending(decode(read(slot/'pending.json',4096)), value)
                     if 'closed.json' in names:
                         validate_sender_closed(decode(read(slot/'closed.json', 4096)), value, namespace)
                         require(original['state'] == 'NOT_ADMITTED', 'Closed receiver attempt has no Root not-admitted original')
                         if value['kind'] == 'start':
                             closed_starts[value['nativeOperationId']] = receiver_start_intent(value)
+                        if value['kind'] == 'restore' and archived is not None:
+                            closed_restores[value['nativeOperationId']] = receiver_restore_intent(value)
             files=list((state/'operations').iterdir());require(len(files)<=32)
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
@@ -974,6 +1001,9 @@ class Lifecycle:
                 require(set(value)=={'schema','operationId','expectedKeySha256','backupSha256'}
                     and type(value['schema']) is int and value['schema']==1 and value['operationId']==path.name[:-5]
                     and is_digest(value['expectedKeySha256']) and is_digest(value['backupSha256']))
+                if value['operationId'] in closed_restores:
+                    require(value == closed_restores[value['operationId']], 'Retired restore intent has changed')
+                    continue
                 original=validate_record(decode(self.read(self.state/'operations'/path.name)),value['operationId'])
                 require(original['state']=='SUCCEEDED' and original['action']=='restore'
                     and original['response']['keySha256']==value['expectedKeySha256'],
@@ -984,6 +1014,7 @@ class Lifecycle:
                         and pending['schema']==1 and canonical_id(pending['operationId']) and is_digest(pending['expectedKeySha256']))
                 local=decode(read(state/'operations'/(pending['operationId']+'.json'),4096))
                 require(local['expectedKeySha256']==pending['expectedKeySha256'])
+                require(pending['operationId'] not in closed_restores, 'Retired recovery marker remains active')
             if os.path.lexists(state/'starts'):
                 directory(state/'starts');starts=list((state/'starts').iterdir());require(len(starts)<=32)
                 for path in starts:
@@ -995,6 +1026,7 @@ class Lifecycle:
                             and type(local['schema']) is int and local['schema'] in (1,2) and local['operationId']==path.name[:-5]
                             and canonical_id(local['restoreOperationId']) and is_digest(local['expectedKeySha256']))
                     if modern:require(canonical_id(local['predecessorStartOperationId']) and canonical_id(local['maintenanceId']) and is_digest(local['manifestSha256']))
+                    require(local['restoreOperationId'] not in closed_restores, 'Retired restore has a private startup child')
                     if local['operationId'] in closed_starts:
                         require(local == closed_starts[local['operationId']], 'Closed startup private intent has changed')
                         continue  # The authenticated Root NOT_ADMITTED record already proves native absence.

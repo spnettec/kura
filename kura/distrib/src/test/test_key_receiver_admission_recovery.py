@@ -124,8 +124,9 @@ class ReceiverAdmissionRecoveryTest(unittest.TestCase):
         with self.assertRaises(protocol.Failure):self.view('close')
         self.assertEqual(0,self.root.closes)
 
-    def test_pending_marker_before_detailed_restore_intent_remains_query_only(self):
+    def test_pending_marker_before_detailed_restore_intent_with_root_intake_remains_query_only(self):
         self.seed();self.journal.mark(self.identity,SHA)
+        next(iter(self.root.records.values()))['state']='INTAKE'
         self.assertFalse(self.view()['closeAllowed'])
         with self.assertRaises(protocol.Failure):self.view('close')
         self.assertEqual(0,self.root.closes);self.assertEqual(self.identity,self.journal.pending()['operationId'])

@@ -1,14 +1,24 @@
 /* SPDX-License-Identifier: EPL-2.0 */
 // New production HTTPS metadata panel; decryption, Root and native results are explicit models.
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
+import {createServer} from 'node:net';
 import {createRequire} from 'node:module';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createInterface} from 'node:readline';
 const here=dirname(fileURLToPath(import.meta.url)),workspace=resolve(here,'../../../../..');
 const {chromium,expect}=createRequire(resolve(workspace,'kura-management-console/frontend/package.json'))('@playwright/test');
-const child=spawn(process.argv[2]||'python3',['-B',resolve(here,'receiver_admission_browser_server.py')],{stdio:['pipe','pipe','pipe']});
+const linux=process.argv.includes('--linux'),container='kura-receiver-browser-'+randomUUID();let port;
+if(linux){const socket=createServer();await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve));port=socket.address().port;await new Promise(resolve=>socket.close(resolve));}
+const command=linux?'docker':process.argv[2]||'python3';
+const args=linux?['run','--rm','-i','--pull','never','--name',container,'--read-only','--cap-drop','ALL','--security-opt','no-new-privileges',
+ '--tmpfs','/tmp:rw,nosuid,nodev,size=128m','-p',`127.0.0.1:${port}:18443`,
+ '--mount',`type=bind,source=${resolve(workspace,'kura/kura/distrib/src')},target=/src,readonly`,
+ '--entrypoint','/usr/bin/python3','yofc-empty-systemd:g028-20261114','-B','/src/test/receiver_admission_browser_server.py',
+ '--listen-host','0.0.0.0','--listen-port','18443','--public-port',String(port)]:['-B',resolve(here,'receiver_admission_browser_server.py')];
+const child=spawn(command,args,{stdio:['pipe','pipe','pipe']});
 let stderr='';child.stderr.on('data',value=>{stderr=(stderr+value.toString()).slice(-2000);});
 const lines=createInterface({input:child.stdout})[Symbol.asyncIterator]();
 async function read(){let timer;try{const row=await Promise.race([lines.next(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('fixture timeout: '+stderr)),15000);})]);if(row.done)throw Error('fixture stopped: '+stderr);return JSON.parse(row.value);}finally{clearTimeout(timer);}}
@@ -79,7 +89,7 @@ try{
  {
   const {page,context}=await setup();await query(page);await material(page);await control('set',{loseClose:true});await dialog(page);await accept(page);
   await expect(page.locator('#admission-notice')).toContainText('暂时无法核实');assert.equal((await stats()).closes,1);assert.equal((await stats()).closedReceipts,0);
-  await query(page);await control('set',{loseClose:false,releaseThrottle:true});await material(page);await dialog(page);await page.keyboard.press('Escape');await expect(page.locator('#admission-confirm')).toBeHidden();assert.equal((await stats()).closes,1);
+  await query(page);await control('set',{loseClose:false,releaseThrottle:true});await material(page);await dialog(page);await page.keyboard.press('Escape');await expect(page.locator('#admission-confirm')).toBeHidden();await expect(page.locator('#admission-password')).toHaveValue('');assert.equal((await stats()).closes,1);
   await page.locator('#admission-password').fill(fixture.passphrase);await dialog(page);await accept(page);await expect(page.locator('#admission-notice')).toContainText('已确认未发送');
   assert.equal((await stats()).closes,2);assert.equal((await stats()).closedReceipts,1);await context.close();cases.push('lost close reply requires fresh read and explicit authenticated metadata completion; Escape does not reuse an old confirmation');
  }
@@ -148,7 +158,31 @@ try{
   await page.locator('#admission-acknowledge').click();await expect(page.locator('#admission-notice')).toContainText('浏览器中的原记录不匹配');
   assert.equal(await page.evaluate(k=>localStorage.getItem(k),startStore),stored);await context.close();cases.push('closed initial startup cannot acknowledge a maintenance-shaped browser record');
  }
- assert.deepEqual(errors,[]);console.log(JSON.stringify({tests:cases.length,cases,productionPageAndHandler:true,actualHttps:true,rootAndDecryption:'modeled',humanMainSessionAcceptance:false,nativeKeyWrites:0,oldClosedScenariosReplayed:false}));
+ if(fixture.platform==='linux'){
+  for(const detailed of [false,true]){
+   const {page,context}=await setup();await control('set',{pendingMarker:true,...(detailed?{privateIntent:true}:{})});const before=(await stats()).privateRestoreFiles;
+   await query(page);await material(page);await dialog(page);await accept(page);await expect(page.locator('#admission-acknowledge')).toBeVisible();
+   const after=await stats();assert.equal(after.pendingMarkerActive,false);assert.equal(after.archivedPendingMarkers,1);assert.deepEqual(after.privateRestoreFiles,before);
+   await page.reload();await query(page);await page.locator('#admission-acknowledge').click();await expect(page.locator('#backup')).toBeEnabled();
+   assert.equal(await page.evaluate(k=>localStorage.getItem(k),restoreStore),null);assert.deepEqual((await stats()).privateRestoreFiles,before);
+   await privateBrowser(page);await context.close();cases.push((detailed?'private restore intent':'early pending marker')+' is retained under its original authorization, then explicit acknowledgement returns to manual recovery');
+  }
+  {
+   const {page,context}=await setup();await control('set',{pendingMarker:true,privateIntent:true,archiveInterrupted:true});
+   await query(page);await material(page);await dialog(page);await accept(page);await expect(page.locator('#admission-notice')).toContainText('暂时无法核实');
+   await query(page);await expect(page.locator('#admission-acknowledge')).toBeHidden();assert.equal((await stats()).pendingMarkerActive,true);
+   await control('set',{releaseArchive:true,releaseThrottle:true});await material(page);await dialog(page);await accept(page);
+   await expect(page.locator('#admission-acknowledge')).toBeVisible();assert.equal((await stats()).pendingMarkerActive,false);assert.equal((await stats()).archivedPendingMarkers,1);
+   await context.close();cases.push('local closed receipt without marker retirement cannot be acknowledged and requires explicit original authorization to finish');
+  }
+  {
+   const {page,context}=await setup();await control('set',{pendingMarker:true,privateIntent:true,phase:'INTAKE'});const before=(await stats()).privateRestoreFiles;
+   await query(page);await expect(page.locator('#admission-close-form')).toBeHidden();assert.equal((await stats()).pendingMarkerActive,true);assert.equal((await stats()).archivedPendingMarkers,0);
+   assert.deepEqual((await stats()).privateRestoreFiles,before);await context.close();cases.push('Root INTAKE keeps the cold restore and pending marker unresolved without any archive or resend');
+  }
+ }
+ assert.deepEqual(errors,[]);console.log(JSON.stringify({tests:cases.length,cases,productionPageAndHandler:true,actualHttps:true,receiverPlatform:fixture.platform,rootAndDecryption:'modeled',humanMainSessionAcceptance:false,nativeKeyWrites:0,oldClosedScenariosReplayed:false}));
 }finally{
  await browser.close();try{await control('stop');}catch(_){}child.stdin.end();if(child.exitCode===null){await new Promise(resolve=>{const timer=setTimeout(()=>{child.kill('SIGTERM');resolve();},4000);child.once('exit',()=>{clearTimeout(timer);resolve();});});}
+ if(linux)spawnSync('docker',['rm','-f',container],{stdio:'ignore'});
 }

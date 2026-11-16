@@ -61,6 +61,20 @@ def require(ok, reason="INVALID_ARGUMENT"):
         raise Failure(reason)
 
 
+def rename_no_replace(source, destination):
+    """Move one original inode without replacing a destination or creating hard links."""
+    library = ctypes.CDLL(None, use_errno=True)
+    rename = getattr(library, "renameat2", None)
+    require(rename is not None and sys.platform == "linux", "UNSUPPORTED")
+    rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(source), -100, os.fsencode(destination), 1) != 0:
+        code = ctypes.get_errno()
+        if code == errno.EEXIST:
+            raise Failure("CONFLICT")
+        raise OSError(code, "Atomic key publication refused")
+
+
 def pairs(items):
     result = {}
     for key, value in items:
@@ -485,16 +499,7 @@ class Manager:
                 os.fsync(stream.fileno())
             if no_replace:
                 # Unlike link/unlink, renameat2 never exposes a two-link canonical secret.
-                library = ctypes.CDLL(None, use_errno=True)
-                rename = getattr(library, "renameat2", None)
-                require(rename is not None and sys.platform == "linux", "UNSUPPORTED")
-                rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
-                rename.restype = ctypes.c_int
-                if rename(-100, os.fsencode(temporary), -100, os.fsencode(path), 1) != 0:
-                    code = ctypes.get_errno()
-                    if code == errno.EEXIST:
-                        raise Failure("CONFLICT")
-                    raise OSError(code, "Atomic key publication refused")
+                  rename_no_replace(temporary, path)
             else:
                 if os.path.lexists(path):
                     self.read(path)

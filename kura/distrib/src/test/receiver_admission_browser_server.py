@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """New loopback HTTPS metadata fixture. Root, decryption, systemd and results are models."""
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -13,6 +14,8 @@ import uuid
 
 from test_key_receiver_admission_recovery import AdmissionRoot, recovery, protocol, BACKUP, PASSWORD, SHA
 
+parser=argparse.ArgumentParser();parser.add_argument('--listen-host',default='127.0.0.1');parser.add_argument('--listen-port',type=int,default=0)
+parser.add_argument('--public-port',type=int);options=parser.parse_args()
 temporary=tempfile.TemporaryDirectory(prefix='kura-receiver-admission-browser-');directory=Path(temporary.name)
 key,certificate=directory/'tls.key',directory/'tls.crt'
 subprocess.run(['/usr/bin/openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','1','-subj','/CN=localhost',
@@ -50,12 +53,14 @@ def reset(kind='restore',maintenance=False):
     if server is not None:server.controller=controller;server.handoffs=recovery.HandoffController(root,journal,sender)
     return controller
 
-controller=reset();server=recovery.RecoveryServer(('127.0.0.1',0),controller,tls,assets)
+controller=reset();server=recovery.RecoveryServer((options.listen_host,options.listen_port),controller,tls,assets)
+# Docker publishes this test listener only on host loopback. Keep production Host/Origin checks intact.
+if options.public_port is not None:server.server_port=options.public_port
 worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
 
-def describe():return dict(url='https://127.0.0.1:'+str(server.server_port),kind=selected,operationId=identity,restoreOperationId=restore_id,
+def describe():return dict(url='https://'+('localhost' if options.public_port is not None else '127.0.0.1')+':'+str(server.server_port),kind=selected,operationId=identity,restoreOperationId=restore_id,
     expectedKeySha256=SHA,backupJson=json.dumps(BACKUP),passphrase=PASSWORD,token=root.handoff.token,
-    startIntent=recovery.receiver_start_intent(sender.load('start',identity)[0]) if selected=='start' else None)
+    startIntent=recovery.receiver_start_intent(sender.load('start',identity)[0]) if selected=='start' else None,platform=sys.platform)
 
 print(json.dumps(describe()),flush=True)
 try:
@@ -70,12 +75,19 @@ try:
             if value.get('privateIntent'):
                 if selected=='restore':journal.admit(dict(schema=1,operationId=identity,expectedKeySha256=SHA,backupSha256=hashlib.sha256(protocol.encode(BACKUP)).hexdigest()))
                 elif selected=='start':journal.write_new(journal.starts/(identity+'.json'),recovery.receiver_start_intent(sender.load('start',identity)[0]))
+            if value.get('pendingMarker'):journal.mark(identity,SHA)
+            if value.get('archiveInterrupted'):server.controller.journal.retire_pending=lambda *args:(_ for _ in ()).throw(OSError('modeled archive interruption'))
+            if value.get('releaseArchive'):server.controller.journal.retire_pending=recovery.Journal.retire_pending.__get__(journal)
             reply=dict(ok=True)
         elif command=='stats':
             files=list(journal.directory.rglob('*.json'))
             reply=dict(nativeKeyWrites=root.native_writes,closes=root.closes,reservations=len(root.records),
                 phase=next(iter(root.records.values()))['state'],closedReceipts=len(list(sender.directory.rglob('closed.json'))),
                 credentialsOnDisk=any(PASSWORD.encode() in p.read_bytes() or root.handoff.token.encode() in p.read_bytes() for p in files),
+                pendingMarkerActive=journal.pending() is not None,archivedPendingMarkers=len(list(sender.directory.glob('*/pending.json'))),
+                privateRestoreFiles={p.name:dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),inode=p.stat().st_ino,
+                    uid=p.stat().st_uid,gid=p.stat().st_gid,mode=p.stat().st_mode,nlink=p.stat().st_nlink,
+                    mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.operations.iterdir()},
                 privateStartFiles={p.name:dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),inode=p.stat().st_ino,
                     uid=p.stat().st_uid,gid=p.stat().st_gid,mode=p.stat().st_mode,nlink=p.stat().st_nlink,
                     mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.starts.iterdir()})
