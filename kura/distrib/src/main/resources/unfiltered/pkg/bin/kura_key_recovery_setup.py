@@ -6,6 +6,7 @@ import ctypes
 import errno
 import fcntl
 import grp
+import importlib.util
 import os
 from pathlib import Path
 import pwd
@@ -125,6 +126,34 @@ class Setup:
         require(set(grp.getgrnam('kura-key-control').gr_mem) == members)
         return account
 
+    @staticmethod
+    def handoff_ledger():
+        # postinst uses python -I: do not depend on cwd, PYTHONPATH or a writable sys.path.
+        anchor=Path(__file__).resolve(strict=True)
+        path=anchor.with_name('kura_key_service_lifecycle.py')
+        owner=anchor.lstat().st_uid
+        for entry,regular in ((anchor.parent,False),(anchor,True),(path,True)):
+            value=entry.lstat()
+            require((stat.S_ISREG(value.st_mode) if regular else stat.S_ISDIR(value.st_mode))
+                    and value.st_uid==owner and not value.st_mode & 0o022 and (not regular or value.st_nlink==1))
+        spec=importlib.util.spec_from_file_location('_kura_installer_handoff_ledger',path)
+        require(spec is not None and spec.loader is not None)
+        ledger=importlib.util.module_from_spec(spec)
+        # Execute only the checked source: neither trust an old .pyc nor create a cache in installed code.
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
+        try:
+            before=os.fstat(fd)
+            require(stat.S_ISREG(before.st_mode) and before.st_uid==owner and before.st_nlink==1
+                    and not before.st_mode & 0o022 and 0<before.st_size<=512*1024)
+            source=os.read(fd,512*1024+1);after=os.fstat(fd);current=path.lstat()
+            identity=lambda value:(value.st_dev,value.st_ino,value.st_uid,value.st_gid,value.st_mode,value.st_nlink,
+                                    value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+            require(len(source)==before.st_size and identity(before)==identity(after)==identity(current))
+        finally:os.close(fd)
+        exec(compile(source,str(path),'exec',dont_inherit=True),ledger.__dict__)
+        require(hasattr(ledger,'Lifecycle') and hasattr(ledger.Lifecycle,'recovery_locked') and hasattr(ledger,'Refused'))
+        return ledger
+
     def state(self, account):
         path = self.root/'var/lib/kura-key-recovery'
         self.directory(path.parent,create=True)
@@ -135,7 +164,17 @@ class Setup:
         # Never let systemd recursively adopt another owner's old journal.
         require(stat.S_ISDIR(st.st_mode) and st.st_uid == account.pw_uid
                 and st.st_gid == account.pw_gid and stat.S_IMODE(st.st_mode) == 0o700)
-        require({p.name for p in path.iterdir()} <= {'operations','admission.lock','starts','pending.json'})
+        names={p.name for p in path.iterdir()}
+        require(names <= {'operations','admission.lock','starts','pending.json','handoffs'})
+        if 'handoffs' in names:
+            # Reuse the installer's original-result checks. Merely allowing the new directory
+            # would let a local completion marker conceal a missing/UNKNOWN Root request.
+            ledger=self.handoff_ledger()
+            try:
+                with ledger.Lifecycle(self.root,owner=self.owner).recovery_locked():
+                    pass
+            except (ledger.Refused,OSError,KeyError,ValueError,TypeError):
+                raise Refused('Unresolved or unsafe fixed handoff; retain original sender and Root records') from None
         operations = path/'operations'
         if not os.path.lexists(operations):
             operations.mkdir(mode=0o700);operations.chmod(0o700);os.chown(operations,account.pw_uid,account.pw_gid)
