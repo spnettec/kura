@@ -522,8 +522,7 @@ class Manager:
         # The effective SystemService directory is reported by the actual Main JVM.
         # Root never executes a property provider or traverses the Core-private data tree.
         require(type(daemon) is int and daemon > 0 and uid == daemon, 'FORBIDDEN')
-        module, _ = self.generation_module()
-        core = module.Generations(self)
+        core, _ = self.generation_component()
         unit = core.unit(generation_mode=os.path.lexists(self.store.path(GENERATION_RECEIPT_PATH)))
         process = self.writer_process(pid)
         require(unit['ActiveState'] == 'active' and unit['SubState'] == 'running'

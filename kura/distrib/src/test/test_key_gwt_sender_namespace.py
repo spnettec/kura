@@ -183,7 +183,7 @@ class GwtSenderNamespaceTest(unittest.TestCase):
         state=dict(ActiveState='active',SubState='running',ControlPID='0',MainPID='111',
             ControlGroup='/system.slice/kura.service',InvocationID='a'*32)
         core=SimpleNamespace(unit=lambda **kw:state,process_group=lambda pid:'/system.slice/kura.service')
-        self.manager.generation_module=lambda:(SimpleNamespace(Generations=lambda manager:core),None)
+        self.manager.generation_component=lambda:(core,None)
         self.manager.writer_process=lambda pid:(self.uid,'321')
         owner(111,self.uid,self.uid)
         for change in ({'MainPID':'112'},{'ActiveState':'inactive'},{'ControlPID':'2'},{'InvocationID':''}):
