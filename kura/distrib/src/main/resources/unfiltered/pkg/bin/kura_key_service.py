@@ -512,6 +512,10 @@ class Manager:
         namespace, binding = self.generation_module('kura_key_generation')
         return namespace['Generations'](self), binding
 
+    def handoff_component(self):
+        namespace, _ = self.generation_module('kura_key_generation')
+        return namespace['Handoffs'](self)
+
     def validation_component(self):
         namespace, _ = self.generation_module('kura_key_validation')
         return namespace['Validation'](self)
@@ -1340,6 +1344,16 @@ def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor
         require(input_descriptor is not None, 'PROTOCOL_MISMATCH')
         return manager.validation_component().validate(request, input_descriptor, uid, core_uid=daemon), None
     require(input_descriptor is None, 'PROTOCOL_MISMATCH')
+    if action in ('generation-handoff-create', 'generation-handoff-read',
+                  'generation-handoff-token-read', 'generation-handoff-command'):
+        if action != 'generation-handoff-command':
+            require(uid in (0, daemon), 'FORBIDDEN')
+        component = manager.handoff_component()
+        if action == 'generation-handoff-create':
+            return component.create(request, pid, uid, daemon), None
+        if action == 'generation-handoff-command':
+            return component.command(request, pid, uid, daemon, recovery), None
+        return component.read(request, pid, uid, daemon, token=action == 'generation-handoff-token-read'), None
     if action == 'writer-lease-acquire':
         require(recovery is None or uid != recovery, 'FORBIDDEN')
         return manager.acquire_writer_lease(request, pid, uid)

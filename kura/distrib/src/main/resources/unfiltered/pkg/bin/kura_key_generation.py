@@ -7,13 +7,15 @@ import os
 from pathlib import Path
 import pwd
 import re
+import secrets
 import stat
 import subprocess
+import time
 
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_service_lifecycle import Lifecycle, Refused, validate_publication
+from kura_key_service_lifecycle import Lifecycle, Refused, validate_generation_metadata, validate_publication
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
@@ -429,7 +431,7 @@ class Generations:
                     except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
                         raise Failure('UNKNOWN') from None
 
-    def request(self, request, *, start=False):
+    def request(self, request, *, start=False, expected_owner=None):
         manager = self.manager
         plan = request['action'] == 'generation-publication-plan'
         require(request['action'] in ('generation-publication-plan', 'generation-publish', 'generation-core-start')
@@ -460,9 +462,13 @@ class Generations:
                 manager.journal_admission()
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), not plan and not start):
                 if start:
-                    return self.start(request, identity, tag)
+                    return self.start(request, identity, tag, expected_owner=expected_owner)
                 raw, history, prepared, source, cohort, template = self.prepared(request)
                 unit, writer = self.active_core(source, cohort)
+                if expected_owner is not None:
+                    require(all(writer[name] == expected_owner[name] for name in
+                                ('pid', 'uid', 'startTicks', 'bootId', 'lockDevice', 'lockInode'))
+                            and unit['InvocationID'] == expected_owner['invocationId'], 'OWNER_CHANGED')
                 if plan:
                     return dict(schema=1, state='PUBLICATION_PLAN', preparationId=request['preparationId'],
                                 verificationId=request['verificationId'], ringSha256=history['generation']['ringSha256'],
@@ -507,7 +513,7 @@ class Generations:
                 except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
                     raise Failure('UNKNOWN') from None
 
-    def start(self, request, identity, tag):
+    def start(self, request, identity, tag, *, expected_owner=None):
         manager = self.manager
         current = self.current()
         require(request['publicationId'] == current['operationId']
@@ -520,7 +526,12 @@ class Generations:
         for path in manager.operations.iterdir():
             prior = manager.record(path.name[:-5])
             require(prior['action'] != 'generation-core-start' or prior['response']['publicationId'] != current['operationId'], 'START_ALREADY_AUTHORIZED')
-        with manager.exclusive_writers():
+        with manager.exclusive_writers() as locked:
+            if expected_owner is not None:
+                require((locked.st_dev, locked.st_ino) == (expected_owner['lockDevice'], expected_owner['lockInode'])
+                        and expected_owner['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+                        and expected_owner['uid'] == pwd.getpwnam('kurad').pw_uid, 'UNSAFE_WRITER_STATE')
+            self.stopped(generation_mode=True, uid=pwd.getpwnam('kurad').pw_uid)
             record = dict(schema=1, operationId=identity, action=request['action'], requestTag=tag, state='INTENT', response=None)
             try:
                 manager.atomic(manager.operations / (identity + '.json'), encode(record))
@@ -536,3 +547,275 @@ class Generations:
                 return response
             except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
                 raise Failure('UNKNOWN') from None
+
+
+HANDOFF_PURPOSE = 'yofc-kura-generation-handoff-v1'
+HANDOFF_RECEIPT = b'yofc-kura-generation-handoff-receipt-v1\0'
+HANDOFF_TOKEN = b'yofc-kura-generation-handoff-token-v1\0'
+HANDOFF_REQUEST = frozenset(('schema', 'action', 'handoffId', 'preparationId', 'verificationId',
+                             'publicationId', 'startOperationId', 'expectedRingSha256', 'expectedCohortSha256', 'operator'))
+
+
+class Handoffs:
+    """A recorded authority delegates only two preselected original operations.
+
+    It is not a key-operation result or a general recovery credential. Bearer
+    bytes are derived on demand and never stored in the authorization record.
+    """
+    def __init__(self, manager):
+        self.manager = manager
+        self.generations = Generations(manager)
+        self.clock = lambda: time.clock_gettime_ns(time.CLOCK_BOOTTIME)
+
+    def secret(self):
+        value = self.manager.read(self.manager.state / 'journal.key', 32)
+        require(len(value) == 32, 'UNSAFE_JOURNAL')
+        return value
+
+    @staticmethod
+    def validate_request(value):
+        fields(value, HANDOFF_REQUEST)
+        require(type(value['schema']) is int and value['schema'] == 1
+                and value['action'] == 'generation-handoff-create', 'INVALID_ARGUMENT')
+        names = ('handoffId', 'preparationId', 'verificationId', 'publicationId', 'startOperationId')
+        require(len({operation_id(value[name]) for name in names}) == len(names), 'INVALID_ARGUMENT')
+        digest(value['expectedRingSha256']); digest(value['expectedCohortSha256'])
+        operator = value['operator']
+        require(isinstance(operator, str), 'INVALID_ARGUMENT')
+        try:
+            size = len(operator.encode('utf-8'))
+        except UnicodeError:
+            raise Failure('INVALID_ARGUMENT') from None
+        require(operator.strip() and size <= 128
+                and all(ord(char) >= 32 and not 127 <= ord(char) <= 159 for char in operator), 'INVALID_ARGUMENT')
+
+    def load(self, identity):
+        manager = self.manager
+        parent = manager.state / 'handoffs'
+        if not os.path.lexists(parent):
+            return None
+        manager.directory(parent, private=True)
+        path = parent / (operation_id(identity) + '.json')
+        try:
+            raw = manager.read(path, 8192)
+        except FileNotFoundError:
+            return None
+        value = decode(raw)
+        fields(value, {'schema', 'purpose', 'request', 'requestTag', 'owner', 'source', 'generation',
+                       'historySha256', 'nonce', 'issuedBoottimeNs', 'expiresBoottimeNs', 'issuedAt', 'expiresAt', 'receiptTag'})
+        require(type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == HANDOFF_PURPOSE
+                and raw == encode(value) and stat.S_IMODE(path.lstat().st_mode) == 0o400, 'UNSAFE_JOURNAL')
+        self.validate_request(value['request'])
+        require(value['request']['handoffId'] == identity, 'UNSAFE_JOURNAL')
+        for name in ('requestTag', 'historySha256', 'nonce', 'receiptTag'):
+            digest(value[name])
+        secret = self.secret()
+        require(hmac.compare_digest(value['requestTag'], hmac.new(secret, encode(value['request']), hashlib.sha256).hexdigest())
+                and hmac.compare_digest(value['receiptTag'], hmac.new(secret, HANDOFF_RECEIPT
+                    + encode({key: item for key, item in value.items() if key != 'receiptTag'}), hashlib.sha256).hexdigest()),
+                'UNSAFE_JOURNAL')
+        source = value['source']; fields(source, {'keySha256', 'ringSha256'})
+        digest(source['keySha256'])
+        if source['ringSha256'] is not None:
+            digest(source['ringSha256'])
+        try:
+            validate_generation_metadata(value['generation'])
+        except Refused:
+            raise Failure('UNSAFE_JOURNAL') from None
+        owner = value['owner']
+        fields(owner, {'pid', 'uid', 'startTicks', 'bootId', 'invocationId', 'lockDevice', 'lockInode'})
+        require(all(type(owner[name]) is int and owner[name] >= 0 for name in ('pid', 'uid', 'lockDevice', 'lockInode'))
+                and owner['pid'] > 0 and owner['lockInode'] > 0 and isinstance(owner['startTicks'], str)
+                and owner['startTicks'].isdigit() and isinstance(owner['invocationId'], str)
+                and re.fullmatch(r'[0-9a-f]{32}', owner['invocationId']) is not None, 'UNSAFE_JOURNAL')
+        operation_id(owner['bootId'])
+        require(all(type(value[name]) is int and value[name] >= 0 for name in
+                    ('issuedBoottimeNs', 'expiresBoottimeNs', 'issuedAt', 'expiresAt'))
+                and value['expiresBoottimeNs'] - value['issuedBoottimeNs'] == 900_000_000_000
+                and value['expiresAt'] - value['issuedAt'] == 900
+                and value['generation']['ringSha256'] == value['request']['expectedRingSha256'], 'UNSAFE_JOURNAL')
+        return value
+
+    def metadata(self, value):
+        request = value['request']
+        return dict(schema=1, state='GRANT_RECORDED', scope='ORIGINAL_AUTHORIZATION_ONLY',
+                    handoffId=request['handoffId'], operator=request['operator'], preparationId=request['preparationId'],
+                    verificationId=request['verificationId'], publicationId=request['publicationId'],
+                    startOperationId=request['startOperationId'], ringSha256=request['expectedRingSha256'],
+                    cohortSha256=request['expectedCohortSha256'], historySha256=value['historySha256'],
+                    issuedAt=value['issuedAt'], expiresAt=value['expiresAt'], mutationWindowOpen=self.window_open(value),
+                    startupAuthorized=False)
+
+    def window_open(self, value):
+        return value['owner']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip() \
+            and value['issuedBoottimeNs'] <= self.clock() <= value['expiresBoottimeNs']
+
+    def token(self, value):
+        signature = hmac.new(self.secret(), HANDOFF_TOKEN + encode(value), hashlib.sha256).hexdigest()
+        return 'KURA-HANDOFF-1.' + value['request']['handoffId'] + '.' + signature
+
+    def authenticate(self, token):
+        require(isinstance(token, str) and len(token) <= 128, 'FORBIDDEN')
+        parts = token.split('.')
+        require(len(parts) == 3 and parts[0] == 'KURA-HANDOFF-1', 'FORBIDDEN')
+        identity = operation_id(parts[1]); digest(parts[2])
+        value = self.load(identity)
+        require(value is not None and hmac.compare_digest(token, self.token(value)), 'FORBIDDEN')
+        return value
+
+    def owner(self, request, pid, uid, daemon, *, expected=None):
+        require(uid == 0 or uid == daemon, 'FORBIDDEN')
+        raw, history, prepared, source, cohort, _ = self.generations.prepared(request)
+        require(cohort['cohortSha256'] == request['expectedCohortSha256'], 'COHORT_CHANGED')
+        unit, writer = self.generations.active_core(source, cohort)
+        require(uid == 0 or pid == writer['pid'] and uid == writer['uid'] == daemon, 'FORBIDDEN')
+        current = {name: writer[name] for name in ('pid', 'uid', 'startTicks', 'bootId', 'lockDevice', 'lockInode')}
+        current['invocationId'] = unit['InvocationID']
+        if expected is not None:
+            require(current == expected['owner'] and source == expected['source']
+                    and history['generation'] == expected['generation']
+                    and prepared['historySha256'] == expected['historySha256'], 'OWNER_CHANGED')
+        return current, source, history, prepared
+
+    def create(self, request, pid, uid, daemon):
+        require(uid == 0 or uid == daemon, 'FORBIDDEN')
+        self.validate_request(request)
+        require(sys_platform_linux() and hasattr(time, 'CLOCK_BOOTTIME'), 'UNSUPPORTED')
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance(); manager.settled()
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                existing = self.load(request['handoffId'])
+                if existing is not None:
+                    require(existing['request'] == request, 'CONFLICT')
+                    self.owner(request, pid, uid, daemon, expected=existing)
+                    return dict(self.metadata(existing), token=self.token(existing))
+                parent = manager.state / 'handoffs'
+                if os.path.lexists(parent):
+                    manager.directory(parent, private=True)
+                    files = list(parent.iterdir()); require(len(files) < 32, 'CAPACITY')
+                    for path in files:
+                        require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+                        prior = self.load(operation_id(path.name[:-5]))
+                        require(prior is not None and prior['request']['preparationId'] != request['preparationId']
+                                and not {prior['request']['publicationId'], prior['request']['startOperationId']}
+                                & {request['publicationId'], request['startOperationId']}, 'HANDOFF_EXISTS')
+                for name in ('publicationId', 'startOperationId'):
+                    require(manager.record(request[name]) is None
+                            and not os.path.lexists(manager.state / 'startups' / (request[name] + '.json')), 'CONFLICT')
+                owner, source, history, prepared = self.owner(request, pid, uid, daemon)
+                issued = self.clock(); wall = int(time.time())
+                value = dict(schema=1, purpose=HANDOFF_PURPOSE, request=dict(request),
+                             requestTag=hmac.new(self.secret(), encode(request), hashlib.sha256).hexdigest(),
+                             owner=owner, source=source, generation=history['generation'], historySha256=prepared['historySha256'],
+                             nonce=secrets.token_hex(32), issuedBoottimeNs=issued, expiresBoottimeNs=issued + 900_000_000_000,
+                             issuedAt=wall, expiresAt=wall + 900)
+                value['receiptTag'] = hmac.new(self.secret(), HANDOFF_RECEIPT + encode(value), hashlib.sha256).hexdigest()
+                parent.mkdir(mode=0o700, exist_ok=True); manager.directory(parent, private=True); manager.sync(manager.state)
+                manager.atomic(parent / (request['handoffId'] + '.json'), encode(value), mode=0o400, no_replace=True)
+                return dict(self.metadata(value), token=self.token(value))
+
+    def read(self, request, pid, uid, daemon, *, token=False):
+        fields(request, {'schema', 'action', 'handoffId'})
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == ('generation-handoff-token-read' if token else 'generation-handoff-read'), 'INVALID_ARGUMENT')
+        require(uid == 0 or uid == daemon, 'FORBIDDEN')
+        identity = operation_id(request['handoffId']); manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                value = self.load(identity)
+                if value is None:
+                    return dict(schema=1, handoffId=identity, state='NOT_RECORDED', scope='ORIGINAL_AUTHORIZATION_ONLY')
+                if token:
+                    self.owner(value['request'], pid, uid, daemon, expected=value)
+                result = self.metadata(value)
+                if token:
+                    result['token'] = self.token(value)
+                return result
+
+    @staticmethod
+    def operation_request(value, *, start=False):
+        request = value['request']
+        result = dict(schema=1, action='generation-core-start' if start else 'generation-publish',
+                      operationId=request['startOperationId' if start else 'publicationId'],
+                      expectedRingSha256=request['expectedRingSha256'], expectedCohortSha256=request['expectedCohortSha256'])
+        if start:
+            result['publicationId'] = request['publicationId']
+        else:
+            result.update(preparationId=request['preparationId'], verificationId=request['verificationId'])
+        return result
+
+    def original(self, value, *, start=False):
+        identity = value['request']['startOperationId' if start else 'publicationId']
+        action = 'generation-core-start' if start else 'generation-publish'
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            record = manager.record(identity)
+            require(record is None or record['action'] == action, 'CONFLICT')
+            if record is not None:
+                require(hmac.compare_digest(record['requestTag'], hmac.new(self.secret(),
+                    encode(self.operation_request(value, start=start)), hashlib.sha256).hexdigest()), 'CONFLICT')
+            return record
+
+    def publication_matches(self, value, publication):
+        request = value['request']
+        require(publication['operationId'] == request['publicationId']
+                and publication['preparationId'] == request['preparationId']
+                and publication['verificationId'] == request['verificationId']
+                and publication['historySha256'] == value['historySha256']
+                and publication['source'] == value['source'] and publication['generation'] == value['generation']
+                and publication['cohortSha256'] == request['expectedCohortSha256']
+                and publication['stoppedWriter'] == {key: item for key, item in value['owner'].items() if key != 'uid'}, 'CONFLICT')
+
+    def command(self, request, pid, uid, daemon, recovery):
+        command = request.get('command')
+        require(command in ('info', 'publication-read', 'publish', 'continue', 'start-read', 'start'), 'INVALID_ARGUMENT')
+        fields(request, {'schema', 'action', 'token', 'command'} | ({'expectedRecoveryReceiptSha256'} if command == 'continue' else set()))
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == 'generation-handoff-command', 'INVALID_ARGUMENT')
+        if command == 'continue':
+            digest(request['expectedRecoveryReceiptSha256'])
+        require(uid == 0 or uid == daemon or recovery is not None and uid == recovery, 'FORBIDDEN')
+        if command in ('publish', 'continue', 'start'):
+            require(uid == 0 or recovery is not None and uid == recovery, 'FORBIDDEN')
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            value = self.authenticate(request['token'])
+        original = value['request']
+        if command == 'info':
+            return self.metadata(value)
+        start = command in ('start', 'start-read')
+        record = self.original(value, start=start)
+        if command == 'publication-read' and record is not None:
+            return self.generations.publication_read(dict(schema=1, action='generation-publication-read',
+                                                          operationId=original['publicationId']))
+        if command in ('publication-read', 'start-read') or record is not None and (
+                command in ('publish', 'start') or record['state'] == 'SUCCEEDED'):
+            return manager.public_record(record) if record is not None else dict(schema=1,
+                operationId=original['startOperationId' if start else 'publicationId'], state='NOT_RECORDED',
+                scope='ORIGINAL_OPERATION_ONLY')
+        if command == 'continue':
+            if record is None:
+                return dict(schema=1, operationId=original['publicationId'], state='NOT_RECORDED', scope='ORIGINAL_OPERATION_ONLY')
+            receipt = self.generations.recovery_receipt(original['publicationId'])
+            if receipt is not None:
+                self.publication_matches(value, receipt[1]['publication'])
+            return self.generations.recover_publication(dict(schema=1, action='generation-publication-recover',
+                operationId=original['publicationId'], expectedRecoveryReceiptSha256=request['expectedRecoveryReceiptSha256']))
+        require(self.window_open(value), 'HANDOFF_EXPIRED')
+        # The recorded authority is synced before a new key operation can be
+        # admitted. Reading a grant never concludes a remote operation succeeded.
+        manager.sync(manager.state / 'handoffs')
+        if command == 'publish':
+            return self.generations.request(self.operation_request(value), expected_owner=value['owner'])
+        self.publication_matches(value, self.generations.current())
+        return self.generations.request(self.operation_request(value, start=True), start=True, expected_owner=value['owner'])
+
+
+def sys_platform_linux():
+    # Kept local to this attested module; no environment-selected clock fallback.
+    import sys
+    return sys.platform == 'linux'
