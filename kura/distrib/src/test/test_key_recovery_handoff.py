@@ -23,6 +23,7 @@ import kura_key_recovery_start as start
 import kura_key_recovery as recovery
 import kura_key_recovery_setup as setup
 from test_key_recovery import Fixture, PASSWORD, BACKUP, SHA
+from sender_admission_model import SenderModel
 
 
 class Adapter(Fixture, unittest.TestCase):
@@ -44,7 +45,7 @@ class Adapter(Fixture, unittest.TestCase):
                 if self.loss:raise OSError('Synthetic reply loss')
                 return value
             return root(request)
-        self.client=client;self.controller=recovery.Controller(client,self.journal)
+        self.client=client;self.controller=recovery.Controller(client,self.journal, sender=SenderModel())
         self.start_request=dict(operationId=str(uuid.uuid4()),restoreOperationId=self.request['operationId'],expectedKeySha256=SHA)
 
     def test_zero_monotonic_origin_allows_first_inspection_then_throttles(self):
@@ -56,7 +57,7 @@ class Adapter(Fixture, unittest.TestCase):
     def test_present_key_restart_recovers_server_pending_without_new_restore(self):
         self.controller.restore(self.request)
         before=(self.path/'pending.json').read_bytes()
-        restored=recovery.Controller(self.client,recovery.Journal(self.path))
+        restored=recovery.Controller(self.client,recovery.Journal(self.path), sender=SenderModel())
         state=restored.status()
         self.assertTrue(state['keyReady']);self.assertEqual(self.request['operationId'],state['pendingRestore']['operationId'])
         self.assertEqual('ROOT_ORIGINAL',restored.original(state['pendingRestore']['operationId'])['resultSource'])
@@ -66,7 +67,7 @@ class Adapter(Fixture, unittest.TestCase):
         self.controller.restore(self.request);self.loss=True
         result=self.controller.start(self.start_request)
         self.assertEqual('SYSTEMD_JOB_ACCEPTED',result['scope']);self.assertEqual('ROOT_ORIGINAL',result['resultSource'])
-        restored=recovery.Controller(self.client,recovery.Journal(self.path))
+        restored=recovery.Controller(self.client,recovery.Journal(self.path), sender=SenderModel())
         self.assertEqual(self.start_request['operationId'],restored.status()['pendingStart']['operationId'])
         self.assertEqual(result,restored.start(self.start_request))
         other=dict(self.start_request,operationId=str(uuid.uuid4()))
@@ -199,7 +200,7 @@ class HttpsRestart(unittest.TestCase):
             tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);tls.load_cert_chain(cert,key)
             directory=Path(temporary)/'receiver';directory.mkdir(mode=0o700)
             journal=recovery.Journal(directory)
-            controller=recovery.Controller(lambda request: self.fail('TLS listener test must not call Root'),journal)
+            controller=recovery.Controller(lambda request: self.fail('TLS listener test must not call Root'),journal,sender=SenderModel())
             first=recovery.RecoveryServer(('127.0.0.1',0),controller,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery")
             address=first.server_address
             thread=threading.Thread(target=first.serve_forever,daemon=True);thread.start()

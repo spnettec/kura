@@ -22,6 +22,7 @@ import stat
 import struct
 import subprocess
 import sys
+import threading
 import uuid
 
 # Lazy helpers must share this entrypoint's exception and protocol classes.
@@ -35,7 +36,9 @@ from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEV
                             key_generation_entries, encode_key_generations)
 from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_publication, Refused as LifecycleRefused,
                                        Unresolved as LifecycleUnresolved, GWT_BINDING_PURPOSE, GWT_DATA_FIELDS,
-                                       GWT_NAMESPACE_FIELDS, gwt_namespace, validate_gwt_data, validate_gwt_binding)
+                                       GWT_NAMESPACE_FIELDS, gwt_namespace, validate_gwt_data, validate_gwt_binding,
+                                       validate_sender_admission, validate_start, validate_handoff_authority,
+                                       SENDER_ADMISSION_PURPOSE, SENDER_ADMISSION_CONTEXT)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
@@ -132,6 +135,226 @@ def key_generations(raw):
         raise Failure("INVALID_ARGUMENT") from None
 
 
+class SenderAdmissions:
+    """Root-owned reservations and a durable, single intake for every sender identity."""
+    def __init__(self, manager):
+        self.manager = manager
+        self.directory = manager.state/'sender-admissions'
+        self.context = threading.local()
+
+    @contextlib.contextmanager
+    def locked(self):
+        if getattr(self.context, 'locked', False):
+            yield
+            return
+        with self.manager.lock(self.manager.state/'sender-admission.lock', True):
+            self.context.locked = True
+            try: yield
+            finally: self.context.locked = False
+
+    def secret(self):
+        secret = self.manager.read(self.manager.state/'journal.key', 32)
+        require(len(secret) == 32, 'UNSAFE_JOURNAL')
+        return secret
+
+    def tag(self, request):
+        return hmac.new(self.secret(), encode(request), hashlib.sha256).hexdigest()
+
+    def load(self, identity):
+        operation_id(identity)
+        if not os.path.lexists(self.directory): return None
+        self.manager.directory(self.directory, private=True)
+        try: raw = self.manager.read(self.directory/(identity+'.json'), 8192)
+        except FileNotFoundError: return None
+        try: value = validate_sender_admission(decode(raw), identity, self.secret())
+        except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+        require(value['namespaceSha256'] == self.manager.gwt_namespace()['namespaceSha256'], 'CONFLICT')
+        return value
+
+    def write(self, value, *, create=False):
+        if not os.path.lexists(self.directory):
+            self.directory.mkdir(mode=0o700); self.manager.sync(self.manager.state)
+        self.manager.directory(self.directory, private=True)
+        value = dict(value); value.pop('receiptTag', None)
+        value['receiptTag'] = hmac.new(self.secret(), SENDER_ADMISSION_CONTEXT + encode(value), hashlib.sha256).hexdigest()
+        self.manager.atomic(self.directory/(value['admissionId']+'.json'), encode(value), no_replace=create)
+        return self.load(value['admissionId'])
+
+    def records(self):
+        if not os.path.lexists(self.directory): return []
+        self.manager.directory(self.directory, private=True)
+        paths = list(self.directory.iterdir()); require(len(paths) <= 256, 'CAPACITY')
+        result = []
+        for path in paths:
+            require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+            value = self.load(operation_id(path.name[:-5])); require(value is not None, 'UNSAFE_JOURNAL'); result.append(value)
+        return result
+
+    def owner(self, source, pid, uid, daemon, recovery):
+        require(source in ('gwt', 'recovery', 'local-admin'), 'FORBIDDEN')
+        if source == 'gwt': self.manager.gwt_sender_owner(pid, uid, daemon)
+        elif source == 'recovery':
+            require(recovery is not None and uid == recovery, 'FORBIDDEN')
+            self.manager.recovery_sender_owner(pid, uid)
+        else: require(uid == 0, 'FORBIDDEN')
+        process = self.manager.writer_process(pid)
+        require(process is not None and process[0] == uid, 'FORBIDDEN')
+        return dict(pid=pid, uid=uid, startTicks=process[1], bootId=Path('/proc/sys/kernel/random/boot_id').read_text().strip())
+
+    def target(self, wire, source, pid, uid, daemon):
+        request = wire
+        if source == 'gwt':
+            require(request.get('action') == 'gwt-bound-request', 'FORBIDDEN')
+            request = self.manager.unwrap_gwt_request(request, pid, uid, daemon)
+        action = request.get('action'); continuation = False; directory = 'operations'
+        if source == 'recovery':
+            require(action in ('restore', 'generation-restore', 'core-start', 'core-start-after-maintenance', 'generation-handoff-command'), 'FORBIDDEN')
+        if action == 'generation-handoff-command':
+            component = self.manager.handoff_component(); grant = component.authenticate(request.get('token'))
+            command = request.get('command'); require(command in ('publish', 'continue', 'start'), 'FORBIDDEN')
+            native = component.operation_request(grant, start=command == 'start')
+            if command == 'continue':
+                receipt = component.generations.recovery_receipt(native['operationId'])
+                require(receipt is not None and hashlib.sha256(receipt[0]).hexdigest() == request.get('expectedRecoveryReceiptSha256'), 'UNRESOLVED_OPERATION')
+                component.publication_matches(grant, receipt[1]['publication']); continuation = True
+        elif action == 'generation-publication-recover':
+            component, _ = self.manager.generation_component(); identity = operation_id(request.get('operationId'))
+            receipt = component.recovery_receipt(identity)
+            require(receipt is not None and hashlib.sha256(receipt[0]).hexdigest() == request.get('expectedRecoveryReceiptSha256'), 'UNRESOLVED_OPERATION')
+            original = self.manager.record(identity); require(original is not None and original['action'] == 'generation-publish', 'UNRESOLVED_OPERATION')
+            return dict(directory='operations', operationId=identity, action='generation-publish', requestTag=original['requestTag'], continuation=True)
+        elif action == 'generation-cancel-recover':
+            identity = operation_id(request.get('operationId')); digest(request.get('expectedCancellationSha256'))
+            original = self.manager.record(identity)
+            require(original is not None and original['action'] == 'generation-cancel' and original['state'] == 'INTENT', 'UNRESOLVED_OPERATION')
+            return dict(directory='operations', operationId=identity, action='generation-cancel', requestTag=original['requestTag'], continuation=True)
+        else:
+            require(action in SENDER_MUTATIONS, 'FORBIDDEN')
+            native = request
+        action = native['action']
+        if action in ('core-start', 'core-start-after-maintenance'): directory = 'startups'
+        elif action == 'generation-handoff-create': directory = 'handoffs'
+        identity = operation_id(native.get('handoffId') if directory == 'handoffs' else native.get('operationId'))
+        return dict(directory=directory, operationId=identity, action=action, requestTag=self.tag(native), continuation=continuation)
+
+    def native(self, target):
+        path = self.manager.state/target['directory']/(target['operationId']+'.json')
+        try:
+            raw = self.manager.read(path, 8192 if target['directory'] == 'handoffs' else MAX_FRAME)
+            value = decode(raw)
+        except FileNotFoundError: return None
+        try:
+            if target['directory'] == 'operations': value = validate_record(value, target['operationId'])
+            elif target['directory'] == 'startups': value = validate_start(value, target['operationId'])
+            else:
+                require(stat.S_IMODE(path.lstat().st_mode) == 0o400 and raw == encode(value), 'UNSAFE_JOURNAL')
+                value = validate_handoff_authority(value, target['operationId'], self.secret())
+        except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+        require(value['requestTag'] == target['requestTag'], 'CONFLICT')
+        if target['directory'] == 'operations': require(value['action'] == target['action'], 'CONFLICT')
+        return value
+
+    def settled(self, value):
+        if value['state'] == 'NOT_ADMITTED':
+            require(self.native(value['target']) is None, 'UNSAFE_JOURNAL'); return True
+        native = self.native(value['target'])
+        success = native is not None and (value['target']['directory'] == 'handoffs' or native.get('state') == 'SUCCEEDED')
+        if value['state'] == 'TERMINAL': require(success, 'UNSAFE_JOURNAL')
+        if success:
+            require(value['state'] != 'RESERVED', 'UNSAFE_JOURNAL')
+            if value['state'] == 'INTAKE': value.update(self.write(dict(value, state='TERMINAL')))
+            return True
+        return False
+
+    def require_settled(self):
+        if not os.path.lexists(self.directory): return
+        with self.locked():
+            current = getattr(self.context, 'current', None)
+            excluded = set() if current is None else {current['admissionId'], current['parentAdmissionId']}
+            for value in self.records():
+                if value['admissionId'] not in excluded: require(self.settled(value), 'UNRESOLVED_OPERATION')
+
+    @staticmethod
+    def view(value, *, fresh=False):
+        return dict(schema=1, admissionId=value['admissionId'], state=value['state'], source=value['source'],
+            namespaceSha256=value['namespaceSha256'], nativeOperationId=value['target']['operationId'],
+            nativeAction=value['target']['action'], newlyReserved=fresh)
+
+    def reserve(self, request, pid, uid, daemon, recovery):
+        fields(request, {'schema', 'action', 'admissionId', 'source', 'namespaceSha256', 'request'})
+        require(type(request['schema']) is int and request['schema'] == 1)
+        identity = operation_id(request['admissionId'])
+        with self.locked():
+            self.manager.maintenance(); owner = self.owner(request['source'], pid, uid, daemon, recovery)
+            require(request['namespaceSha256'] == self.manager.gwt_namespace()['namespaceSha256'], 'CONFLICT')
+            target = self.target(request['request'], request['source'], pid, uid, daemon)
+            tag = self.tag(request['request']); previous = self.load(identity)
+            if previous is not None:
+                require(previous['source'] == request['source'] and previous['owner']['uid'] == uid
+                    and previous['requestTag'] == tag and previous['target'] == target, 'CONFLICT')
+                return self.view(previous)
+            records = self.records(); require(len(records) < 256, 'CAPACITY'); parent = None; denied = False
+            for value in records:
+                same = all(value['target'][k] == target[k] for k in ('directory', 'operationId', 'action', 'requestTag'))
+                if same and target['continuation'] and not value['target']['continuation'] and value['state'] == 'INTAKE':
+                    require(parent is None and not self.settled(value), 'CONFLICT'); parent = value['admissionId']; continue
+                require(value['target']['operationId'] != target['operationId'], 'CONFLICT')
+                if not self.settled(value): denied = True
+            prior = self.native(target)
+            require(prior is None or target['continuation'] and prior.get('state') == 'INTENT', 'CONFLICT')
+            try:
+                ignored = {} if not target['continuation'] else {
+                    'recovering_cancel' if target['action'] == 'generation-cancel' else 'recovering_publication': target['operationId']}
+                Lifecycle(self.manager.root, self.manager.owner).check_records(**ignored)
+            except LifecycleUnresolved: denied = True
+            except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+            # A rejected continuation must not claim the already existing native original was absent.
+            require(not denied or prior is None, 'UNRESOLVED_OPERATION')
+            value = dict(schema=1, purpose=SENDER_ADMISSION_PURPOSE, admissionId=identity, source=request['source'],
+                namespaceSha256=request['namespaceSha256'], owner=owner, requestTag=tag, target=target,
+                parentAdmissionId=parent, state='NOT_ADMITTED' if denied else 'RESERVED')
+            return self.view(self.write(value, create=True), fresh=not denied)
+
+    def read(self, request, pid, uid, daemon, recovery, *, close=False):
+        fields(request, {'schema', 'action', 'admissionId', 'source', 'namespaceSha256'})
+        require(type(request['schema']) is int and request['schema'] == 1)
+        with self.locked():
+            self.manager.maintenance(); self.owner(request['source'], pid, uid, daemon, recovery)
+            require(request['namespaceSha256'] == self.manager.gwt_namespace()['namespaceSha256'], 'CONFLICT')
+            value = self.load(operation_id(request['admissionId'])); require(value is not None, 'NOT_FOUND')
+            require(value['source'] == request['source'] and value['owner']['uid'] == uid
+                and value['namespaceSha256'] == request['namespaceSha256'], 'FORBIDDEN')
+            if close:
+                # Only an explicit close can seal a reservation; reads never settle missing native originals.
+                require(value['state'] in ('RESERVED', 'NOT_ADMITTED') and self.native(value['target']) is None, 'UNRESOLVED_OPERATION')
+                if value['state'] == 'RESERVED': value = self.write(dict(value, state='NOT_ADMITTED'))
+            elif self.settled(value) and value['state'] not in ('TERMINAL', 'NOT_ADMITTED'):
+                value = self.write(dict(value, state='TERMINAL'))
+            return self.view(value)
+
+    def execute(self, request, pid, uid, daemon, recovery, dispatch):
+        fields(request, {'schema', 'action', 'admissionId', 'source', 'namespaceSha256', 'request'})
+        require(type(request['schema']) is int and request['schema'] == 1)
+        with self.locked():
+            self.manager.maintenance(); owner = self.owner(request['source'], pid, uid, daemon, recovery)
+            value = self.load(operation_id(request['admissionId'])); require(value is not None, 'NOT_FOUND')
+            require(value['source'] == request['source'] and value['namespaceSha256'] == request['namespaceSha256']
+                == self.manager.gwt_namespace()['namespaceSha256'] and value['owner'] == owner
+                and hmac.compare_digest(value['requestTag'], self.tag(request['request'])), 'CONFLICT')
+            require(value['state'] == 'RESERVED', 'UNRESOLVED_OPERATION')
+            require(self.target(request['request'], request['source'], pid, uid, daemon) == value['target'], 'CONFLICT')
+            self.context.current = value
+            try:
+                self.require_settled()
+                value = self.write(dict(value, state='INTAKE')); self.context.current = value
+                # Persist intake before any native handler, even one that fails its own preflight.
+                result = dispatch(request['request'])
+                if self.settled(value) and value['parentAdmissionId'] is not None:
+                    parent = self.load(value['parentAdmissionId']); require(parent is not None, 'UNSAFE_JOURNAL'); self.settled(parent)
+                return result
+            finally: self.context.current = None
+
+
 class Manager:
     """The root and cipher arguments exist for isolated tests, never on the wire or command line."""
     def __init__(self, root=Path("/"), owner=0, cipher=None):
@@ -141,6 +364,20 @@ class Manager:
         self.state = self.store.path(STATE)
         self.operations = self.state / "operations"
         self.cipher = list(CIPHER if cipher is None else cipher)
+        self.sender_admissions = SenderAdmissions(self)
+
+    def recovery_sender_owner(self, pid, uid):
+        output = subprocess.run(['/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager', 'show',
+            'kura-key-recovery.service', '--property=Id', '--property=ActiveState', '--property=SubState',
+            '--property=MainPID', '--property=ControlPID', '--property=User', '--property=ControlGroup'],
+            capture_output=True, text=True, check=False, timeout=5, close_fds=True, cwd='/',
+            env={'PATH':'/usr/bin:/bin','LANG':'C'})
+        require(output.returncode == 0 and len(output.stdout) <= 4096, 'FORBIDDEN')
+        pairs = [line.split('=', 1) for line in output.stdout.splitlines() if '=' in line]
+        require(len(pairs) == 7 and len(dict(pairs)) == 7, 'FORBIDDEN'); unit = dict(pairs)
+        require(unit == dict(Id='kura-key-recovery.service', ActiveState='active', SubState='running',
+            MainPID=str(pid), ControlPID='0', User='kura-key-recovery', ControlGroup='/system.slice/kura-key-recovery.service')
+            and self.writer_process(pid) is not None and self.writer_process(pid)[0] == uid, 'FORBIDDEN')
 
     def gwt_namespace(self):
         self.directory(self.state, private=True)
@@ -430,6 +667,7 @@ class Manager:
             raise Failure("UNSAFE_JOURNAL") from None
 
     def settled(self, *, recovering_publication=None):
+        self.sender_admissions.require_settled()
         try:
             policy = Lifecycle(self.root, self.owner)
             if recovering_publication is None:
@@ -1399,11 +1637,29 @@ def agent_peer(pid):
 
 GWT_MUTATIONS = frozenset(('backup-create', 'restore', 'generation-prepare', 'generation-backup-verify', 'generation-handoff-create'))
 GWT_ORIGINAL_READS = frozenset(('operation-read', 'generation-handoff-read', 'generation-handoff-token-read', 'generation-publication-plan'))
+SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'generation-restore', 'core-start',
+    'core-start-after-maintenance', 'generation-cancel', 'generation-cancel-recover', 'generation-publish',
+    'generation-core-start', 'generation-publication-recover', 'generation-handoff-command'))
+
+
+def sender_mutation(request):
+    return request.get('action') in SENDER_MUTATIONS and not (
+        request.get('action') == 'generation-handoff-command' and request.get('command') in ('info', 'publication-read', 'start-read'))
 
 
 def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):
     action = request.get('action')
     require(not agent_peer(pid) or action in ('core-validation-info', 'core-snapshot-validate'), 'FORBIDDEN')
+    if action == 'sender-reserve':
+        require(input_descriptor is None)
+        return manager.sender_admissions.reserve(request, pid, uid, daemon, recovery), None
+    if action in ('sender-admission-read', 'sender-admission-close'):
+        require(input_descriptor is None)
+        return manager.sender_admissions.read(request, pid, uid, daemon, recovery, close=action.endswith('-close')), None
+    if action == 'sender-command':
+        require(input_descriptor is None)
+        return manager.sender_admissions.execute(request, pid, uid, daemon, recovery,
+            lambda inner: serve_request(manager, inner, pid, uid, daemon, recovery, None))
     if action == 'gwt-sender-namespace':
         fields(request, {'schema', 'action'})
         require(type(request['schema']) is int and request['schema'] == 1 and input_descriptor is None)
@@ -1418,8 +1674,10 @@ def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor
         request = manager.unwrap_gwt_request(request, pid, uid, daemon)
         action = request['action']
     elif uid == daemon and action in GWT_MUTATIONS:
-        # An old sender cannot silently bypass the effective data/Root namespace binding.
-        raise Failure('FORBIDDEN')
+        require(getattr(manager.sender_admissions.context, 'current', None) is not None, 'FORBIDDEN')
+    if sender_mutation(request):
+        # Includes independent recovery and local Root clients. No old wire format bypasses reservation/intake.
+        require(getattr(manager.sender_admissions.context, 'current', None) is not None, 'FORBIDDEN')
     require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance', 'generation-publication-recover'), 'FORBIDDEN')
     if action == 'core-snapshot-validate':
         require(uid in (0, daemon) and (recovery is None or uid != recovery), 'FORBIDDEN')

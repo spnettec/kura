@@ -165,8 +165,8 @@ class Setup:
         require(stat.S_ISDIR(st.st_mode) and st.st_uid == account.pw_uid
                 and st.st_gid == account.pw_gid and stat.S_IMODE(st.st_mode) == 0o700)
         names={p.name for p in path.iterdir()}
-        require(names <= {'operations','admission.lock','starts','pending.json','handoffs'})
-        if 'handoffs' in names:
+        require(names <= {'operations','admission.lock','starts','pending.json','handoffs','admissions'})
+        if {'handoffs','admissions'} & names:
             # Reuse the installer's original-result checks. Merely allowing the new directory
             # would let a local completion marker conceal a missing/UNKNOWN Root request.
             ledger=self.handoff_ledger()

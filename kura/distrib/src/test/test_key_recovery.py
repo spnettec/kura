@@ -20,6 +20,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'main/resources/unfiltered/pkg/bin'))
 import kura_key_recovery as recovery
+from sender_admission_model import SenderModel
 protocol = recovery.protocol
 PASSWORD = 'synthetic cold recovery passphrase 52!'
 SHA = hashlib.sha256(b'isolated cold adapter synthetic key').hexdigest()
@@ -52,7 +53,7 @@ class Fixture:
         temporary=tempfile.TemporaryDirectory(prefix='kura-new-cold-ui-');self.addCleanup(temporary.cleanup)
         self.path=Path(temporary.name);self.root=FakeRoot()
         self.journal=recovery.Journal(self.path)
-        self.controller=recovery.Controller(self.root,self.journal)
+        self.controller=recovery.Controller(self.root,self.journal, sender=SenderModel())
         self.request=dict(operationId=str(uuid.uuid4()),expectedKeySha256=SHA,
                           backupJson=json.dumps(BACKUP),passphrase=PASSWORD)
 
@@ -80,7 +81,7 @@ class AdapterTest(Fixture, unittest.TestCase):
     def test_restart_and_same_uuid_never_redispatch_even_with_wrong_password(self):
         original=self.controller.restore(self.request)
         self.request['passphrase']='changed synthetic passphrase'
-        restarted=recovery.Controller(self.root,recovery.Journal(self.path))
+        restarted=recovery.Controller(self.root,recovery.Journal(self.path), sender=SenderModel())
         self.assertEqual(original,restarted.restore(self.request));self.assertEqual(1,self.root.writes)
 
     def test_lost_write_reply_uses_proven_original_success(self):
@@ -101,7 +102,7 @@ class AdapterTest(Fixture, unittest.TestCase):
     def test_intent_without_any_root_record_survives_restart_and_never_retries(self):
         self.journal.admit(dict(schema=1,operationId=self.request['operationId'],expectedKeySha256=SHA,
             backupSha256=hashlib.sha256(protocol.encode(BACKUP)).hexdigest()))
-        restarted=recovery.Controller(self.root,recovery.Journal(self.path))
+        restarted=recovery.Controller(self.root,recovery.Journal(self.path), sender=SenderModel())
         self.assertEqual('UNKNOWN',restarted.restore(self.request)['state']);self.assertEqual(0,self.root.writes)
 
     def test_existing_root_original_without_local_slot_is_never_dispatched(self):

@@ -19,6 +19,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_key_recovery as recovery
 import kura_key_service_lifecycle as lifecycle
+from sender_admission_model import SenderModel
 
 protocol = recovery.protocol
 HASH, OTHER = 'a' * 64, 'b' * 64
@@ -80,7 +81,7 @@ class HandoffRecoveryTest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory(prefix='kura-handoff-sender-'); self.addCleanup(temporary.cleanup)
         self.path = Path(temporary.name); self.path.chmod(0o700)
         self.root = Root(); self.journal = recovery.Journal(self.path)
-        self.controller = recovery.HandoffController(self.root, self.journal)
+        self.controller = recovery.HandoffController(self.root, self.journal, sender=SenderModel())
 
     def execute(self, command, **extra):
         return self.controller.execute(dict(token=self.root.token, command=command, **extra))
@@ -113,14 +114,14 @@ class HandoffRecoveryTest(unittest.TestCase):
     def test_lost_reply_uses_original_result_without_a_second_writer(self):
         self.root.loss = True
         result = self.execute('publish'); self.assertEqual('ROOT_ORIGINAL', result['publication']['resultSource'])
-        restarted = recovery.HandoffController(self.root, recovery.Journal(self.path))
+        restarted = recovery.HandoffController(self.root, recovery.Journal(self.path), sender=SenderModel())
         result = restarted.execute(dict(token=self.root.token, command='publish'))
         self.assertEqual('SUCCEEDED', result['publication']['state']); self.assertEqual(1, self.root.writes['publish'])
 
     def test_sender_intent_and_root_absence_remain_unknown_across_restart(self):
         self.root.absent = True; self.root.loss = True
         self.assertEqual('UNKNOWN', self.execute('publish')['publication']['state'])
-        self.controller = recovery.HandoffController(self.root, recovery.Journal(self.path))
+        self.controller = recovery.HandoffController(self.root, recovery.Journal(self.path), sender=SenderModel())
         result = self.execute('publish'); self.assertEqual('UNKNOWN', result['publication']['state'])
         self.assertFalse(result['allowed']['publish']); self.assertEqual(1, self.root.writes['publish'])
 
@@ -175,7 +176,7 @@ class HandoffRecoveryTest(unittest.TestCase):
         self.root.absent = True; self.execute('publish')
         calls = []
         def forbidden(request): calls.append(request); raise AssertionError('Legacy writer must remain fenced')
-        legacy = recovery.Controller(forbidden, self.journal)
+        legacy = recovery.Controller(forbidden, self.journal, sender=SenderModel())
         backup = dict(format=protocol.FORMAT, operationId=str(uuid.uuid4()), encrypted='synthetic-backup')
         self.rejected(lambda: legacy.restore(dict(operationId=str(uuid.uuid4()), expectedKeySha256=HASH,
             backupJson=json.dumps(backup), passphrase='Synthetic original key recovery password!')))
@@ -208,7 +209,7 @@ class HandoffRecoveryTest(unittest.TestCase):
             if (path / 'publish.json').exists(): raise OSError('Synthetic directory sync failure')
             sync(path)
         with patch.object(self.journal, 'sync', side_effect=failure): self.rejected(lambda: self.execute('publish'))
-        self.controller = recovery.HandoffController(self.root, recovery.Journal(self.path))
+        self.controller = recovery.HandoffController(self.root, recovery.Journal(self.path), sender=SenderModel())
         result = self.execute('publish'); self.assertEqual('UNKNOWN', result['publication']['state'])
         self.assertEqual(0, self.root.writes['publish'])
 
@@ -223,7 +224,7 @@ class HandoffPackageGateTest(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix='kura-handoff-package-'); self.addCleanup(temporary.cleanup)
         self.path = Path(temporary.name); state = self.path/'var/lib/kura-key-recovery'; state.mkdir(parents=True, mode=0o700)
-        self.root = Root(); self.journal = recovery.Journal(state); self.controller = recovery.HandoffController(self.root, self.journal)
+        self.root = Root(); self.journal = recovery.Journal(state); self.controller = recovery.HandoffController(self.root, self.journal, sender=SenderModel())
         self.gate = lifecycle.Lifecycle(self.path, owner=os.geteuid())
         (self.gate.state/'operations').mkdir(parents=True, mode=0o700)
         self.recovery_uid = 65534 if os.geteuid() == 0 else os.geteuid()
@@ -283,7 +284,7 @@ class HandoffHttpTest(unittest.TestCase):
             '-keyout',str(key),'-out',str(certificate)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
         tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); tls.load_cert_chain(certificate,key)
         assets = Path(__file__).resolve().parents[1]/'main/resources/unfiltered/pkg/share/key-recovery'
-        self.server = recovery.RecoveryServer(('127.0.0.1',0),recovery.Controller(self.root,self.journal),tls,assets)
+        self.server = recovery.RecoveryServer(('127.0.0.1',0),recovery.Controller(self.root,self.journal, sender=SenderModel()),tls,assets)
         threading.Thread(target=self.server.serve_forever,daemon=True).start()
         self.addCleanup(self.server.server_close); self.addCleanup(self.server.shutdown)
         self.origin = 'https://127.0.0.1:'+str(self.server.server_port)

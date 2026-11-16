@@ -79,6 +79,100 @@ GWT_BINDING_PURPOSE = 'yofc.kura.gwt-sender-namespace.v1'
 GWT_DATA_FIELDS = frozenset(('dataDirectory', 'dataDevice', 'dataInode', 'dataUid'))
 GWT_NAMESPACE_FIELDS = frozenset(('namespaceSha256', 'rootDevice', 'rootInode'))
 GWT_BINDING_FIELDS = GWT_DATA_FIELDS | GWT_NAMESPACE_FIELDS | {'schema', 'purpose'}
+SENDER_ADMISSION_PURPOSE = 'yofc.kura.sender-admission.v1'
+SENDER_ADMISSION_CONTEXT = b'yofc-kura-sender-admission-v1\0'
+
+
+def validate_sender_admission(value, identity, secret):
+    require(isinstance(value, dict) and set(value) == {'schema', 'purpose', 'admissionId', 'source', 'namespaceSha256',
+        'owner', 'requestTag', 'target', 'parentAdmissionId', 'state', 'receiptTag'}
+        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == SENDER_ADMISSION_PURPOSE
+        and canonical_id(identity) and value['admissionId'] == identity
+        and value['source'] in ('gwt', 'recovery', 'local-admin')
+        and value['state'] in ('RESERVED', 'INTAKE', 'TERMINAL', 'NOT_ADMITTED')
+        and all(is_digest(value[k]) for k in ('namespaceSha256', 'requestTag', 'receiptTag'))
+        and (value['parentAdmissionId'] is None or canonical_id(value['parentAdmissionId'])))
+    owner = value['owner']
+    require(isinstance(owner, dict) and set(owner) == {'pid', 'uid', 'startTicks', 'bootId'}
+        and type(owner['pid']) is int and 0 < owner['pid'] <= 0x7fffffff
+        and type(owner['uid']) is int and 0 <= owner['uid'] < 0xffffffff
+        and isinstance(owner['startTicks'], str) and re.fullmatch(r'[0-9]{1,20}', owner['startTicks']) is not None
+        and canonical_id(owner['bootId']))
+    target = value['target']
+    require(isinstance(target, dict) and set(target) == {'directory', 'operationId', 'action', 'requestTag', 'continuation'}
+        and target['directory'] in ('operations', 'startups', 'handoffs') and canonical_id(target['operationId'])
+        and isinstance(target['action'], str) and 1 <= len(target['action']) <= 64 and is_digest(target['requestTag'])
+        and type(target['continuation']) is bool)
+    require(len(secret) == 32 and hmac.compare_digest(value['receiptTag'], hmac.new(secret,
+        SENDER_ADMISSION_CONTEXT + encoded({k: v for k, v in value.items() if k != 'receiptTag'}), hashlib.sha256).hexdigest()))
+    return value
+
+
+def validate_sender_attempt(value, source):
+    require(isinstance(value, dict) and set(value) == {'schema', 'purpose', 'admissionId', 'kind', 'nativeOperationId', 'request'}
+        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == 'yofc.kura.sender-attempt.v1'
+        and canonical_id(value['admissionId']) and canonical_id(value['nativeOperationId']) and isinstance(value['request'], dict))
+    if source == 'gwt':
+        require(value['kind'] in ('LEGACY', 'GENERATION', 'HANDOFF'))
+        require(validate_gwt_intent(value['kind'], value['request']) == value['nativeOperationId'])
+    else:
+        require(source == 'recovery' and value['kind'] in ('restore', 'start', 'publish', 'continue', 'handoff-start'))
+        request = value['request']; action = request.get('action')
+        if value['kind'] == 'restore':
+            require(set(request) == {'schema', 'action', 'operationId', 'expectedKeySha256', 'backupSha256'}
+                and action == 'restore' and request['operationId'] == value['nativeOperationId']
+                and all(is_digest(request[k]) for k in ('expectedKeySha256', 'backupSha256')))
+        elif value['kind'] == 'start':
+            extra = {'predecessorStartOperationId', 'maintenanceId', 'manifestSha256'} if action == 'core-start-after-maintenance' else set()
+            require(action in ('core-start', 'core-start-after-maintenance') and set(request) ==
+                {'schema', 'action', 'operationId', 'restoreOperationId', 'expectedKeySha256'} | extra
+                and request['operationId'] == value['nativeOperationId'] and canonical_id(request['restoreOperationId'])
+                and is_digest(request['expectedKeySha256']))
+            if extra: require(canonical_id(request['predecessorStartOperationId']) and canonical_id(request['maintenanceId']) and is_digest(request['manifestSha256']))
+        else:
+            command = 'start' if value['kind'] == 'handoff-start' else value['kind']; extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else set()
+            require(set(request) == {'schema', 'action', 'command', 'handoffId'} | extra
+                and action == 'generation-handoff-command' and request['command'] == command and canonical_id(request['handoffId']))
+            if extra: require(is_digest(request['expectedRecoveryReceiptSha256']))
+        require(type(request.get('schema')) is int and request['schema'] == 1)
+    return value
+
+
+def check_sender_attempt(policy, value, namespace, source, uid):
+    validate_sender_attempt(value, source)
+    require(isinstance(namespace, dict) and set(namespace) == {'schema', 'namespaceSha256'}
+        and type(namespace['schema']) is int and namespace['schema'] == 1 and is_digest(namespace['namespaceSha256']))
+    secret = policy.read(policy.state/'journal.key', 32)
+    require(namespace['namespaceSha256'] == gwt_namespace(policy.state, secret)['namespaceSha256'])
+    identity = value['admissionId']
+    try: raw = policy.read(policy.state/'sender-admissions'/(identity+'.json'), 8192)
+    except FileNotFoundError: raise Unresolved('Sender reservation is missing; preserve its original attempt') from None
+    root = validate_sender_admission(decode(raw), identity, secret)
+    require(root['source'] == source and root['owner']['uid'] == uid and root['target']['operationId'] == value['nativeOperationId']
+        and root['namespaceSha256'] == namespace['namespaceSha256'])
+    check_sender_original(policy, root, secret)
+    return root
+
+
+def check_sender_original(policy, value, secret):
+    """Read the exact original; an absent result never settles an admitted command."""
+    target = value['target']; path = policy.state/target['directory']/(target['operationId']+'.json')
+    try: raw = policy.read(path, 65536); native = decode(raw)
+    except FileNotFoundError: native = None
+    if value['state'] == 'NOT_ADMITTED':
+        require(native is None, 'A closed sender reservation cannot conceal a native original')
+        return
+    if value['state'] == 'RESERVED' or native is None:
+        raise Unresolved('Unresolved sender admission; preserve original IDs and receipts')
+    if target['directory'] == 'operations':
+        validate_record(native, target['operationId']); require(native['action'] == target['action'])
+    elif target['directory'] == 'startups': validate_start(native, target['operationId'])
+    else:
+        require(stat.S_IMODE(path.lstat().st_mode) == 0o400 and raw == encoded(native))
+        validate_handoff_authority(native, target['operationId'], secret)
+    require(native['requestTag'] == target['requestTag'])
+    if target['directory'] != 'handoffs' and native['state'] != 'SUCCEEDED':
+        raise Unresolved('Native sender result is unresolved; retain the original UUID')
 
 
 def validate_gwt_data(value):
@@ -550,6 +644,16 @@ class GwtSenderInventory:
                     and all(receipt[k] == self.binding[k] for k in ('dataDirectory', 'dataDevice', 'dataInode'))
                     and validate_gwt_intent(receipt['kind'], receipt['request']) == slot.name)
                 self.absent(slot.name)
+        attempts = self.data/'gateway-key-admissions'
+        if os.path.lexists(attempts):
+            self.directory(attempts); slots = list(attempts.iterdir()); require(len(slots) <= 256)
+            for slot in slots:
+                require(canonical_id(slot.name)); self.directory(slot)
+                require({p.name for p in slot.iterdir()} == {'intent.json', 'complete', 'namespace.json'})
+                raw = self.read(slot/'intent.json', 12288)
+                require(self.read(slot/'complete', 65) == hashlib.sha256(raw).hexdigest().encode('ascii')+b'\n')
+                value = validate_sender_attempt(decode(raw), 'gwt'); require(value['nativeOperationId'] == slot.name)
+                check_sender_attempt(self.policy, value, decode(self.read(slot/'namespace.json', 4096)), 'gwt', self.binding['dataUid'])
         return len(owning)
 
 
@@ -625,12 +729,17 @@ class Lifecycle:
         self.directory(self.state, private=True, create=True)
         self.directory(self.state / "operations", private=True, create=True)
         names = list(self.state.iterdir())
-        require({p.name for p in names} <= {"operations", "admission.lock", "journal.key", "maintenance.json", "startups", "package-history", "gwt-sender.json"})
+        require({p.name for p in names} <= {"operations", "admission.lock", "journal.key", "maintenance.json", "startups", "package-history", "gwt-sender.json", 'sender-admissions', 'sender-admission.lock'})
         lock = self.state / "admission.lock"
         if not os.path.lexists(lock):
             require(not list((self.state / "operations").iterdir()), "Missing admission lock with saved operations")
             self.create(lock, b"")
         require(self.read(lock) == b"", "Invalid key-service admission lock")
+        sender = self.state/'sender-admission.lock'
+        if not os.path.lexists(sender):
+            require(not os.path.lexists(self.state/'sender-admissions'), 'Missing sender lock with saved reservations')
+            self.create(sender, b'')
+        require(self.read(sender, limit=0) == b'')
 
     @contextlib.contextmanager
     def locked(self):
@@ -678,6 +787,27 @@ class Lifecycle:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 validate_maintenance(decode(self.read(path)),path.name[:-5])
         return paths
+
+    @contextlib.contextmanager
+    def sender_locked(self):
+        path = self.state/'sender-admission.lock'; require(self.read(path, limit=0) == b'')
+        fd = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+        try:
+            try: fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError: raise Refused('A sender admission is active; package change refused') from None
+            yield
+        finally: os.close(fd)
+
+    def check_sender_admissions(self):
+        directory = self.state/'sender-admissions'
+        if not os.path.lexists(directory): return
+        self.directory(directory, private=True); paths = list(directory.iterdir()); require(len(paths) <= 256)
+        secret = self.read(self.state/'journal.key', 32); namespace = gwt_namespace(self.state, secret)['namespaceSha256']
+        for path in paths:
+            require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+            value = validate_sender_admission(decode(self.read(path, 8192)), path.name[:-5], secret)
+            require(value['namespaceSha256'] == namespace)
+            check_sender_original(self, value, secret)
 
     @contextlib.contextmanager
     def gwt_locked(self):
@@ -794,7 +924,7 @@ class Lifecycle:
             finally:os.close(fd)
         self.directory(state.parent)
         directory(state);directory(state/'operations')
-        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <= {'operations','admission.lock','starts','pending.json','handoffs'})
+        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <= {'operations','admission.lock','starts','pending.json','handoffs','admissions'})
         require(read(state/'admission.lock',0)==b'')
         fd=os.open(state/'admission.lock',os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC)
         try:
@@ -864,6 +994,13 @@ class Lifecycle:
                     require(published['preparationId'] == binding['preparationId'] and published['verificationId'] == binding['verificationId']
                         and started['publicationId'] == binding['publicationId'] and started['activeKeySha256'] == published['activeKeySha256']
                         and completed['publicationSha256'] == published['publicationSha256'] and completed['jobPath'] == started['jobPath'])
+            if os.path.lexists(state/'admissions'):
+                directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
+                for slot in slots:
+                    directory(slot); require({p.name for p in slot.iterdir()} == {'intent.json', 'namespace.json'})
+                    value = validate_sender_attempt(decode(read(slot/'intent.json', 12288)), 'recovery')
+                    require(slot.name == value['nativeOperationId']+'-'+value['kind'])
+                    check_sender_attempt(self, value, decode(read(slot/'namespace.json', 4096)), 'recovery', account.pw_uid)
             yield
         finally:os.close(fd)
 
@@ -926,7 +1063,8 @@ class Lifecycle:
                     properties=dict(line.split('=',1) for line in self.command(['show',name,'--property=LoadState']).splitlines() if '=' in line)
                     require(properties.get('LoadState')=='not-found', 'Foreign recovery service requires reviewed migration')
         self.initialize()
-        with self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
+        with self.sender_locked(), self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
+            self.check_sender_admissions()
             if gwt is not None: gwt.check()
             paths = self.check_records()
             secret = self.state / "journal.key"

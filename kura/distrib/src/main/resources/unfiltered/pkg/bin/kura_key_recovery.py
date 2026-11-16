@@ -23,6 +23,7 @@ import stat
 import sys
 import threading
 import time
+import uuid
 from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -39,8 +40,62 @@ def fail(reason):
     raise protocol.Failure(reason)
 
 
+class SenderAdmission:
+    """Consume an admission attempt before RPC; create private key intentions only after Root reserves."""
+    context = threading.local()
+
+    def __init__(self, client, journal):
+        self.client, self.journal = client, journal
+        self.directory = journal.directory/'admissions'
+
+    @classmethod
+    def wrap(cls, request):
+        current = getattr(cls.context, 'current', None)
+        if current is None or not protocol.sender_mutation(request): return request
+        protocol.require(request == current['request'], 'CONFLICT')
+        return dict(schema=1, action='sender-command', admissionId=current['admissionId'], source='recovery',
+            namespaceSha256=current['namespaceSha256'], request=request)
+
+    def submit(self, kind, identity, request, callback):
+        protocol.operation_id(identity); protocol.require(kind in ('restore', 'start', 'publish', 'continue', 'handoff-start'))
+        protocol.require(getattr(self.context, 'current', None) is None, 'BUSY')
+        if not os.path.lexists(self.directory): self.directory.mkdir(mode=0o700); self.journal.sync(self.journal.directory)
+        self.journal.check_directory(self.directory)
+        slot = self.directory/(identity+'-'+kind)
+        redacted = protocol.decode(protocol.encode(request)); redacted.pop('passphrase', None)
+        if 'backup' in redacted: redacted['backupSha256'] = hashlib.sha256(protocol.encode(redacted.pop('backup'))).hexdigest()
+        if 'token' in redacted: redacted['handoffId'] = redacted.pop('token').split('.')[1]
+        if os.path.lexists(slot):
+            self.journal.check_directory(slot)
+            previous = protocol.decode(self.journal.read(slot/'intent.json', 12288))
+            protocol.require(previous['kind'] == kind and previous['nativeOperationId'] == identity and previous['request'] == redacted, 'CONFLICT')
+            fail('UNRESOLVED_OPERATION')  # Reservation/response ambiguity never reaches a later first writer.
+        protocol.require(len(list(self.directory.iterdir())) < 256, 'CAPACITY')
+        slot.mkdir(mode=0o700); self.journal.sync(self.directory)
+        admission = str(uuid.uuid4())
+        self.journal.write_new(slot/'intent.json', dict(schema=1, purpose='yofc.kura.sender-attempt.v1', admissionId=admission,
+            kind=kind, nativeOperationId=identity, request=redacted))
+        namespace = self.client(dict(schema=1, action='gwt-sender-namespace'))
+        protocol.fields(namespace, {'schema', 'namespaceSha256', 'rootDevice', 'rootInode'})
+        protocol.require(type(namespace['schema']) is int and namespace['schema'] == 1)
+        realm = protocol.digest(namespace['namespaceSha256'])
+        self.journal.write_new(slot/'namespace.json', dict(schema=1, namespaceSha256=realm))
+        response = self.client(dict(schema=1, action='sender-reserve', admissionId=admission, source='recovery',
+            namespaceSha256=realm, request=request))
+        protocol.fields(response, {'schema', 'admissionId', 'state', 'source', 'namespaceSha256', 'nativeOperationId', 'nativeAction', 'newlyReserved'})
+        expected_action = 'generation-core-start' if kind == 'handoff-start' else 'generation-publish' if kind in ('publish','continue') else request['action']
+        protocol.require(type(response['schema']) is int and response['schema'] == 1 and response['admissionId'] == admission
+            and response['state'] == 'RESERVED' and response['source'] == 'recovery' and response['namespaceSha256'] == realm
+            and response['nativeOperationId'] == identity and response['nativeAction'] == expected_action
+            and response['newlyReserved'] is True, 'UNRESOLVED_OPERATION')
+        self.context.current = dict(admissionId=admission, namespaceSha256=realm, request=request)
+        try: return callback()
+        finally: self.context.current = None
+
+
 class RootClient:
     def __call__(self, request):
+        request = SenderAdmission.wrap(request)
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
             stream.settimeout(25)
             stream.connect(protocol.SOCKET)
@@ -206,9 +261,10 @@ class Journal:
 
 
 class Controller:
-    def __init__(self, client=None, journal=None):
+    def __init__(self, client=None, journal=None, sender=None):
         self.client = RootClient() if client is None else client
         self.journal = Journal() if journal is None else journal
+        self.sender = SenderAdmission(self.client, self.journal) if sender is None else sender
         self.inspect_lock = threading.Lock()
         self.last_inspect = None
 
@@ -340,15 +396,14 @@ class Controller:
             protocol.require(not state['keyReady'] and state['keySha256'] == expected, 'CONFLICT')
             checked = self.inspect(dict(backupJson=value['backupJson'], passphrase=value['passphrase']), throttle=False)
             protocol.require(checked['restoreAllowed'] and checked['keySha256'] == expected, 'BACKUP_REJECTED')
-            self.journal.mark(identity,expected)
-            self.journal.admit(intent)
-            # Exactly one writer call. All post-admission errors remain UNKNOWN.
-            try:
-                self.call('restore', operationId=identity, expectedKeySha256=expected,
-                          backup=backup, passphrase=value['passphrase'])
-            except (protocol.Failure, OSError, KeyError, ValueError):
-                pass
-            return self.original(identity, expected)
+            request = dict(schema=1, action='restore', operationId=identity, expectedKeySha256=expected,
+                backup=backup, passphrase=value['passphrase'])
+            def forward():
+                self.journal.mark(identity,expected); self.journal.admit(intent)
+                try: self.call('restore', operationId=identity, expectedKeySha256=expected, backup=backup, passphrase=value['passphrase'])
+                except (protocol.Failure, OSError, KeyError, ValueError): pass
+                return self.original(identity, expected)
+            return self.sender.submit('restore', identity, request, forward)
 
 
     def start_original(self, identity, restore_id=None, expected=None):
@@ -400,10 +455,14 @@ class Controller:
             for record in records:
                 protocol.require(maintenance or record['restoreOperationId']!=restore_id,'CONFLICT')
                 protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
-            self.journal.write_new(self.journal.starts/(identity+'.json'),intent)
-            try:self.call('core-start-after-maintenance' if maintenance else 'core-start',**value)
-            except (protocol.Failure,OSError,KeyError,ValueError):pass
-            return self.start_original(identity,restore_id,expected)
+            action = 'core-start-after-maintenance' if maintenance else 'core-start'
+            request = dict(schema=1, action=action, **value)
+            def forward():
+                self.journal.write_new(self.journal.starts/(identity+'.json'),intent)
+                try:self.call(action,**value)
+                except (protocol.Failure,OSError,KeyError,ValueError):pass
+                return self.start_original(identity,restore_id,expected)
+            return self.sender.submit('start', identity, request, forward)
 
     def complete(self, value):
         protocol.fields(value,{'operationId'})
@@ -439,8 +498,9 @@ class HandoffController:
     WRITERS = frozenset(('publish', 'continue', 'start'))
     FILES = frozenset(('binding.json', 'publish.json', 'continue.json', 'start.json', 'completed.json'))
 
-    def __init__(self, client, journal):
+    def __init__(self, client, journal, sender=None):
         self.client, self.journal = client, journal
+        self.sender = SenderAdmission(client, journal) if sender is None else sender
         self.directory = journal.directory / 'handoffs'
         try:
             self.directory.mkdir(mode=0o700)
@@ -609,19 +669,19 @@ class HandoffController:
             protocol.require(current['allowed'][command], 'UNRESOLVED_OPERATION')
             if extra:
                 protocol.require(current['publication']['recoveryReceiptSha256'] == value['expectedRecoveryReceiptSha256'], 'CONFLICT')
-            if not os.path.lexists(slot):
-                protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
-                slot.mkdir(mode=0o700); self.journal.sync(self.directory)
-                self.journal.write_new(slot / 'binding.json', binding)
-            intent = dict(binding, command=command, **{key: value[key] for key in extra})
-            self.journal.write_new(slot / (command + '.json'), intent)
-            # Exactly one forward, with the fixed Root authority. Never retry even
-            # if Root reports absence or the following result read is unavailable.
-            try: self.call(token, command, **{key: value[key] for key in extra})
-            except (protocol.Failure, OSError, KeyError, ValueError, TypeError): pass
-            try: return self.snapshot(token)
-            except (protocol.Failure, OSError, KeyError, ValueError, TypeError):
-                return dict(schema=1, state='UNKNOWN', handoffId=binding['handoffId'], scope='ORIGINAL_HANDOFF_ONLY')
+            request = dict(schema=1, action='generation-handoff-command', token=token, command=command, **{key:value[key] for key in extra})
+            identity = binding['startOperationId' if command == 'start' else 'publicationId']
+            def forward():
+                if not os.path.lexists(slot):
+                    protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+                    slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
+                intent = dict(binding, command=command, **{key:value[key] for key in extra}); self.journal.write_new(slot/(command+'.json'), intent)
+                try: self.call(token, command, **{key:value[key] for key in extra})
+                except (protocol.Failure, OSError, KeyError, ValueError, TypeError): pass
+                try: return self.snapshot(token)
+                except (protocol.Failure, OSError, KeyError, ValueError, TypeError):
+                    return dict(schema=1, state='UNKNOWN', handoffId=binding['handoffId'], scope='ORIGINAL_HANDOFF_ONLY')
+            return self.sender.submit('handoff-start' if command == 'start' else command, identity, request, forward)
 
 
 class RecoveryServer(ThreadingHTTPServer):
@@ -631,7 +691,7 @@ class RecoveryServer(ThreadingHTTPServer):
 
     def __init__(self, address, controller, tls, assets=ASSETS):
         self.controller = controller
-        self.handoffs = HandoffController(controller.client, controller.journal)
+        self.handoffs = HandoffController(controller.client, controller.journal, sender=controller.sender)
         self.tls = tls
         self.assets = Path(assets)
         self.token = secrets.token_urlsafe(32)

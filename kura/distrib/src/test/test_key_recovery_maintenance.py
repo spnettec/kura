@@ -20,6 +20,7 @@ import kura_key_recovery as recovery
 import kura_key_recovery_start as start
 import test_key_recovery_handoff as old
 import test_key_service_lifecycle as package_tests
+from sender_admission_model import SenderModel
 
 
 class Maintenance(unittest.TestCase):
@@ -111,7 +112,7 @@ class Maintenance(unittest.TestCase):
             restoreOperationId=self.base.restore_id,expectedKeySha256=self.base.sha))
         def client(request):
             with patch.object(start,'Starter',return_value=self.starter):return self.manager.handle(request,recovery_only=True)
-        return recovery.Controller(client,journal)
+        return recovery.Controller(client,journal, sender=SenderModel())
 
     def test_adapter_restart_picks_new_leaf_and_queries_without_redispatch(self):
         controller=self.controller();value={k:v for k,v in self.request.items() if k not in ('schema','action')}

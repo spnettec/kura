@@ -14,6 +14,7 @@ import tempfile
 import threading
 
 import test_key_handoff_recovery as model
+from sender_admission_model import SenderModel
 
 temporary = tempfile.TemporaryDirectory(prefix='kura-browser-handoff-')
 directory = Path(temporary.name)
@@ -30,9 +31,9 @@ def reset():
     global root, journal, sequence
     sequence += 1; state = directory/('case-'+str(sequence)); state.mkdir(mode=0o700)
     root = model.Root(); journal = model.recovery.Journal(state)
-    controller = model.recovery.Controller(root,journal)
+    controller = model.recovery.Controller(root,journal, sender=SenderModel())
     if server is not None:
-        server.controller = controller; server.handoffs = model.recovery.HandoffController(root,journal)
+        server.controller = controller; server.handoffs = model.recovery.HandoffController(root,journal, sender=SenderModel())
     return controller
 
 controller = reset()
