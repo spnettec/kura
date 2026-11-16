@@ -21,7 +21,7 @@ tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);tls.minimum_version=ssl.TLSVersion.T
 assets=Path(__file__).resolve().parents[1]/'main/resources/unfiltered/pkg/share/key-recovery'
 server=None;sequence=0
 
-def reset(kind='restore'):
+def reset(kind='restore',maintenance=False):
     global root,journal,sender,identity,restore_id,selected,sequence
     selected=kind;sequence+=1;state=directory/('case-'+str(sequence));state.mkdir(mode=0o700)
     root=AdmissionRoot();journal=recovery.Journal(state);sender=recovery.SenderAdmission(root,journal)
@@ -31,6 +31,9 @@ def reset(kind='restore'):
         if kind=='restore':request.update(backup=BACKUP,passphrase=PASSWORD)
         else:
             request['restoreOperationId']=restore_id;root.cold.key_ready=True
+            if maintenance:
+                request.update(action='core-start-after-maintenance',predecessorStartOperationId=str(uuid.uuid4()),
+                    maintenanceId=str(uuid.uuid4()),manifestSha256='a'*64)
             journal.admit(dict(schema=1,operationId=restore_id,expectedKeySha256=SHA,backupSha256=hashlib.sha256(protocol.encode(BACKUP)).hexdigest()))
             journal.mark(restore_id,SHA)
             root.cold.records[restore_id]=dict(schema=1,operationId=restore_id,state='SUCCEEDED',action='restore',keySha256=SHA,keyChanged=True,existingReceiptPreserved=True)
@@ -51,13 +54,14 @@ controller=reset();server=recovery.RecoveryServer(('127.0.0.1',0),controller,tls
 worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
 
 def describe():return dict(url='https://127.0.0.1:'+str(server.server_port),kind=selected,operationId=identity,restoreOperationId=restore_id,
-    expectedKeySha256=SHA,backupJson=json.dumps(BACKUP),passphrase=PASSWORD,token=root.handoff.token)
+    expectedKeySha256=SHA,backupJson=json.dumps(BACKUP),passphrase=PASSWORD,token=root.handoff.token,
+    startIntent=recovery.receiver_start_intent(sender.load('start',identity)[0]) if selected=='start' else None)
 
 print(json.dumps(describe()),flush=True)
 try:
     for line in sys.stdin:
         value=json.loads(line);command=value['command']
-        if command=='reset':reset(value.get('kind','restore'));reply=describe()
+        if command=='reset':reset(value.get('kind','restore'),value.get('maintenance',False));reply=describe()
         elif command=='set':
             if 'phase' in value:next(iter(root.records.values()))['state']=value['phase']
             if 'loseClose' in value:root.lose_close=value['loseClose']
@@ -65,13 +69,16 @@ try:
             if value.get('foreignNamespace'):root.namespace='d'*64
             if value.get('privateIntent'):
                 if selected=='restore':journal.admit(dict(schema=1,operationId=identity,expectedKeySha256=SHA,backupSha256=hashlib.sha256(protocol.encode(BACKUP)).hexdigest()))
-                elif selected=='start':journal.write_new(journal.starts/(identity+'.json'),dict(schema=1,operationId=identity,restoreOperationId=restore_id,expectedKeySha256=SHA))
+                elif selected=='start':journal.write_new(journal.starts/(identity+'.json'),recovery.receiver_start_intent(sender.load('start',identity)[0]))
             reply=dict(ok=True)
         elif command=='stats':
             files=list(journal.directory.rglob('*.json'))
             reply=dict(nativeKeyWrites=root.native_writes,closes=root.closes,reservations=len(root.records),
                 phase=next(iter(root.records.values()))['state'],closedReceipts=len(list(sender.directory.rglob('closed.json'))),
-                credentialsOnDisk=any(PASSWORD.encode() in p.read_bytes() or root.handoff.token.encode() in p.read_bytes() for p in files))
+                credentialsOnDisk=any(PASSWORD.encode() in p.read_bytes() or root.handoff.token.encode() in p.read_bytes() for p in files),
+                privateStartFiles={p.name:dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),inode=p.stat().st_ino,
+                    uid=p.stat().st_uid,gid=p.stat().st_gid,mode=p.stat().st_mode,nlink=p.stat().st_nlink,
+                    mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.starts.iterdir()})
         elif command=='stop':print(json.dumps(dict(ok=True)),flush=True);break
         else:raise ValueError('Unknown fixture command')
         print(json.dumps(reply),flush=True)

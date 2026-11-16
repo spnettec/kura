@@ -15,12 +15,12 @@ async function read(){let timer;try{const row=await Promise.race([lines.next(),n
 async function control(command,extra={}){child.stdin.write(JSON.stringify({command,...extra})+'\n');return read();}
 let fixture=await read();const browser=await chromium.launch({headless:true}),cases=[],errors=[];
 const restoreStore='yofc.kura.cold-key-recovery.intent.v1',startStore='yofc.kura.cold-key-recovery.start.v1';
-async function setup(kind='restore',options={}){
- fixture=await control('reset',{kind});const context=await browser.newContext({ignoreHTTPSErrors:true,...options});context.setDefaultTimeout(10000);
+async function setup(kind='restore',options={},scenario={}){
+ fixture=await control('reset',{kind,...scenario});const context=await browser.newContext({ignoreHTTPSErrors:true,...options});context.setDefaultTimeout(10000);
  if(['restore','start'].includes(kind))await context.addInitScript(({restoreStore,startStore,fixture})=>{
   if(!sessionStorage.getItem('fixture-seeded')){
    localStorage.setItem(restoreStore,JSON.stringify({schema:1,operationId:fixture.kind==='restore'?fixture.operationId:fixture.restoreOperationId,expectedKeySha256:fixture.expectedKeySha256}));
-   if(fixture.kind==='start')localStorage.setItem(startStore,JSON.stringify({schema:1,operationId:fixture.operationId,restoreOperationId:fixture.restoreOperationId,expectedKeySha256:fixture.expectedKeySha256}));
+   if(fixture.kind==='start')localStorage.setItem(startStore,JSON.stringify(fixture.startIntent));
    sessionStorage.setItem('fixture-seeded','yes');
   }
  },{restoreStore,startStore,fixture});
@@ -114,6 +114,39 @@ try{
   await page.locator('#admission-acknowledge').click();await expect(page.locator('#admission-notice')).toContainText('浏览器中的原记录不匹配');
   assert.equal(await page.evaluate(key=>localStorage.getItem(key),restoreStore),before);assert.equal((await stats()).closes,1);
   await context.close();cases.push('mismatched browser '+mismatch+' is retained, not acknowledged or silently removed');
+ }
+ {
+  const {page,context}=await setup('start');await control('set',{privateIntent:true});const before=(await stats()).privateStartFiles;
+  assert.equal(Object.keys(before).length,1);await query(page);await material(page);await dialog(page);await accept(page);
+  assert.deepEqual((await stats()).privateStartFiles,before);await page.reload();await query(page);
+  await expect(page.locator('#admission-acknowledge')).toBeVisible();await page.locator('#admission-acknowledge').click();
+  await expect(page.locator('#start-core')).toBeEnabled();assert.equal(await page.evaluate(k=>localStorage.getItem(k),startStore),null);
+  assert.notEqual(await page.evaluate(k=>localStorage.getItem(k),restoreStore),null);assert.deepEqual((await stats()).privateStartFiles,before);
+  await privateBrowser(page);await context.close();cases.push('original private startup intent closes before Root intake, survives reload byte-for-byte, then explicit acknowledgement permits a manual new startup');
+ }
+ {
+  const {page,context}=await setup('start');await control('set',{privateIntent:true,phase:'INTAKE'});const before=(await stats()).privateStartFiles;
+  await query(page);await expect(page.locator('#admission-close-form')).toBeHidden();assert.equal((await stats()).closes,0);
+  assert.deepEqual((await stats()).privateStartFiles,before);await context.close();cases.push('private startup plus Root INTAKE remains query-only and its intent is retained');
+ }
+ for(const mismatch of ['schema','maintenanceId','manifestSha256','predecessorStartOperationId']){
+  const {page,context}=await setup('start',{}, {maintenance:true});await control('set',{privateIntent:true});const before=(await stats()).privateStartFiles;
+  await query(page);await material(page);await dialog(page);await accept(page);await expect(page.locator('#admission-acknowledge')).toBeVisible();
+  const stored=await page.evaluate(({key,mismatch})=>{
+   let value=JSON.parse(localStorage.getItem(key));
+   if(mismatch==='schema')value={schema:1,operationId:value.operationId,restoreOperationId:value.restoreOperationId,expectedKeySha256:value.expectedKeySha256};
+   else value[mismatch]=mismatch==='manifestSha256'?'b'.repeat(64):crypto.randomUUID();
+   const raw=JSON.stringify(value);localStorage.setItem(key,raw);return raw;
+  },{key:startStore,mismatch});
+  await page.locator('#admission-acknowledge').click();await expect(page.locator('#admission-notice')).toContainText('浏览器中的原记录不匹配');
+  assert.equal(await page.evaluate(k=>localStorage.getItem(k),startStore),stored);assert.deepEqual((await stats()).privateStartFiles,before);
+  await context.close();cases.push('closed maintenance startup cannot acknowledge a browser record with a different '+mismatch);
+ }
+ {
+  const {page,context}=await setup('start');await query(page);await material(page);await dialog(page);await accept(page);
+  const stored=await page.evaluate(key=>{const value={...JSON.parse(localStorage.getItem(key)),schema:2,maintenanceId:crypto.randomUUID(),predecessorStartOperationId:crypto.randomUUID(),manifestSha256:'b'.repeat(64)};const raw=JSON.stringify(value);localStorage.setItem(key,raw);return raw;},startStore);
+  await page.locator('#admission-acknowledge').click();await expect(page.locator('#admission-notice')).toContainText('浏览器中的原记录不匹配');
+  assert.equal(await page.evaluate(k=>localStorage.getItem(k),startStore),stored);await context.close();cases.push('closed initial startup cannot acknowledge a maintenance-shaped browser record');
  }
  assert.deepEqual(errors,[]);console.log(JSON.stringify({tests:cases.length,cases,productionPageAndHandler:true,actualHttps:true,rootAndDecryption:'modeled',humanMainSessionAcceptance:false,nativeKeyWrites:0,oldClosedScenariosReplayed:false}));
 }finally{

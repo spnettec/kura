@@ -34,12 +34,17 @@
   catch(_){el('reference').value='';}
  }
  function validate(value){
-  const names=['schema','state','kind','operationId','phase','closeAllowed','closed','expectedKeySha256','restoreOperationId'];
+  const names=['schema','state','kind','operationId','phase','closeAllowed','closed','expectedKeySha256','restoreOperationId','startSchema','predecessorStartOperationId','maintenanceId','manifestSha256'];
   if(!value||Object.keys(value).some(n=>!names.includes(n))||value.schema!==1||value.state!=='SENDER_ADMISSION'||value.kind!==backendKind()
    ||!uuid(value.operationId)||!['UNKNOWN','NOT_RECORDED','RESERVED','INTAKE','TERMINAL','NOT_ADMITTED'].includes(value.phase)
    ||typeof value.closeAllowed!=='boolean'||typeof value.closed!=='boolean'||(!handoff&&value.operationId!==el('reference').value)
    ||(value.expectedKeySha256!==undefined&&!hash(value.expectedKeySha256))||(value.restoreOperationId!==undefined&&!uuid(value.restoreOperationId))
    ||(value.closed&&value.phase!=='NOT_ADMITTED')||(value.closeAllowed&&!['RESERVED','NOT_ADMITTED'].includes(value.phase)))throw Error();
+  if(value.kind==='start'&&value.phase!=='NOT_RECORDED'){
+   if(![1,2].includes(value.startSchema))throw Error();
+   const extra=['predecessorStartOperationId','maintenanceId','manifestSha256'];
+   if(value.startSchema===2?(!uuid(value.predecessorStartOperationId)||!uuid(value.maintenanceId)||!hash(value.manifestSha256)):extra.some(n=>n in value))throw Error();
+  }else if(['startSchema','predecessorStartOperationId','maintenanceId','manifestSha256'].some(n=>n in value))throw Error();
   return value;
  }
  function authorization(){
@@ -58,7 +63,7 @@
    return validate(value);
   }finally{clearTimeout(timer);if('passphrase'in body)body.passphrase='';}
  }
- function apply(value){current=value;notice(value.closed?handoff?'closedHandoff':'closed':value.phase==='RESERVED'&&value.closeAllowed?'reserved':value.phase==='NOT_ADMITTED'?'notAdmitted':value.phase==='NOT_RECORDED'?'missing':value.phase==='TERMINAL'?'terminal':'unknown');}
+ function apply(value){current=value;notice(value.closed?handoff?'closedHandoff':'closed':value.phase==='RESERVED'&&value.closeAllowed?'reserved':value.phase==='NOT_ADMITTED'&&value.closeAllowed?'notAdmitted':value.phase==='NOT_RECORDED'?'missing':value.phase==='TERMINAL'?'terminal':'unknown');}
  async function read(){
   if(busy)return;const generation=++epoch;busy=true;current=null;notice('');render();
   try{const value=await api('read');if(generation===epoch)apply(value);}
@@ -105,7 +110,9 @@
    if(!saved||Object.keys(saved).sort().join(',')!==names||(!modern&&saved.schema!==1)
     ||(modern&&(!uuid(saved.maintenanceId)||!uuid(saved.predecessorStartOperationId)||!hash(saved.manifestSha256))))throw Error();
    if(saved.operationId!==current.operationId||saved.expectedKeySha256!==current.expectedKeySha256
-    ||(kind()==='start'&&saved.restoreOperationId!==current.restoreOperationId)||localStorage.getItem(name)!==raw)throw Error();
+    ||(kind()==='start'&&(saved.restoreOperationId!==current.restoreOperationId||saved.schema!==current.startSchema
+      ||(modern&&['predecessorStartOperationId','maintenanceId','manifestSha256'].some(n=>saved[n]!==current[n]))))
+    ||localStorage.getItem(name)!==raw)throw Error();
    localStorage.removeItem(name);if(localStorage.getItem(name)!==null)throw Error();current=null;render();notice('returned');window.dispatchEvent(new Event('kura-recovery-intent-changed'));
   }catch(_){notice('storage');}
  });

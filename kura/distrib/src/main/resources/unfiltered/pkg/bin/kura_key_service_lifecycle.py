@@ -146,6 +146,15 @@ def validate_sender_closed(value, attempt, namespace):
     return value
 
 
+def receiver_start_intent(attempt):
+    """The complete private startup metadata implied by its original reservation."""
+    validate_sender_attempt(attempt, 'recovery')
+    require(attempt['kind'] == 'start')
+    request = attempt['request']
+    return dict(schema=2 if request['action'] == 'core-start-after-maintenance' else 1,
+        **{key: value for key, value in request.items() if key not in ('schema', 'action')})
+
+
 def check_sender_attempt(policy, value, namespace, source, uid):
     validate_sender_attempt(value, source)
     require(isinstance(namespace, dict) and set(namespace) == {'schema', 'namespaceSha256'}
@@ -158,6 +167,11 @@ def check_sender_attempt(policy, value, namespace, source, uid):
     root = validate_sender_admission(decode(raw), identity, secret)
     require(root['source'] == source and root['owner']['uid'] == uid and root['target']['operationId'] == value['nativeOperationId']
         and root['namespaceSha256'] == namespace['namespaceSha256'])
+    if source == 'recovery' and value['kind'] == 'start':
+        tag = hmac.new(secret, encoded(value['request']), hashlib.sha256).hexdigest()
+        require(root['target']['directory'] == 'startups' and root['target']['action'] == value['request']['action']
+            and root['target']['continuation'] is False and root['requestTag'] == tag and root['target']['requestTag'] == tag,
+            'Startup reservation does not match the complete original request')
     check_sender_original(policy, root, secret)
     return root
 
@@ -938,6 +952,21 @@ class Lifecycle:
         try:
             try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError:raise Refused('Cold recovery is active; package change refused') from None
+            closed_starts = {}
+            if os.path.lexists(state/'admissions'):
+                directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
+                for slot in slots:
+                    directory(slot); names = {p.name for p in slot.iterdir()}
+                    require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}))
+                    value = validate_sender_attempt(decode(read(slot/'intent.json', 12288)), 'recovery')
+                    require(slot.name == value['nativeOperationId']+'-'+value['kind'])
+                    namespace = decode(read(slot/'namespace.json', 4096))
+                    original = check_sender_attempt(self, value, namespace, 'recovery', account.pw_uid)
+                    if 'closed.json' in names:
+                        validate_sender_closed(decode(read(slot/'closed.json', 4096)), value, namespace)
+                        require(original['state'] == 'NOT_ADMITTED', 'Closed receiver attempt has no Root not-admitted original')
+                        if value['kind'] == 'start':
+                            closed_starts[value['nativeOperationId']] = receiver_start_intent(value)
             files=list((state/'operations').iterdir());require(len(files)<=32)
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
@@ -966,6 +995,9 @@ class Lifecycle:
                             and type(local['schema']) is int and local['schema'] in (1,2) and local['operationId']==path.name[:-5]
                             and canonical_id(local['restoreOperationId']) and is_digest(local['expectedKeySha256']))
                     if modern:require(canonical_id(local['predecessorStartOperationId']) and canonical_id(local['maintenanceId']) and is_digest(local['manifestSha256']))
+                    if local['operationId'] in closed_starts:
+                        require(local == closed_starts[local['operationId']], 'Closed startup private intent has changed')
+                        continue  # The authenticated Root NOT_ADMITTED record already proves native absence.
                     root=validate_start(decode(self.read(self.state/'startups'/path.name)),local['operationId'])
                     require(root['state']=='SUCCEEDED' and root['restoreOperationId']==local['restoreOperationId']
                             and root['keySha256']==local['expectedKeySha256'] and all(root.get(k)==local[k] for k in extra),'Unresolved Core handoff; retain original UUID')
@@ -1002,18 +1034,6 @@ class Lifecycle:
                     require(published['preparationId'] == binding['preparationId'] and published['verificationId'] == binding['verificationId']
                         and started['publicationId'] == binding['publicationId'] and started['activeKeySha256'] == published['activeKeySha256']
                         and completed['publicationSha256'] == published['publicationSha256'] and completed['jobPath'] == started['jobPath'])
-            if os.path.lexists(state/'admissions'):
-                directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
-                for slot in slots:
-                    directory(slot); names = {p.name for p in slot.iterdir()}
-                    require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'}))
-                    value = validate_sender_attempt(decode(read(slot/'intent.json', 12288)), 'recovery')
-                    require(slot.name == value['nativeOperationId']+'-'+value['kind'])
-                    namespace = decode(read(slot/'namespace.json', 4096))
-                    original = check_sender_attempt(self, value, namespace, 'recovery', account.pw_uid)
-                    if 'closed.json' in names:
-                        validate_sender_closed(decode(read(slot/'closed.json', 4096)), value, namespace)
-                        require(original['state'] == 'NOT_ADMITTED', 'Closed receiver attempt has no Root not-admitted original')
             yield
         finally:os.close(fd)
 

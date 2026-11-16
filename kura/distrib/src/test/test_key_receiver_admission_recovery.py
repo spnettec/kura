@@ -46,6 +46,8 @@ class AdmissionRoot:
             if request.get('token')!=self.handoff.token:return dict(schema=1,error='FORBIDDEN')
             return self.handoff(request)
         if action=='core-start-read':return dict(schema=1,state='NOT_FOUND')
+        if action=='core-start-plan':return dict(schema=1,state='START_PLAN',startAllowed=False,maintenanceId=None,
+            predecessorStartOperationId=None,manifestSha256=None,blockingOperationId=None)
         return self.cold(request)
 
 

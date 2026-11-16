@@ -29,7 +29,7 @@ from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
-    validate_sender_attempt, validate_sender_closed, Refused)
+    validate_sender_attempt, validate_sender_closed, receiver_start_intent, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -58,9 +58,11 @@ class SenderAdmission:
         try:self.path(kind,identity).lstat();return True
         except FileNotFoundError:return False
 
-    def has_key_intent(self, identity):
+    def has_key_intent(self, identity, *, permitted_start=None):
         protocol.operation_id(identity)
-        if self.journal.record(identity) is not None or self.journal.start_record(identity) is not None:return True
+        if self.journal.record(identity) is not None:return True
+        start=self.journal.start_record(identity)
+        if start is not None and start!=permitted_start:return True
         pending=self.journal.pending()
         if pending is not None and pending['operationId']==identity:return True
         directory=self.journal.directory/'handoffs'
@@ -104,6 +106,10 @@ class SenderAdmission:
         attempt,namespace,closed=saved;metadata=attempt['request']
         for name in ('expectedKeySha256','restoreOperationId'):
             if name in metadata:result[name]=metadata[name]
+        if kind=='start':
+            result['startSchema']=2 if metadata['action']=='core-start-after-maintenance' else 1
+            if result['startSchema']==2:
+                for name in ('predecessorStartOperationId','maintenanceId','manifestSha256'):result[name]=metadata[name]
         if namespace is None:
             protocol.require(not close,'UNRESOLVED_OPERATION');return result
         try:
@@ -376,7 +382,7 @@ class Controller:
         protocol.require(type(value['keyReady']) is bool and type(value['legacyKey']) is bool
                          and value['agentRequired'] is False, 'PROTOCOL_MISMATCH')
         pending=self.journal.pending()
-        starts=self.journal.start_records()
+        starts=self.active_start_records()
         linked=[r for r in starts if pending is not None and r['restoreOperationId']==pending['operationId']]
         leaves=self.start_leaves(linked)
         plan=None
@@ -419,17 +425,43 @@ class Controller:
                          'BACKUP_REJECTED')
         return backup
 
+    def active_start_records(self):
+        records=[]
+        for record in self.journal.start_records():
+            identity=record['operationId']
+            if self.sender.has_attempt('start',identity):
+                saved=self.sender.load('start',identity)
+                if saved is not None and saved[2]:
+                    try:expected=receiver_start_intent(saved[0])
+                    except Refused:fail('UNSAFE_JOURNAL')
+                    protocol.require(record==expected,'CONFLICT')
+                    current=self.sender.view('start',identity)
+                    if (current['phase']=='NOT_ADMITTED' and current['closed']
+                        and not self.sender.has_key_intent(identity,permitted_start=expected)):
+                        original=self.call('core-start-read',operationId=identity)
+                        protocol.fields(original,{'schema','state'})
+                        protocol.require(type(original['schema']) is int and original['schema']==1
+                            and original['state']=='NOT_FOUND','UNRESOLVED_OPERATION')
+                        continue  # Preserve the private file; only a confirmed original closure releases admission.
+            records.append(record)
+        return records
+
     def admission(self, value):
         command=value.get('command');protocol.require(command in ('read','close'))
         protocol.fields(value,{'command','kind','operationId'} | ({'backupJson','passphrase'} if command=='close' else set()))
         kind=value['kind'];protocol.require(kind in ('restore','start'));identity=protocol.operation_id(value['operationId'])
         with self.journal.lock():
             current=self.sender.view(kind,identity)
-            owning=self.sender.has_key_intent(identity)
-            if owning:current['closeAllowed']=False
+            saved=self.sender.load(kind,identity)
+            permitted=None
+            if kind=='start' and saved is not None:
+                try:permitted=receiver_start_intent(saved[0])
+                except Refused:fail('UNSAFE_JOURNAL')
+            owning=self.sender.has_key_intent(identity,permitted_start=permitted)
+            if owning:current.update(closeAllowed=False,closed=False)
             if command=='read':return current
             protocol.require(not owning and (current['closeAllowed'] or current['phase']=='NOT_ADMITTED' and current['closed']),'UNRESOLVED_OPERATION')
-            saved=self.sender.load(kind,identity);protocol.require(saved is not None,'UNRESOLVED_OPERATION');metadata=saved[0]['request']
+            protocol.require(saved is not None,'UNRESOLVED_OPERATION');metadata=saved[0]['request']
             backup=self.material(value);backup_sha=hashlib.sha256(protocol.encode(backup)).hexdigest()
             if kind=='start':
                 restore=self.journal.record(metadata['restoreOperationId'])
@@ -559,8 +591,8 @@ class Controller:
             protocol.require(local is not None and local['expectedKeySha256']==expected,'CONFLICT')
             restored=self.original(restore_id,expected)
             protocol.require(restored['state']=='SUCCEEDED' and restored.get('keyChanged') is True,'UNRESOLVED_OPERATION')
-            records=self.journal.start_records()
-            protocol.require(len(records)<MAX_OPERATIONS,'CAPACITY')
+            records=self.active_start_records()
+            protocol.require(len(self.journal.start_records())<MAX_OPERATIONS,'CAPACITY')
             if maintenance:
                 plan=self.start_plan(pending)
                 protocol.require(plan['startAllowed'] and all(plan[k]==value[k] for k in extra),'CONFLICT')
@@ -582,7 +614,7 @@ class Controller:
         with self.journal.lock():
             slot=self.journal.start_record(identity)
             protocol.require(slot is not None,'CONFLICT')
-            records=[r for r in self.journal.start_records() if r['restoreOperationId']==slot['restoreOperationId']]
+            records=[r for r in self.active_start_records() if r['restoreOperationId']==slot['restoreOperationId']]
             leaves=self.start_leaves(records)
             protocol.require(leaves and leaves[0]['operationId']==identity,'CONFLICT')
             protocol.require(all(self.start_original(r['operationId'])['state']=='SUCCEEDED' for r in records),'UNRESOLVED_OPERATION')
@@ -771,7 +803,7 @@ class HandoffController:
         saved=self.sender.load(kind,identity)
         if saved is not None:protocol.require(saved[0]['request']['handoffId']==info['handoffId'],'CONFLICT')
         owning=self.sender.has_key_intent(identity)
-        if owning or step=='continue':current['closeAllowed']=False
+        if owning or step=='continue':current.update(closeAllowed=False,closed=False)
         if not close:return current
         protocol.require(not owning and step!='continue','UNRESOLVED_OPERATION')
         original=self.original(token,info,start=step=='start')
