@@ -688,6 +688,30 @@ class Manager:
         require(source["keySha256"] == history["sourceReceipt"]["keySha256"], "UNSAFE_JOURNAL")
         return raw, history, response
 
+    def read_preparation(self, request):
+        """Read the immutable preparation receipt, never infer later publication/start state."""
+        fields(request, {'schema', 'action', 'preparationId'})
+        require(request['action'] == 'generation-preparation-read', 'INVALID_ARGUMENT')
+        identity = operation_id(request['preparationId'])
+        response = dict(schema=1, action=request['action'], preparationId=identity,
+                        scope='IMMUTABLE_PREPARATION_ONLY')
+        with self.lock(self.state / 'admission.lock', False):
+            self.maintenance()
+            record = self.record(identity)
+            if record is None:
+                return dict(response, state='NOT_FOUND')
+            require(record['action'] == 'generation-prepare', 'CONFLICT')
+            if record['state'] == 'INTENT':
+                return dict(response, state='UNKNOWN')
+            with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
+                try:
+                    _, history, prepared = self.prepared_generation(identity)
+                except (OSError, Refused):
+                    raise Failure('UNSAFE_JOURNAL') from None
+                return dict(response, state='RECORDED', createdAt=history['createdAt'],
+                            source=history['source'], generation=history['generation'],
+                            historySha256=prepared['historySha256'], backupSha256=history['backupSha256'])
+
     def stage_generation(self, request, *, verify=False):
         expected = {"schema", "action", "operationId", "passphrase"}
         expected |= {"preparationId", "expectedRingSha256", "backup"} if verify else {"expectedSource"}
@@ -791,6 +815,8 @@ class Manager:
         action = request.get("action")
         if recovery_only:
             require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
+        if action == 'generation-preparation-read':
+            return self.read_preparation(request)
         if action in ("generation-prepare", "generation-backup-verify"):
             return self.stage_generation(request, verify=action == "generation-backup-verify")
         if action == 'core-validation-info':

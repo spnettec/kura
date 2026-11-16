@@ -906,6 +906,109 @@ class KeyServiceTest(unittest.TestCase):
             self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.verification_request(prepared)))
             self.refused("UNRESOLVED_OPERATION", lambda: self.manager.handle(self.prepare_request()))
 
+    def preparation_read_request(self, identity):
+        return self.request('generation-preparation-read', preparationId=identity)
+
+    def preparation_read_snapshot(self):
+        result = {}
+        for path in self.root.rglob('*'):
+            if path.is_file():
+                info = path.lstat()
+                result[str(path.relative_to(self.root))] = (
+                    info.st_ino, info.st_uid, info.st_gid, info.st_mode, info.st_nlink,
+                    info.st_mtime_ns, info.st_ctime_ns, hashlib.sha256(path.read_bytes()).hexdigest())
+        return result
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Immutable preparation requires Linux renameat2')
+    def test_preparation_read_returns_only_historical_metadata_without_secrets_or_mutation(self):
+        prepared = self.manager.handle(self.prepare_request())
+        identity = prepared['operationId']
+        raw, history, _ = self.manager.prepared_generation(identity)
+        before = self.preparation_read_snapshot()
+        with patch.object(self.manager, 'atomic', side_effect=AssertionError('Read must not persist')):
+            with patch.object(self.manager, 'crypt', side_effect=AssertionError('Read must not encrypt')):
+                first = self.manager.handle(self.preparation_read_request(identity))
+                self.assertEqual(first, self.manager.handle(self.preparation_read_request(identity)))
+        self.assertEqual({'schema', 'action', 'preparationId', 'scope', 'state', 'createdAt', 'source',
+                          'generation', 'historySha256', 'backupSha256'}, set(first))
+        self.assertEqual('RECORDED', first['state'])
+        self.assertEqual('IMMUTABLE_PREPARATION_ONLY', first['scope'])
+        self.assertEqual(prepared['historySha256'], first['historySha256'])
+        self.assertEqual(history['backupSha256'], first['backupSha256'])
+        self.assertEqual(history['generation'], first['generation'])
+        encoded = service.encode(first)
+        for secret in [PASSWORD.encode(), base64.b64encode(raw), base64.b64encode(self.key),
+                       prepared['backup']['encrypted'].encode()]:
+            self.assertNotIn(secret, encoded)
+        self.assertEqual(before, self.preparation_read_snapshot())
+
+    def test_preparation_read_unknown_never_loads_or_completes_candidate_material(self):
+        identity = str(uuid.uuid4())
+        self.write(self.state / 'operations' / (identity + '.json'), service.encode(dict(
+            schema=1, operationId=identity, action='generation-prepare', requestTag='a'*64,
+            state='INTENT', response=None)), 0o600)
+        before = self.preparation_read_snapshot()
+        with patch.object(self.manager, 'prepared_generation', side_effect=AssertionError('Original UNKNOWN')):
+            result = self.manager.handle(self.preparation_read_request(identity))
+        self.assertEqual('UNKNOWN', result['state'])
+        self.assertEqual({'schema', 'action', 'preparationId', 'scope', 'state'}, set(result))
+        self.assertEqual(before, self.preparation_read_snapshot())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Immutable preparation requires Linux renameat2')
+    def test_preparation_read_remains_historical_when_canonical_keys_are_missing_or_another_intent_is_unknown(self):
+        prepared = self.manager.handle(self.prepare_request());identity = prepared['operationId']
+        self.key_path.unlink()
+        unresolved = str(uuid.uuid4())
+        self.write(self.state / 'operations' / (unresolved + '.json'), service.encode(dict(
+            schema=1, operationId=unresolved, action='backup-create', requestTag='b'*64,
+            state='INTENT', response=None)), 0o600)
+        before = self.preparation_read_snapshot()
+        result = self.manager.handle(self.preparation_read_request(identity))
+        self.assertEqual('RECORDED', result['state'])
+        self.assertNotIn('published', result);self.assertNotIn('startAllowed', result)
+        self.refused('UNRESOLVED_OPERATION', self.manager.settled)
+        self.assertFalse(self.key_path.exists())
+        self.assertEqual(before, self.preparation_read_snapshot())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Immutable preparation requires Linux renameat2')
+    def test_preparation_read_rejects_missing_changed_or_linked_immutable_material(self):
+        prepared = self.manager.handle(self.prepare_request());identity = prepared['operationId']
+        history = self.state / 'generations' / identity / 'history.json'
+        saved = history.read_bytes()
+        for kind in ('changed', 'missing', 'linked'):
+            if history.exists() or history.is_symlink():history.unlink()
+            if kind == 'changed':self.write(history, saved + b' ', 0o400)
+            if kind == 'linked':
+                target = self.root / 'same-history';self.write(target, saved, 0o400)
+                history.symlink_to(target)
+            with self.subTest(kind=kind), self.assertRaises((service.Failure, service.Refused)):
+                self.manager.handle(self.preparation_read_request(identity))
+        history.unlink();self.write(history, saved, 0o400)
+
+    def test_preparation_read_missing_invalid_fields_and_wrong_action_never_create_records(self):
+        identity = str(uuid.uuid4());request = self.preparation_read_request(identity)
+        before = self.preparation_read_snapshot()
+        self.assertEqual('NOT_FOUND', self.manager.handle(request)['state'])
+        for extra in ('passphrase', 'backup', 'keyFile'):
+            self.refused('INVALID_ARGUMENT', lambda: self.manager.handle(dict(request, **{extra: 'forbidden'})))
+        self.refused('INVALID_ARGUMENT', lambda: self.manager.handle(self.preparation_read_request('../outside')))
+        self.assertEqual(before, self.preparation_read_snapshot())
+        other = str(uuid.uuid4())
+        self.write(self.state / 'operations' / (other + '.json'), service.encode(dict(
+            schema=1, operationId=other, action='backup-create', requestTag='c'*64,
+            state='INTENT', response=None)), 0o600)
+        before = self.preparation_read_snapshot()
+        self.refused('CONFLICT', lambda: self.manager.handle(self.preparation_read_request(other)))
+        self.assertEqual(before, self.preparation_read_snapshot())
+
+    def test_preparation_read_recovery_and_agent_peers_cannot_open_the_history(self):
+        request = self.preparation_read_request(str(uuid.uuid4()))
+        with patch.object(self.manager, 'read_preparation', side_effect=AssertionError('Forbidden peer')):
+            self.refused('FORBIDDEN', lambda: self.manager.handle(request, recovery_only=True))
+            with patch.object(service, 'agent_peer', return_value=True):
+                self.refused('FORBIDDEN', lambda: service.serve_request(
+                    self.manager, request, 123, 0, 999, None, None))
+
     @unittest.skipUnless(sys.platform == "linux", "Immutable preparation requires Linux renameat2")
     def test_preparation_receipt_cannot_claim_publication_or_weaken_required_confirmation(self):
         prepared = self.manager.handle(self.prepare_request())
