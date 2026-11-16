@@ -77,14 +77,62 @@ with socket.socket(fileno=int(sys.argv[5])) as listener:
             except service.Failure as error:response=dict(schema=1,error=error.reason)
             service.send_frame(connection,response)
 assert not list(manager.operations.iterdir()) and not manager.store.path(service.KEY_PATH).exists()
-assert len(manager.sender_admissions.records())==4 and len(manager.archives()['archived'])==2
+fences=len(sys.argv)>6 and sys.argv[6]=='private-fences'
+assert len(manager.sender_admissions.records())==(6 if fences else 4) and len(manager.archives()['archived'])==(0 if fences else 2)
 print(json.dumps(dict(rootStatus=root_status,peers=peers,rootPrivateReadsRefused=denied,actions=actions,
-    archives=2,originalAdmissions=4,nativeKeyOperations=0,cipherCalls=0,installedMainAndHumanSession=False,
+    archives=0 if fences else 2,privateFences=2 if fences else 0,originalAdmissions=4,nativeKeyOperations=0,cipherCalls=0,installedMainAndHumanSession=False,
     systemdAndMain='modeled; SO_PEERCRED, process UIDs/caps, transport and archive handlers actual')),flush=True)
 '''
 
 
-def main(repository):
+def check_private_fences(manager,root,namespace,ask,core,recovery,rogue,bound,java_peer=False):
+    results=[]
+    for peer,source,kind,directory,uid,wrap in [(core,'gwt','LEGACY','core-private',65534,bound),
+            (recovery,'recovery','restore','recovery-private',65533,lambda value:value)]:
+        data=root/directory;target=str(uuid.uuid4())
+        intent=dict(schema=1,action='backup-create',operationId=target,operator='modeled-private-admin') if source=='gwt' else dict(
+            schema=1,action='restore',operationId=target,expectedKeySha256='1'*64,backupSha256='2'*64)
+        if source=='gwt' and java_peer:
+            assert ask(peer,dict(testAction='record',operationId=target))['state']=='LOCAL_NO_DISPATCH_RECORDED'
+            for _ in range(63):assert ask(peer,dict(testAction='record',operationId=str(uuid.uuid4())))['state']=='LOCAL_NO_DISPATCH_RECORDED'
+            path=data/'gateway-key-not-dispatched'/target/'receipt.json';raw=path.read_bytes();intent=json.loads(raw)['request']
+        else:
+            raw=json.dumps(dict(schema=1,kind=kind,request=intent),separators=(',',':')).encode()
+            path=data/'private-no-dispatch.json';path.write_bytes(raw);path.chmod(0o600);os.chown(path,uid,uid)
+        request=dict(schema=1,action='sender-private-fence',source=source,kind=kind,intent=intent,receiptSha256=hashlib.sha256(raw).hexdigest(),
+            admissionId=str(uuid.uuid4()),namespaceSha256=namespace['namespaceSha256'],dataDirectory=str(data) if source=='gwt' and java_peer else '/'+directory,
+            dataDevice=str(data.stat().st_dev),dataInode=str(data.stat().st_ino),dataUid=uid)
+        if source=='gwt':
+            assert ask(core,request)['error']=='FORBIDDEN'
+            assert ask(rogue,bound(request))['error']=='UNMANAGED_CORE'
+        before={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir()}
+        plan=ask(peer,wrap(dict(request,action='sender-private-fence-plan')));assert plan['state']=='PRIVATE_FENCE_PLAN'
+        assert before=={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir()}
+        if source=='gwt' and java_peer:
+            result=ask(peer,dict(testAction='archive',operationId=target));request=json.loads((path.parent/'archive.json').read_bytes())
+            assert ask(peer,dict(testAction='archive',operationId=target))==result  # Original query only.
+            assert ask(peer,dict(testAction='record',operationId=str(uuid.uuid4())))['state']=='LOCAL_NO_DISPATCH_RECORDED'
+            assert ask(peer,dict(testAction='list'))['records']==65
+        else:result=ask(peer,wrap(request))
+        assert result['state']=='PRIVATE_FENCE_RECORDED'
+        assert result['privateProof']['receiptSha256']==hashlib.sha256(raw).hexdigest()
+        query=dict({k:request[k] for k in ('schema','source','admissionId','namespaceSha256')},action='sender-private-fence-read')
+        assert ask(peer,wrap(query))==result
+        wrong=dict(query,source='recovery' if source=='gwt' else 'gwt')
+        assert ask(recovery if source=='gwt' else core,wrong if source=='gwt' else bound(wrong))['error']=='CONFLICT'
+        original=manager.sender_admissions.directory/(request['admissionId']+'.json');assert original.stat().st_mode&0o777==0o400
+        assert original.stat().st_uid==0 and hashlib.sha256(original.read_bytes()).hexdigest()==result['receiptSha256']
+        for identity in (target,request['admissionId']):
+            native=dict(schema=1,action='restore',operationId=identity,passphrase='synthetic-never-used',expectedKeySha256='1'*64,
+                backup=dict(format='yofc-kura-gateway-master-key-v1',operationId=str(uuid.uuid4()),encrypted='YQ=='))
+            reserve=dict(schema=1,action='sender-reserve',admissionId=str(uuid.uuid4()),source='recovery',
+                namespaceSha256=namespace['namespaceSha256'],request=native)
+            assert ask(recovery,reserve)['error']=='CONFLICT'
+        assert raw==path.read_bytes();results.append(result)
+    assert len(results)==2
+
+
+def main(repository,private_fences=False,java=None,classpath=None):
     assert sys.platform=='linux' and os.geteuid()==0 and Path('/.dockerenv').exists()
     assert not Path('/etc/kura').exists() and not Path('/var/lib/kura-key-service').exists()
     source=repository/'kura/distrib/src/main/resources/unfiltered/pkg/bin';sys.path.insert(0,str(source))
@@ -110,7 +158,10 @@ def main(repository):
     os.chown(run/'control.sock',0,65534);os.chmod(run/'control.sock',0o660)
     clients=[];server=None;stop=work/'stop';expected=work/'expected.json'
     def client(uid):
-        process=subprocess.Popen([sys.executable,'-B',str(Path(__file__).resolve()),'--client'],stdin=subprocess.PIPE,
+        command=[sys.executable,'-B',str(Path(__file__).resolve()),'--client']
+        if java is not None and uid==65534 and not clients:
+            command=[str(java),'-cp',classpath,'org.eclipse.kura.web.server.keybackup.PrivateArchivePeerProbe',str(root/'core-private')]
+        process=subprocess.Popen(command,stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,preexec_fn=lambda:drop(uid),cwd='/')
         clients.append(process);assert process.stdout.readline().strip()=='CLIENT_READY';return process
     def ask(process,request):
@@ -120,36 +171,42 @@ def main(repository):
     try:
         core=client(65534);recovery=client(65533);rogue=client(65534)
         expected.write_text(json.dumps(dict(core=core.pid,recovery=recovery.pid)));expected.chmod(0o600)
-        server=subprocess.Popen([sys.executable,'-B','-c',WORKER,str(source),str(root),str(expected),str(stop),str(listener.fileno())],
+        server=subprocess.Popen([sys.executable,'-B','-c',WORKER,str(source),str(root),str(expected),str(stop),str(listener.fileno())]
+            +(['private-fences'] if private_fences else []),
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,preexec_fn=lambda:drop(0),pass_fds=(listener.fileno(),),cwd='/')
         assert server.stdout.readline().strip()=='ARCHIVE_ROOT_READY'
-        binding=dict(schema=1,action='gwt-sender-bind',**namespace,dataDirectory='/core-private',
+        binding=dict(schema=1,action='gwt-sender-bind',**namespace,dataDirectory=str(root/'core-private') if java else '/core-private',
             dataUid=65534,dataDevice=str((root/'core-private').stat().st_dev),dataInode=str((root/'core-private').stat().st_ino))
         value=ask(core,binding);assert value['state']=='GWT_SENDER_BOUND';persisted={k:v for k,v in value.items() if k!='state'}
         def bound(request):return dict(schema=1,action='gwt-bound-request',binding=persisted,request=request)
-        def plan(index):return dict(schema=1,action='journal-archive-plan',namespaceSha256=namespace['namespaceSha256'],
-            entries=[dict(directory='sender-admissions',operationId=rows[index]['admissionId'])])
-        assert ask(core,plan(0))['error']=='FORBIDDEN'
-        assert ask(rogue,bound(plan(0)))['error']=='UNMANAGED_CORE'
-        first=None
-        for index,(peer,wrap) in enumerate([(core,bound),(recovery,lambda value:value)]):
-            value=ask(peer,wrap(plan(index)));assert value['state']=='ARCHIVE_PLAN'
-            request=dict(plan(index),action='journal-archive',archiveId=str(uuid.uuid4()),expectedEntriesSha256=value['entriesSha256'])
-            result=ask(peer,wrap(request));assert result['state']=='ARCHIVE_RECORDED'
-            assert result['credentialsChanged'] is False and result['startRequested'] is False
-            read=dict(schema=1,action='journal-archive-read',namespaceSha256=namespace['namespaceSha256'],archiveId=request['archiveId'])
-            assert ask(peer,wrap(read))==result
-            if first is None:first=request
-        assert ask(recovery,dict(first,action='journal-archive-continue'))['error']=='CONFLICT'
-        old=rows[0]['target'];native=dict(schema=1,action='backup-create',operationId=old['operationId'],passphrase='synthetic-closed-history')
-        late=dict(schema=1,action='sender-reserve',admissionId=str(uuid.uuid4()),source='gwt',namespaceSha256=namespace['namespaceSha256'],request=bound(native))
-        assert ask(core,late)['error']=='CONFLICT'
-        assert originals=={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir()}
+        if private_fences:check_private_fences(manager,root,namespace,ask,core,recovery,rogue,bound,java is not None)
+        else:
+            def plan(index):return dict(schema=1,action='journal-archive-plan',namespaceSha256=namespace['namespaceSha256'],
+                entries=[dict(directory='sender-admissions',operationId=rows[index]['admissionId'])])
+            assert ask(core,plan(0))['error']=='FORBIDDEN'
+            assert ask(rogue,bound(plan(0)))['error']=='UNMANAGED_CORE'
+            first=None
+            for index,(peer,wrap) in enumerate([(core,bound),(recovery,lambda value:value)]):
+                value=ask(peer,wrap(plan(index)));assert value['state']=='ARCHIVE_PLAN'
+                request=dict(plan(index),action='journal-archive',archiveId=str(uuid.uuid4()),expectedEntriesSha256=value['entriesSha256'])
+                result=ask(peer,wrap(request));assert result['state']=='ARCHIVE_RECORDED'
+                assert result['credentialsChanged'] is False and result['startRequested'] is False
+                read=dict(schema=1,action='journal-archive-read',namespaceSha256=namespace['namespaceSha256'],archiveId=request['archiveId'])
+                assert ask(peer,wrap(read))==result
+                if first is None:first=request
+            assert ask(recovery,dict(first,action='journal-archive-continue'))['error']=='CONFLICT'
+            old=rows[0]['target'];native=dict(schema=1,action='backup-create',operationId=old['operationId'],passphrase='synthetic-closed-history')
+            late=dict(schema=1,action='sender-reserve',admissionId=str(uuid.uuid4()),source='gwt',namespaceSha256=namespace['namespaceSha256'],request=bound(native))
+            assert ask(core,late)['error']=='CONFLICT'
+        assert originals=={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir() if p.name in originals}
         stop.touch();out,error=server.communicate(timeout=8);assert server.returncode==0,error
         result=json.loads(out);result['testedNativeSourceSha256']={name:hashlib.sha256((source/name).read_bytes()).hexdigest()
             for name in ('kura_key_service.py','kura_key_service_lifecycle.py','kura_key_store.py')}
         result.update(originalAdmissionBytesAndMetadataExact=True,lateClosedOriginalRefused=True,gwtRawMetadataRefused=True,
-            foreignSameUidPidRefused=True,crossSourceContinuationRefused=True,unknownRedispatched=False)
+            foreignSameUidPidRefused=True,crossSourceContinuationRefused=not private_fences,
+            crossSourcePrivateProofReadRefused=private_fences,unknownRedispatched=False)
+        if java:result.update(actualJavaPrivateArchive=True,privateOriginalCount=65,javaBytecodeRelease=11,javaRuntimeFloor=21,
+            unicodePrivateReceiptMatched=True,humanGwtSession=False)
         print(json.dumps(result))
     finally:
         for peer in clients:
@@ -166,4 +223,6 @@ if __name__=='__main__':
         for line in sys.stdin:print(json.dumps(rpc(json.loads(line))),flush=True)
     else:
         parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--repository',type=Path,required=True)
-        main(parser.parse_args().repository.resolve())
+        parser.add_argument('--private-fences',action='store_true');parser.add_argument('--java',type=Path);parser.add_argument('--classpath');args=parser.parse_args()
+        if args.java is not None:assert args.private_fences and args.classpath
+        main(args.repository.resolve(),args.private_fences,args.java,args.classpath)

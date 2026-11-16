@@ -81,6 +81,8 @@ GWT_NAMESPACE_FIELDS = frozenset(('namespaceSha256', 'rootDevice', 'rootInode'))
 GWT_BINDING_FIELDS = GWT_DATA_FIELDS | GWT_NAMESPACE_FIELDS | {'schema', 'purpose'}
 SENDER_ADMISSION_PURPOSE = 'yofc.kura.sender-admission.v1'
 SENDER_ADMISSION_CONTEXT = b'yofc-kura-sender-admission-v1\0'
+PRIVATE_FENCE_PURPOSE = 'yofc.kura.sender-private-no-dispatch.v1'
+PRIVATE_FENCE_CONTEXT = b'yofc-kura-sender-private-no-dispatch-v1\0'
 ARCHIVE_INTENT_CONTEXT = b'yofc-kura-journal-archive-intent-v1\0'
 ARCHIVE_RECEIPT_CONTEXT = b'yofc-kura-journal-archive-receipt-v1\0'
 ARCHIVE_TABLES = frozenset(('operations', 'startups', 'handoffs', 'sender-admissions', 'package-history'))
@@ -326,7 +328,19 @@ def archive_inventory(policy):
 def active_journal_count(policy, directory, identities, *, inventory=None):
     require(directory in ARCHIVE_TABLES)
     inventory = archive_inventory(policy) if inventory is None else inventory
-    return sum((directory, identity) not in inventory['archived'] for identity in identities)
+    count=0
+    for identity in identities:
+        if (directory,identity) in inventory['archived']:continue
+        if directory=='sender-admissions':
+            try:value=decode(policy.read(policy.state/directory/(identity+'.json'),8192))
+            except FileNotFoundError:value=None  # A projected ordinary reservation still consumes capacity.
+            if value is not None and value.get('purpose')==PRIVATE_FENCE_PURPOSE:
+                secret=policy.read(policy.state/'journal.key',32)
+                validate_sender_admission(value,identity,secret);check_sender_original(policy,value,secret)
+                require(value['namespaceSha256']==gwt_namespace(policy.state,secret)['namespaceSha256'])
+                continue  # Permanent metadata fence, with no writer/reservation capacity.
+        count+=1
+    return count
 
 
 def maintenance_includes_startup(policy, maintenance, identity, *, inventory=None):
@@ -341,9 +355,10 @@ def maintenance_includes_startup(policy, maintenance, identity, *, inventory=Non
 
 
 def validate_sender_admission(value, identity, secret):
-    require(isinstance(value, dict) and set(value) == {'schema', 'purpose', 'admissionId', 'source', 'namespaceSha256',
-        'owner', 'requestTag', 'target', 'parentAdmissionId', 'state', 'receiptTag'}
-        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == SENDER_ADMISSION_PURPOSE
+    fence=isinstance(value,dict) and value.get('purpose')==PRIVATE_FENCE_PURPOSE
+    require(isinstance(value, dict) and set(value) == ({'schema', 'purpose', 'admissionId', 'source', 'namespaceSha256',
+        'owner', 'requestTag', 'target', 'parentAdmissionId', 'state', 'receiptTag'} | ({'privateProof'} if fence else set()))
+        and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] in (SENDER_ADMISSION_PURPOSE,PRIVATE_FENCE_PURPOSE)
         and canonical_id(identity) and value['admissionId'] == identity
         and value['source'] in ('gwt', 'recovery', 'local-admin')
         and value['state'] in ('RESERVED', 'INTAKE', 'TERMINAL', 'NOT_ADMITTED')
@@ -362,6 +377,25 @@ def validate_sender_admission(value, identity, secret):
         and type(target['continuation']) is bool)
     require(len(secret) == 32 and hmac.compare_digest(value['receiptTag'], hmac.new(secret,
         SENDER_ADMISSION_CONTEXT + encoded({k: v for k, v in value.items() if k != 'receiptTag'}), hashlib.sha256).hexdigest()))
+    if fence:
+        proof=value['privateProof']
+        require(isinstance(proof,dict) and set(proof)==GWT_DATA_FIELDS|{'kind','metadataSha256','receiptSha256','blockedIds'})
+        validate_gwt_data({k:proof[k] for k in GWT_DATA_FIELDS})
+        blocked=proof['blockedIds']
+        require(value['state']=='NOT_ADMITTED' and value['parentAdmissionId'] is None and target['continuation'] is False
+            and proof['dataUid']==owner['uid'] and proof['kind'] in ('LEGACY','GENERATION','HANDOFF','restore','start')
+            and all(is_digest(proof[k]) for k in ('metadataSha256','receiptSha256'))
+            and isinstance(blocked,list) and len(blocked)==(3 if proof['kind']=='HANDOFF' else 1)
+            and all(canonical_id(key) for key in blocked) and blocked==sorted(set(blocked))
+            and target['operationId'] in blocked and identity not in blocked)
+        require(target['directory']==('handoffs' if proof['kind']=='HANDOFF' else 'startups' if proof['kind']=='start' else 'operations'))
+        actions={'LEGACY':('backup-create','restore'),'GENERATION':('generation-prepare','generation-backup-verify'),
+            'HANDOFF':('generation-handoff-create',),'restore':('restore',),'start':('core-start','core-start-after-maintenance')}
+        require(value['source'] in ('gwt','recovery') and target['action'] in actions[proof['kind']]
+            and ((value['source']=='gwt')==(proof['kind'] in ('LEGACY','GENERATION','HANDOFF'))))
+        body=dict(source=value['source'],namespaceSha256=value['namespaceSha256'],privateProof=proof,
+            directory=target['directory'],operationId=target['operationId'],action=target['action'])
+        require(value['requestTag']==target['requestTag']==hmac.new(secret,PRIVATE_FENCE_CONTEXT+encoded(body),hashlib.sha256).hexdigest())
     return value
 
 
@@ -395,6 +429,32 @@ def validate_sender_attempt(value, source):
             if command == 'start-renew': require(request['operationId'] == value['nativeOperationId'] and is_digest(request['expectedPublicationSha256']))
         require(type(request.get('schema')) is int and request['schema'] == 1)
     return value
+
+
+def check_private_fence_links(policy, values):
+    """Package readers reject contradictory retained IDs, without private reads."""
+    claimed=set()
+    for value in values:
+        if value.get('purpose')==PRIVATE_FENCE_PURPOSE:
+            identities=set(value['privateProof']['blockedIds']+[value['admissionId']])
+            require(not claimed&identities);claimed.update(identities)
+    if not claimed:return
+    secret=policy.read(policy.state/'journal.key',32)
+    for value in values:
+        validate_sender_admission(value,value['admissionId'],secret)
+        if value['purpose']!=PRIVATE_FENCE_PURPOSE:
+            require(value['admissionId'] not in claimed and value['target']['operationId'] not in claimed,
+                'A retained reservation contradicts a permanent private fence')
+    parent=policy.state/'handoffs'
+    if os.path.lexists(parent):
+        policy.directory(parent,private=True)
+        for path in parent.iterdir():
+            require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+            authority=validate_handoff_authority(decode(policy.read(path,8192)),path.name[:-5],secret)
+            require(not claimed&{authority['request'][key] for key in HANDOFF_IDS},
+                'A retained authority contradicts a permanent private fence')
+    for identity in claimed:
+        require(not any(os.path.lexists(policy.state/'archives'/(identity+suffix)) for suffix in ('.intent.json','.receipt.json')))
 
 
 def validate_sender_closed(value, attempt, namespace):
@@ -458,6 +518,8 @@ def check_sender_attempt(policy, value, namespace, source, uid):
     try: raw = policy.read(policy.state/'sender-admissions'/(identity+'.json'), 8192)
     except FileNotFoundError: raise Unresolved('Sender reservation is missing; preserve its original attempt') from None
     root = validate_sender_admission(decode(raw), identity, secret)
+    require(root['purpose']==SENDER_ADMISSION_PURPOSE,
+        'A private no-dispatch fence is not an ordinary sender-attempt receipt')
     require(root['source'] == source and root['owner']['uid'] == uid and root['target']['operationId'] == value['nativeOperationId']
         and root['namespaceSha256'] == namespace['namespaceSha256'])
     if source == 'gwt':
@@ -495,6 +557,13 @@ def check_sender_original(policy, value, secret):
             if os.path.lexists(parent): policy.directory(parent, private=True)
             require(not os.path.lexists(parent/(target['operationId']+'.json')),
                 'A closed sender reservation cannot conceal another native action or directory')
+        if value['purpose']==PRIVATE_FENCE_PURPOSE:
+            path=policy.state/'sender-admissions'/(value['admissionId']+'.json')
+            require(policy.read(path,8192)==encoded(value) and stat.S_IMODE(path.lstat().st_mode)==0o400)
+            for identity in value['privateProof']['blockedIds']+[value['admissionId']]:
+                for name in ('operations','startups','handoffs'):
+                    require(not os.path.lexists(policy.state/name/(identity+'.json')),
+                        'A permanent private no-dispatch fence cannot conceal a native original')
         return
     if value['state'] == 'RESERVED' or native is None:
         raise Unresolved('Unresolved sender admission; preserve original IDs and receipts')
@@ -1085,6 +1154,32 @@ class GwtSenderInventory:
                 require({p.name for p in directory.iterdir()} == set(receipt['files']))
             self.closed[slot.name] = (attempt['kind'], attempt['request'])
 
+    def no_dispatch_archived(self,slot,raw,receipt):
+        path=slot/'archive.json'
+        if not os.path.lexists(path):return False
+        request=decode(self.read(path,16384))
+        require(set(request)=={'schema','action','source','admissionId','namespaceSha256',*GWT_DATA_FIELDS,'kind','intent','receiptSha256'}
+            and type(request['schema']) is int and request['schema']==1 and request['action']=='sender-private-fence'
+            and request['source']=='gwt' and canonical_id(request['admissionId']) and request['admissionId']!=slot.name
+            and request['namespaceSha256']==self.binding['namespaceSha256']
+            and all(request[k]==self.binding[k] for k in GWT_DATA_FIELDS) and type(request['dataUid']) is int
+            and request['kind']==receipt['kind'] and request['intent']==receipt['request']
+            and request['receiptSha256']==hashlib.sha256(raw).hexdigest())
+        identity=request['admissionId'];parent=self.policy.state/'sender-admissions'
+        if not os.path.lexists(parent):return False
+        try:root_raw=self.policy.read(parent/(identity+'.json'),8192)
+        except FileNotFoundError:return False  # Pending metadata never frees a private active slot.
+        secret=self.policy.read(self.policy.state/'journal.key',32)
+        value=validate_sender_admission(decode(root_raw),identity,secret)
+        require(value['purpose']==PRIVATE_FENCE_PURPOSE and value['namespaceSha256']==request['namespaceSha256']
+            and value['source']=='gwt' and value['owner']['uid']==self.binding['dataUid'])
+        blocked=sorted([request['intent'][k] for k in ('handoffId','publicationId','startOperationId')]
+            if request['kind']=='HANDOFF' else [slot.name])
+        require(value['privateProof']==dict(**{k:request[k] for k in GWT_DATA_FIELDS},kind=request['kind'],
+            receiptSha256=request['receiptSha256'],metadataSha256=hashlib.sha256(encoded(request['intent'])).hexdigest(),blockedIds=blocked)
+            and value['target']['operationId']==slot.name and value['target']['action']==request['intent']['action'])
+        check_sender_original(self.policy,value,secret);return True
+
     def check(self):
         marker = decode(self.read(self.data/'gateway-key-namespace.json', 8192))
         require(marker == self.binding, 'Core and Root sender namespaces differ')
@@ -1123,10 +1218,10 @@ class GwtSenderInventory:
                 require(identity not in owning, 'A UUID is occupied by multiple GWT sender journals'); owning.add(identity)
         parent = self.data/'gateway-key-not-dispatched'
         if os.path.lexists(parent):
-            self.directory(parent); slots = list(parent.iterdir()); require(len(slots) <= 64)
+            self.directory(parent); slots = list(parent.iterdir());active=0
             for slot in slots:
                 require(canonical_id(slot.name) and slot.name not in owning); self.directory(slot)
-                require({p.name for p in slot.iterdir()} == {'receipt.json', 'complete'})
+                require({p.name for p in slot.iterdir()} in ({'receipt.json','complete'},{'receipt.json','complete','archive.json'}))
                 raw = self.read(slot/'receipt.json', 12288)
                 require(self.read(slot/'complete', 65) == hashlib.sha256(raw).hexdigest().encode('ascii') + b'\n')
                 receipt = decode(raw)
@@ -1135,6 +1230,8 @@ class GwtSenderInventory:
                     and all(receipt[k] == self.binding[k] for k in ('dataDirectory', 'dataDevice', 'dataInode'))
                     and validate_gwt_intent(receipt['kind'], receipt['request']) == slot.name)
                 self.absent(slot.name)
+                if not self.no_dispatch_archived(slot,raw,receipt):active+=1
+            require(active<=64)
         require(set(self.closed) <= owning, 'A closed GWT admission cannot conceal missing original intent files')
         return len(owning)
 
@@ -1233,6 +1330,19 @@ class Lifecycle:
         performs no key repair and never interprets a partial result as closed.
         """
         inventory=archive_inventory(self)
+        sender=self.state/'sender-admissions'
+        values=[]
+        if os.path.lexists(sender):
+            self.directory(sender,private=True)
+            for path in sender.iterdir():
+                require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+                value=decode(self.read(path,8192))
+                values.append(value)
+                if value.get('purpose')==PRIVATE_FENCE_PURPOSE:
+                    secret=self.read(self.state/'journal.key',32)
+                    validate_sender_admission(value,path.name[:-5],secret);check_sender_original(self,value,secret)
+                    require(value['namespaceSha256']==gwt_namespace(self.state,secret)['namespaceSha256'])
+        check_private_fence_links(self,values)
         extended=any(os.path.lexists(self.state/name) for name in
             ('generations','generation-current.json','handoffs','handoff-revocations'))
         if not extended:return
@@ -1408,11 +1518,14 @@ class Lifecycle:
         self.directory(directory, private=True); paths = list(directory.iterdir())
         require(active_journal_count(self,'sender-admissions',[p.name[:-5] for p in paths]) <= 256)
         secret = self.read(self.state/'journal.key', 32); namespace = gwt_namespace(self.state, secret)['namespaceSha256']
+        values=[]
         for path in paths:
             require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
             value = validate_sender_admission(decode(self.read(path, 8192)), path.name[:-5], secret)
             require(value['namespaceSha256'] == namespace)
             check_sender_original(self, value, secret)
+            values.append(value)
+        check_private_fence_links(self,values)
 
     @contextlib.contextmanager
     def gwt_locked(self):
