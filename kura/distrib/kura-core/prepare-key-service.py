@@ -21,7 +21,7 @@ def require(ok):
 def prepare(assembly, cipher_target, offline_target):
     require(assembly.is_dir() and not assembly.is_symlink())
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
-               'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py']
+               'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py', 'bin/kura_key_journal.py']
     static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css']]
     units = ["kura-key-service.socket", "kura-key-service.service", 'kura-key-recovery.service', 'kura.service']
     for name in helpers + static + ['bin/kura_key_cohort.py', 'bin/kura_credential_env.sh'] + ["install/" + unit for unit in units]:
@@ -81,6 +81,18 @@ def prepare(assembly, cipher_target, offline_target):
     return manifest
 
 
+def embed_journal_reader(preinst, reader):
+    token='raise RuntimeError("Kura key-journal reader was not embedded")'
+    require(preinst.is_file() and not preinst.is_symlink())
+    source=reader.read_bytes();require(0<len(source)<=131072);compile(source,str(reader),'exec',dont_inherit=True)
+    content=preinst.read_text();require(content.count(token)==1)
+    # A new preinst validates old state with its own reader before unpack.
+    # Store bytes only; execute after Lifecycle and its exception types exist.
+    content=content.replace(token,'_KURA_EMBEDDED_JOURNAL_SOURCE = '+repr(source))
+    preinst.write_text(content)
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+    embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')

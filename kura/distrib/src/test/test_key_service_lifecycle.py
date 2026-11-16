@@ -34,7 +34,8 @@ class LifecycleTest(unittest.TestCase):
         self.physical.mkdir(parents=True, mode=0o750)
         (self.physical.parent / "kura").symlink_to(self.physical, target_is_directory=True)
         for name in lifecycle.ASSETS:
-            self.write(self.physical / name, ("fixture asset " + name).encode(), 0o640)
+            value=(Path(__file__).resolve().parents[1]/'main/resources/unfiltered/pkg'/name).read_bytes() if name=='bin/kura_key_journal.py' else ("fixture asset " + name).encode()
+            self.write(self.physical / name, value, 0o640)
         for name in lifecycle.UNITS:
             self.write(self.root / "lib/systemd/system" / name, ("fixture unit " + name).encode(), 0o644)
         (self.root / "run/systemd/system").mkdir(parents=True)

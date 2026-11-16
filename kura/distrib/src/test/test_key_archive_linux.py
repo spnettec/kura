@@ -76,11 +76,12 @@ with socket.socket(fileno=int(sys.argv[5])) as listener:
             try:response,descriptor=service.serve_request(manager,request,pid,uid,65534,65533,None);assert descriptor is None
             except service.Failure as error:response=dict(schema=1,error=error.reason)
             service.send_frame(connection,response)
-assert not list(manager.operations.iterdir()) and not manager.store.path(service.KEY_PATH).exists()
-fences=len(sys.argv)>6 and sys.argv[6]=='private-fences'
-assert len(manager.sender_admissions.records())==(6 if fences else 4) and len(manager.archives()['archived'])==(0 if fences else 2)
+profile=sys.argv[6] if len(sys.argv)>6 else 'root-archive';fences=profile=='private-fences';history=profile=='private-history'
+assert len(list(manager.operations.iterdir()))==(1 if history else 0) and not manager.store.path(service.KEY_PATH).exists()
+assert len(manager.sender_admissions.records())==(6 if fences or history else 4) and len(manager.archives()['archived'])==(3 if history else 0 if fences else 2)
 print(json.dumps(dict(rootStatus=root_status,peers=peers,rootPrivateReadsRefused=denied,actions=actions,
-    archives=0 if fences else 2,privateFences=2 if fences else 0,originalAdmissions=4,nativeKeyOperations=0,cipherCalls=0,installedMainAndHumanSession=False,
+    archives=3 if history else 0 if fences else 2,privateFences=2 if fences else 0,originalAdmissions=6 if history else 4,
+    modeledHistoricalNativeOperations=1 if history else 0,nativeKeyOperations=0,cipherCalls=0,installedMainAndHumanSession=False,
     systemdAndMain='modeled; SO_PEERCRED, process UIDs/caps, transport and archive handlers actual')),flush=True)
 '''
 
@@ -132,7 +133,54 @@ def check_private_fences(manager,root,namespace,ask,core,recovery,rogue,bound,ja
     assert len(results)==2
 
 
-def main(repository,private_fences=False,java=None,classpath=None):
+def seed_private_history(manager,namespace):
+    """Only historic outcomes are modeled. HMAC and subsequent transport/handlers are real."""
+    import kura_key_service as service
+    result={name:str(uuid.uuid4()) for name in ('legacyId','admissionId','deniedId','deniedAdmissionId')}
+    for identity,admission,phase in [(result['legacyId'],result['admissionId'],'INTAKE'),
+            (result['deniedId'],result['deniedAdmissionId'],'NOT_ADMITTED')]:
+        native=dict(schema=1,action='backup-create',operationId=identity,passphrase='synthetic-modeled-history-only')
+        if phase=='INTAKE':
+            response=dict(schema=1,action='backup-create',operationId=identity,state='SUCCEEDED',
+                backup=dict(format=service.FORMAT,operationId=identity,encrypted='YQ=='))
+            manager.atomic(manager.operations/(identity+'.json'),service.encode(dict(schema=1,action='backup-create',
+                operationId=identity,requestTag=manager.sender_admissions.tag(native),state='SUCCEEDED',response=response)))
+        manager.sender_admissions.write(dict(schema=1,purpose=service.SENDER_ADMISSION_PURPOSE,admissionId=admission,
+            source='gwt',namespaceSha256=namespace['namespaceSha256'],owner=dict(uid=65534,pid=os.getpid(),
+            startTicks=manager.writer_process(os.getpid())[1],bootId=Path('/proc/sys/kernel/random/boot_id').read_text().strip()),
+            requestTag=manager.sender_admissions.tag(native),target=manager.sender_admissions.native_target(native),
+            parentAdmissionId=None,state=phase),create=True)
+    return result
+
+
+def check_private_history(manager,root,namespace,ask,core,recovery,rogue,bound,seed):
+    reference=dict(schema=1,action='journal-archive-reference-read',namespaceSha256=namespace['namespaceSha256'],
+        directory='operations',operationId=seed['legacyId'])
+    assert ask(core,reference)['error']=='FORBIDDEN'
+    assert ask(rogue,bound(reference))['error']=='UNMANAGED_CORE'
+    assert ask(core,dict(testAction='history-seed',**seed))['state']=='HISTORICAL_METADATA_SEEDED'
+    private=root/'core-private'
+    originals={str(p.relative_to(private)):(p.read_bytes(),p.stat()) for p in private.rglob('*') if p.is_file()}
+    native={p.name:(p.read_bytes(),p.stat()) for p in manager.operations.iterdir()}
+    first=None
+    for kind,identity in [('LEGACY',seed['legacyId']),('ADMISSION',seed['legacyId']),
+            ('NOT_DISPATCHED',seed['deniedId']),('ADMISSION',seed['deniedId'])]:
+        request=dict(testAction='history-archive',kind=kind,operationId=identity)
+        result=ask(core,request);assert result['state']=='ARCHIVE_RECORDED',result
+        assert result['credentialsChanged'] is False and result['startRequested'] is False
+        assert ask(core,request)==result  # Existing private intent is query-only.
+        if first is None:first=result
+    assert ask(core,dict(testAction='history-list'))==dict(legacy=1,admissions=2,denied=1)
+    assert ask(core,dict(testAction='history-old-id',operationId=seed['legacyId']))['lateCallbacks']==0
+    assert originals=={name:((private/name).read_bytes(),(private/name).stat()) for name in originals}
+    assert native=={p.name:(p.read_bytes(),p.stat()) for p in manager.operations.iterdir()}
+    assert len(list((private/'gateway-key-archives').iterdir()))==4
+    assert len(manager.archives()['archived'])==3
+    query=dict(schema=1,action='journal-archive-read',namespaceSha256=namespace['namespaceSha256'],archiveId=first['archive']['archiveId'])
+    assert ask(recovery,query)['state']=='ARCHIVE_RECORDED'
+
+
+def main(repository,private_fences=False,java=None,classpath=None,private_history=False):
     assert sys.platform=='linux' and os.geteuid()==0 and Path('/.dockerenv').exists()
     assert not Path('/etc/kura').exists() and not Path('/var/lib/kura-key-service').exists()
     source=repository/'kura/distrib/src/main/resources/unfiltered/pkg/bin';sys.path.insert(0,str(source))
@@ -146,12 +194,26 @@ def main(repository,private_fences=False,java=None,classpath=None):
     for name,raw in [('journal.key',os.urandom(32)),('admission.lock',b''),('sender-admission.lock',b'')]:
         path=state/name;path.write_bytes(raw);path.chmod(0o600)
     manager=service.Manager(root);namespace=manager.gwt_namespace();rows=[]
+    # The transport/Main roles remain models. The new journal implementation itself
+    # is read from an actual Root-owned, manifest-pinned package file, without pyc.
+    import kura_key_service_lifecycle as lifecycle
+    home=root/'opt/eclipse/kura';home.mkdir(parents=True,mode=0o755)
+    for name in lifecycle.ASSETS:
+        path=home/name;path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_bytes((source/'kura_key_journal.py').read_bytes() if name=='bin/kura_key_journal.py' else b'modeled package asset');path.chmod(0o644)
+    unit_hashes={}
+    for name in lifecycle.UNITS:
+        path=root/'lib/systemd/system'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'modeled systemd unit');path.chmod(0o644)
+        unit_hashes[name]=hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest=dict(schema=1,protocol=1,files={name:hashlib.sha256((home/name).read_bytes()).hexdigest() for name in lifecycle.ASSETS},units=unit_hashes)
+    (home/'libexec/key-backup/manifest.json').write_bytes(service.encode(manifest));(home/'libexec/key-backup/manifest.json').chmod(0o644)
     for _ in range(4):
         native=dict(schema=1,action='backup-create',operationId=str(uuid.uuid4()),passphrase='synthetic-closed-history')
         rows.append(manager.sender_admissions.write(dict(schema=1,purpose=service.SENDER_ADMISSION_PURPOSE,
             admissionId=str(uuid.uuid4()),source='local-admin',namespaceSha256=namespace['namespaceSha256'],
             owner=dict(uid=0,pid=os.getpid(),startTicks=manager.writer_process(os.getpid())[1],bootId=Path('/proc/sys/kernel/random/boot_id').read_text().strip()),
             requestTag=manager.sender_admissions.tag(native),target=manager.sender_admissions.native_target(native),parentAdmissionId=None,state='NOT_ADMITTED'),create=True))
+    seed=seed_private_history(manager,namespace) if private_history else None
     originals={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir()}
     run=Path('/run/kura-key-service');run.mkdir(mode=0o755)
     listener=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);listener.bind(str(run/'control.sock'));listener.listen(8)
@@ -172,14 +234,15 @@ def main(repository,private_fences=False,java=None,classpath=None):
         core=client(65534);recovery=client(65533);rogue=client(65534)
         expected.write_text(json.dumps(dict(core=core.pid,recovery=recovery.pid)));expected.chmod(0o600)
         server=subprocess.Popen([sys.executable,'-B','-c',WORKER,str(source),str(root),str(expected),str(stop),str(listener.fileno())]
-            +(['private-fences'] if private_fences else []),
+            +(['private-history'] if private_history else ['private-fences'] if private_fences else []),
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,preexec_fn=lambda:drop(0),pass_fds=(listener.fileno(),),cwd='/')
         assert server.stdout.readline().strip()=='ARCHIVE_ROOT_READY'
         binding=dict(schema=1,action='gwt-sender-bind',**namespace,dataDirectory=str(root/'core-private') if java else '/core-private',
             dataUid=65534,dataDevice=str((root/'core-private').stat().st_dev),dataInode=str((root/'core-private').stat().st_ino))
         value=ask(core,binding);assert value['state']=='GWT_SENDER_BOUND';persisted={k:v for k,v in value.items() if k!='state'}
         def bound(request):return dict(schema=1,action='gwt-bound-request',binding=persisted,request=request)
-        if private_fences:check_private_fences(manager,root,namespace,ask,core,recovery,rogue,bound,java is not None)
+        if private_history:check_private_history(manager,root,namespace,ask,core,recovery,rogue,bound,seed)
+        elif private_fences:check_private_fences(manager,root,namespace,ask,core,recovery,rogue,bound,java is not None)
         else:
             def plan(index):return dict(schema=1,action='journal-archive-plan',namespaceSha256=namespace['namespaceSha256'],
                 entries=[dict(directory='sender-admissions',operationId=rows[index]['admissionId'])])
@@ -201,12 +264,15 @@ def main(repository,private_fences=False,java=None,classpath=None):
         assert originals=={p.name:(p.read_bytes(),p.stat()) for p in manager.sender_admissions.directory.iterdir() if p.name in originals}
         stop.touch();out,error=server.communicate(timeout=8);assert server.returncode==0,error
         result=json.loads(out);result['testedNativeSourceSha256']={name:hashlib.sha256((source/name).read_bytes()).hexdigest()
-            for name in ('kura_key_service.py','kura_key_service_lifecycle.py','kura_key_store.py')}
+            for name in ('kura_key_service.py','kura_key_service_lifecycle.py','kura_key_store.py','kura_key_journal.py')}
         result.update(originalAdmissionBytesAndMetadataExact=True,lateClosedOriginalRefused=True,gwtRawMetadataRefused=True,
-            foreignSameUidPidRefused=True,crossSourceContinuationRefused=not private_fences,
+            foreignSameUidPidRefused=True,crossSourceContinuationRefused=not private_fences and not private_history,
             crossSourcePrivateProofReadRefused=private_fences,unknownRedispatched=False)
-        if java:result.update(actualJavaPrivateArchive=True,privateOriginalCount=65,javaBytecodeRelease=11,javaRuntimeFloor=21,
+        if java:result.update(actualJavaPrivateArchive=True,privateOriginalCount=4 if private_history else 65,javaBytecodeRelease=11,javaRuntimeFloor=21,
             unicodePrivateReceiptMatched=True,humanGwtSession=False)
+        if private_history:result.update(nativeOriginalBytesAndMetadataExact=True,claimedIntakeReadDidNotRewriteOriginal=True,
+            rootArchiveAdoptedWithoutNewId=True,privateOriginalBytesAndMetadataExact=True,latePrivateWriterCallbacks=0,
+            modeledHistoricalBackupBody=True)
         print(json.dumps(result))
     finally:
         for peer in clients:
@@ -223,6 +289,9 @@ if __name__=='__main__':
         for line in sys.stdin:print(json.dumps(rpc(json.loads(line))),flush=True)
     else:
         parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--repository',type=Path,required=True)
-        parser.add_argument('--private-fences',action='store_true');parser.add_argument('--java',type=Path);parser.add_argument('--classpath');args=parser.parse_args()
-        if args.java is not None:assert args.private_fences and args.classpath
-        main(args.repository.resolve(),args.private_fences,args.java,args.classpath)
+        parser.add_argument('--private-fences',action='store_true');parser.add_argument('--private-history',action='store_true')
+        parser.add_argument('--java',type=Path);parser.add_argument('--classpath');args=parser.parse_args()
+        assert not (args.private_fences and args.private_history)
+        if args.java is not None:assert (args.private_fences or args.private_history) and args.classpath
+        if args.private_history:assert args.java is not None
+        main(args.repository.resolve(),args.private_fences,args.java,args.classpath,args.private_history)

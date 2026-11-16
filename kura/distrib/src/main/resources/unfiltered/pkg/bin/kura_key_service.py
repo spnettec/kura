@@ -194,6 +194,8 @@ class SenderAdmissions:
 
     def write(self, value, *, create=False):
         require(value.get('purpose')==SENDER_ADMISSION_PURPOSE,'FORBIDDEN')
+        if not create and os.path.lexists(self.directory/(value['admissionId']+'.json')):
+            require(not self.archive_claimed(value),'ARCHIVED_ORIGINAL')
         if not os.path.lexists(self.directory):
             self.directory.mkdir(mode=0o700); self.manager.sync(self.manager.state)
         self.manager.directory(self.directory, private=True)
@@ -379,9 +381,13 @@ class SenderAdmissions:
         if value['state'] == 'TERMINAL': require(success, 'UNSAFE_JOURNAL')
         if success:
             require(value['state'] != 'RESERVED', 'UNSAFE_JOURNAL')
-            if value['state'] == 'INTAKE': value.update(self.write(dict(value, state='TERMINAL')))
+            if value['state'] == 'INTAKE' and not self.archive_claimed(value): value.update(self.write(dict(value, state='TERMINAL')))
             return True
         return False
+
+    def archive_claimed(self,value):
+        return any(row['directory']=='sender-admissions' and row['operationId']==value['admissionId']
+            for intent,_ in self.manager.archives()['requests'].values() for row in intent['entries'])
 
     def require_no_native(self, identity, reason='UNRESOLVED_OPERATION'):
         # A closed original must not conceal a different native action/directory.
@@ -406,84 +412,7 @@ class SenderAdmissions:
             nativeAction=value['target']['action'], newlyReserved=fresh)
 
     def private_fence(self, request, pid, uid, daemon, recovery):
-        """Attest an explicit private no-dispatch receipt, never an absent INTAKE.
-
-        A distinct signed purpose and domain identify this metadata fence. It is
-        not an ordinary reservation or a reconstruction of an old request HMAC.
-        Root trusts the authenticated Main's assertion without reading private files.
-        """
-        action=request.get('action');require(action in PRIVATE_FENCE_ACTIONS)
-        base={'schema','action','source','namespaceSha256','admissionId'}
-        fields(request,base if action.endswith('-read') else base|GWT_DATA_FIELDS|{'kind','intent','receiptSha256'})
-        require(type(request['schema']) is int and request['schema']==1 and request['source'] in ('gwt','recovery'))
-        identity=operation_id(request['admissionId']);manager=self.manager
-        with self.locked(),manager.lock(manager.state/'admission.lock',True):
-            manager.maintenance();owner=self.owner(request['source'],pid,uid,daemon,recovery)
-            require(request['namespaceSha256']==manager.gwt_namespace()['namespaceSha256'],'CONFLICT')
-            previous=self.load(identity)
-            if action.endswith('-read'):
-                if previous is None:return dict(schema=1,state='NOT_RECORDED',admissionId=identity,scope='PRIVATE_FENCE_ONLY')
-                require(previous['purpose']==PRIVATE_FENCE_PURPOSE and previous['source']==request['source']
-                    and previous['owner']['uid']==uid,'CONFLICT')
-                check_sender_original(manager,previous,self.secret())
-                return self.private_fence_view(previous)
-            data={k:request[k] for k in GWT_DATA_FIELDS};intent=request['intent'];kind=request['kind'];require(isinstance(intent,dict))
-            try:
-                validate_gwt_data(data);require(data['dataUid']==uid,'FORBIDDEN')
-                if request['source']=='gwt':
-                    require(kind in ('LEGACY','GENERATION','HANDOFF'))
-                    native_id=validate_gwt_intent(kind,intent)
-                    binding=validate_gwt_binding(decode(manager.read(manager.state/'gwt-sender.json',8192)))
-                    require(all(binding[k]==data[k] for k in GWT_DATA_FIELDS),'CONFLICT')
-                else:
-                    require(kind in ('restore','start'))
-                    native_id=operation_id(intent.get('operationId'))
-                    validate_sender_attempt(dict(schema=1,purpose='yofc.kura.sender-attempt.v1',admissionId=identity,
-                        kind=kind,nativeOperationId=native_id,request=intent),'recovery')
-            except LifecycleRefused:raise Failure('INVALID_ARGUMENT') from None
-            digest(request['receiptSha256']);blocked=sorted([intent[k] for k in ('handoffId','publicationId','startOperationId')]
-                if kind=='HANDOFF' else [native_id]);require(identity not in blocked,'CONFLICT')
-            proof=dict(data,kind=kind,metadataSha256=hashlib.sha256(encode(intent)).hexdigest(),
-                receiptSha256=request['receiptSha256'],blockedIds=blocked)
-            directory='handoffs' if kind=='HANDOFF' else 'startups' if kind=='start' else 'operations'
-            body=dict(source=request['source'],namespaceSha256=request['namespaceSha256'],privateProof=proof,
-                directory=directory,operationId=native_id,action=intent['action'])
-            tag=hmac.new(self.secret(),PRIVATE_FENCE_CONTEXT+encode(body),hashlib.sha256).hexdigest()
-            if previous is not None:
-                require(previous['purpose']==PRIVATE_FENCE_PURPOSE and previous['requestTag']==tag
-                    and previous['owner']['uid']==uid,'CONFLICT')
-                check_sender_original(manager,previous,self.secret());return self.private_fence_view(previous)
-            # Check every native table and retained reservation, including archived
-            # rows. No pending issuer may hold undisclosed fixed child IDs.
-            protected=set(blocked+[identity]);records=self.records()
-            for key in protected:
-                self.require_no_native(key);manager.require_not_archive_id(key)
-                require(self.load(key) is None,'CONFLICT')
-            for row in records:
-                require(row['target']['operationId'] not in protected,'UNRESOLVED_OPERATION')
-                require(not (row['target']['directory']=='handoffs' and row['state'] in ('RESERVED','INTAKE')
-                    and self.native(row['target']) is None),'UNRESOLVED_OPERATION')
-            grants=manager.state/'handoffs'
-            if os.path.lexists(grants):
-                manager.directory(grants,private=True)
-                for path in grants.iterdir():
-                    require(path.name.endswith('.json'),'UNSAFE_JOURNAL')
-                    try:value=validate_handoff_authority(decode(manager.read(path,8192)),operation_id(path.name[:-5]),self.secret())
-                    except LifecycleRefused:raise Failure('UNSAFE_JOURNAL') from None
-                    require(not protected&{value['request'][k] for k in
-                        ('handoffId','preparationId','verificationId','publicationId','startOperationId')},'CONFLICT')
-            if action.endswith('-plan'):return dict(schema=1,state='PRIVATE_FENCE_PLAN',admissionId=identity,**body,
-                credentialsChanged=False,startRequested=False)
-            value=dict(schema=1,purpose=PRIVATE_FENCE_PURPOSE,admissionId=identity,source=request['source'],
-                namespaceSha256=request['namespaceSha256'],owner=owner,requestTag=tag,privateProof=proof,
-                target=dict(directory=directory,operationId=native_id,action=intent['action'],requestTag=tag,continuation=False),
-                parentAdmissionId=None,state='NOT_ADMITTED')
-            value['receiptTag']=hmac.new(self.secret(),SENDER_ADMISSION_CONTEXT+encode(value),hashlib.sha256).hexdigest()
-            self.directory.mkdir(mode=0o700,exist_ok=True);manager.directory(self.directory,private=True);manager.sync(manager.state)
-            try:
-                manager.atomic(self.directory/(identity+'.json'),encode(value),mode=0o400,no_replace=True)
-                return self.private_fence_view(self.load(identity))
-            except (Failure,LifecycleRefused,OSError):raise Failure('UNKNOWN') from None
+        return self.manager.journal_module().private_fence(self,request,pid,uid,daemon,recovery)
 
     @staticmethod
     def private_fence_view(value):
@@ -546,9 +475,11 @@ class SenderAdmissions:
                 require(value['state'] in ('RESERVED', 'NOT_ADMITTED') and self.native(value['target']) is None, 'UNRESOLVED_OPERATION')
                 self.require_no_native(value['target']['operationId'])
                 if value['state'] == 'RESERVED': value = self.write(dict(value, state='NOT_ADMITTED'))
-            elif self.settled(value) and value['state'] not in ('TERMINAL', 'NOT_ADMITTED'):
+            elif self.settled(value) and value['state'] not in ('TERMINAL', 'NOT_ADMITTED') and not self.archive_claimed(value):
                 value = self.write(dict(value, state='TERMINAL'))
-            return self.view(value)
+            result=self.view(value)
+            if value['state']=='INTAKE' and self.archive_claimed(value):result['state']='TERMINAL'
+            return result
 
     def execute(self, request, pid, uid, daemon, recovery, dispatch):
         fields(request, {'schema', 'action', 'admissionId', 'source', 'namespaceSha256', 'request'})
@@ -606,85 +537,12 @@ class Manager:
         if receipt is not None:result['receiptSha256']=hashlib.sha256(encode(receipt)).hexdigest()
         return result
 
+    def journal_module(self):
+        try:return Lifecycle(self.root,self.owner).journal_module()
+        except (LifecycleRefused,OSError,ValueError):raise Failure('COHORT_UNAVAILABLE') from None
+
     def archive_journal(self, request, pid, uid, daemon, recovery):
-        """Explicit metadata only. No cipher, unit command or key writer is reachable."""
-        action=request.get('action');require(action in ARCHIVE_ACTIONS)
-        expected={'schema','action','namespaceSha256'}|({'entries'} if action=='journal-archive-plan' else
-            {'archiveId'} if action=='journal-archive-read' else {'archiveId','entries','expectedEntriesSha256'})
-        fields(request,expected);require(type(request['schema']) is int and request['schema']==1)
-        if uid==0:source='local-admin'
-        elif uid==daemon:self.gwt_sender_owner(pid,uid,daemon);source='gwt'
-        else:
-            require(recovery is not None and uid==recovery,'FORBIDDEN')
-            self.recovery_sender_owner(pid,uid);source='recovery'
-        with self.sender_admissions.locked(),self.lock(self.state/'admission.lock',True):
-            self.maintenance();namespace=self.gwt_namespace()['namespaceSha256']
-            require(request['namespaceSha256']==namespace,'CONFLICT');inventory=self.archives()
-            if action=='journal-archive-read':
-                identity=operation_id(request['archiveId']);previous=inventory['requests'].get(identity)
-                return self.archive_view(identity,*previous) if previous else dict(schema=1,archiveId=identity,
-                    namespaceSha256=namespace,state='NOT_RECORDED',scope='ORIGINAL_ARCHIVE_ONLY')
-            try:references=archive_references(request['entries'])
-            except LifecycleRefused:raise Failure('INVALID_ARGUMENT') from None
-            if action=='journal-archive-plan':
-                try:entries=[archive_entry(self,ref,self.sender_admissions.secret(),inventory=inventory) for ref in references]
-                except (LifecycleRefused,FileNotFoundError):raise Failure('ARCHIVE_UNSETTLED') from None
-                require(all((row['directory'],row['operationId']) not in inventory['archived'] for row in entries),'ALREADY_ARCHIVED')
-                return dict(schema=1,state='ARCHIVE_PLAN',namespaceSha256=namespace,entries=entries,
-                    entriesSha256=hashlib.sha256(encode(entries)).hexdigest(),originalsRetained=True,credentialsChanged=False,startRequested=False)
-            identity=operation_id(request['archiveId']);digest(request['expectedEntriesSha256'])
-            native=dict(schema=1,action='journal-archive',archiveId=identity,namespaceSha256=namespace,
-                entries=references,expectedEntriesSha256=request['expectedEntriesSha256'])
-            tag=self.sender_admissions.tag(native);previous=inventory['requests'].get(identity)
-            if previous is not None:
-                intent,receipt=previous
-                require(intent['requestTag']==tag and (uid==0 or intent['actorUid']==uid and intent['source']==source),'CONFLICT')
-                if receipt is not None or action=='journal-archive':return self.archive_view(identity,intent,receipt)
-            else:
-                require(action=='journal-archive','NOT_FOUND')
-                self.require_not_archive_id(identity)
-                require(all(receipt is not None for _,receipt in inventory['requests'].values()),'UNRESOLVED_ARCHIVE')
-                for directory in ('operations','startups','handoffs','sender-admissions','package-history'):
-                    require(not os.path.lexists(self.state/directory/(identity+'.json')),'CONFLICT')
-                senders=self.sender_admissions.records()
-                require(all(row['target']['operationId']!=identity for row in senders),'CONFLICT')
-                require(not any(row['target']['directory']=='handoffs' and row['state'] in ('RESERVED','INTAKE')
-                    and self.sender_admissions.native(row['target']) is None for row in senders),'UNRESOLVED_OPERATION')
-                grants=self.state/'handoffs'
-                if os.path.lexists(grants):
-                    for path in grants.iterdir():
-                        require(path.name.endswith('.json'),'UNSAFE_JOURNAL');value=decode(self.read(path,8192))
-                        try:validate_handoff_authority(value,operation_id(path.name[:-5]),self.sender_admissions.secret())
-                        except LifecycleRefused:raise Failure('UNSAFE_JOURNAL') from None
-                        require(identity not in {value['request'][key] for key in
-                            ('handoffId','preparationId','verificationId','publicationId','startOperationId')},'CONFLICT')
-                claimed={(row['directory'],row['operationId']) for intent,_ in inventory['requests'].values() for row in intent['entries']}
-                require(not any((ref['directory'],ref['operationId']) in claimed for ref in references),'ALREADY_ARCHIVED')
-                try:entries=[archive_entry(self,ref,self.sender_admissions.secret(),inventory=inventory) for ref in references]
-                except (LifecycleRefused,FileNotFoundError):raise Failure('ARCHIVE_UNSETTLED') from None
-                require(hashlib.sha256(encode(entries)).hexdigest()==request['expectedEntriesSha256'],'CONFLICT')
-                intent=dict(schema=1,purpose='yofc.kura.journal-archive-intent.v1',archiveId=identity,namespaceSha256=namespace,
-                    source=source,actorUid=uid,createdAt=int(datetime.datetime.now(datetime.timezone.utc).timestamp()),
-                    entries=entries,entriesSha256=request['expectedEntriesSha256'],requestTag=tag,
-                    previousArchiveId=inventory['head'],previousArchiveSha256=hashlib.sha256(encode(
-                        inventory['requests'][inventory['head']][1])).hexdigest() if inventory['head'] is not None else None)
-                intent['receiptTag']=hmac.new(self.sender_admissions.secret(),ARCHIVE_INTENT_CONTEXT+encode(intent),hashlib.sha256).hexdigest()
-                parent=self.state/'archives';parent.mkdir(mode=0o700,exist_ok=True);self.directory(parent,private=True);self.sync(self.state)
-                try:self.atomic(parent/(identity+'.intent.json'),encode(intent),mode=0o400,no_replace=True)
-                except (Failure,OSError):raise Failure('UNKNOWN') from None
-            # Recheck only the original signed metadata. Continuing an archive never
-            # replays a key operation, changes an ID or fills a missing native result.
-            try:
-                self.sync(self.state/'archives')
-                entries=[archive_entry(self,ref,self.sender_admissions.secret(),inventory=inventory) for ref in references]
-                require(entries==intent['entries'],'CONFLICT')
-                receipt=dict(schema=1,purpose='yofc.kura.journal-archive-receipt.v1',archiveId=identity,
-                    namespaceSha256=namespace,intentSha256=hashlib.sha256(encode(intent)).hexdigest(),
-                    entriesSha256=intent['entriesSha256'],archivedAt=int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
-                receipt['receiptTag']=hmac.new(self.sender_admissions.secret(),ARCHIVE_RECEIPT_CONTEXT+encode(receipt),hashlib.sha256).hexdigest()
-                self.atomic(self.state/'archives'/(identity+'.receipt.json'),encode(receipt),mode=0o400,no_replace=True)
-                return self.archive_view(identity,intent,receipt)
-            except (LifecycleRefused,Failure,OSError):raise Failure('UNKNOWN') from None
+        return self.journal_module().archive_journal(self,request,pid,uid,daemon,recovery)
 
     def recovery_sender_owner(self, pid, uid):
         output = subprocess.run(['/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager', 'show',
@@ -761,6 +619,7 @@ class Manager:
             if os.path.lexists(path):
                 try: previous = validate_gwt_binding(decode(self.read(path, 8192)))
                 except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+
                 require(previous == binding, 'CONFLICT')
             else:
                 self.atomic(path, encode(binding), no_replace=True)
@@ -1972,7 +1831,7 @@ def agent_peer(pid):
 
 GWT_MUTATIONS = frozenset(('backup-create', 'restore', 'generation-prepare', 'generation-backup-verify', 'generation-handoff-create'))
 GWT_ORIGINAL_READS = frozenset(('operation-read', 'generation-handoff-read', 'generation-handoff-token-read', 'generation-publication-plan'))
-ARCHIVE_ACTIONS = frozenset(('journal-archive-plan','journal-archive','journal-archive-read','journal-archive-continue'))
+ARCHIVE_ACTIONS = frozenset(('journal-archive-plan','journal-archive','journal-archive-read','journal-archive-continue','journal-archive-reference-read'))
 PRIVATE_FENCE_ACTIONS = frozenset(('sender-private-fence-plan','sender-private-fence','sender-private-fence-read'))
 SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'generation-restore', 'core-start',
     'core-start-after-maintenance', 'generation-cancel', 'generation-cancel-recover', 'generation-publish',

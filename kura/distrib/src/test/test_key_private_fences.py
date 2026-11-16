@@ -225,6 +225,56 @@ class PrivateFenceTest(unittest.TestCase):
         with self.assertRaises(lifecycle.Refused):policy.initialize()
         with self.assertRaises(lifecycle.Refused):policy.check_sender_admissions()
 
+    def reference(self,directory,identity):
+        return self.manager.archive_journal(dict(schema=1,action='journal-archive-reference-read',
+            namespaceSha256=self.manager.gwt_namespace()['namespaceSha256'],directory=directory,operationId=identity),
+            333,0,self.base.core,self.base.recovery)
+
+    def archive_reference(self,directory,identity):
+        refs=[dict(directory=directory,operationId=identity)];namespace=self.manager.gwt_namespace()['namespaceSha256']
+        plan=self.manager.archive_journal(dict(schema=1,action='journal-archive-plan',entries=refs,namespaceSha256=namespace),333,0,self.base.core,self.base.recovery)
+        request=dict(schema=1,action='journal-archive',entries=refs,namespaceSha256=namespace,
+            archiveId=str(uuid.uuid4()),expectedEntriesSha256=plan['entriesSha256'])
+        return request,self.manager.archive_journal(request,333,0,self.base.core,self.base.recovery)
+
+    def test_reference_lookup_is_readonly_redacted_and_adopts_original_archive(self):
+        identity=str(uuid.uuid4());self.fixture.root_result(identity,'backup-create');before=self.snapshot()
+        result=self.reference('operations',identity);self.assertEqual('ARCHIVABLE',result['state']);self.assertIsNone(result['archive'])
+        self.assertEqual(before,self.snapshot());self.assertNotIn('backup',result['correlation']);self.assertNotIn('requestTag',str(result))
+        request,proof=self.archive_reference('operations',identity);before=self.snapshot();result=self.reference('operations',identity)
+        self.assertEqual('ARCHIVE_RECORDED',result['state']);self.assertEqual(proof,result['archive']);self.assertEqual(request['archiveId'],result['archive']['archiveId'])
+        self.assertEqual(before,self.snapshot())
+
+    def test_positive_intake_can_archive_but_ordinary_reads_never_rewrite_claimed_bytes(self):
+        frame=self.base.request();self.base.reserve(frame);self.shared.write(dict(self.shared.load(frame['admissionId']),state='INTAKE'));self.base.success(frame)
+        path=self.shared.directory/(frame['admissionId']+'.json');raw=path.read_bytes()
+        self.assertEqual('ARCHIVABLE',self.reference('sender-admissions',frame['admissionId'])['state']);self.assertEqual(raw,path.read_bytes())
+        self.archive_reference('sender-admissions',frame['admissionId'])
+        self.assertEqual('TERMINAL',self.base.read(frame)['state']);self.shared.require_settled();self.assertEqual(raw,path.read_bytes())
+        self.assertEqual('INTAKE',self.shared.load(frame['admissionId'])['state']);self.manager.archives()
+        with self.assertRaises(service.Failure):self.shared.write(dict(self.shared.load(frame['admissionId']),state='TERMINAL'))
+        self.assertEqual(raw,path.read_bytes())
+
+    def test_pending_archive_also_protects_positive_intake_original_from_read_settlement(self):
+        frame=self.base.request();self.base.reserve(frame);self.shared.write(dict(self.shared.load(frame['admissionId']),state='INTAKE'));self.base.success(frame)
+        path=self.shared.directory/(frame['admissionId']+'.json');raw=path.read_bytes();atomic=self.manager.atomic
+        def lose(path,value,**kw):
+            if path.name.endswith('.receipt.json'):raise OSError('modeled metadata receipt failure')
+            return atomic(path,value,**kw)
+        with patch.object(self.manager,'atomic',side_effect=lose):
+            with self.assertRaises(service.Failure) as failure:self.archive_reference('sender-admissions',frame['admissionId'])
+        self.assertEqual('UNKNOWN',failure.exception.reason)
+        self.assertEqual('TERMINAL',self.base.read(frame)['state']);self.assertEqual(raw,path.read_bytes())
+        result=self.reference('sender-admissions',frame['admissionId']);self.assertEqual('UNKNOWN',result['state'])
+        self.assertIsNotNone(result['archive']);self.assertTrue(result['continuationAllowed']);self.assertEqual(raw,path.read_bytes())
+
+    def test_missing_native_or_true_intake_uncertainty_has_no_reference_archive_proof(self):
+        frame=self.base.request();self.base.reserve(frame);self.shared.write(dict(self.shared.load(frame['admissionId']),state='INTAKE'));before=self.snapshot()
+        for directory,identity in [('sender-admissions',frame['admissionId']),('operations',self.base.original(frame)['operationId'])]:
+            with self.assertRaises(service.Failure) as failure:self.reference(directory,identity)
+            self.assertEqual('ARCHIVE_UNSETTLED',failure.exception.reason)
+        self.assertEqual(before,self.snapshot())
+
 
 @unittest.skipUnless(sys.platform=='linux','Production Root fence requires Linux renameat2')
 class NoDispatchArchiveReaderTest(unittest.TestCase):
