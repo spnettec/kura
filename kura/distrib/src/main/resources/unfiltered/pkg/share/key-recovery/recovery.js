@@ -379,6 +379,8 @@
  };
  Object.assign(words.zh,{revoke:'撤销未使用的交接授权',revokeTitle:'永久撤销此未使用的交接授权？',revokeHelp:'仅在发布和启动均未进入处理时，永久撤销旧授权和固定编号。保留原准备、备份核验和全部记录；返回原控制台后由原管理员手动重新签发。',revoked:'旧授权已撤销，固定编号已永久禁用。原准备、备份核验和记录仍保留，请返回原控制台手动重新签发。',revoking:'撤销尚未完成。保留原授权，可再次点击完成撤销；不会重新发布或启动。'});
  Object.assign(words.en,{revoke:'Revoke unused handoff authorization',revokeTitle:'Permanently revoke this unused handoff authorization?',revokeHelp:'Only publication and startup that never entered processing can be revoked. Old authorization and fixed IDs are permanently blocked. Preparation, backup verification and all records remain. Return to the original console for the original administrator to explicitly reissue.',revoked:'Old authorization and fixed IDs are permanently blocked. Preparation, backup verification and records remain. Return to the original console to explicitly reissue.',revoking:'Revocation is incomplete. Retain the original authorization and explicitly finish revocation. Publication and startup are not resent.'});
+ Object.assign(words.zh,{renew:'续期原首次启动授权',renewHelp:'发布已确认且尚未申请启动时，可单独续期原首次启动授权15分钟。保留原启动编号；续期不会启动Kura，也不允许再次发布。','start-renewTitle':'续期原首次启动授权？','start-renewHelp':'核对原发布回执、当前密钥集合和原启动编号后，另存15分钟的首次启动授权。全部原记录保留；续期后仍须单独确认启动。',renewed:'原首次启动授权已续期。请单独确认原启动请求；发布不会重发。',renewalIdentity:'原续期申请编号',leaseSucceeded:'原续期已确认',leaseClosed:'原续期预留已确认未受理，编号保留',closeRenewal:'确认未受理并关闭原续期预留','renewal-closeTitle':'关闭此原续期预留？','renewal-closeHelp':'仅在Root确认原续期尚未受理时永久关闭此编号。保留原记录，不会续期、发布或启动Kura。之后可手动创建新的续期申请。'});
+ Object.assign(words.en,{renew:'Renew original first-start authorization',renewHelp:'After publication is confirmed and before startup is requested, renew only the original first-start authorization for 15 minutes. The original startup ID is retained. Renewal does not start Kura or permit another publication.','start-renewTitle':'Renew the original first-start authorization?','start-renewHelp':'After checking the original publication receipt, current key set and fixed startup ID, retain a separate 15-minute first-start authorization. All originals remain. Startup still requires separate confirmation.',renewed:'The original first-start authorization is renewed. Confirm startup separately; publication is not resent.',renewalIdentity:'Original renewal request ID',leaseSucceeded:'Original renewal confirmed',leaseClosed:'Original renewal was not admitted; its ID is retained',closeRenewal:'Confirm not admitted and close original renewal reservation','renewal-closeTitle':'Close this original renewal reservation?','renewal-closeHelp':'Permanently close this ID only after Root confirms the original renewal was not admitted. All originals remain. This does not renew, publish or start Kura. A new renewal can then be created manually.'});
  let language = 'zh', authorization = '', current = null, busy = false, stale = false, storageFault = false, epoch = 0, proposal = null, noticeKey = '';
  const observedIntents = new Map();
  const message = key => { noticeKey = key; el('notice').textContent = key ? words[language][key] : ''; };
@@ -397,19 +399,58 @@
    observedIntents.set(name,raw); return value;
   } catch (_) { storageFault = true; return null; }
  }
- function platform() { return window.isSecureContext && navigator.locks && typeof navigator.locks.request === 'function' && typeof el('confirm').showModal === 'function'; }
- function allowed(command) {
+ function localRenewals() {
+  if (!current) return [];
+  const result=[], start=key('renewal')+'.';
+  try {
+   for (let i=0;i<localStorage.length;i++) {
+    const name=localStorage.key(i); if (!name?.startsWith(start)) continue;
+    const raw=localStorage.getItem(name), value=JSON.parse(raw), names=[...fields,'command','operationId','expectedPublicationSha256'];
+    if (!value || Object.keys(value).length!==names.length || names.some(k=>!Object.hasOwn(value,k))
+      || fields.some(k=>value[k]!==current.handoff[k]) || value.command!=='start-renew' || !uuid(value.operationId)
+      || name!==start+value.operationId || ids.some(k=>current.handoff[k]===value.operationId) || !hash(value.expectedPublicationSha256)
+      || observedIntents.has(name) && observedIntents.get(name)!==raw) throw Error();
+    observedIntents.set(name,raw); result.push(value); if(result.length>256)throw Error();
+   }
+  } catch (_) {storageFault=true;}
+  return result;
+ }
+ function unsettledLocalRenewal() {
+  return localRenewals().some(value=>!current.startRenewals.some(row=>row.operationId===value.operationId&&row.expectedPublicationSha256===value.expectedPublicationSha256
+    && (row.state==='SUCCEEDED' && row.resultSource==='ROOT_ORIGINAL' || row.state==='NOT_ADMITTED' && row.resultSource==='ROOT_ADMISSION_CLOSED' && row.closed)));
+ }
+ function persistRenewal(identity,publication) {
+  const name=key('renewal')+'.'+identity, value={...binding(current.handoff),command:'start-renew',operationId:identity,expectedPublicationSha256:publication};
+  try {
+   if(localStorage.getItem(name)!==null)throw Error();
+   const raw=JSON.stringify(value);localStorage.setItem(name,raw);if(localStorage.getItem(name)!==raw)throw Error();observedIntents.set(name,raw);
+  } catch (_) {storageFault=true;throw Error();}
+ }
+ function platform() { return window.isSecureContext && navigator.locks && typeof navigator.locks.request === 'function' && typeof crypto.randomUUID==='function' && typeof el('confirm').showModal === 'function'; }
+ function allowed(command,identity) {
   if (!current || busy || stale || storageFault || !platform() || current.completed) return false;
   if (command === 'revoke') return current.revocationAllowed && !current.retired;
   if (current.retired || current.handoff.state !== 'GRANT_RECORDED') return false;
+  if (command==='renewal-close')return current.startRenewals.some(row=>row.operationId===identity && row.closeAllowed && row.state!=='SUCCEEDED');
   if (command === 'complete') return current.publication.state === 'SUCCEEDED' && current.start.state === 'SUCCEEDED';
+  if (command==='start-renew')return current.renewalAllowed && !unsettledLocalRenewal() && !storageFault;
+  if (command==='start' && unsettledLocalRenewal())return false;
   return current.allowed[command] === true && intent(command) === null && !storageFault;
  }
  function render() {
-  if (current) for (const command of writers) intent(command);
+  if (current) {for (const command of writers) intent(command);localRenewals();}
   el('query').disabled = busy; el('token').disabled = busy; el('forget').disabled = busy;
   el('progress').hidden = !busy; el('details').hidden = !current;
-  for (const command of [...writers,'complete','revoke']) el(command).disabled = !allowed(command);
+  for (const command of [...writers,'complete','revoke','start-renew']) el(command).disabled = !allowed(command);
+  el('renewals').replaceChildren();
+  if(current)for(const row of current.startRenewals){
+   const item=document.createElement('li'),code=document.createElement('code');code.textContent=row.operationId;
+   item.append(code,document.createTextNode(' — '+words[language][row.state==='SUCCEEDED'?'leaseSucceeded':row.state==='NOT_ADMITTED'?'leaseClosed':'unknown']));
+   if(row.closeAllowed){const button=document.createElement('button');button.type='button';button.textContent=words[language].closeRenewal;
+    button.setAttribute('aria-label',words[language].closeRenewal+' '+row.operationId);button.disabled=!allowed('renewal-close',row.operationId);
+    button.addEventListener('click',()=>confirm('renewal-close',row.operationId));item.append(' ',button);}
+   el('renewals').append(item);
+  }
   if (current) {
    const info = current.handoff;
    el('id').textContent = info.handoffId; el('operator').textContent = info.operator;
@@ -439,8 +480,26 @@
   if (typeof value.completed !== 'boolean' || typeof value.originalRecoveryPending !== 'boolean'
     || typeof value.retired !== 'boolean' || typeof value.revocationAllowed !== 'boolean'
     || writers.some(name => typeof value.allowed[name] !== 'boolean' || typeof value.senderIntents[name] !== 'boolean')) throw Error();
+  if(typeof value.renewalAllowed!=='boolean' || !Array.isArray(value.startRenewals) || value.startRenewals.length>256)throw Error();
+  const renewalIds=new Set();
+  for(const row of value.startRenewals){
+   if(!uuid(row.operationId)||renewalIds.has(row.operationId)||ids.some(k=>info[k]===row.operationId)||!hash(row.expectedPublicationSha256)||typeof row.closed!=='boolean'||typeof row.closeAllowed!=='boolean'
+    ||!['UNKNOWN','SUCCEEDED','NOT_ADMITTED'].includes(row.state)
+    ||row.state==='SUCCEEDED'&&(row.resultSource!=='ROOT_ORIGINAL'||row.closed||row.closeAllowed||!Number.isInteger(row.issuedAt)||row.expiresAt-row.issuedAt!==900)
+    ||row.state==='NOT_ADMITTED'&&(row.resultSource!=='ROOT_ADMISSION_CLOSED'||!row.closed||row.closeAllowed)
+    ||row.state==='UNKNOWN'&&row.resultSource!=='UNCONFIRMED')throw Error();
+   renewalIds.add(row.operationId);
+  }
+  const lease=value.startAuthorization;
+  if(lease!==null&&(!lease||lease.schema!==1||lease.state!=='START_LEASE_STATUS'||lease.scope!=='ORIGINAL_FIRST_START_ONLY'
+    ||['handoffId','publicationId','startOperationId'].some(k=>lease[k]!==info[k])||typeof lease.windowOpen!=='boolean'||typeof lease.renewalAllowed!=='boolean'
+    ||lease.publicationSha256!==null&&lease.publicationSha256!==value.publication.publicationSha256
+    ||lease.renewalOperationId!==null&&!uuid(lease.renewalOperationId)
+    ||lease.windowOpen&&(!uuid(lease.renewalOperationId)||!hash(lease.publicationSha256))
+    ||lease.renewalAllowed&&(lease.windowOpen||info.mutationWindowOpen||!hash(lease.publicationSha256))))throw Error();
+  if(value.renewalAllowed&&(!lease?.renewalAllowed||value.completed||value.retired||value.start.state!=='NOT_RECORDED'||value.senderIntents.start))throw Error();
   if (value.allowed.publish && (!info.mutationWindowOpen || value.senderIntents.publish || value.publication.state !== 'NOT_RECORDED')) throw Error();
-  if (value.allowed.start && (!info.mutationWindowOpen || value.senderIntents.start || value.publication.state !== 'SUCCEEDED' || value.start.state !== 'NOT_RECORDED')) throw Error();
+  if (value.allowed.start && ((!info.mutationWindowOpen && !lease?.windowOpen) || value.senderIntents.start || value.publication.state !== 'SUCCEEDED' || value.start.state !== 'NOT_RECORDED')) throw Error();
   if (value.allowed.continue && (value.senderIntents.continue || value.publication.state !== 'UNKNOWN' || !hash(value.publication.recoveryReceiptSha256))) throw Error();
   if (info.state !== 'GRANT_RECORDED' && (info.mutationWindowOpen || writers.some(name=>value.allowed[name]))) throw Error();
   if (value.retired && (info.state !== 'GRANT_REVOKED' || value.completed || value.revocationAllowed || writers.some(name=>value.allowed[name]))) throw Error();
@@ -458,7 +517,7 @@
  function apply(value) {
   current = value; stale = false;
   for (const command of writers) intent(command);
-  message(value.retired ? 'revoked' : value.handoff.state !== 'GRANT_RECORDED' ? 'revoking' : value.completed ? 'completed' : value.originalRecoveryPending ? 'recoveryPending' : !value.handoff.mutationWindowOpen ? 'expired'
+  message(value.retired ? 'revoked' : value.handoff.state !== 'GRANT_RECORDED' ? 'revoking' : value.completed ? 'completed' : value.originalRecoveryPending ? 'recoveryPending' : unsettledLocalRenewal() ? 'unknown' : value.startAuthorization?.windowOpen ? 'renewed' : !value.handoff.mutationWindowOpen ? 'expired'
     : value.publication.state === 'UNKNOWN' || value.start.state === 'UNKNOWN' ? 'unknown' : 'recorded');
  }
  async function query() {
@@ -493,6 +552,15 @@
      if (!fresh.revocationAllowed || fresh.retired) { message('blocked'); return; }
      const value = await api('revoke'); if (generation === epoch) apply(value); return;
     }
+    if(command==='renewal-close'){
+     if(!fresh.startRenewals.some(row=>row.operationId===selected.renewalId&&row.closeAllowed&&row.state!=='SUCCEEDED')){message('blocked');return;}
+     const value=await api('renewal-close',{operationId:selected.renewalId});if(generation===epoch)apply(value);return;
+    }
+    if(command==='start-renew'){
+     if(!fresh.renewalAllowed||unsettledLocalRenewal()||storageFault||fresh.publication.publicationSha256!==selected.publication){message('blocked');return;}
+     const identity=crypto.randomUUID();persistRenewal(identity,selected.publication);
+     const value=await api('start-renew',{operationId:identity,expectedPublicationSha256:selected.publication});if(generation===epoch)apply(value);return;
+    }
     // The browser records its own immutable intent before the first HTTPS writer
     // request. A timeout or Root/server absence never authorizes a second send.
     if (!fresh.allowed[command] || intent(command) !== null || storageFault
@@ -501,14 +569,17 @@
     const value = await api(command,extra); if (generation === epoch) apply(value);
    });
   } catch (_) { if (generation === epoch) { stale = true; message('unknown'); } }
-  finally { if (generation === epoch) { busy = false; render(); if (selected.command === 'revoke' && current?.retired) el('console').focus(); } }
+  finally { if (generation === epoch) { busy = false; render(); if (selected.command === 'revoke' && current?.retired) el('console').focus();
+   if(selected.command==='start-renew')el(allowed('start')?'start':'query').focus();
+   if(selected.command==='renewal-close')el(allowed('start-renew')?'start-renew':'query').focus(); } }
  }
- function confirm(command) {
-  if (!allowed(command)) return;
-  const dialog = el('confirm'); proposal = {command,binding:JSON.stringify(binding(current.handoff)),receipt:current.publication.recoveryReceiptSha256};
+ function confirm(command,renewalId) {
+  if (!allowed(command,renewalId)) return;
+  const dialog = el('confirm'); proposal = {command,binding:JSON.stringify(binding(current.handoff)),receipt:current.publication.recoveryReceiptSha256,publication:current.publication.publicationSha256,renewalId};
   el('confirm-title').textContent = words[language][command === 'continue' ? 'continue' : command + 'Title'];
   el('confirm-help').textContent = words[language][command === 'continue' ? 'continueHelp' : command + 'Help'];
   el('confirm-id').textContent = current.handoff.handoffId; el('confirm-ring').textContent = current.handoff.ringSha256;
+  el('confirm-renewal').hidden=command!=='renewal-close';el('confirm-renewal-id').textContent=renewalId||'';
   dialog.returnValue = ''; dialog.showModal();
  }
  function forget() {
@@ -525,7 +596,7 @@
  el('auth').addEventListener('submit',event => { event.preventDefault(); query(); });
  el('forget').addEventListener('click',forget);
  el('token').addEventListener('input',() => { epoch++; authorization = ''; current = null; stale = false; storageFault = false; proposal = null; render(); });
- for (const command of [...writers,'revoke']) el(command).addEventListener('click',() => confirm(command));
+ for (const command of [...writers,'revoke','start-renew']) el(command).addEventListener('click',() => confirm(command));
  el('confirm').addEventListener('close',() => {
   const accepted = el('confirm').returnValue === 'accept', selected = proposal;
   el('confirm').returnValue = ''; proposal = null; if (accepted && selected) forward(selected);

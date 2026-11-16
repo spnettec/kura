@@ -16,7 +16,8 @@ from kura_key_service import (Failure, require, fields, digest, operation_id, en
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
 from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
-    handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT)
+    handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
+    validate_start_lease, START_LEASE_CONTEXT)
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
@@ -839,28 +840,159 @@ class Handoffs:
                 and publication['cohortSha256'] == request['expectedCohortSha256']
                 and publication['stoppedWriter'] == {key: item for key, item in value['owner'].items() if key != 'uid'}, 'CONFLICT')
 
+    @staticmethod
+    def renewal_request(value, request):
+        identity = operation_id(request.get('operationId')); digest(request.get('expectedPublicationSha256'))
+        require(identity not in {value['request'][key] for key in
+            ('handoffId','preparationId','verificationId','publicationId','startOperationId')}, 'CONFLICT')
+        return dict(schema=1, action='generation-start-lease', operationId=identity,
+            handoffId=value['request']['handoffId'], expectedPublicationSha256=request['expectedPublicationSha256'])
+
+    def lease_record(self, value, identity):
+        record = self.manager.record(operation_id(identity))
+        if record is None: return None
+        require(record['action'] == 'generation-start-lease' and record['intent']['handoffId'] == value['request']['handoffId'], 'CONFLICT')
+        native = self.renewal_request(value, dict(operationId=identity,
+            expectedPublicationSha256=record['intent']['expectedPublicationSha256']))
+        require(hmac.compare_digest(record['requestTag'], self.manager.sender_admissions.tag(native)), 'CONFLICT')
+        if record['state'] == 'SUCCEEDED':
+            lease = record['response']
+            try: validate_start_lease(lease, identity)
+            except Refused: raise Failure('UNSAFE_JOURNAL') from None
+            require(lease['grantSha256'] == hashlib.sha256(encode(value)).hexdigest()
+                and lease['namespaceSha256'] == self.manager.gwt_namespace()['namespaceSha256']
+                and lease['bootId'] == value['owner']['bootId']
+                and all(lease[key] == value['request'][key] for key in ('handoffId','publicationId','startOperationId'))
+                and hmac.compare_digest(lease['receiptTag'], hmac.new(self.secret(), START_LEASE_CONTEXT
+                    + encode({key:item for key,item in lease.items() if key != 'receiptTag'}), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
+        return record
+
+    def leases(self, value):
+        result = []
+        for path in self.manager.operations.iterdir():
+            require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+            record = self.manager.record(path.name[:-5])
+            if record['action'] == 'generation-start-lease' and record['intent']['handoffId'] == value['request']['handoffId']:
+                result.append(self.lease_record(value, record['operationId']))
+        return result
+
+    def start_window(self, value):
+        return any(row['state'] == 'SUCCEEDED' and row['response']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+            and row['response']['issuedBoottimeNs'] <= self.clock() <= row['response']['expiresBoottimeNs'] for row in self.leases(value))
+
+    def renewal_preflight(self, value):
+        manager = self.manager; request = value['request']; component = self.generations
+        require(self.revocation(value) is None, 'HANDOFF_REVOKED')
+        require(value['owner']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(), 'OWNER_CHANGED')
+        original = manager.record(request['publicationId'])
+        require(original is not None and original['action'] == 'generation-publish' and original['state'] == 'SUCCEEDED'
+            and hmac.compare_digest(original['requestTag'], manager.sender_admissions.tag(self.operation_request(value))), 'UNRESOLVED_OPERATION')
+        publication = component.current(); self.publication_matches(value, publication)
+        manager.sender_admissions.require_no_native(request['startOperationId'])
+        require(not any(row['target']['operationId'] == request['startOperationId'] for row in manager.sender_admissions.records()), 'UNRESOLVED_OPERATION')
+        manager.settled()
+        _, metadata, _ = manager.generations(); cohort = manager.require_generation_cohort()
+        require(metadata == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256']
+            == request['expectedCohortSha256'], 'COHORT_CHANGED')
+        component.no_optional_agent(); component.dropin(generation_mode=True)
+        uid = pwd.getpwnam('kurad').pw_uid
+        require(value['owner']['uid'] == uid, 'OWNER_CHANGED')
+        component.stopped(generation_mode=True, uid=uid)
+        for path in manager.operations.iterdir():
+            row = manager.record(path.name[:-5])
+            require(row['action'] != 'generation-core-start' or row['response']['publicationId'] != request['publicationId'], 'START_ALREADY_AUTHORIZED')
+        with manager.exclusive_writers() as locked:
+            require((locked.st_dev, locked.st_ino) == (value['owner']['lockDevice'], value['owner']['lockInode']), 'UNSAFE_WRITER_STATE')
+            component.stopped(generation_mode=True, uid=uid)
+        return original['response']['publicationSha256']
+
+    def lease_status(self, value):
+        rows = self.leases(value)
+        active = [row for row in rows if row['state'] == 'SUCCEEDED' and row['response']['issuedBoottimeNs'] <= self.clock()
+            <= row['response']['expiresBoottimeNs'] and row['response']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip()]
+        publication = None; valid = False
+        try:
+            with self.manager.lock(self.manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                publication = self.renewal_preflight(value); valid = True
+        except (Failure, Refused, OSError): pass
+        latest = max(active, key=lambda row: row['response']['issuedBoottimeNs']) if active else None
+        return dict(schema=1, state='START_LEASE_STATUS', scope='ORIGINAL_FIRST_START_ONLY',
+            handoffId=value['request']['handoffId'], publicationId=value['request']['publicationId'],
+            startOperationId=value['request']['startOperationId'], publicationSha256=publication,
+            renewalOperationId=latest['operationId'] if latest and valid else None,
+            windowOpen=bool(latest and valid), renewalAllowed=valid and not active and self.clock() > value['expiresBoottimeNs'])
+
+    def renew_start(self, value, request):
+        manager = self.manager; native = self.renewal_request(value, request); identity = native['operationId']
+        with manager.sender_admissions.locked(), manager.lock(manager.state/'admission.lock', True):
+            manager.maintenance()
+            prior = self.lease_record(value, identity)
+            if prior is not None:
+                require(prior['intent']['expectedPublicationSha256'] == request['expectedPublicationSha256'], 'CONFLICT')
+                return manager.public_record(prior)  # Never extend this original lease or retry its metadata intent.
+            for path in (manager.state/'handoffs').iterdir():
+                require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
+                authority = self.load(operation_id(path.name[:-5]))
+                require(identity not in {authority['request'][key] for key in
+                    ('handoffId','preparationId','verificationId','publicationId','startOperationId')}, 'CONFLICT')
+            manager.sender_admissions.require_no_native(identity)
+            require(self.clock() > value['expiresBoottimeNs'] and not self.start_window(value), 'HANDOFF_WINDOW_OPEN')
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                published = self.renewal_preflight(value)
+                require(published == request['expectedPublicationSha256'], 'CONFLICT')
+                manager.journal_admission()
+                issued = self.clock(); wall = int(time.time())
+                lease = dict(schema=1, operationId=identity, action='generation-start-lease', state='SUCCEEDED',
+                    purpose='yofc.kura.generation-start-lease.v1', scope='ORIGINAL_FIRST_START_ONLY',
+                    handoffId=value['request']['handoffId'], publicationId=value['request']['publicationId'],
+                    startOperationId=value['request']['startOperationId'], publicationSha256=published,
+                    grantSha256=hashlib.sha256(encode(value)).hexdigest(), namespaceSha256=manager.gwt_namespace()['namespaceSha256'],
+                    bootId=value['owner']['bootId'], issuedBoottimeNs=issued, expiresBoottimeNs=issued+900_000_000_000,
+                    issuedAt=wall, expiresAt=wall+900, credentialsChanged=False, startRequested=False)
+                lease['receiptTag'] = hmac.new(self.secret(), START_LEASE_CONTEXT+encode(lease), hashlib.sha256).hexdigest()
+                record = dict(schema=1, operationId=identity, action='generation-start-lease',
+                    requestTag=manager.sender_admissions.tag(native), intent={key:native[key] for key in ('handoffId','expectedPublicationSha256')},
+                    state='INTENT', response=None)
+                try:
+                    manager.atomic(manager.operations/(identity+'.json'), encode(record), no_replace=True)
+                    record.update(state='SUCCEEDED', response=lease)
+                    manager.atomic(manager.operations/(identity+'.json'), encode(record))
+                    return lease
+                except (Failure, Refused, OSError): raise Failure('UNKNOWN') from None
+
     def command(self, request, pid, uid, daemon, recovery):
         command = request.get('command')
         require(command in ('info', 'publication-read', 'publish', 'continue', 'start-read', 'start',
-            'revoke', 'revocation-read'), 'INVALID_ARGUMENT')
-        fields(request, {'schema', 'action', 'token', 'command'} | ({'expectedRecoveryReceiptSha256'} if command == 'continue' else set()))
+              'revoke', 'revocation-read', 'start-renew', 'start-lease-read', 'start-lease-status'), 'INVALID_ARGUMENT')
+        extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else {'operationId','expectedPublicationSha256'} if command == 'start-renew' else {'operationId'} if command == 'start-lease-read' else set()
+        fields(request, {'schema', 'action', 'token', 'command'} | extra)
         require(type(request['schema']) is int and request['schema'] == 1
                 and request['action'] == 'generation-handoff-command', 'INVALID_ARGUMENT')
         if command == 'continue':
             digest(request['expectedRecoveryReceiptSha256'])
         require(uid == 0 or uid == daemon or recovery is not None and uid == recovery, 'FORBIDDEN')
-        if command in ('publish', 'continue', 'start'):
+        if command in ('publish', 'continue', 'start', 'start-renew'):
             require(uid == 0 or recovery is not None and uid == recovery, 'FORBIDDEN')
         manager = self.manager
         if command == 'revoke':
             return self.revoke(request['token'], pid, uid, daemon, recovery)
+        if command == 'start-renew' and uid != 0: manager.recovery_sender_owner(pid, uid)
+        if command == 'start-lease-status':
+            with manager.sender_admissions.locked(), manager.lock(manager.state/'admission.lock', False):
+                manager.maintenance()
+                return self.lease_status(self.authenticate(request['token']))
         with manager.lock(manager.state / 'admission.lock', False):
             manager.maintenance()
             value = self.authenticate(request['token'])
             if command == 'revocation-read': return self.revocation_read(value)
             if command == 'info': return self.metadata(value)
-            if command in ('publish', 'continue', 'start'):
+            if command == 'start-lease-read':
+                record = self.lease_record(value, request['operationId'])
+                return manager.public_record(record) if record else dict(schema=1, operationId=operation_id(request['operationId']),
+                    state='NOT_RECORDED', scope='ORIGINAL_OPERATION_ONLY')
+            if command in ('publish', 'continue', 'start', 'start-renew'):
                 require(self.revocation(value) is None, 'HANDOFF_REVOKED')
+        if command == 'start-renew': return self.renew_start(value, request)
         original = value['request']
         start = command in ('start', 'start-read')
         record = self.original(value, start=start)
@@ -880,7 +1012,7 @@ class Handoffs:
                 self.publication_matches(value, receipt[1]['publication'])
             return self.generations.recover_publication(dict(schema=1, action='generation-publication-recover',
                 operationId=original['publicationId'], expectedRecoveryReceiptSha256=request['expectedRecoveryReceiptSha256']))
-        require(self.window_open(value), 'HANDOFF_EXPIRED')
+        require(self.window_open(value) or command == 'start' and self.start_window(value), 'HANDOFF_EXPIRED')
         # The recorded authority is synced before a new key operation can be
         # admitted. Reading a grant never concludes a remote operation succeeded.
         manager.sync(manager.state / 'handoffs')

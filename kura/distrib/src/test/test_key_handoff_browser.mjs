@@ -20,8 +20,8 @@ async function control(command,extra={}){child.stdin.write(JSON.stringify({comma
 let fixture=await read();
 const browser=await chromium.launch({headless:true});
 const results=[];
-async function setup(options={}){
- fixture=await control('reset');
+async function setup(options={},lease=false){
+ fixture=await control(lease?'lease-reset':'reset');
  const context=await browser.newContext({ignoreHTTPSErrors:true,...options});
  context.setDefaultTimeout(10000);
  return {context,page:await context.newPage()};
@@ -116,6 +116,72 @@ try{
   await page.keyboard.press('Escape');await control('set',{values:{expired:true}});await page.locator('#handoff-query').click();
   await expect(page.locator('#handoff-notice')).toContainText('授权窗口已关闭');await expect(page.locator('#handoff-publish')).toBeDisabled();
   assert.equal((await stats()).writes.publish,0);await context.close();results.push('mobile native confirmation and expired authority stay read-only');
+ }
+ {
+  const {context,page}=await setup({},true);await load(page);await query(page);
+  await expect(page.locator('#handoff-start')).toBeDisabled();await expect(page.locator('#handoff-start-renew')).toBeEnabled();
+  await page.locator('#handoff-start-renew').click();await expect(page.locator('#handoff-confirm button[value=cancel]')).toBeFocused();
+  await dismiss(page);assert.equal((await stats()).leaseWrites,0);
+  await confirm(page,'start-renew');await expect(page.locator('#handoff-start')).toBeFocused();
+  await expect(page.locator('#handoff-notice')).toContainText('原首次启动授权已续期');
+  assert.equal((await stats()).writes.start,0);assert.equal((await stats()).writes.publish,0);
+  await page.reload();await query(page);await noBrowserBearer(page);
+  await confirm(page,'start');assert.equal((await stats()).writes.start,1);assert.equal((await stats()).leaseWrites,1);
+  await context.close();results.push('explicit 15-minute original-start renewal, safe native confirmation, retained browser history and separate fixed-ID startup');
+ }
+ {
+  const {context,page}=await setup({},true);await control('set',{values:{lose_lease_reply:true}});await load(page);await query(page);
+  await confirm(page,'start-renew');await page.reload();await query(page);
+  await expect(page.locator('#handoff-start')).toBeEnabled();assert.equal((await stats()).leaseWrites,1);
+  await context.close();results.push('lost successful renewal reply resolves from the original receipt across reload without redispatch');
+ }
+ {
+  const {context,page}=await setup({},true);await control('set',{values:{drop_lease_native:true}});await load(page);await query(page);
+  await confirm(page,'start-renew');await expect(page.locator('#handoff-notice')).toContainText('结果尚未核定');
+  await page.reload();await query(page);await expect(page.locator('#handoff-start-renew')).toBeDisabled();await expect(page.locator('#handoff-start')).toBeDisabled();
+  await expect(page.locator('#handoff-renewals button')).toHaveCount(0);assert.equal((await stats()).leaseWrites,1);
+  await context.close();results.push('renewal intake without original remains query-only across reload and cannot be closed, replaced or used to start');
+ }
+ {
+  const {context,page}=await setup({},true);await control('set',{values:{lose:true}});await load(page);await query(page);
+  await confirm(page,'start-renew');await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();
+  const original=await page.evaluate(()=>Object.fromEntries(Object.keys(localStorage).filter(k=>k.includes('.renewal.')).map(k=>[k,localStorage.getItem(k)])));
+  assert.equal(Object.keys(original).length,1);await page.locator('#handoff-renewals button').click();
+  await expect(page.locator('#handoff-confirm button[value=cancel]')).toBeFocused();await expect(page.locator('#handoff-confirm-renewal-id')).toHaveText(JSON.parse(Object.values(original)[0]).operationId);
+  const closed=page.waitForResponse(responseFor('renewal-close'));await page.locator('#handoff-confirm-accept').click();await (await closed).finished();
+  await expect(page.locator('#handoff-progress')).toBeHidden();await expect(page.locator('#handoff-start-renew')).toBeFocused();
+  assert.equal((await stats()).leaseCloses,1);assert.equal((await stats()).leaseWrites,0);
+  for(const [key,value]of Object.entries(original))assert.equal(await page.evaluate(k=>localStorage.getItem(k),key),value);
+  await control('set',{values:{lose:false}});await confirm(page,'start-renew');assert.equal((await stats()).leaseWrites,1);
+  assert.equal(await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('.renewal.')).length),2);
+  await context.close();results.push('unconsumed renewal requires explicit original non-admission closure; old bytes remain before a manual fresh renewal');
+ }
+ {
+  const {context,page}=await setup({},true);await page.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.includes('.renewal.'))throw Error('modeled storage failure');return original.call(this,k,v);};});
+  await load(page);await query(page);await confirm(page,'start-renew',false);assert.equal((await stats()).leaseWrites,0);
+  await expect(page.locator('#handoff-start')).toBeDisabled();await context.close();results.push('browser storage failure blocks renewal before the first HTTPS metadata writer');
+ }
+ {
+  const {context,page}=await setup({},true),other=await context.newPage();await load(page);await query(page);await load(other);await query(other);
+  await page.locator('#handoff-start-renew').click();await other.locator('#handoff-start-renew').click();
+  const first=page.waitForResponse(responseFor('start-renew'));await page.locator('#handoff-confirm-accept').click();await (await first).finished();await expect(page.locator('#handoff-progress')).toBeHidden();
+  await other.locator('#handoff-confirm-accept').click();await expect(other.locator('#handoff-confirm')).toBeHidden();await expect(other.locator('#handoff-progress')).toBeHidden();
+  assert.equal((await stats()).leaseWrites,1);await context.close();results.push('two browser tabs recheck the original publication under one lock and mint at most one current renewal');
+ }
+ {
+  const {context,page}=await setup({},true);await load(page);await query(page);await confirm(page,'start-renew');
+  const before=await page.evaluate(()=>Object.fromEntries(Object.keys(localStorage).filter(k=>k.includes('.renewal.')).map(k=>[k,localStorage.getItem(k)])));
+  await control('set',{values:{lease_window:false}});await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();
+  await confirm(page,'start-renew');assert.equal((await stats()).leaseWrites,2);assert.equal((await stats()).writes.start,0);
+  for(const [key,value]of Object.entries(before))assert.equal(await page.evaluate(k=>localStorage.getItem(k),key),value);
+  await context.close();results.push('a later expired lease permits an explicitly new renewal while retaining every prior receipt and original startup ID');
+ }
+ {
+  const {context,page}=await setup({viewport:{width:390,height:844}},true);await load(page);await query(page);await page.locator('#language').selectOption('en');
+  await expect(page.getByRole('button',{name:'Renew original first-start authorization',exact:true})).toBeEnabled();
+  await page.locator('#handoff-start-renew').click();await expect(page.locator('#handoff-confirm button[value=cancel]')).toBeFocused();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await dismiss(page);assert.equal((await stats()).leaseWrites,0);
+  await context.close();results.push('English mobile renewal labels, non-overflow layout, safe cancel focus and Escape never mint an authorization');
  }
  console.log(JSON.stringify({tests:results.length,cases:results,root:'synthetic replies',realHttps:true,productionPageAndHandler:true,nativeGenerationAcceptance:false}));
 }finally{

@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
     validate_sender_attempt, validate_sender_closed, receiver_start_intent, receiver_restore_intent,
-    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, Refused)
+    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, validate_start_lease, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -45,6 +45,12 @@ def fail(reason):
 class SenderAdmission:
     """Consume an admission attempt before RPC; create private key intentions only after Root reserves."""
     context = threading.local()
+    KINDS = frozenset(('restore','start','publish','continue','handoff-start','handoff-renewal'))
+
+    @staticmethod
+    def native_action(kind, request):
+        return ('generation-start-lease' if kind == 'handoff-renewal' else 'generation-core-start' if kind == 'handoff-start'
+            else 'generation-publish' if kind in ('publish','continue') else request['action'])
 
     def __init__(self, client, journal):
         self.client, self.journal = client, journal
@@ -52,7 +58,7 @@ class SenderAdmission:
 
     def path(self, kind, identity):
         protocol.operation_id(identity)
-        protocol.require(kind in ('restore','start','publish','continue','handoff-start'))
+        protocol.require(kind in self.KINDS)
         return self.directory/(identity+'-'+kind)
 
     def has_attempt(self, kind, identity):
@@ -127,7 +133,7 @@ class SenderAdmission:
             query=dict(schema=1,action='sender-admission-close' if close else 'sender-admission-read',admissionId=attempt['admissionId'],source='recovery',namespaceSha256=namespace['namespaceSha256'])
             reply=self.client(query)
             protocol.fields(reply,{'schema','admissionId','state','source','namespaceSha256','nativeOperationId','nativeAction','newlyReserved'})
-            action='generation-core-start' if kind=='handoff-start' else 'generation-publish' if kind in ('publish','continue') else metadata['action']
+            action=self.native_action(kind,metadata)
             protocol.require(type(reply['schema']) is int and reply['schema']==1 and reply['admissionId']==attempt['admissionId']
                 and reply['source']=='recovery' and reply['namespaceSha256']==namespace['namespaceSha256'] and reply['nativeOperationId']==identity
                 and reply['nativeAction']==action and reply['newlyReserved'] is False
@@ -159,7 +165,7 @@ class SenderAdmission:
             namespaceSha256=current['namespaceSha256'], request=request)
 
     def submit(self, kind, identity, request, callback):
-        protocol.operation_id(identity); protocol.require(kind in ('restore', 'start', 'publish', 'continue', 'handoff-start'))
+        protocol.operation_id(identity); protocol.require(kind in self.KINDS)
         protocol.require(getattr(self.context, 'current', None) is None, 'BUSY')
         if not os.path.lexists(self.directory): self.directory.mkdir(mode=0o700); self.journal.sync(self.journal.directory)
         self.journal.check_directory(self.directory)
@@ -185,7 +191,7 @@ class SenderAdmission:
         response = self.client(dict(schema=1, action='sender-reserve', admissionId=admission, source='recovery',
             namespaceSha256=realm, request=request))
         protocol.fields(response, {'schema', 'admissionId', 'state', 'source', 'namespaceSha256', 'nativeOperationId', 'nativeAction', 'newlyReserved'})
-        expected_action = 'generation-core-start' if kind == 'handoff-start' else 'generation-publish' if kind in ('publish','continue') else request['action']
+        expected_action = self.native_action(kind,request)
         protocol.require(type(response['schema']) is int and response['schema'] == 1 and response['admissionId'] == admission
             and response['state'] == 'RESERVED' and response['source'] == 'recovery' and response['namespaceSha256'] == realm
             and response['nativeOperationId'] == identity and response['nativeAction'] == expected_action
@@ -905,6 +911,56 @@ class HandoffController:
             result['publicationSha256'] = protocol.digest(value['publicationSha256'])
         return result
 
+    def renewal_attempts(self, token, info):
+        result = []
+        directory = self.journal.directory/'admissions'
+        if not os.path.lexists(directory): return result
+        self.journal.check_directory(directory)
+        paths = list(directory.iterdir()); protocol.require(len(paths) <= 256, 'CAPACITY')
+        for path in sorted(paths):
+            if not path.name.endswith('-handoff-renewal'): continue
+            identity = protocol.operation_id(path.name[:36])
+            attempt, namespace, closed = self.sender.load('handoff-renewal', identity)
+            if attempt['request']['handoffId'] != info['handoffId']: continue
+            view = self.sender.view('handoff-renewal', identity)
+            row = dict(operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED', closeAllowed=view['closeAllowed'], closed=view['closed'],
+                expectedPublicationSha256=attempt['request']['expectedPublicationSha256'])
+            original = self.call(token, 'start-lease-read', operationId=identity)
+            protocol.require(original.get('operationId') == identity, 'PROTOCOL_MISMATCH')
+            if original.get('state') == 'SUCCEEDED':
+                try: validate_start_lease(original, identity)
+                except Refused: fail('PROTOCOL_MISMATCH')
+                protocol.require(namespace is not None and not closed and original['namespaceSha256'] == namespace['namespaceSha256']
+                    and all(original[k] == info[k] for k in ('handoffId','publicationId','startOperationId'))
+                    and original['publicationSha256'] == attempt['request']['expectedPublicationSha256'], 'PROTOCOL_MISMATCH')
+                row.update(state='SUCCEEDED', resultSource='ROOT_ORIGINAL', closeAllowed=False,
+                    issuedAt=original['issuedAt'], expiresAt=original['expiresAt'])
+            elif original.get('state') == 'NOT_RECORDED':
+                protocol.fields(original, {'schema','operationId','state','scope'})
+                protocol.require(original['scope'] == 'ORIGINAL_OPERATION_ONLY', 'PROTOCOL_MISMATCH')
+                if view['phase'] == 'NOT_ADMITTED' and view['closed']:
+                    row.update(state='NOT_ADMITTED', resultSource='ROOT_ADMISSION_CLOSED', closeAllowed=False)
+            else:
+                protocol.fields(original, {'schema','operationId','state'})
+                protocol.require(original['state'] == 'UNKNOWN', 'PROTOCOL_MISMATCH')
+                row['closeAllowed'] = False
+            result.append(row)
+        return result
+
+    def start_authorization(self, token, info, publication, start):
+        if publication['state'] != 'SUCCEEDED' or start['state'] != 'NOT_RECORDED': return None
+        value = self.call(token, 'start-lease-status')
+        protocol.fields(value, {'schema','state','scope','handoffId','publicationId','startOperationId',
+            'publicationSha256','renewalOperationId','windowOpen','renewalAllowed'})
+        protocol.require(value['state'] == 'START_LEASE_STATUS' and value['scope'] == 'ORIGINAL_FIRST_START_ONLY'
+            and all(value[k] == info[k] for k in ('handoffId','publicationId','startOperationId'))
+            and type(value['windowOpen']) is bool and type(value['renewalAllowed']) is bool
+            and (value['publicationSha256'] is None or value['publicationSha256'] == publication['publicationSha256'])
+            and (value['renewalOperationId'] is None or protocol.operation_id(value['renewalOperationId']))
+            and (not value['windowOpen'] or value['renewalOperationId'] is not None and value['publicationSha256'] is not None)
+            and (not value['renewalAllowed'] or not value['windowOpen'] and not info['mutationWindowOpen'] and value['publicationSha256'] is not None), 'PROTOCOL_MISMATCH')
+        return value
+
     def snapshot(self, token):
         info = self.info(token); flags, completed, other_pending = self.local(info)
         retired = self.retirement(self.binding(info)) is not None
@@ -915,10 +971,13 @@ class HandoffController:
         if (flags['publish'] or flags['continue']) and publication['state'] == 'NOT_RECORDED':
             publication = self.unknown(info['publicationId'])
         if flags['start'] and start['state'] == 'NOT_RECORDED': start = self.unknown(info['startOperationId'])
+        renewals = self.renewal_attempts(token, info)
+        lease = self.start_authorization(token, info, publication, start)
+        unsettled_renewal = any(row['state'] == 'UNKNOWN' for row in renewals)
         original_recovery_pending = self.journal.pending() is not None
-        available = not completed and not retired and info['state'] == 'GRANT_RECORDED' and not other_pending and not original_recovery_pending
+        available = not completed and not retired and info['state'] == 'GRANT_RECORDED' and not other_pending and not original_recovery_pending and not unsettled_renewal
         allowed = dict(publish=available and info['mutationWindowOpen'] and not flags['publish'] and publication['state'] == 'NOT_RECORDED',
-            start=available and info['mutationWindowOpen'] and not flags['start'] and publication['state'] == 'SUCCEEDED' and start['state'] == 'NOT_RECORDED',
+            start=available and (info['mutationWindowOpen'] or lease is not None and lease['windowOpen']) and not flags['start'] and publication['state'] == 'SUCCEEDED' and start['state'] == 'NOT_RECORDED',
             **{'continue': available and not flags['continue'] and not flags['start'] and publication['state'] == 'UNKNOWN' and publication['recoveryReceiptSha256'] is not None})
         for command,kind,identity in (('publish','publish',info['publicationId']),('continue','continue',info['publicationId']),('start','handoff-start',info['startOperationId'])):
             if self.sender.has_attempt(kind,identity):allowed[command]=False
@@ -929,7 +988,41 @@ class HandoffController:
         except (protocol.Failure, OSError, ValueError, KeyError, TypeError): revoke_allowed = False
         return dict(schema=1, state='HANDOFF_STATUS', handoff=info, publication=publication, start=start,
             senderIntents=flags, completed=completed, allowed=allowed, originalRecoveryPending=original_recovery_pending,
-            retired=retired, revocationAllowed=revoke_allowed)
+            retired=retired, revocationAllowed=revoke_allowed, startAuthorization=lease, startRenewals=renewals,
+            renewalAllowed=available and lease is not None and lease['renewalAllowed'] and not flags['start']
+                and not self.sender.has_attempt('handoff-start', info['startOperationId']))
+
+    def renew_start(self, value):
+        command = value['command']; token = self.token(value['token']); identity = protocol.operation_id(value['operationId'])
+        extra = {'expectedPublicationSha256'} if command == 'start-renew' else set()
+        protocol.fields(value, {'token','command','operationId'} | extra)
+        with self.journal.lock():
+            current = self.snapshot(token); info = current['handoff']; binding = self.binding(info)
+            protocol.require(identity not in {info[key] for key in self.IDS}, 'CONFLICT')
+            if command == 'renewal-close':
+                row = next((row for row in current['startRenewals'] if row['operationId'] == identity), None)
+                protocol.require(row is not None and (row['closeAllowed'] or row['closed']) and row['state'] != 'SUCCEEDED', 'UNRESOLVED_OPERATION')
+                self.sender.close('handoff-renewal', identity)
+                return self.snapshot(token)
+            protocol.digest(value['expectedPublicationSha256'])
+            if self.sender.has_attempt('handoff-renewal', identity):
+                saved = self.sender.load('handoff-renewal', identity)[0]['request']
+                protocol.require(saved['handoffId'] == info['handoffId'] and saved['expectedPublicationSha256'] == value['expectedPublicationSha256'], 'CONFLICT')
+                return current
+            protocol.require(current['renewalAllowed'] and current['publication']['publicationSha256'] == value['expectedPublicationSha256'], 'UNRESOLVED_OPERATION')
+            request = dict(schema=1, action='generation-handoff-command', token=token, command='start-renew',
+                operationId=identity, expectedPublicationSha256=value['expectedPublicationSha256'])
+            def forward():
+                slot = self.directory/info['handoffId']
+                if not os.path.lexists(slot):
+                    protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+                    slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
+                try: self.call(token, 'start-renew', operationId=identity, expectedPublicationSha256=value['expectedPublicationSha256'])
+                except (protocol.Failure, OSError, KeyError, ValueError, TypeError): pass
+                try: return self.snapshot(token)
+                except (protocol.Failure, OSError, KeyError, ValueError, TypeError):
+                    return dict(schema=1, state='UNKNOWN', handoffId=info['handoffId'], scope='ORIGINAL_HANDOFF_ONLY')
+            return self.sender.submit('handoff-renewal', identity, request, forward)
 
     def admission(self, token, step, *, close=False):
         protocol.require(step in ('publish','continue','start'))
@@ -948,6 +1041,7 @@ class HandoffController:
 
     def execute(self, value):
         command = value.get('command')
+        if command in ('start-renew','renewal-close'): return self.renew_start(value)
         if command == 'revoke':
             protocol.fields(value, {'token', 'command'}); token = self.token(value['token'])
             with self.journal.lock(): return self.revoke(token)

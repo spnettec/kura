@@ -55,6 +55,11 @@ class Root:
         command = request['command']; extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else set()
         assert set(request) == {'schema', 'action', 'token', 'command'} | extra
         if command == 'info': return copy.deepcopy(self.info)
+        if command == 'start-lease-status':
+            return dict(schema=1, state='START_LEASE_STATUS', scope='ORIGINAL_FIRST_START_ONLY',
+                handoffId=self.info['handoffId'], publicationId=self.info['publicationId'], startOperationId=self.info['startOperationId'],
+                publicationSha256=self.publication['publicationSha256'] if self.publication and self.publication['state']=='SUCCEEDED' else None,
+                renewalOperationId=None, windowOpen=False, renewalAllowed=False)
         if command in self.writes:
             self.writes[command] += 1
             if not self.absent:

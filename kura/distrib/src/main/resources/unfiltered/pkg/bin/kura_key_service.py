@@ -225,8 +225,8 @@ class SenderAdmissions:
             require(action in ('restore', 'generation-restore', 'core-start', 'core-start-after-maintenance', 'generation-handoff-command'), 'FORBIDDEN')
         if action == 'generation-handoff-command':
             component = self.manager.handoff_component(); grant = component.authenticate(request.get('token'))
-            command = request.get('command'); require(command in ('publish', 'continue', 'start'), 'FORBIDDEN')
-            native = component.operation_request(grant, start=command == 'start')
+            command = request.get('command'); require(command in ('publish', 'continue', 'start', 'start-renew'), 'FORBIDDEN')
+            native = component.renewal_request(grant, request) if command == 'start-renew' else component.operation_request(grant, start=command == 'start')
             if command == 'continue':
                 receipt = component.generations.recovery_receipt(native['operationId'])
                 require(receipt is not None and hashlib.sha256(receipt[0]).hexdigest() == request.get('expectedRecoveryReceiptSha256'), 'UNRESOLVED_OPERATION')
@@ -660,8 +660,8 @@ class Manager:
             record = validate_record(record, identity)
         except LifecycleRefused:
             raise Failure("UNSAFE_JOURNAL") from None
-        if record['action'] == 'generation-cancel':
-            original = dict(schema=1, action='generation-cancel', operationId=identity, **record['intent'])
+        if record['action'] in ('generation-cancel', 'generation-start-lease'):
+            original = dict(schema=1, action=record['action'], operationId=identity, **record['intent'])
             secret = self.read(self.state / 'journal.key', 32)
             require(len(secret) == 32 and hmac.compare_digest(record['requestTag'],
                     hmac.new(secret, encode(original), hashlib.sha256).hexdigest()), 'UNSAFE_JOURNAL')
@@ -827,7 +827,8 @@ class Manager:
         require(hashlib.sha256(raw).hexdigest() == binding['manifestSha256'], 'COHORT_CHANGED')
         relative = 'bin/' + name + '.py'
         expected = decode(raw)['generation']['files'][relative]
-        source = policy.read(home / relative, limit=65536, private=False)
+        # Cohort-pinned executable sources have a separate bound from wire frames.
+        source = policy.read(home / relative, limit=131072, private=False)
         require(hashlib.sha256(source).hexdigest() == expected, 'COHORT_CHANGED')
         namespace = {'__name__': name, '__file__': str(home / relative)}
         exec(compile(source, str(home / relative), 'exec'), namespace)
@@ -1670,7 +1671,7 @@ SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'gener
 def sender_mutation(request):
     return request.get('action') in SENDER_MUTATIONS and not (
         request.get('action') == 'generation-handoff-command' and request.get('command') in
-        ('info', 'publication-read', 'start-read', 'revoke', 'revocation-read'))
+        ('info', 'publication-read', 'start-read', 'revoke', 'revocation-read', 'start-lease-status', 'start-lease-read'))
 
 
 def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):

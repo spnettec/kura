@@ -116,7 +116,7 @@ def validate_sender_attempt(value, source):
         require(value['kind'] in ('LEGACY', 'GENERATION', 'HANDOFF'))
         require(validate_gwt_intent(value['kind'], value['request']) == value['nativeOperationId'])
     else:
-        require(source == 'recovery' and value['kind'] in ('restore', 'start', 'publish', 'continue', 'handoff-start'))
+        require(source == 'recovery' and value['kind'] in ('restore', 'start', 'publish', 'continue', 'handoff-start', 'handoff-renewal'))
         request = value['request']; action = request.get('action')
         if value['kind'] == 'restore':
             require(set(request) == {'schema', 'action', 'operationId', 'expectedKeySha256', 'backupSha256'}
@@ -130,10 +130,12 @@ def validate_sender_attempt(value, source):
                 and is_digest(request['expectedKeySha256']))
             if extra: require(canonical_id(request['predecessorStartOperationId']) and canonical_id(request['maintenanceId']) and is_digest(request['manifestSha256']))
         else:
-            command = 'start' if value['kind'] == 'handoff-start' else value['kind']; extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else set()
+            command = 'start' if value['kind'] == 'handoff-start' else 'start-renew' if value['kind'] == 'handoff-renewal' else value['kind']
+            extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else {'operationId','expectedPublicationSha256'} if command == 'start-renew' else set()
             require(set(request) == {'schema', 'action', 'command', 'handoffId'} | extra
                 and action == 'generation-handoff-command' and request['command'] == command and canonical_id(request['handoffId']))
-            if extra: require(is_digest(request['expectedRecoveryReceiptSha256']))
+            if command == 'continue': require(is_digest(request['expectedRecoveryReceiptSha256']))
+            if command == 'start-renew': require(request['operationId'] == value['nativeOperationId'] and is_digest(request['expectedPublicationSha256']))
         require(type(request.get('schema')) is int and request['schema'] == 1)
     return value
 
@@ -208,6 +210,13 @@ def check_sender_attempt(policy, value, namespace, source, uid):
     if source == 'recovery' and value['kind'] == 'restore':
         require(root['target']['directory'] == 'operations' and root['target']['action'] == 'restore'
             and root['target']['continuation'] is False, 'Recovery reservation has a different native target')
+    if source == 'recovery' and value['kind'] == 'handoff-renewal':
+        request = value['request']
+        native = dict(schema=1, action='generation-start-lease', operationId=value['nativeOperationId'],
+            handoffId=request['handoffId'], expectedPublicationSha256=request['expectedPublicationSha256'])
+        require(root['target'] == dict(directory='operations', action='generation-start-lease', operationId=value['nativeOperationId'],
+            continuation=False, requestTag=hmac.new(secret, encoded(native), hashlib.sha256).hexdigest()),
+            'Start renewal reservation does not match the original metadata intent')
     if source == 'recovery' and value['kind'] == 'start':
         tag = hmac.new(secret, encoded(value['request']), hashlib.sha256).hexdigest()
         require(root['target']['directory'] == 'startups' and root['target']['action'] == value['request']['action']
@@ -475,16 +484,41 @@ def validate_publication(value):
     return value
 
 
+START_LEASE_CONTEXT = b'yofc.kura.generation-start-lease.v1\0'
+
+
+def validate_start_lease(value, identity):
+    names = {'schema','operationId','action','state','purpose','scope','handoffId','publicationId','startOperationId',
+        'publicationSha256','grantSha256','namespaceSha256','bootId','issuedBoottimeNs','expiresBoottimeNs',
+        'issuedAt','expiresAt','receiptTag','credentialsChanged','startRequested'}
+    require(isinstance(value, dict) and set(value) == names and type(value['schema']) is int and value['schema'] == 1
+        and value['action'] == 'generation-start-lease' and value['state'] == 'SUCCEEDED'
+        and value['purpose'] == 'yofc.kura.generation-start-lease.v1' and value['scope'] == 'ORIGINAL_FIRST_START_ONLY'
+        and value['operationId'] == identity and all(canonical_id(value[k]) for k in
+            ('operationId','handoffId','publicationId','startOperationId','bootId'))
+        and len({value[k] for k in ('operationId','handoffId','publicationId','startOperationId')}) == 4
+        and all(is_digest(value[k]) for k in ('publicationSha256','grantSha256','namespaceSha256','receiptTag'))
+        and all(type(value[k]) is int and value[k] >= 0 for k in ('issuedBoottimeNs','expiresBoottimeNs','issuedAt','expiresAt'))
+        and value['expiresBoottimeNs'] - value['issuedBoottimeNs'] == 900_000_000_000
+        and value['expiresAt'] - value['issuedAt'] == 900 and value['credentialsChanged'] is False and value['startRequested'] is False)
+    return value
+
+
 def validate_record(record, identity):
     cancel = isinstance(record, dict) and record.get('action') == 'generation-cancel'
+    lease = isinstance(record, dict) and record.get('action') == 'generation-start-lease'
     require(isinstance(record, dict) and set(record) ==
-            {"schema", "operationId", "action", "requestTag", "state", "response"} | ({'intent'} if cancel else set()))
+            {"schema", "operationId", "action", "requestTag", "state", "response"} | ({'intent'} if cancel or lease else set()))
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
             and record["operationId"] == identity and record["action"] in
               ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify",
-                 "generation-publish", "generation-core-start", "generation-cancel")
+                 "generation-publish", "generation-core-start", "generation-cancel", "generation-start-lease")
             and record["state"] in ("INTENT", "SUCCEEDED") and is_digest(record["requestTag"]))
     response = record["response"]
+    if lease:
+        intent = record['intent']
+        require(isinstance(intent, dict) and set(intent) == {'handoffId','expectedPublicationSha256'}
+            and canonical_id(intent['handoffId']) and intent['handoffId'] != identity and is_digest(intent['expectedPublicationSha256']))
     if cancel:
         intent = record['intent']
         require(isinstance(intent, dict) and set(intent) == {
@@ -493,6 +527,10 @@ def validate_record(record, identity):
                 and is_digest(intent['expectedHistorySha256']) and is_digest(intent['expectedRingSha256']))
     if record["state"] == "INTENT":
         require(response is None)
+        return record
+    if lease:
+        validate_start_lease(response, identity)
+        require(response['handoffId'] == intent['handoffId'] and response['publicationSha256'] == intent['expectedPublicationSha256'])
         return record
     if cancel:
         require(isinstance(response, dict) and set(response) == {

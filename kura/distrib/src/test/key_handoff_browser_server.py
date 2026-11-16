@@ -15,6 +15,7 @@ import threading
 
 import test_key_handoff_recovery as model
 from sender_admission_model import SenderModel
+from test_key_start_lease_receiver import LeaseRoot
 
 temporary = tempfile.TemporaryDirectory(prefix='kura-browser-handoff-')
 directory = Path(temporary.name)
@@ -25,15 +26,20 @@ subprocess.run(['/usr/bin/openssl','req','-x509','-newkey','rsa:2048','-nodes','
 tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); tls.minimum_version = ssl.TLSVersion.TLSv1_2
 tls.load_cert_chain(certificate,key)
 assets = Path(__file__).resolve().parents[1]/'main/resources/unfiltered/pkg/share/key-recovery'
-server = None; sequence = 0
+server = None; sequence = 0; lease_root = None
 
-def reset():
-    global root, journal, sequence
+def reset(lease=False):
+    global root, journal, sequence, lease_root
     sequence += 1; state = directory/('case-'+str(sequence)); state.mkdir(mode=0o700)
-    root = model.Root(); journal = model.recovery.Journal(state)
-    controller = model.recovery.Controller(root,journal, sender=SenderModel())
+    lease_root = LeaseRoot() if lease else None
+    root = lease_root.handoff if lease else model.Root(); journal = model.recovery.Journal(state)
+    if lease:
+        root.publication = root.published(); root.info['mutationWindowOpen'] = False
+    client = lease_root if lease else root
+    sender = model.recovery.SenderAdmission(client,journal) if lease else SenderModel()
+    controller = model.recovery.Controller(client,journal, sender=sender)
     if server is not None:
-        server.controller = controller; server.handoffs = model.recovery.HandoffController(root,journal, sender=SenderModel())
+        server.controller = controller; server.handoffs = model.recovery.HandoffController(client,journal, sender=sender)
     return controller
 
 controller = reset()
@@ -47,18 +53,22 @@ print(json.dumps(describe()),flush=True)
 try:
     for line in sys.stdin:
         request = json.loads(line); command = request['command']
-        if command == 'reset':
-            reset(); response = describe()
+        if command in ('reset','lease-reset'):
+            reset(lease=command=='lease-reset'); response = describe()
         elif command == 'set':
             for name,value in request['values'].items():
                 if name == 'expired': root.info['mutationWindowOpen'] = not value
+                elif name in ('lease_window','drop_lease_native','lose_lease_reply','lose'):
+                    assert lease_root is not None and type(value) is bool
+                    setattr(lease_root,name,value)
                 else:
                     assert name in ('partial','absent','loss') and type(value) is bool
                     setattr(root,name,value)
             response = dict(ok=True)
         elif command == 'stats':
             files = list(journal.directory.rglob('*.json'))
-            response = dict(writes=root.writes,rootCalls=len(root.calls),
+            response = dict(writes=root.writes,rootCalls=len(root.calls),leaseWrites=lease_root.lease_writes if lease_root else 0,
+                leaseCloses=lease_root.closes if lease_root else 0,
                 bearerOnDisk=any(root.token.encode() in path.read_bytes() for path in files),metadataFiles=len(files))
         elif command == 'stop':
             print(json.dumps(dict(ok=True)),flush=True); break
