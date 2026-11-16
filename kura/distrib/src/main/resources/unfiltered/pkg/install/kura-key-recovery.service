@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: EPL-2.0
 [Unit]
-Description=Kura original-key HTTPS recovery
+Description=Kura original-key HTTPS recovery and fixed-operation handoff
 Requires=kura-key-service.socket
 After=kura-key-service.socket network.target
 ConditionPathExists=/etc/kura/credentials/provisioned.json
-ConditionPathExists=|!/etc/kura/credentials/kura_encryption_key
-ConditionPathExists=|/var/lib/kura-key-recovery/pending.json
 ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
 
 [Service]

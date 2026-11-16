@@ -8,9 +8,11 @@
  <link rel="stylesheet" href="/recovery.css">
  <script src="/recovery.js" defer></script>
 </head>
-<body>
+<body data-view="recovery">
  <main>
   <header><span>YOFC Kura</span><label><span data-i18n="language">语言</span> <select id="language" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select></label></header>
+  <nav aria-label="Recovery"><a href="/">原密钥恢复 / Original-key recovery</a> · <a href="/handoff">轮换交接 / Rotation handoff</a></nav>
+  <div id="cold-flow">
   <h1 data-i18n="title">恢复网关原密钥</h1>
   <p data-i18n="intro">上传此前下载的加密备份并输入口令。网关将校验保留的原指纹，只补回与本网关匹配的密钥。</p>
   <section aria-label="Key status">
@@ -48,6 +50,48 @@
    <button id="query-original" type="button" data-i18n="queryOriginal">查询此原操作</button>
    <p><a id="console" data-i18n="console">返回网关控制台</a></p>
   </section>
+  </div>
+  <div id="handoff-flow" hidden>
+   <h1 data-handoff-i18n="title">网关密钥轮换交接</h1>
+   <p data-handoff-i18n="intro">请先核对浏览器证书与此前保存的证书指纹，再输入从 HTTPS 管理控制台取得的本次交接授权。</p>
+   <form id="handoff-auth" method="post" action="/api/handoff">
+    <label for="handoff-token" data-handoff-i18n="token">本次交接授权</label>
+    <p id="handoff-safety" class="hint" data-handoff-i18n="safety">授权仅保留在本页内存中。刷新或关闭页面前，请保留原授权材料；查询始终使用原申请编号。</p>
+    <input id="handoff-token" type="password" autocomplete="off" maxlength="128" spellcheck="false" required aria-describedby="handoff-safety">
+    <button id="handoff-query" type="submit" data-handoff-i18n="query">核对原交接申请</button>
+    <button id="handoff-forget" type="button" data-handoff-i18n="forget">清除此页授权</button>
+   </form>
+   <progress id="handoff-progress" hidden aria-label="Reading handoff information"></progress>
+   <p id="handoff-notice" role="status" aria-atomic="true"></p>
+   <section id="handoff-details" hidden>
+    <h2 data-handoff-i18n="details">本次申请</h2>
+    <dl>
+     <dt data-handoff-i18n="identity">交接申请编号</dt><dd><code id="handoff-id"></code></dd>
+     <dt data-handoff-i18n="operator">已登录操作人</dt><dd id="handoff-operator"></dd>
+     <dt data-handoff-i18n="ring">准备密钥集合指纹（SHA-256）</dt><dd><code id="handoff-ring"></code></dd>
+     <dt data-handoff-i18n="cohort">安装组件指纹（SHA-256）</dt><dd><code id="handoff-cohort"></code></dd>
+    </dl>
+    <ol>
+     <li><h3 data-handoff-i18n="publishTitle">停止 Kura 并发布准备密钥集合</h3>
+      <p data-handoff-i18n="publishHelp">确认已保存并核验加密备份后，明确停止 Kura，保留原密钥及旧数据，再发布本次准备的密钥集合。</p>
+      <p id="handoff-publication-state"></p><button id="handoff-publish" type="button" disabled data-handoff-i18n="publish">确认停机发布</button>
+      <button id="handoff-continue" type="button" disabled data-handoff-i18n="continue">按原认证回执继续发布</button></li>
+     <li><h3 data-handoff-i18n="startTitle">单独申请启动 Kura</h3>
+      <p data-handoff-i18n="startHelp">原发布回执确认后，可单独申请启动。收到系统启动请求回执后，请回到控制台核对 Kura 是否就绪。</p>
+      <p id="handoff-start-state"></p><button id="handoff-start" type="button" disabled data-handoff-i18n="start">确认申请启动</button></li>
+     <li><h3 data-handoff-i18n="completeTitle">确认原请求回执</h3>
+      <p data-handoff-i18n="completeHelp">核对原发布与启动请求回执后，确认结束本次交接申请。</p>
+      <button id="handoff-complete" type="button" disabled data-handoff-i18n="complete">确认本次请求回执</button></li>
+    </ol>
+    <p><a id="handoff-console" data-handoff-i18n="console">返回网关控制台</a></p>
+   </section>
+   <dialog id="handoff-confirm" aria-labelledby="handoff-confirm-title">
+    <h2 id="handoff-confirm-title"></h2><p id="handoff-confirm-help"></p>
+    <p><span data-handoff-i18n="identity">交接申请编号</span><br><code id="handoff-confirm-id"></code></p>
+    <p><span data-handoff-i18n="ring">准备密钥集合指纹（SHA-256）</span><br><code id="handoff-confirm-ring"></code></p>
+    <form method="dialog"><button value="cancel" autofocus data-handoff-i18n="cancel">取消</button><button id="handoff-confirm-accept" value="accept" data-handoff-i18n="accept">确认本次操作</button></form>
+   </dialog>
+  </div>
  </main>
 </body>
 </html>

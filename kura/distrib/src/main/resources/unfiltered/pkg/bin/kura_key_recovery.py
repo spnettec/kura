@@ -27,6 +27,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
+from kura_key_service_lifecycle import HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding, Refused
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -323,6 +324,7 @@ class Controller:
             if prior is not None:
                 protocol.require(prior == intent, 'CONFLICT')
                 return self.original(identity, expected)
+            protocol.require(not HandoffController(self.client, self.journal).pending(), 'UNRESOLVED_OPERATION')
             # Read the original before admission. A previously accepted Root UUID
             # cannot be sent again even when this UI has no local slot for it.
             original = self.call('operation-read', operationId=identity)
@@ -381,6 +383,7 @@ class Controller:
             if prior is not None:
                 protocol.require(prior==intent,'CONFLICT')
                 return self.start_original(identity,restore_id,expected)
+            protocol.require(not HandoffController(self.client, self.journal).pending(), 'UNRESOLVED_OPERATION')
             original=self.call('core-start-read',operationId=identity)
             if original.get('state')!='NOT_FOUND':return self.start_original(identity,restore_id,expected)
             pending=self.journal.pending()
@@ -424,6 +427,203 @@ class Controller:
             return result
 
 
+class HandoffController:
+    """Fixed original authority only. Never persist or recover a bearer from an ID.
+
+    Each publish, continuation and start has an immutable sender INTENT. A lost
+    reply permits original reads, never a second forwarding call. Completion is
+    a local acknowledgement of two Root originals, not application readiness.
+    """
+    IDS = HANDOFF_IDS
+    BINDING = HANDOFF_BINDING
+    WRITERS = frozenset(('publish', 'continue', 'start'))
+    FILES = frozenset(('binding.json', 'publish.json', 'continue.json', 'start.json', 'completed.json'))
+
+    def __init__(self, client, journal):
+        self.client, self.journal = client, journal
+        self.directory = journal.directory / 'handoffs'
+        try:
+            self.directory.mkdir(mode=0o700)
+            journal.sync(journal.directory)
+        except FileExistsError:
+            pass
+        journal.check_directory(self.directory)
+
+    @staticmethod
+    def token(value):
+        protocol.require(isinstance(value, str) and re.fullmatch(
+            r'KURA-HANDOFF-1\.[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.[0-9a-f]{64}', value), 'INVALID_ARGUMENT')
+        return value
+
+    def call(self, token, command, **extra):
+        value = self.client(dict(schema=1, action='generation-handoff-command', token=token, command=command, **extra))
+        protocol.require(isinstance(value, dict) and type(value.get('schema')) is int and value['schema'] == 1, 'PROTOCOL_MISMATCH')
+        if 'error' in value:
+            protocol.fields(value, {'schema', 'error'})
+            fail('UNAVAILABLE')  # Do not expose Root error text or request contents.
+        return value
+
+    @classmethod
+    def binding(cls, info):
+        binding = {name: info[name] for name in cls.BINDING}
+        try: validate_handoff_binding(binding)
+        except Refused: fail('PROTOCOL_MISMATCH')
+        return binding
+
+    def info(self, token):
+        value = self.call(token, 'info')
+        protocol.fields(value, self.BINDING | {'state', 'scope', 'issuedAt', 'expiresAt', 'mutationWindowOpen', 'startupAuthorized'})
+        self.binding(value)
+        protocol.require(value['handoffId'] == token.split('.')[1] and value['state'] == 'GRANT_RECORDED'
+            and value['scope'] == 'ORIGINAL_AUTHORIZATION_ONLY' and value['startupAuthorized'] is False
+            and type(value['mutationWindowOpen']) is bool and type(value['issuedAt']) is int
+            and type(value['expiresAt']) is int and value['issuedAt'] >= 0 and value['expiresAt'] - value['issuedAt'] == 900, 'PROTOCOL_MISMATCH')
+        return value
+
+    def load(self, path):
+        return protocol.decode(self.journal.read(path, 8192))
+
+    def slots(self):
+        self.journal.check_directory(self.directory)
+        paths = list(self.directory.iterdir())
+        protocol.require(len(paths) <= MAX_OPERATIONS, 'CAPACITY')
+        for path in paths:
+            protocol.operation_id(path.name); self.journal.check_directory(path)
+            protocol.require({p.name for p in path.iterdir()} <= self.FILES, 'UNSAFE_JOURNAL')
+        return paths
+
+    def local(self, info):
+        binding = self.binding(info); slot = self.directory / info['handoffId']
+        paths = self.slots(); flags = {name: False for name in self.WRITERS}
+        completed, other_pending = False, False
+        for path in paths:
+            saved = self.load(path / 'binding.json')
+            protocol.fields(saved, self.BINDING); self.binding(saved)
+            protocol.require(saved['handoffId'] == path.name, 'UNSAFE_JOURNAL')
+            if path == slot:
+                protocol.require(saved == binding, 'CONFLICT')
+            for name in self.WRITERS:
+                target = path / (name + '.json')
+                if os.path.lexists(target):
+                    intent = self.load(target)
+                    extra = {'expectedRecoveryReceiptSha256'} if name == 'continue' else set()
+                    protocol.fields(intent, self.BINDING | {'command'} | extra)
+                    protocol.require({k: intent[k] for k in self.BINDING} == saved and intent['command'] == name, 'UNSAFE_JOURNAL')
+                    if extra: protocol.digest(intent['expectedRecoveryReceiptSha256'])
+                    if path == slot: flags[name] = True
+            done = path / 'completed.json'
+            if os.path.lexists(done):
+                receipt = self.load(done)
+                protocol.fields(receipt, self.BINDING | {'state', 'publicationSha256', 'jobPath'})
+                protocol.require({k: receipt[k] for k in self.BINDING} == saved and receipt['state'] == 'ORIGINAL_REQUESTS_CONFIRMED'
+                    and re.fullmatch(r'/org/freedesktop/systemd1/job/[0-9]+', receipt['jobPath']) is not None, 'UNSAFE_JOURNAL')
+                protocol.digest(receipt['publicationSha256'])
+                if path == slot: completed = True
+            elif path != slot:
+                other_pending = True
+        return flags, completed, other_pending
+
+    def pending(self):
+        slots = self.slots()
+        if not slots: return False
+        _, completed, other_pending = self.local(self.load(slots[0] / 'binding.json'))
+        return not completed or other_pending
+
+    @staticmethod
+    def unknown(identity):
+        return dict(operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED', recoveryReceiptSha256=None)
+
+    def original(self, token, info, *, start=False):
+        identity = info['startOperationId' if start else 'publicationId']
+        value = self.call(token, 'start-read' if start else 'publication-read')
+        protocol.require(value.get('operationId') == identity, 'PROTOCOL_MISMATCH')
+        if value.get('state') == 'NOT_RECORDED':
+            protocol.fields(value, {'schema', 'operationId', 'state', 'scope'})
+            protocol.require(value['scope'] == 'ORIGINAL_OPERATION_ONLY', 'PROTOCOL_MISMATCH')
+            return dict(operationId=identity, state='NOT_RECORDED', resultSource='ROOT_ABSENCE', recoveryReceiptSha256=None)
+        receipt = None
+        if not start:
+            protocol.fields(value, {'schema', 'action', 'operationId', 'state', 'scope', 'recoveryReceiptSha256', 'originalResult', 'startupAuthorized'})
+            protocol.require(value['action'] == 'generation-publication-read' and value['scope'] == 'ORIGINAL_PUBLICATION_ONLY'
+                and value['startupAuthorized'] is False and value['state'] in ('UNKNOWN', 'SUCCEEDED'), 'PROTOCOL_MISMATCH')
+            receipt = value['recoveryReceiptSha256']
+            if receipt is not None: protocol.digest(receipt)
+            original = value['originalResult']
+            protocol.require(isinstance(original, dict) and original.get('state') == value['state'], 'PROTOCOL_MISMATCH')
+            value = original
+        protocol.require(type(value.get('schema')) is int and value['schema'] == 1 and value.get('operationId') == identity, 'PROTOCOL_MISMATCH')
+        if value.get('state') == 'UNKNOWN':
+            protocol.fields(value, {'schema', 'operationId', 'state'})
+            return dict(self.unknown(identity), resultSource='ROOT_ORIGINAL', recoveryReceiptSha256=receipt)
+        common = {'schema', 'operationId', 'action', 'state', 'ringSha256', 'activeKeySha256', 'cohortSha256'}
+        protocol.fields(value, common | ({'publicationId', 'scope', 'jobPath'} if start else
+            {'preparationId', 'verificationId', 'publicationSha256', 'coreStopped', 'requiresExplicitStart'}))
+        protocol.require(value['state'] == 'SUCCEEDED' and value['action'] == ('generation-core-start' if start else 'generation-publish')
+            and value['ringSha256'] == info['ringSha256'] and value['cohortSha256'] == info['cohortSha256'], 'PROTOCOL_MISMATCH')
+        protocol.digest(value['activeKeySha256'])
+        result = dict(operationId=identity, state='SUCCEEDED', resultSource='ROOT_ORIGINAL', recoveryReceiptSha256=receipt,
+            activeKeySha256=value['activeKeySha256'])
+        if start:
+            protocol.require(value['publicationId'] == info['publicationId'] and value['scope'] == 'SYSTEMD_JOB_ACCEPTED'
+                and re.fullmatch(r'/org/freedesktop/systemd1/job/[0-9]+', value['jobPath']) is not None, 'PROTOCOL_MISMATCH')
+            result.update(scope='SYSTEMD_JOB_ACCEPTED', jobPath=value['jobPath'])
+        else:
+            protocol.require(value['preparationId'] == info['preparationId'] and value['verificationId'] == info['verificationId']
+                and value['coreStopped'] is True and value['requiresExplicitStart'] is True, 'PROTOCOL_MISMATCH')
+            result['publicationSha256'] = protocol.digest(value['publicationSha256'])
+        return result
+
+    def snapshot(self, token):
+        info = self.info(token); flags, completed, other_pending = self.local(info)
+        publication, start = self.original(token, info), self.original(token, info, start=True)
+        if publication['state'] == start['state'] == 'SUCCEEDED':
+            protocol.require(publication['activeKeySha256'] == start['activeKeySha256'], 'PROTOCOL_MISMATCH')
+        if (flags['publish'] or flags['continue']) and publication['state'] == 'NOT_RECORDED':
+            publication = self.unknown(info['publicationId'])
+        if flags['start'] and start['state'] == 'NOT_RECORDED': start = self.unknown(info['startOperationId'])
+        original_recovery_pending = self.journal.pending() is not None
+        available = not completed and not other_pending and not original_recovery_pending
+        allowed = dict(publish=available and info['mutationWindowOpen'] and not flags['publish'] and publication['state'] == 'NOT_RECORDED',
+            start=available and info['mutationWindowOpen'] and not flags['start'] and publication['state'] == 'SUCCEEDED' and start['state'] == 'NOT_RECORDED',
+            **{'continue': available and not flags['continue'] and not flags['start'] and publication['state'] == 'UNKNOWN' and publication['recoveryReceiptSha256'] is not None})
+        return dict(schema=1, state='HANDOFF_STATUS', handoff=info, publication=publication, start=start,
+            senderIntents=flags, completed=completed, allowed=allowed, originalRecoveryPending=original_recovery_pending)
+
+    def execute(self, value):
+        command = value.get('command')
+        protocol.require(command in ('query', 'publish', 'continue', 'start', 'complete'), 'INVALID_ARGUMENT')
+        extra = {'expectedRecoveryReceiptSha256'} if command == 'continue' else set()
+        protocol.fields(value, {'token', 'command'} | extra); token = self.token(value['token'])
+        if extra: protocol.digest(value['expectedRecoveryReceiptSha256'])
+        with self.journal.lock():
+            current = self.snapshot(token)
+            if command == 'query': return current
+            binding = self.binding(current['handoff']); slot = self.directory / binding['handoffId']
+            if command == 'complete':
+                protocol.require(current['publication']['state'] == current['start']['state'] == 'SUCCEEDED' and slot.exists(), 'UNRESOLVED_OPERATION')
+                saved = dict(binding, state='ORIGINAL_REQUESTS_CONFIRMED', publicationSha256=current['publication']['publicationSha256'], jobPath=current['start']['jobPath'])
+                if not os.path.lexists(slot / 'completed.json'): self.journal.write_new(slot / 'completed.json', saved)
+                else: protocol.require(self.load(slot / 'completed.json') == saved, 'CONFLICT')
+                return self.snapshot(token)
+            if current['senderIntents'][command]: return current
+            protocol.require(current['allowed'][command], 'UNRESOLVED_OPERATION')
+            if extra:
+                protocol.require(current['publication']['recoveryReceiptSha256'] == value['expectedRecoveryReceiptSha256'], 'CONFLICT')
+            if not os.path.lexists(slot):
+                protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+                slot.mkdir(mode=0o700); self.journal.sync(self.directory)
+                self.journal.write_new(slot / 'binding.json', binding)
+            intent = dict(binding, command=command, **{key: value[key] for key in extra})
+            self.journal.write_new(slot / (command + '.json'), intent)
+            # Exactly one forward, with the fixed Root authority. Never retry even
+            # if Root reports absence or the following result read is unavailable.
+            try: self.call(token, command, **{key: value[key] for key in extra})
+            except (protocol.Failure, OSError, KeyError, ValueError, TypeError): pass
+            try: return self.snapshot(token)
+            except (protocol.Failure, OSError, KeyError, ValueError, TypeError):
+                return dict(schema=1, state='UNKNOWN', handoffId=binding['handoffId'], scope='ORIGINAL_HANDOFF_ONLY')
+
+
 class RecoveryServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True  # Permit restart across TCP TIME_WAIT, without SO_REUSEPORT.
@@ -431,6 +631,7 @@ class RecoveryServer(ThreadingHTTPServer):
 
     def __init__(self, address, controller, tls, assets=ASSETS):
         self.controller = controller
+        self.handoffs = HandoffController(controller.client, controller.journal)
         self.tls = tls
         self.assets = Path(assets)
         self.token = secrets.token_urlsafe(32)
@@ -505,6 +706,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             self.authority()
             mapping = {'/': ('index.html', 'text/html; charset=utf-8'),
+                       '/handoff': ('index.html', 'text/html; charset=utf-8'),
                        '/recovery.js': ('recovery.js', 'text/javascript; charset=utf-8'),
                        '/recovery.css': ('recovery.css', 'text/css; charset=utf-8')}
             protocol.require(self.path in mapping, 'INVALID_ARGUMENT')
@@ -514,6 +716,10 @@ class Handler(BaseHTTPRequestHandler):
             if name == 'index.html':
                 protocol.require(data.count(b'KURA_RECOVERY_CSRF') == 1, 'UNAVAILABLE')
                 data = data.replace(b'KURA_RECOVERY_CSRF', self.server.token.encode('ascii'))
+                if self.path == '/handoff':
+                    for before, after in ((b'data-view="recovery"', b'data-view="handoff"'),
+                            (b'id="cold-flow"', b'id="cold-flow" hidden'), (b'id="handoff-flow" hidden', b'id="handoff-flow"')):
+                        protocol.require(data.count(before) == 1, 'UNAVAILABLE'); data = data.replace(before, after)
             self.send(200, data, kind, cookie=name == 'index.html')
         except (protocol.Failure, ValueError, OSError):
             self.error('UNAVAILABLE')
@@ -540,7 +746,9 @@ class Handler(BaseHTTPRequestHandler):
             length = int(lengths[0]);protocol.require(0 < length <= protocol.MAX_FRAME, 'INVALID_ARGUMENT')
             body = self.rfile.read(length);protocol.require(len(body) == length, 'INVALID_ARGUMENT')
             value = protocol.decode(body)
-            if self.path == '/api/status':
+            if self.path == '/api/handoff':
+                result = self.server.handoffs.execute(value)
+            elif self.path == '/api/status':
                 protocol.fields(value, set());result = self.server.controller.status()
             elif self.path == '/api/inspect':
                 result = self.server.controller.inspect(value)
@@ -566,7 +774,7 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 fail('INVALID_ARGUMENT')
             self.send(200, protocol.encode(result))
-        except (protocol.Failure, OSError, ValueError, KeyError) as failure:
+        except (protocol.Failure, OSError, ValueError, KeyError, TypeError) as failure:
             # A request may have been durably admitted before any local exception.
             # Admission absence is checked under the same journal lock, never used
             # to conclude that another process's in-flight request was rejected.
@@ -599,8 +807,9 @@ def serve():
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.load_cert_chain(credentials / 'tls.crt', credentials / 'tls.key')
     controller = Controller()
-    state = controller.status()
-    protocol.require(not state['keyReady'] or state['pendingRestore'] is not None, 'CONFLICT')
+    # TLS and browser session establishment remain available while Core is healthy
+    # or Root is temporarily unavailable. Every action retains its own Root gate;
+    # this does not grant key restoration or a generation handoff from page access.
     with RecoveryServer(('0.0.0.0', 9443), controller, context) as server:
         server.serve_forever(poll_interval=0.5)
 

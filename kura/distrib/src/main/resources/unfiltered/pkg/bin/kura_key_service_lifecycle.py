@@ -74,6 +74,24 @@ def is_digest(value):
     return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
 
 
+HANDOFF_IDS = ('handoffId', 'preparationId', 'verificationId', 'publicationId', 'startOperationId')
+HANDOFF_BINDING = frozenset(('schema', 'operator', 'ringSha256', 'cohortSha256', 'historySha256', *HANDOFF_IDS))
+
+
+def validate_handoff_binding(value):
+    require(isinstance(value, dict) and set(value) == HANDOFF_BINDING
+        and type(value['schema']) is int and value['schema'] == 1
+        and all(canonical_id(value[name]) for name in HANDOFF_IDS)
+        and len({value[name] for name in HANDOFF_IDS}) == len(HANDOFF_IDS)
+        and all(is_digest(value[name]) for name in ('ringSha256', 'cohortSha256', 'historySha256')))
+    user = value['operator']; require(isinstance(user, str))
+    try:
+        require(user.strip() and len(user.encode('utf-8')) <= 128
+            and all(ord(char) >= 32 and not 127 <= ord(char) <= 159 for char in user))
+    except UnicodeError:
+        raise Refused('Invalid handoff binding') from None
+
+
 def validate_generation_metadata(value):
     require(isinstance(value, dict) and set(value) ==
             {"ringSha256", "activeKeySha256", "legacyKeySha256", "keySha256s"})
@@ -490,7 +508,7 @@ class Lifecycle:
             finally:os.close(fd)
         self.directory(state.parent)
         directory(state);directory(state/'operations')
-        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <= {'operations','admission.lock','starts','pending.json'})
+        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <= {'operations','admission.lock','starts','pending.json','handoffs'})
         require(read(state/'admission.lock',0)==b'')
         fd=os.open(state/'admission.lock',os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC)
         try:
@@ -527,6 +545,39 @@ class Lifecycle:
                     root=validate_start(decode(self.read(self.state/'startups'/path.name)),local['operationId'])
                     require(root['state']=='SUCCEEDED' and root['restoreOperationId']==local['restoreOperationId']
                             and root['keySha256']==local['expectedKeySha256'] and all(root.get(k)==local[k] for k in extra),'Unresolved Core handoff; retain original UUID')
+            if os.path.lexists(state/'handoffs'):
+                directory(state/'handoffs'); handoffs = list((state/'handoffs').iterdir()); require(len(handoffs) <= 32)
+                for slot in handoffs:
+                    require(canonical_id(slot.name)); directory(slot)
+                    require({'binding.json', 'completed.json'} <= {p.name for p in slot.iterdir()} <=
+                        {'binding.json', 'completed.json', 'publish.json', 'continue.json', 'start.json'},
+                        'Unresolved fixed-operation handoff; preserve original requests')
+                    binding = decode(read(slot/'binding.json', 8192)); validate_handoff_binding(binding)
+                    require(binding['handoffId'] == slot.name)
+                    for name in ('publish', 'continue', 'start'):
+                        if os.path.lexists(slot/(name+'.json')):
+                            intent = decode(read(slot/(name+'.json'), 8192))
+                            extra = {'expectedRecoveryReceiptSha256'} if name == 'continue' else set()
+                            require(set(intent) == HANDOFF_BINDING | {'command'} | extra
+                                and {key: intent[key] for key in HANDOFF_BINDING} == binding and intent['command'] == name)
+                            if extra: require(is_digest(intent['expectedRecoveryReceiptSha256']))
+                    completed = decode(read(slot/'completed.json', 8192))
+                    require(set(completed) == HANDOFF_BINDING | {'state', 'publicationSha256', 'jobPath'}
+                        and {key: completed[key] for key in HANDOFF_BINDING} == binding
+                        and completed['state'] == 'ORIGINAL_REQUESTS_CONFIRMED')
+                    originals = {}
+                    for name, key in (('publish', 'publicationId'), ('start', 'startOperationId')):
+                        identity = binding[key]
+                        original = validate_record(decode(self.read(self.state/'operations'/(identity+'.json'))), identity)
+                        require(original['state'] == 'SUCCEEDED' and original['action'] ==
+                            ('generation-publish' if name == 'publish' else 'generation-core-start'),
+                            'Unresolved original handoff; retain original UUID')
+                        result = original['response']; originals[name] = result
+                        require(all(result[field] == binding[field] for field in ('ringSha256', 'cohortSha256')))
+                    published, started = originals['publish'], originals['start']
+                    require(published['preparationId'] == binding['preparationId'] and published['verificationId'] == binding['verificationId']
+                        and started['publicationId'] == binding['publicationId'] and started['activeKeySha256'] == published['activeKeySha256']
+                        and completed['publicationSha256'] == published['publicationSha256'] and completed['jobPath'] == started['jobPath'])
             yield
         finally:os.close(fd)
 
