@@ -197,17 +197,20 @@ class HttpsRestart(unittest.TestCase):
                 '-subj','/CN=localhost','-keyout',str(key),'-out',str(cert)],check=True,
                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
             tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);tls.load_cert_chain(cert,key)
-            first=recovery.RecoveryServer(('127.0.0.1',0),None,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery")
+            directory=Path(temporary)/'receiver';directory.mkdir(mode=0o700)
+            journal=recovery.Journal(directory)
+            controller=recovery.Controller(lambda request: self.fail('TLS listener test must not call Root'),journal)
+            first=recovery.RecoveryServer(('127.0.0.1',0),controller,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery")
             address=first.server_address
             thread=threading.Thread(target=first.serve_forever,daemon=True);thread.start()
             try:
                 # A live listener must remain exclusive despite SO_REUSEADDR.
-                with self.assertRaises(OSError):recovery.RecoveryServer(address,None,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery")
+                with self.assertRaises(OSError):recovery.RecoveryServer(address,controller,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery")
                 connection=http.client.HTTPSConnection(*address,context=ssl._create_unverified_context(),timeout=5)
                 connection.request('GET','/');response=connection.getresponse();self.assertEqual(200,response.status)
                 response.read();connection.close()
             finally:first.shutdown();first.server_close();thread.join(5)
-            with recovery.RecoveryServer(address,None,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery") as second:
+            with recovery.RecoveryServer(address,controller,tls,assets=Path(recovery.__file__).parent.parent/"share/key-recovery") as second:
                 self.assertEqual(address,second.server_address)
 
 
