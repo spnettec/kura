@@ -34,7 +34,8 @@ from kura_key_store import (Store, KEY_PATH, RECEIPT_PATH, CORE_DEFAULT, OLD_DEV
                             key_generations as parse_key_generations, generation_receipt as parse_generation_receipt,
                             key_generation_entries, encode_key_generations)
 from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_publication, Refused as LifecycleRefused,
-                                       Unresolved as LifecycleUnresolved)
+                                       Unresolved as LifecycleUnresolved, GWT_BINDING_PURPOSE, GWT_DATA_FIELDS,
+                                       GWT_NAMESPACE_FIELDS, gwt_namespace, validate_gwt_data, validate_gwt_binding)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
@@ -140,6 +141,67 @@ class Manager:
         self.state = self.store.path(STATE)
         self.operations = self.state / "operations"
         self.cipher = list(CIPHER if cipher is None else cipher)
+
+    def gwt_namespace(self):
+        self.directory(self.state, private=True)
+        try:
+            return gwt_namespace(self.state, self.read(self.state / 'journal.key', 32))
+        except LifecycleRefused:
+            raise Failure('UNSAFE_JOURNAL') from None
+
+    def gwt_sender_owner(self, pid, uid, daemon):
+        # The effective SystemService directory is reported by the actual Main JVM.
+        # Root never executes a property provider or traverses the Core-private data tree.
+        require(type(daemon) is int and daemon > 0 and uid == daemon, 'FORBIDDEN')
+        module, _ = self.generation_module()
+        core = module.Generations(self)
+        unit = core.unit(generation_mode=os.path.lexists(self.store.path(GENERATION_RECEIPT_PATH)))
+        process = self.writer_process(pid)
+        require(unit['ActiveState'] == 'active' and unit['SubState'] == 'running'
+            and unit['ControlPID'] == '0' and int(unit['MainPID']) == pid
+            and unit['ControlGroup'] == '/system.slice/kura.service'
+            and re.fullmatch(r'[0-9a-f]{32}', unit['InvocationID']) is not None
+            and process is not None and process[0] == uid
+            and core.process_group(pid) == unit['ControlGroup'], 'UNMANAGED_CORE')
+
+    def bind_gwt_sender(self, request, pid, uid, daemon):
+        fields(request, {'schema', 'action'} | GWT_DATA_FIELDS | GWT_NAMESPACE_FIELDS)
+        require(type(request['schema']) is int and request['schema'] == 1 and request['action'] == 'gwt-sender-bind')
+        try:
+            validate_gwt_data({k: request[k] for k in GWT_DATA_FIELDS})
+        except LifecycleRefused:
+            raise Failure('INVALID_ARGUMENT') from None
+        require(request['dataUid'] == uid, 'FORBIDDEN')
+        with self.lock(self.state / 'admission.lock', True):
+            self.maintenance(); self.gwt_sender_owner(pid, uid, daemon)
+            namespace = self.gwt_namespace()
+            require(all(request[k] == namespace[k] for k in GWT_NAMESPACE_FIELDS), 'CONFLICT')
+            binding = dict(schema=1, purpose=GWT_BINDING_PURPOSE, **namespace,
+                **{k: request[k] for k in GWT_DATA_FIELDS})
+            path = self.state / 'gwt-sender.json'
+            if os.path.lexists(path):
+                try: previous = validate_gwt_binding(decode(self.read(path, 8192)))
+                except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+                require(previous == binding, 'CONFLICT')
+            else:
+                self.atomic(path, encode(binding), no_replace=True)
+            # No key/start UUID is admitted, completed, retried or inferred by registration.
+            return dict(binding, state='GWT_SENDER_BOUND')
+
+    def unwrap_gwt_request(self, request, pid, uid, daemon):
+        fields(request, {'schema', 'action', 'binding', 'request'})
+        require(type(request['schema']) is int and request['schema'] == 1)
+        try: binding = validate_gwt_binding(request['binding'])
+        except LifecycleRefused: raise Failure('INVALID_ARGUMENT') from None
+        with self.lock(self.state / 'admission.lock', False):
+            self.maintenance(); self.gwt_sender_owner(pid, uid, daemon)
+            try: original = validate_gwt_binding(decode(self.read(self.state / 'gwt-sender.json', 8192)))
+            except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
+            namespace = self.gwt_namespace()
+            require(binding == original and all(binding[k] == namespace[k] for k in GWT_NAMESPACE_FIELDS), 'CONFLICT')
+        inner = request['request']
+        require(isinstance(inner, dict) and inner.get('action') in GWT_MUTATIONS | GWT_ORIGINAL_READS, 'FORBIDDEN')
+        return inner
 
     def directory(self, path, private=False):
         # Do not create or repair directories as a side effect of status or backup.
@@ -1335,9 +1397,29 @@ def agent_peer(pid):
     return path == base or path.startswith(base + '/')
 
 
+GWT_MUTATIONS = frozenset(('backup-create', 'restore', 'generation-prepare', 'generation-backup-verify', 'generation-handoff-create'))
+GWT_ORIGINAL_READS = frozenset(('operation-read', 'generation-handoff-read', 'generation-handoff-token-read', 'generation-publication-plan'))
+
+
 def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):
     action = request.get('action')
     require(not agent_peer(pid) or action in ('core-validation-info', 'core-snapshot-validate'), 'FORBIDDEN')
+    if action == 'gwt-sender-namespace':
+        fields(request, {'schema', 'action'})
+        require(type(request['schema']) is int and request['schema'] == 1 and input_descriptor is None)
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            return dict(schema=1, **manager.gwt_namespace()), None
+    if action == 'gwt-sender-bind':
+        require(input_descriptor is None)
+        return manager.bind_gwt_sender(request, pid, uid, daemon), None
+    if action == 'gwt-bound-request':
+        require(input_descriptor is None)
+        request = manager.unwrap_gwt_request(request, pid, uid, daemon)
+        action = request['action']
+    elif uid == daemon and action in GWT_MUTATIONS:
+        # An old sender cannot silently bypass the effective data/Root namespace binding.
+        raise Failure('FORBIDDEN')
     require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance', 'generation-publication-recover'), 'FORBIDDEN')
     if action == 'core-snapshot-validate':
         require(uid in (0, daemon) and (recovery is None or uid != recovery), 'FORBIDDEN')
