@@ -1034,7 +1034,8 @@ class Lifecycle:
         module.__dict__['_kura_lifecycle_api']=dict(globals())
         exec(compile(source,module.__file__,'exec',dont_inherit=True),module.__dict__)
         require(type(getattr(module,'JOURNAL_READER_PROTOCOL',None)) is int and module.JOURNAL_READER_PROTOCOL==1
-            and all(callable(getattr(module,name,None)) for name in ('GwtSenderInventory','private_fence','archive_journal')),
+            and all(callable(getattr(module,name,None)) for name in
+                ('GwtSenderInventory','private_fence','archive_journal','RecoveryPrivateFormat','RecoveryPrivateArchive')),
             'Unsupported paired key-journal reader protocol')
         self._journal_module=(fingerprint,module);return module
 
@@ -1432,15 +1433,21 @@ class Lifecycle:
             finally:os.close(fd)
         self.directory(state.parent)
         directory(state);directory(state/'operations')
-        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <= {'operations','admission.lock','starts','pending.json','handoffs','admissions'})
+        require({'operations','admission.lock'} <= {p.name for p in state.iterdir()} <=
+            {'operations','admission.lock','starts','pending.json','handoffs','admissions','archives'})
         require(read(state/'admission.lock',0)==b'')
         fd=os.open(state/'admission.lock',os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC)
         try:
             try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError:raise Refused('Cold recovery is active; package change refused') from None
+            archived_private=set()
+            if os.path.lexists(state/'archives'):
+                namespace=dict(schema=1,**gwt_namespace(self.state,self.read(self.state/'journal.key',32)))
+                archived_private=self.journal_module().RecoveryPrivateFormat(state,account.pw_uid,account.pw_gid,read,directory).inventory(self,namespace)
             closed_starts = {}; closed_restores = {}; closed_handoffs = {}
             if os.path.lexists(state/'admissions'):
-                directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
+                directory(state/'admissions'); slots = list((state/'admissions').iterdir())
+                require(sum(('ADMISSION',p.name[:36],p.name[37:]) not in archived_private for p in slots)<=256)
                 for slot in slots:
                     directory(slot); names = {p.name for p in slot.iterdir()}
                     require(names in ({'intent.json','namespace.json'}, {'intent.json','namespace.json','closed.json'},
@@ -1461,7 +1468,7 @@ class Lifecycle:
                             closed_restores[value['nativeOperationId']] = receiver_restore_intent(value)
                         if value['kind'] in ('publish', 'handoff-start'):
                             closed_handoffs[(value['kind'], value['nativeOperationId'])] = value
-            files=list((state/'operations').iterdir());require(len(files)<=32)
+            files=list((state/'operations').iterdir());require(sum(('RESTORE',p.name[:-5],None) not in archived_private for p in files)<=32)
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 value=decode(read(path,4096))
@@ -1483,7 +1490,8 @@ class Lifecycle:
                 require(local['expectedKeySha256']==pending['expectedKeySha256'])
                 require(pending['operationId'] not in closed_restores, 'Retired recovery marker remains active')
             if os.path.lexists(state/'starts'):
-                directory(state/'starts');starts=list((state/'starts').iterdir());require(len(starts)<=32)
+                directory(state/'starts');starts=list((state/'starts').iterdir())
+                require(sum(('START',p.name[:-5],None) not in archived_private for p in starts)<=32)
                 for path in starts:
                     require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                     local=decode(read(path,4096))
@@ -1501,7 +1509,8 @@ class Lifecycle:
                     require(root['state']=='SUCCEEDED' and root['restoreOperationId']==local['restoreOperationId']
                             and root['keySha256']==local['expectedKeySha256'] and all(root.get(k)==local[k] for k in extra),'Unresolved Core handoff; retain original UUID')
             if os.path.lexists(state/'handoffs'):
-                directory(state/'handoffs'); handoffs = list((state/'handoffs').iterdir()); require(len(handoffs) <= 32)
+                directory(state/'handoffs'); handoffs = list((state/'handoffs').iterdir())
+                require(sum(('HANDOFF',p.name,None) not in archived_private for p in handoffs)<=32)
                 for slot in handoffs:
                     require(canonical_id(slot.name)); directory(slot)
                     names = {p.name for p in slot.iterdir()}
@@ -1545,7 +1554,7 @@ class Lifecycle:
                     require(published['preparationId'] == binding['preparationId'] and published['verificationId'] == binding['verificationId']
                         and started['publicationId'] == binding['publicationId'] and started['activeKeySha256'] == published['activeKeySha256']
                         and completed['publicationSha256'] == published['publicationSha256'] and completed['jobPath'] == started['jobPath'])
-            yield
+            yield dict(archived=archived_private,closedRestores=closed_restores)
         finally:os.close(fd)
 
     def no_overrides(self):

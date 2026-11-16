@@ -1831,7 +1831,7 @@ def agent_peer(pid):
 
 GWT_MUTATIONS = frozenset(('backup-create', 'restore', 'generation-prepare', 'generation-backup-verify', 'generation-handoff-create'))
 GWT_ORIGINAL_READS = frozenset(('operation-read', 'generation-handoff-read', 'generation-handoff-token-read', 'generation-publication-plan'))
-ARCHIVE_ACTIONS = frozenset(('journal-archive-plan','journal-archive','journal-archive-read','journal-archive-continue','journal-archive-reference-read'))
+ARCHIVE_ACTIONS = frozenset(('journal-archive-plan','journal-archive','journal-archive-read','journal-archive-continue','journal-archive-reference-read','journal-archive-recovery-reference-read'))
 PRIVATE_FENCE_ACTIONS = frozenset(('sender-private-fence-plan','sender-private-fence','sender-private-fence-read'))
 SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'generation-restore', 'core-start',
     'core-start-after-maintenance', 'generation-cancel', 'generation-cancel-recover', 'generation-publish',

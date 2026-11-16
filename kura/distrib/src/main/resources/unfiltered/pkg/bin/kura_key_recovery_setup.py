@@ -165,8 +165,8 @@ class Setup:
         require(stat.S_ISDIR(st.st_mode) and st.st_uid == account.pw_uid
                 and st.st_gid == account.pw_gid and stat.S_IMODE(st.st_mode) == 0o700)
         names={p.name for p in path.iterdir()}
-        require(names <= {'operations','admission.lock','starts','pending.json','handoffs','admissions'})
-        if {'handoffs','admissions'} & names:
+        require(names <= {'operations','admission.lock','starts','pending.json','handoffs','admissions','archives'})
+        if {'handoffs','admissions','archives'} & names:
             # Reuse the installer's original-result checks. Merely allowing the new directory
             # would let a local completion marker conceal a missing/UNKNOWN Root request.
             ledger=self.handoff_ledger()
@@ -174,7 +174,7 @@ class Setup:
                 with ledger.Lifecycle(self.root,owner=self.owner).recovery_locked():
                     pass
             except (ledger.Refused,OSError,KeyError,ValueError,TypeError):
-                raise Refused('Unresolved or unsafe fixed handoff; retain original sender and Root records') from None
+                raise Refused('Unresolved or unsafe receiver history; retain original sender and Root records') from None
         operations = path/'operations'
         if not os.path.lexists(operations):
             operations.mkdir(mode=0o700);operations.chmod(0o700);os.chown(operations,account.pw_uid,account.pw_gid)
@@ -196,8 +196,7 @@ class Setup:
         # Post-unpack migration only: an old protected restore receipt is authority.
         # Key presence by itself never settles a restore or creates a start receipt.
         sys.path.insert(0,str(Path(__file__).resolve().parent))
-        from kura_key_service import Manager, decode, encode
-        from kura_key_service_lifecycle import validate_start
+        from kura_key_service import Manager
         path=self.root/'var/lib/kura-key-recovery'
         starts=path/'starts'
         if not os.path.lexists(starts):
@@ -212,47 +211,63 @@ class Setup:
         # A fresh install has no receipt until its provisioner runs.
         if not os.path.lexists(manager.store.path('/etc/kura/credentials/provisioned.json')):return
         with manager.lock(manager.state/'admission.lock',False):
-            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'),False):
-                current,proof=manager.canonical(True)
-            if current is None:return
-            completed=set()
-            root_starts=manager.state/'startups'
-            if os.path.lexists(root_starts):
-                manager.directory(root_starts,private=True)
-                files=list(root_starts.iterdir());require(len(files)<=32)
-                for entry in files:
-                    require(entry.name.endswith('.json'))
-                    record=validate_start(decode(manager.read(entry)),entry.name[:-5])
-                    if record['state']=='SUCCEEDED':completed.add(record['restoreOperationId'])
-            candidates=[]
-            files=list((path/'operations').iterdir());require(len(files)<=32)
+            if any(os.path.lexists(path/name) for name in ('archives','admissions','handoffs')):
+                ledger=self.handoff_ledger()
+                try:
+                    with ledger.Lifecycle(self.root,owner=self.owner).recovery_locked() as history:
+                        self.resume_marker_locked(account,manager,history)
+                except (ledger.Refused,OSError,KeyError,ValueError,TypeError):
+                    raise Refused('Unsafe recovery history; preserve original receiver and Root state') from None
+            else:self.resume_marker_locked(account,manager,dict(archived=set(),closedRestores={}))
+
+    def resume_marker_locked(self,account,manager,history):
+        from kura_key_service import decode, encode
+        from kura_key_service_lifecycle import validate_start
+        path=self.root/'var/lib/kura-key-recovery';marker=path/'pending.json'
+        with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'),False):current,proof=manager.canonical(True)
+        if current is None:return
+        completed=set()
+        root_starts=manager.state/'startups'
+        if os.path.lexists(root_starts):
+            manager.directory(root_starts,private=True)
+            files=list(root_starts.iterdir())
+            require(manager.active_records('startups',[p.name[:-5] for p in files])<=32)
             for entry in files:
                 require(entry.name.endswith('.json'))
-                fd=os.open(entry,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
-                try:
-                    st=os.fstat(fd)
-                    require(stat.S_ISREG(st.st_mode) and st.st_uid==account.pw_uid and st.st_gid==account.pw_gid
-                            and st.st_nlink==1 and stat.S_IMODE(st.st_mode)==0o600 and st.st_size<=4096)
-                    local=decode(os.read(fd,4097))
-                finally:os.close(fd)
-                require(set(local)=={'schema','operationId','expectedKeySha256','backupSha256'}
-                        and type(local['schema']) is int and local['schema']==1 and local['operationId']==entry.name[:-5])
-                original=manager.record(local['operationId'])
-                require(original is not None and original['state']=='SUCCEEDED' and original['action']=='restore')
-                response=original['response']
-                require(response['keySha256']==local['expectedKeySha256'])
-                if (response['keyChanged'] is True and response['existingReceiptPreserved'] is True
-                    and response['keySha256']==proof['keySha256'] and local['operationId'] not in completed):
-                    candidates.append(dict(schema=1,operationId=local['operationId'],expectedKeySha256=response['keySha256']))
-            require(len(candidates)<=1)
-            if candidates:
-                fd=os.open(marker,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
-                try:
-                    os.fchown(fd,account.pw_uid,account.pw_gid);os.fchmod(fd,0o600)
-                    with os.fdopen(fd,'wb',closefd=False) as stream:
-                        stream.write(encode(candidates[0]));stream.flush();os.fsync(fd)
-                finally:os.close(fd)
-                self.sync(path)
+                record=validate_start(decode(manager.read(entry)),entry.name[:-5])
+                if record['state']=='SUCCEEDED':completed.add(record['restoreOperationId'])
+        candidates=[]
+        files=list((path/'operations').iterdir())
+        require(sum(('RESTORE',p.name[:-5],None) not in history['archived'] for p in files)<=32)
+        for entry in files:
+            require(entry.name.endswith('.json'))
+            fd=os.open(entry,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+            try:
+                st=os.fstat(fd)
+                require(stat.S_ISREG(st.st_mode) and st.st_uid==account.pw_uid and st.st_gid==account.pw_gid
+                        and st.st_nlink==1 and stat.S_IMODE(st.st_mode)==0o600 and st.st_size<=4096)
+                local=decode(os.read(fd,4097))
+            finally:os.close(fd)
+            require(set(local)=={'schema','operationId','expectedKeySha256','backupSha256'}
+                    and type(local['schema']) is int and local['schema']==1 and local['operationId']==entry.name[:-5])
+            if local['operationId'] in history['closedRestores']:
+                require(local==history['closedRestores'][local['operationId']]);continue
+            original=manager.record(local['operationId'])
+            require(original is not None and original['state']=='SUCCEEDED' and original['action']=='restore')
+            response=original['response']
+            require(response['keySha256']==local['expectedKeySha256'])
+            if (response['keyChanged'] is True and response['existingReceiptPreserved'] is True
+                and response['keySha256']==proof['keySha256'] and local['operationId'] not in completed):
+                candidates.append(dict(schema=1,operationId=local['operationId'],expectedKeySha256=response['keySha256']))
+        require(len(candidates)<=1)
+        if candidates:
+            fd=os.open(marker,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+            try:
+                os.fchown(fd,account.pw_uid,account.pw_gid);os.fchmod(fd,0o600)
+                with os.fdopen(fd,'wb',closefd=False) as stream:
+                    stream.write(encode(candidates[0]));stream.flush();os.fsync(fd)
+            finally:os.close(fd)
+            self.sync(path)
 
     def validate_tls(self, directory):
         self.directory(directory,private=True)

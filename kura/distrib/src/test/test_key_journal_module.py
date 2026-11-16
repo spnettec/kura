@@ -26,6 +26,7 @@ class JournalModuleTest(unittest.TestCase):
         module=self.policy.journal_module();self.assertIs(module.Refused,lifecycle.Refused)
         self.assertIs(module.GwtSenderInventory.JOURNALS,lifecycle.GwtSenderInventory.JOURNALS)
         self.assertIs(module,self.policy.journal_module());self.assertTrue(callable(module.archive_reference_read))
+        self.assertTrue(callable(module.RecoveryPrivateFormat));self.assertTrue(callable(module.RecoveryPrivateArchive))
         self.assertFalse(list(self.file.parent.glob('__pycache__/*')))
 
     def test_changed_missing_linked_or_writable_module_is_refused_even_after_cache(self):
@@ -42,6 +43,11 @@ class JournalModuleTest(unittest.TestCase):
         manifest=self.base.physical/'libexec/key-backup/manifest.json';value=json.loads(manifest.read_bytes())
         value['files'].pop('bin/kura_key_journal.py');self.base.write(manifest,json.dumps(value).encode(),0o640)
         self.assertEqual(set(lifecycle.PRE_JOURNAL_ASSETS),set(self.policy.assets()['files']))
+        with self.assertRaises(lifecycle.Refused):self.policy.journal_module()
+
+    def test_paired_reader_requires_recovery_exports_before_caching_the_module(self):
+        self.base.write(self.file,self.file.read_bytes()+b'\ndel RecoveryPrivateArchive\n',0o640)
+        self.base.manifest()
         with self.assertRaises(lifecycle.Refused):self.policy.journal_module()
 
     def test_embedded_reader_runs_in_python_isolation_without_installed_module_or_standard_alias(self):

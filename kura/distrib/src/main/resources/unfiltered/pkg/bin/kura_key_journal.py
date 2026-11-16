@@ -9,6 +9,7 @@ import hmac
 import os
 from pathlib import Path
 import stat
+import uuid
 
 JOURNAL_READER_PROTOCOL = 1
 
@@ -24,6 +25,15 @@ is_digest = _lifecycle_api['is_digest']
 GWT_DATA_FIELDS = _lifecycle_api['GWT_DATA_FIELDS']
 GWT_NAMESPACE_FIELDS = _lifecycle_api['GWT_NAMESPACE_FIELDS']
 HANDOFF_IDS = _lifecycle_api['HANDOFF_IDS']
+HANDOFF_BINDING = _lifecycle_api['HANDOFF_BINDING']
+validate_handoff_binding = _lifecycle_api['validate_handoff_binding']
+validate_handoff_retired = _lifecycle_api['validate_handoff_retired']
+validate_sender_closed = _lifecycle_api['validate_sender_closed']
+validate_receiver_pending = _lifecycle_api['validate_receiver_pending']
+receiver_restore_intent = _lifecycle_api['receiver_restore_intent']
+receiver_start_intent = _lifecycle_api['receiver_start_intent']
+validate_start = _lifecycle_api['validate_start']
+handoff_revocation_view = _lifecycle_api['handoff_revocation_view']
 validate_record = _lifecycle_api['validate_record']
 validate_gwt_intent = _lifecycle_api['validate_gwt_intent']
 validate_handoff_authority = _lifecycle_api['validate_handoff_authority']
@@ -71,8 +81,11 @@ def archive_correlation(policy, reference, secret):
 
 def archive_reference_read(manager,request,pid,uid,daemon,recovery):
     from kura_key_service import require, fields, Failure
-    fields(request,{'schema','action','namespaceSha256','directory','operationId'})
+    receiver=request['action']=='journal-archive-recovery-reference-read'
+    fields(request,{'schema','action','namespaceSha256','directory','operationId'} |
+        ({'attempt'} if receiver and request.get('directory')=='sender-admissions' else set()))
     require(type(request['schema']) is int and request['schema']==1)
+    if receiver:require(recovery is not None and uid in (0,recovery),'FORBIDDEN')
     if uid==0:pass
     elif uid==daemon:manager.gwt_sender_owner(pid,uid,daemon)
     else:
@@ -93,9 +106,300 @@ def archive_reference_read(manager,request,pid,uid,daemon,recovery):
         if owner is not None:
             intent=inventory['requests'][owner][0]
             allowed=uid==0 or intent['actorUid']==uid and intent['source']==('gwt' if uid==daemon else 'recovery')
+        try:correlation=recovery_archive_correlation(manager,reference,secret,request.get('attempt'),recovery) if receiver else archive_correlation(manager,reference,secret)
+        except (Refused,FileNotFoundError):raise Failure('ARCHIVE_UNSETTLED') from None
         return dict(schema=1,state='ARCHIVABLE' if proof is None else proof['state'],namespaceSha256=namespace,
-            entry=entry,correlation=archive_correlation(manager,reference,secret),archive=proof,continuationAllowed=allowed,
+            entry=entry,correlation=correlation,archive=proof,continuationAllowed=allowed,
             credentialsChanged=False,startRequested=False)
+
+
+def recovery_archive_correlation(policy,reference,secret,attempt,uid):
+    """Receiver-specific public metadata; no bearer, backup, passphrase or request tag."""
+    directory,identity=reference['directory'],reference['operationId']
+    value=decode(policy.read(policy.state/directory/(identity+'.json'),65536))
+    if directory=='sender-admissions':
+        require(attempt is not None)
+        check_sender_attempt(policy,attempt,dict(schema=1,namespaceSha256=value['namespaceSha256']),'recovery',uid)
+        require(attempt['admissionId']==identity)
+        if attempt['kind'] in ('publish','continue','handoff-start','handoff-renewal'):
+            request=attempt['request'];path=policy.state/'handoffs'/(request['handoffId']+'.json')
+            raw=policy.read(path,8192);grant=validate_handoff_authority(decode(raw),request['handoffId'],secret)
+            require(raw==encoded(grant) and stat.S_IMODE(path.lstat().st_mode)==0o400)
+            key='startOperationId' if attempt['kind']=='handoff-start' else 'publicationId'
+            if attempt['kind']!='handoff-renewal':require(attempt['nativeOperationId']==grant['request'][key])
+            require(value['target']['action']==('generation-start-lease' if attempt['kind']=='handoff-renewal'
+                else 'generation-core-start' if attempt['kind']=='handoff-start' else 'generation-publish')
+                and value['target']['continuation']==(attempt['kind']=='continue'))
+        return dict(archive_correlation(policy,reference,secret),attemptSha256=hashlib.sha256(encoded(attempt)).hexdigest())
+    require(attempt is None)
+    if directory=='operations':return archive_correlation(policy,reference,secret)
+    if directory=='startups':
+        validate_start(value,identity)
+        intent=dict(schema=value['schema'],operationId=identity,restoreOperationId=value['restoreOperationId'],expectedKeySha256=value['keySha256'])
+        if value['schema']==2:intent.update({k:value[k] for k in ('predecessorStartOperationId','maintenanceId','manifestSha256')})
+        return dict(kind='STARTUP',intent=intent,outcome='COMPLETED')
+    require(directory=='handoffs');validate_handoff_authority(value,identity,secret);request=value['request']
+    binding={k:request[k] for k in HANDOFF_IDS};binding.update(schema=1,operator=request['operator'],historySha256=value['historySha256'],
+        ringSha256=request['expectedRingSha256'],cohortSha256=request['expectedCohortSha256'])
+    revoked=read_handoff_revocation(policy,identity,secret)
+    if revoked is not None:return dict(kind='HANDOFF',binding=binding,outcome='REVOKED',terminal=handoff_revocation_view(revoked))
+    published=validate_record(decode(policy.read(policy.state/'operations'/(request['publicationId']+'.json'))),request['publicationId'])['response']
+    started=validate_record(decode(policy.read(policy.state/'operations'/(request['startOperationId']+'.json'))),request['startOperationId'])['response']
+    return dict(kind='HANDOFF',binding=binding,outcome='COMPLETED',terminal=dict(binding,state='ORIGINAL_REQUESTS_CONFIRMED',
+        publicationSha256=published['publicationSha256'],jobPath=started['jobPath']))
+
+class RecoveryPrivateFormat:
+    """One private format shared by the receiver UID and the independent package reader."""
+    PURPOSE='yofc.kura.recovery-private-archive.v1'
+    KINDS=frozenset(('RESTORE','START','HANDOFF','ADMISSION'))
+    STEPS=frozenset(('restore','start','publish','continue','handoff-start','handoff-renewal'))
+
+    def __init__(self,state,uid,gid,read,directory):
+        self.state,self.uid,self.gid,self._read,self._directory=state,uid,gid,read,directory
+
+    def directory(self,path):
+        self._directory(path);require(path.lstat().st_gid==self.gid)
+
+    def read(self,path,limit):
+        self.directory(path.parent);raw=self._read(path,limit);m=path.lstat()
+        require(m.st_uid==self.uid and m.st_gid==self.gid and m.st_nlink==1 and stat.S_IMODE(m.st_mode)==0o600)
+        return raw
+
+    def selector(self,kind,identity,step=None):
+        require(kind in self.KINDS and canonical_id(identity))
+        require(step in self.STEPS if kind=='ADMISSION' else step is None)
+        return kind+'-'+identity+('-'+step if step is not None else '')
+
+    def path(self,kind,identity,step=None):return self.state/'archives'/(self.selector(kind,identity,step)+'.json')
+
+    def binding(self,namespace):
+        require(isinstance(namespace,dict) and set(namespace)=={'schema','namespaceSha256','rootDevice','rootInode'}
+            and type(namespace['schema']) is int and namespace['schema']==1 and is_digest(namespace['namespaceSha256']))
+        for name in ('rootDevice','rootInode'):
+            require(isinstance(namespace[name],str) and namespace[name].isascii() and namespace[name].isdecimal()
+                and str(int(namespace[name]))==namespace[name] and len(namespace[name])<=20)
+        require(int(namespace['rootInode'])>0)
+        self.directory(self.state);m=self.state.lstat()
+        return dict(namespace,privateDevice=str(m.st_dev),privateInode=str(m.st_ino),privateUid=self.uid,privateGid=self.gid)
+
+    def admission(self,identity,step):
+        slot=self.state/'admissions'/(identity+'-'+step);self.directory(slot.parent);self.directory(slot)
+        names={p.name for p in slot.iterdir()}
+        require(names in ({'intent.json','namespace.json'},{'intent.json','namespace.json','closed.json'})
+            or step=='restore' and names=={'intent.json','namespace.json','closed.json','pending.json'})
+        attempt=validate_sender_attempt(decode(self.read(slot/'intent.json',12288)),'recovery')
+        require(attempt['kind']==step and attempt['nativeOperationId']==identity)
+        namespace=decode(self.read(slot/'namespace.json',4096))
+        require(set(namespace)=={'schema','namespaceSha256'} and type(namespace['schema']) is int
+            and namespace['schema']==1 and is_digest(namespace['namespaceSha256']))
+        if 'closed.json' in names:validate_sender_closed(decode(self.read(slot/'closed.json',4096)),attempt,namespace)
+        if 'pending.json' in names:validate_receiver_pending(decode(self.read(slot/'pending.json',4096)),attempt)
+        return dict(attempt=attempt,namespace=namespace,names=names,paths=[slot/name for name in sorted(names)])
+
+    def snapshot(self,kind,identity,step=None):
+        self.selector(kind,identity,step);attempt=None;namespace=None;closed=False;terminal=None
+        if kind=='ADMISSION':
+            sender=self.admission(identity,step);attempt=sender['attempt'];namespace=sender['namespace']
+            paths=sender['paths'];metadata=attempt['request'];closed='closed.json' in sender['names']
+            reference=dict(directory='sender-admissions',operationId=attempt['admissionId'])
+        elif kind in ('RESTORE','START'):
+            path=self.state/('operations' if kind=='RESTORE' else 'starts')/(identity+'.json');self.directory(path.parent)
+            metadata=decode(self.read(path,4096));paths=[path]
+            if kind=='RESTORE':
+                require(set(metadata)=={'schema','operationId','expectedKeySha256','backupSha256'} and metadata['schema']==1
+                    and type(metadata['schema']) is int and all(is_digest(metadata[k]) for k in ('expectedKeySha256','backupSha256')))
+            else:
+                require(type(metadata.get('schema')) is int and metadata['schema'] in (1,2))
+                extra={'predecessorStartOperationId','maintenanceId','manifestSha256'} if metadata['schema']==2 else set()
+                require(set(metadata)=={'schema','operationId','restoreOperationId','expectedKeySha256'}|extra
+                    and canonical_id(metadata['restoreOperationId']) and is_digest(metadata['expectedKeySha256']))
+                if extra:require(canonical_id(metadata['predecessorStartOperationId']) and canonical_id(metadata['maintenanceId']) and is_digest(metadata['manifestSha256']))
+            require(metadata['operationId']==identity)
+            name='restore' if kind=='RESTORE' else 'start';slot=self.state/'admissions'/(identity+'-'+name)
+            if os.path.lexists(slot/'closed.json'):
+                sender=self.admission(identity,name);attempt=sender['attempt'];namespace=sender['namespace'];closed=True
+                require(metadata==(receiver_restore_intent(attempt) if kind=='RESTORE' else receiver_start_intent(attempt)))
+                if kind=='RESTORE':self.retired_restore(identity,sender)
+                reference=dict(directory='sender-admissions',operationId=attempt['admissionId'])
+            else:reference=dict(directory='operations' if kind=='RESTORE' else 'startups',operationId=identity)
+        else:
+            slot=self.state/'handoffs'/identity;self.directory(slot.parent);self.directory(slot)
+            names={p.name for p in slot.iterdir()}
+            require('binding.json' in names and len(names&{'completed.json','retired.json'})==1
+                and names<={'binding.json','publish.json','continue.json','start.json','completed.json','retired.json'})
+            metadata=decode(self.read(slot/'binding.json',8192));validate_handoff_binding(metadata);require(metadata['handoffId']==identity)
+            for command in ('publish','continue','start'):
+                if command+'.json' not in names:continue
+                value=decode(self.read(slot/(command+'.json'),8192));extra={'expectedRecoveryReceiptSha256'} if command=='continue' else set()
+                require(set(value)==HANDOFF_BINDING|{'command'}|extra and value['command']==command
+                    and {k:value[k] for k in HANDOFF_BINDING}==metadata)
+                if extra:require(is_digest(value['expectedRecoveryReceiptSha256']))
+            terminal=decode(self.read(slot/('retired.json' if 'retired.json' in names else 'completed.json'),8192))
+            if 'retired.json' in names:
+                validate_handoff_retired(terminal,metadata);require('continue.json' not in names)
+            else:
+                require(set(terminal)==HANDOFF_BINDING|{'state','publicationSha256','jobPath'}
+                    and {k:terminal[k] for k in HANDOFF_BINDING}==metadata and terminal['state']=='ORIGINAL_REQUESTS_CONFIRMED'
+                    and is_digest(terminal['publicationSha256']))
+            paths=[slot/name for name in sorted(names)];reference=dict(directory='handoffs',operationId=identity)
+        files={str(path.relative_to(self.state)):hashlib.sha256(self.read(path,12288)).hexdigest() for path in paths}
+        return dict(files=files,metadata=metadata,attempt=attempt,namespace=namespace,closed=closed,terminal=terminal,reference=reference)
+
+    def retired_restore(self,identity,sender):
+        require('closed.json' in sender['names'] and 'pending.json' in sender['names'],
+            'Retire the original receiver pending marker before archiving its negative admission')
+        if os.path.lexists(self.state/'pending.json'):
+            require(decode(self.read(self.state/'pending.json',4096))['operationId']!=identity)
+
+    def correlate(self,kind,identity,step,snapshot,correlation,binding):
+        metadata=snapshot['metadata'];reference=snapshot['reference'];require(isinstance(correlation,dict))
+        if reference['directory']=='sender-admissions':
+            require(set(correlation)=={'kind','source','actorUid','target','outcome','attemptSha256'})
+            attempt=snapshot['attempt'];name=attempt['kind'];request=attempt['request']
+            require(correlation['kind']=='ADMISSION' and correlation['source']=='recovery' and type(correlation['actorUid']) is int
+                and correlation['actorUid']==self.uid and snapshot['namespace']==dict(schema=1,namespaceSha256=binding['namespaceSha256'])
+                and correlation['attemptSha256']==hashlib.sha256(encoded(attempt)).hexdigest()
+                and correlation['outcome'] in ('COMPLETED','NOT_ADMITTED'))
+            action='generation-start-lease' if name=='handoff-renewal' else 'generation-core-start' if name=='handoff-start' else 'generation-publish' if name in ('publish','continue') else request['action']
+            require(correlation['target']==dict(directory='startups' if name=='start' else 'operations',operationId=identity,action=action,continuation=name=='continue'))
+            if snapshot['closed']:require(correlation['outcome']=='NOT_ADMITTED')
+            if kind!='ADMISSION':require(correlation['outcome']=='NOT_ADMITTED' and snapshot['closed'])
+            elif correlation['outcome']=='NOT_ADMITTED':
+                if name in ('restore','start'):
+                    owning=self.state/('operations' if name=='restore' else 'starts')/(identity+'.json')
+                    if os.path.lexists(owning):
+                        require(snapshot['closed'],'Close the original receiver attempt before archiving it')
+                        if name=='restore':self.retired_restore(identity,self.admission(identity,name))
+            return
+        if kind=='RESTORE':
+            require(set(correlation)=={'kind','action','binding','outcome','responseSha256'} and correlation['kind']=='OPERATION'
+                and correlation['action']=='restore' and correlation['outcome']=='COMPLETED'
+                and correlation['binding']==dict(expectedKeySha256=metadata['expectedKeySha256']) and is_digest(correlation['responseSha256']))
+        elif kind=='START':require(correlation==dict(kind='STARTUP',intent=metadata,outcome='COMPLETED'))
+        else:require(kind=='HANDOFF' and set(correlation)=={'kind','binding','outcome','terminal'} and correlation['kind']=='HANDOFF'
+            and correlation['binding']==metadata and correlation['terminal']==snapshot['terminal']
+            and correlation['outcome']==('REVOKED' if snapshot['terminal'].get('state')!='ORIGINAL_REQUESTS_CONFIRMED' else 'COMPLETED'))
+
+    def marker(self,kind,identity,step,binding):
+        value=decode(self.read(self.path(kind,identity,step),65536))
+        require(set(value)=={'schema','purpose','kind','operationId','senderKind','binding','privateFiles','reference','entrySha256','request','continuationAllowed'}
+            and type(value['schema']) is int and value['schema']==1 and value['purpose']==self.PURPOSE and value['kind']==kind
+            and value['operationId']==identity and value['senderKind']==step and value['binding']==binding
+            and type(value['continuationAllowed']) is bool and is_digest(value['entrySha256']))
+        snapshot=self.snapshot(kind,identity,step)
+        require(value['privateFiles']==snapshot['files'] and value['reference']==snapshot['reference'],'Receiver archive original bytes changed')
+        request=value['request'];require(isinstance(request,dict) and set(request)=={'schema','action','archiveId','namespaceSha256','entries','expectedEntriesSha256'}
+            and type(request['schema']) is int and request['schema']==1 and request['action']=='journal-archive' and canonical_id(request['archiveId'])
+            and request['namespaceSha256']==binding['namespaceSha256'] and is_digest(request['expectedEntriesSha256']))
+        refs=archive_references(request['entries']);require(refs==request['entries'] and snapshot['reference'] in refs)
+        return value,snapshot
+
+    def inventory(self,policy,namespace):
+        parent=self.state/'archives';result=set()
+        if not os.path.lexists(parent):return result
+        self.directory(parent);binding=self.binding(namespace);inventory=archive_inventory(policy);secret=policy.read(policy.state/'journal.key',32)
+        for path in parent.iterdir():
+            name=path.name;require(name.endswith('.json'));parts=name[:-5].split('-',1);require(len(parts)==2 and parts[0] in self.KINDS)
+            kind,tail=parts;identity=tail[:36];step=tail[37:] if len(tail)>36 else None
+            require(name==self.path(kind,identity,step).name)
+            marker,snapshot=self.marker(kind,identity,step,binding);reference=snapshot['reference']
+            entry=archive_entry(policy,reference,secret,inventory=inventory);require(entry['sha256']==marker['entrySha256'])
+            self.correlate(kind,identity,step,snapshot,recovery_archive_correlation(policy,reference,secret,snapshot['attempt'],self.uid),binding)
+            request=marker['request'];original=inventory['requests'].get(request['archiveId'])
+            if original is None:continue
+            intent,receipt=original
+            require(intent['requestTag']==hmac.new(secret,encoded(request),hashlib.sha256).hexdigest()
+                and intent['entriesSha256']==request['expectedEntriesSha256']
+                and [{k:row[k] for k in ('directory','operationId')} for row in intent['entries']]==request['entries'])
+            if receipt is not None:result.add((kind,identity,step))
+        return result
+
+
+class RecoveryPrivateArchive:
+    """Receiver-owned metadata only. Caller holds the receiver journal lock."""
+    def __init__(self,journal,client):
+        self.journal,self.client=journal,client;self.state=journal.directory
+        self.format=RecoveryPrivateFormat(self.state,journal.owner,self.state.lstat().st_gid,journal.read,journal.check_directory)
+
+    def call(self,request):
+        result=self.client(request)
+        require(isinstance(result,dict) and type(result.get('schema')) is int and result['schema']==1 and 'error' not in result,
+            'Receiver archive original is unavailable')
+        return result
+
+    def lookup(self,snapshot,binding):
+        request=dict(schema=1,action='journal-archive-recovery-reference-read',namespaceSha256=binding['namespaceSha256'],**snapshot['reference'])
+        if snapshot['attempt'] is not None:request['attempt']=snapshot['attempt']
+        result=self.call(request)
+        require(set(result)=={'schema','state','namespaceSha256','entry','correlation','archive','continuationAllowed','credentialsChanged','startRequested'}
+            and result['namespaceSha256']==binding['namespaceSha256'] and result['state'] in ('ARCHIVABLE','ARCHIVE_RECORDED','UNKNOWN')
+            and type(result['continuationAllowed']) is bool and result['credentialsChanged'] is False and result['startRequested'] is False)
+        entry=result['entry'];require(isinstance(entry,dict) and set(entry)=={'directory','operationId','sha256'}
+            and {k:entry[k] for k in snapshot['reference']}==snapshot['reference'] and is_digest(entry['sha256']))
+        require(result['archive'] is not None or result['continuationAllowed'] is False)
+        return result
+
+    def request_from_view(self,proof,binding):
+        base={'schema','archiveId','namespaceSha256','state','scope','entries','entriesSha256','intentSha256','originalsRetained','credentialsChanged','startRequested'}
+        require(isinstance(proof,dict) and set(proof)==base|({'receiptSha256'} if proof.get('state')=='ARCHIVE_RECORDED' else set())
+            and type(proof['schema']) is int and proof['schema']==1 and canonical_id(proof['archiveId'])
+            and proof['namespaceSha256']==binding['namespaceSha256'] and proof['state'] in ('ARCHIVE_RECORDED','UNKNOWN')
+            and proof['scope']=='ROOT_JOURNAL_ACTIVE_CAPACITY_ONLY' and proof['originalsRetained'] is True
+            and proof['credentialsChanged'] is False and proof['startRequested'] is False
+            and all(is_digest(proof[k]) for k in ('entriesSha256','intentSha256')))
+        if proof['state']=='ARCHIVE_RECORDED':require(is_digest(proof['receiptSha256']))
+        entries=proof['entries'];require(isinstance(entries,list) and 1<=len(entries)<=128)
+        refs=[]
+        for entry in entries:
+            require(isinstance(entry,dict) and set(entry)=={'directory','operationId','sha256'} and is_digest(entry['sha256']))
+            refs.append({k:entry[k] for k in ('directory','operationId')})
+        require(refs==archive_references(refs) and hashlib.sha256(encoded(entries)).hexdigest()==proof['entriesSha256'])
+        return dict(schema=1,action='journal-archive',archiveId=proof['archiveId'],namespaceSha256=binding['namespaceSha256'],entries=refs,expectedEntriesSha256=proof['entriesSha256'])
+
+    def check(self,kind,identity,step,marker,snapshot,binding):
+        observed=self.lookup(snapshot,binding);self.format.correlate(kind,identity,step,snapshot,observed['correlation'],binding)
+        require(marker['entrySha256']==observed['entry']['sha256'])
+        if observed['archive'] is not None:
+            require(observed['state']==observed['archive']['state'] and observed['entry'] in observed['archive']['entries']
+                and marker['request']==self.request_from_view(observed['archive'],binding))
+        else:require(observed['state']=='ARCHIVABLE')
+        return observed
+
+    def archive(self,kind,identity,step=None,*,preview=False,continue_metadata=False):
+        path=self.format.path(kind,identity,step);binding=self.format.binding(self.call(dict(schema=1,action='gwt-sender-namespace')))
+        if os.path.lexists(path):
+            marker,snapshot=self.format.marker(kind,identity,step,binding);observed=self.check(kind,identity,step,marker,snapshot,binding)
+            if continue_metadata and observed['state']!='ARCHIVE_RECORDED':
+                require(not preview and marker['continuationAllowed'] and observed['continuationAllowed'] and observed['archive'] is not None,
+                    'Only an existing original metadata archive can be continued')
+                self.call(dict(marker['request'],action='journal-archive-continue'))
+                observed=self.check(kind,identity,step,marker,snapshot,binding)
+            return observed
+        require(not continue_metadata,'No original private archive intent')
+        snapshot=self.format.snapshot(kind,identity,step);observed=self.lookup(snapshot,binding)
+        self.format.correlate(kind,identity,step,snapshot,observed['correlation'],binding)
+        if preview:return observed
+        if observed['archive'] is not None:
+            request=self.request_from_view(observed['archive'],binding);allowed=observed['continuationAllowed']
+        else:
+            plan=self.call(dict(schema=1,action='journal-archive-plan',namespaceSha256=binding['namespaceSha256'],entries=[snapshot['reference']]))
+            require(set(plan)=={'schema','state','namespaceSha256','entries','entriesSha256','originalsRetained','credentialsChanged','startRequested'}
+                and plan['state']=='ARCHIVE_PLAN' and plan['namespaceSha256']==binding['namespaceSha256'] and plan['entries']==[observed['entry']]
+                and plan['entriesSha256']==hashlib.sha256(encoded(plan['entries'])).hexdigest() and plan['originalsRetained'] is True
+                and plan['credentialsChanged'] is False and plan['startRequested'] is False)
+            request=dict(schema=1,action='journal-archive',archiveId=str(uuid.uuid4()),namespaceSha256=binding['namespaceSha256'],entries=[snapshot['reference']],expectedEntriesSha256=plan['entriesSha256']);allowed=True
+        marker=dict(schema=1,purpose=self.format.PURPOSE,kind=kind,operationId=identity,senderKind=step,binding=binding,
+            privateFiles=snapshot['files'],reference=snapshot['reference'],entrySha256=observed['entry']['sha256'],request=request,continuationAllowed=allowed)
+        if not os.path.lexists(path.parent):path.parent.mkdir(mode=0o700);self.journal.sync(self.state)
+        self.format.directory(path.parent);self.journal.write_new(path,marker)
+        require(self.format.snapshot(kind,identity,step)['files']==snapshot['files'])
+        if observed['archive'] is None:self.call(request)
+        return self.check(kind,identity,step,marker,snapshot,binding)
+
+    def archived(self,kind,identity,step=None):
+        if not os.path.lexists(self.format.path(kind,identity,step)):return False
+        return self.archive(kind,identity,step,preview=True)['state']=='ARCHIVE_RECORDED'
+
 
 class GwtSenderInventory:
     """Full-privilege package reader only; the no-capability Root daemon never uses it."""
@@ -520,7 +824,7 @@ def archive_journal(self, request, pid, uid, daemon, recovery):
     """Explicit metadata only. No cipher, unit command or key writer is reachable."""
     from kura_key_service import (require, fields, operation_id, digest, encode, decode, Failure, PRIVATE_FENCE_ACTIONS, ARCHIVE_ACTIONS)
     LifecycleRefused=Refused
-    if request.get('action')=='journal-archive-reference-read':
+    if request.get('action') in ('journal-archive-reference-read','journal-archive-recovery-reference-read'):
         return archive_reference_read(self,request,pid,uid,daemon,recovery)
     action=request.get('action');require(action in ARCHIVE_ACTIONS)
     expected={'schema','action','namespaceSha256'}|({'entries'} if action=='journal-archive-plan' else

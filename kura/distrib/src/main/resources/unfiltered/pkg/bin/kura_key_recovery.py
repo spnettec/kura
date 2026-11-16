@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
     validate_sender_attempt, validate_sender_closed, receiver_start_intent, receiver_restore_intent,
-    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, validate_start_lease, Refused)
+    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, validate_start_lease, Lifecycle, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -54,6 +54,7 @@ class SenderAdmission:
 
     def __init__(self, client, journal):
         self.client, self.journal = client, journal
+        journal.archive_client=client
         self.directory = journal.directory/'admissions'
 
     def path(self, kind, identity):
@@ -77,7 +78,8 @@ class SenderAdmission:
         directory=self.journal.directory/'handoffs'
         try:directory.lstat()
         except FileNotFoundError:return False
-        self.journal.check_directory(directory);slots=list(directory.iterdir());protocol.require(len(slots)<=MAX_OPERATIONS,'UNSAFE_JOURNAL')
+        self.journal.check_directory(directory);slots=list(directory.iterdir())
+        protocol.require(self.journal.active_count('HANDOFF',slots)<=MAX_OPERATIONS,'UNSAFE_JOURNAL')
         for slot in slots:
             self.journal.check_directory(slot);protocol.operation_id(slot.name)
             names={p.name for p in slot.iterdir()};protocol.require(names<=HandoffController.FILES,'UNSAFE_JOURNAL')
@@ -178,7 +180,7 @@ class SenderAdmission:
             previous = protocol.decode(self.journal.read(slot/'intent.json', 12288))
             protocol.require(previous['kind'] == kind and previous['nativeOperationId'] == identity and previous['request'] == redacted, 'CONFLICT')
             fail('UNRESOLVED_OPERATION')  # Reservation/response ambiguity never reaches a later first writer.
-        protocol.require(len(list(self.directory.iterdir())) < 256, 'CAPACITY')
+        protocol.require(self.journal.active_count('ADMISSION',list(self.directory.iterdir())) < 256, 'CAPACITY')
         slot.mkdir(mode=0o700); self.journal.sync(self.directory)
         admission = str(uuid.uuid4())
         self.journal.write_new(slot/'intent.json', dict(schema=1, purpose='yofc.kura.sender-attempt.v1', admissionId=admission,
@@ -217,9 +219,12 @@ class RootClient:
 
 class Journal:
     """Public intent metadata only. An existing UUID never dispatches a writer."""
-    def __init__(self, directory=STATE):
+    def __init__(self, directory=STATE, *, archive_module=None):
         self.directory = Path(directory)
         self.owner = os.geteuid()
+        self.archive_module=archive_module
+        self.archive_client=None
+        self._archive=None
         self.check_directory(self.directory)
         self.operations = self.directory / 'operations'
         try:
@@ -241,6 +246,28 @@ class Journal:
             pass
         self.read(path, 0)
         self.thread_lock = threading.Lock()
+
+    def history(self):
+        protocol.require(self.archive_client is not None,'UNAVAILABLE')
+        if self._archive is None:
+            module=Lifecycle().journal_module() if self.archive_module is None else self.archive_module
+            self._archive=module.RecoveryPrivateArchive(self,self.archive_client)
+        return self._archive
+
+    def active_count(self,kind,records):
+        if not os.path.lexists(self.directory/'archives'):return len(records)
+        try:
+            self.check_directory(self.directory/'archives');history=self.history();count=0
+            for record in records:
+                step=None
+                if isinstance(record,dict):identity=record['operationId']
+                elif kind=='ADMISSION':
+                    identity=record.name[:36];step=record.name[37:]
+                    protocol.require(record.name==identity+'-'+step,'UNSAFE_JOURNAL')
+                else:identity=record.name if kind=='HANDOFF' else record.name[:-5]
+                if not history.archived(kind,identity,step):count+=1
+            return count
+        except Refused:fail('UNRESOLVED_OPERATION')
 
     def check_directory(self, path):
         st = path.lstat()
@@ -310,7 +337,7 @@ class Journal:
 
     def records(self):
         names = list(self.operations.iterdir())
-        protocol.require(len(names) <= MAX_OPERATIONS, 'UNSAFE_JOURNAL')
+        protocol.require(self.active_count('RESTORE',names) <= MAX_OPERATIONS, 'UNSAFE_JOURNAL')
         result = []
         for path in names:
             protocol.require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
@@ -377,7 +404,7 @@ class Journal:
 
     def start_records(self):
         self.check_directory(self.starts)
-        paths=list(self.starts.iterdir());protocol.require(len(paths)<=MAX_OPERATIONS,'UNSAFE_JOURNAL')
+        paths=list(self.starts.iterdir());protocol.require(self.active_count('START',paths)<=MAX_OPERATIONS,'UNSAFE_JOURNAL')
         result=[]
         for path in paths:
             protocol.require(path.name.endswith('.json'),'UNSAFE_JOURNAL')
@@ -571,6 +598,25 @@ class Controller:
         result['restoreAllowed'] = result['restoreAllowed'] and result['sameDeviceKey'] and not result['keyReady']
         return dict(result, state='INSPECTED')
 
+    def archive(self,value):
+        command=value.get('command');kind=value.get('kind');identity=protocol.operation_id(value.get('operationId'))
+        protocol.require(command in ('preview','query','archive','continue') and kind in ('RESTORE','START','ADMISSION'))
+        mutate=command in ('archive','continue');extra={'senderKind'} if kind=='ADMISSION' else set()
+        protocol.fields(value,{'command','kind','operationId'}|extra|({'backupJson','passphrase'} if mutate else set()))
+        step=value.get('senderKind');protocol.require(step in ('restore','start') if kind=='ADMISSION' else step is None)
+        try:
+            with self.journal.lock():
+                history=self.journal.history();snapshot=history.format.snapshot(kind,identity,step)
+                if mutate:
+                    metadata=snapshot['metadata'];backup=self.material(value)
+                    restore=metadata if kind=='RESTORE' or kind=='ADMISSION' and step=='restore' else self.journal.record(metadata['restoreOperationId'])
+                    protocol.require(restore is not None and restore['expectedKeySha256']==metadata['expectedKeySha256']
+                        and hashlib.sha256(protocol.encode(backup)).hexdigest()==restore['backupSha256'],'BACKUP_REJECTED')
+                    checked=self.inspect(dict(backupJson=value['backupJson'],passphrase=value['passphrase']))
+                    protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
+                return history.archive(kind,identity,step,preview=not mutate,continue_metadata=command=='continue')
+        except Refused:fail('UNRESOLVED_OPERATION')
+
     def original(self, identity, expected=None):
         protocol.operation_id(identity)
         unknown = dict(schema=1, operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED')
@@ -608,7 +654,7 @@ class Controller:
                 return self.original(identity, expected)
             protocol.fields(original, {'schema', 'state'})
             records = self.active_restore_records()
-            protocol.require(len(self.journal.records()) < MAX_OPERATIONS, 'CAPACITY')
+            protocol.require(self.journal.active_count('RESTORE',self.journal.records()) < MAX_OPERATIONS, 'CAPACITY')
             for record in self.active_start_records():
                 protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
             for record in records:
@@ -670,7 +716,7 @@ class Controller:
             restored=self.original(restore_id,expected)
             protocol.require(restored['state']=='SUCCEEDED' and restored.get('keyChanged') is True,'UNRESOLVED_OPERATION')
             records=self.active_start_records()
-            protocol.require(len(self.journal.start_records())<MAX_OPERATIONS,'CAPACITY')
+            protocol.require(self.journal.active_count('START',self.journal.start_records())<MAX_OPERATIONS,'CAPACITY')
             if maintenance:
                 plan=self.start_plan(pending)
                 protocol.require(plan['startAllowed'] and all(plan[k]==value[k] for k in extra),'CONFLICT')
@@ -808,7 +854,7 @@ class HandoffController:
         self.retirement_attempts(binding, value['namespaceSha256'], closed=True)
         slot = self.directory/binding['handoffId']
         if not os.path.lexists(slot):
-            protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+            protocol.require(self.journal.active_count('HANDOFF',self.slots()) < MAX_OPERATIONS, 'CAPACITY')
             slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
         if os.path.lexists(slot/'retired.json'): protocol.require(self.load(slot/'retired.json') == value, 'CONFLICT')
         else: self.journal.write_new(slot/'retired.json', value)
@@ -820,7 +866,7 @@ class HandoffController:
     def slots(self):
         self.journal.check_directory(self.directory)
         paths = list(self.directory.iterdir())
-        protocol.require(len(paths) <= MAX_OPERATIONS, 'CAPACITY')
+        protocol.require(self.journal.active_count('HANDOFF',paths) <= MAX_OPERATIONS, 'CAPACITY')
         for path in paths:
             protocol.operation_id(path.name); self.journal.check_directory(path)
             protocol.require({p.name for p in path.iterdir()} <= self.FILES, 'UNSAFE_JOURNAL')
@@ -916,7 +962,7 @@ class HandoffController:
         directory = self.journal.directory/'admissions'
         if not os.path.lexists(directory): return result
         self.journal.check_directory(directory)
-        paths = list(directory.iterdir()); protocol.require(len(paths) <= 256, 'CAPACITY')
+        paths = list(directory.iterdir()); protocol.require(self.journal.active_count('ADMISSION',paths) <= 256, 'CAPACITY')
         for path in sorted(paths):
             if not path.name.endswith('-handoff-renewal'): continue
             identity = protocol.operation_id(path.name[:36])
@@ -1015,7 +1061,7 @@ class HandoffController:
             def forward():
                 slot = self.directory/info['handoffId']
                 if not os.path.lexists(slot):
-                    protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+                    protocol.require(self.journal.active_count('HANDOFF',self.slots()) < MAX_OPERATIONS, 'CAPACITY')
                     slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
                 try: self.call(token, 'start-renew', operationId=identity, expectedPublicationSha256=value['expectedPublicationSha256'])
                 except (protocol.Failure, OSError, KeyError, ValueError, TypeError): pass
@@ -1041,6 +1087,7 @@ class HandoffController:
 
     def execute(self, value):
         command = value.get('command')
+        if command in ('archive-preview','archive-query','archive-confirm','archive-continue'):return self.archive(value)
         if command in ('start-renew','renewal-close'): return self.renew_start(value)
         if command == 'revoke':
             protocol.fields(value, {'token', 'command'}); token = self.token(value['token'])
@@ -1070,7 +1117,7 @@ class HandoffController:
             identity = binding['startOperationId' if command == 'start' else 'publicationId']
             def forward():
                 if not os.path.lexists(slot):
-                    protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+                    protocol.require(self.journal.active_count('HANDOFF',self.slots()) < MAX_OPERATIONS, 'CAPACITY')
                     slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
                 intent = dict(binding, command=command, **{key:value[key] for key in extra}); self.journal.write_new(slot/(command+'.json'), intent)
                 try: self.call(token, command, **{key:value[key] for key in extra})
@@ -1079,6 +1126,20 @@ class HandoffController:
                 except (protocol.Failure, OSError, KeyError, ValueError, TypeError):
                     return dict(schema=1, state='UNKNOWN', handoffId=binding['handoffId'], scope='ORIGINAL_HANDOFF_ONLY')
             return self.sender.submit('handoff-start' if command == 'start' else command, identity, request, forward)
+
+    def archive(self,value):
+        kind=value.get('kind');protocol.require(kind in ('HANDOFF','ADMISSION'))
+        protocol.fields(value,{'token','command','kind','operationId'}|({'senderKind'} if kind=='ADMISSION' else set()))
+        token=self.token(value['token']);identity=protocol.operation_id(value['operationId']);step=value.get('senderKind')
+        protocol.require(step in ('publish','continue','handoff-start','handoff-renewal') if kind=='ADMISSION' else step is None)
+        try:
+            with self.journal.lock():
+                info=self.info(token);history=self.journal.history();snapshot=history.format.snapshot(kind,identity,step)
+                protocol.require(identity==info['handoffId'] and snapshot['metadata']==self.binding(info) if kind=='HANDOFF'
+                    else snapshot['attempt']['request']['handoffId']==info['handoffId'],'CONFLICT')
+                return history.archive(kind,identity,step,preview=value['command'] in ('archive-preview','archive-query'),
+                    continue_metadata=value['command']=='archive-continue')
+        except Refused:fail('UNRESOLVED_OPERATION')
 
 
 class RecoveryServer(ThreadingHTTPServer):
@@ -1211,6 +1272,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.controller.inspect(value)
             elif self.path == '/api/admission':
                 result = self.server.controller.admission(value)
+            elif self.path == '/api/archive':
+                result = self.server.controller.archive(value)
             elif self.path == '/api/original':
                 protocol.fields(value, {'operationId'})
                 result = self.server.controller.original(value['operationId'])
