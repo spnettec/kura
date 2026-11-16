@@ -970,12 +970,12 @@ class Manager:
                 except (OSError, Failure, Refused):
                     raise Failure("UNKNOWN") from None
 
-    def generation_source(self):
+    def generation_source(self, *, allow_missing=False):
         if any(os.path.lexists(self.store.path(p)) for p in (RING_PATH, GENERATION_RECEIPT_PATH)):
             raw, metadata, proof = self.generations()
             keys, _, legacy = key_generation_entries(raw)
         else:
-            current, proof = self.canonical()
+            current, proof = self.canonical(allow_missing)
             keys, legacy, raw, metadata = [current], 0, None, None
         source = dict(keySha256=proof["keySha256"], ringSha256=metadata["ringSha256"] if metadata else None)
         return keys, legacy, raw, metadata, proof, source

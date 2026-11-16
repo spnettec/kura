@@ -224,8 +224,9 @@ class Setup:
         from kura_key_service import decode, encode
         from kura_key_service_lifecycle import validate_start
         path=self.root/'var/lib/kura-key-recovery';marker=path/'pending.json'
-        with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'),False):current,proof=manager.canonical(True)
-        if current is None:return
+        with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'),False):
+            keys,_,_,_,proof,_=manager.generation_source(allow_missing=True)
+        if keys==[None]:return  # Cold single-key recovery; never reconstruct missing generation credentials.
         completed=set()
         root_starts=manager.state/'startups'
         if os.path.lexists(root_starts):
