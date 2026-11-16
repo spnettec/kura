@@ -7,7 +7,7 @@ import re
 import subprocess
 
 from kura_key_service import Failure, digest, encode, operation_id, fields, require, decode
-from kura_key_service_lifecycle import Refused, validate_start, validate_maintenance, Lifecycle
+from kura_key_service_lifecycle import Refused, validate_start, validate_maintenance, Lifecycle, maintenance_includes_startup
 
 COMMAND = ('/usr/bin/busctl', '--system', '--timeout=15s', 'call',
            'org.freedesktop.systemd1', '/org/freedesktop/systemd1',
@@ -23,7 +23,7 @@ class Starter:
     def records(self):
         self.manager.directory(self.directory, private=True)
         paths = list(self.directory.iterdir())
-        require(len(paths) <= 32, 'UNSAFE_JOURNAL')
+        require(self.manager.active_records('startups',[operation_id(p.name[:-5]) for p in paths if p.name.endswith('.json')]) <= 32, 'UNSAFE_JOURNAL')
         return [self.record(operation_id(p.name[:-5])) if p.name.endswith('.json')
                 else self.invalid() for p in paths]
 
@@ -57,7 +57,7 @@ class Starter:
         directory = self.manager.state / 'package-history'
         self.manager.directory(directory, private=True)
         paths = list(directory.iterdir())
-        require(len(paths) <= 128, 'UNSAFE_JOURNAL')
+        require(self.manager.active_records('package-history',[operation_id(p.name[:-5]) for p in paths if p.name.endswith('.json')]) <= 128, 'UNSAFE_JOURNAL')
         records = {}
         try:
             for path in paths:
@@ -123,8 +123,9 @@ class Starter:
             return result
         if head['keySha256'] != expected or head['manifestSha256'] != self.manifest_digest():
             return result
-        if leaves[0]['operationId'] not in head['precedingStartupIds']:
-            return result
+        try:
+            if not maintenance_includes_startup(self.manager,head,leaves[0]['operationId']):return result
+        except Refused:return self.invalid()
         if any(r.get('maintenanceId') == head['maintenanceId'] for r in records):
             return result
         return dict(result, startAllowed=True, maintenanceId=head['maintenanceId'],
@@ -163,7 +164,7 @@ class Starter:
                 require(hmac.compare_digest(prior['requestTag'], tag), 'CONFLICT')
                 return self.public(prior)  # Never repeat StartUnit, including INTENT.
             records = self.records()
-            require(len(records) < 32, 'CAPACITY')
+            require(manager.active_records('startups',[r['operationId'] for r in records]) < 32, 'CAPACITY')
             require(all(r['state'] == 'SUCCEEDED' for r in records), 'UNRESOLVED_OPERATION')
             if modern:
                 plan = self.plan(restore_id, expected)

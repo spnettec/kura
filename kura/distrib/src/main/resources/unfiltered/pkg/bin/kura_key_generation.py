@@ -757,7 +757,8 @@ class Handoffs:
                 parent = manager.state / 'handoffs'
                 if os.path.lexists(parent):
                     manager.directory(parent, private=True)
-                    files = list(parent.iterdir()); require(len(files) < 32, 'CAPACITY')
+                    files = list(parent.iterdir())
+                    require(manager.active_records('handoffs',[operation_id(p.name[:-5]) for p in files if p.name.endswith('.json')]) < 32, 'CAPACITY')
                     for path in files:
                         require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
                         prior = self.load(operation_id(path.name[:-5]))
@@ -772,9 +773,11 @@ class Handoffs:
                                 ('verificationId', 'operator', 'expectedRingSha256', 'expectedCohortSha256')), 'CONFLICT')
                             self.owner(request, pid, uid, daemon, expected=prior)
                 for name in ('publicationId', 'startOperationId'):
+                    manager.require_not_archive_id(request[name])
                     require(manager.record(request[name]) is None
                             and not os.path.lexists(manager.state / 'startups' / (request[name] + '.json')), 'CONFLICT')
                 manager.sender_admissions.require_capacity(handoff=request)
+                manager.require_not_archive_id(request['handoffId'])
                 owner, source, history, prepared = self.owner(request, pid, uid, daemon)
                 issued = self.clock(); wall = int(time.time())
                 value = dict(schema=1, purpose=HANDOFF_PURPOSE, request=dict(request),

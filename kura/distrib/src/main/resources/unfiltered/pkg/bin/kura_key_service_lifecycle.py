@@ -81,6 +81,263 @@ GWT_NAMESPACE_FIELDS = frozenset(('namespaceSha256', 'rootDevice', 'rootInode'))
 GWT_BINDING_FIELDS = GWT_DATA_FIELDS | GWT_NAMESPACE_FIELDS | {'schema', 'purpose'}
 SENDER_ADMISSION_PURPOSE = 'yofc.kura.sender-admission.v1'
 SENDER_ADMISSION_CONTEXT = b'yofc-kura-sender-admission-v1\0'
+ARCHIVE_INTENT_CONTEXT = b'yofc-kura-journal-archive-intent-v1\0'
+ARCHIVE_RECEIPT_CONTEXT = b'yofc-kura-journal-archive-receipt-v1\0'
+ARCHIVE_TABLES = frozenset(('operations', 'startups', 'handoffs', 'sender-admissions', 'package-history'))
+
+
+def archive_references(value):
+    require(isinstance(value, list) and 1 <= len(value) <= 128)
+    result = []
+    for item in value:
+        require(isinstance(item, dict) and set(item) == {'directory', 'operationId'}
+            and item['directory'] in ARCHIVE_TABLES and canonical_id(item['operationId']))
+        result.append(dict(item))
+    result.sort(key=lambda item: (item['directory'], item['operationId']))
+    require(len({(item['directory'], item['operationId']) for item in result}) == len(result))
+    return result
+
+
+def archive_handoff_closed(policy, authority, secret):
+    """Historical Root proof only. Never require the original JVM to remain alive."""
+    request = authority['request']; identity = request['handoffId']
+    revoked = read_handoff_revocation(policy, identity, secret)
+    if revoked is not None:
+        parent = policy.state/'sender-admissions'
+        if os.path.lexists(parent):
+            policy.directory(parent, private=True)
+            for path in parent.iterdir():
+                require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+                value = validate_sender_admission(decode(policy.read(path, 8192)), path.name[:-5], secret)
+                if value['target']['operationId'] in (request['publicationId'], request['startOperationId']):
+                    require(value['state'] == 'NOT_ADMITTED')
+                    native=handoff_operation_request(authority,start=value['target']['operationId']==request['startOperationId'])
+                    require(value['target']==dict(directory='operations',operationId=native['operationId'],action=native['action'],
+                        requestTag=hmac.new(secret,encoded(native),hashlib.sha256).hexdigest(),continuation=False))
+                    check_sender_original(policy, value, secret)
+        return
+    originals = []
+    for start in (False, True):
+        native = handoff_operation_request(authority, start=start)
+        raw = policy.read(policy.state/'operations'/(native['operationId']+'.json'), 65536)
+        value = validate_record(decode(raw), native['operationId'])
+        require(value['state'] == 'SUCCEEDED' and value['action'] == native['action']
+            and hmac.compare_digest(value['requestTag'], hmac.new(secret, encoded(native), hashlib.sha256).hexdigest()))
+        originals.append(value)
+    path = policy.state/'generations'/request['preparationId']/'publication.json'
+    raw = policy.read(path, 8192); publication = validate_publication(decode(raw))
+    require(raw == encoded(publication) and stat.S_IMODE(path.lstat().st_mode) == 0o400
+        and publication['operationId'] == request['publicationId']
+        and all(publication[k] == request[k] for k in ('preparationId', 'verificationId'))
+        and publication['source'] == authority['source'] and publication['generation'] == authority['generation']
+        and publication['cohortSha256'] == request['expectedCohortSha256']
+        and publication['historySha256'] == authority['historySha256']
+        and publication['stoppedWriter'] == {k:v for k,v in authority['owner'].items() if k != 'uid'})
+    published, started = (row['response'] for row in originals)
+    require(published['publicationSha256'] == hashlib.sha256(raw).hexdigest()
+        and all(published[k]==publication[k] for k in ('preparationId','verificationId','cohortSha256'))
+        and published['ringSha256']==authority['generation']['ringSha256']
+        and published['activeKeySha256']==authority['generation']['activeKeySha256']
+        and started['publicationId'] == request['publicationId']
+        and all(started[k] == published[k] for k in ('ringSha256', 'activeKeySha256', 'cohortSha256')))
+
+
+def archive_entry(policy, reference, secret, *, inventory=None):
+    """Select a positive immutable original; a missing original is never completion."""
+    directory, identity = reference['directory'], reference['operationId']
+    policy.directory(policy.state/directory, private=True)
+    path = policy.state/directory/(identity+'.json'); raw = policy.read(path, 65536)
+    value = decode(raw)
+    if directory == 'operations':
+        validate_record(value, identity); require(value['state'] == 'SUCCEEDED')
+        response=value['response']
+        if value['action'] in ('generation-publish','generation-core-start'):
+            start=value['action']=='generation-core-start'
+            native=dict(schema=1,action=value['action'],operationId=identity,expectedRingSha256=response['ringSha256'],
+                expectedCohortSha256=response['cohortSha256'])
+            if start:native['publicationId']=response['publicationId']
+            else:native.update(preparationId=response['preparationId'],verificationId=response['verificationId'])
+            require(hmac.compare_digest(value['requestTag'],hmac.new(secret,encoded(native),hashlib.sha256).hexdigest()))
+            if not start:
+                publication_raw=policy.read(policy.state/'generations'/response['preparationId']/'publication.json',8192)
+                publication=validate_publication(decode(publication_raw))
+                require(publication_raw==encoded(publication) and hashlib.sha256(publication_raw).hexdigest()==response['publicationSha256']
+                    and publication['operationId']==identity
+                    and all(response[k]==publication[k] for k in ('preparationId','verificationId','cohortSha256'))
+                    and response['ringSha256']==publication['generation']['ringSha256']
+                    and response['activeKeySha256']==publication['generation']['activeKeySha256'])
+            else:
+                archive_entry(policy,dict(directory='operations',operationId=response['publicationId']),secret,inventory=inventory)
+                published=validate_record(decode(policy.read(policy.state/'operations'/(response['publicationId']+'.json'))),response['publicationId'])
+                require(all(response[k]==published['response'][k] for k in ('ringSha256','activeKeySha256','cohortSha256')))
+        if value['action'] in ('generation-prepare','generation-backup-verify'):
+            preparation=identity if value['action']=='generation-prepare' else response['preparationId']
+            prepared=value if preparation==identity else validate_record(decode(policy.read(
+                policy.state/'operations'/(preparation+'.json'))),preparation)
+            require(prepared['action']=='generation-prepare' and prepared['state']=='SUCCEEDED')
+            history_raw=policy.read(policy.state/'generations'/preparation/'history.json',8192);history=decode(history_raw)
+            require(hashlib.sha256(history_raw).hexdigest()==prepared['response']['historySha256']
+                and history['preparationId']==preparation and history['generation']==prepared['response']['generation']
+                and history['source']==prepared['response']['source'])
+            require(hashlib.sha256(encoded(prepared['response']['backup'])).hexdigest()==history['backupSha256'])
+            require(hashlib.sha256(policy.read(policy.state/'generations'/preparation/'keyring',512)).hexdigest()==history['generation']['ringSha256'])
+            if value['action']=='generation-backup-verify':
+                require(response['ringSha256']==history['generation']['ringSha256'] and response['backupSha256']==history['backupSha256'])
+        if value['action'] in ('generation-cancel', 'generation-start-lease'):
+            native = dict(schema=1, action=value['action'], operationId=identity, **value['intent'])
+            require(hmac.compare_digest(value['requestTag'], hmac.new(secret, encoded(native), hashlib.sha256).hexdigest()))
+        if value['action'] == 'generation-start-lease':
+            lease=validate_start_lease(value['response'],identity)
+            authority_path=policy.state/'handoffs'/(lease['handoffId']+'.json')
+            authority_raw=policy.read(authority_path,8192)
+            authority=validate_handoff_authority(decode(authority_raw),lease['handoffId'],secret)
+            require(authority_raw==encoded(authority) and stat.S_IMODE(authority_path.lstat().st_mode)==0o400
+                and lease['grantSha256']==hashlib.sha256(authority_raw).hexdigest()
+                and lease['namespaceSha256']==gwt_namespace(policy.state,secret)['namespaceSha256']
+                and lease['bootId']==authority['owner']['bootId']
+                and all(lease[k]==authority['request'][k] for k in ('handoffId','publicationId','startOperationId')))
+            body={k:v for k,v in lease.items() if k!='receiptTag'}
+            require(hmac.compare_digest(lease['receiptTag'],hmac.new(secret,START_LEASE_CONTEXT+encoded(body),hashlib.sha256).hexdigest()))
+        if value['action']=='generation-cancel':
+            cancellation=policy.read(policy.state/'generations'/value['intent']['preparationId']/'cancellation.json',8192)
+            require(hashlib.sha256(cancellation).hexdigest()==response['cancellationSha256'])
+            event=decode(cancellation);body={k:v for k,v in event.items() if k!='receiptTag'}
+            require(event['operationId']==identity and hmac.compare_digest(event['receiptTag'],hmac.new(secret,
+                b'yofc-kura-cancel-receipt-v1\0'+encoded(body),hashlib.sha256).hexdigest()))
+    elif directory == 'startups':
+        validate_start(value, identity); require(value['state'] == 'SUCCEEDED')
+        restored=validate_record(decode(policy.read(policy.state/'operations'/(value['restoreOperationId']+'.json'))),value['restoreOperationId'])
+        require(restored['action']=='restore' and restored['state']=='SUCCEEDED'
+            and restored['response']['keyChanged'] is True and restored['response']['existingReceiptPreserved'] is True
+            and restored['response']['keySha256']==value['keySha256'])
+        modern=value['schema']==2
+        native=dict(schema=1,action='core-start-after-maintenance' if modern else 'core-start',operationId=identity,
+            restoreOperationId=value['restoreOperationId'],expectedKeySha256=value['keySha256'])
+        if modern:native.update({k:value[k] for k in ('predecessorStartOperationId','maintenanceId','manifestSha256')})
+        require(hmac.compare_digest(value['requestTag'],hmac.new(secret,encoded(native),hashlib.sha256).hexdigest()))
+        if modern:
+            previous=validate_start(decode(policy.read(policy.state/'startups'/(value['predecessorStartOperationId']+'.json'))),value['predecessorStartOperationId'])
+            maintenance=validate_maintenance(decode(policy.read(policy.state/'package-history'/(value['maintenanceId']+'.json'))),value['maintenanceId'])
+            require(previous['state']=='SUCCEEDED' and previous['restoreOperationId']==value['restoreOperationId']
+                and previous['keySha256']==value['keySha256']==maintenance['keySha256']
+                and value['manifestSha256']==maintenance['manifestSha256'])
+            if inventory is not None:require(maintenance_includes_startup(policy,maintenance,value['predecessorStartOperationId'],inventory=inventory))
+    elif directory == 'sender-admissions':
+        validate_sender_admission(value, identity, secret)
+        require(value['namespaceSha256'] == gwt_namespace(policy.state, secret)['namespaceSha256']
+            and value['state'] in ('TERMINAL', 'NOT_ADMITTED'))
+        check_sender_original(policy, value, secret)
+        if value['state']=='TERMINAL' and value['target']['directory']!='handoffs':
+            archive_entry(policy,{k:value['target'][k] for k in ('directory','operationId')},secret,inventory=inventory)
+    elif directory == 'package-history':
+        validate_maintenance(value,identity)
+        if value['schema']==2 and inventory is not None:maintenance_includes_startup(policy,value,'',inventory=inventory)
+    else:
+        validate_handoff_authority(value, identity, secret)
+        require(raw == encoded(value) and stat.S_IMODE(path.lstat().st_mode) == 0o400)
+        archive_handoff_closed(policy, value, secret)
+    return dict(reference, sha256=hashlib.sha256(raw).hexdigest())
+
+
+def archive_inventory(policy):
+    """Authenticate logical archives before exempting any original from an active budget.
+
+    Originals stay at their canonical paths. Old readers and late-frame fences
+    continue to see them; no read moves data or finishes an incomplete archive.
+    """
+    parent = policy.state/'archives'; result = dict(archived=set(), requests={}, head=None, depths={}, owners={}); claimed=set()
+    if not os.path.lexists(parent): return result
+    policy.directory(parent, private=True)
+    secret = policy.read(policy.state/'journal.key', 32); require(len(secret) == 32)
+    namespace = gwt_namespace(policy.state, secret)['namespaceSha256']
+    groups={}
+    for path in parent.iterdir():
+        parts=path.name.split('.');require(len(parts)==3 and canonical_id(parts[0])
+            and parts[1] in ('intent','receipt') and parts[2]=='json')
+        groups.setdefault(parts[0],set()).add(parts[1]+'.json')
+    for identity,names in groups.items():
+        require(names in ({'intent.json'}, {'intent.json', 'receipt.json'}))
+        path = parent/(identity+'.intent.json'); raw = policy.read(path, 65536); intent = decode(raw)
+        require(set(intent) == {'schema','purpose','archiveId','namespaceSha256','source','actorUid',
+            'createdAt','entries','entriesSha256','requestTag','receiptTag','previousArchiveId','previousArchiveSha256'}
+            and type(intent['schema']) is int and intent['schema'] == 1
+            and intent['purpose'] == 'yofc.kura.journal-archive-intent.v1' and intent['archiveId'] == identity
+            and intent['namespaceSha256'] == namespace and intent['source'] in ('gwt','recovery','local-admin')
+            and type(intent['actorUid']) is int and 0 <= intent['actorUid'] < 0xffffffff
+            and type(intent['createdAt']) is int and intent['createdAt'] >= 0
+            and ((intent['previousArchiveId'] is None and intent['previousArchiveSha256'] is None) or
+                canonical_id(intent['previousArchiveId']) and is_digest(intent['previousArchiveSha256']))
+            and all(is_digest(intent[k]) for k in ('entriesSha256','requestTag','receiptTag'))
+            and raw == encoded(intent) and stat.S_IMODE(path.lstat().st_mode) == 0o400)
+        entries = intent['entries']; require(isinstance(entries,list))
+        require(all(isinstance(row,dict) and set(row)=={'directory','operationId','sha256'}
+            and is_digest(row['sha256']) for row in entries))
+        references = archive_references([{k:row[k] for k in ('directory','operationId')} for row in entries])
+        require(references == [{k:row[k] for k in ('directory','operationId')} for row in entries]
+            and hashlib.sha256(encoded(entries)).hexdigest() == intent['entriesSha256'])
+        body = {k:v for k,v in intent.items() if k != 'receiptTag'}
+        require(hmac.compare_digest(intent['receiptTag'],hmac.new(secret,ARCHIVE_INTENT_CONTEXT+encoded(body),hashlib.sha256).hexdigest()))
+        for reference, entry in zip(references,entries):
+            require(archive_entry(policy,reference,secret)==entry)
+            key=(entry['directory'],entry['operationId']);require(key not in claimed);claimed.add(key)
+        receipt = None
+        if 'receipt.json' in names:
+            path=parent/(identity+'.receipt.json'); receipt_raw=policy.read(path,8192); receipt=decode(receipt_raw)
+            require(set(receipt)=={'schema','purpose','archiveId','namespaceSha256','intentSha256','entriesSha256','archivedAt','receiptTag'}
+                and type(receipt['schema']) is int and receipt['schema']==1
+                and receipt['purpose']=='yofc.kura.journal-archive-receipt.v1' and receipt['archiveId']==identity
+                and receipt['namespaceSha256']==namespace and receipt['intentSha256']==hashlib.sha256(raw).hexdigest()
+                and receipt['entriesSha256']==intent['entriesSha256']
+                and type(receipt['archivedAt']) is int and receipt['archivedAt']>=0
+                and is_digest(receipt['receiptTag']) and receipt_raw==encoded(receipt)
+                and stat.S_IMODE(path.lstat().st_mode)==0o400)
+            body={k:v for k,v in receipt.items() if k!='receiptTag'}
+            require(hmac.compare_digest(receipt['receiptTag'],hmac.new(secret,ARCHIVE_RECEIPT_CONTEXT+encoded(body),hashlib.sha256).hexdigest()))
+            for reference, entry in zip(references,entries):
+                key=(entry['directory'],entry['operationId']); require(key not in result['archived'])
+                result['archived'].add(key)
+                result['owners'][key]=identity
+        result['requests'][identity]=(intent,receipt)
+    children={};closed=set()
+    for identity,(intent,receipt) in result['requests'].items():
+        previous=intent['previousArchiveId'];require(previous!=identity and previous not in children);children[previous]=identity
+        if previous is not None:
+            parent_value=result['requests'].get(previous)
+            require(parent_value is not None and parent_value[1] is not None
+                and hashlib.sha256(encoded(parent_value[1])).hexdigest()==intent['previousArchiveSha256'])
+        if receipt is not None:closed.add(identity)
+    current=children.get(None);visited=set();depth=0
+    while current is not None:
+        require(current not in visited);visited.add(current)
+        intent,receipt=result['requests'][current]
+        if receipt is not None:
+            result['depths'][current]=depth;result['head']=current;depth+=1
+        else:require(current not in children)
+        current=children.get(current)
+    require(len(visited)==len(result['requests']))
+    for intent,_ in result['requests'].values():
+        for entry in intent['entries']:
+            if entry['directory']=='package-history':
+                value=validate_maintenance(decode(policy.read(policy.state/'package-history'/(entry['operationId']+'.json'))),entry['operationId'])
+                if value['schema']==2:maintenance_includes_startup(policy,value,'',inventory=result)
+    return result
+
+
+def active_journal_count(policy, directory, identities, *, inventory=None):
+    require(directory in ARCHIVE_TABLES)
+    inventory = archive_inventory(policy) if inventory is None else inventory
+    return sum((directory, identity) not in inventory['archived'] for identity in identities)
+
+
+def maintenance_includes_startup(policy, maintenance, identity, *, inventory=None):
+    if maintenance['schema']==2:
+        inventory=archive_inventory(policy) if inventory is None else inventory
+        head=maintenance['precedingArchiveId'];require(head in inventory['depths'])
+        require(hashlib.sha256(encoded(inventory['requests'][head][1])).hexdigest()==maintenance['precedingArchiveSha256'])
+    if identity in maintenance['precedingStartupIds']:return True
+    if maintenance['schema']==1:return False
+    owner=inventory['owners'].get(('startups',identity))
+    return owner is not None and inventory['depths'][owner]<=inventory['depths'][head]
 
 
 def validate_sender_admission(value, identity, secret):
@@ -362,40 +619,48 @@ HANDOFF_REVOCATION_PURPOSE = 'yofc.kura.unused-handoff-revocation.v1'
 HANDOFF_REVOCATION_CONTEXT = b'yofc-kura-unused-handoff-revocation-v1\0'
 
 
+def read_handoff_revocation(policy, identity, secret):
+    """Read one permanent fence without archive-inventory recursion."""
+    parent=policy.state/'handoff-revocations'
+    if not os.path.lexists(parent):return None
+    policy.directory(parent,private=True)
+    path=parent/(identity+'.json')
+    try:raw=policy.read(path,8192)
+    except FileNotFoundError:return None
+    value=decode(raw);namespace=gwt_namespace(policy.state,secret)['namespaceSha256']
+    require(isinstance(value,dict) and set(value)=={'schema','purpose','handoffId','grantSha256',
+        'namespaceSha256','revokedAt','revokedByUid','receiptTag'}
+        and type(value['schema']) is int and value['schema']==1 and value['purpose']==HANDOFF_REVOCATION_PURPOSE
+        and value['handoffId']==identity and value['namespaceSha256']==namespace
+        and type(value['revokedAt']) is int and value['revokedAt']>=0
+        and type(value['revokedByUid']) is int and value['revokedByUid']>=0
+        and is_digest(value['grantSha256']) and is_digest(value['receiptTag'])
+        and raw==encoded(value) and stat.S_IMODE(path.lstat().st_mode)==0o400)
+    require(hmac.compare_digest(value['receiptTag'],hmac.new(secret,HANDOFF_REVOCATION_CONTEXT+
+        encoded({k:v for k,v in value.items() if k!='receiptTag'}),hashlib.sha256).hexdigest()))
+    authority_path=policy.state/'handoffs'/(identity+'.json');authority_raw=policy.read(authority_path,8192)
+    authority=validate_handoff_authority(decode(authority_raw),identity,secret)
+    require(authority_raw==encoded(authority) and stat.S_IMODE(authority_path.lstat().st_mode)==0o400
+        and value['grantSha256']==hashlib.sha256(authority_raw).hexdigest())
+    for key in ('publicationId','startOperationId'):
+        for directory in ('operations','startups','handoffs'):
+            require(not os.path.lexists(policy.state/directory/(authority['request'][key]+'.json')),
+                'A revoked unused authority cannot conceal an original operation')
+    return value,authority,hashlib.sha256(raw).hexdigest()
+
+
 def handoff_revocations(policy):
     """Authenticated permanent fences, including a revocation interrupted before sender closure."""
-    parent = policy.state/'handoff-revocations'
-    if not os.path.lexists(parent): return {}
-    policy.directory(parent, private=True)
-    policy.directory(policy.state/'handoffs', private=True)
-    paths = list(parent.iterdir()); require(len(paths) <= 32)
-    secret = policy.read(policy.state/'journal.key', 32)
-    namespace = gwt_namespace(policy.state, secret)['namespaceSha256']
-    result = {}
+    parent=policy.state/'handoff-revocations'
+    if not os.path.lexists(parent):return {}
+    policy.directory(parent,private=True);policy.directory(policy.state/'handoffs',private=True)
+    paths=list(parent.iterdir())
+    for path in paths:require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+    require(active_journal_count(policy,'handoffs',[path.name[:-5] for path in paths])<=32)
+    secret=policy.read(policy.state/'journal.key',32);result={}
     for path in paths:
-        require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
-        identity = path.name[:-5]; raw = policy.read(path, 8192); value = decode(raw)
-        require(isinstance(value, dict) and set(value) == {'schema', 'purpose', 'handoffId', 'grantSha256',
-            'namespaceSha256', 'revokedAt', 'revokedByUid', 'receiptTag'}
-            and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == HANDOFF_REVOCATION_PURPOSE
-            and value['handoffId'] == identity and value['namespaceSha256'] == namespace
-            and type(value['revokedAt']) is int and value['revokedAt'] >= 0
-            and type(value['revokedByUid']) is int and value['revokedByUid'] >= 0
-            and is_digest(value['grantSha256']) and is_digest(value['receiptTag'])
-            and raw == encoded(value) and stat.S_IMODE(path.lstat().st_mode) == 0o400)
-        require(hmac.compare_digest(value['receiptTag'], hmac.new(secret, HANDOFF_REVOCATION_CONTEXT +
-            encoded({k: v for k, v in value.items() if k != 'receiptTag'}), hashlib.sha256).hexdigest()))
-        authority_path = policy.state/'handoffs'/(identity+'.json')
-        authority_raw = policy.read(authority_path, 8192)
-        authority = validate_handoff_authority(decode(authority_raw), identity, secret)
-        require(authority_raw == encoded(authority) and stat.S_IMODE(authority_path.lstat().st_mode) == 0o400
-            and value['grantSha256'] == hashlib.sha256(authority_raw).hexdigest())
-        # No alternate action/directory may occupy either permanently fenced UUID.
-        for key in ('publicationId', 'startOperationId'):
-            for directory in ('operations', 'startups', 'handoffs'):
-                require(not os.path.lexists(policy.state/directory/(authority['request'][key]+'.json')),
-                    'A revoked unused authority cannot conceal an original operation')
-        result[identity] = (value, authority, hashlib.sha256(raw).hexdigest())
+        value=read_handoff_revocation(policy,path.name[:-5],secret);require(value is not None)
+        result[path.name[:-5]]=value
     return result
 
 
@@ -611,9 +876,10 @@ def validate_record(record, identity):
 
 
 def validate_maintenance(record, identity):
-    require(isinstance(record,dict) and set(record)=={'schema','maintenanceId','firstAction','manifestSha256',
-            'keySha256','precedingStartupIds','previousMaintenanceId'})
-    require(type(record['schema']) is int and record['schema']==1 and canonical_id(identity)
+    require(isinstance(record,dict) and type(record.get('schema')) is int and record['schema'] in (1,2))
+    require(set(record)=={'schema','maintenanceId','firstAction','manifestSha256',
+            'keySha256','precedingStartupIds','previousMaintenanceId'}|({'precedingArchiveId','precedingArchiveSha256'} if record['schema']==2 else set()))
+    require(canonical_id(identity)
             and record['maintenanceId']==identity and record['firstAction'] in ('install','upgrade')
             and is_digest(record['manifestSha256']) and is_digest(record['keySha256'])
             and (record['previousMaintenanceId'] is None or canonical_id(record['previousMaintenanceId']))
@@ -621,6 +887,8 @@ def validate_maintenance(record, identity):
     ids=record['precedingStartupIds']
     require(isinstance(ids,list) and len(ids)<=32 and all(canonical_id(v) for v in ids)
             and ids==sorted(set(ids)))
+    if record['schema']==2:
+        require(canonical_id(record['precedingArchiveId']) and is_digest(record['precedingArchiveSha256']))
     return record
 
 
@@ -823,7 +1091,8 @@ class GwtSenderInventory:
         self.authority_ids = set()
         authorities = self.policy.state/'handoffs'
         if os.path.lexists(authorities):
-            self.policy.directory(authorities, private=True); files = list(authorities.iterdir()); require(len(files) <= 32)
+            self.policy.directory(authorities, private=True); files = list(authorities.iterdir())
+            require(active_journal_count(self.policy,'handoffs',[p.name[:-5] for p in files]) <= 32)
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 raw = self.policy.read(path, 8192)
@@ -942,7 +1211,10 @@ class Lifecycle:
         self.directory(self.state, private=True, create=True)
         self.directory(self.state / "operations", private=True, create=True)
         names = list(self.state.iterdir())
-        require({p.name for p in names} <= {"operations", "admission.lock", "journal.key", "maintenance.json", "startups", "package-history", "gwt-sender.json", 'sender-admissions', 'sender-admission.lock'})
+        require({p.name for p in names} <= {"operations", "admission.lock", "journal.key", "maintenance.json", "startups", "package-history", "gwt-sender.json", 'sender-admissions', 'sender-admission.lock',
+            'generations','generation-current.json','handoffs','handoff-revocations','archives'})
+        try:self.check_extended_journal()
+        except (OSError,KeyError,TypeError,ValueError):raise Refused('Invalid retained generation/archive layout; preserve keys and original IDs') from None
         lock = self.state / "admission.lock"
         if not os.path.lexists(lock):
             require(not list((self.state / "operations").iterdir()), "Missing admission lock with saved operations")
@@ -953,6 +1225,122 @@ class Lifecycle:
             require(not os.path.lexists(self.state/'sender-admissions'), 'Missing sender lock with saved reservations')
             self.create(sender, b'')
         require(self.read(sender, limit=0) == b'')
+
+    def check_extended_journal(self):
+        """Validate known generation/authority bytes before accepting their layout.
+
+        This is an independent package reader. It executes no installed Manager,
+        performs no key repair and never interprets a partial result as closed.
+        """
+        inventory=archive_inventory(self)
+        extended=any(os.path.lexists(self.state/name) for name in
+            ('generations','generation-current.json','handoffs','handoff-revocations'))
+        if not extended:return
+        secret=self.read(self.state/'journal.key',32);require(len(secret)==32)
+        def record(identity):
+            require(canonical_id(identity))
+            return validate_record(decode(self.read(self.state/'operations'/(identity+'.json'))),identity)
+        authorities=self.state/'handoffs'
+        if os.path.lexists(authorities):
+            self.directory(authorities,private=True);paths=list(authorities.iterdir())
+            require(active_journal_count(self,'handoffs',[p.name[:-5] for p in paths],inventory=inventory)<=32)
+            for path in paths:
+                require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+                raw=self.read(path,8192);authority=validate_handoff_authority(decode(raw),path.name[:-5],secret)
+                require(raw==encoded(authority) and stat.S_IMODE(path.lstat().st_mode)==0o400)
+                request=authority['request'];prepared=record(request['preparationId']);verified=record(request['verificationId'])
+                require(prepared['action']=='generation-prepare' and verified['action']=='generation-backup-verify')
+                if prepared['state']!='SUCCEEDED' or verified['state']!='SUCCEEDED':raise Unresolved('Original authority preparation is incomplete')
+                require(prepared['response']['generation']==authority['generation']
+                    and prepared['response']['historySha256']==authority['historySha256']
+                    and verified['response']['preparationId']==request['preparationId']
+                    and verified['response']['ringSha256']==request['expectedRingSha256'])
+                for start in (False,True):
+                    native=handoff_operation_request(authority,start=start);target=self.state/'operations'/(native['operationId']+'.json')
+                    if os.path.lexists(target):
+                        original=record(native['operationId'])
+                        require(original['action']==native['action'] and hmac.compare_digest(original['requestTag'],
+                            hmac.new(secret,encoded(native),hashlib.sha256).hexdigest()))
+        handoff_revocations(self)
+        parent=self.state/'generations'
+        if os.path.lexists(parent):
+            self.directory(parent,private=True);paths=list(parent.iterdir())
+            require(active_journal_count(self,'operations',[p.name for p in paths],inventory=inventory)<=256)
+            allowed={'keyring','source-keyring','history.json','cancellation.json','publication.json',
+                'publication-recovery.json','source-active-key','source-provisioned.json','source-generation-receipt.json'}
+            for slot in paths:
+                require(canonical_id(slot.name));self.directory(slot,private=True)
+                names={p.name for p in slot.iterdir()};require(names<=allowed)
+                prepared=record(slot.name)
+                require(prepared['action']=='generation-prepare')
+                if prepared['state']!='SUCCEEDED':raise Unresolved('Original preparation is incomplete; preserve keys and UUID')
+                require({'keyring','history.json'}<=names and not {'publication.json','cancellation.json'}<=names)
+                raw=self.read(slot/'history.json',8192);history=decode(raw);response=prepared['response']
+                require(set(history)=={'schema','purpose','preparationId','createdAt','source','sourceReceipt',
+                    'sourceGenerationReceipt','provisioned','generation','backupSha256'}
+                    and type(history['schema']) is int and history['schema']==1
+                    and history['purpose']=='yofc-kura-prepared-generation-v1' and history['preparationId']==slot.name
+                    and history['source']==response['source'] and history['generation']==response['generation']
+                    and hashlib.sha256(raw).hexdigest()==response['historySha256']
+                    and hashlib.sha256(encoded(response['backup'])).hexdigest()==history['backupSha256'])
+                validate_generation_metadata(history['generation'])
+                require(hashlib.sha256(self.read(slot/'keyring',512)).hexdigest()==history['generation']['ringSha256'])
+                for name in names:
+                    path=slot/name;self.read(path,65536);require(stat.S_IMODE(path.lstat().st_mode)==0o400)
+                if 'source-active-key' in names:
+                    require(hashlib.sha256(self.read(slot/'source-active-key',32)).hexdigest()==history['source']['keySha256'])
+                if 'source-provisioned.json' in names:
+                    require(decode(self.read(slot/'source-provisioned.json',8192))==history['sourceReceipt'])
+                if 'source-generation-receipt.json' in names:
+                    require(history['sourceGenerationReceipt'] is not None)
+                    require(decode(self.read(slot/'source-generation-receipt.json',8192))==dict(
+                        schema=1,purpose=GENERATION_FORMAT,**history['sourceGenerationReceipt']))
+                if history['source']['ringSha256'] is None:
+                    require('source-keyring' not in names and history['sourceGenerationReceipt'] is None)
+                else:
+                    require('source-keyring' in names)
+                    validate_generation_metadata(history['sourceGenerationReceipt'])
+                    require(hashlib.sha256(self.read(slot/'source-keyring',512)).hexdigest()==history['source']['ringSha256']
+                        ==history['sourceGenerationReceipt']['ringSha256'])
+                if 'cancellation.json' in names:
+                    raw=self.read(slot/'cancellation.json',8192);value=decode(raw)
+                    require(set(value)=={'schema','purpose','operationId','preparationId','historySha256','ringSha256','source','createdAt','receiptTag'}
+                        and type(value['schema']) is int and value['schema']==1 and value['purpose']=='yofc-kura-generation-cancel-v1'
+                        and value['preparationId']==slot.name and value['source']==history['source']
+                        and value['historySha256']==response['historySha256'] and value['ringSha256']==history['generation']['ringSha256']
+                        and raw==encoded(value))
+                    body={k:v for k,v in value.items() if k!='receiptTag'}
+                    require(is_digest(value['receiptTag']) and hmac.compare_digest(value['receiptTag'],hmac.new(secret,
+                        b'yofc-kura-cancel-receipt-v1\0'+encoded(body),hashlib.sha256).hexdigest()))
+                    cancelled=record(value['operationId']);require(cancelled['action']=='generation-cancel')
+                    if cancelled['state']!='SUCCEEDED':raise Unresolved('Original cancellation is incomplete')
+                    require(cancelled['response']['cancellationSha256']==hashlib.sha256(raw).hexdigest())
+                if 'publication.json' in names:
+                    require({'source-active-key','source-provisioned.json','publication-recovery.json'}<=names)
+                    raw=self.read(slot/'publication.json',8192);value=validate_publication(decode(raw))
+                    require(raw==encoded(value) and value['preparationId']==slot.name
+                        and value['historySha256']==response['historySha256'] and value['source']==history['source']
+                        and value['generation']==history['generation'])
+                    published=record(value['operationId']);require(published['action']=='generation-publish')
+                    if published['state']!='SUCCEEDED':raise Unresolved('Original publication is incomplete')
+                    require(published['response']['publicationSha256']==hashlib.sha256(raw).hexdigest())
+                if 'publication-recovery.json' in names:
+                    raw=self.read(slot/'publication-recovery.json',16384);value=decode(raw)
+                    require(set(value)=={'schema','purpose','publication','sourceFiles','writerUid','receiptTag'}
+                        and type(value['schema']) is int and value['schema']==1 and value['purpose']=='yofc-kura-publication-recovery-v1'
+                        and raw==encoded(value) and validate_publication(value['publication'])['preparationId']==slot.name)
+                    body={k:v for k,v in value.items() if k!='receiptTag'}
+                    require(is_digest(value['receiptTag']) and hmac.compare_digest(value['receiptTag'],hmac.new(secret,
+                        b'yofc-kura-publication-recovery-v1\0'+encoded(body),hashlib.sha256).hexdigest()))
+        current=self.state/'generation-current.json'
+        if os.path.lexists(current):
+            raw=self.read(current,8192);value=validate_publication(decode(raw))
+            immutable=self.state/'generations'/value['preparationId']/'publication.json'
+            require(raw==encoded(value) and self.read(immutable,8192)==raw)
+            original=record(value['operationId'])
+            require(original['action']=='generation-publish')
+            if original['state']!='SUCCEEDED':raise Unresolved('Current publication is incomplete')
+            require(original['response']['publicationSha256']==hashlib.sha256(raw).hexdigest())
 
     @contextlib.contextmanager
     def locked(self):
@@ -971,10 +1359,11 @@ class Lifecycle:
             os.close(fd)
 
     def check_records(self, *, recovering_cancel=None, recovering_publication=None):
+        inventory=archive_inventory(self)
         handoff_revocations(self)
         self.directory(self.state / "operations", private=True)
         paths = list((self.state / "operations").iterdir())
-        require(len(paths) <= 256)
+        require(active_journal_count(self,'operations',[p.name[:-5] for p in paths],inventory=inventory) <= 256)
         for path in paths:
             require(path.name.endswith(".json") and canonical_id(path.name[:-5]))
             record = validate_record(decode(self.read(path)), path.name[:-5])
@@ -987,7 +1376,7 @@ class Lifecycle:
         startups=self.state/'startups'
         if os.path.lexists(startups):
             self.directory(startups,private=True)
-            starts=list(startups.iterdir());require(len(starts)<=32)
+            starts=list(startups.iterdir());require(active_journal_count(self,'startups',[p.name[:-5] for p in starts],inventory=inventory)<=32)
             for path in starts:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 record=validate_start(decode(self.read(path)),path.name[:-5])
@@ -996,10 +1385,11 @@ class Lifecycle:
         history=self.state/'package-history'
         if os.path.lexists(history):
             self.directory(history,private=True)
-            records=list(history.iterdir());require(len(records)<=128)
+            records=list(history.iterdir());require(active_journal_count(self,'package-history',[p.name[:-5] for p in records],inventory=inventory)<=128)
             for path in records:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
-                validate_maintenance(decode(self.read(path)),path.name[:-5])
+                value=validate_maintenance(decode(self.read(path)),path.name[:-5])
+                if value['schema']==2:maintenance_includes_startup(self,value,'',inventory=inventory)
         return paths
 
     @contextlib.contextmanager
@@ -1015,7 +1405,8 @@ class Lifecycle:
     def check_sender_admissions(self):
         directory = self.state/'sender-admissions'
         if not os.path.lexists(directory): return
-        self.directory(directory, private=True); paths = list(directory.iterdir()); require(len(paths) <= 256)
+        self.directory(directory, private=True); paths = list(directory.iterdir())
+        require(active_journal_count(self,'sender-admissions',[p.name[:-5] for p in paths]) <= 256)
         secret = self.read(self.state/'journal.key', 32); namespace = gwt_namespace(self.state, secret)['namespaceSha256']
         for path in paths:
             require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
@@ -1360,13 +1751,16 @@ class Lifecycle:
                     require(info.get('ActiveState') in ('inactive','failed') and info.get('MainPID')=='0'
                             and info.get('ControlPID')=='0','Core must be stopped before publishing package handoff')
                 history=self.state/'package-history';self.directory(history,private=True,create=True)
-                ids=sorted(path.name[:-5] for path in (self.state/'startups').iterdir())
+                archives=archive_inventory(self)
+                ids=sorted(path.name[:-5] for path in (self.state/'startups').iterdir()
+                    if ('startups',path.name[:-5]) not in archives['archived'])
                 prior=[]
                 for path in history.iterdir():
                     require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                     record=validate_maintenance(decode(self.read(path)),path.name[:-5])
                     if record['maintenanceId']!=fence['id']:prior.append(record)
-                require(len(ids)<=32 and len(prior)<128)
+                require(len(ids)<=32 and active_journal_count(self,'package-history',
+                    [row['maintenanceId'] for row in prior],inventory=archives)<128)
                 parents={item['previousMaintenanceId'] for item in prior}
                 heads=[item for item in prior if item['maintenanceId'] not in parents]
                 require(len(heads)==(1 if prior else 0),'Package history head is ambiguous')
@@ -1375,6 +1769,9 @@ class Lifecycle:
                 value=dict(schema=1,maintenanceId=fence['id'],firstAction=fence['firstAction'],
                     manifestSha256=hashlib.sha256(self.read(home/'libexec/key-backup/manifest.json',private=False)).hexdigest(),
                     keySha256=proof['keySha256'],precedingStartupIds=ids,previousMaintenanceId=previous)
+                if archives['head'] is not None:
+                    head=archives['head'];value.update(schema=2,precedingArchiveId=head,
+                        precedingArchiveSha256=hashlib.sha256(encoded(archives['requests'][head][1])).hexdigest())
                 validate_maintenance(value,fence['id']);target=history/(fence['id']+'.json')
                 if os.path.lexists(target):require(decode(self.read(target))==value)
                 else:self.create(target,encoded(value))
