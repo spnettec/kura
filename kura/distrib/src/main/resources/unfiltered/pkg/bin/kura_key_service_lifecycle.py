@@ -311,6 +311,62 @@ def validate_handoff_authority(value, identity, secret):
 
 HANDOFF_IDS = ('handoffId', 'preparationId', 'verificationId', 'publicationId', 'startOperationId')
 HANDOFF_BINDING = frozenset(('schema', 'operator', 'ringSha256', 'cohortSha256', 'historySha256', *HANDOFF_IDS))
+HANDOFF_REVOCATION_PURPOSE = 'yofc.kura.unused-handoff-revocation.v1'
+HANDOFF_REVOCATION_CONTEXT = b'yofc-kura-unused-handoff-revocation-v1\0'
+
+
+def handoff_revocations(policy):
+    """Authenticated permanent fences, including a revocation interrupted before sender closure."""
+    parent = policy.state/'handoff-revocations'
+    if not os.path.lexists(parent): return {}
+    policy.directory(parent, private=True)
+    policy.directory(policy.state/'handoffs', private=True)
+    paths = list(parent.iterdir()); require(len(paths) <= 32)
+    secret = policy.read(policy.state/'journal.key', 32)
+    namespace = gwt_namespace(policy.state, secret)['namespaceSha256']
+    result = {}
+    for path in paths:
+        require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
+        identity = path.name[:-5]; raw = policy.read(path, 8192); value = decode(raw)
+        require(isinstance(value, dict) and set(value) == {'schema', 'purpose', 'handoffId', 'grantSha256',
+            'namespaceSha256', 'revokedAt', 'revokedByUid', 'receiptTag'}
+            and type(value['schema']) is int and value['schema'] == 1 and value['purpose'] == HANDOFF_REVOCATION_PURPOSE
+            and value['handoffId'] == identity and value['namespaceSha256'] == namespace
+            and type(value['revokedAt']) is int and value['revokedAt'] >= 0
+            and type(value['revokedByUid']) is int and value['revokedByUid'] >= 0
+            and is_digest(value['grantSha256']) and is_digest(value['receiptTag'])
+            and raw == encoded(value) and stat.S_IMODE(path.lstat().st_mode) == 0o400)
+        require(hmac.compare_digest(value['receiptTag'], hmac.new(secret, HANDOFF_REVOCATION_CONTEXT +
+            encoded({k: v for k, v in value.items() if k != 'receiptTag'}), hashlib.sha256).hexdigest()))
+        authority_path = policy.state/'handoffs'/(identity+'.json')
+        authority_raw = policy.read(authority_path, 8192)
+        authority = validate_handoff_authority(decode(authority_raw), identity, secret)
+        require(authority_raw == encoded(authority) and stat.S_IMODE(authority_path.lstat().st_mode) == 0o400
+            and value['grantSha256'] == hashlib.sha256(authority_raw).hexdigest())
+        # No alternate action/directory may occupy either permanently fenced UUID.
+        for key in ('publicationId', 'startOperationId'):
+            for directory in ('operations', 'startups', 'handoffs'):
+                require(not os.path.lexists(policy.state/directory/(authority['request'][key]+'.json')),
+                    'A revoked unused authority cannot conceal an original operation')
+        result[identity] = (value, authority, hashlib.sha256(raw).hexdigest())
+    return result
+
+
+def handoff_revocation_view(revoked):
+    receipt, authority, fingerprint = revoked; request = authority['request']
+    return dict(schema=1, **{key: request[key] for key in (*HANDOFF_IDS, 'operator')},
+        ringSha256=request['expectedRingSha256'], cohortSha256=request['expectedCohortSha256'],
+        historySha256=authority['historySha256'], state='UNUSED_AUTHORITY_REVOKED', scope='FIXED_OPERATIONS_NOT_ADMITTED',
+        namespaceSha256=receipt['namespaceSha256'], revocationSha256=fingerprint)
+
+
+def validate_handoff_retired(value, binding):
+    validate_handoff_binding(binding)
+    require(isinstance(value, dict) and set(value) == HANDOFF_BINDING | {'state', 'scope', 'namespaceSha256', 'revocationSha256'}
+        and {key: value[key] for key in HANDOFF_BINDING} == binding and value['state'] == 'UNUSED_AUTHORITY_REVOKED'
+        and value['scope'] == 'FIXED_OPERATIONS_NOT_ADMITTED' and is_digest(value['namespaceSha256'])
+        and is_digest(value['revocationSha256']))
+    return value
 
 
 def validate_handoff_binding(value):
@@ -801,6 +857,7 @@ class Lifecycle:
             os.close(fd)
 
     def check_records(self, *, recovering_cancel=None, recovering_publication=None):
+        handoff_revocations(self)
         self.directory(self.state / "operations", private=True)
         paths = list((self.state / "operations").iterdir())
         require(len(paths) <= 256)
@@ -973,7 +1030,7 @@ class Lifecycle:
         try:
             try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError:raise Refused('Cold recovery is active; package change refused') from None
-            closed_starts = {}; closed_restores = {}
+            closed_starts = {}; closed_restores = {}; closed_handoffs = {}
             if os.path.lexists(state/'admissions'):
                 directory(state/'admissions'); slots = list((state/'admissions').iterdir()); require(len(slots) <= 256)
                 for slot in slots:
@@ -994,6 +1051,8 @@ class Lifecycle:
                             closed_starts[value['nativeOperationId']] = receiver_start_intent(value)
                         if value['kind'] == 'restore' and archived is not None:
                             closed_restores[value['nativeOperationId']] = receiver_restore_intent(value)
+                        if value['kind'] in ('publish', 'handoff-start'):
+                            closed_handoffs[(value['kind'], value['nativeOperationId'])] = value
             files=list((state/'operations').iterdir());require(len(files)<=32)
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
@@ -1037,8 +1096,9 @@ class Lifecycle:
                 directory(state/'handoffs'); handoffs = list((state/'handoffs').iterdir()); require(len(handoffs) <= 32)
                 for slot in handoffs:
                     require(canonical_id(slot.name)); directory(slot)
-                    require({'binding.json', 'completed.json'} <= {p.name for p in slot.iterdir()} <=
-                        {'binding.json', 'completed.json', 'publish.json', 'continue.json', 'start.json'},
+                    names = {p.name for p in slot.iterdir()}
+                    require('binding.json' in names and len(names & {'completed.json','retired.json'}) == 1 and names <=
+                        {'binding.json', 'completed.json', 'retired.json', 'publish.json', 'continue.json', 'start.json'},
                         'Unresolved fixed-operation handoff; preserve original requests')
                     binding = decode(read(slot/'binding.json', 8192)); validate_handoff_binding(binding)
                     require(binding['handoffId'] == slot.name)
@@ -1049,6 +1109,17 @@ class Lifecycle:
                             require(set(intent) == HANDOFF_BINDING | {'command'} | extra
                                 and {key: intent[key] for key in HANDOFF_BINDING} == binding and intent['command'] == name)
                             if extra: require(is_digest(intent['expectedRecoveryReceiptSha256']))
+                    if 'retired.json' in names:
+                        retired = validate_handoff_retired(decode(read(slot/'retired.json',8192)), binding)
+                        revoked = handoff_revocations(self).get(slot.name)
+                        require(revoked is not None and retired == handoff_revocation_view(revoked)
+                            and 'continue.json' not in names, 'Unconfirmed unused-authority retirement')
+                        for command, kind, key in (('publish','publish','publicationId'), ('start','handoff-start','startOperationId')):
+                            if command+'.json' in names:
+                                attempt = closed_handoffs.get((kind,binding[key]))
+                                require(attempt is not None and attempt['request']['handoffId'] == slot.name,
+                                    'Retired handoff has an unclosed original sender attempt')
+                        continue
                     completed = decode(read(slot/'completed.json', 8192))
                     require(set(completed) == HANDOFF_BINDING | {'state', 'publicationSha256', 'jobPath'}
                         and {key: completed[key] for key in HANDOFF_BINDING} == binding

@@ -21,6 +21,7 @@ class AdmissionRoot:
     def __init__(self):
         self.cold=FakeRoot();self.handoff=HandoffRoot();self.namespace='c'*64;self.records={};self.calls=[]
         self.lose=True;self.lose_close=False;self.native_writes=0;self.closes=0
+        self.lose_revoke=False;self.revocations=0;self.revocation_proof=None
 
     def __call__(self,request):
         self.calls.append(request['action']);action=request['action']
@@ -44,7 +45,19 @@ class AdmissionRoot:
             self.native_writes+=1;raise AssertionError('Metadata recovery must not invoke a native writer')
         if action=='generation-handoff-command':
             if request.get('token')!=self.handoff.token:return dict(schema=1,error='FORBIDDEN')
+            if request.get('command')=='revoke':
+                protocol.require(self.handoff.publication is None and self.handoff.start is None,'UNRESOLVED_OPERATION')
+                protocol.require(all(v['state'] in ('RESERVED','NOT_ADMITTED') for v in self.records.values()),'UNRESOLVED_OPERATION')
+                for record in self.records.values():record['state']='NOT_ADMITTED'
+                self.handoff.info.update(state='GRANT_REVOKED',mutationWindowOpen=False);self.revocations+=1
+                self.revocation_proof=dict(recovery.HandoffController.binding(self.handoff.info),state='UNUSED_AUTHORITY_REVOKED',
+                    scope='FIXED_OPERATIONS_NOT_ADMITTED',namespaceSha256=self.namespace,revocationSha256='d'*64)
+                if self.lose_revoke:self.lose_revoke=False;raise OSError('modeled lost Root revocation reply')
+                return copy.deepcopy(self.revocation_proof)
             return self.handoff(request)
+        if action=='generation-handoff-revocation-read':
+            protocol.require(request['handoffId']==self.handoff.info['handoffId'] and self.revocation_proof is not None,'UNRESOLVED_OPERATION')
+            return copy.deepcopy(self.revocation_proof)
         if action=='core-start-read':return dict(schema=1,state='NOT_FOUND')
         if action=='core-start-plan':return dict(schema=1,state='START_PLAN',startAllowed=False,maintenanceId=None,
             predecessorStartOperationId=None,manifestSha256=None,blockingOperationId=None)

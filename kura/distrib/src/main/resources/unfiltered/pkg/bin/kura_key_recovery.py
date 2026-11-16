@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
     validate_sender_attempt, validate_sender_closed, receiver_start_intent, receiver_restore_intent,
-    receiver_restore_pending, validate_receiver_pending, Refused)
+    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -59,7 +59,7 @@ class SenderAdmission:
         try:self.path(kind,identity).lstat();return True
         except FileNotFoundError:return False
 
-    def has_key_intent(self, identity, *, permitted_start=None, permitted_restore=None, permitted_pending=None):
+    def has_key_intent(self, identity, *, permitted_start=None, permitted_restore=None, permitted_pending=None, permitted_handoff=None):
         protocol.operation_id(identity)
         restore=self.journal.record(identity)
         if restore is not None and restore!=permitted_restore:return True
@@ -79,6 +79,7 @@ class SenderAdmission:
             try:validate_handoff_binding(saved)
             except Refused:fail('UNSAFE_JOURNAL')
             protocol.require(saved['handoffId']==slot.name,'UNSAFE_JOURNAL')
+            if slot.name == permitted_handoff: continue
             if names=={'binding.json'} and identity in (saved['publicationId'],saved['startOperationId']):return True
             if identity==saved['publicationId'] and names&{'publish.json','continue.json'}:return True
             if identity==saved['startOperationId'] and 'start.json' in names:return True
@@ -711,7 +712,7 @@ class HandoffController:
     IDS = HANDOFF_IDS
     BINDING = HANDOFF_BINDING
     WRITERS = frozenset(('publish', 'continue', 'start'))
-    FILES = frozenset(('binding.json', 'publish.json', 'continue.json', 'start.json', 'completed.json'))
+    FILES = frozenset(('binding.json', 'publish.json', 'continue.json', 'start.json', 'completed.json', 'retired.json'))
 
     def __init__(self, client, journal, sender=None):
         self.client, self.journal = client, journal
@@ -749,11 +750,63 @@ class HandoffController:
         value = self.call(token, 'info')
         protocol.fields(value, self.BINDING | {'state', 'scope', 'issuedAt', 'expiresAt', 'mutationWindowOpen', 'startupAuthorized'})
         self.binding(value)
-        protocol.require(value['handoffId'] == token.split('.')[1] and value['state'] == 'GRANT_RECORDED'
+        protocol.require(value['handoffId'] == token.split('.')[1] and value['state'] in ('GRANT_RECORDED', 'GRANT_REVOKING', 'GRANT_REVOKED')
             and value['scope'] == 'ORIGINAL_AUTHORIZATION_ONLY' and value['startupAuthorized'] is False
             and type(value['mutationWindowOpen']) is bool and type(value['issuedAt']) is int
             and type(value['expiresAt']) is int and value['issuedAt'] >= 0 and value['expiresAt'] - value['issuedAt'] == 900, 'PROTOCOL_MISMATCH')
+        protocol.require(value['state'] == 'GRANT_RECORDED' or value['mutationWindowOpen'] is False, 'PROTOCOL_MISMATCH')
         return value
+
+    def retirement(self, binding):
+        path = self.directory/binding['handoffId']/'retired.json'
+        if not os.path.lexists(path): return None
+        value = self.load(path)
+        try: validate_handoff_retired(value, binding)
+        except Refused: fail('UNSAFE_JOURNAL')
+        original = self.client(dict(schema=1, action='generation-handoff-revocation-read', handoffId=binding['handoffId']))
+        protocol.require(original == value, 'UNRESOLVED_OPERATION')
+        self.retirement_attempts(binding, value['namespaceSha256'], closed=True)
+        return value
+
+    def retirement_attempts(self, binding, namespace=None, *, closed=False):
+        slot = self.directory/binding['handoffId']
+        for command, kind, key in (('publish', 'publish', 'publicationId'), ('start', 'handoff-start', 'startOperationId')):
+            saved = self.sender.load(kind, binding[key])
+            if saved is None:
+                protocol.require(not os.path.lexists(slot/(command+'.json')), 'UNRESOLVED_OPERATION')
+                continue
+            attempt, realm, finished = saved
+            protocol.require(attempt['request']['handoffId'] == binding['handoffId'] and realm is not None
+                and (namespace is None or realm['namespaceSha256'] == namespace), 'CONFLICT')
+            view = self.sender.view(kind, binding[key])
+            protocol.require(view['phase'] in ('RESERVED', 'NOT_ADMITTED'), 'UNRESOLVED_OPERATION')
+            if closed: protocol.require(finished and view['phase'] == 'NOT_ADMITTED' and view['closed'], 'UNRESOLVED_OPERATION')
+        protocol.require(not self.sender.has_attempt('continue', binding['publicationId'])
+            and not os.path.lexists(slot/'continue.json'), 'UNRESOLVED_OPERATION')
+
+    def revoke(self, token):
+        info = self.info(token); binding = self.binding(info); flags, completed, _ = self.local(info)
+        protocol.require(not completed and not flags['continue'], 'UNRESOLVED_OPERATION')
+        for identity in (binding['publicationId'], binding['startOperationId']):
+            protocol.require(not self.sender.has_key_intent(identity, permitted_handoff=binding['handoffId']), 'UNRESOLVED_OPERATION')
+        self.retirement_attempts(binding)
+        for start in (False, True):
+            original = self.original(token, info, start=start)
+            protocol.require(original['state'] == 'NOT_RECORDED' and original['resultSource'] == 'ROOT_ABSENCE', 'UNRESOLVED_OPERATION')
+        value = self.call(token, 'revoke')
+        try: validate_handoff_retired(value, binding)
+        except Refused: fail('PROTOCOL_MISMATCH')
+        self.retirement_attempts(binding, value['namespaceSha256'])
+        for kind, key in (('publish', 'publicationId'), ('handoff-start', 'startOperationId')):
+            if self.sender.has_attempt(kind, binding[key]): self.sender.close(kind, binding[key])
+        self.retirement_attempts(binding, value['namespaceSha256'], closed=True)
+        slot = self.directory/binding['handoffId']
+        if not os.path.lexists(slot):
+            protocol.require(len(self.slots()) < MAX_OPERATIONS, 'CAPACITY')
+            slot.mkdir(mode=0o700); self.journal.sync(self.directory); self.journal.write_new(slot/'binding.json', binding)
+        if os.path.lexists(slot/'retired.json'): protocol.require(self.load(slot/'retired.json') == value, 'CONFLICT')
+        else: self.journal.write_new(slot/'retired.json', value)
+        return self.snapshot(token)
 
     def load(self, path):
         return protocol.decode(self.journal.read(path, 8192))
@@ -772,6 +825,7 @@ class HandoffController:
         paths = self.slots(); flags = {name: False for name in self.WRITERS}
         completed, other_pending = False, False
         for path in paths:
+            protocol.require(not (os.path.lexists(path/'completed.json') and os.path.lexists(path/'retired.json')), 'UNSAFE_JOURNAL')
             saved = self.load(path / 'binding.json')
             protocol.fields(saved, self.BINDING); self.binding(saved)
             protocol.require(saved['handoffId'] == path.name, 'UNSAFE_JOURNAL')
@@ -794,6 +848,8 @@ class HandoffController:
                     and re.fullmatch(r'/org/freedesktop/systemd1/job/[0-9]+', receipt['jobPath']) is not None, 'UNSAFE_JOURNAL')
                 protocol.digest(receipt['publicationSha256'])
                 if path == slot: completed = True
+            elif self.retirement(saved) is not None:
+                protocol.require(not os.path.lexists(path/'continue.json'), 'UNSAFE_JOURNAL')
             elif path != slot:
                 other_pending = True
         return flags, completed, other_pending
@@ -802,7 +858,8 @@ class HandoffController:
         slots = self.slots()
         if not slots: return False
         _, completed, other_pending = self.local(self.load(slots[0] / 'binding.json'))
-        return not completed or other_pending
+        binding = self.load(slots[0]/'binding.json')
+        return not completed and self.retirement(binding) is None or other_pending
 
     @staticmethod
     def unknown(identity):
@@ -850,21 +907,29 @@ class HandoffController:
 
     def snapshot(self, token):
         info = self.info(token); flags, completed, other_pending = self.local(info)
+        retired = self.retirement(self.binding(info)) is not None
         publication, start = self.original(token, info), self.original(token, info, start=True)
+        absent = publication['state'] == start['state'] == 'NOT_RECORDED'
         if publication['state'] == start['state'] == 'SUCCEEDED':
             protocol.require(publication['activeKeySha256'] == start['activeKeySha256'], 'PROTOCOL_MISMATCH')
         if (flags['publish'] or flags['continue']) and publication['state'] == 'NOT_RECORDED':
             publication = self.unknown(info['publicationId'])
         if flags['start'] and start['state'] == 'NOT_RECORDED': start = self.unknown(info['startOperationId'])
         original_recovery_pending = self.journal.pending() is not None
-        available = not completed and not other_pending and not original_recovery_pending
+        available = not completed and not retired and info['state'] == 'GRANT_RECORDED' and not other_pending and not original_recovery_pending
         allowed = dict(publish=available and info['mutationWindowOpen'] and not flags['publish'] and publication['state'] == 'NOT_RECORDED',
             start=available and info['mutationWindowOpen'] and not flags['start'] and publication['state'] == 'SUCCEEDED' and start['state'] == 'NOT_RECORDED',
             **{'continue': available and not flags['continue'] and not flags['start'] and publication['state'] == 'UNKNOWN' and publication['recoveryReceiptSha256'] is not None})
         for command,kind,identity in (('publish','publish',info['publicationId']),('continue','continue',info['publicationId']),('start','handoff-start',info['startOperationId'])):
             if self.sender.has_attempt(kind,identity):allowed[command]=False
+        revoke_allowed = not completed and not retired and not original_recovery_pending
+        try:
+            protocol.require(absent)
+            self.retirement_attempts(self.binding(info))
+        except (protocol.Failure, OSError, ValueError, KeyError, TypeError): revoke_allowed = False
         return dict(schema=1, state='HANDOFF_STATUS', handoff=info, publication=publication, start=start,
-            senderIntents=flags, completed=completed, allowed=allowed, originalRecoveryPending=original_recovery_pending)
+            senderIntents=flags, completed=completed, allowed=allowed, originalRecoveryPending=original_recovery_pending,
+            retired=retired, revocationAllowed=revoke_allowed)
 
     def admission(self, token, step, *, close=False):
         protocol.require(step in ('publish','continue','start'))
@@ -883,6 +948,9 @@ class HandoffController:
 
     def execute(self, value):
         command = value.get('command')
+        if command == 'revoke':
+            protocol.fields(value, {'token', 'command'}); token = self.token(value['token'])
+            with self.journal.lock(): return self.revoke(token)
         if command in ('admission-read','admission-close'):
             protocol.fields(value,{'token','command','step'});token=self.token(value['token'])
             with self.journal.lock():return self.admission(token,value['step'],close=command=='admission-close')

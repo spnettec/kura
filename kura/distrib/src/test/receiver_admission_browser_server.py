@@ -78,6 +78,18 @@ try:
             if value.get('pendingMarker'):journal.mark(identity,SHA)
             if value.get('archiveInterrupted'):server.controller.journal.retire_pending=lambda *args:(_ for _ in ()).throw(OSError('modeled archive interruption'))
             if value.get('releaseArchive'):server.controller.journal.retire_pending=recovery.Journal.retire_pending.__get__(journal)
+            if value.get('privateHandoff'):
+                binding=server.handoffs.binding(root.handoff.info);slot=server.handoffs.directory/binding['handoffId']
+                slot.mkdir(mode=0o700);journal.sync(slot.parent);journal.write_new(slot/'binding.json',binding)
+                if value['privateHandoff']!='binding-only':journal.write_new(slot/'publish.json',dict(binding,command='publish'))
+            if 'loseRevoke' in value:root.lose_revoke=value['loseRevoke']
+            if value.get('retirementInterrupted'):
+                write=journal.write_new
+                def interrupted(path,value):
+                    if path.name=='retired.json':raise OSError('modeled private disposition interruption')
+                    return write(path,value)
+                journal.write_new=interrupted
+            if value.get('releaseRetirement'):journal.write_new=recovery.Journal.write_new.__get__(journal)
             reply=dict(ok=True)
         elif command=='stats':
             files=list(journal.directory.rglob('*.json'))
@@ -90,7 +102,10 @@ try:
                     mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.operations.iterdir()},
                 privateStartFiles={p.name:dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),inode=p.stat().st_ino,
                     uid=p.stat().st_uid,gid=p.stat().st_gid,mode=p.stat().st_mode,nlink=p.stat().st_nlink,
-                    mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.starts.iterdir()})
+                    mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in journal.starts.iterdir()},
+                revocations=root.revocations,retiredHandoffs=len(list(server.handoffs.directory.glob('*/retired.json'))),
+                privateHandoffFiles={str(p.relative_to(journal.directory)):dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),inode=p.stat().st_ino,
+                    mtimeNs=p.stat().st_mtime_ns,ctimeNs=p.stat().st_ctime_ns) for p in server.handoffs.directory.rglob('*.json')})
         elif command=='stop':print(json.dumps(dict(ok=True)),flush=True);break
         else:raise ValueError('Unknown fixture command')
         print(json.dumps(reply),flush=True)

@@ -29,6 +29,7 @@ class HandoffTest(unittest.TestCase):
 
     def setUp(self):
         base.GenerationPublicationTest.setUp(self)
+        self.put(self.state/'sender-admission.lock', b'')
         self.auth = self.manager.handoff_component()
         self.auth.generations = self.component
         self.now = 100_000_000_000

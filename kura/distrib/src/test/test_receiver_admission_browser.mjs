@@ -181,6 +181,36 @@ try{
    assert.deepEqual((await stats()).privateRestoreFiles,before);await context.close();cases.push('Root INTAKE keeps the cold restore and pending marker unresolved without any archive or resend');
   }
  }
+ for(const privateHandoff of [false,'binding-only',true]){
+  const {page,context}=await setup('publish');if(privateHandoff)await control('set',{privateHandoff});
+  await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();
+  await expect(page.locator('#handoff-revoke')).toBeEnabled();const before=(await stats()).privateHandoffFiles;
+  await page.locator('#handoff-revoke').click();await expect(page.locator('#handoff-confirm')).toBeVisible();
+  await expect(page.getByRole('button',{name:'取消',exact:true})).toBeFocused();await page.keyboard.press('Escape');
+  await expect(page.locator('#handoff-confirm')).toBeHidden();await expect(page.locator('#handoff-revoke')).toBeFocused();assert.equal((await stats()).revocations,0);
+  await page.locator('#handoff-revoke').click();const response=page.waitForResponse(r=>r.url().endsWith('/api/handoff')&&r.request().postDataJSON().command==='revoke');
+  await page.locator('#handoff-confirm-accept').click();await (await response).finished();await expect(page.locator('#handoff-progress')).toBeHidden();
+  await expect(page.locator('#handoff-notice')).toContainText('旧授权已撤销');await expect(page.locator('#handoff-revoke')).toBeDisabled();await expect(page.locator('#handoff-console')).toBeFocused();
+  for(const step of ['publish','continue','start'])await expect(page.locator('#handoff-'+step)).toBeDisabled();
+  const after=await stats();assert.equal(after.retiredHandoffs,1);for(const [key,value]of Object.entries(before))assert.deepEqual(after.privateHandoffFiles[key],value);
+  await privateBrowser(page);await page.reload();await page.locator('#handoff-token').fill(fixture.token);await page.locator('#handoff-query').click();
+  await expect(page.locator('#handoff-notice')).toContainText('旧授权已撤销');assert.equal((await stats()).revocations,1);
+  await context.close();cases.push('unused handoff '+String(privateHandoff)+' explicit native confirmation, permanent retirement and original metadata retained after reload');
+ }
+ for(const interruption of ['loseRevoke','retirementInterrupted']){
+  const {page,context}=await setup('publish');await control('set',{privateHandoff:true,[interruption]:true});
+  await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();
+  async function revoke(){await page.locator('#handoff-revoke').click();const response=page.waitForResponse(r=>r.url().endsWith('/api/handoff')&&r.request().postDataJSON().command==='revoke');await page.locator('#handoff-confirm-accept').click();await (await response).finished();await expect(page.locator('#handoff-progress')).toBeHidden();}
+  await revoke();assert.equal((await stats()).retiredHandoffs,0);await control('set',{releaseRetirement:true});
+  await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();await expect(page.locator('#handoff-notice')).toContainText('撤销尚未完成');
+  await expect(page.locator('#handoff-publish')).toBeDisabled();await revoke();await expect(page.locator('#handoff-notice')).toContainText('旧授权已撤销');
+  assert.equal((await stats()).retiredHandoffs,1);await context.close();cases.push(interruption+' requires an explicit metadata finish; original key requests remain blocked');
+ }
+ {
+  const {page,context}=await setup('publish');await control('set',{phase:'INTAKE',privateHandoff:true});
+  await page.locator('#handoff-query').click();await expect(page.locator('#handoff-progress')).toBeHidden();await expect(page.locator('#handoff-revoke')).toBeDisabled();
+  assert.equal((await stats()).revocations,0);assert.equal((await stats()).retiredHandoffs,0);await context.close();cases.push('Root intake without native result cannot be revoked or replaced through the page');
+ }
  assert.deepEqual(errors,[]);console.log(JSON.stringify({tests:cases.length,cases,productionPageAndHandler:true,actualHttps:true,receiverPlatform:fixture.platform,rootAndDecryption:'modeled',humanMainSessionAcceptance:false,nativeKeyWrites:0,oldClosedScenariosReplayed:false}));
 }finally{
  await browser.close();try{await control('stop');}catch(_){}child.stdin.end();if(child.exitCode===null){await new Promise(resolve=>{const timer=setTimeout(()=>{child.kill('SIGTERM');resolve();},4000);child.once('exit',()=>{clearTimeout(timer);resolve();});});}

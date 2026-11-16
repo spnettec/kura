@@ -15,7 +15,8 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_service_lifecycle import Lifecycle, Refused, validate_generation_metadata, validate_publication
+from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
+    handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT)
 
 DROPIN = '/etc/systemd/system/kura.service.d/40-kura-key-generations.conf'
 TEMPLATE = 'share/key-management/key-generations.conf'
@@ -450,6 +451,7 @@ class Generations:
         with manager.lock(manager.state / 'admission.lock', not plan):
             manager.maintenance()
             if not plan:
+                manager.require_unrevoked_operation(identity)
                 secret = manager.read(manager.state / 'journal.key', 32)
                 require(len(secret) == 32, 'UNSAFE_JOURNAL')
                 tag = hmac.new(secret, encode(request), hashlib.sha256).hexdigest()
@@ -638,13 +640,74 @@ class Handoffs:
 
     def metadata(self, value):
         request = value['request']
-        return dict(schema=1, state='GRANT_RECORDED', scope='ORIGINAL_AUTHORIZATION_ONLY',
+        revocation = self.revocation(value)
+        state = 'GRANT_RECORDED' if revocation is None else ('GRANT_REVOKED' if
+            all(item['state'] == 'NOT_ADMITTED' for item in self.unused_admissions(value)) else 'GRANT_REVOKING')
+        return dict(schema=1, state=state, scope='ORIGINAL_AUTHORIZATION_ONLY',
                     handoffId=request['handoffId'], operator=request['operator'], preparationId=request['preparationId'],
                     verificationId=request['verificationId'], publicationId=request['publicationId'],
                     startOperationId=request['startOperationId'], ringSha256=request['expectedRingSha256'],
                     cohortSha256=request['expectedCohortSha256'], historySha256=value['historySha256'],
-                    issuedAt=value['issuedAt'], expiresAt=value['expiresAt'], mutationWindowOpen=self.window_open(value),
+                    issuedAt=value['issuedAt'], expiresAt=value['expiresAt'], mutationWindowOpen=revocation is None and self.window_open(value),
                     startupAuthorized=False)
+
+    def revocation(self, value):
+        try:
+            revoked = handoff_revocations(self.manager)
+        except Refused:
+            raise Failure('UNSAFE_JOURNAL') from None
+        result = revoked.get(value['request']['handoffId'])
+        require(result is None or result[1] == value, 'UNSAFE_JOURNAL')
+        return result
+
+    def unused_admissions(self, value):
+        manager = self.manager; targets = {self.operation_request(value)['operationId']: self.operation_request(value),
+            self.operation_request(value, start=True)['operationId']: self.operation_request(value, start=True)}
+        for identity in targets:
+            for directory in ('operations', 'startups', 'handoffs'):
+                require(not os.path.lexists(manager.state/directory/(identity+'.json')), 'UNRESOLVED_OPERATION')
+        matches = []
+        for item in manager.sender_admissions.records():
+            target = item['target']
+            if target['operationId'] not in targets: continue
+            native = targets[target['operationId']]
+            require(target == dict(directory='operations', operationId=native['operationId'], action=native['action'],
+                requestTag=manager.sender_admissions.tag(native), continuation=False)
+                and item['state'] in ('RESERVED', 'NOT_ADMITTED'), 'UNRESOLVED_OPERATION')
+            matches.append(item)
+        return matches
+
+    def revocation_read(self, value):
+        result = self.revocation(value)
+        require(result is not None and all(item['state'] == 'NOT_ADMITTED' for item in self.unused_admissions(value)),
+            'UNRESOLVED_OPERATION')
+        return handoff_revocation_view(result)
+
+    def revoke(self, token, pid, uid, daemon, recovery):
+        manager = self.manager
+        if uid == daemon: manager.gwt_sender_owner(pid, uid, daemon)
+        elif recovery is not None and uid == recovery: manager.recovery_sender_owner(pid, uid)
+        else: require(uid == 0, 'FORBIDDEN')
+        # Same lock order as native intake. Revocation cannot race a reserved sender-command.
+        with manager.sender_admissions.locked(), manager.lock(manager.state/'admission.lock', True):
+            manager.maintenance(); value = self.authenticate(token)
+            matches = self.unused_admissions(value)
+            if self.revocation(value) is None:
+                with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                    # Absence alone is not a no-dispatch proof for historical grants. The
+                    # exact original live Core/writer/source must still own the prepared round.
+                    self.owner(value['request'], 0, 0, daemon, expected=value)
+                    receipt = dict(schema=1, purpose=HANDOFF_REVOCATION_PURPOSE, handoffId=value['request']['handoffId'],
+                        grantSha256=hashlib.sha256(encode(value)).hexdigest(),
+                        namespaceSha256=manager.gwt_namespace()['namespaceSha256'], revokedAt=int(time.time()), revokedByUid=uid)
+                    receipt['receiptTag'] = hmac.new(self.secret(), HANDOFF_REVOCATION_CONTEXT + encode(receipt), hashlib.sha256).hexdigest()
+                    parent = manager.state/'handoff-revocations'
+                    parent.mkdir(mode=0o700, exist_ok=True); manager.directory(parent, private=True); manager.sync(manager.state)
+                    # The permanent fence is durable before sealing any old reservation.
+                    manager.atomic(parent/(value['request']['handoffId']+'.json'), encode(receipt), mode=0o400, no_replace=True)
+            for item in matches:
+                if item['state'] == 'RESERVED': manager.sender_admissions.write(dict(item, state='NOT_ADMITTED'))
+            return self.revocation_read(value)
 
     def window_open(self, value):
         return value['owner']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip() \
@@ -682,7 +745,7 @@ class Handoffs:
         self.validate_request(request)
         require(sys_platform_linux() and hasattr(time, 'CLOCK_BOOTTIME'), 'UNSUPPORTED')
         manager = self.manager
-        with manager.lock(manager.state / 'admission.lock', True):
+        with manager.sender_admissions.locked(), manager.lock(manager.state / 'admission.lock', True):
             manager.maintenance(); manager.settled()
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
                 existing = self.load(request['handoffId'])
@@ -697,9 +760,16 @@ class Handoffs:
                     for path in files:
                         require(path.name.endswith('.json'), 'UNSAFE_JOURNAL')
                         prior = self.load(operation_id(path.name[:-5]))
-                        require(prior is not None and prior['request']['preparationId'] != request['preparationId']
-                                and not {prior['request']['publicationId'], prior['request']['startOperationId']}
-                                & {request['publicationId'], request['startOperationId']}, 'HANDOFF_EXISTS')
+                        require(prior is not None, 'UNSAFE_JOURNAL')
+                        old_ids = {prior['request'][key] for key in
+                            ('handoffId', 'preparationId', 'verificationId', 'publicationId', 'startOperationId')}
+                        require(not old_ids & {request[key] for key in ('handoffId', 'publicationId', 'startOperationId')}, 'HANDOFF_EXISTS')
+                        if prior['request']['preparationId'] == request['preparationId']:
+                            require(self.revocation(prior) is not None, 'HANDOFF_EXISTS')
+                            self.revocation_read(prior)
+                            require(all(prior['request'][key] == request[key] for key in
+                                ('verificationId', 'operator', 'expectedRingSha256', 'expectedCohortSha256')), 'CONFLICT')
+                            self.owner(request, pid, uid, daemon, expected=prior)
                 for name in ('publicationId', 'startOperationId'):
                     require(manager.record(request[name]) is None
                             and not os.path.lexists(manager.state / 'startups' / (request[name] + '.json')), 'CONFLICT')
@@ -771,7 +841,8 @@ class Handoffs:
 
     def command(self, request, pid, uid, daemon, recovery):
         command = request.get('command')
-        require(command in ('info', 'publication-read', 'publish', 'continue', 'start-read', 'start'), 'INVALID_ARGUMENT')
+        require(command in ('info', 'publication-read', 'publish', 'continue', 'start-read', 'start',
+            'revoke', 'revocation-read'), 'INVALID_ARGUMENT')
         fields(request, {'schema', 'action', 'token', 'command'} | ({'expectedRecoveryReceiptSha256'} if command == 'continue' else set()))
         require(type(request['schema']) is int and request['schema'] == 1
                 and request['action'] == 'generation-handoff-command', 'INVALID_ARGUMENT')
@@ -781,12 +852,16 @@ class Handoffs:
         if command in ('publish', 'continue', 'start'):
             require(uid == 0 or recovery is not None and uid == recovery, 'FORBIDDEN')
         manager = self.manager
+        if command == 'revoke':
+            return self.revoke(request['token'], pid, uid, daemon, recovery)
         with manager.lock(manager.state / 'admission.lock', False):
             manager.maintenance()
             value = self.authenticate(request['token'])
+            if command == 'revocation-read': return self.revocation_read(value)
+            if command == 'info': return self.metadata(value)
+            if command in ('publish', 'continue', 'start'):
+                require(self.revocation(value) is None, 'HANDOFF_REVOKED')
         original = value['request']
-        if command == 'info':
-            return self.metadata(value)
         start = command in ('start', 'start-read')
         record = self.original(value, start=start)
         if command == 'publication-read' and record is not None:

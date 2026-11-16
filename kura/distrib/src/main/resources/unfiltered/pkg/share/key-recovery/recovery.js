@@ -377,6 +377,8 @@
    title:'Gateway key rotation handoff',intro:'Compare the browser certificate with your retained certificate fingerprint before entering the handoff authorization from the HTTPS management console.',token:'Original handoff authorization',safety:'Authorization stays in this page memory only. Retain the original authorization material before closing or refreshing. Queries always use the original request.',query:'Check original handoff request',forget:'Clear authorization from this page',details:'Original request',identity:'Handoff request ID',operator:'Authenticated operator',ring:'Prepared key-set fingerprint (SHA-256)',cohort:'Installed component fingerprint (SHA-256)',publishTitle:'Stop Kura and publish the prepared key set',publishHelp:'After saving and verifying the encrypted backup, explicitly stop Kura, retain the original keys and data, and publish this prepared key set.',publish:'Confirm stop and publication',continue:'Continue using the original authenticated receipt',continueHelp:'Continue only the remaining fixed files using the original publication receipt. This does not issue another publication or stop request.',startTitle:'Request Kura startup separately',startHelp:'After the original publication receipt is confirmed, request startup separately. Check Kura readiness in the console after the system accepts the request.',start:'Confirm startup request',completeTitle:'Acknowledge original request receipts',completeHelp:'Check the original publication and startup-request receipts, then acknowledge this handoff request.',complete:'Acknowledge original request receipts',console:'Return to the gateway console',cancel:'Cancel',accept:'Confirm this operation',loading:'Reading handoff information',unknown:'The outcome is unconfirmed. Retain the original request and query it. Saved operations will not be submitted again.',unavailable:'Handoff information is unavailable. Retain the authorization and original request ID and query again later.',recorded:'The original handoff authorization is verified. Confirm each operation separately.',expired:'The original authorization window is closed. Original results remain available; retain the request.',recoveryPending:'Acknowledge the existing original-key recovery receipts on the recovery page before continuing.',completed:'The original publication and startup-request receipts are confirmed. Check Kura readiness in the management console.',notRecorded:'There is no confirmed receipt for this operation.',published:'The original publication receipt is confirmed. Startup requires a separate request.',started:'The system accepted the original startup request. Check Kura readiness in the management console.',storage:'The browser cannot reliably retain this operation. New writes are disabled; original queries remain available.',changed:'Another page changed the original operation record. Query the original request again.',otherTab:'Another page is handling this handoff. Query the original request.',invalid:'Enter the complete original handoff authorization.',blocked:'This operation is not currently allowed. Check the original request and backup.'
   }
  };
+ Object.assign(words.zh,{revoke:'撤销未使用的交接授权',revokeTitle:'永久撤销此未使用的交接授权？',revokeHelp:'仅在发布和启动均未进入处理时，永久撤销旧授权和固定编号。保留原准备、备份核验和全部记录；返回原控制台后由原管理员手动重新签发。',revoked:'旧授权已撤销，固定编号已永久禁用。原准备、备份核验和记录仍保留，请返回原控制台手动重新签发。',revoking:'撤销尚未完成。保留原授权，可再次点击完成撤销；不会重新发布或启动。'});
+ Object.assign(words.en,{revoke:'Revoke unused handoff authorization',revokeTitle:'Permanently revoke this unused handoff authorization?',revokeHelp:'Only publication and startup that never entered processing can be revoked. Old authorization and fixed IDs are permanently blocked. Preparation, backup verification and all records remain. Return to the original console for the original administrator to explicitly reissue.',revoked:'Old authorization and fixed IDs are permanently blocked. Preparation, backup verification and records remain. Return to the original console to explicitly reissue.',revoking:'Revocation is incomplete. Retain the original authorization and explicitly finish revocation. Publication and startup are not resent.'});
  let language = 'zh', authorization = '', current = null, busy = false, stale = false, storageFault = false, epoch = 0, proposal = null, noticeKey = '';
  const observedIntents = new Map();
  const message = key => { noticeKey = key; el('notice').textContent = key ? words[language][key] : ''; };
@@ -398,6 +400,8 @@
  function platform() { return window.isSecureContext && navigator.locks && typeof navigator.locks.request === 'function' && typeof el('confirm').showModal === 'function'; }
  function allowed(command) {
   if (!current || busy || stale || storageFault || !platform() || current.completed) return false;
+  if (command === 'revoke') return current.revocationAllowed && !current.retired;
+  if (current.retired || current.handoff.state !== 'GRANT_RECORDED') return false;
   if (command === 'complete') return current.publication.state === 'SUCCEEDED' && current.start.state === 'SUCCEEDED';
   return current.allowed[command] === true && intent(command) === null && !storageFault;
  }
@@ -405,21 +409,21 @@
   if (current) for (const command of writers) intent(command);
   el('query').disabled = busy; el('token').disabled = busy; el('forget').disabled = busy;
   el('progress').hidden = !busy; el('details').hidden = !current;
-  for (const command of [...writers,'complete']) el(command).disabled = !allowed(command);
+  for (const command of [...writers,'complete','revoke']) el(command).disabled = !allowed(command);
   if (current) {
    const info = current.handoff;
    el('id').textContent = info.handoffId; el('operator').textContent = info.operator;
    el('ring').textContent = info.ringSha256; el('cohort').textContent = info.cohortSha256;
    const pendingPublication = current.publication.state === 'UNKNOWN' || !!intent('publish') || !!intent('continue');
-   el('publication-state').textContent = words[language][stale ? 'unknown' : current.publication.state === 'SUCCEEDED' ? 'published' : pendingPublication ? 'unknown' : 'notRecorded'];
-   el('start-state').textContent = words[language][stale ? 'unknown' : current.start.state === 'SUCCEEDED' ? 'started' : current.start.state === 'UNKNOWN' || !!intent('start') ? 'unknown' : 'notRecorded'];
+   el('publication-state').textContent = words[language][stale ? 'unknown' : current.retired ? 'revoked' : current.publication.state === 'SUCCEEDED' ? 'published' : pendingPublication ? 'unknown' : 'notRecorded'];
+   el('start-state').textContent = words[language][stale ? 'unknown' : current.retired ? 'revoked' : current.start.state === 'SUCCEEDED' ? 'started' : current.start.state === 'UNKNOWN' || !!intent('start') ? 'unknown' : 'notRecorded'];
   }
   if (!busy && (storageFault || (current && !platform()))) message('storage');
  }
  function validate(value) {
   if (!value || value.schema !== 1 || value.state !== 'HANDOFF_STATUS') throw Error();
   const info = value.handoff;
-  if (!info || Object.keys(info).length !== 16 || info.schema !== 1 || info.state !== 'GRANT_RECORDED'
+  if (!info || Object.keys(info).length !== 16 || info.schema !== 1 || !['GRANT_RECORDED','GRANT_REVOKING','GRANT_REVOKED'].includes(info.state)
     || info.scope !== 'ORIGINAL_AUTHORIZATION_ONLY' || info.startupAuthorized !== false || typeof info.mutationWindowOpen !== 'boolean'
     || ids.some(name => !uuid(info[name])) || new Set(ids.map(name => info[name])).size !== 5
     || ['ringSha256','cohortSha256','historySha256'].some(name => !hash(info[name]))
@@ -433,10 +437,13 @@
   if (value.start.state === 'SUCCEEDED' && (value.start.scope !== 'SYSTEMD_JOB_ACCEPTED' || !/^\/org\/freedesktop\/systemd1\/job\/[0-9]+$/.test(value.start.jobPath))) throw Error();
   if (value.publication.state === 'SUCCEEDED' && value.start.state === 'SUCCEEDED' && value.publication.activeKeySha256 !== value.start.activeKeySha256) throw Error();
   if (typeof value.completed !== 'boolean' || typeof value.originalRecoveryPending !== 'boolean'
+    || typeof value.retired !== 'boolean' || typeof value.revocationAllowed !== 'boolean'
     || writers.some(name => typeof value.allowed[name] !== 'boolean' || typeof value.senderIntents[name] !== 'boolean')) throw Error();
   if (value.allowed.publish && (!info.mutationWindowOpen || value.senderIntents.publish || value.publication.state !== 'NOT_RECORDED')) throw Error();
   if (value.allowed.start && (!info.mutationWindowOpen || value.senderIntents.start || value.publication.state !== 'SUCCEEDED' || value.start.state !== 'NOT_RECORDED')) throw Error();
   if (value.allowed.continue && (value.senderIntents.continue || value.publication.state !== 'UNKNOWN' || !hash(value.publication.recoveryReceiptSha256))) throw Error();
+  if (info.state !== 'GRANT_RECORDED' && (info.mutationWindowOpen || writers.some(name=>value.allowed[name]))) throw Error();
+  if (value.retired && (info.state !== 'GRANT_REVOKED' || value.completed || value.revocationAllowed || writers.some(name=>value.allowed[name]))) throw Error();
   return value;
  }
  async function api(command, extra = {}) {
@@ -451,7 +458,7 @@
  function apply(value) {
   current = value; stale = false;
   for (const command of writers) intent(command);
-  message(value.completed ? 'completed' : value.originalRecoveryPending ? 'recoveryPending' : !value.handoff.mutationWindowOpen ? 'expired'
+  message(value.retired ? 'revoked' : value.handoff.state !== 'GRANT_RECORDED' ? 'revoking' : value.completed ? 'completed' : value.originalRecoveryPending ? 'recoveryPending' : !value.handoff.mutationWindowOpen ? 'expired'
     : value.publication.state === 'UNKNOWN' || value.start.state === 'UNKNOWN' ? 'unknown' : 'recorded');
  }
  async function query() {
@@ -482,6 +489,10 @@
     if (JSON.stringify(binding(fresh.handoff)) !== selected.binding) throw Error();
     apply(fresh);
     const command = selected.command, extra = command === 'continue' ? {expectedRecoveryReceiptSha256:fresh.publication.recoveryReceiptSha256} : {};
+    if (command === 'revoke') {
+     if (!fresh.revocationAllowed || fresh.retired) { message('blocked'); return; }
+     const value = await api('revoke'); if (generation === epoch) apply(value); return;
+    }
     // The browser records its own immutable intent before the first HTTPS writer
     // request. A timeout or Root/server absence never authorizes a second send.
     if (!fresh.allowed[command] || intent(command) !== null || storageFault
@@ -490,7 +501,7 @@
     const value = await api(command,extra); if (generation === epoch) apply(value);
    });
   } catch (_) { if (generation === epoch) { stale = true; message('unknown'); } }
-  finally { if (generation === epoch) { busy = false; render(); } }
+  finally { if (generation === epoch) { busy = false; render(); if (selected.command === 'revoke' && current?.retired) el('console').focus(); } }
  }
  function confirm(command) {
   if (!allowed(command)) return;
@@ -514,7 +525,7 @@
  el('auth').addEventListener('submit',event => { event.preventDefault(); query(); });
  el('forget').addEventListener('click',forget);
  el('token').addEventListener('input',() => { epoch++; authorization = ''; current = null; stale = false; storageFault = false; proposal = null; render(); });
- for (const command of writers) el(command).addEventListener('click',() => confirm(command));
+ for (const command of [...writers,'revoke']) el(command).addEventListener('click',() => confirm(command));
  el('confirm').addEventListener('close',() => {
   const accepted = el('confirm').returnValue === 'accept', selected = proposal;
   el('confirm').returnValue = ''; proposal = null; if (accepted && selected) forward(selected);

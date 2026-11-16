@@ -83,6 +83,8 @@
       <p data-handoff-i18n="completeHelp">核对原发布与启动请求回执后，确认结束本次交接申请。</p>
       <button id="handoff-complete" type="button" disabled data-handoff-i18n="complete">确认本次请求回执</button></li>
     </ol>
+    <p id="handoff-revoke-help" class="hint" data-handoff-i18n="revokeHelp">仅在发布和启动均未进入处理时，永久撤销旧授权和固定编号。保留原准备、备份核验和全部记录；返回原控制台后由原管理员手动重新签发。</p>
+    <button id="handoff-revoke" type="button" disabled aria-describedby="handoff-revoke-help" data-handoff-i18n="revoke">撤销未使用的交接授权</button>
     <p><a id="handoff-console" data-handoff-i18n="console">返回网关控制台</a></p>
    </section>
    <dialog id="handoff-confirm" aria-labelledby="handoff-confirm-title">

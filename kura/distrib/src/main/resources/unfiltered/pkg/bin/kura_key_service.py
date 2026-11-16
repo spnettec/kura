@@ -38,7 +38,7 @@ from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_pub
                                        Unresolved as LifecycleUnresolved, GWT_BINDING_PURPOSE, GWT_DATA_FIELDS,
                                        GWT_NAMESPACE_FIELDS, gwt_namespace, validate_gwt_data, validate_gwt_binding,
                                        validate_sender_admission, validate_start, validate_handoff_authority,
-                                       SENDER_ADMISSION_PURPOSE, SENDER_ADMISSION_CONTEXT)
+                                       SENDER_ADMISSION_PURPOSE, SENDER_ADMISSION_CONTEXT, handoff_revocations)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
@@ -307,6 +307,7 @@ class SenderAdmissions:
                 require(previous['source'] == request['source'] and previous['owner']['uid'] == uid
                     and previous['requestTag'] == tag and previous['target'] == target, 'CONFLICT')
                 return self.view(previous)
+            self.manager.require_unrevoked_operation(target['operationId'])
             records = self.records(); require(len(records) < 256, 'CAPACITY'); parent = None; denied = False
             for value in records:
                 same = all(value['target'][k] == target[k] for k in ('directory', 'operationId', 'action', 'requestTag'))
@@ -356,6 +357,7 @@ class SenderAdmissions:
                 == self.manager.gwt_namespace()['namespaceSha256'] and value['owner'] == owner
                 and hmac.compare_digest(value['requestTag'], self.tag(request['request'])), 'CONFLICT')
             require(value['state'] == 'RESERVED', 'UNRESOLVED_OPERATION')
+            self.manager.require_unrevoked_operation(value['target']['operationId'])
             require(self.target(request['request'], request['source'], pid, uid, daemon) == value['target'], 'CONFLICT')
             self.context.current = value
             try:
@@ -392,6 +394,15 @@ class Manager:
         require(unit == dict(Id='kura-key-recovery.service', ActiveState='active', SubState='running',
             MainPID=str(pid), ControlPID='0', User='kura-key-recovery', ControlGroup='/system.slice/kura-key-recovery.service')
             and self.writer_process(pid) is not None and self.writer_process(pid)[0] == uid, 'FORBIDDEN')
+
+    def require_unrevoked_operation(self, identity):
+        operation_id(identity)
+        try:
+            revoked = handoff_revocations(self)
+        except LifecycleRefused:
+            raise Failure('UNSAFE_JOURNAL') from None
+        require(all(identity not in (authority['request']['publicationId'], authority['request']['startOperationId'])
+            for _, authority, _ in revoked.values()), 'HANDOFF_REVOKED')
 
     def gwt_namespace(self):
         self.directory(self.state, private=True)
@@ -1649,7 +1660,8 @@ SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'gener
 
 def sender_mutation(request):
     return request.get('action') in SENDER_MUTATIONS and not (
-        request.get('action') == 'generation-handoff-command' and request.get('command') in ('info', 'publication-read', 'start-read'))
+        request.get('action') == 'generation-handoff-command' and request.get('command') in
+        ('info', 'publication-read', 'start-read', 'revoke', 'revocation-read'))
 
 
 def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor):
@@ -1689,6 +1701,16 @@ def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor
         require(input_descriptor is not None, 'PROTOCOL_MISMATCH')
         return manager.validation_component().validate(request, input_descriptor, uid, core_uid=daemon), None
     require(input_descriptor is None, 'PROTOCOL_MISMATCH')
+    if action == 'generation-handoff-revocation-read':
+        fields(request, {'schema', 'action', 'handoffId'})
+        require(type(request['schema']) is int and request['schema'] == 1, 'INVALID_ARGUMENT')
+        if recovery is not None and uid == recovery: manager.recovery_sender_owner(pid, uid)
+        else: require(uid in (0, daemon), 'FORBIDDEN')
+        component = manager.handoff_component()
+        with manager.lock(manager.state/'admission.lock', False):
+            manager.maintenance(); grant = component.load(operation_id(request['handoffId']))
+            require(grant is not None, 'NOT_FOUND')
+            return component.revocation_read(grant), None
     if action in ('generation-handoff-create', 'generation-handoff-read',
                   'generation-handoff-token-read', 'generation-handoff-command'):
         if action != 'generation-handoff-command':
