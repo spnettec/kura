@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import zipfile
@@ -18,8 +19,58 @@ def require(ok):
         raise RuntimeError("Incomplete or unexpected gateway key-service build inputs")
 
 
+def verify_crypto_imports(assembly, modules=None):
+    """Reject cached Core bundles built against a different crypto API contract.
+
+    Snapshot coordinates alone cannot distinguish the previous API major. The
+    handwritten manifests are authoritative; compare the staged bundles' OSGi
+    crypto version declarations before producing a new distribution manifest.
+    This is a build-input check, not a general OSGi resolver or runtime bypass.
+    """
+    modules = modules or Path(__file__).resolve().parents[2]
+    def headers(raw):
+        joined = raw.decode('utf-8').replace('\r\n', '\n').replace('\n ', '')
+        return dict(line.split(': ', 1) for line in joined.splitlines() if ': ' in line)
+    def version(values, name):
+        raw = values.get(name, '')
+        match = re.search(r'(?:^|,)\s*org\.eclipse\.kura\.crypto\s*;\s*version\s*=\s*"([^"]+)"', raw)
+        if 'org.eclipse.kura.crypto' in raw and match is None:
+            raise RuntimeError('Unrecognized crypto package declaration in ' + name)
+        return match.group(1) if match else None
+    checked = {}
+    for path in sorted((assembly / 'plugins').rglob('*.jar')):
+        with zipfile.ZipFile(path) as archive:
+            actual = headers(archive.read('META-INF/MANIFEST.MF'))
+        declarations = {name: version(actual, name) for name in ('Import-Package', 'Export-Package')}
+        bundle = actual.get('Bundle-SymbolicName', '').split(';', 1)[0].strip()
+        if not re.fullmatch(r'org\.eclipse\.kura\.[A-Za-z0-9_.-]+', bundle):
+            if not any(declarations.values()):
+                continue
+            raise RuntimeError('Unexpected crypto API bundle: ' + path.name)
+        source = modules / bundle / 'META-INF/MANIFEST.MF'
+        if not any(declarations.values()) and not source.is_file():
+            continue
+        if not source.is_file():
+            raise RuntimeError('Missing handwritten crypto contract: ' + bundle)
+        expected = headers(source.read_bytes())
+        if not any(declarations.values()) and not any(version(expected, name) for name in declarations):
+            continue
+        for name, value in declarations.items():
+            if value != version(expected, name):
+                raise RuntimeError('Stale crypto API build input: ' + bundle + ' ' + name
+                    + ' staged=' + str(value) + ' source=' + str(version(expected, name))
+                    + '; rebuild and install current consumers into the same Maven cache')
+        if bundle in checked:
+            raise RuntimeError('Duplicate crypto API build input: ' + bundle)
+        checked[bundle] = declarations
+    if 'org.eclipse.kura.api' not in checked or len(checked) < 2:
+        raise RuntimeError('Incomplete crypto API build inputs')
+    return checked
+
+
 def prepare(assembly, cipher_target, offline_target):
     require(assembly.is_dir() and not assembly.is_symlink())
+    verify_crypto_imports(assembly)
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
                'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py', 'bin/kura_key_journal.py']
     static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css', 'archive.js']]
