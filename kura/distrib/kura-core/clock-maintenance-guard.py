@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import stat
 import subprocess
 
@@ -39,7 +40,16 @@ if os.path.lexists(setup):
     for path in [setup, manifest]:
         for parent in path.parents:
             value = parent.lstat()
-            require(stat.S_ISDIR(value.st_mode) and value.st_uid == 0 and not value.st_mode & 0o022)
+            if parent == home and stat.S_ISLNK(value.st_mode):
+                require(value.st_uid == 0)
+                raw = os.readlink(parent)
+                target = Path(raw) if raw.startswith('/') else parent.parent / raw
+                require(target.parent == home.parent and re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+_linux', target.name) is not None
+                        and raw in (target.name, str(target)))
+                target_metadata = target.lstat()
+                require(stat.S_ISDIR(target_metadata.st_mode) and target_metadata.st_uid == 0 and not target_metadata.st_mode & 0o022)
+            else:
+                require(stat.S_ISDIR(value.st_mode) and value.st_uid == 0 and not value.st_mode & 0o022)
     descriptor = json.loads(read(manifest))
     require(descriptor.get('schema') == 1 and descriptor.get('protocol') == 1)
     for name in ('kura_clock_setup.py', 'kura_clock_broker.py', 'kura_clock_client.py', 'kura_clock_journal.py'):

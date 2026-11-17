@@ -29,15 +29,32 @@ HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_cl
 SYS_TIME = 1 << 25
 
 
+def canonical_alias(path):
+    """Only the installer's Root-owned, one-hop versioned Core alias."""
+    require(path == HOME, 'UNPAIRED_CODE')
+    metadata = path.lstat()
+    require(stat.S_ISLNK(metadata.st_mode) and metadata.st_uid == 0, 'UNPAIRED_CODE')
+    raw = os.readlink(path)
+    target = Path(raw) if raw.startswith('/') else path.parent / raw
+    require(target.parent == HOME.parent and re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+_linux', target.name) is not None
+            and raw in (target.name, str(target)), 'UNPAIRED_CODE')
+    value = target.lstat()
+    require(stat.S_ISDIR(value.st_mode) and value.st_uid == 0 and not value.st_mode & 0o022, 'UNPAIRED_CODE')
+    return target
+
+
 def protected(path):
-    """Root code only. The fixed distro /lib -> /usr/lib alias is supported."""
+    """Root code only. Fixed distro /lib and versioned Core aliases only."""
     path = Path(path)
     require(path.is_absolute(), 'UNPAIRED_CODE')
     for part in [*reversed(path.parents), path]:
         metadata = part.lstat()
         if stat.S_ISLNK(metadata.st_mode):
-            require(part == Path('/lib') and metadata.st_uid == 0
-                    and part.resolve() == Path('/usr/lib'), 'UNPAIRED_CODE')
+            if part == HOME:
+                canonical_alias(part)
+            else:
+                require(part == Path('/lib') and metadata.st_uid == 0
+                        and part.resolve() == Path('/usr/lib'), 'UNPAIRED_CODE')
         elif part != path:
             require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0
                     and not metadata.st_mode & 0o022, 'UNPAIRED_CODE')
