@@ -115,6 +115,74 @@ do
     done
 done
 
+# An agent may be installed before Core, so its optional immutable adapter must
+# not occupy the Core credential/initialization namespace. Load only its paired
+# Root-owned payload; agent availability never becomes a Core startup dependency.
+if [ -e /usr/share/kura-management-agent/package-v1 ]; then
+    if AGENT_BRIDGE=$(python3 -I - "$0" <<'KURA_OPTIONAL_AGENT_BRIDGE'
+import hashlib
+import json
+from pathlib import Path
+import re
+import stat
+import sys
+import zipfile
+
+def protected(path, maximum):
+    for parent in path.parents:
+        value = parent.lstat()
+        if not stat.S_ISDIR(value.st_mode) or value.st_uid != 0 or value.st_mode & 0o022:
+            raise RuntimeError('Unsafe optional-adapter directory')
+    value = path.lstat()
+    if (not stat.S_ISREG(value.st_mode) or value.st_uid != 0 or value.st_nlink != 1
+            or value.st_mode & 0o022 or value.st_size > maximum):
+        raise RuntimeError('Unsafe optional-adapter file')
+    return path.read_bytes()
+
+def pairs(values):
+    result = {}
+    for key, value in values:
+        if key in result:
+            raise ValueError('Duplicate optional-adapter metadata')
+        result[key] = value
+    return result
+
+try:
+    share = Path('/usr/share/kura-management-agent')
+    if protected(share / 'package-v1', 128) != b'kura-management-agent-v1\n':
+        raise ValueError('Wrong optional-adapter package marker')
+    metadata = json.loads(protected(share / 'java-bridge.json', 4096), object_pairs_hook=pairs)
+    loader = Path(sys.argv[1]).resolve(strict=True)
+    loader_sha = hashlib.sha256(protected(loader, 131072)).hexdigest()
+    jar = share / 'java/org.eclipse.kura.management.bridge.jar'
+    if (type(metadata.get('coreLoaderProtocol')) is not int or metadata.get('coreLoaderProtocol') != 1
+            or metadata.get('coreLoaderSha256') != loader_sha
+            or metadata.get('path') != str(jar)
+            or metadata.get('symbolicName') != 'org.eclipse.kura.management.bridge'
+            or not re.fullmatch('[0-9a-f]{64}', metadata.get('sha256', ''))):
+        raise ValueError('Unpaired optional-adapter metadata')
+    if hashlib.sha256(protected(jar, 8388608)).hexdigest() != metadata['sha256']:
+        raise ValueError('Optional-adapter payload differs')
+    with zipfile.ZipFile(jar) as archive:
+        raw = archive.read('META-INF/MANIFEST.MF').decode('utf-8').replace('\r\n', '\n').replace('\n ', '')
+        headers = dict(line.split(': ', 1) for line in raw.split('\n\n', 1)[0].splitlines() if ': ' in line)
+        if (headers.get('Bundle-SymbolicName', '').split(';', 1)[0] != metadata['symbolicName']
+                or headers.get('Bundle-Version') != metadata.get('version')
+                or 'org/eclipse/kura/management/bridge/ManagementBridge.class' not in archive.namelist()):
+            raise ValueError('Invalid optional-adapter OSGi identity')
+    print(jar)
+except (OSError, ValueError, RuntimeError, KeyError, TypeError, zipfile.BadZipFile):
+    print('Optional agent adapter unavailable: preserve its original package and inspect the component pairing.', file=sys.stderr)
+    sys.exit(1)
+KURA_OPTIONAL_AGENT_BRIDGE
+    ); then
+        append_bundle "${AGENT_BRIDGE}" 5s
+        mark_seen "$(basename -- "${AGENT_BRIDGE}")" "kura-management-agent:paired-external-adapter"
+    else
+        log_conflict "optional agent adapter rejected; Core continues independently"
+    fi
+fi
+
 # === Second pass: siblings, in install order ===
 if [ -n "${SIBLING_ROOT}" ] && [ -d "${SIBLING_ROOT}" ]
 then
@@ -157,6 +225,10 @@ then
     # dirs numerically (shell glob order, e.g. 3 3s 4 4s 5 5s 6 6s).
     for NAME in ${ORDERED_SIBLINGS}
     do
+        if [ "${NAME}" = management-agent ]; then
+            log_conflict "legacy management-agent directory retained but not loaded; install the paired external adapter"
+            continue
+        fi
         SIBLING_DIR="${SIBLING_ROOT}/${NAME}"
         for DIR_PATH in "${SIBLING_DIR}"/*
         do
