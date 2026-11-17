@@ -12,6 +12,10 @@ sys.path.insert(0, '/opt/eclipse/kura/bin')
 import kura_clock_broker as broker
 
 ROWS = []
+PIN = 'clock-policy-fixture-pin.service'
+PIN_RAW = (b'[Unit]\nAfter=kura-clock-broker.service\n[Service]\n'
+           b'ExecStart=/usr/bin/sleep infinity\nUser=nobody\nGroup=nogroup\n'
+           b'NoNewPrivileges=yes\nCapabilityBoundingSet=\nAmbientCapabilities=\nMemoryMax=8M\nTasksMax=2\n')
 PROPERTIES = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
               'NeedDaemonReload', 'Transient', 'ActiveState')
 
@@ -83,6 +87,29 @@ def remove_own(path, parents, raw=None, target=None):
     path.unlink()
     for parent in parents:
         parent.rmdir()
+
+
+def pin():
+    # Keep the inactive clock fragment referenced. Otherwise PID1 may garbage
+    # collect and freshly load it, which cannot exercise NeedDaemonReload.
+    path = Path('/run/systemd/system') / PIN
+    parents = make(path, raw=PIN_RAW)
+    reload(); run('start', PIN)
+    pid = run('show', PIN, '--property=MainPID', '--value').strip()
+    status = dict(line.split(':', 1) for line in Path('/proc/' + pid + '/status').read_text().splitlines() if ':' in line)
+    assert status['Uid'].split() == ['65534'] * 4 and status['NoNewPrivs'].strip() == '1'
+    assert all(int(status[k], 16) == 0 for k in ['CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb'])
+    assert Path('/proc/' + pid + '/cmdline').read_bytes() == b'/usr/bin/sleep\0infinity\0'
+    return path, parents, pid
+
+
+def unpin(holder):
+    path, parents, pid = holder
+    assert run('show', PIN, '--property=MainPID', '--value').strip() == pid
+    assert Path('/proc/' + pid + '/cmdline').read_bytes() == b'/usr/bin/sleep\0infinity\0'
+    run('stop', PIN)
+    assert run('show', PIN, '--property=MainPID', '--value').strip() == '0'
+    remove_own(path, parents, raw=PIN_RAW); reload()
 
 
 def override(path, label, loaded=True, raw=b'[Service]\nMemoryMax=67108865\n', name=broker.UNITS[1]):
@@ -163,4 +190,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    holder = pin()
+    try:
+        main()
+    except Exception:
+        print(json.dumps(dict(completedCases=ROWS, incomplete=True)))
+        raise
+    finally:
+        unpin(holder)
