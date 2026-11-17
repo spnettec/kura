@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: EPL-2.0
+# Fresh systemd base only; install the supplied Core/addon packages and their
+# declared dependencies in the disposable test container, never an old gateway.
+FROM ubuntu:24.04
+ENV container=docker
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends systemd systemd-sysv dbus python3 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
