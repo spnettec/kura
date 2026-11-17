@@ -380,6 +380,12 @@ function stopWatchdog {
 }
 
 # Post-install script
+function manageAddonCode {
+    python3 -I - "$@" <<'KURA_ADDON_CODE_POLICY'
+raise RuntimeError("Kura addon-code policy was not embedded")
+KURA_ADDON_CODE_POLICY
+}
+
 function postInstall {
 
     mkdir -p ${INSTALL_DIR} >> ${LOG} 2>&1
@@ -455,6 +461,7 @@ function postInstall {
             mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1
             cp -a -n "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
         fi
+        manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
         if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
             restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
             systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0

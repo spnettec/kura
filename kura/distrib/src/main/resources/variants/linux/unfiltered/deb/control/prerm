@@ -46,6 +46,12 @@ function stopKuraForPackage {
 # Save mutable state before dpkg removes any package-owned files.  Stage into
 # a private directory and publish it only after every copy succeeds; never
 # replace an earlier recovery copy from an interrupted operation.
+function manageAddonCode {
+    python3 -I - "$@" <<'KURA_ADDON_CODE_POLICY'
+raise RuntimeError("Kura addon-code policy was not embedded")
+KURA_ADDON_CODE_POLICY
+}
+
 function preserveUserData {
     [ -d "${INSTALL_DIR}/kura" ] || return 0
     if [ -e "${RETAINED_DIR}" ]; then
@@ -63,6 +69,10 @@ function preserveUserData {
             fi
         fi
     done
+    if ! manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${retained_tmp}/libexec/addons"; then
+        echo 'Cannot remove Kura: protected sibling code could not be retained.' >&2
+        return 1
+    fi
     # The snapshot master key may be configured in the generated service unit.
     # prerm removes that unit, so it must travel with the snapshots and keys.
     if [ -f /lib/systemd/system/kura.service ]; then

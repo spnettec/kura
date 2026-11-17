@@ -439,6 +439,12 @@ function stopWatchdog {
 }
 
 # Pre-install script
+function manageAddonCode {
+    python3 -I - "$@" <<'KURA_ADDON_CODE_POLICY'
+raise RuntimeError("Kura addon-code policy was not embedded")
+KURA_ADDON_CODE_POLICY
+}
+
 function preInstall {
     # On an in-place upgrade (apt install of a newer kura-core over an existing
     # one), preserve the user's runtime state across the wipe. The runtime trees
@@ -466,6 +472,7 @@ function preInstall {
         if [ -d "${INSTALL_DIR}/kura/.data" ]; then
             cp -a "${INSTALL_DIR}/kura/.data" "${PRESERVE_DIR}/addon-data" >> "${LOG}" 2>&1 || return 1
         fi
+        manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${PRESERVE_DIR}/libexec/addons" >> "${LOG}" 2>&1 || return 1
         if [ -f /lib/systemd/system/kura.service ]; then
             mkdir -p "${PRESERVE_DIR}/systemd" >> "${LOG}" 2>&1 || return 1
             cp -a /lib/systemd/system/kura.service "${PRESERVE_DIR}/systemd/kura.service" >> "${LOG}" 2>&1 || return 1

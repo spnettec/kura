@@ -155,9 +155,24 @@ def embed_policy_readers(preinst,lifecycle,journal):
     preinst.write_text(content.replace(token,'\n'.join(assignments)))
 
 
+def embed_addon_code_policy(control, policy):
+    token = 'raise RuntimeError("Kura addon-code policy was not embedded")'
+    require(control.is_file() and not control.is_symlink())
+    require(policy.is_file() and not policy.is_symlink())
+    source = policy.read_text()
+    require(0 < len(source.encode()) <= 32768)
+    compile(source, str(policy), 'exec', dont_inherit=True)
+    content = control.read_text()
+    require(content.count(token) == 1)
+    control.write_text(content.replace(token, source))
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
+    for hook in ('preinst', 'postinst', 'prerm'):
+        embed_addon_code_policy(Path(sys.argv[1]).parent/'filtered-control'/hook,
+                               Path(__file__).with_name('addon-code-policy.py'))
