@@ -118,7 +118,8 @@ done
 # An agent may be installed before Core, so its optional immutable adapter must
 # not occupy the Core credential/initialization namespace. Load only its paired
 # Root-owned payload; agent availability never becomes a Core startup dependency.
-if [ -e /usr/share/kura-management-agent/package-v1 ]; then
+if [ -e /usr/share/kura-management-agent/package-v1 ] || [ -L /usr/share/kura-management-agent/package-v1 ] \
+        || [ -e /usr/share/kura-management-agent/package-v2 ] || [ -L /usr/share/kura-management-agent/package-v2 ]; then
     if AGENT_BRIDGE=$(python3 -I - "$0" <<'KURA_OPTIONAL_AGENT_BRIDGE'
 import hashlib
 import json
@@ -149,12 +150,22 @@ def pairs(values):
 
 try:
     share = Path('/usr/share/kura-management-agent')
-    if protected(share / 'package-v1', 128) != b'kura-management-agent-v1\n':
+    markers = [name for name in ('package-v1', 'package-v2')
+               if (share / name).exists() or (share / name).is_symlink()]
+    if len(markers) != 1:
+        raise ValueError('Ambiguous optional-adapter package markers')
+    marker = markers[0]
+    if protected(share / marker, 128) != ('kura-management-agent-' + marker[len('package-'):] + '\n').encode():
         raise ValueError('Wrong optional-adapter package marker')
     metadata = json.loads(protected(share / 'java-bridge.json', 4096), object_pairs_hook=pairs)
     loader = Path(sys.argv[1]).resolve(strict=True)
     loader_sha = hashlib.sha256(protected(loader, 131072)).hexdigest()
     jar = share / 'java/org.eclipse.kura.management.bridge.jar'
+    if marker == 'package-v2':
+        for path in (share / marker, share / 'java-bridge.json', jar):
+            value = path.lstat()
+            if value.st_gid != 0 or stat.S_IMODE(value.st_mode) != 0o644:
+                raise ValueError('Wrong native optional-adapter metadata/code ownership or mode')
     if (type(metadata.get('coreLoaderProtocol')) is not int or metadata.get('coreLoaderProtocol') != 1
             or metadata.get('coreLoaderSha256') != loader_sha
             or metadata.get('path') != str(jar)

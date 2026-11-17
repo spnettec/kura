@@ -38,9 +38,9 @@ class OptionalAgentAdapterTests(unittest.TestCase):
         self.siblings.mkdir()
         self.addCleanup(lambda: shutil.rmtree(SHARE) if SHARE.exists() else None)
 
-    def prepare_adapter(self):
+    def prepare_adapter(self, version=1):
         (SHARE / 'java').mkdir(parents=True)
-        (SHARE / 'package-v1').write_text('kura-management-agent-v1\n')
+        (SHARE / ('package-v' + str(version))).write_text('kura-management-agent-v' + str(version) + '\n')
         jar = SHARE / 'java/org.eclipse.kura.management.bridge.jar'
         with zipfile.ZipFile(jar, 'w') as archive:
             archive.writestr('META-INF/MANIFEST.MF', 'Bundle-SymbolicName: org.eclipse.kura.management.bridge\nBundle-Version: 1.0.0.test\n\n')
@@ -69,6 +69,42 @@ class OptionalAgentAdapterTests(unittest.TestCase):
         result = self.run_loader()
         self.assertIn(str(jar), result.stdout)
         self.assertIn('@5', result.stdout)
+
+    def test_native_package_loads_only_the_same_exact_root_pair(self):
+        jar = self.prepare_adapter(2)
+        self.assertIn(str(jar), self.run_loader().stdout)
+        self.metadata['coreLoaderSha256'] = '0' * 64
+        self.write_metadata()
+        self.assertNotIn(str(jar), self.run_loader().stdout)
+
+    def test_native_marker_never_falls_back_to_a_legacy_marker(self):
+        jar = self.prepare_adapter(2)
+        (SHARE / 'package-v1').write_text('kura-management-agent-v1\n')
+        result = self.run_loader()
+        self.assertNotIn(str(jar), result.stdout)
+        self.assertIn('optional agent adapter rejected', result.stderr)
+
+    def test_invalid_or_dangling_native_marker_keeps_core_independent(self):
+        jar = self.prepare_adapter(2)
+        marker = SHARE / 'package-v2'
+        marker.write_text('kura-management-agent-v1\n')
+        self.assertNotIn(str(jar), self.run_loader().stdout)
+        marker.unlink()
+        marker.symlink_to('/does-not-exist/native-marker')
+        result = self.run_loader()
+        self.assertNotIn(str(jar), result.stdout)
+        self.assertIn('optional agent adapter rejected', result.stderr)
+
+    def test_native_root_group_and_exact_modes_are_required(self):
+        jar = self.prepare_adapter(2)
+        for path in (SHARE / 'package-v2', SHARE / 'java-bridge.json', jar):
+            path.chmod(0o640)
+            self.assertNotIn(str(jar), self.run_loader().stdout)
+            path.chmod(0o644)
+            os.chown(path, 0, 65534)
+            self.assertNotIn(str(jar), self.run_loader().stdout)
+            os.chown(path, 0, 0)
+        self.assertIn(str(jar), self.run_loader().stdout)
 
     def test_payload_or_loader_drift_is_rejected_while_core_continues(self):
         jar = self.prepare_adapter()
