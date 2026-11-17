@@ -23,6 +23,10 @@ def main():
     for name in ('core-sha256', 'ui-sha256'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--image', default='yofc-kura-main-archive-tests:ubuntu24.04')
+    parser.add_argument('--extra-packages-manifest', type=Path,
+                        help='Explicit inspected .deb path/SHA256 rows, installed with their real dependencies')
+    parser.add_argument('--purpose', choices=('installed-main-archive', 'sibling-package-matrix'),
+                        default='installed-main-archive')
     parser.add_argument('--disposable-fixture', action='store_true', required=True)
     args = parser.parse_args()
     output = args.results.resolve()
@@ -49,10 +53,22 @@ def main():
         if actual != expected:
             raise ValueError('Package hash mismatch: ' + str(path))
         packages.append(dict(path=str(path), sha256=actual, target=target))
-    name = 'yofc-installed-main-archive-' + uuid.uuid4().hex[:10]
+    if args.extra_packages_manifest:
+        rows = json.loads(args.extra_packages_manifest.read_text())
+        assert isinstance(rows, list) and 0 < len(rows) <= 16
+        seen = {item['path'] for item in packages}
+        for index, row in enumerate(rows):
+            path = Path(row['path']).resolve(strict=True)
+            assert path.suffix == '.deb' and str(path) not in seen
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+            assert actual == row['sha256'], str(path)
+            seen.add(str(path))
+            packages.append(dict(path=str(path), sha256=actual,
+                                 target='/candidate-addon-' + str(index) + '.deb'))
+    name = 'yofc-' + args.purpose + '-' + uuid.uuid4().hex[:10]
     image = json.loads(command(['docker', 'image', 'inspect', args.image]).stdout)[0]
     argv = ['docker', 'run', '--detach', '--pull=never', '--name', name,
-            '--label', 'yofc.purpose=installed-main-archive', '--privileged',
+            '--label', 'yofc.purpose=' + args.purpose, '--privileged',
             '--cgroupns=private', '--memory=1536m', '--cpus=2',
             '--tmpfs', '/run:rw,nosuid,nodev,mode=755,size=96m',
             '--tmpfs', '/run/lock:rw,nosuid,nodev,mode=755,size=2m',
@@ -81,7 +97,8 @@ p=Path('/usr/sbin/policy-rc.d');p.write_text('#!/bin/sh\\nexit 101\\n');p.chmod(
     command(['docker', 'exec', cid, 'python3', '-B', '-c', guard])
     for label, install in (('apt-update', ['apt-get', 'update']),
                            ('apt-install', ['apt-get', '-y', '--no-install-recommends', 'install',
-                            'openjdk-21-jre-headless', 'locales', '/candidate-core.deb', '/candidate-ui.deb'])):
+                            'openjdk-21-jre-headless', 'locales',
+                            *[package['target'] for package in packages]])):
         with (output / (label + '.log')).open('xb') as log:
             result = subprocess.run(['docker', 'exec', '--env', 'DEBIAN_FRONTEND=noninteractive',
                 '--env', 'LC_ALL=C', cid, *install], stdout=log, stderr=subprocess.STDOUT, timeout=900)
