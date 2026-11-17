@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
@@ -241,16 +241,16 @@ public class ClockServiceImplTest {
 
     @Test
     public void testClockUpdateLinux() throws Throwable {
-        // test the service's onClockUpdate(), only run on Linux
-
-        assumeTrue(System.getProperty("os.name").matches("[Ll]inux"), "Only run this test on Linux");
-        assumeTrue("root".equals(System.getProperty("user.name")), "Only run this test as root");
+        // Mocked broker/RTC contract: no OS clock mutation or Root is required.
 
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
+        ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
+        when(clockClient.adjustRealtime(anyLong())).thenReturn(true);
+        TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
 
         EventAdmin eaMock = mock(EventAdmin.class);
         svc.setEventAdmin(eaMock);
@@ -258,7 +258,7 @@ public class ClockServiceImplTest {
         Map<String, Object> properties = new HashMap<>();
         properties.put("enabled", true);
         properties.put("clock.set.hwclock", true);
-        TestUtil.setFieldValue(svc, "properties", properties);
+        TestUtil.setFieldValue(svc, "clockServiceConfig", new ClockServiceConfig(properties));
 
         svc.onClockUpdate(1, true);
 
@@ -274,6 +274,9 @@ public class ClockServiceImplTest {
         when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
+        ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
+        when(clockClient.adjustRealtime(anyLong())).thenReturn(false);
+        TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
 
         EventAdmin eaMock = mock(EventAdmin.class);
         svc.setEventAdmin(eaMock);
@@ -286,6 +289,7 @@ public class ClockServiceImplTest {
         svc.onClockUpdate(1, true);
 
         verify(eaMock, times(0)).postEvent(isA(ClockEvent.class)); // sys clock not updated
+        verify(serviceMock, times(0)).execute(any()); // failed wall clock must not reach RTC
     }
 
     @Test
@@ -297,6 +301,9 @@ public class ClockServiceImplTest {
         when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
+        ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
+        when(clockClient.adjustRealtime(anyLong())).thenReturn(true);
+        TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
 
         EventAdmin eaMock = mock(EventAdmin.class);
         svc.setEventAdmin(eaMock);

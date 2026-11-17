@@ -84,6 +84,7 @@ chmod 700 ${INSTALL_DIR}/kura/.data/manage_kura_users.sh
 # Retain the historical copy for recovery; execute the installed code only.
 bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -i || exit 1
 python3 -I "${INSTALL_DIR}/kura/bin/kura_key_recovery_setup.py" --install || exit 1
+python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" install || exit 1
 for key_unit in kura-key-service.socket kura-key-service.service kura-key-recovery.service; do
     install -o root -g root -m 0644 "${INSTALL_DIR}/kura/install/${key_unit}" "/lib/systemd/system/${key_unit}" || exit 1
 done
@@ -154,4 +155,5 @@ if [ "${DEFER_KEY_SERVICE}" = false ]; then
     systemctl daemon-reload || exit 1
     systemctl enable --now kura-key-service.socket || exit 1
     systemctl enable --now kura-key-recovery.service || exit 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" resume || exit 1
 fi

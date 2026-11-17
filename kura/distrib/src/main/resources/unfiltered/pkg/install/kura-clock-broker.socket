@@ -1,0 +1,16 @@
+[Unit]
+Description=YOFC Kura typed wall-clock socket
+
+[Socket]
+ListenStream=/run/kura-clock-broker/control.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+DirectoryMode=0755
+FileDescriptorName=control
+Accept=no
+Backlog=16
+Service=kura-clock-broker.service
+
+[Install]
+WantedBy=sockets.target

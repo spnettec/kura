@@ -185,6 +185,9 @@ if [ "$1" = "upgrade" ]; then
 fi
 # Stop synchronously on both paths; never fall through to a raw JVM signal when
 # a managed stop failed or the manager still reports live/start/stop processes.
+python3 -I - <<'KURA_CLOCK_MAINTENANCE_GUARD' || exit 1
+raise RuntimeError("Kura clock maintenance guard was not embedded")
+KURA_CLOCK_MAINTENANCE_GUARD
 if [ -f /lib/systemd/system/kura.service ]; then
     stopKuraForPackage || exit 1
 else
@@ -213,6 +216,7 @@ fi
 
 if [ "$1" = "remove" ]; then
     preserveUserData || exit 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" remove || exit 1
     # Revoke the paired su grant while package helpers are still available.
     # Upgrade keeps the installed policy until the new package reconciles it.
     python3 -I "${INSTALL_DIR}/kura/bin/kura_su_pam.py" remove || exit 1

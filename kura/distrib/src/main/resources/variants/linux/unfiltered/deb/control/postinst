@@ -388,7 +388,18 @@ KURA_ADDON_CODE_POLICY
 
 function postInstall {
 
-    mkdir -p ${INSTALL_DIR} >> ${LOG} 2>&1
+    # The credential workflow uses umask 077. A newly created code prefix must
+    # still be traversable by the dedicated non-Root runtime identities.
+    # Existing prefixes are validated, never chmod/chowned as a data repair.
+    if [ -L "${INSTALL_DIR}" ]; then
+        echo "ERROR: installation prefix must be a physical directory" >> ${LOG} 2>&1
+        return 1
+    elif [ ! -e "${INSTALL_DIR}" ]; then
+        install -d -m 0755 "${INSTALL_DIR}" >> ${LOG} 2>&1 || return 1
+    elif [ ! -d "${INSTALL_DIR}" ]; then
+        echo "ERROR: installation prefix must be a physical directory" >> ${LOG} 2>&1
+        return 1
+    fi
 
     #install KURA files — deb unpacks directly under ${INSTALL_DIR}/kura (no zip intermediate)
     if [ -d "${INSTALL_DIR}/kura/install" ]; then
@@ -517,6 +528,7 @@ function postInstall {
     systemctl daemon-reload >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-service.socket >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-recovery.service >> ${LOG} 2>&1 || return 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" resume >> ${LOG} 2>&1 || return 1
 
     #flush all cached filesystem to disk
     sync

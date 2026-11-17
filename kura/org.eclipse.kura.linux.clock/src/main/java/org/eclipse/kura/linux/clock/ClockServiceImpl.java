@@ -42,6 +42,8 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
     private EventAdmin eventAdmin;
     private CommandExecutorService executorService;
     private CryptoService cryptoService;
+    private org.eclipse.kura.system.SystemService systemService;
+    private ClockPrivilegeClient clockPrivilegeClient;
     private ClockSyncProvider provider;
 
     private ClockServiceConfig clockServiceConfig;
@@ -71,6 +73,17 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
 
     public void setCryptoService(CryptoService cryptoService) {
         this.cryptoService = cryptoService;
+    }
+
+    public void setSystemService(org.eclipse.kura.system.SystemService systemService) {
+        this.systemService = systemService;
+    }
+
+    protected ClockPrivilegeClient createClockPrivilegeClient() {
+        if (this.systemService == null) {
+            throw new IllegalArgumentException("SystemService is required for durable clock decisions");
+        }
+        return new ClockPrivilegeClient(this.systemService.getKuraDataDirectory());
     }
 
     // ----------------------------------------------------------------
@@ -204,23 +217,27 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         // set system clock if necessary
         boolean bClockUpToDate = false;
         if (offset != 0 && changeSystemClock) {
-            long time = System.currentTimeMillis() + offset;
-            Command command = new Command(new String[] { "date", "-s", "@" + Long.toString(time / 1000) });
-            command.setTimeout(60);
-            CommandStatus status = this.executorService.execute(command);
-            if (status.getExitStatus().isSuccessful()) {
-                bClockUpToDate = true;
-                logger.info("System Clock Updated to {}", new Date());
-            } else {
-                logger.error(
-                        "Unexpected error while updating System Clock - rc = {}, CommandLine:{}, it should've been {}",
-                        status.getExitStatus().getExitCode(), command.getCommandLine(), new Date());
+            try {
+                if (this.clockPrivilegeClient == null) {
+                    this.clockPrivilegeClient = createClockPrivilegeClient();
+                }
+                bClockUpToDate = this.clockPrivilegeClient.adjustRealtime(offset);
+                if (bClockUpToDate) {
+                    logger.info("System Clock Updated to {}", new Date());
+                } else {
+                    logger.warn("Clock sample was not applied; preserve the original broker decision");
+                }
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                logger.warn("Clock broker interrupted; preserve the original decision");
+            } catch (java.io.IOException | IllegalArgumentException error) {
+                logger.error("Clock broker unavailable; preserve the original decision", error);
             }
         } else {
             bClockUpToDate = true;
         }
 
-        if (this.clockServiceConfig.isHwclockEnabled() && changeSystemClock) {
+        if (this.clockServiceConfig.isHwclockEnabled() && changeSystemClock && bClockUpToDate) {
             Command command = new Command(
                     new String[] { "hwclock", "--utc", "--systohc", "-f", this.clockServiceConfig.getRtcFilename() });
             command.setTimeout(60);

@@ -526,6 +526,9 @@ echo "Installing Kura..." >> "${LOG}" 2>&1
 
 # Key capture above must precede the manager stop. This also cancels restart
 # jobs left behind by an older package's prerm before any runtime copy or wipe.
+python3 -I - <<'KURA_CLOCK_MAINTENANCE_GUARD' || exit 1
+raise RuntimeError("Kura clock maintenance guard was not embedded")
+KURA_CLOCK_MAINTENANCE_GUARD
 if [ -f /lib/systemd/system/kura.service ]; then
     stopKuraForPackage || exit 1
 # Legacy non-systemd installations keep their existing stop path.

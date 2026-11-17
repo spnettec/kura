@@ -12,6 +12,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src/main/resources/unfiltered/pkg/bin"))
 import kura_key_cohort as cohort
+import kura_clock_broker as clock_broker
 
 
 def require(ok):
@@ -167,12 +168,33 @@ def embed_addon_code_policy(control, policy):
     control.write_text(content.replace(token, source))
 
 
+def prepare_clock_service(assembly):
+    destination = assembly / 'libexec/clock-broker'
+    destination.mkdir(parents=True, exist_ok=True)
+    for name in clock_broker.UNITS:
+        source = assembly / 'install' / name
+        require(source.is_file() and not source.is_symlink())
+        shutil.copyfile(source, destination / name)
+    return clock_broker.package_cohort(assembly)
+
+
+def embed_clock_guard(control):
+    token = 'raise RuntimeError("Kura clock maintenance guard was not embedded")'
+    source = Path(__file__).with_name('clock-maintenance-guard.py').read_text()
+    compile(source, 'clock-maintenance-guard.py', 'exec', dont_inherit=True)
+    content = control.read_text(); require(content.count(token) == 1)
+    control.write_text(content.replace(token, source))
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+    prepare_clock_service(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
     for hook in ('preinst', 'postinst', 'prerm'):
         embed_addon_code_policy(Path(sys.argv[1]).parent/'filtered-control'/hook,
                                Path(__file__).with_name('addon-code-policy.py'))
+    for hook in ('preinst', 'prerm'):
+        embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

@@ -1,0 +1,31 @@
+[Unit]
+Description=YOFC Kura typed wall-clock actor
+Requires=kura-clock-broker.socket
+After=kura-clock-broker.socket
+
+[Service]
+Type=simple
+User=kura-clock
+Group=kura-clock
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py serve
+StateDirectory=kura-clock-broker
+StateDirectoryMode=0700
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_SYS_TIME
+AmbientCapabilities=CAP_SYS_TIME
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadOnlyPaths=/usr/libexec/kura-clock-broker
+InaccessiblePaths=-/etc/kura -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-management-agent -/var/lib/kura-management-agent-native -/run/kura-key-service -/opt/eclipse/kura
+ReadWritePaths=/var/lib/kura-clock-broker
+MemoryMax=64M
+TasksMax=8
+CPUQuota=10%
+KillMode=control-group
+TimeoutStopSec=10
