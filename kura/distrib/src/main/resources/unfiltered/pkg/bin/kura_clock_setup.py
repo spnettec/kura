@@ -13,7 +13,7 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import ACTOR_HOME, COHORT, HOME, STATE, UNITS, Policy, protected, public_file
+from kura_clock_broker import ACTOR_HOME, COHORT, HOME, STATE, UNITS, Policy, protected, public_file, unit_sources
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 identifier, read, require, sync)
 
@@ -171,6 +171,8 @@ def install():
     inactive('kura.service')
     for name in UNITS:
         inactive(name)
+    # Reject every effective lookup location before accounts, state or code change.
+    unit_sources()
     # Core already owns /etc/kura. No parent ownership or existing data is repaired.
     metadata = ACCOUNT.parent.lstat()
     require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0 and not metadata.st_mode & 0o022, 'UNSAFE_STATE')
@@ -185,8 +187,6 @@ def install():
             old = public_file(path)
             require(old == desired or (current is not None and hashlib.sha256(old).hexdigest() == current['units'][name]),
                     'UNPAIRED_CODE')
-        for root in ('/etc/systemd/system', '/run/systemd/system'):
-            require(not os.path.lexists(Path(root) / name) and not os.path.lexists(Path(root) / (name + '.d')), 'UNPAIRED_CODE')
         temporary = path.with_name(name + '.kura-clock-staged')
         if os.path.lexists(temporary):
             require(public_file(temporary) == desired, 'UNPAIRED_CODE')
@@ -194,7 +194,7 @@ def install():
             with temporary.open('xb') as output:
                 os.fchmod(output.fileno(), 0o644); output.write(desired); output.flush(); os.fsync(output.fileno())
         os.replace(temporary, path); sync(path.parent)
-    policy.check()
+    policy.check(effective=False)
 
 
 def install_actor_code(policy, descriptor, record, maintenance_record):
@@ -245,17 +245,21 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
 
 
 def resume():
-    policy = Policy(); policy.check(); record = account()
-    actor = Policy(actor=True); actor.check()
+    policy = Policy(); policy.check(effective=False); record = account()
+    actor = Policy(actor=True); actor.check(effective=False)
     require(actor.cohort == policy.cohort, 'UNPAIRED_CODE')
+    # A newly published fragment is not yet PID1's loaded configuration. Keep
+    # the original maintenance gate through reload, validation and socket start.
+    run('/usr/bin/systemctl', 'daemon-reload')
+    policy.check(); actor.check()
+    run('/usr/bin/systemctl', 'enable', '--now', 'kura-clock-broker.socket')
+    policy.check(); actor.check()
     if os.path.lexists(STATE):
         journal = Journal(STATE, record['uid'])
         with journal.lock():
             value = maintenance(record)
             if value is not None:
                 (STATE / 'maintenance.json').unlink(); sync(STATE)
-    run('/usr/bin/systemctl', 'daemon-reload')
-    run('/usr/bin/systemctl', 'enable', '--now', 'kura-clock-broker.socket')
 
 
 def remove():

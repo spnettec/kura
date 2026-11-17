@@ -27,6 +27,7 @@ COHORT = Path('libexec/clock-broker/cohort.json')
 UNITS = ('kura-clock-broker.socket', 'kura-clock-broker.service')
 HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
 SYS_TIME = 1 << 25
+VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
 
 
 def canonical_alias(path):
@@ -106,12 +107,102 @@ def package_cohort(home):
     return value
 
 
+def systemd_properties(properties, unit=None):
+    """Read PID1's configuration, with no caller environment or fallback."""
+    require(unit is None or unit in UNITS, 'UNPAIRED_CODE')
+    arguments = ['/usr/bin/systemctl', '--system', '--no-ask-password', 'show', '--all',
+                 '--property=' + ','.join(properties)]
+    if unit is not None:
+        arguments.append(unit)
+    try:
+        result = subprocess.run(arguments, env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'},
+                                capture_output=True, text=True, timeout=5)
+        require(result.returncode == 0 and len(result.stdout.encode()) <= MAX_BYTES, 'UNPAIRED_CODE')
+        values = {}
+        for line in result.stdout.splitlines():
+            key, separator, value = line.partition('=')
+            require(separator == '=' and key in properties and key not in values, 'UNPAIRED_CODE')
+            values[key] = value
+        require(set(values) == set(properties), 'UNPAIRED_CODE')
+        return values
+    except (OSError, UnicodeError, subprocess.SubprocessError) as error:
+        raise Refused('UNPAIRED_CODE') from error
+
+
+def unit_load_paths():
+    raw = systemd_properties(('UnitPath',))['UnitPath']
+    tokens = raw.split()
+    require(tokens and all(re.fullmatch(r'/[A-Za-z0-9_./+-]+', token) is not None
+                           and '..' not in Path(token).parts and Path(token).as_posix() == token
+                           for token in tokens), 'UNPAIRED_CODE')
+    roots = tuple(dict.fromkeys(Path(token) for token in tokens))
+    require(any(root in VENDOR_UNIT_ROOTS for root in roots), 'UNPAIRED_CODE')
+    return roots
+
+
+def unit_directory_present(path):
+    """A missing Root-controlled suffix is fine; denied lookup is not absence."""
+    for part in [*reversed(path.parents), path]:
+        try:
+            metadata = part.lstat()
+        except FileNotFoundError:
+            return False
+        if stat.S_ISLNK(metadata.st_mode):
+            require(part == Path('/lib') and metadata.st_uid == 0
+                    and part.resolve() == Path('/usr/lib'), 'UNPAIRED_CODE')
+        else:
+            require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0
+                    and not metadata.st_mode & 0o022, 'UNPAIRED_CODE')
+    return True
+
+
+def unit_input_names(name):
+    stem, kind = name.rsplit('.', 1)
+    names = [name + suffix for suffix in ('.d', '.wants', '.requires', '.upholds')]
+    names.append(kind + '.d')
+    while '-' in stem:
+        stem = stem.rsplit('-', 1)[0]
+        names.append(stem + '-.' + kind + '.d')
+    return names
+
+
+def unit_sources():
+    """Reject overrides in the manager's complete current system load path."""
+    try:
+        for root in unit_load_paths():
+            if not unit_directory_present(root):
+                continue
+            for name in UNITS:
+                inputs = unit_input_names(name)
+                if root not in VENDOR_UNIT_ROOTS:
+                    inputs.append(name)
+                for entry in inputs:
+                    try:
+                        (root / entry).lstat()
+                    except FileNotFoundError:
+                        continue
+                    raise Refused('UNPAIRED_CODE')
+    except OSError as error:
+        raise Refused('UNPAIRED_CODE') from error
+
+
+def effective_units():
+    properties = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
+                  'NeedDaemonReload', 'Transient')
+    for name in UNITS:
+        value = systemd_properties(properties, name)
+        require(value['Id'] == name and value['Names'].split() == [name] and value['LoadState'] == 'loaded'
+                and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}
+                and value['SourcePath'] == value['DropInPaths'] == ''
+                and value['NeedDaemonReload'] == value['Transient'] == 'no', 'UNPAIRED_CODE')
+
+
 class Policy:
     def __init__(self, actor=False):
         self.home = ACTOR_HOME if actor else HOME
         self.actor_copy = actor
 
-    def check(self, installed=True):
+    def check(self, installed=True, effective=True):
         raw = public_file(self.home / COHORT)
         value = decode(raw)
         require(set(value) == {'schema', 'protocol', 'files', 'clockBundle', 'actor', 'caller', 'action'}
@@ -147,15 +238,12 @@ class Policy:
             require(hashlib.sha256(actual).hexdigest() == expected_hash, 'UNPAIRED_CODE')
         jar_contract(self.home / bundle)
         if installed:
+            unit_sources()
             for name in UNITS:
                 require(public_file(Path('/lib/systemd/system') / name)
                         == public_file(self.home / 'libexec/clock-broker' / name), 'UNPAIRED_CODE')
-                for root in ('/etc/systemd/system', '/run/systemd/system'):
-                    require(not os.path.lexists(Path(root) / name)
-                            and not os.path.lexists(Path(root) / (name + '.d')), 'UNPAIRED_CODE')
-            # Also reject vendor drop-ins: source pairing includes effective units.
-            for name in UNITS:
-                require(not os.path.lexists(Path('/lib/systemd/system') / (name + '.d')), 'UNPAIRED_CODE')
+            if effective:
+                effective_units()
         self.cohort = digest(value)
         return value
 
