@@ -346,10 +346,11 @@ public class ExecutorUtil {
     }
 
     private CommandLine buildUnprivilegedCommand(Command command) {
-        if (this.commandUsername == null || this.commandUsername.isEmpty()) {
+        final String username = this.commandUsername;
+        if (username == null || username.isEmpty()) {
             throw new IllegalArgumentException("Command username must be specified");
         }
-        requireArgument(this.commandUsername);
+        requireArgument(username);
         String[] arguments = command.getCommandLine();
         if (arguments == null || arguments.length == 0 || arguments[0] == null || arguments[0].isEmpty()) {
             throw new IllegalArgumentException("Command executable must be specified");
@@ -393,13 +394,21 @@ public class ExecutorUtil {
             c.add("kura-command");
             c.addAll(Arrays.asList(arguments));
         }
+        // A cap-free, NNP-constrained service already running as the requested
+        // identity cannot use setuid su. Keep the same argument/environment
+        // boundary, and bypass su only after checking the live kernel identity.
+        if (UnprivilegedProcessIdentity.isCurrentUser(username)) {
+            CommandLine commandLine = new CommandLine(c.get(0));
+            commandLine.addArguments(c.subList(1, c.size()).toArray(new String[0]), false);
+            return commandLine;
+        }
         String script = "exec " + c.stream().map(ExecutorUtil::shellArgument).collect(Collectors.joining(" "));
         CommandLine commandLine = new CommandLine("/usr/bin/su");
         commandLine.addArgument("--shell=/bin/sh", false);
         commandLine.addArgument("--command", false);
         commandLine.addArgument(script, false);
         commandLine.addArgument("--", false);
-        commandLine.addArgument(this.commandUsername, false);
+        commandLine.addArgument(username, false);
         return commandLine;
     }
 
