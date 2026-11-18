@@ -53,3 +53,9 @@
 原1fab失败在同一自有7fd夹具精确续接，随后14f正常保留重装由产品完成原维护；该局部修复不算通用中断恢复。38a修复残留NM授权、严格已知Root规则及错误传播，从新Git/private缓存/JDK21构建，正常单次升级/移除/同包保留重装均exit0。新正常remove维护4f52e089-e745-4f1b-83e6-ac2fe8059252由产品以同ID完成，原29输入22外部完整/7Core逻辑字段保持，新增1正常回执，总30，Main disabled/未启、原UID/密钥/历史.data及Root canary保持。实际polkit同一UID997/cap0/NNP1 subject授权0→1→0、daemon未重启、无网络写；探针已清理。
 
 原容器健康停止exit0，保留全部数据/身份；原1fab/4f52验收不重做。63宿主回归及12真实LinuxRoot条件通过，不累加旧JVM/crypto。详见`management-nm-polkit-policy-20261118.md`及console实际审查；purge/legacy/其他boot状态/通用中断/完整六组件及12父项仍内部pending。
+
+## 2026-11-18 实际四服务选择
+
+97补runtime disable并传播清理失败；原有凭据/回执完整时只识别固定Root/dev/null Main mask，拒绝key bootstrap/真实override。44令clock安装仅把严格Main mask+明确PID0/inactive视为off，不接受clock helper masked、不读key、不放宽代码配对。135选择134过/1既有Linux-only归档用例在macOS skip，7 nativeRoot mask/key及6实际shipped preRemove条件通过；不累加旧选择。实际enabled-runtime/enabled在97、masked-runtime/masked在完整44各自单次正常remove/reinstall通过、每次同目的完成，38输入/原UID/密钥/.data历史/Root canary保持，Main始终未启。97 masked-runtime已知clock拒绝原2041仅有界修复后完成，不计正常产品/通用中断通过；随后完整44 masked upgrade及独立正常模式通过。详见`management-main-boot-choices-20261118.md`及console实际审查。四profile验证后才单独恢复夹具disabled停放，正常停止保留；所有完成目的不重做。
+
+本轮overlay重挂仅st_dev变、30原文件其余九字段精确，原失败/旧基线保留，当前boot新基线独立记录，产品Root/namespace检查未改。static/linked实际Core、purge/通用中断/旧态及完整矩阵仍内部pending。
