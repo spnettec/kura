@@ -120,13 +120,15 @@ class PackagePairingTest(unittest.TestCase):
         with patch.multiple(broker, HOME=self.home, VENDOR_UNIT_ROOTS=(vendor,), public_file=Path.read_bytes,
                             verify_unit_sources=Mock(), manager_properties=Mock(side_effect=loaded),
                             account_binding=Mock(return_value=marker)):
-            self.assertEqual((broker.digest(manifest), marker), broker.Policy().check())
+            self.assertEqual((broker.digest(manifest), marker), broker.Policy().check(actor=True))
             (vendor / broker.MAIN_UNIT).write_bytes(b'unpaired main')
             with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
-                broker.Policy().check()
+                broker.Policy().check(actor=True)
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=False)
             (self.home / 'bin/kura_reboot_protocol.py').write_bytes(b'unpaired protocol')
             with self.assertRaisesRegex(Refused, '^UNPAIRED_CODE$'):
-                broker.Policy().check()
+                broker.Policy().check(actor=True)
 
     def test_runtime_and_vendor_dropins_are_refused_even_when_dangling(self):
         for directory, name in [('etc', 'kura-reboot-broker.socket'), ('lib', 'kura-.service.d')]:
@@ -146,6 +148,29 @@ class PackagePairingTest(unittest.TestCase):
             lookup.return_value.pw_gid = 990
             with self.assertRaisesRegex(Refused, '^UNPAIRED_ACCOUNT$'):
                 broker.account_binding()
+
+    def test_only_the_reserved_empty_private_main_dropin_directory_is_accepted(self):
+        root = self.home / 'system'
+        root.mkdir()
+        reserved = root / 'kura.service.d'
+        reserved.mkdir(mode=0o700)
+        lstat = Path.lstat
+
+        def root_owned(path):
+            actual = lstat(path)
+            if path == reserved:
+                values = {name: getattr(actual, name) for name in dir(actual) if name.startswith('st_')}
+                values.update(st_uid=0, st_gid=0)
+                return SimpleNamespace(**values)
+            return actual
+
+        with patch.multiple(broker, EMPTY_KEY_DROPINS=reserved, unit_load_paths=Mock(return_value=[root]),
+                            unit_directory_present=Mock(return_value=True)), patch.object(Path, 'lstat', root_owned):
+            broker.verify_unit_sources()
+            unapproved = reserved / 'site.conf'
+            unapproved.write_text('[Service]\n')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
 
 
 class SocketFrameTest(unittest.TestCase):

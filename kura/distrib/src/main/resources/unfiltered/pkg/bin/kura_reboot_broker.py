@@ -18,7 +18,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, protected, public_file, unit_directory_present,
                               unit_input_names, unit_load_paths)
-from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, require
+from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, identity, require
 from kura_reboot_journal import RebootJournal
 from kura_reboot_protocol import RebootProtocol, RebootSender
 
@@ -29,6 +29,7 @@ SOCKET = Path('/run/kura-reboot-broker/control.sock')
 HELPER = HOME / 'bin/kura_reboot_broker.py'
 COHORT = Path('libexec/reboot-broker/cohort.json')
 MAIN_UNIT = 'kura.service'
+EMPTY_KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
 UNITS = ('kura-reboot-broker.service', 'kura-reboot-broker.socket', MAIN_UNIT)
 UNIT_PROPERTIES = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                    'NeedDaemonReload', 'Transient')
@@ -95,9 +96,16 @@ def verify_unit_sources():
             if root not in VENDOR_UNIT_ROOTS:
                 names.append(unit)
             for name in names:
+                path = root / name
                 try:
-                    (root / name).lstat()
+                    metadata = path.lstat()
                 except FileNotFoundError:
+                    continue
+                if path == EMPTY_KEY_DROPINS:
+                    # The key service reserves this private directory even with no drop-in.
+                    require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
+                            and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
+                            and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
                     continue
                 raise Refused('UNPAIRED_UNIT')
 
@@ -114,14 +122,15 @@ def account_binding():
 
 
 class Policy:
-    def check(self):
+    def check(self, *, actor):
         manifest = decode(public_file(HOME / COHORT))
         require(set(manifest) == {'schema', 'action', 'caller', 'files'} and type(manifest['schema']) is int
                 and manifest['schema'] == 1 and manifest['action'] == 'reboot' and manifest['caller'] == CALLER
                 and type(manifest['files']) is dict and set(manifest['files']) == set(FILES), 'UNPAIRED_CODE')
         for name in FILES:
             require(file_hash(public_file(HOME / name)) == manifest['files'][name], 'UNPAIRED_CODE')
-        verify_unit_sources()
+        if actor:
+            verify_unit_sources()
         for unit in UNITS:
             loaded = manager_properties(unit, UNIT_PROPERTIES)
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
@@ -268,12 +277,12 @@ def serve():
     require(os.environ.get('LISTEN_PID') == str(os.getpid()) and os.environ.get('LISTEN_FDS') == '1'
             and os.environ.get('LISTEN_FDNAMES') == 'control', 'INVALID_LISTENER')
     policy = Policy()
-    cohort, binding = policy.check()
+    cohort, binding = policy.check(actor=True)
 
     def authorize(peer):
         # Authenticate the actual process before repeating the live unit and cohort check.
         require(main_peer(peer, binding), 'UNAUTHORIZED')
-        require(policy.check() == (cohort, binding), 'UNPAIRED_CODE')
+        require(policy.check(actor=True) == (cohort, binding), 'UNPAIRED_CODE')
         return True
 
     protocol = RebootProtocol(RebootJournal(STATE, binding['namespace'], cohort), authorize, dispatch_reboot)
@@ -316,7 +325,7 @@ def exchange(value, gid):
 
 
 def client():
-    cohort, binding = Policy().check()
+    cohort, binding = Policy().check(actor=False)
     uid, gid = binding['callerUid'], binding['callerGid']
     verify_identity(proc_status(os.getpid()), uid, gid)
     sender = RebootSender(SENDER, binding['namespace'], cohort, lambda value: exchange(value, gid))
