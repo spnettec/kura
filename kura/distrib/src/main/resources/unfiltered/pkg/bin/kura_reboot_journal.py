@@ -95,7 +95,7 @@ class RebootJournal:
         sync(self.root)
 
     @contextmanager
-    def _locked(self):
+    def locked(self):
         directory(self.root, self.owner)
         # Runtime never recreates an absent lock, marker, or operations directory.
         with admission_lock(self.root / 'admission.lock', self.owner):
@@ -148,7 +148,7 @@ class RebootJournal:
     def status(self, namespace, request_id, request_hash):
         """Observe the original decision, without dispatch or journal mutation."""
         require(identifier(namespace) == self.namespace, 'FOREIGN_NAMESPACE')
-        with self._locked():
+        with self.locked():
             return self._status(identifier(request_id), sha256(request_hash), identifier(self.boot_id()))
 
     def _require_open(self, boot_id):
@@ -165,7 +165,7 @@ class RebootJournal:
             require(receipt['state'] != 'ACCEPTED' or intent['bootId'] != boot_id, 'REBOOT_ALREADY_ACCEPTED')
 
     def context(self):
-        with self._locked():
+        with self.locked():
             boot_id = identifier(self.boot_id())
             try:
                 self._require_open(boot_id)
@@ -180,7 +180,7 @@ class RebootJournal:
         value = request(value)
         require(value['namespace'] == self.namespace, 'FOREIGN_NAMESPACE')
         require(value['cohortSha256'] == self.cohort, 'UNPAIRED_CODE')
-        with self._locked():
+        with self.locked():
             boot_id = identifier(self.boot_id())
             request_id, request_hash = value['requestId'], digest(value)
             previous = self._status(request_id, request_hash, boot_id)

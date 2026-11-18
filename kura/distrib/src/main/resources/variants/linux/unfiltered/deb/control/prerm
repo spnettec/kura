@@ -190,6 +190,9 @@ function preRemove {
 if [ "$1" = "failed-upgrade" ]; then
     exit 0
 fi
+python3 -I -B - <<'KURA_REBOOT_MAINTENANCE_GUARD' || exit 1
+raise RuntimeError("Kura reboot maintenance guard was not embedded")
+KURA_REBOOT_MAINTENANCE_GUARD
 # Exclude active/unknown key operations before stopping Core or copying data.
 python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --enter "$1" || exit 1
 # Preserve live-only legacy key sources before a managed stop on future upgrades.
@@ -229,6 +232,7 @@ fi
 
 if [ "$1" = "remove" ]; then
     preserveUserData || exit 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_reboot_setup.py" remove || exit 1
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" remove || exit 1
     # Revoke the paired su grant while package helpers are still available.
     # Upgrade keeps the installed policy until the new package reconciles it.

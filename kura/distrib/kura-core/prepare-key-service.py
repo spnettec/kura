@@ -196,6 +196,15 @@ def embed_clock_guard(control):
     control.write_text(content.replace(token, source))
 
 
+def embed_reboot_guard(control):
+    token = 'raise RuntimeError("Kura reboot maintenance guard was not embedded")'
+    source = Path(__file__).with_name('reboot-maintenance-guard.py').read_text()
+    compile(source, 'reboot-maintenance-guard.py', 'exec', dont_inherit=True)
+    content = control.read_text()
+    require(content.count(token) == 1)
+    control.write_text(content.replace(token, source))
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
@@ -210,3 +219,4 @@ if __name__ == "__main__":
                                Path(__file__).with_name('addon-code-policy.py'))
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
+        embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

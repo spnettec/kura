@@ -18,13 +18,14 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, protected, public_file, unit_directory_present,
                               unit_input_names, unit_load_paths)
-from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, identity, require
+from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, identity, read, require
 from kura_reboot_journal import RebootJournal
 from kura_reboot_protocol import RebootProtocol, RebootSender
 
 STATE = Path('/var/lib/kura-reboot-broker')
 SENDER = Path('/var/lib/kura-reboot-sender')
 AUTHORITY = Path('/etc/kura/reboot-broker-authority.json')
+INSTALLATION = Path('/etc/kura/reboot-broker-installation.json')
 SOCKET = Path('/run/kura-reboot-broker/control.sock')
 HELPER = HOME / 'bin/kura_reboot_broker.py'
 COHORT = Path('libexec/reboot-broker/cohort.json')
@@ -37,6 +38,7 @@ MAIN_PROPERTIES = ('MainPID', 'ControlGroup', 'ActiveState', 'InvocationID')
 FILES = (
     'bin/kura_clock_journal.py', 'bin/kura_clock_broker.py',
     'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py', 'bin/kura_reboot_broker.py',
+    'bin/kura_reboot_setup.py',
     *((COHORT.parent / name).as_posix() for name in UNITS),
 )
 PEER_PIDFD = getattr(socket, 'SO_PEERPIDFD', 77)  # Linux generic UAPI, ARM64 and amd64.
@@ -87,11 +89,11 @@ def manager_properties(unit, names):
     return values
 
 
-def verify_unit_sources():
+def verify_unit_sources(units=UNITS):
     for root in unit_load_paths():
         if not unit_directory_present(root):
             continue
-        for unit in UNITS:
+        for unit in units:
             names = unit_input_names(unit)
             if root not in VENDOR_UNIT_ROOTS:
                 names.append(unit)
@@ -110,8 +112,8 @@ def verify_unit_sources():
                 raise Refused('UNPAIRED_UNIT')
 
 
-def account_binding():
-    value = decode(public_file(AUTHORITY))
+def account_binding(path=None):
+    value = decode(public_file(AUTHORITY if path is None else path))
     account = pwd.getpwnam(CALLER)
     require(set(value) == {'schema', 'namespace', 'callerUid', 'callerGid'} and type(value['schema']) is int
             and value['schema'] == 1 and type(value['callerUid']) is int and type(value['callerGid']) is int
@@ -121,17 +123,28 @@ def account_binding():
     return value
 
 
+def sender_binding(binding):
+    directory(SENDER, binding['callerUid'])
+    require(SENDER.lstat().st_gid == binding['callerGid']
+            and read(SENDER / 'binding.json', 0, 0o644) == encode(binding), 'UNPAIRED_SENDER')
+
+
 class Policy:
-    def check(self, *, actor):
+    def packaged(self):
         manifest = decode(public_file(HOME / COHORT))
         require(set(manifest) == {'schema', 'action', 'caller', 'files'} and type(manifest['schema']) is int
                 and manifest['schema'] == 1 and manifest['action'] == 'reboot' and manifest['caller'] == CALLER
                 and type(manifest['files']) is dict and set(manifest['files']) == set(FILES), 'UNPAIRED_CODE')
         for name in FILES:
             require(file_hash(public_file(HOME / name)) == manifest['files'][name], 'UNPAIRED_CODE')
+        return manifest
+
+    def check(self, *, actor, include_main=True):
+        manifest = self.packaged()
+        units = UNITS if include_main else UNITS[:2]
         if actor:
-            verify_unit_sources()
-        for unit in UNITS:
+            verify_unit_sources(units)
+        for unit in units:
             loaded = manager_properties(unit, UNIT_PROPERTIES)
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
@@ -277,12 +290,14 @@ def serve():
     require(os.environ.get('LISTEN_PID') == str(os.getpid()) and os.environ.get('LISTEN_FDS') == '1'
             and os.environ.get('LISTEN_FDNAMES') == 'control', 'INVALID_LISTENER')
     policy = Policy()
-    cohort, binding = policy.check(actor=True)
+    cohort, binding = policy.check(actor=True, include_main=False)
+    require(read(INSTALLATION, 0) == encode(binding), 'UNPAIRED_INSTALLATION')
 
     def authorize(peer):
         # Authenticate the actual process before repeating the live unit and cohort check.
         require(main_peer(peer, binding), 'UNAUTHORIZED')
         require(policy.check(actor=True) == (cohort, binding), 'UNPAIRED_CODE')
+        require(read(INSTALLATION, 0) == encode(binding), 'UNPAIRED_INSTALLATION')
         return True
 
     protocol = RebootProtocol(RebootJournal(STATE, binding['namespace'], cohort), authorize, dispatch_reboot)
@@ -328,6 +343,7 @@ def client():
     cohort, binding = Policy().check(actor=False)
     uid, gid = binding['callerUid'], binding['callerGid']
     verify_identity(proc_status(os.getpid()), uid, gid)
+    sender_binding(binding)
     sender = RebootSender(SENDER, binding['namespace'], cohort, lambda value: exchange(value, gid))
     print(encode(sender.submit()).decode('ascii'), flush=True)
 

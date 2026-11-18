@@ -356,6 +356,9 @@ if [ "${ACTION}" = "--migrate-linked-main" ]; then
     keyServicePackageAdmission --migrate-linked-main
     exit "$?"
 fi
+python3 -I -B - <<'KURA_REBOOT_MAINTENANCE_GUARD' || exit 1
+raise RuntimeError("Kura reboot maintenance guard was not embedded")
+KURA_REBOOT_MAINTENANCE_GUARD
 if [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; then
     keyServicePackageAdmission --check-retained-main-state || exit 1
 fi
