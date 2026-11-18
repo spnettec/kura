@@ -231,7 +231,9 @@ if [ "$1" = "remove" ]; then
     # Upgrade keeps the installed policy until the new package reconciles it.
     python3 -I "${INSTALL_DIR}/kura/bin/kura_su_pam.py" remove || exit 1
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --remove-units || exit 1
-    bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -u || exit 1
+    # postinst removes install/. The package also ships this Root-owned bin/
+    # helper; .data is only a historical data copy and is never executable here.
+    bash "${INSTALL_DIR}/kura/bin/manage_kura_users.sh" -u || exit 1
 fi
 
 echo ""

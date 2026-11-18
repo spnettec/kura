@@ -119,6 +119,21 @@ class RetainedMainStateTest(unittest.TestCase):
 
 
 class RemoveCallbackTest(unittest.TestCase):
+    def test_uninstall_uses_installed_bin_helper_after_install_tree_cleanup(self):
+        raw = CONTROL.read_text()
+        callback = 'bash "${INSTALL_DIR}/kura/bin/manage_kura_users.sh" -u || exit 1'
+        self.assertIn(callback, raw)
+        self.assertNotIn('bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -u', raw)
+        postinst = (CONTROL.parent / 'postinst').read_text()
+        self.assertIn('rm -rf ${INSTALL_DIR}/kura/install', postinst)
+        # Exercise the shipped callback after the entire install tree is gone.
+        with fixtures.tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); helper = root / 'kura/bin/manage_kura_users.sh'
+            helper.parent.mkdir(parents=True)
+            helper.write_text('#!/bin/bash\n[ "$1" = -u ] || exit 47\n')
+            result = subprocess.run(['bash', '-c', callback], env=dict(os.environ, INSTALL_DIR=str(root)))
+            self.assertEqual(0, result.returncode)
+
     def test_preserve_data_copies_history_with_numeric_owners_and_never_executes_it(self):
         raw = CONTROL.read_text(); start = raw.index('function preserveUserData {')
         end = raw.index('##############################################\n# UTILITY FUNCTIONS', start)
