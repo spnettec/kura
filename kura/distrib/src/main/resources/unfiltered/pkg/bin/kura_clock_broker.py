@@ -258,7 +258,7 @@ def chrony_last_step():
     """Return only the timestamps of the last step from the local Chrony service."""
     try:
         result = subprocess.run(
-            ['/usr/bin/journalctl', '--system', '--no-pager', '--quiet', '--boot', '--since=today',
+            ['/usr/bin/journalctl', '--system', '--no-pager', '--boot', '--since=today',
              '--output=json', '--output-fields=_EXE,_SYSTEMD_UNIT', '--case-sensitive=true',
              '--grep=' + CHRONY_STEP_MESSAGE, '--lines=1',
              *['_SYSTEMD_UNIT=' + unit for unit in CHRONY_UNITS],
@@ -266,7 +266,7 @@ def chrony_last_step():
             env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}, capture_output=True, timeout=3)
         reason = 'UNAVAILABLE_CHRONY_JOURNAL'
         require(not result.stderr and result.returncode in (0, 1), reason)
-        if not result.stdout:
+        if result.stdout.strip() in (b'', b'-- No entries --'):
             return dict(schema=1, realtimeMicros=0, monotonicMicros=0)
         require(result.returncode == 0 and len(result.stdout) <= 4096, reason)
         entry = decode(result.stdout)

@@ -734,6 +734,7 @@ class ChronyJournalTest(unittest.TestCase):
         self.assertIn('--boot', arguments)
         self.assertIn('--lines=1', arguments)
         self.assertIn('--output-fields=_EXE,_SYSTEMD_UNIT', arguments)
+        self.assertNotIn('--quiet', arguments)
         self.assertEqual(['_SYSTEMD_UNIT=chrony.service', '_SYSTEMD_UNIT=chronyd.service',
                           '_EXE=/usr/sbin/chronyd', '_EXE=/usr/bin/chronyd'], arguments[-4:])
         self.assertEqual(3, run.call_args.kwargs['timeout'])
@@ -755,9 +756,10 @@ class ChronyJournalTest(unittest.TestCase):
                 returncode=1, stdout=b'', stderr=b'journal unavailable')):
             with self.assertRaisesRegex(journal.Refused, 'UNAVAILABLE_CHRONY_JOURNAL'):
                 broker.chrony_last_step()
-        with mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
-                returncode=1, stdout=b'', stderr=b'')):
-            self.assertEqual(dict(schema=1, realtimeMicros=0, monotonicMicros=0), broker.chrony_last_step())
+        for empty in (b'', b'-- No entries --\n'):
+            with mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                    returncode=1, stdout=empty, stderr=b'')):
+                self.assertEqual(dict(schema=1, realtimeMicros=0, monotonicMicros=0), broker.chrony_last_step())
 
 
 if __name__ == '__main__':
