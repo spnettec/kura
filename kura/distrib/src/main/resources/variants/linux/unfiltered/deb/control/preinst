@@ -347,6 +347,7 @@ fi
 keyServicePackageAdmission() {
     python3 -I - "$@" <<'PYKURAKEYSERVICE'
 raise RuntimeError("Kura key-journal reader was not embedded")
+raise RuntimeError("Kura Main link migration was not embedded")
 raise RuntimeError("Kura key-service lifecycle was not embedded")
 PYKURAKEYSERVICE
 }

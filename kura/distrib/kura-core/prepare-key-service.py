@@ -143,6 +143,15 @@ def embed_journal_reader(preinst, reader):
     content=content.replace(token,'_KURA_EMBEDDED_JOURNAL_SOURCE = '+repr(source))
     preinst.write_text(content)
 
+def embed_main_link_migration(preinst):
+    token = 'raise RuntimeError("Kura Main link migration was not embedded")'
+    source = Path(__file__).with_name('main-link-migration.py').read_bytes()
+    require(0 < len(source) <= 32768)
+    compile(source, 'main-link-migration.py', 'exec', dont_inherit=True)
+    content = preinst.read_text()
+    require(content.count(token) == 1)
+    preinst.write_text(content.replace(token, '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE = ' + repr(source)))
+
 
 def embed_policy_readers(preinst,lifecycle,journal):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
@@ -191,6 +200,7 @@ if __name__ == "__main__":
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
     prepare_clock_service(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
+    embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
     for hook in ('preinst', 'postinst', 'prerm'):

@@ -3,10 +3,15 @@
 """Main layout refusal must precede package-maintenance side effects."""
 import hashlib
 import json
+from pathlib import Path
+import runpy
 import unittest
 from unittest.mock import patch
 
 import test_key_service_lifecycle as fixtures
+
+migrate_linked_main = runpy.run_path(str(Path(__file__).resolve().parents[2]
+                                         / 'kura-core/main-link-migration.py'))['migrate_linked_main']
 
 
 class MainLayoutAdmissionTest(unittest.TestCase):
@@ -193,7 +198,7 @@ class MainLinkMigrationTest(unittest.TestCase):
         for choice in ('linked', 'linked-runtime'):
             with self.subTest(choice=choice):
                 self.setup_link(choice)
-                self.policy.migrate_linked_main()
+                migrate_linked_main(self.policy)
                 self.assertEqual(self.vendor.read_bytes(), self.unit)
                 self.assertEqual(self.source.read_bytes(), self.unit)
                 self.assertFalse(self.link.is_symlink())
@@ -206,13 +211,13 @@ class MainLinkMigrationTest(unittest.TestCase):
         self.setup_link('linked-runtime')
         self.fail_reload = True
         with self.assertRaises(fixtures.lifecycle.Refused):
-            self.policy.migrate_linked_main()
+            migrate_linked_main(self.policy)
         self.assertTrue(self.saved.is_symlink())
         self.assertEqual(self.vendor.read_bytes(), self.unit)
         with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Complete the existing Main link migration'):
             self.policy.check_main_package_layout(self.manifest)
         self.fail_reload = False
-        self.policy.migrate_linked_main()
+        migrate_linked_main(self.policy)
         self.assertFalse(self.saved.is_symlink())
         self.assertEqual(self.source.read_bytes(), self.unit)
 
@@ -220,15 +225,15 @@ class MainLinkMigrationTest(unittest.TestCase):
         self.setup_link('linked')
         self.active = True
         with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Main must be inactive'):
-            self.policy.migrate_linked_main()
+            migrate_linked_main(self.policy)
         self.active = False
         self.pairing_error = True
         with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Generation reader does not match'):
-            self.policy.migrate_linked_main()
+            migrate_linked_main(self.policy)
         self.pairing_error = False
         self.source.write_bytes(b'Foreign unit')
         with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Linked Main differs'):
-            self.policy.migrate_linked_main()
+            migrate_linked_main(self.policy)
         self.assertFalse(self.vendor.exists())
         self.assertTrue(self.link.is_symlink())
         self.assertNotIn('daemon-reload', self.commands)

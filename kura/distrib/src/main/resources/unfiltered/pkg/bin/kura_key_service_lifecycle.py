@@ -15,7 +15,6 @@ import secrets
 import stat
 import subprocess
 import sys
-import tempfile
 import types
 import uuid
 
@@ -1412,91 +1411,6 @@ class Lifecycle:
                 and self.read(physical, private=False) == unit, 'Main unit changed during package pairing')
         return unit
 
-    def link_snapshot(self, link):
-        self.directory(link.parent)
-        before = link.lstat()
-        require(stat.S_ISLNK(before.st_mode) and before.st_uid == self.owner and before.st_nlink == 1,
-                'Main link is not Root-owned')
-        target = os.readlink(link)
-        after = link.lstat()
-        identity = lambda m: (m.st_dev, m.st_ino, m.st_ctime_ns, m.st_mtime_ns)
-        require(identity(before) == identity(after), 'Main link changed during migration')
-        require(Path(target).is_absolute() and str(Path(target)) == target and Path(target).name == 'kura.service',
-                'Main link target requires reviewed migration')
-        return target, identity(after)
-
-    def stopped_main_layout(self):
-        properties = self.main_unit_properties('ActiveState', 'MainPID', 'ControlPID', 'Job')
-        fields = dict(Id='kura.service', Names='kura.service', LoadState='loaded', SourcePath='',
-                      DropInPaths='', Transient='no', ActiveState='inactive', MainPID='0', ControlPID='0', Job='')
-        require(all(properties[key] == value for key, value in fields.items()),
-                'Main must be inactive with a single clean effective unit and no queued job')
-        return properties
-
-    def migrate_linked_main(self):
-        """Normalize an explicitly selected package-paired link under the installer locks."""
-        self.no_overrides()
-        with self.sender_locked(), self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
-            self.check_sender_admissions()
-            if gwt is not None:
-                gwt.check()
-            self.check_records()
-            require(self.fence() is None and not any(os.path.lexists(self.path(path)) for path in (
-                '/var/lib/kura-retained', '/opt/eclipse/.kura-preserve')),
-                'Finish existing package maintenance before Main link migration')
-            manifest = self.assets()
-            expected = self.main_unit_digest(manifest)
-            vendor = self.main_vendor_path()
-            self.directory(vendor.parent)
-            for path in map(self.path, MAIN_VENDOR_PATHS):
-                if os.path.lexists(path):
-                    require(path.parent.resolve(strict=True) / path.name == vendor,
-                            'Ambiguous vendor Main paths')
-            candidates = [(choice, self.path(path)) for choice, path in MAIN_LINKS.items()]
-            candidates += [(choice, link.with_name(MAIN_LINK_BACKUP)) for choice, link in candidates]
-            selected = [(choice, link) for choice, link in candidates if os.path.lexists(link)]
-            require(len(selected) == 1, 'Expected exactly one Root Main link or saved migration link')
-            choice, link = selected[0]
-            original = self.path(MAIN_LINKS[choice])
-            saved = original.with_name(MAIN_LINK_BACKUP)
-            target, identity = self.link_snapshot(link)
-            unit = self.read(self.path(target), private=False)
-            require(hashlib.sha256(unit).hexdigest() == expected, 'Linked Main differs from its package')
-            layout = self.stopped_main_layout()
-            self.assets(generation_binding=True, _linked_main_unit=unit)
-            if link == original:
-                require(layout['UnitFileState'] == choice and layout['FragmentPath'] == MAIN_LINKS[choice]
-                        and layout['NeedDaemonReload'] == 'no', 'Main link is not the loaded package definition')
-                if not os.path.lexists(vendor):
-                    with tempfile.NamedTemporaryFile(dir=vendor.parent, prefix='.kura-main-', mode='wb') as staged:
-                        staged.write(unit)
-                        staged.flush()
-                        os.fchmod(staged.fileno(), 0o644)
-                        os.fsync(staged.fileno())
-                        os.link(staged.name, vendor)
-                    self.sync(vendor.parent)
-            else:
-                require(layout['FragmentPath'] in (*MAIN_VENDOR_PATHS, MAIN_LINKS[choice])
-                        and layout['UnitFileState'] in (choice, 'disabled', 'static'),
-                        'Saved link cannot explain the effective Main layout')
-            require(self.read(vendor, private=False) == unit, 'Existing vendor Main differs from the linked package')
-            require(self.link_snapshot(link) == (target, identity) and self.stopped_main_layout() == layout,
-                    'Main link or manager state changed during migration')
-            if link == original:
-                require(not os.path.lexists(saved), 'Main migration link already exists')
-                original.rename(saved)
-                self.sync(saved.parent)
-            saved_snapshot = self.link_snapshot(saved)
-            require(saved_snapshot[0] == target, 'Saved migration link changed')
-            self.command(['daemon-reload'])
-            result = self.stopped_main_layout()
-            require(result['UnitFileState'] in ('disabled', 'static'),
-                    'Migrated Main would be enabled or overridden')
-            self.paired_main_unit(manifest, result['UnitFileState'])
-            require(self.link_snapshot(saved) == saved_snapshot, 'Saved migration link changed')
-            saved.unlink()
-            self.sync(saved.parent)
-
     @staticmethod
     def main_accounts():
         # cp -a preserves numeric data owners. Recreating either name with a
@@ -2003,8 +1917,10 @@ if __name__ == "__main__":
             lifecycle.retained_main_state()
         elif sys.argv[1:] == ['--restore-retained-main-state']:
             lifecycle.retained_main_state(restore=True)
-        elif sys.argv[1:] == ['--migrate-linked-main'] and '_KURA_EMBEDDED_JOURNAL_SOURCE' in globals():
-            lifecycle.migrate_linked_main()
+        elif sys.argv[1:] == ['--migrate-linked-main'] and '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE' in globals():
+            namespace = {}
+            exec(compile(_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE, '<incoming Main link migration>', 'exec'), namespace)
+            namespace['migrate_linked_main'](lifecycle)
         else:
             raise Refused("Unsupported key-service package admission action")
     except Exception:
