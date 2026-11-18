@@ -475,7 +475,14 @@ function postInstall {
         fi
         manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
         if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
-            restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
+            MAIN_RESTORE=$(python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" \
+                --package-main-restore-decision "${PRESERVE_DIR}" 2>>"${LOG}") || return 1
+            case "${MAIN_RESTORE}" in
+                vendor) ;;
+                restore) restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" \
+                    /lib/systemd/system/kura.service >> "${LOG}" 2>&1 || RESTORE_OK=0 ;;
+                *) return 1 ;;
+            esac
             systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
         fi
         # dpkg unpacks every package in a transaction before configuring the
@@ -510,6 +517,7 @@ function postInstall {
             if [ "${WAS_REINSTALL}" = "1" ]; then
                 python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --restore-retained-main-state >> ${LOG} 2>&1 || return 1
             fi
+            python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
             if ! rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1; then
                 echo "ERROR: restored data but could not remove its recovery copy at ${PRESERVE_DIR}." >> ${LOG} 2>&1
                 return 1
@@ -524,6 +532,9 @@ function postInstall {
     # The outer postinst may have restored an old framework registry. Code-only
     # normalization never rewrites retained key/data ownership or permissions.
     python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+    if [ "${WAS_UPGRADE}" = "0" ] && [ "${WAS_REINSTALL}" = "0" ]; then
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
+    fi
 
     # The retained data and root code are final before new key operations are admitted.
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1

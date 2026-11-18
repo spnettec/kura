@@ -95,10 +95,11 @@ polkit.addRule(function(action, subject) {
     if (action.id.indexOf("org.freedesktop.systemd1.") == 0) {
         return polkit.Result.NO;
     }
-    if (action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
-        action.id == "org.freedesktop.login1.power-off-multiple-sessions") {
-        return polkit.Result.YES;
+    var login1 = "org.freedesktop.login1.";
+    if (action.id.indexOf(login1) == 0 &&
+        /^(reboot|power-off|halt|kexec|soft-reboot|suspend|hibernate|hybrid-sleep|set-reboot)(-|$)/.test(
+            action.id.substring(login1.length))) {
+        return polkit.Result.NO;
     }
 });
 EOF

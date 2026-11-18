@@ -222,6 +222,23 @@ class RetainedMainStateTest(unittest.TestCase):
         with self.assertRaises(lifecycle.Refused): self.policy.retained_main_state(restore=True)
         self.assertEqual(raw, path.read_bytes()); self.assertEqual(self.fence, self.policy.fence())
 
+    def test_exact_retained_legacy_unit_can_use_incoming_no_boot_unit_without_new_receipt(self):
+        old = b'[Service]\nAmbientCapabilities=cap_net_admin cap_sys_boot\n'
+        incoming = b'[Service]\nAmbientCapabilities=cap_net_admin\n'
+        self.pair_main(old)
+        self.fixture.write(self.stage / 'systemd/kura.service', old, 0o644)
+        path = self.retain('disabled')
+        original = path.read_bytes()
+        source = path.parent / 'source-package-manifest.json'
+        self.assertEqual(source.read_bytes(),
+                         (self.fixture.physical / 'libexec/key-backup/manifest.json').read_bytes())
+        source.unlink()  # A release before the retirement did not save this file.
+        self.pair_main(incoming)
+        self.assertEqual('vendor', self.policy.package_main_restore_decision(self.retained))
+        self.assertEqual(original, path.read_bytes())
+        self.assertEqual(old, (path.parent / 'kura.service').read_bytes())
+        self.assertEqual(self.fence, self.policy.fence())
+
 
 class RemoveCallbackTest(unittest.TestCase):
     def test_uninstall_uses_installed_bin_helper_after_install_tree_cleanup(self):

@@ -30,6 +30,8 @@ RING_PATH = "/etc/kura/credentials/" + RING_CREDENTIAL
 GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
+LIFECYCLE_SOURCE_LIMIT = 160 * 1024
+JOURNAL_SOURCE_LIMIT = 128 * 1024
 
 class Refused(RuntimeError):
     pass
@@ -51,7 +53,8 @@ def paired_lifecycle():
     journal=None
     if embedded:
         source=globals().get('_KURA_EMBEDDED_LIFECYCLE_SOURCE');journal=globals().get('_KURA_EMBEDDED_JOURNAL_SOURCE')
-        require(isinstance(source,bytes) and 0<len(source)<=131072 and isinstance(journal,bytes) and 0<len(journal)<=131072,
+        require(isinstance(source, bytes) and 0 < len(source) <= LIFECYCLE_SOURCE_LIMIT
+            and isinstance(journal, bytes) and 0 < len(journal) <= JOURNAL_SOURCE_LIMIT,
             'Incoming key policy is not paired with its package readers')
     else:
         filename=globals().get('__file__')
@@ -65,8 +68,8 @@ def paired_lifecycle():
         fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_CLOEXEC|os.O_NONBLOCK)
         try:
             before=os.fstat(fd);require(stat.S_ISREG(before.st_mode) and before.st_uid==owner and before.st_nlink==1
-                and not before.st_mode&0o022 and 0<before.st_size<=131072,'Unsafe key policy companion source')
-            source=os.read(fd,131073)
+                and not before.st_mode&0o022 and 0<before.st_size<=LIFECYCLE_SOURCE_LIMIT,'Unsafe key policy companion source')
+            source=os.read(fd,LIFECYCLE_SOURCE_LIMIT + 1)
             require(len(source)==before.st_size and identity(before)==identity(os.fstat(fd))==identity(path.lstat()),
                 'Key policy companion source changed')
         finally:os.close(fd)

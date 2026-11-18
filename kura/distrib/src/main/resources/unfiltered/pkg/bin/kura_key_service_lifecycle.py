@@ -1446,10 +1446,14 @@ class Lifecycle:
             require(len(secret) == 32)
             value['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + encoded(value), hashlib.sha256).hexdigest()
             self.create(directory / 'systemd/main-state.json', encoded(value))
+            if manifest.get('schema') == 2 and self.without_main_sys_boot(saved) != saved:
+                installed_manifest = self.path('/opt/eclipse/kura').resolve(strict=True) / 'libexec/key-backup/manifest.json'
+                raw = self.read(installed_manifest, private=False)
+                require(decode(raw) == manifest)
+                self.create(directory / 'systemd/source-package-manifest.json', raw)
 
-    def check_legacy_static_source(self, directory, fence, unit_digest):
-        # A historical receipt authenticates the saved unit on this Root.
-        # Pair it to the exact manifest of the last installed package as well.
+    def check_main_source_package(self, directory, fence, unit_digest):
+        # A staged manifest must be the last complete package recorded by this Root.
         history = self.state / 'package-history'
         self.directory(history, private=True)
         receipts = {}
@@ -1511,7 +1515,7 @@ class Lifecycle:
                     == value['unitSha256'], 'Retained Main unit changed')
             expected = value['unitFileState']
             if expected == 'static' and value['schema'] == 1:
-                self.check_legacy_static_source(directory, fence, value['unitSha256'])
+                self.check_main_source_package(directory, fence, value['unitSha256'])
             if restore:
                 current = self.main_unit_state()
                 if expected == 'static':
@@ -1525,6 +1529,71 @@ class Lifecycle:
                     self.command(['enable', *(['--runtime'] if expected == 'enabled-runtime' else []), 'kura.service'])
                     require(self.main_unit_state() == expected, 'Main boot choice was not restored')
             return value
+
+    @staticmethod
+    def without_main_sys_boot(unit):
+        def directive(match):
+            caps = match[2].split()
+            kept = [cap for cap in caps if cap.lower() != b'cap_sys_boot']
+            return match[0] if caps == kept else match[1] + b' '.join(kept)
+
+        return re.sub(rb'(?im)^([ \t]*(?:AmbientCapabilities|CapabilityBoundingSet)[ \t]*=[ \t]*)([^\r\n]*)',
+                      directive, unit)
+
+    def check_main_reboot_source(self):
+        logical = self.path('/lib/systemd/system/kura.service')
+        if os.path.lexists(logical):
+            raw = self.read(self.main_vendor_path(), private=False)
+            if self.without_main_sys_boot(raw) != raw:
+                require(hashlib.sha256(raw).hexdigest() == self.main_unit_digest(self.assets()),
+                        'Unpaired Main reboot grant requires reviewed migration')
+
+    def package_main_restore_decision(self, directory):
+        directory = Path(directory)
+        retained = directory == self.path('/var/lib/kura-retained')
+        require(retained or directory == self.path('/opt/eclipse/.kura-preserve'),
+                'Unrecognized Main package preservation directory')
+        self.directory(directory, private=True)
+        self.directory(directory / 'systemd', private=True)
+        old = self.read(directory / 'systemd/kura.service', private=False)
+        new = self.read(self.main_vendor_path(), private=False)
+        # The supported historical static receipts already establish their
+        # source unit's package pairing.
+        state = self.retained_main_state() if retained else None
+        migrated = self.without_main_sys_boot(old)
+        if migrated == old:
+            return 'restore'
+        incoming = self.assets()
+        require(hashlib.sha256(new).hexdigest() == self.main_unit_digest(incoming)
+                and self.without_main_sys_boot(new) == new,
+                'Incoming Main unit must be the paired vendor unit without the old grant')
+        with self.locked():
+            fence = self.fence()
+            require(fence is not None and fence['firstAction'] == ('remove' if retained else 'upgrade'))
+            if retained:
+                require(fence['id'] == state['maintenanceId']
+                        and hashlib.sha256(old).hexdigest() == state['unitSha256'])
+            if not retained or (state['unitFileState'] != 'static' and migrated != new):
+                self.check_main_source_package(directory, fence, hashlib.sha256(old).hexdigest())
+        return 'vendor'
+
+    def check_main_reboot_permissions(self):
+        if not self.path('/run/systemd/system').is_dir():
+            return
+        properties = self.main_unit_properties('MainPID', 'ControlPID', 'ActiveState',
+                                               'AmbientCapabilities', 'CapabilityBoundingSet')
+        require(properties['MainPID'] == properties['ControlPID'] == '0'
+                and properties['ActiveState'] in ('inactive', 'failed'),
+                'Main must be inactive for reboot privilege cutover')
+        if properties['UnitFileState'] in ('masked', 'masked-runtime'):
+            require(properties['LoadState'] == 'masked')
+            return
+        require(properties['LoadState'] == 'loaded' and properties['NeedDaemonReload'] == 'no',
+                'Verify loaded Main before releasing package maintenance')
+        for field in ('AmbientCapabilities', 'CapabilityBoundingSet'):
+            caps = properties[field].split()
+            require(all(re.fullmatch(r'cap_[a-z0-9_]+', cap) for cap in caps) and 'cap_sys_boot' not in caps,
+                    'Effective Main still has CAP_SYS_BOOT; preserve package maintenance')
 
     def assets(self, *, generation_binding=False, _linked_main_unit=None):
         logical = self.path("/opt/eclipse/kura")
@@ -1917,6 +1986,12 @@ if __name__ == "__main__":
             lifecycle.retained_main_state()
         elif sys.argv[1:] == ['--restore-retained-main-state']:
             lifecycle.retained_main_state(restore=True)
+        elif sys.argv[1:] == ['--check-main-reboot-source']:
+            lifecycle.check_main_reboot_source()
+        elif len(sys.argv) == 3 and sys.argv[1] == '--package-main-restore-decision':
+            print(lifecycle.package_main_restore_decision(sys.argv[2]))
+        elif sys.argv[1:] == ['--check-main-reboot-permissions']:
+            lifecycle.check_main_reboot_permissions()
         elif sys.argv[1:] == ['--migrate-linked-main'] and '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE' in globals():
             namespace = {}
             exec(compile(_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE, '<incoming Main link migration>', 'exec'), namespace)

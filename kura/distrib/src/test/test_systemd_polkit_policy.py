@@ -148,8 +148,18 @@ process.stdout.write(JSON.stringify(cases.map(c => rule({
     def test_other_users_and_services_keep_their_own_authority(self):
         cases = [dict(user=u, details=dict(unit='named.service', verb='start')) for u in ['root', 'nobody']]
         cases += [dict(action='org.freedesktop.NetworkManager.enable-disable-network'),
-                  dict(action='org.freedesktop.login1.reboot-multiple-sessions')]
-        self.assertEqual(self.evaluate('NO', cases), [None, None, None, 'yes'])
+                  dict(action='org.freedesktop.login1.inhibit-handle-lid-switch'),
+                  dict(user='root', action='org.freedesktop.login1.reboot-multiple-sessions')]
+        self.assertEqual(self.evaluate('NO', cases), [None] * len(cases))
+
+    def test_daemon_cannot_use_logind_to_change_host_power_state(self):
+        actions = ['reboot', 'reboot-multiple-sessions', 'reboot-ignore-inhibit', 'power-off-multiple-sessions',
+                   'power-off', 'halt', 'kexec', 'soft-reboot', 'suspend-multiple-sessions',
+                   'suspend-then-hibernate', 'hibernate-ignore-inhibit', 'hybrid-sleep',
+                   'set-reboot-parameter', 'set-reboot-to-boot-loader-entry', 'set-reboot-to-firmware-setup']
+        cases = [dict(action='org.freedesktop.login1.' + action) for action in actions]
+        for profile in ('NO', 'YES'):
+            self.assertEqual(self.evaluate(profile, cases), ['no'] * len(cases))
 
     def test_clock_rule_requires_exact_service_account_unit_verb_and_nnp(self):
         policy = self.root / 'clock.rules'

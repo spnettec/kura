@@ -141,6 +141,64 @@ class MainLayoutAdmissionTest(unittest.TestCase):
         self.assertEqual(secret, (self.policy.state / 'journal.key').read_bytes())
         self.assertFalse(any(args[1:3] == ['show', 'kura.service'] for args in self.fixture.calls))
 
+    def pair_main(self, raw):
+        path = self.fixture.physical / 'libexec/key-backup/manifest.json'
+        manifest = json.loads(path.read_bytes())
+        manifest.update(schema=2, protocol=2, generation={'unitSha256': hashlib.sha256(raw).hexdigest()})
+        self.fixture.write(self.unit, raw, 0o644)
+        self.fixture.write(path, fixtures.lifecycle.encoded(manifest), 0o640)
+        return path.read_bytes()
+
+    def test_upgrade_uses_incoming_vendor_only_with_original_main_source_receipt(self):
+        old = b'[Service]\nCapabilityBoundingSet=cap_net_admin cap_sys_boot\nAmbientCapabilities=cap_sys_boot\n'
+        incoming = b'[Service]\nCapabilityBoundingSet=cap_net_admin\nAmbientCapabilities=\n'
+        old_manifest = self.pair_main(old)
+        self.policy.check_main_reboot_source()
+        fence = self.policy.enter('upgrade')
+        history = self.policy.state / 'package-history'
+        self.policy.directory(history, private=True, create=True)
+        identity = str(fixtures.uuid.uuid4())
+        previous = dict(schema=1, maintenanceId=identity, firstAction='install',
+                        manifestSha256=hashlib.sha256(old_manifest).hexdigest(), keySha256='0' * 64,
+                        precedingStartupIds=[], previousMaintenanceId=None)
+        self.policy.create(history / (identity + '.json'), fixtures.lifecycle.encoded(previous))
+        stage = self.policy.path('/opt/eclipse/.kura-preserve')
+        self.policy.directory(stage, private=True, create=True)
+        self.policy.directory(stage / 'systemd', private=True, create=True)
+        self.fixture.write(stage / 'systemd/kura.service', old, 0o644)
+        self.pair_main(incoming)
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'requires the original package manifest'):
+            self.policy.package_main_restore_decision(stage)
+        source = stage / 'systemd/source-package-manifest.json'
+        self.policy.create(source, old_manifest)
+        self.assertEqual('vendor', self.policy.package_main_restore_decision(stage))
+        self.assertEqual(old, (stage / 'systemd/kura.service').read_bytes())
+        self.assertEqual(fence, self.policy.fence())
+        self.fixture.write(source, old_manifest + b'\n')
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'differs from the original package'):
+            self.policy.package_main_restore_decision(stage)
+
+    def test_unpaired_existing_unit_with_legacy_boot_capability_refuses_before_fence(self):
+        self.pair_main(self.original_unit)
+        self.fixture.write(self.unit, b'[Service]\nAmbientCapabilities=CAP_SYS_BOOT\n', 0o644)
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'reviewed migration'):
+            self.policy.check_main_reboot_source()
+        self.assertFalse(self.policy.state.exists())
+
+    def test_effective_directives_and_overrides_cannot_restore_the_capability(self):
+        unit = self.effective_main()
+        def effective(bounding, ambient):
+            return (unit + 'MainPID=0\nControlPID=0\nActiveState=inactive\n'
+                    f'CapabilityBoundingSet={bounding}\nAmbientCapabilities={ambient}\n')
+        self.effective_main = lambda: effective('cap_net_admin', '')
+        self.policy.check_main_reboot_permissions()
+        for bounding, ambient in [('cap_net_admin cap_sys_boot', ''), ('cap_net_admin', 'cap_sys_boot'),
+                                  ('0x400000', '')]:
+            with self.subTest(bounding=bounding, ambient=ambient):
+                self.effective_main = lambda: effective(bounding, ambient)
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'CAP_SYS_BOOT'):
+                    self.policy.check_main_reboot_permissions()
+
 
 class MainLinkMigrationTest(unittest.TestCase):
     def setUp(self):

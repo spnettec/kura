@@ -362,6 +362,9 @@ KURA_REBOOT_MAINTENANCE_GUARD
 if [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; then
     keyServicePackageAdmission --check-retained-main-state || exit 1
 fi
+if [ "${ACTION}" = "upgrade" ]; then
+    keyServicePackageAdmission --check-main-reboot-source || exit 1
+fi
 keyServicePackageAdmission --enter "${ACTION}" || exit 1
 
 provisionCryptoKey() {
@@ -486,8 +489,12 @@ function preInstall {
         fi
         manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${PRESERVE_DIR}/libexec/addons" >> "${LOG}" 2>&1 || return 1
         if [ -f /lib/systemd/system/kura.service ]; then
-            mkdir -p "${PRESERVE_DIR}/systemd" >> "${LOG}" 2>&1 || return 1
+            mkdir -m 700 "${PRESERVE_DIR}/systemd" >> "${LOG}" 2>&1 || return 1
             cp -a /lib/systemd/system/kura.service "${PRESERVE_DIR}/systemd/kura.service" >> "${LOG}" 2>&1 || return 1
+            if [ -f "${INSTALL_DIR}/kura/libexec/key-backup/manifest.json" ]; then
+                install -m 600 "${INSTALL_DIR}/kura/libexec/key-backup/manifest.json" \
+                    "${PRESERVE_DIR}/systemd/source-package-manifest.json" >> "${LOG}" 2>&1 || return 1
+            fi
         fi
         # Preserve the sibling install-order registry so gen_config_ini.sh
         # maintains the correct bundle precedence after the upgrade.

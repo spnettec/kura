@@ -158,9 +158,13 @@ def embed_policy_readers(preinst,lifecycle,journal):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
     require(preinst.is_file() and not preinst.is_symlink())
     assignments=[]
-    for name,path in (('_KURA_EMBEDDED_LIFECYCLE_SOURCE',lifecycle),('_KURA_EMBEDDED_JOURNAL_SOURCE',journal)):
+    readers = (('_KURA_EMBEDDED_LIFECYCLE_SOURCE', lifecycle, 160 * 1024),
+               ('_KURA_EMBEDDED_JOURNAL_SOURCE', journal, 128 * 1024))
+    for name, path, limit in readers:
         require(path.is_file() and not path.is_symlink())
-        source=path.read_bytes();require(0<len(source)<=131072);compile(source,str(path),'exec',dont_inherit=True)
+        source = path.read_bytes()
+        require(0 < len(source) <= limit)
+        compile(source, str(path), 'exec', dont_inherit=True)
         assignments.append(name+' = '+repr(source))
     content=preinst.read_text();require(content.count(token)==1)
     preinst.write_text(content.replace(token,'\n'.join(assignments)))
