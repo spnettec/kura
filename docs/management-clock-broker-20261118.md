@@ -88,6 +88,16 @@ Root和同UID的非Main进程均得到UNAUTHORIZED；额外代码和unit overrid
 
 23:16 UTC 原3/个人25/C9及进程计数/D29原Main3135、E原配对/身份20/Core6/local7/material5/switch9/transport7与原所有进程/ON revision再次只读精确。Parallels仍 stopped，原 +1ms及其 namespace/ID 未再使用。当前包的其他平台、完整 Core/OSGi、升级/移除/恢复及完整六组件/provider/launcher、RTC/Chrony、最小权限与全部12父项继续内部 pending；仅原3 external deferred。
 
+## 当前代码的真实非 Root actor
+
+后续新 Git `a54af33949` 重建完整包 `6.0.0~git202611172327.a54af33-1`（SHA `632219ff0c123763446c0c28622da95075b4bffe4c6aa10bc186b6ee61670e27`），仅提取核过的7个 clock code/unit/JAR 及 manifest 更新原 Parallels 组件现场。不是在 VM 安装完整 deb。原维护目的 `1284ae68-2e9e-4f28-8e1b-c62fc1119cf1`、原 clock namespace/唯一 APPLIED/全部 sender 文件先按当前环境核对；只归档并更新识别过的代码，由产品 install 归档旧 actor cohort，再沿原维护目的 resume。没有改NSS身份、重建namespace、复制运行数据或执行旧Java probe/dispatch。
+
+当前 actor cohort `07212c1f891a4c1e0b1f18d37bb2043ea56e0ffe35276cf4183c4b6a9129304f`，manifest文件SHA `56fc11e8ed799c29d0bb36f56ed278e036c62749a0208e0fabd0b7f8578c1d54`，Clock JAR `6a67ff22b07c3d48dad60025c928d9f7054624f8a24a8cf2f5dd98dcd9c05cc8`。只发送一次不带namespace/ID的Root context拒绝请求，激活真实actor，得到UNAUTHORIZED；其启动和处理该请求均已通过当前有效unit配对检查。实际PID4181/ticks41703，四UID992/四GID970/附加组仅970，五cap均`0000000002000000`、NNP1、NRestarts0，固定实际python入口一致。
+
+原 namespace/operation/sender 的字节及指定元数据精确，操作数仍1，没有新增校时或重发原+1ms，没有向其他Root发送旧ID。不是当前合法Main写业务的验收。之后产品正常quiesce，当前停机维护目的 `4322e5d4-a9bb-4bdb-ab43-a853fad78fb0` 保留同一namespace与当前cohort，全部unit inactive/PID0，guest正常poweroff回stopped。4helpers/2units/2Java/manifest/DS与后续`e1c40469d9`逐字节一致；后续仅安装恢复行为改变，当前完整包的业务/完整CoreOSGi仍待验。
+
+原始回执同在父工作空间 `.management-close-20261116/source-cohort-20261117/core-clock-actor-current-runtime-20261118/`。同现场 Core 包升级中的服务选择、历史数据和Root属主修复另见 `docs/management-core-upgrade-preservation-20261118.md`。
+
 ## 后续
 
 继续当前源码发行包核对、完整 Core/OSGi 和安装升级移除恢复、真实 syscall 拒绝与崩溃矩阵、clock UNKNOWN 管理/容量、RTC/Chrony，以及其他网络、日志、模块、文件移动、系统更新等 typed broker/provider/launcher。原三现场和E没有部署本候选；E真实Core仍11 ambient/13 bounding caps、NNP0。完整12父项保持内部 pending，仅原3 external deferred，G034未封存、未正式发布，目标 active。
