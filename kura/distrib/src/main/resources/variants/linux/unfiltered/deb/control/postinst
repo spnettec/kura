@@ -466,11 +466,12 @@ function postInstall {
                 cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
             fi
         done
-        # Keep newly unpacked helpers when siblings are upgraded in the same
-        # transaction; restore missing hooks after a core-only upgrade.
+        # .data contains preserved runtime state and historical copies. Trusted
+        # addon code is published separately below; fresh defaults must not win
+        # over the gateway's old data, even when their names look like scripts.
         if [ -d "${PRESERVE_DIR}/addon-data" ]; then
-            mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1
-            cp -a -n "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
+            mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1 || RESTORE_OK=0
+            cp -a "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
         fi
         manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
         if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
@@ -494,16 +495,14 @@ function postInstall {
         if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
             cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
         fi
-        # Refresh the snapshot_0 recovery copy from the restored snapshots.
-        if [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
-            cp "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || true
+        # Keep an existing recovery copy, including an intentionally different
+        # historical snapshot. Only fill a missing copy; never follow a data link.
+        if [ ! -e "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ ! -L "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
+            cp -a "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || RESTORE_OK=0
         fi
-        # The retained copy is outside /opt, so its original ownership has not
-        # been changed by the installer. Keep it on reinstall, including
-        # intentionally root-owned keys. Preserve the existing upgrade policy.
-        if [ "${WAS_REINSTALL}" = "0" ]; then
-            chown -R kurad:kurad "${INSTALL_DIR}/kura/user" "${INSTALL_DIR}/kura/data" "${INSTALL_DIR}/kura/packages" "${INSTALL_DIR}/kura/log" >> ${LOG} 2>&1 || true
-        fi
+        # cp -a retains the gateway's numeric data/key owners and modes on both
+        # upgrade and reinstall. The code-only ownership pass below protects
+        # installed executables without changing those restored data owners.
         if [ "${RESTORE_OK}" = "1" ]; then
             # Repair installed code before releasing the recovery copy. Leave
             # intentional restored data/key owners and modes unchanged.
