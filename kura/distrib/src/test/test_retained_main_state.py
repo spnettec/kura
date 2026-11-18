@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Retained boot choices are bound to the original Root removal and identities."""
+import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -24,6 +26,11 @@ class RetainedMainStateTest(unittest.TestCase):
         def runner(args, **kwargs):
             if args[1:3] == ['show', 'kura.service'] and '--property=UnitFileState' in args:
                 return fixtures.types.SimpleNamespace(returncode=0, stdout=self.choice + '\n', stderr='')
+            if args[1:3] == ['show', 'kura.service'] and '--property=Id,Names' in args[3]:
+                output = ('Id=kura.service\nNames=kura.service\nLoadState=loaded\n'
+                          f'UnitFileState={self.choice}\nSourcePath=\nDropInPaths=\nNeedDaemonReload=no\n'
+                          'Transient=no\nFragmentPath=/lib/systemd/system/kura.service\n')
+                return fixtures.types.SimpleNamespace(returncode=0, stdout=output, stderr='')
             if args[1] == 'enable':
                 self.fixture.calls.append(args)
                 if self.fail_enable:
@@ -42,6 +49,19 @@ class RetainedMainStateTest(unittest.TestCase):
         self.fixture.write(self.root / 'lib/systemd/system/kura.service', b'Root owned Main unit\n', 0o644)
         self.fixture.write(self.stage / 'systemd/kura.service', b'Root owned Main unit\n', 0o644)
         self.retained = self.root / 'var/lib/kura-retained'
+
+    def pair_main(self, unit):
+        self.fixture.write(self.root / 'lib/systemd/system/kura.service', unit, 0o644)
+        path = self.fixture.physical / 'libexec/key-backup/manifest.json'
+        manifest = json.loads(path.read_bytes())
+        manifest.update(schema=2, protocol=2, generation={'unitSha256': hashlib.sha256(unit).hexdigest()})
+        self.fixture.write(path, lifecycle.encoded(manifest), 0o640)
+
+    def retain_static(self):
+        static = b'[Service]\nExecStart=/usr/bin/false\n'
+        self.pair_main(static)
+        self.fixture.write(self.stage / 'systemd/kura.service', static, 0o644)
+        return self.retain('static')
 
     def retain(self, choice='disabled'):
         self.choice = choice; self.policy.retain_main_state(self.stage)
@@ -71,10 +91,51 @@ class RetainedMainStateTest(unittest.TestCase):
     def test_static_and_masks_are_verified_without_changing_links(self):
         for state in ('static', 'masked', 'masked-runtime'):
             with self.subTest(state=state):
-                path = self.retain(state); self.policy.retained_main_state(restore=True)
+                path = self.retain_static() if state == 'static' else self.retain(state)
+                self.policy.retained_main_state(restore=True)
                 self.assertEqual(state, self.choice)
                 self.assertFalse(any(args[1] == 'enable' for args in self.fixture.calls))
                 path.unlink(); self.retained.rename(self.stage)
+
+    def test_paired_static_becomes_disabled_under_original_remove_fence(self):
+        path = self.retain_static()
+        original = path.read_bytes()
+        self.pair_main(b'[Service]\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n')
+        self.choice = 'disabled'
+        for _ in range(2):
+            receipt = self.policy.retained_main_state(restore=True)
+            self.assertEqual(2, receipt['schema'])
+            self.assertEqual('static', receipt['unitFileState'])
+            self.assertEqual(self.fence, self.policy.fence())
+            self.assertEqual(original, path.read_bytes())
+        self.assertFalse(any(args[1] in ('enable', 'disable', 'start') for args in self.fixture.calls))
+
+    def test_static_conversion_rejects_changed_candidate_or_boot_choice(self):
+        path = self.retain_static()
+        original = path.read_bytes()
+        self.choice = 'disabled'
+        self.fixture.write(self.root / 'lib/systemd/system/kura.service', b'unpaired replacement\n', 0o644)
+        with self.assertRaisesRegex(lifecycle.Refused, 'differs from its package'):
+            self.policy.retained_main_state(restore=True)
+        self.choice = 'enabled'
+        with self.assertRaisesRegex(lifecycle.Refused, 'boot choice changed'):
+            self.policy.retained_main_state(restore=True)
+        self.assertEqual(original, path.read_bytes())
+        self.assertEqual(self.fence, self.policy.fence())
+
+    def test_schema_one_static_receipt_cannot_authorize_conversion(self):
+        path = self.retain_static()
+        receipt = json.loads(path.read_bytes())
+        receipt['schema'] = 1
+        del receipt['receiptTag']
+        secret = (self.policy.state / 'journal.key').read_bytes()
+        receipt['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + lifecycle.encoded(receipt),
+                                         hashlib.sha256).hexdigest()
+        self.fixture.write(path, lifecycle.encoded(receipt))
+        self.assertEqual(receipt, self.policy.retained_main_state())
+        self.choice = 'disabled'
+        with self.assertRaisesRegex(lifecycle.Refused, 'boot choice changed'):
+            self.policy.retained_main_state(restore=True)
 
     def test_changed_record_fence_root_secret_account_or_unit_refuses_before_enable(self):
         path = self.retain('enabled'); original = path.read_bytes(); self.choice = 'disabled'

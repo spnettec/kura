@@ -27,8 +27,24 @@ class MainLayoutAdmissionTest(unittest.TestCase):
                 self.fixture.calls.append(args)
                 return fixtures.types.SimpleNamespace(returncode=self.query_status,
                                                      stdout=self.choice + '\n', stderr='')
+            if args[1:3] == ['show', 'kura.service'] and '--property=Id,Names' in args[3]:
+                self.fixture.calls.append(args)
+                return fixtures.types.SimpleNamespace(returncode=0, stdout=self.effective_main(), stderr='')
             return previous_runner(args, **kwargs)
         self.policy.runner = runner
+
+    def effective_main(self):
+        return ('Id=kura.service\nNames=kura.service\nLoadState=loaded\n'
+                f'UnitFileState={self.choice}\nSourcePath=\nDropInPaths=\nNeedDaemonReload=no\n'
+                'Transient=no\nFragmentPath=/lib/systemd/system/kura.service\n')
+
+    def pair_static_main(self):
+        unit = b'[Service]\nExecStart=/usr/bin/false\n'
+        self.fixture.write(self.unit, unit, 0o644)
+        manifest_path = self.fixture.physical / 'libexec/key-backup/manifest.json'
+        manifest = json.loads(manifest_path.read_bytes())
+        manifest.update(schema=2, protocol=2, generation={'unitSha256': hashlib.sha256(unit).hexdigest()})
+        self.fixture.write(manifest_path, fixtures.lifecycle.encoded(manifest), 0o640)
 
     def assert_no_admission(self, original):
         self.assertEqual(original, self.fixture.data_identity())
@@ -70,11 +86,38 @@ class MainLayoutAdmissionTest(unittest.TestCase):
         self.assertEqual(2, self.policy.assets()['schema'])
 
     def test_supported_choices_remain_available_to_new_admission(self):
-        for choice in ('enabled', 'enabled-runtime', 'disabled', 'static', 'masked', 'masked-runtime'):
+        for choice in ('enabled', 'enabled-runtime', 'disabled', 'masked', 'masked-runtime'):
             with self.subTest(choice=choice):
                 self.choice = choice
                 self.policy.check_main_package_layout(self.policy.assets())
         self.assertFalse(self.policy.state.exists())
+
+    def test_static_choice_requires_a_paired_vendor_definition(self):
+        self.choice = 'static'
+        original = self.fixture.data_identity()
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'no paired package definition'):
+            self.policy.enter('remove')
+        self.assert_no_admission(original)
+        self.pair_static_main()
+        marker = self.policy.enter('remove')
+        self.assertEqual('remove', marker['firstAction'])
+
+    def test_static_choice_rejects_unpaired_effective_unit_before_fence(self):
+        self.choice = 'static'
+        self.pair_static_main()
+        original = self.fixture.data_identity()
+        effective = self.effective_main()
+        for before, after in (('FragmentPath=/lib', 'FragmentPath=/etc'),
+                              ('DropInPaths=', 'DropInPaths=/etc/systemd/system/kura.service.d/site.conf'),
+                              ('NeedDaemonReload=no', 'NeedDaemonReload=yes'),
+                              ('Transient=no', 'Transient=yes'),
+                              ('SourcePath=', 'SourcePath=/etc/init.d/kura'),
+                              ('Names=kura.service', 'Names=kura.service other.service')):
+            with self.subTest(field=before):
+                self.effective_main = lambda: effective.replace(before, after)
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Effective Main unit'):
+                    self.policy.enter('remove')
+                self.assert_no_admission(original)
 
     def test_absent_main_does_not_disable_independent_cold_base_maintenance(self):
         self.unit.unlink()

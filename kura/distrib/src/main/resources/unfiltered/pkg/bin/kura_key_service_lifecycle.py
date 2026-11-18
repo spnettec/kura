@@ -1361,14 +1361,34 @@ class Lifecycle:
                 os.path.lexists(self.path(prefix + '/systemd/system/kura.service'))
                 for prefix in ('/etc', '/run', '/lib', '/usr/lib')):
             return
-        choice = self.main_unit_state()
-        if choice == 'static' and manifest is not None and manifest['schema'] == 2:
-            generation = manifest['generation']
-            require(isinstance(generation, dict) and is_digest(generation.get('unitSha256')),
-                    'Static Main unit has no paired package definition; preserve installation')
-            unit = self.path('/lib/systemd/system/kura.service').resolve(strict=True)
-            require(hashlib.sha256(self.read(unit, private=False)).hexdigest() == generation['unitSha256'],
-                    'Static Main unit differs from its package; reviewed migration is required')
+        if self.main_unit_state() == 'static':
+            self.paired_main_unit(manifest, 'static')
+
+    def paired_main_unit(self, manifest, choice):
+        generation = manifest.get('generation') if manifest and manifest['schema'] == 2 else None
+        require(isinstance(generation, dict) and is_digest(generation.get('unitSha256')),
+                'Main unit has no paired package definition; preserve installation')
+        vendor_paths = ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
+        vendor = self.path(vendor_paths[0])
+        physical = vendor.parent.resolve(strict=True) / vendor.name
+        require(physical in tuple(self.path(path) for path in vendor_paths),
+                'Main vendor path requires reviewed migration')
+        unit = self.read(physical, private=False)
+        require(hashlib.sha256(unit).hexdigest() == generation['unitSha256'],
+                'Main unit differs from its package; reviewed migration is required')
+        fields = dict(Id='kura.service', Names='kura.service', LoadState='loaded', UnitFileState=choice,
+                      SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
+        output = self.command(['show', 'kura.service', '--property=' + ','.join((*fields, 'FragmentPath'))])
+        rows = [line.split('=', 1) for line in output.splitlines()]
+        require(all(len(row) == 2 for row in rows) and len(rows) == len(fields) + 1,
+                'Unexpected Main unit properties; preserve installation')
+        properties = dict(rows)
+        fragment = properties.pop('FragmentPath', '')
+        require(properties == fields and fragment in vendor_paths, 'Effective Main unit requires reviewed migration')
+        loaded = self.path(fragment)
+        require(loaded.parent.resolve(strict=True) / loaded.name == physical
+                and self.read(physical, private=False) == unit, 'Main unit changed during package pairing')
+        return unit
 
     @staticmethod
     def main_accounts():
@@ -1388,12 +1408,18 @@ class Lifecycle:
             self.check_records()
             fence = self.fence()
             require(fence is not None and fence['firstAction'] == 'remove')
-            self.assets()
+            manifest = self.assets()
             saved = self.read(directory / 'systemd/kura.service', private=False)
-            installed = self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False)
+            choice = self.main_unit_state()
+            if choice == 'static':
+                installed = self.paired_main_unit(manifest, choice)
+            else:
+                installed = self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False)
             require(saved == installed, 'Saved Main unit changed before retention')
-            value = dict(schema=1, purpose='yofc.kura.retained-main.v1', maintenanceId=fence['id'],
-                         unitSha256=hashlib.sha256(saved).hexdigest(), unitFileState=self.main_unit_state(),
+            # Schema 2 attests that the static choice came from a paired vendor
+            # unit. Older receipts did not record that package admission fact.
+            value = dict(schema=2 if choice == 'static' else 1, purpose='yofc.kura.retained-main.v1',
+                         maintenanceId=fence['id'], unitSha256=hashlib.sha256(saved).hexdigest(), unitFileState=choice,
                          accounts=self.main_accounts())
             secret = self.read(self.state / 'journal.key', 32)
             require(len(secret) == 32)
@@ -1410,7 +1436,8 @@ class Lifecycle:
             value = decode(self.read(directory / 'systemd/main-state.json', 8192))
             require(set(value) == {'schema', 'purpose', 'maintenanceId', 'unitSha256',
                                    'unitFileState', 'accounts', 'receiptTag'}
-                    and type(value['schema']) is int and value['schema'] == 1
+                    and type(value['schema']) is int
+                    and (value['schema'] == 1 or value['schema'] == 2 and value['unitFileState'] == 'static')
                     and value['purpose'] == 'yofc.kura.retained-main.v1'
                     and value['maintenanceId'] == fence['id'] and is_digest(value['receiptTag'])
                     and is_digest(value['unitSha256'])
@@ -1427,7 +1454,12 @@ class Lifecycle:
             if restore:
                 expected = value['unitFileState']
                 current = self.main_unit_state()
-                if current != expected:
+                if value['schema'] == 2:
+                    # When the new package adds [Install], the equivalent
+                    # boot choice for a static unit is to leave it disabled.
+                    require(current in ('static', 'disabled'), 'Main boot choice changed during retained reinstall')
+                    self.paired_main_unit(self.assets(), current)
+                elif current != expected:
                     require(current == 'disabled' and expected in ('enabled', 'enabled-runtime'),
                             'Main boot choice changed during retained reinstall')
                     self.command(['enable', *(['--runtime'] if expected == 'enabled-runtime' else []), 'kura.service'])
