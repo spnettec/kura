@@ -102,6 +102,7 @@ public class ClockServiceImplTest {
         clockService.setExecutorService(serviceMock);
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
+        when(broker.latestChronyStep()).thenReturn(new ClockPrivilegeClient.ChronyStep(0, 0));
         TestUtil.setFieldValue(clockService, "clockPrivilegeClient", broker);
 
         Map<String, Object> properties = new HashMap<>();
@@ -138,6 +139,7 @@ public class ClockServiceImplTest {
         clockService.setCryptoService(cryptoServiceMock);
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
+        when(broker.latestChronyStep()).thenReturn(new ClockPrivilegeClient.ChronyStep(0, 0));
         TestUtil.setFieldValue(clockService, "clockPrivilegeClient", broker);
 
         Map<String, Object> properties = new HashMap<>();
