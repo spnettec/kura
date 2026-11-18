@@ -45,8 +45,9 @@ class GenerationPackageTest(unittest.TestCase):
             raw = raw.replace(b"@kura.mem.size@", b"1024m").replace(b"${kura.mem.size}", b"1024m")
             target = self.home / "bin" / name
             target.write_bytes(raw); target.chmod(0o640)
-        for role in ("crypto", "configuration", "snapshot"):
-            bsn = cohort.ROLES[role][0]
+        readers = (cohort.ROLES[role][0] for role in ("crypto", "configuration", "snapshot"))
+        # The package builder also audits its public crypto API and its consumers.
+        for bsn in ("org.eclipse.kura.api", *readers):
             matches = list((CONFIG / "kura" / bsn / "target").glob(bsn + "-*.jar"))
             self.assertEqual(1, len(matches), "Build the canonical reader modules before running this suite")
             self.copy(matches[0], self.home / "plugins/4s" / matches[0].name)

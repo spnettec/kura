@@ -41,7 +41,9 @@ class JournalModuleTest(unittest.TestCase):
 
     def test_old_asset_profile_remains_readable_but_cannot_borrow_an_unpinned_new_module(self):
         manifest=self.base.physical/'libexec/key-backup/manifest.json';value=json.loads(manifest.read_bytes())
-        value['files'].pop('bin/kura_key_journal.py');self.base.write(manifest,json.dumps(value).encode(),0o640)
+        for name in ('bin/kura_key_journal.py', 'share/key-recovery/archive.js'):
+            del value['files'][name]
+        self.base.write(manifest,json.dumps(value).encode(),0o640)
         self.assertEqual(set(lifecycle.PRE_JOURNAL_ASSETS),set(self.policy.assets()['files']))
         with self.assertRaises(lifecycle.Refused):self.policy.journal_module()
 
