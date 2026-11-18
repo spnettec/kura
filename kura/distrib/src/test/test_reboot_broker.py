@@ -96,7 +96,8 @@ class PackagePairingTest(unittest.TestCase):
     def setUp(self):
         self.home = Path(self.enterContext(tempfile.TemporaryDirectory()))
         (self.home / 'libexec').mkdir()
-        for name in broker.FILES:
+        inputs = [name for name in broker.FILES if not name.startswith('libexec/')]
+        for name in [*inputs, *('install/' + unit for unit in broker.UNITS)]:
             real = ROOT / 'main/resources/unfiltered/pkg' / name
             if name == 'install/kura.service':
                 real = ROOT / 'main/resources/filtered/pkg' / name
@@ -110,6 +111,8 @@ class PackagePairingTest(unittest.TestCase):
         vendor.mkdir()
         for unit in broker.UNITS:
             (vendor / unit).write_bytes((self.home / 'install' / unit).read_bytes())
+            (self.home / 'install' / unit).unlink()
+        (self.home / 'install').rmdir()
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
         def loaded(unit, _):
             return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),

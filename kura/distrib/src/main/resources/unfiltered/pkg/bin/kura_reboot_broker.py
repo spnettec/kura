@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pwd
 import select
+import shutil
 import socket
 import stat
 import struct
@@ -35,7 +36,7 @@ MAIN_PROPERTIES = ('MainPID', 'ControlGroup', 'ActiveState', 'InvocationID')
 FILES = (
     'bin/kura_clock_journal.py', 'bin/kura_clock_broker.py',
     'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py', 'bin/kura_reboot_broker.py',
-    *('install/' + name for name in UNITS),
+    *((COHORT.parent / name).as_posix() for name in UNITS),
 )
 PEER_PIDFD = getattr(socket, 'SO_PEERPIDFD', 77)  # Linux generic UAPI, ARM64 and amd64.
 MAX_FRAME = 4096
@@ -53,14 +54,18 @@ def file_hash(raw):
 
 
 def package_cohort(home):
+    target = home / COHORT
+    target.parent.mkdir(mode=0o755)
+    for unit in UNITS:
+        source = home / 'install' / unit
+        require(source.is_file() and not source.is_symlink(), 'UNPAIRED_CODE')
+        shutil.copyfile(source, target.parent / unit)
     files = {}
     for name in FILES:
         path = home / name
         require(path.is_file() and not path.is_symlink(), 'UNPAIRED_CODE')
         files[name] = file_hash(path.read_bytes())
     manifest = dict(schema=1, action='reboot', caller=CALLER, files=files)
-    target = home / COHORT
-    target.parent.mkdir(mode=0o755)
     with target.open('xb') as output:
         os.fchmod(output.fileno(), 0o644)
         output.write(encode(manifest) + b'\n')
@@ -123,7 +128,8 @@ class Policy:
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
                     and loaded['SourcePath'] == loaded['DropInPaths'] == ''
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
-            require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files']['install/' + unit],
+            packaged_unit = (COHORT.parent / unit).as_posix()
+            require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
                     'UNPAIRED_UNIT')
         return digest(manifest), account_binding()
 
