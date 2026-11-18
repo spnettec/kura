@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
-"""Core's fixed wall-clock sender; persist first and never resend a write."""
+"""Core's fixed clock sender; persist first and never resend a write."""
 import fcntl
 import os
 from pathlib import Path
@@ -14,7 +14,10 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import HOME, SOCKET, Policy, receive, send
 from kura_clock_journal import (Refused, command, create, decode, digest, directory, encode,
-                                identifier, read, require, sync, MAX_BYTES)
+                                identifier, read, require, sync, terminal_receipt, validate_argument,
+                                MAX_BYTES, OPERATIONS)
+
+REQUEST_OPERATIONS = {field: action for action, (_, field, _) in OPERATIONS.items()}
 
 
 class Client:
@@ -74,6 +77,11 @@ class Client:
         (self.root / 'pending.json').unlink(); sync(self.root)
 
     def update(self, correction_millis):
+        return self.submit('adjust-realtime', correction_millis)
+
+    def submit(self, action, argument):
+        suffix, field, _ = OPERATIONS[action]
+        validate_argument(field, argument)
         lock = self.root / 'sender.lock'
         fd = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
         try:
@@ -101,12 +109,13 @@ class Client:
             else:
                 require(context['acceptingWrites'], 'ADMISSION_CLOSED')
                 pending = command(dict(schema=1, namespace=namespace, requestId=str(uuid.uuid4()),
-                                       action='adjust-realtime', correctionMillis=correction_millis, cohortSha256=self.policy.cohort))
+                                       action=action, cohortSha256=self.policy.cohort, **{field: argument}))
                 create(path, pending)
                 require(read(path, self.owner) == encode(pending), 'UNRESOLVED_LOCAL_INTENT')
                 # Prepare has no clock syscall. Never resend it after loss;
                 # subsequent invocations query the original namespace/ID.
-                result = self.exchange(dict(pending, action='prepare-adjust'))
+                result = self.exchange(dict(pending, action='prepare-' + suffix))
+            suffix, field, _ = OPERATIONS[pending['action']]
             issued = self.root / 'issued'
             if not os.path.lexists(issued):
                 issued.mkdir(mode=0o700); sync(self.root)
@@ -124,27 +133,20 @@ class Client:
                         and result['reason'] == 'NOT_COMMITTED', 'INVALID_REPLY')
                 require(pending['cohortSha256'] == self.policy.cohort, 'UNPAIRED_PREPARE')
                 create(issued_path, issued_value)
-                result = self.exchange(dict(pending, action='commit-adjust'))
+                result = self.exchange(dict(pending, action='commit-' + suffix))
             require(result.get('schema') == 1 and type(result.get('schema')) is int
                     and result.get('namespace') == namespace and result.get('requestId') == pending['requestId']
                     and result.get('requestSha256') == digest(pending)
                     and result.get('state') in ('APPLIED', 'FAILED', 'UNKNOWN', 'UNSEEN', 'PREPARED'), 'INVALID_REPLY')
             if result['state'] in ('APPLIED', 'FAILED'):
-                require(set(result) == {'schema', 'namespace', 'requestId', 'requestSha256', 'state', 'reason',
-                                        'errno', 'observedRealtimeNs', 'observedMonotonicNs'}
-                        and type(result['errno']) is int and type(result['observedRealtimeNs']) is int
-                        and type(result['observedMonotonicNs']) is int, 'INVALID_REPLY')
-                require((result['state'], result['reason'], result['errno'] == 0) in
-                        (('APPLIED', 'CLOCK_SET_RETURNED', True), ('FAILED', 'OS_ERROR', False),
-                         ('FAILED', 'STALE_SAMPLE', False), ('FAILED', 'CLOCK_RANGE', False))
-                        and 0 <= result['errno'] <= 4095, 'INVALID_REPLY')
+                require(terminal_receipt(result, issued_value, pending['action']), 'INVALID_REPLY')
                 self.finish(pending, result)
             else:
                 require(set(result) == {'schema', 'namespace', 'requestId', 'requestSha256', 'state', 'reason'}
                         and result['reason'] in ('NO_LOCAL_INTENT', 'UNRESOLVED_INTENT', 'NO_DURABLE_RESULT', 'UNRESOLVED_RESULT',
                                                  'UNRESOLVED_COMMIT', 'UNRESOLVED_PREPARE', 'NOT_COMMITTED'),
                         'INVALID_REPLY')
-            return dict(schema=1, namespace=namespace, requestId=pending['requestId'], correctionMillis=pending['correctionMillis'],
+            return dict(schema=1, namespace=namespace, requestId=pending['requestId'], **{field: pending[field]},
                         state='UNKNOWN' if result['state'] in ('UNSEEN', 'PREPARED') else result['state'],
                         reason=result['reason'], currentSample=current_sample)
         finally:
@@ -155,8 +157,10 @@ if __name__ == '__main__':
     try:
         require(len(sys.argv) == 3 and sys.argv[:2] == [str(HOME / 'bin/kura_clock_client.py'), 'client'], 'INVALID_ENTRYPOINT')
         value = decode(sys.stdin.buffer.read(MAX_BYTES + 1))
-        require(set(value) == {'correctionMillis'} and type(value['correctionMillis']) is int)
-        print(encode(Client(sys.argv[2]).update(value['correctionMillis'])).decode('ascii'), flush=True)
+        require(len(value) == 1)
+        field, argument = next(iter(value.items()))
+        require(field in REQUEST_OPERATIONS)
+        print(encode(Client(sys.argv[2]).submit(REQUEST_OPERATIONS[field], argument)).decode('ascii'), flush=True)
     except (Refused, OSError, ValueError, KeyError) as error:
         print(error.reason if isinstance(error, Refused) else 'UNRESOLVED_OR_UNAVAILABLE', file=sys.stderr)
         raise SystemExit(1)

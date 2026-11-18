@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
-"""Private, append-only wall-clock decisions. Never replay an admitted write."""
+"""Private, append-only clock decisions. Never replay an admitted write."""
 import contextlib
+import errno
 import fcntl
 import hashlib
 import json
@@ -15,7 +16,13 @@ import uuid
 MAX_BYTES = 65536
 MAX_OPERATIONS = 4096
 MAX_SAMPLE_AGE_NS = 30 * 1000000000
-COMMAND_FIELDS = {'schema', 'namespace', 'requestId', 'action', 'correctionMillis', 'cohortSha256'}
+COMMAND_FIELDS = {'schema', 'namespace', 'requestId', 'action', 'cohortSha256'}
+RTC_NODE = re.compile(r'/dev/rtc(?:0|[1-9][0-9]{0,8})')
+RTC_ALIASES = ('/dev/rtc', '/dev/misc/rtc')
+OPERATIONS = {
+    'adjust-realtime': ('adjust', 'correctionMillis', 'CLOCK_SET_RETURNED'),
+    'sync-rtc': ('rtc', 'rtcDevice', 'RTC_SET_RETURNED'),
+}
 
 
 class Refused(RuntimeError):
@@ -64,13 +71,35 @@ def digest(value):
     return hashlib.sha256(encode(value)).hexdigest()
 
 
+def validate_argument(field, value):
+    if field == 'correctionMillis':
+        require(type(value) is int and -9223372036854 <= value <= 9223372036854)
+    else:
+        require(isinstance(value, str) and (RTC_NODE.fullmatch(value) is not None or value in RTC_ALIASES))
+
+
 def command(value):
-    require(type(value) is dict and set(value) == COMMAND_FIELDS and type(value['schema']) is int and value['schema'] == 1)
+    require(type(value) is dict and isinstance(value.get('action'), str) and value['action'] in OPERATIONS)
+    _, argument, _ = OPERATIONS[value['action']]
+    require(set(value) == COMMAND_FIELDS | {argument} and type(value['schema']) is int and value['schema'] == 1)
     identifier(value['namespace']); identifier(value['requestId'])
-    require(value['action'] == 'adjust-realtime' and type(value['correctionMillis']) is int
-            and -9223372036854 <= value['correctionMillis'] <= 9223372036854)
+    validate_argument(argument, value[argument])
     require(isinstance(value['cohortSha256'], str) and re.fullmatch('[0-9a-f]{64}', value['cohortSha256']) is not None)
     return value
+
+
+def terminal_receipt(result, reference, action):
+    _, _, success = OPERATIONS[action]
+    reasons = {'OS_ERROR', 'STALE_SAMPLE'}
+    if action == 'adjust-realtime':
+        reasons.add('CLOCK_RANGE')
+    return (set(result) == set(reference) | {'state', 'reason', 'errno', 'observedRealtimeNs', 'observedMonotonicNs'}
+            and all(result[key] == expected for key, expected in reference.items())
+            and type(result['schema']) is int and type(result['errno']) is int and 0 <= result['errno'] <= 4095
+            and type(result['observedRealtimeNs']) is int and type(result['observedMonotonicNs']) is int
+            and ((result['state'] == 'APPLIED' and result['reason'] == success and result['errno'] == 0)
+                 or (result['state'] == 'FAILED' and isinstance(result['reason'], str)
+                     and result['reason'] in reasons and result['errno'] != 0)))
 
 
 def identity(metadata):
@@ -199,15 +228,7 @@ class Journal:
             return dict(result, state='UNKNOWN', reason='NO_DURABLE_RESULT')
         try:
             receipt = decode(read(path / 'result.json', self.owner))
-            require(set(receipt) == set(result) | {'state', 'reason', 'errno', 'observedRealtimeNs', 'observedMonotonicNs'})
-            require(all(receipt[key] == value for key, value in result.items())
-                    and receipt['state'] in ('APPLIED', 'FAILED')
-                    and receipt['reason'] in ('CLOCK_SET_RETURNED', 'OS_ERROR', 'STALE_SAMPLE', 'CLOCK_RANGE')
-                    and type(receipt['errno']) is int and 0 <= receipt['errno'] <= 4095
-                    and type(receipt['observedRealtimeNs']) is int and type(receipt['observedMonotonicNs']) is int)
-            require((receipt['state'], receipt['reason'], receipt['errno'] == 0) in
-                    (('APPLIED', 'CLOCK_SET_RETURNED', True), ('FAILED', 'OS_ERROR', False),
-                     ('FAILED', 'STALE_SAMPLE', False), ('FAILED', 'CLOCK_RANGE', False)))
+            require(terminal_receipt(receipt, result, intent['action']))
             return receipt
         except (OSError, Refused):
             return dict(result, state='UNKNOWN', reason='UNRESOLVED_RESULT')
@@ -245,7 +266,7 @@ class Journal:
                preparedMonotonicNs=time.monotonic_ns()))
         return self.status(value['namespace'], request_id, request_hash)
 
-    def commit(self, value, adjust_realtime):
+    def commit(self, value, actuate):
         value = command(value)
         require(value['namespace'] == self.namespace(), 'FOREIGN_NAMESPACE')
         request_id = value['requestId']; request_hash = digest(value)
@@ -261,15 +282,18 @@ class Journal:
         create(path / 'commit-intent.json', receipt)
         prepared = decode(read(path / 'prepared-context.json', self.owner))
         age = time.monotonic_ns() - prepared['preparedMonotonicNs']
-        target = time.time_ns() + value['correctionMillis'] * 1000000
+        _, field, success = OPERATIONS[value['action']]
+        argument = value[field]
+        if field == 'correctionMillis':
+            argument = time.time_ns() + argument * 1000000
         if prepared['bootId'] != identifier(self.boot_id()) or not 0 <= age <= MAX_SAMPLE_AGE_NS:
-            receipt.update(state='FAILED', reason='STALE_SAMPLE', errno=116)
-        elif not 0 <= target <= 9223372036854775807:
-            receipt.update(state='FAILED', reason='CLOCK_RANGE', errno=22)
+            receipt.update(state='FAILED', reason='STALE_SAMPLE', errno=errno.ESTALE)
+        elif field == 'correctionMillis' and not 0 <= argument <= 9223372036854775807:
+            receipt.update(state='FAILED', reason='CLOCK_RANGE', errno=errno.EINVAL)
         else:
             try:
-                adjust_realtime(target)
-                receipt.update(state='APPLIED', reason='CLOCK_SET_RETURNED', errno=0)
+                actuate(argument)
+                receipt.update(state='APPLIED', reason=success, errno=0)
             except OSError as error:
                 require(type(error.errno) is int and 0 < error.errno <= 4095, 'UNRESOLVED_JOURNAL')
                 receipt.update(state='FAILED', reason='OS_ERROR', errno=error.errno)

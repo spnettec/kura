@@ -98,6 +98,14 @@ Root和同UID的非Main进程均得到UNAUTHORIZED；额外代码和unit overrid
 
 原始回执同在父工作空间 `.management-close-20261116/source-cohort-20261117/core-clock-actor-current-runtime-20261118/`。同现场 Core 包升级中的服务选择、历史数据和Root属主修复另见 `docs/management-core-upgrade-preservation-20261118.md`。
 
+## RTC typed 协议与 ARM64 合同
+
+Core sender 和 clock actor 增加 `prepare-rtc` / `commit-rtc`。RTC 和壁钟沿同一 Root namespace、单 pending、issued 记录及 30 秒同 boot 准入，旧 `adjust-realtime` 命令、摘要和壁钟回执格式继续兼容。RTC 仅接受编号设备和两个固定常用别名，成功回执为 `RTC_SET_RETURNED`。恢复另一种操作的历史请求时返回原类型、原 ID 和 `currentSample=false`。
+
+actor 将设备与 Linux RTC class 的 major/minor 核对后，用只读 descriptor 发出一次 UTC `RTC_SET_TIME`。设备预检错误产生确定失败；已调用 ioctl 后遇到错误则保留 UNKNOWN。通过 Linux ARM64 系统头文件验证 ioctl 编号 `0x4024700a` 和结构大小 36 字节。macOS 与 Linux ARM64 各通过同一组 60 项合同检查，其中 8 项新增 RTC 用例。隔离 ARM64、UID65534、cap0、NNP1 的真实缺设备路径以 ENOENT 落确定失败并读回原回执；该测试用本地合同 policy，未启动已安装 Main 或 actor，也没有发出 ioctl。[Linux RTC UAPI](https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/rtc.h)
+
+私有设备命名空间内的 RTC 授权和 Java ClockService 切换仍待完成。当前 RTC 证据为协议与设备预检，实际 RTC 写成功待验；Chrony 仍内部 pending。原始回执在父工作空间 `.management-close-20261116/rtc-broker-20261118/`。
+
 ## 后续
 
 继续当前源码发行包核对、完整 Core/OSGi 和安装升级移除恢复、真实 syscall 拒绝与崩溃矩阵、clock UNKNOWN 管理/容量、RTC/Chrony，以及其他网络、日志、模块、文件移动、系统更新等 typed broker/provider/launcher。原三现场和E没有部署本候选；E真实Core仍11 ambient/13 bounding caps、NNP0。完整12父项保持内部 pending，仅原3 external deferred，G034未封存、未正式发布，目标 active。

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
-"""Dedicated non-Root CAP_SYS_TIME actor; fixed typed wall-clock protocol only."""
+"""Dedicated non-Root CAP_SYS_TIME actor for typed clock operations."""
+import contextlib
+import ctypes
+import errno
 import hashlib
 import json
 import os
@@ -17,7 +20,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_journal import (Journal, Refused, command, create, decode, digest, directory, encode,
-                                identifier, identity, read, require, sync, MAX_BYTES)
+                                identifier, identity, read, require, sync, MAX_BYTES, OPERATIONS, RTC_ALIASES, RTC_NODE)
 
 HOME = Path('/opt/eclipse/kura')
 ACTOR_HOME = Path('/usr/libexec/kura-clock-broker')
@@ -28,6 +31,10 @@ UNITS = ('kura-clock-broker.socket', 'kura-clock-broker.service')
 HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
 SYS_TIME = 1 << 25
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
+WRITE_ACTIONS = {phase + '-' + suffix: (phase, name)
+                 for name, (suffix, _, _) in OPERATIONS.items() for phase in ('prepare', 'commit')}
+# _IOW('p', 0x0a, struct rtc_time) on the release architectures.
+RTC_SET_TIME = 0x4024700a
 
 
 def canonical_alias(path):
@@ -284,10 +291,11 @@ class Policy:
 
 
 class Manager:
-    def __init__(self, policy, journal, adjust_realtime=None):
+    def __init__(self, policy, journal, adjust_realtime=None, sync_rtc=None):
         self.policy = policy
         self.journal = journal
         self.adjust_realtime = adjust_realtime or (lambda nanos: time.clock_settime_ns(time.CLOCK_REALTIME, nanos))
+        self.sync_rtc = sync_rtc or rtc_set_time
 
     def handle(self, value, peer):
         self.policy.check(); self.policy.peer(peer)
@@ -304,16 +312,58 @@ class Manager:
             if action == 'status':
                 require(set(value) == {'schema', 'action', 'namespace', 'requestId', 'requestSha256'})
                 return self.journal.status(namespace, value['requestId'], value['requestSha256'])
-            require(action in ('prepare-adjust', 'commit-adjust'))
-            value = command(dict(value, action='adjust-realtime'))
+            require(isinstance(action, str) and action in WRITE_ACTIONS)
+            phase, operation = WRITE_ACTIONS[action]
+            value = command(dict(value, action=operation))
             require(value['cohortSha256'] == self.policy.cohort, 'UNPAIRED_CODE')
             # Check again under admission immediately before any durable intent.
             self.policy.check()
             require(value['cohortSha256'] == self.policy.cohort, 'UNPAIRED_CODE')
             self.policy.peer(peer)
-            if action == 'prepare-adjust':
+            if phase == 'prepare':
                 return self.journal.prepare(value)
-            return self.journal.commit(value, self.adjust_realtime)
+            actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
+            return self.journal.commit(value, actuate)
+
+
+def rtc_set_time(device):
+    if sys.platform != 'linux' or os.uname().machine not in ('aarch64', 'x86_64'):
+        raise OSError(errno.ENOSYS, 'Unsupported RTC ioctl ABI')
+    path = Path(device)
+    if device in RTC_ALIASES:
+        path = path.resolve(strict=True)
+    if RTC_NODE.fullmatch(str(path)) is None:
+        raise OSError(errno.ENODEV, 'RTC path is outside the device contract')
+
+    # Verify the kernel's RTC class mapping before opening a character device.
+    # The runtime must already have made the device visible to the private unit.
+    mapping = Path('/sys/class/rtc') / path.name / 'dev'
+    with mapping.open(encoding='ascii') as source:
+        published = source.read(64).strip()
+    before = path.lstat()
+    if (not stat.S_ISCHR(before.st_mode) or before.st_uid != 0 or before.st_mode & 0o022
+            or published != f'{os.major(before.st_rdev)}:{os.minor(before.st_rdev)}'):
+        raise OSError(errno.ENODEV, 'RTC device does not match the kernel RTC class')
+    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        opened = os.fstat(fd)
+        if (identity(opened) != identity(before) or opened.st_rdev != before.st_rdev
+                or identity(path.lstat()) != identity(before)):
+            raise OSError(errno.ENODEV, 'RTC device changed during admission')
+        utc = time.gmtime()
+        fields = (ctypes.c_int * 9)(utc.tm_sec, utc.tm_min, utc.tm_hour, utc.tm_mday, utc.tm_mon - 1,
+                                     utc.tm_year - 1900, (utc.tm_wday + 1) % 7, utc.tm_yday - 1, 0)
+        ioctl = ctypes.CDLL(None, use_errno=True).ioctl
+        ioctl.restype = ctypes.c_int
+        # An RTC driver may fail after starting a hardware write. No terminal
+        # result and no second ioctl, including after EINTR.
+        if ioctl(ctypes.c_int(fd), ctypes.c_ulong(RTC_SET_TIME), ctypes.byref(fields)) != 0:
+            raise Refused('UNCERTAIN_RTC_RESULT')
+    finally:
+        # Linux releases the descriptor even on EINTR. A close failure must
+        # not turn an admitted ioctl with an ambiguous result into FAILED.
+        with contextlib.suppress(OSError):
+            os.close(fd)
 
 
 def exact(stream, count):

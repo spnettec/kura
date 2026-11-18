@@ -5,11 +5,13 @@ import errno
 import json
 import os
 from pathlib import Path
+import stat
 import sys
 import tempfile
 import unittest
 from unittest import mock
 import uuid
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_clock_broker as broker
@@ -37,7 +39,8 @@ class ClockBrokerTest(unittest.TestCase):
         self.policy = Policy()
         self.journal = journal.Journal(self.private, boot_id=lambda: "8119db2b-caa2-4d24-be38-471711ad9faa")
         self.writes = []
-        self.manager = broker.Manager(self.policy, self.journal, self.writes.append)
+        self.rtc_writes = []
+        self.manager = broker.Manager(self.policy, self.journal, self.writes.append, self.rtc_writes.append)
         self.peer = (123, 996, 989)
         self.calls = []
         clock = mock.patch.object(journal.time, 'time_ns', return_value=1794949974000000000)
@@ -339,6 +342,124 @@ class ClockBrokerTest(unittest.TestCase):
         with self.assertRaisesRegex(journal.Refused, 'ADMISSION_CLOSED'):
             self.sender().update(9999)
         self.assertFalse((self.data / 'clock-broker/pending.json').exists()); self.assertEqual([], self.writes)
+
+    def test_rtc_sender_records_a_distinct_typed_receipt(self):
+        result = self.sender().submit('sync-rtc', '/dev/rtc4')
+        self.assertEqual(('APPLIED', 'RTC_SET_RETURNED', '/dev/rtc4', True),
+                         (result['state'], result['reason'], result['rtcDevice'], result['currentSample']))
+        self.assertEqual(['/dev/rtc4'], self.rtc_writes)
+        self.assertEqual([], self.writes)
+        self.assertEqual(['context', 'prepare-rtc', 'commit-rtc'], [v['action'] for v in self.calls])
+        self.assertEqual('RTC_SET_RETURNED', self.exchange(self.calls[-1])['reason'])
+        self.assertEqual(['/dev/rtc4'], self.rtc_writes)
+
+    def test_rtc_protocol_rejects_non_rtc_paths_and_extra_fields(self):
+        value = self.command()
+        del value['correctionMillis']
+        value['action'] = 'prepare-rtc'
+        for device in ('/dev/null', '/dev/../dev/rtc0', '/dev/rtc01', '/tmp/rtc0', '/dev/rtc0\n', [], True):
+            with self.subTest(device=device), self.assertRaisesRegex(journal.Refused, 'INVALID_ARGUMENT'):
+                self.exchange(dict(value, rtcDevice=device))
+        with self.assertRaisesRegex(journal.Refused, 'INVALID_ARGUMENT'):
+            self.exchange(dict(value, rtcDevice='/dev/rtc0', argv=['hwclock']))
+        self.assertEqual([], list((self.private / 'operations').iterdir()))
+        self.assertEqual([], self.rtc_writes)
+
+    def test_rtc_ambiguous_ioctl_blocks_wall_clock_and_is_never_reissued(self):
+        def ambiguous(device):
+            self.rtc_writes.append(device)
+            raise journal.Refused('UNCERTAIN_RTC_RESULT')
+
+        self.manager.sync_rtc = ambiguous
+        with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_RTC_RESULT'):
+            self.sender().submit('sync-rtc', '/dev/rtc0')
+        original = (self.data / 'clock-broker/pending.json').read_bytes()
+        original_id = journal.decode(original)['requestId']
+        for _ in range(2):
+            result = self.sender().update(500)
+            self.assertEqual(('UNKNOWN', False, original_id, '/dev/rtc0'),
+                             (result['state'], result['currentSample'], result['requestId'], result['rtcDevice']))
+        self.assertEqual(original, (self.data / 'clock-broker/pending.json').read_bytes())
+        self.assertEqual(['context', 'prepare-rtc', 'commit-rtc', 'context', 'status', 'context', 'status'],
+                         [v['action'] for v in self.calls])
+        self.assertEqual(['/dev/rtc0'], self.rtc_writes)
+        self.assertEqual([], self.writes)
+
+    def test_rtc_status_never_accepts_wall_clock_success_for_same_id(self):
+        result = self.sender().submit('sync-rtc', '/dev/rtc0')
+        path = self.private / 'operations' / result['requestId'] / 'result.json'
+        path.write_bytes(journal.encode(dict(journal.decode(path.read_bytes()), reason='CLOCK_SET_RETURNED')))
+        self.assertEqual('UNKNOWN', self.exchange(self.calls[-1])['state'])
+        self.assertEqual(['/dev/rtc0'], self.rtc_writes)
+
+    def test_wall_clock_pending_is_resolved_without_starting_a_new_rtc_write(self):
+        def lost(value):
+            result = self.exchange(value)
+            if value['action'] == 'commit-adjust':
+                raise TimeoutError('Lost wall-clock receipt')
+            return result
+
+        with self.assertRaises(TimeoutError):
+            self.sender(lost).update(500)
+        pending = journal.decode((self.data / 'clock-broker/pending.json').read_bytes())
+        result = self.sender().submit('sync-rtc', '/dev/rtc')
+        self.assertEqual((False, pending['requestId'], 500, 'CLOCK_SET_RETURNED'),
+                         (result['currentSample'], result['requestId'], result['correctionMillis'], result['reason']))
+        self.assertEqual([], self.rtc_writes)
+        self.assertEqual(1, len(self.writes))
+        self.assertEqual(['context', 'prepare-adjust', 'commit-adjust', 'context', 'status'],
+                         [v['action'] for v in self.calls])
+
+
+class RtcDeviceTest(unittest.TestCase):
+    def setUp(self):
+        self.node = SimpleNamespace(st_dev=1, st_ino=2, st_uid=0, st_gid=125, st_mode=stat.S_IFCHR | 0o640,
+                                    st_nlink=1, st_size=0, st_mtime_ns=5, st_ctime_ns=6, st_rdev=os.makedev(254, 4))
+        self.mapping = self.enterContext(mock.patch.object(Path, 'open', mock.mock_open(read_data='254:4\n')))
+        self.admitted = self.enterContext(mock.patch.object(Path, 'lstat', return_value=self.node))
+        self.opened = self.enterContext(mock.patch.object(broker.os, 'open', return_value=7))
+        self.fd = self.enterContext(mock.patch.object(broker.os, 'fstat', return_value=self.node))
+        self.closed = self.enterContext(mock.patch.object(broker.os, 'close'))
+        self.ioctl = self.enterContext(mock.patch.object(broker.ctypes, 'CDLL')).return_value.ioctl
+        self.enterContext(mock.patch.object(broker.sys, 'platform', 'linux'))
+        self.enterContext(mock.patch.object(broker.os, 'uname', return_value=SimpleNamespace(machine='aarch64')))
+
+    def test_rtc_write_uses_utc_and_one_read_only_kernel_descriptor(self):
+        def write(fd, request, fields):
+            self.assertEqual((7, 0x4024700a), (fd.value, request.value))
+            self.assertEqual([6, 5, 4, 3, 1, 126, 2, 33, 0], list(fields._obj))
+            return 0
+
+        self.ioctl.side_effect = write
+        utc = broker.time.struct_time((2026, 2, 3, 4, 5, 6, 1, 34, 0))
+        with mock.patch.object(broker.time, 'gmtime', return_value=utc):
+            broker.rtc_set_time('/dev/rtc4')
+        self.opened.assert_called_once_with(Path('/dev/rtc4'),
+                                            os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+        self.ioctl.assert_called_once()
+        self.closed.assert_called_once_with(7)
+
+    def test_invalid_device_mapping_and_replaced_device_never_invoke_ioctl(self):
+        self.mapping.return_value.read.return_value = '1:3\n'
+        with self.assertRaises(OSError) as failure:
+            broker.rtc_set_time('/dev/rtc4')
+        self.assertEqual(errno.ENODEV, failure.exception.errno)
+        self.opened.assert_not_called()
+        self.mapping.return_value.read.return_value = '254:4\n'
+        self.fd.return_value = SimpleNamespace(**vars(self.node))
+        self.fd.return_value.st_ino = 30
+        with self.assertRaises(OSError):
+            broker.rtc_set_time('/dev/rtc4')
+        self.closed.assert_called_once_with(7)
+        self.ioctl.assert_not_called()
+
+    def test_ioctl_failure_remains_ambiguous_with_no_retry(self):
+        self.ioctl.return_value = -1
+        self.closed.side_effect = OSError(errno.EINTR, 'Close interrupted')
+        with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_RTC_RESULT'):
+            broker.rtc_set_time('/dev/rtc4')
+        self.ioctl.assert_called_once()
+        self.closed.assert_called_once_with(7)
 
 
 if __name__ == '__main__':
