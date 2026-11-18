@@ -32,3 +32,18 @@
 最终仍 installed、Main disabled/inactive/PID0/NRestarts0，actor inactive/PID0；clock namespace/operations未创建、业务请求0。最终 actor cohort `a16faa5ed0f60733a92a7fdf3a1f1a564b63200f1b81e20e63f207e0a5578ac4`，manifest文件SHA `1798b28daab00890252b27ef75a3addbe2a0bdc2dd0f8fe60c0329c7ceaa623c`。新历史标记、Root数据和全部凭据留在同一已正常停止容器，不清空、不重初始化或误启Main。安装日志/指纹在本地0700/0600目录，不进Git/知识库。
 
 回执：父工作空间 `.management-close-20261116/source-cohort-20261117/core-clock-actor-current-runtime-20261118/`。只证明 Ubuntu ARM64 默认 Core、inactive/disabled Main 的两次包升级及上述数据；完整 Core/OSGi、当前完整包的实际 actor/消费者业务、其他服务状态、六组件/全部provider/launcher/安装重装移除purge恢复/资源平台、RTC/Chrony/其余typed brokers与12父项继续内部 pending。仅原3 external deferred；不重放旧UNKNOWN、闭环密钥或900秒，不push/JDK27/清活动runtime。
+
+## 2026-11-18 保留卸载候选与实际失败
+
+从新Git/private Maven缓存/JDK21/Maven3.10.1顺序重建support、Core/tools、distrib。4b候选ARM64包 `6.0.0~git202611180104.4b8171c-1`，SHA256 `2014aec537e4789f3fa201615f93bc713a3ea8e2a30046dde9bbb12eecf1e2a1`。Root载荷/内嵌guards/维护shell/Main依赖通过；两clock生产类与既有VM字节一致，不把原VM或旧中间产物作为构建输入。此包现在是**已知卸载失败候选**。
+
+沿原容器 `7fd8c6a0967a58a95c123785e5feff68cd0ce74e370d00ee875f9e215ac08d7e` 的e1安装、原账号和数据继续。唯一一次真实dpkg升级exit0；原26输入中19个外部文件完整指纹、7份Core数据/历史逻辑字段保留，新增1正常package-history，总27。Core拷回产生inode/ctime差异如实保留，不断言atime。Main保持disabled/inactive/PID0/NRestarts0，无事后补disable；clock namespace/operations不存在，key业务/startups均0。
+
+随后唯一一次真实 `dpkg --remove kura-core` exit1。已经发布完整retained副本、保存disabled选择，clock/key listeners已移除且维护围栏保留；失败在新增prerm错误地调用已被postinst删除的`install/manage_kura_users.sh`，**没有进入账号回调**。这是本轮引入的路径错误；原已安装Root helper实际为`bin/manage_kura_users.sh`，源码b509d5d3f7已恢复此路径并新增回归。原失败日志保留，不将该remove或未执行的reinstall/purge记为通过；源码修正尚未重建/安装。
+
+失败后只读复核原27输入：20个外部文件完整指纹、7份Core数据/历史逻辑字段及各自retained副本一致，历史两标记和Root0600数据canary保留。产品`--check-retained-main-state`沿原Root/fence/HMAC/账号校验通过，原clock目的/UID995/GID988保持；所有账号数字身份相同，0 clock业务、0 key业务、0 Core启动。包状态仍installed 4b。原remove维护ID `1fab699a-6544-4f65-87f3-cf24a0691c05`、`/var/lib/kura-retained`、原canonical数据、维护clock状态均保留。随后同容器正常停止exit0，不能重当空主机、清retained或改维护ID，也不能盲重发remove。
+
+此次包内key archive只是该次正常移除的数据恢复副本，未调用已闭环的Root备份/归档/轮换/恢复/续期验收。私有日志/指纹仍只在本地0700/0600，不进Git或知识库。
+
+
+后续需沿同一失败维护目的精确续接，实际保留重装/purge/中断/legacy及全部boot状态仍内部pending。Root配对不放宽，不能把已知失败4b包用于自动验收。
