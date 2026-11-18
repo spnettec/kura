@@ -1,0 +1,14 @@
+[Unit]
+Description=YOFC Kura typed host reboot socket
+
+[Socket]
+ListenStream=/run/kura-reboot-broker/control.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+DirectoryMode=0755
+FileDescriptorName=control
+RemoveOnStop=true
+
+[Install]
+WantedBy=sockets.target
