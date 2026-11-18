@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -243,13 +244,12 @@ public class ClockServiceImplTest {
     public void testClockUpdateLinux() throws Throwable {
         // Mocked broker/RTC contract: no OS clock mutation or Root is required.
 
-        CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
         when(clockClient.adjustRealtime(anyLong())).thenReturn(true);
+        when(clockClient.syncRtc("/dev/rtc4")).thenReturn(true);
         TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
 
         EventAdmin eaMock = mock(EventAdmin.class);
@@ -258,10 +258,15 @@ public class ClockServiceImplTest {
         Map<String, Object> properties = new HashMap<>();
         properties.put("enabled", true);
         properties.put("clock.set.hwclock", true);
+        properties.put("rtc.filename", "/dev/rtc4");
         TestUtil.setFieldValue(svc, "clockServiceConfig", new ClockServiceConfig(properties));
 
         svc.onClockUpdate(1, true);
 
+        var calls = inOrder(clockClient);
+        calls.verify(clockClient).adjustRealtime(1);
+        calls.verify(clockClient).syncRtc("/dev/rtc4");
+        verify(serviceMock, times(0)).execute(any());
         verify(eaMock, times(1)).postEvent(isA(ClockEvent.class)); // sys clock updated successfully
     }
 
@@ -269,9 +274,7 @@ public class ClockServiceImplTest {
     public void testClockUpdateErrors() throws Throwable {
         // test the service's onClockUpdate() with clock update failures; test of proper logging, mostly
 
-        CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(1));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
@@ -289,20 +292,19 @@ public class ClockServiceImplTest {
         svc.onClockUpdate(1, true);
 
         verify(eaMock, times(0)).postEvent(isA(ClockEvent.class)); // sys clock not updated
-        verify(serviceMock, times(0)).execute(any()); // failed wall clock must not reach RTC
+        verify(clockClient, times(0)).syncRtc("/dev/rtc0");
+        verify(serviceMock, times(0)).execute(any());
     }
 
     @Test
     public void testClockUpdate() throws Throwable {
         // test the service's onClockUpdate()
 
-        CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(any())).thenReturn(status);
         ClockServiceImpl svc = new ClockServiceImpl();
         svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
-        when(clockClient.adjustRealtime(anyLong())).thenReturn(true);
+        when(clockClient.syncRtc("/dev/rtc0")).thenThrow(new IOException("Uncertain RTC response"));
         TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
 
         EventAdmin eaMock = mock(EventAdmin.class);
@@ -313,8 +315,11 @@ public class ClockServiceImplTest {
         properties.put("clock.set.hwclock", true);
         TestUtil.setFieldValue(svc, "clockServiceConfig", new ClockServiceConfig(properties));
 
-        svc.onClockUpdate(1, true);
+        svc.onClockUpdate(0, true);
 
-        verify(eaMock, times(1)).postEvent(isA(ClockEvent.class)); // sys clock updated successfully
+        verify(clockClient, times(0)).adjustRealtime(anyLong());
+        verify(clockClient, times(1)).syncRtc("/dev/rtc0");
+        verify(serviceMock, times(0)).execute(any());
+        verify(eaMock, times(1)).postEvent(isA(ClockEvent.class)); // wall clock is already current
     }
 }

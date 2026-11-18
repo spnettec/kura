@@ -44,9 +44,9 @@ class ClockPackageTest(unittest.TestCase):
 
     def test_manifest_binds_all_helpers_units_and_clock_consumer(self):
         home = self.assembly(); value = broker.package_cohort(home)
-        self.assertEqual(7, len(value['files']))
+        self.assertEqual(8, len(value['files']))
         self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
-        self.assertEqual('adjust-realtime', value['action'])
+        self.assertEqual(['adjust-realtime', 'sync-rtc'], value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
     def test_cached_old_clock_bundle_cannot_be_paired(self):
@@ -74,7 +74,15 @@ class ClockPackageTest(unittest.TestCase):
         self.assertIn('\nCapabilityBoundingSet=CAP_SYS_TIME\n', raw)
         self.assertIn('\nAmbientCapabilities=CAP_SYS_TIME\n', raw)
         self.assertIn('\nNoNewPrivileges=true\n', raw)
+        self.assertIn('\nPrivateDevices=true\n', raw)
+        self.assertIn('\nDeviceAllow=char-rtc r\n', raw)
+        self.assertIn('\nBindReadOnlyPaths=-/dev/.kura-clock-rtc:/dev/kura-clock-rtc\n', raw)
+        self.assertIn('\nWants=' + broker.RTC_UNIT + '\n', raw)
         self.assertIn('-/opt/eclipse/kura', raw)
+        projection = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_UNIT).read_text()
+        self.assertIn('\nCapabilityBoundingSet=CAP_MKNOD CAP_CHOWN\n', projection)
+        self.assertIn('\nDevicePolicy=closed\n', projection)
+        self.assertIn('\nDeviceAllow=char-rtc m\n', projection)
 
     def prefix(self, path):
         raw = (SOURCE / 'variants/linux/unfiltered/deb/control/postinst').read_text()

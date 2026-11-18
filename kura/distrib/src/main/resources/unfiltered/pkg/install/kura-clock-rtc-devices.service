@@ -1,0 +1,26 @@
+[Unit]
+Description=YOFC Kura private RTC device projection
+Requires=kura-clock-broker.socket
+After=kura-clock-broker.socket
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py project-rtc
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_MKNOD CAP_CHOWN
+DevicePolicy=closed
+DeviceAllow=char-rtc m
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+InaccessiblePaths=-/etc/kura -/var/lib/kura-clock-broker -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-management-agent -/var/lib/kura-management-agent-native -/run/kura-key-service -/opt/eclipse/kura
+MemoryMax=64M
+TasksMax=8
+TimeoutStartSec=15

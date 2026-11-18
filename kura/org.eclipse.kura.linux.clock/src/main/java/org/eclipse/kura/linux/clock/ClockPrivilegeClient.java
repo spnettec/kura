@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -14,11 +15,13 @@ import com.google.gson.JsonParser;
 /** The paired helper owns durable IDs; Java never retries a clock mutation. */
 class ClockPrivilegeClient {
 
-    private static final Set<String> FIELDS = Set.of("schema", "namespace", "requestId", "correctionMillis", "state",
-            "reason", "currentSample");
-    private static final Set<String> REASONS = Set.of("CLOCK_SET_RETURNED", "OS_ERROR", "NO_LOCAL_INTENT",
-            "UNRESOLVED_INTENT", "NO_DURABLE_RESULT", "UNRESOLVED_RESULT", "UNRESOLVED_COMMIT", "UNRESOLVED_PREPARE",
-            "NOT_COMMITTED", "STALE_SAMPLE", "CLOCK_RANGE");
+    private static final String REALTIME_FIELD = "correctionMillis";
+    private static final String RTC_FIELD = "rtcDevice";
+    private static final long MAX_CORRECTION_MILLIS = 9223372036854L;
+    private static final Pattern RTC_DEVICE = Pattern.compile("/dev/(?:rtc(?:0|[1-9][0-9]{0,8})?|misc/rtc)");
+    private static final Pattern CORRECTION = Pattern.compile("0|-?[1-9][0-9]{0,12}");
+    private static final Set<String> UNKNOWN_REASONS = Set.of("NO_LOCAL_INTENT", "UNRESOLVED_INTENT",
+            "NO_DURABLE_RESULT", "UNRESOLVED_RESULT", "UNRESOLVED_COMMIT", "UNRESOLVED_PREPARE", "NOT_COMMITTED");
     private final String dataDirectory;
 
     ClockPrivilegeClient(String dataDirectory) {
@@ -39,13 +42,26 @@ class ClockPrivilegeClient {
     }
 
     boolean adjustRealtime(long correctionMillis) throws IOException, InterruptedException {
-        if (correctionMillis < -9223372036854L || correctionMillis > 9223372036854L) {
+        if (!validCorrection(correctionMillis)) {
             throw new IllegalArgumentException("Clock sample is outside the supported kernel range");
         }
+        JsonObject request = new JsonObject();
+        request.addProperty(REALTIME_FIELD, correctionMillis);
+        return appliedForSample(exchange(request), correctionMillis);
+    }
+
+    boolean syncRtc(String device) throws IOException, InterruptedException {
+        if (device == null || !RTC_DEVICE.matcher(device).matches()) {
+            throw new IllegalArgumentException("Unsupported RTC device name");
+        }
+        JsonObject request = new JsonObject();
+        request.addProperty(RTC_FIELD, device);
+        return appliedForRtc(exchange(request), device);
+    }
+
+    private String exchange(JsonObject request) throws IOException, InterruptedException {
         Process process = startHelper();
         try {
-            JsonObject request = new JsonObject();
-            request.addProperty("correctionMillis", correctionMillis);
             try (var input = process.getOutputStream()) {
                 input.write(request.toString().getBytes(US_ASCII));
             }
@@ -56,7 +72,7 @@ class ClockPrivilegeClient {
             if (process.exitValue() != 0 || reply.length == 0 || reply.length > 4096) {
                 throw new IOException("Clock helper unavailable; original decision retained for status lookup");
             }
-            return appliedForSample(new String(reply, US_ASCII), correctionMillis);
+            return new String(reply, US_ASCII);
         } finally {
             if (process.isAlive()) {
                 process.destroyForcibly();
@@ -65,36 +81,68 @@ class ClockPrivilegeClient {
     }
 
     static boolean appliedForSample(String raw, long correctionMillis) throws IOException {
+        return appliedFor(raw, REALTIME_FIELD, Long.toString(correctionMillis));
+    }
+
+    static boolean appliedForRtc(String raw, String device) throws IOException {
+        return appliedFor(raw, RTC_FIELD, device);
+    }
+
+    private static boolean validCorrection(long value) {
+        return value >= -MAX_CORRECTION_MILLIS && value <= MAX_CORRECTION_MILLIS;
+    }
+
+    private static boolean appliedFor(String raw, String expectedField, String expectedValue) throws IOException {
         try {
             JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
-            if (!result.keySet().equals(FIELDS) || !result.get("schema").getAsJsonPrimitive().isNumber()
+            boolean rtc = result.has(RTC_FIELD);
+            String field = rtc ? RTC_FIELD : REALTIME_FIELD;
+            if (!result.keySet().equals(Set.of("schema", "namespace", "requestId", field, "state", "reason",
+                    "currentSample")) || !result.get("schema").getAsJsonPrimitive().isNumber()
                     || !"1".equals(result.get("schema").getAsString())
-                    || !result.get("correctionMillis").getAsJsonPrimitive().isNumber()
-                    || !result.get("correctionMillis").getAsString().matches("0|-?[1-9][0-9]{0,12}")
-                    || !result.get("currentSample").getAsJsonPrimitive().isBoolean()
-                    || !REASONS.contains(result.get("reason").getAsString())) {
+                    || !result.get("currentSample").getAsJsonPrimitive().isBoolean()) {
+                throw new IllegalArgumentException();
+            }
+            var argument = result.getAsJsonPrimitive(field);
+            String value = argument.getAsString();
+            boolean valid = rtc ? argument.isString() && RTC_DEVICE.matcher(value).matches()
+                    : argument.isNumber() && CORRECTION.matcher(value).matches() && validCorrection(argument.getAsLong());
+            if (!valid) {
                 throw new IllegalArgumentException();
             }
             for (String name : new String[] { "namespace", "requestId" }) {
-                String value = result.get(name).getAsString();
-                if (!UUID.fromString(value).toString().equals(value)) {
+                String id = stringField(result, name);
+                if (!UUID.fromString(id).toString().equals(id)) {
                     throw new IllegalArgumentException();
                 }
             }
-            String state = result.get("state").getAsString();
-            if (!Set.of("APPLIED", "FAILED", "UNKNOWN").contains(state)
-                    || (state.equals("APPLIED") && !result.get("reason").getAsString().equals("CLOCK_SET_RETURNED"))
-                    || (state.equals("FAILED") && !Set.of("OS_ERROR", "STALE_SAMPLE", "CLOCK_RANGE")
-                            .contains(result.get("reason").getAsString()))) {
+            String state = stringField(result, "state");
+            String reason = stringField(result, "reason");
+            boolean validState = switch (state) {
+            case "APPLIED" -> reason.equals(rtc ? "RTC_SET_RETURNED" : "CLOCK_SET_RETURNED");
+            case "FAILED" -> reason.equals("OS_ERROR") || reason.equals("STALE_SAMPLE")
+                    || (!rtc && reason.equals("CLOCK_RANGE"));
+            case "UNKNOWN" -> UNKNOWN_REASONS.contains(reason);
+            default -> false;
+            };
+            if (!validState) {
                 throw new IllegalArgumentException();
             }
             boolean current = result.get("currentSample").getAsBoolean();
-            if (current && result.get("correctionMillis").getAsLong() != correctionMillis) {
+            if (current && (!field.equals(expectedField) || !value.equals(expectedValue))) {
                 throw new IllegalArgumentException();
             }
             return current && state.equals("APPLIED");
         } catch (RuntimeException error) {
             throw new IOException("Invalid clock helper response; original decision retained", error);
         }
+    }
+
+    private static String stringField(JsonObject value, String name) {
+        var field = value.getAsJsonPrimitive(name);
+        if (!field.isString()) {
+            throw new IllegalArgumentException();
+        }
+        return field.getAsString();
     }
 }

@@ -13,7 +13,8 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import ACTOR_HOME, COHORT, HOME, STATE, UNITS, Policy, protected, public_file, unit_sources, unit_directory_present
+from kura_clock_broker import (ACTOR_HOME, COHORT, HOME, LEGACY_UNITS, STATE, UNITS, Policy, public_file,
+                               remove_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 identifier, read, require, sync)
 
@@ -157,7 +158,7 @@ def maintenance(record):
     value = decode(read(flag, 0, 0o644))
     require(set(value) == {'schema', 'purposeId', 'namespace', 'cohortSha256', 'units'}
             and type(value['schema']) is int and value['schema'] == 1 and type(value['units']) is dict
-            and set(value['units']) == set(UNITS), 'UNPAIRED_MAINTENANCE')
+            and set(value['units']) in (set(LEGACY_UNITS), set(UNITS)), 'UNPAIRED_MAINTENANCE')
     identifier(value['purposeId'])
     require(isinstance(value['cohortSha256'], str) and re.fullmatch('[0-9a-f]{64}', value['cohortSha256']) is not None
             and all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) is not None for v in value['units'].values()),
@@ -202,15 +203,19 @@ def install():
     record = account(create_missing=True)
     private_state(record)
     current = maintenance(record) if os.path.lexists(STATE) else None
-    install_actor_code(policy, descriptor, record, current)
+    # Check every installed fragment before publishing any replacement code.
+    desired_units = {}
     for name in UNITS:
         desired = public_file(HOME / 'libexec/clock-broker' / name)
         path = Path('/lib/systemd/system') / name
         if os.path.lexists(path):
             old = public_file(path)
-            require(old == desired or (current is not None and hashlib.sha256(old).hexdigest() == current['units'][name]),
+            require(old == desired or (current is not None and hashlib.sha256(old).hexdigest() == current['units'].get(name)),
                     'UNPAIRED_CODE')
-        temporary = path.with_name(name + '.kura-clock-staged')
+        desired_units[path] = desired
+    install_actor_code(policy, descriptor, record, current)
+    for path, desired in desired_units.items():
+        temporary = path.with_name(path.name + '.kura-clock-staged')
         if os.path.lexists(temporary):
             require(public_file(temporary) == desired, 'UNPAIRED_CODE')
         else:
@@ -230,7 +235,7 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
     metadata = parent.lstat()
     require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0 and not metadata.st_mode & 0o022, 'UNPAIRED_CODE')
     if os.path.lexists(ACTOR_HOME):
-        installed = Policy(actor=True); installed.check(installed=False)
+        installed = Policy(actor=True); installed.check(installed=False, allow_legacy=True)
         if installed.cohort == policy.cohort:
             return
         require(maintenance_record is not None and installed.cohort == maintenance_record['cohortSha256'], 'UNPAIRED_CODE')
@@ -257,7 +262,7 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
     staged_policy.check(installed=False)
     require(staged_policy.cohort == policy.cohort, 'UNPAIRED_CODE')
     if os.path.lexists(ACTOR_HOME):
-        old = Policy(actor=True); old.check(installed=False)
+        old = Policy(actor=True); old.check(installed=False, allow_legacy=True)
         require(maintenance_record is not None and old.cohort == maintenance_record['cohortSha256'], 'UNPAIRED_CODE')
         archive = parent / ('.kura-clock-broker-previous-' + old.cohort + '-' + maintenance_record['purposeId'])
         require(not os.path.lexists(archive), 'UNRESOLVED_CODE_PUBLICATION')
@@ -287,6 +292,7 @@ def resume():
 
 def remove():
     quiesce()
+    remove_rtc_projection()
     for name in UNITS:
         run('/usr/bin/systemctl', 'disable', name)
         (Path('/lib/systemd/system') / name).unlink()

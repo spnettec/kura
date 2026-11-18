@@ -415,7 +415,11 @@ class RtcDeviceTest(unittest.TestCase):
     def setUp(self):
         self.node = SimpleNamespace(st_dev=1, st_ino=2, st_uid=0, st_gid=125, st_mode=stat.S_IFCHR | 0o640,
                                     st_nlink=1, st_size=0, st_mtime_ns=5, st_ctime_ns=6, st_rdev=os.makedev(254, 4))
-        self.mapping = self.enterContext(mock.patch.object(Path, 'open', mock.mock_open(read_data='254:4\n')))
+        self.hardware = dict(major=254, minor=4, inode=924, path='/sys/devices/platform/example/rtc/rtc4')
+        self.kernel = self.enterContext(mock.patch.object(broker, 'rtc_hardware', return_value=self.hardware))
+        self.catalog = self.enterContext(mock.patch.object(broker, 'rtc_catalog', return_value=dict(
+            schema=1, nodes={'rtc4': self.hardware}, aliases={'/dev/rtc': 'rtc4'})))
+        self.enterContext(mock.patch.object(broker.pwd, 'getpwnam', return_value=SimpleNamespace(pw_gid=125)))
         self.admitted = self.enterContext(mock.patch.object(Path, 'lstat', return_value=self.node))
         self.opened = self.enterContext(mock.patch.object(broker.os, 'open', return_value=7))
         self.fd = self.enterContext(mock.patch.object(broker.os, 'fstat', return_value=self.node))
@@ -433,23 +437,31 @@ class RtcDeviceTest(unittest.TestCase):
         self.ioctl.side_effect = write
         utc = broker.time.struct_time((2026, 2, 3, 4, 5, 6, 1, 34, 0))
         with mock.patch.object(broker.time, 'gmtime', return_value=utc):
-            broker.rtc_set_time('/dev/rtc4')
-        self.opened.assert_called_once_with(Path('/dev/rtc4'),
+            broker.rtc_set_time('/dev/rtc')
+        self.opened.assert_called_once_with(broker.RTC_PROJECTION / 'rtc4',
                                             os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
         self.ioctl.assert_called_once()
         self.closed.assert_called_once_with(7)
 
     def test_invalid_device_mapping_and_replaced_device_never_invoke_ioctl(self):
-        self.mapping.return_value.read.return_value = '1:3\n'
+        self.kernel.return_value = dict(self.hardware, inode=925)
         with self.assertRaises(OSError) as failure:
             broker.rtc_set_time('/dev/rtc4')
         self.assertEqual(errno.ENODEV, failure.exception.errno)
         self.opened.assert_not_called()
-        self.mapping.return_value.read.return_value = '254:4\n'
+        self.kernel.return_value = self.hardware
         self.fd.return_value = SimpleNamespace(**vars(self.node))
         self.fd.return_value.st_ino = 30
         with self.assertRaises(OSError):
             broker.rtc_set_time('/dev/rtc4')
+        self.closed.assert_called_once_with(7)
+        self.ioctl.assert_not_called()
+
+    def test_kernel_identity_change_after_open_never_invokes_ioctl(self):
+        self.kernel.side_effect = [self.hardware, dict(self.hardware, inode=925)]
+        with self.assertRaises(OSError) as failure:
+            broker.rtc_set_time('/dev/rtc')
+        self.assertEqual(errno.ENODEV, failure.exception.errno)
         self.closed.assert_called_once_with(7)
         self.ioctl.assert_not_called()
 

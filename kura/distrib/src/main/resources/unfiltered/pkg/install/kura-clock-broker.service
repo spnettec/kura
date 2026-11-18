@@ -1,7 +1,8 @@
 [Unit]
-Description=YOFC Kura typed wall-clock actor
+Description=YOFC Kura typed clock actor
 Requires=kura-clock-broker.socket
-After=kura-clock-broker.socket
+Wants=kura-clock-rtc-devices.service
+After=kura-clock-broker.socket kura-clock-rtc-devices.service
 
 [Service]
 Type=simple
@@ -18,6 +19,9 @@ ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true
+DeviceAllow=char-rtc r
+ProtectKernelTunables=true
+BindReadOnlyPaths=-/dev/.kura-clock-rtc:/dev/kura-clock-rtc
 RestrictAddressFamilies=AF_UNIX
 RestrictSUIDSGID=true
 LockPersonality=true
