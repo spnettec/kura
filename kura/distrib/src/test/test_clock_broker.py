@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unf
 import kura_clock_broker as broker
 import kura_clock_client as client
 import kura_clock_journal as journal
+import kura_clock_setup as setup
 
 
 class Policy:
@@ -77,6 +78,53 @@ class ClockBrokerTest(unittest.TestCase):
 
     def sender(self, exchange=None):
         return client.Client(self.data, exchange=exchange or self.exchange, policy=self.policy)
+
+    def test_purge_restores_original_sender_receipt_without_actuation(self):
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()):
+            original = self.sender().submit('adjust-realtime', 500)
+        self.assertEqual('APPLIED', original['state'])
+        source = self.data / 'clock-broker'
+        inventory = setup.sender_inventory(source, os.geteuid())
+        setup.check_sender(inventory, self.journal, original['namespace'])
+
+        destination = self.root / 'restored' / 'clock-broker'
+        destination.parent.mkdir(mode=0o700)
+        with mock.patch.object(setup, 'publish_path', side_effect=lambda staged, live, replace: staged.rename(live)):
+            setup.restore_sender(destination, inventory, os.geteuid())
+        self.assertEqual(inventory, setup.sender_inventory(destination, os.geteuid()))
+        for name in inventory['entries']:
+            self.assertEqual((source / name).read_bytes(), (destination / name).read_bytes())
+        self.assertEqual(1, len(self.writes))
+
+    def test_retention_checks_sender_result_against_original_clock_root(self):
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()):
+            result = self.sender().submit('adjust-realtime', 500)
+        inventory = setup.sender_inventory(self.data / 'clock-broker', os.geteuid())
+        with mock.patch.object(self.journal, 'status') as lookup:
+            with self.assertRaisesRegex(journal.Refused, 'FOREIGN_NAMESPACE'):
+                setup.check_sender(inventory, self.journal, str(uuid.uuid4()))
+        lookup.assert_not_called()
+        path = 'completed/' + result['requestId'] + '.json'
+        inventory['entries'][path][2]['result']['observedMonotonicNs'] += 1
+        with self.assertRaisesRegex(journal.Refused, 'UNPAIRED_SENDER_RETENTION'):
+            setup.check_sender(inventory, self.journal, result['namespace'])
+        self.assertEqual(1, len(self.writes))
+
+    def test_purge_keeps_sender_pending_even_when_no_root_intent_was_observed(self):
+        request = self.command()
+        source = self.data / 'clock-broker'
+        source.mkdir(mode=0o700)
+        journal.create(source / 'pending.json', request)
+        inventory = setup.sender_inventory(source, os.geteuid())
+        with mock.patch.object(self.journal, 'status') as lookup:
+            setup.check_sender(inventory, self.journal, request['namespace'])
+        lookup.assert_not_called()
+
+        destination = self.root / 'restore-before-first-use'
+        with mock.patch.object(setup, 'publish_path', side_effect=lambda staged, live, replace: staged.rename(live)):
+            setup.restore_sender(destination, inventory, os.geteuid())
+        self.assertEqual(journal.encode(request), (destination / 'pending.json').read_bytes())
+        self.assertEqual([], self.writes)
 
     def test_chrony_status_uses_main_peer_without_allocating_a_clock_identity(self):
         status = dict(schema=1, unit='chrony.service', active=False)

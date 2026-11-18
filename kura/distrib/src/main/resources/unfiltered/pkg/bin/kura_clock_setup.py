@@ -3,6 +3,7 @@
 """Root package lifecycle for the dedicated clock actor; keep all decisions."""
 import grp
 import hashlib
+import json
 import os
 from pathlib import Path
 import pwd
@@ -18,10 +19,15 @@ from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, COHORT, H
                                Policy, public_file, publish_path,
                                remove_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
-                                identifier, read, require, sync)
+                                command, identifier, identity, pairs, read, require, sync, terminal_receipt,
+                                MAX_OPERATIONS)
 
 ACCOUNT = Path('/etc/kura/clock-broker-account.json')
 INTENT = Path('/etc/kura/clock-broker-account-intent.json')
+RETAINED = Path('/var/lib/kura-retained')
+SENDER_ARCHIVE = Path('/etc/kura/clock-sender-retention.json')
+MAX_SENDER_ARCHIVE = 16 * 1024 * 1024
+SENDER_DIRECTORIES = ('issued', 'completed')
 
 
 def run(*arguments):
@@ -195,6 +201,167 @@ def maintenance(record):
     return value
 
 
+def sender_inventory(sender, uid):
+    """Read only the sender's fixed private files, with their exact canonical bytes."""
+    folders, entries = {}, {}
+    size = 0
+    for path in (sender, *(sender / name for name in SENDER_DIRECTORIES if os.path.lexists(sender / name))):
+        name = '' if path == sender else path.name
+        directory(path, uid)
+        metadata = path.lstat()
+        folders[name] = [metadata.st_gid, metadata.st_mtime_ns]
+        children = list(path.iterdir())
+        require(len(children) <= MAX_OPERATIONS, 'UNPAIRED_SENDER_RETENTION')
+        for child in children:
+            if not name and child.name in SENDER_DIRECTORIES:
+                continue
+            require(name or child.name in ('sender.lock', 'pending.json'), 'UNPAIRED_SENDER_RETENTION')
+            metadata = child.lstat()
+            raw = read(child, uid)
+            size += len(raw)
+            require(size <= MAX_SENDER_ARCHIVE, 'UNPAIRED_SENDER_RETENTION')
+            require(identity(metadata) == identity(child.lstat()), 'UNPAIRED_SENDER_RETENTION')
+            value = None if child.name == 'sender.lock' and not name else decode(raw)
+            require(raw == (b'' if value is None else encode(value)), 'UNPAIRED_SENDER_RETENTION')
+            entries[child.relative_to(sender).as_posix()] = [metadata.st_gid, metadata.st_mtime_ns, value]
+    return dict(directories=folders, entries=entries)
+
+
+def check_sender(inventory, journal, namespace):
+    def metadata(entry):
+        require(type(entry[0]) is int and entry[0] >= 0 and type(entry[1]) is int, 'UNPAIRED_SENDER_RETENTION')
+
+    require(type(inventory) is dict and set(inventory) == {'directories', 'entries'}, 'UNPAIRED_SENDER_RETENTION')
+    folders, entries = inventory['directories'], inventory['entries']
+    require(type(folders) is dict and type(entries) is dict and '' in folders and set(folders) <= {'', *SENDER_DIRECTORIES}
+            and len(entries) <= 2 * MAX_OPERATIONS + 2, 'UNPAIRED_SENDER_RETENTION')
+    for entry in folders.values():
+        require(type(entry) is list and len(entry) == 2, 'UNPAIRED_SENDER_RETENTION')
+        metadata(entry)
+    for path, entry in entries.items():
+        require(type(entry) is list and len(entry) == 3, 'UNPAIRED_SENDER_RETENTION')
+        metadata(entry)
+        if path in ('sender.lock', 'pending.json'):
+            continue
+        folder, separator, filename = path.partition('/')
+        require(separator and folder in SENDER_DIRECTORIES and folder in folders
+                and filename.endswith('.json'), 'UNPAIRED_SENDER_RETENTION')
+        identifier(filename[:-5])
+    if 'sender.lock' in entries:
+        require(entries['sender.lock'][2] is None, 'UNPAIRED_SENDER_RETENTION')
+
+    references = {}
+    if 'pending.json' in entries:
+        pending = command(entries['pending.json'][2])
+        require(pending['namespace'] == namespace, 'FOREIGN_NAMESPACE')
+        references[pending['requestId']] = digest(pending)
+    for path, (_, _, saved) in entries.items():
+        if not path.startswith('completed/'):
+            continue
+        request_id = path[len('completed/'):-5]
+        require(type(saved) is dict and set(saved) == {'schema', 'command', 'result'}
+                and type(saved['schema']) is int and saved['schema'] == 1, 'UNPAIRED_SENDER_RETENTION')
+        intent = command(saved['command'])
+        require(intent['namespace'] == namespace and intent['requestId'] == request_id, 'FOREIGN_NAMESPACE')
+        request_hash = digest(intent)
+        require(references.setdefault(request_id, request_hash) == request_hash, 'UNPAIRED_SENDER_RETENTION')
+        reference = dict(schema=1, namespace=namespace, requestId=request_id, requestSha256=request_hash)
+        issue = entries.get('issued/' + request_id + '.json')
+        require(issue is not None and encode(issue[2]) == encode(reference)
+                and type(saved['result']) is dict and terminal_receipt(saved['result'], reference, intent['action'])
+                and journal.status(namespace, request_id, request_hash) == saved['result'], 'UNPAIRED_SENDER_RETENTION')
+    for path, (_, _, issue) in entries.items():
+        if path.startswith('issued/'):
+            request_id = path[len('issued/'):-5]
+            require(request_id in references and encode(issue) == encode(dict(schema=1, namespace=namespace,
+                    requestId=request_id, requestSha256=references[request_id])), 'UNPAIRED_SENDER_RETENTION')
+
+
+def sender_retention_binding(record, current):
+    require(current is not None, 'UNPAIRED_SENDER_RETENTION')
+    sender = pwd.getpwnam('kurad')
+    require(sender.pw_uid > 0 and sender.pw_gid > 0, 'UNPAIRED_SENDER_RETENTION')
+    return dict(schema=1, purposeId=current['purposeId'], namespace=current['namespace'],
+                clockUid=record['uid'], clockGid=record['gid'], senderUid=sender.pw_uid, senderGid=sender.pw_gid)
+
+
+def retained_sender(record, journal, current, restoring=False):
+    live = HOME / 'data/clock-broker'
+    source = RETAINED / 'data/clock-broker'
+    exists = os.path.lexists(SENDER_ARCHIVE)
+    if not exists and (restoring or not (os.path.lexists(source) or os.path.lexists(live))):
+        return
+    binding = sender_retention_binding(record, current)
+    uid = binding['senderUid']
+    namespace = binding['namespace']
+    require(unit_directory_present(SENDER_ARCHIVE.parent), 'UNPAIRED_SENDER_RETENTION')
+    if not restoring:
+        require(unit_directory_present(RETAINED.parent), 'UNPAIRED_SENDER_RETENTION')
+        directory(RETAINED, 0)
+        sender_data_directory(source.parent, uid)
+        inventory = sender_inventory(source, uid)
+        check_sender(inventory, journal, namespace)
+        value = dict(binding=binding, sender=inventory)
+        if exists:
+            require(read(SENDER_ARCHIVE, 0, maximum=MAX_SENDER_ARCHIVE) == encode(value), 'UNPAIRED_SENDER_RETENTION')
+            return
+        require(len(encode(value)) <= MAX_SENDER_ARCHIVE, 'UNPAIRED_SENDER_RETENTION')
+        with tempfile.TemporaryDirectory(prefix='.kura-clock-sender-', dir=SENDER_ARCHIVE.parent) as folder:
+            staged = Path(folder) / 'retention.json'
+            create(staged, value)
+            publish_path(staged, SENDER_ARCHIVE, False)
+        sync(SENDER_ARCHIVE.parent)
+        return
+
+    raw = read(SENDER_ARCHIVE, 0, maximum=MAX_SENDER_ARCHIVE)
+    value = json.loads(raw, object_pairs_hook=pairs)
+    require(set(value) == {'binding', 'sender'} and value['binding'] == binding, 'UNPAIRED_SENDER_RETENTION')
+    inventory = value['sender']
+    check_sender(inventory, journal, namespace)
+    inactive('kura.service')
+    sender_data_directory(live.parent, uid)
+    if not os.path.lexists(live):
+        restore_sender(live, inventory, uid)
+    require(sender_inventory(live, uid) == inventory, 'UNPAIRED_SENDER_RETENTION')
+    # The exact live copy is durable before admitting new clock transactions.
+    SENDER_ARCHIVE.unlink()
+    sync(SENDER_ARCHIVE.parent)
+
+
+def sender_data_directory(path, uid):
+    parent = path.lstat()
+    require(stat.S_ISDIR(parent.st_mode) and parent.st_uid == uid
+            and not parent.st_mode & 0o022, 'UNPAIRED_SENDER_RETENTION')
+
+
+def restore_sender(live, inventory, uid):
+    with tempfile.TemporaryDirectory(prefix='.kura-clock-sender-', dir=live.parent) as folder:
+        staged = Path(folder) / live.name
+        staged.mkdir(mode=0o700)
+        folders = inventory['directories']
+        for name in folders:
+            if name:
+                (staged / name).mkdir(mode=0o700)
+        for name, (gid, modified, value) in inventory['entries'].items():
+            path = staged / name
+            with path.open('xb') as output:
+                os.fchmod(output.fileno(), 0o600)
+                os.fchown(output.fileno(), uid, gid)
+                output.write(b'' if value is None else encode(value))
+                output.flush()
+                os.utime(output.fileno(), ns=(modified, modified))
+                os.fsync(output.fileno())
+        for name in sorted(folders, reverse=True):
+            gid, modified = folders[name]
+            path = staged / name
+            os.chown(path, uid, gid)
+            os.utime(path, ns=(modified, modified))
+            sync(path)
+        require(sender_inventory(staged, uid) == inventory, 'UNPAIRED_SENDER_RETENTION')
+        publish_path(staged, live, False)
+        sync(live.parent)
+
+
 def quiesce():
     policy = Policy(); policy.check()
     record = account(); private_state(record)
@@ -307,6 +474,7 @@ def resume():
     chrony_policy('verify')
     actor = Policy(actor=True); actor.check(effective=False)
     require(actor.cohort == policy.cohort, 'UNPAIRED_CODE')
+    require(not os.path.lexists(SENDER_ARCHIVE), 'UNPAIRED_SENDER_RETENTION')
     # A newly published fragment is not yet PID1's loaded configuration. Keep
     # the original maintenance gate through reload, validation and socket start.
     run('/usr/bin/systemctl', 'daemon-reload')
@@ -321,8 +489,24 @@ def resume():
                 (STATE / 'maintenance.json').unlink(); sync(STATE)
 
 
+def restore_retained_sender():
+    if not os.path.lexists(SENDER_ARCHIVE):
+        return
+    core, actor = Policy(), Policy(actor=True)
+    core.check(effective=False); actor.check(effective=False)
+    require(core.cohort == actor.cohort, 'UNPAIRED_CODE')
+    record = account()
+    journal = Journal(STATE, record['uid'])
+    with journal.lock():
+        retained_sender(record, journal, maintenance(record), restoring=True)
+
+
 def remove():
     quiesce()
+    record = account()
+    journal = Journal(STATE, record['uid'])
+    with journal.lock():
+        retained_sender(record, journal, maintenance(record))
     chrony_policy('remove')
     remove_rtc_projection()
     for name in UNITS:
@@ -337,7 +521,7 @@ def remove():
 if __name__ == '__main__':
     try:
         require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[0] == str(HOME / 'bin/kura_clock_setup.py'), 'INVALID_ENTRYPOINT')
-        require(sys.argv[1] in ('install', 'quiesce', 'resume', 'remove'))
+        require(sys.argv[1] in ('install', 'quiesce', 'resume', 'remove', 'restore_retained_sender'))
         globals()[sys.argv[1]]()
     except (Refused, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(error.reason if isinstance(error, Refused) else 'UNRESOLVED_OR_UNAVAILABLE', file=sys.stderr)

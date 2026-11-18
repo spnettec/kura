@@ -526,6 +526,7 @@ function postInstall {
     python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
 
     # The retained data and root code are final before new key operations are admitted.
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --leave >> ${LOG} 2>&1 || return 1
     systemctl daemon-reload >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-service.socket >> ${LOG} 2>&1 || return 1
