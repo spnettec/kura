@@ -158,6 +158,9 @@ function preRemove {
     fi
     if [ -f /lib/systemd/system/kura.service ] ; then
         systemctl disable kura.service || return 1
+        # Persistent disable does not remove enabled-runtime links. Keep masks,
+        # but remove both kinds of enablement before deleting the vendor unit.
+        systemctl disable --runtime kura.service || return 1
         rm /lib/systemd/system/kura.service || return 1
     fi
     # Firewall/iptables/netplan teardown is owned by kura-networking's prerm
@@ -165,13 +168,13 @@ function preRemove {
     # host's network configuration.
 
     #Roll-back logrotate setup
-    rm -f  /var/log/logrotate-kura.status
-    rm -f  /etc/logrotate-kura.conf
-    rm -f  /etc/cron.d/logrotate-kura
+    rm -f  /var/log/logrotate-kura.status || return 1
+    rm -f  /etc/logrotate-kura.conf || return 1
+    rm -f  /etc/cron.d/logrotate-kura || return 1
 
     # Runtime and audit logs are user data; leave them until purge.
-    rm -rf /tmp/.kura
-    rm -rf /tmp/kura
+    rm -rf /tmp/.kura || return 1
+    rm -rf /tmp/kura || return 1
 
     # Directory cleanup moved to postrm (after sibling packages are purged)
 }

@@ -151,6 +151,7 @@ class Store:
         self.root = Path(root).absolute()
         self.owner = os.geteuid() if owner is None else owner
         self.observed = {}
+        self.main_mask_snapshot = None
 
     def path(self, absolute):
         p = Path(absolute)
@@ -230,6 +231,38 @@ class Store:
             now = self.observed[path]
             require(now[:2] == (identity,digest) and hashlib.sha256(data).digest() == digest,
                     "Key-policy source changed before publication")
+        if self.main_mask_snapshot is not None:
+            require(self.main_masks() == self.main_mask_snapshot,
+                    'Main service mask changed before key preparation completed')
+
+    def main_masks(self):
+        """Recognize only Root-owned fixed Main /dev/null masks, never key sources.
+
+        Do not follow or generalize regular/admin overrides. A mask can preserve
+        an existing key, but cannot bootstrap credentials or replace a source.
+        """
+        values = {}
+        for prefix in ('/etc', '/run'):
+            path = self.path(prefix + '/systemd/system/kura.service')
+            if not os.path.lexists(path):
+                values[str(path)] = None
+                continue
+            current = self.root
+            for part in ('', *path.parent.relative_to(self.root).parts):
+                current = current / part
+                m = current.lstat()
+                require(stat.S_ISDIR(m.st_mode) and m.st_uid == self.owner and not m.st_mode & 0o022,
+                        'Unsafe Main service mask directory')
+            m = path.lstat()
+            require(stat.S_ISLNK(m.st_mode) and m.st_uid == self.owner and m.st_nlink == 1,
+                    'An overriding Kura unit requires reviewed key migration')
+            target = os.readlink(path)
+            identity = lambda s: (s.st_dev, s.st_ino, s.st_uid, s.st_gid, s.st_mode,
+                                  s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+            require(target == '/dev/null' and identity(m) == identity(path.lstat()),
+                    'An overriding Kura unit requires reviewed key migration')
+            values[str(path)] = identity(m)
+        return values
 
     def publish(self, path, value, mode=0o400):
         path = Path(path)
@@ -399,11 +432,10 @@ class Store:
     def prepare(self, action):
         require(action in ("install","upgrade","auto","package"), "Unsupported key provisioning action")
         self.observed.clear()
+        self.main_mask_snapshot = None
         with self.locked():
             self.dropins_safe()
-            for prefix in ("/etc","/run"):
-                require(not os.path.lexists(self.path(prefix+"/systemd/system/kura.service")),
-                        "An overriding Kura unit requires reviewed key migration")
+            self.main_mask_snapshot = self.main_masks()
             canonical = self.path(KEY_PATH)
             current = self.key(canonical) if os.path.lexists(canonical) else None
             record_path = self.path(RECEIPT_PATH)
@@ -421,6 +453,9 @@ class Store:
                                 and all(c in "0123456789abcdef" for c in x)
                                 for x in receipt["unitDigests"]),
                         "Encryption-key receipt is inconsistent")
+            if any(value is not None for value in self.main_mask_snapshot.values()):
+                require(current is not None and receipt is not None and type(receipt['schema']) is int,
+                        'A masked Main service requires its original provisioned key and receipt')
             if action == "package":
                 # Post-unpack may only consume preinst's complete original credentials.
                 # It cannot create a missing key or borrow ordinary startup authority.

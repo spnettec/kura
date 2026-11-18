@@ -182,6 +182,18 @@ cp() {
             result = subprocess.run(['bash', '-c', script], capture_output=True)
             self.assertNotEqual(0, result.returncode); self.assertEqual('keep managed unit\n', unit.read_text())
 
+    def test_runtime_disable_failure_keeps_vendor_unit_and_propagates(self):
+        raw = CONTROL.read_text(); start = raw.index('function preRemove {')
+        end = raw.index('##############################################\n# END UTILITY', start)
+        with fixtures.tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);unit=root/'lib/systemd/system/kura.service';unit.parent.mkdir(parents=True)
+            unit.write_text('keep installed unit\n');calls=root/'calls'
+            function=raw[start:end].replace('/etc/init.d/kura',str(root/'absent-init')).replace('/lib/systemd/system/kura.service',str(unit))
+            script='systemctl() { echo "$*" >> "$CALLS"; [ "$2" != --runtime ]; }\n'+function+'\npreRemove\n'
+            result=subprocess.run(['bash','-c',script],env=dict(os.environ,CALLS=str(calls)),capture_output=True)
+            self.assertNotEqual(0,result.returncode);self.assertEqual('keep installed unit\n',unit.read_text())
+            self.assertEqual(['disable kura.service','disable --runtime kura.service'],calls.read_text().splitlines())
+
     def test_real_callback_exit_status_is_propagated_in_both_watchdog_paths(self):
         raw = CONTROL.read_text(); start = raw.index('function runPreRemove {')
         end = raw.index('# Pre-remove script', start); definitions = raw[start:end]

@@ -47,6 +47,61 @@ class EncryptionKeyLifecycleTests(unittest.TestCase):
             "ExecStart=/bin/sh /opt/eclipse/kura/bin/start_kura_background.sh\n"
             "LoadCredential=kura_encryption_key:"+policy.KEY_PATH+"\n",0o644)
 
+    def main_mask(self, prefix='/etc', target='/dev/null'):
+        path=self.store.path(prefix+'/systemd/system/kura.service')
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.symlink_to(target)
+        return path
+
+    def test_fixed_main_masks_preserve_only_original_provisioned_credentials(self):
+        self.store.prepare('install');self.current_unit()
+        receipt=self.store.path(policy.RECEIPT_PATH)
+        before=(self.key.read_bytes(),receipt.read_bytes(),self.key.stat().st_ino,receipt.stat().st_ino)
+        for prefix in ('/etc','/run'):
+            with self.subTest(prefix=prefix):
+                mask=self.main_mask(prefix);inode=mask.lstat().st_ino
+                self.store.prepare('upgrade');self.store.stable()
+                self.assertEqual(before,(self.key.read_bytes(),receipt.read_bytes(),self.key.stat().st_ino,receipt.stat().st_ino))
+                self.assertEqual('/dev/null',os.readlink(mask));self.assertEqual(inode,mask.lstat().st_ino)
+                mask.unlink()
+
+    def test_mask_cannot_bootstrap_a_key_or_recreate_a_missing_receipt(self):
+        self.legacy();mask=self.main_mask()
+        with self.assertRaises(policy.Refused):self.store.prepare('upgrade')
+        self.assertFalse(self.key.exists());self.assertFalse(self.store.path(policy.RECEIPT_PATH).exists())
+        mask.unlink();self.store.prepare('install');self.current_unit();self.main_mask()
+        before=self.key.read_bytes();self.store.path(policy.RECEIPT_PATH).unlink()
+        with self.assertRaises(policy.Refused):self.store.prepare('upgrade')
+        self.assertEqual(before,self.key.read_bytes());self.assertFalse(self.store.path(policy.RECEIPT_PATH).exists())
+
+    def test_regular_or_other_link_overrides_are_still_refused(self):
+        self.store.prepare('install');self.current_unit();before=self.key.read_bytes()
+        for regular in (False,True):
+            with self.subTest(regular=regular):
+                path=self.store.path('/etc/systemd/system/kura.service');path.parent.mkdir(parents=True,exist_ok=True)
+                if regular:path.write_bytes(b'[Service]\nRoot site configuration\n')
+                else:path.symlink_to(self.key)
+                with self.assertRaises(policy.Refused):self.store.prepare('upgrade')
+                self.assertEqual(before,self.key.read_bytes());self.assertTrue(os.path.lexists(path));path.unlink()
+
+    def test_mask_parent_symlink_or_write_permission_is_not_adopted(self):
+        self.store.prepare('install');self.current_unit();mask=self.main_mask('/run')
+        mask.parent.chmod(0o777)
+        with self.assertRaises(policy.Refused):self.store.prepare('upgrade')
+        mask.parent.chmod(0o700);actual=mask.parent.with_name('actual');mask.parent.rename(actual)
+        mask.parent.symlink_to(actual,target_is_directory=True)
+        with self.assertRaises(policy.Refused):self.store.prepare('upgrade')
+
+    def test_mask_add_remove_or_replacement_refuses_stable_publication(self):
+        self.store.prepare('install');self.current_unit()
+        self.store.prepare('upgrade');mask=self.main_mask()
+        with self.assertRaises(policy.Refused):self.store.stable()
+        self.store.prepare('upgrade');mask.unlink()
+        with self.assertRaises(policy.Refused):self.store.stable()
+        mask=self.main_mask();self.store.prepare('upgrade')
+        replacement=mask.with_name('replacement');replacement.symlink_to('/dev/null');replacement.replace(mask)
+        with self.assertRaises(policy.Refused):self.store.stable()
+
     def test_fresh_install_gets_private_random_key_and_is_byte_idempotent(self):
         self.assertEqual(self.store.prepare("install")["source"],"fresh")
         value = self.key.read_bytes()
