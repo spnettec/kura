@@ -46,6 +46,8 @@ def root_exchange(policy, value):
         send(stream, value); stream.shutdown(socket.SHUT_WR)
         if value['action'] in ('commit-chrony-start', 'commit-chrony-stop'):
             stream.settimeout(CHRONY_JOB_TIMEOUT + 12)
+        elif value['action'] in ('prepare-chrony-start', 'prepare-chrony-stop'):
+            stream.settimeout(10)
         reply = receive(stream)
     require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
     if not reply['ok']:

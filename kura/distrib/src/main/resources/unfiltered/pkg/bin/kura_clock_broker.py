@@ -267,8 +267,31 @@ def chrony_target(unit):
     return digest(dict(unit=value, fragmentSha256=hashlib.sha256(fragment).hexdigest())), state
 
 
+def require_chrony_bus_identity():
+    # Polkit only reports the caller's unit for a PID file descriptor supplied
+    # by the system bus. An older bus must fail before a service job is sent.
+    try:
+        reply = subprocess.check_output(
+            ['/usr/bin/busctl', '--system', '--json=short', '--timeout=2s', 'call',
+             'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus',
+             'GetConnectionCredentials', 's', 'org.freedesktop.systemd1'],
+            env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'},
+            stderr=subprocess.DEVNULL, timeout=3)
+        value = json.loads(reply)
+        credentials, = value['data']
+        if (value['type'] == 'a{sv}' and credentials['ProcessID'] == dict(type='u', data=1)
+                and credentials['UnixUserID'] == dict(type='u', data=0)
+                and credentials['ProcessFD']['type'] == 'h'):
+            return
+    except (OSError, subprocess.SubprocessError, ValueError, TypeError, KeyError):
+        pass
+    raise OSError(errno.EOPNOTSUPP, 'System D-Bus does not provide a verified process descriptor')
+
+
 def chrony_binding(unit):
-    return chrony_target(unit)[0]
+    binding, _ = chrony_target(unit)
+    require_chrony_bus_identity()
+    return binding
 
 
 def change_chrony(action, unit, expected_binding):

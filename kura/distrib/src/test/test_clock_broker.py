@@ -104,6 +104,19 @@ class ClockBrokerTest(unittest.TestCase):
             run.assert_called_once_with('start-chrony', 'chrony.service', 'd' * 64)
         self.assertFalse(self.context()['acceptingWrites'])
 
+    def test_missing_bus_identity_is_a_terminal_failure_without_actuation(self):
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()), \
+                mock.patch.object(broker, 'chrony_target', return_value=('d' * 64, 'inactive')), \
+                mock.patch.object(broker.subprocess, 'check_output', return_value=b'{"type":"a{sv}","data":[{}]}'), \
+                mock.patch.object(broker, 'change_chrony') as change:
+            result = self.sender().submit('start-chrony', 'chrony.service')
+        self.assertEqual(('FAILED', 'OS_ERROR'), (result['state'], result['reason']))
+        self.assertFalse((self.data / 'clock-broker/pending.json').exists())
+        path = self.data / 'clock-broker/completed' / (result['requestId'] + '.json')
+        self.assertEqual(errno.EOPNOTSUPP, json.loads(path.read_bytes())['result']['errno'])
+        self.assertTrue(self.context()['acceptingWrites'])
+        change.assert_not_called()
+
     def test_teardown_admits_only_explicit_stop_stages(self):
         def deactivating(peer, stopping=False):
             journal.require(peer == self.peer and stopping, 'UNAUTHORIZED')
@@ -637,6 +650,7 @@ class ChronyControlTest(unittest.TestCase):
     def test_stable_source_and_confirmed_state_are_required(self):
         observed = ('d' * 64, 'inactive')
         with mock.patch.object(broker, 'chrony_target', side_effect=[('d' * 64, 'active'), observed]), \
+                mock.patch.object(broker, 'require_chrony_bus_identity'), \
                 mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(returncode=0)) as run:
             broker.change_chrony('stop-chrony', 'chrony.service', observed[0])
         self.assertEqual(['/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager',
@@ -654,6 +668,7 @@ class ChronyControlTest(unittest.TestCase):
     def test_lost_job_or_unconfirmed_state_remains_unknown(self):
         for result in (-1, 0):
             with mock.patch.object(broker, 'chrony_target', return_value=('a' * 64, 'activating')), \
+                    mock.patch.object(broker, 'require_chrony_bus_identity'), \
                     mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(returncode=result)) as run:
                 with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_CHRONY_RESULT'):
                     broker.change_chrony('start-chrony', 'chrony.service', 'a' * 64)
@@ -664,7 +679,8 @@ class ChronyControlTest(unittest.TestCase):
                     SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no', ActiveState='inactive')
         def read(path):
             return broker.CHRONY_RULE if path == broker.CHRONY_POLICY else b'vendor unit'
-        with mock.patch.object(broker, 'public_file', side_effect=read):
+        with mock.patch.object(broker, 'public_file', side_effect=read), \
+                mock.patch.object(broker, 'require_chrony_bus_identity'):
             with mock.patch.object(broker, 'systemd_properties', return_value=dict(good)):
                 self.assertEqual(64, len(broker.chrony_binding('chrony.service')))
             for change in [dict(NeedDaemonReload='yes'), dict(DropInPaths='/etc/test.conf'),
@@ -672,6 +688,23 @@ class ChronyControlTest(unittest.TestCase):
                 with mock.patch.object(broker, 'systemd_properties', return_value=dict(good, **change)):
                     with self.assertRaises(OSError):
                         broker.chrony_binding('chrony.service')
+
+    def test_only_a_bus_process_descriptor_for_system_manager_is_accepted(self):
+        credentials = dict(ProcessID=dict(type='u', data=1), UnixUserID=dict(type='u', data=0),
+                           ProcessFD=dict(type='h', data=3))
+        cases = [credentials, dict(credentials, ProcessID=dict(type='u', data=2)),
+                 dict(credentials, UnixUserID=dict(type='u', data=100)), dict(credentials, ProcessFD=dict(type='u', data=3)),
+                 {name: value for name, value in credentials.items() if name != 'ProcessFD'}]
+        for reply in cases:
+            with self.subTest(reply=reply), mock.patch.object(broker.subprocess, 'check_output',
+                    return_value=json.dumps(dict(type='a{sv}', data=[reply])).encode()) as probe:
+                if reply is credentials:
+                    broker.require_chrony_bus_identity()
+                else:
+                    with self.assertRaises(OSError) as error:
+                        broker.require_chrony_bus_identity()
+                    self.assertEqual(errno.EOPNOTSUPP, error.exception.errno)
+                self.assertEqual(['GetConnectionCredentials', 's', 'org.freedesktop.systemd1'], probe.call_args.args[0][-3:])
 
 
 if __name__ == '__main__':
