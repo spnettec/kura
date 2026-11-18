@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.watchdog.CriticalComponent;
@@ -1701,7 +1700,7 @@ public class WatchdogServiceImplTest {
             this.rebootRequests++;
             notifyAll();
             if (this.rebootRequests <= this.failingReboots) {
-                throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "reboot", 1);
+                throw new CommandNotStartedException(new IOException("Reboot process was not started"));
             }
         }
 

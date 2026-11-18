@@ -18,12 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.watchdog.CriticalComponent;
@@ -243,7 +243,7 @@ public class CriticalComponentRebootTest {
             this.rebootRequests++;
             notifyAll();
             if (CriticalComponentRebootTest.this.rebootFails) {
-                throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "reboot", 1);
+                throw new CommandNotStartedException(new IOException("Reboot process was not started"));
             }
         }
 

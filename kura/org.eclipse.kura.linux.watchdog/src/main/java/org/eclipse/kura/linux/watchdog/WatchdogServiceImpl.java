@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
@@ -51,8 +52,14 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private static final long GRACE_PERIOD = Duration.ofMinutes(5).toMillis();
     private static final long REBOOT_RETRY_INTERVAL = Duration.ofMinutes(1).toMillis();
+    private static final long REBOOT_REPLY_TIMEOUT_SECONDS = 60;
+
+    private enum RebootOutcome {
+        NOT_STARTED, ACCEPTED, UNKNOWN
+    }
 
     private Long refreshDeadlineAfterRebootRequest;
+    private volatile RebootOutcome rebootOutcome = RebootOutcome.NOT_STARTED;
     private List<CriticalComponentRegistration> criticalComponentRegistrations;
     private ScheduledExecutorService pollExecutor;
     private ScheduledFuture<?> pollTask;
@@ -186,7 +193,9 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
             return;
         }
 
-        this.refreshDeadlineAfterRebootRequest = null;
+        if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+            this.refreshDeadlineAfterRebootRequest = null;
+        }
         this.device.set(null);
 
         final Optional<String> unavailableReason = openWatchdogDevice(newOptions.getWatchdogDevice(), true);
@@ -328,7 +337,7 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
                 }
                 Thread.currentThread().setName(WATCHDOG_SERVICE_IMPL_NAME);
                 logger.warn("Retrying system reboot");
-                if (tryReboot()) {
+                if (tryReboot() != RebootOutcome.NOT_STARTED) {
                     cancelPollTask();
                 } else {
                     logger.error("System reboot failed. The system is running without hardware watchdog supervision");
@@ -486,19 +495,16 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private void requestReboot(final WatchdogServiceOptions currentOptions, final String failureReason,
             final String rebootCause) {
-        if (this.stopping) {
+        if (this.stopping || this.rebootOutcome != RebootOutcome.NOT_STARTED) {
             return;
         }
         setState(WatchdogState.REBOOT_REQUESTED, failureReason);
         new RebootCauseFileWriter(currentOptions.getRebootCauseFilePath()).writeRebootCause(rebootCause);
 
-        if (tryReboot()) {
-            // Reboot command accepted: keep refreshing the watchdog for the grace period to
-            // allow a clean shutdown,
-            // then stop so the hardware watchdog resets the system if the reboot hangs
-            this.refreshDeadlineAfterRebootRequest = System.nanoTime()
-                    + TimeUnit.MILLISECONDS.toNanos(getGracePeriod());
-        } else if (this.device.get() != null) {
+        if (tryReboot() != RebootOutcome.NOT_STARTED) {
+            return;
+        }
+        if (this.device.get() != null) {
             // Reboot command failed but the watchdog device is open: stop refreshing
             // immediately
             // and let the hardware watchdog reset the system when its timeout expires
@@ -515,24 +521,30 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
         }
     }
 
-    private boolean tryReboot() {
-        if (this.stopping) {
-            return false;
+    private synchronized RebootOutcome tryReboot() {
+        if (this.stopping || this.rebootOutcome != RebootOutcome.NOT_STARTED) {
+            return this.rebootOutcome;
         }
         try {
             logger.debug("Requesting reboot.");
             rebootSystem();
-            return true;
+            this.rebootOutcome = RebootOutcome.ACCEPTED;
+        } catch (CommandNotStartedException e) {
+            logger.error("System reboot command could not be started", e);
+            return RebootOutcome.NOT_STARTED;
         } catch (KuraException e) {
-            logger.error("System reboot failed", e);
-            return false;
+            logger.error("System reboot outcome is unknown. The watchdog will preserve the original request", e);
+            this.rebootOutcome = RebootOutcome.UNKNOWN;
         }
+        // The command may already be acting. Allow a graceful shutdown, then
+        // let the hardware watchdog cover a stalled reboot.
+        this.refreshDeadlineAfterRebootRequest = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(getGracePeriod());
+        return this.rebootOutcome;
     }
 
     protected synchronized void rebootSystem() throws KuraException {
         if (this.stopping || Thread.currentThread().isInterrupted()) {
-            throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR,
-                    new InterruptedException("Watchdog reboot cancelled during shutdown"));
+            throw new CommandNotStartedException(new InterruptedException("Watchdog reboot cancelled during shutdown"));
         }
         try {
             runCommand("sync");
@@ -541,26 +553,48 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
         }
 
         if (this.stopping || Thread.currentThread().isInterrupted()) {
-            throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR,
-                    new InterruptedException("Watchdog reboot cancelled during shutdown"));
+            throw new CommandNotStartedException(new InterruptedException("Watchdog reboot cancelled during shutdown"));
         }
 
         runCommand("reboot");
     }
 
     protected void runCommand(String command) throws KuraException {
+        final Process process;
         try {
-            int exitCode = 0;
-            Process proc = Runtime.getRuntime().exec(command);
-            exitCode = proc.waitFor();
+            process = startCommand(command);
+        } catch (IOException e) {
+            throw new CommandNotStartedException(e);
+        }
+        try {
+            int exitCode;
+            if ("reboot".equals(command)) {
+                if (!process.waitFor(REBOOT_REPLY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR,
+                            new TimeoutException("The reboot command did not confirm its outcome"));
+                }
+                exitCode = process.exitValue();
+            } else {
+                exitCode = process.waitFor();
+            }
             if (exitCode != 0) {
                 throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, command, exitCode);
             }
-        } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR, e);
+        }
+    }
+
+    protected Process startCommand(String command) throws IOException {
+        return Runtime.getRuntime().exec(command);
+    }
+
+    protected static final class CommandNotStartedException extends KuraException {
+        private static final long serialVersionUID = 1L;
+
+        protected CommandNotStartedException(Throwable cause) {
+            super(KuraErrorCode.PROCESS_EXECUTION_ERROR, cause);
         }
     }
 

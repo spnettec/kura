@@ -30,6 +30,15 @@ class SafeWatchdogService extends WatchdogServiceImpl {
         throw new AssertionError("A test must not dispatch an operating-system command: " + command);
     }
 
+    @Override
+    protected Process startCommand(String command) {
+        throw new AssertionError("A test must not launch an operating-system process: " + command);
+    }
+
+    protected final void runDefaultCommandImplementation(String command) throws KuraException {
+        super.runCommand(command);
+    }
+
     protected final void runDefaultRebootImplementation() throws KuraException {
         super.rebootSystem();
     }
