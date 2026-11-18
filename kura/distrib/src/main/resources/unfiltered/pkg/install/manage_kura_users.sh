@@ -84,9 +84,8 @@ polkit.addRule(function(action, subject) {
         var unit = action.lookup("unit");
         var verb = action.lookup("verb");
         var startOrStop = verb == "start" || verb == "stop";
-        var clock = unit == "chrony.service" || unit == "chronyd.service";
         var dns = ${allow_dns} && (unit == "named.service" || unit == "bind9.service");
-        if ((clock && startOrStop) || (dns && (startOrStop || verb == "restart"))) {
+        if (dns && (startOrStop || verb == "restart")) {
             return polkit.Result.YES;
         }
         return polkit.Result.NO;

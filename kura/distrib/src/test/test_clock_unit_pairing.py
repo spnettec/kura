@@ -170,6 +170,7 @@ class ClockMaintenancePairingTest(unittest.TestCase):
 
             with mock.patch.object(setup, 'STATE', state), mock.patch.object(setup, 'Policy', Policy), \
                     mock.patch.object(setup, 'account', return_value=record), mock.patch.object(setup, 'run', side_effect=run), \
+                    mock.patch.object(setup, 'chrony_policy'), \
                     mock.patch.object(setup, 'maintenance', return_value={'original': True}):
                 if fail is None:
                     setup.resume(); self.assertFalse(flag.exists())

@@ -112,6 +112,23 @@ class ClockPrivilegeClientTest {
     }
 
     @Test
+    void chronyStopRequiresItsOwnCurrentReceiptAndCanonicalUnit() throws Exception {
+        Process process = mock(Process.class);
+        ByteArrayOutputStream input = new ByteArrayOutputStream();
+        String reply = APPLIED.replace("\"correctionMillis\":500", "\"chronyStopUnit\":\"chrony.service\"")
+                .replace("CLOCK_SET_RETURNED", "CHRONY_STOPPED");
+        when(process.getOutputStream()).thenReturn(input);
+        when(process.waitFor(45, TimeUnit.SECONDS)).thenReturn(true);
+        when(process.getInputStream()).thenReturn(new ByteArrayInputStream(reply.getBytes(US_ASCII)));
+        assertTrue(helper(process).setChronyRunning("chrony.service", false));
+        assertEquals("{\"chronyStopUnit\":\"chrony.service\"}", input.toString(US_ASCII));
+        assertThrows(IllegalArgumentException.class, () -> helper(process).setChronyRunning("kura.service", false));
+
+        when(process.getInputStream()).thenReturn(new ByteArrayInputStream(reply.getBytes(US_ASCII)));
+        assertThrows(IOException.class, () -> helper(process).setChronyRunning("chrony.service", true));
+    }
+
+    @Test
     void timeoutStopsOnlyOwnedHelperAndDoesNotRetry() throws Exception {
         Process process = mock(Process.class);
         when(process.getOutputStream()).thenReturn(new ByteArrayOutputStream());

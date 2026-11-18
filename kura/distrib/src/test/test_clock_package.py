@@ -46,7 +46,7 @@ class ClockPackageTest(unittest.TestCase):
         home = self.assembly(); value = broker.package_cohort(home)
         self.assertEqual(8, len(value['files']))
         self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
-        self.assertEqual(['adjust-realtime', 'sync-rtc'], value['actions'])
+        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony'], value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
     def test_main_has_no_system_clock_capability(self):

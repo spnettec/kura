@@ -12,7 +12,7 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import HOME, SOCKET, Policy, receive, send
+from kura_clock_broker import CHRONY_JOB_TIMEOUT, HOME, SOCKET, STOP_CONTEXT, Policy, receive, send
 from kura_clock_journal import (Refused, command, create, decode, digest, directory, encode,
                                 identifier, read, require, sync, terminal_receipt, validate_argument,
                                 MAX_BYTES, OPERATIONS)
@@ -44,6 +44,8 @@ def root_exchange(policy, value):
         # The Root listener was bound by PID1 and inherited by the non-Root actor.
         require(pid == 1 and uid == 0, 'UNSAFE_LISTENER')
         send(stream, value); stream.shutdown(socket.SHUT_WR)
+        if value['action'] in ('commit-chrony-start', 'commit-chrony-stop'):
+            stream.settimeout(CHRONY_JOB_TIMEOUT + 12)
         reply = receive(stream)
     require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
     if not reply['ok']:
@@ -99,7 +101,7 @@ class Client:
             except BlockingIOError:
                 raise Refused('BUSY') from None
             self.policy.check()
-            context = self.exchange(dict(schema=1, action='context'))
+            context = self.exchange(dict(schema=1, action=STOP_CONTEXT if action == 'stop-chrony' else 'context'))
             require(set(context) == {'schema', 'state', 'namespace', 'cohortSha256', 'acceptingWrites'}
                     and type(context['schema']) is int and context['schema'] == 1 and context['state'] == 'READY'
                     and type(context['acceptingWrites']) is bool and context['cohortSha256'] == self.policy.cohort, 'UNPAIRED_CODE')

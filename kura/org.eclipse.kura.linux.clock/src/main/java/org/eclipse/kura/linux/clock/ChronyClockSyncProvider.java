@@ -41,8 +41,6 @@ import com.google.gson.annotations.SerializedName;
 
 public class ChronyClockSyncProvider implements ClockSyncProvider {
 
-    private static final String SERVICE_MANAGER = "systemctl";
-
     private static final Logger logger = LoggerFactory.getLogger(ChronyClockSyncProvider.class);
 
     private final CommandExecutorService executorService;
@@ -141,7 +139,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         if (!inspectSelectedChrony().active()) {
             logger.info("chrony service down, trying to start...");
 
-            boolean startChronyd = controlChronyd("start");
+            boolean startChronyd = controlChronyd(true);
             if (!startChronyd) {
                 logger.error("Unable to start chrony service.");
                 throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Unable to start chrony service.");
@@ -225,7 +223,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         try {
             if (this.chronyServiceName != null) {
                 logger.info("Stopping chrony service...");
-                if (controlChronyd("stop")) {
+                if (controlChronyd(false)) {
                     logger.info("chrony service stopped");
                 } else {
                     logger.warn("Unable to stop chrony service");
@@ -243,11 +241,15 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         return this.lastSyncValue;
     }
 
-    private boolean controlChronyd(String command) {
-        Command startChronyStatus = new Command(new String[] { SERVICE_MANAGER, command, chronyServiceName });
-        CommandStatus chronyStatus = this.executorService.execute(startChronyStatus);
-
-        return chronyStatus.getExitStatus().isSuccessful();
+    private boolean controlChronyd(boolean running) throws KuraException {
+        try {
+            return this.clockPrivilegeClient.setChronyRunning(this.chronyServiceName, running);
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, error, "Interrupted during Chrony service control");
+        } catch (IOException error) {
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, error, "Unable to confirm Chrony service control");
+        }
     }
 
     private ClockPrivilegeClient.ChronyStatus inspectSelectedChrony() throws KuraException {

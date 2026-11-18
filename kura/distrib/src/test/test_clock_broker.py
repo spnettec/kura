@@ -25,7 +25,7 @@ class Policy:
     def check(self):
         return None
 
-    def peer(self, value):
+    def peer(self, value, stopping=False):
         journal.require(value == (123, 996, 989), 'UNAUTHORIZED')
 
 
@@ -90,6 +90,36 @@ class ClockBrokerTest(unittest.TestCase):
         inspect.assert_called_once_with()
         self.assertEqual([], list(self.private.iterdir()))
         self.assertEqual([], list(self.data.iterdir()))
+
+    def test_chrony_job_timeout_blocks_a_second_dispatch(self):
+        request = dict(schema=1, namespace=self.context()['namespace'], requestId=str(uuid.uuid4()),
+                       action='start-chrony', chronyStartUnit='chrony.service', cohortSha256=self.policy.cohort)
+        with mock.patch.object(broker, 'chrony_binding', return_value='d' * 64):
+            self.assertEqual('PREPARED', self.exchange(dict(request, action='prepare-chrony-start'))['state'])
+        with mock.patch.object(broker, 'change_chrony', side_effect=journal.Refused('UNCERTAIN_CHRONY_RESULT')) as run:
+            with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_CHRONY_RESULT'):
+                self.exchange(dict(request, action='commit-chrony-start'))
+            self.assertEqual('UNKNOWN', self.status(request)['state'])
+            self.assertEqual('UNKNOWN', self.exchange(dict(request, action='commit-chrony-start'))['state'])
+            run.assert_called_once_with('start-chrony', 'chrony.service', 'd' * 64)
+        self.assertFalse(self.context()['acceptingWrites'])
+
+    def test_teardown_admits_only_explicit_stop_stages(self):
+        def deactivating(peer, stopping=False):
+            journal.require(peer == self.peer and stopping, 'UNAUTHORIZED')
+        with mock.patch.object(self.policy, 'peer', side_effect=deactivating), \
+                mock.patch.object(broker, 'chrony_binding', return_value='d' * 64), \
+                mock.patch.object(broker, 'change_chrony') as change:
+            context = self.exchange(dict(schema=1, action='chrony-stop-context'))
+            for action in ('context', 'chrony-status', 'prepare-chrony-start', 'commit-adjust', 'status'):
+                with self.subTest(action=action), self.assertRaisesRegex(journal.Refused, 'UNAUTHORIZED'):
+                    self.exchange(dict(schema=1, action=action))
+            value = dict(schema=1, namespace=context['namespace'], requestId=str(uuid.uuid4()),
+                         action='prepare-chrony-stop', chronyStopUnit='chrony.service',
+                         cohortSha256=self.policy.cohort)
+            self.assertEqual('PREPARED', self.exchange(value)['state'])
+            self.assertEqual('CHRONY_STOPPED', self.exchange(dict(value, action='commit-chrony-stop'))['reason'])
+            change.assert_called_once_with('stop-chrony', 'chrony.service', 'd' * 64)
 
     def test_prepare_does_not_write_and_first_commit_is_durable(self):
         value = self.command()
@@ -601,6 +631,47 @@ class ChronyStatusTest(unittest.TestCase):
                 with self.assertRaisesRegex(journal.Refused, 'INVALID_CHRONY_STATUS'):
                     broker.chrony_status()
             read_unit.assert_called_once()
+
+
+class ChronyControlTest(unittest.TestCase):
+    def test_stable_source_and_confirmed_state_are_required(self):
+        observed = ('d' * 64, 'inactive')
+        with mock.patch.object(broker, 'chrony_target', side_effect=[('d' * 64, 'active'), observed]), \
+                mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(returncode=0)) as run:
+            broker.change_chrony('stop-chrony', 'chrony.service', observed[0])
+        self.assertEqual(['/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager',
+                          '--job-mode=fail', 'stop', 'chrony.service'], run.call_args.args[0])
+        run.assert_called_once()
+
+    def test_mismatched_prepared_source_never_dispatches(self):
+        with mock.patch.object(broker, 'chrony_binding', return_value='f' * 64), \
+                mock.patch.object(broker.subprocess, 'run') as run:
+            with self.assertRaises(OSError) as error:
+                broker.change_chrony('start-chrony', 'chronyd.service', 'e' * 64)
+        self.assertEqual(errno.ESTALE, error.exception.errno)
+        run.assert_not_called()
+
+    def test_lost_job_or_unconfirmed_state_remains_unknown(self):
+        for result in (-1, 0):
+            with mock.patch.object(broker, 'chrony_target', return_value=('a' * 64, 'activating')), \
+                    mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(returncode=result)) as run:
+                with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_CHRONY_RESULT'):
+                    broker.change_chrony('start-chrony', 'chrony.service', 'a' * 64)
+                run.assert_called_once()
+
+    def test_only_canonical_vendor_unit_is_paired(self):
+        good = dict(Id='chrony.service', LoadState='loaded', FragmentPath='/usr/lib/systemd/system/chrony.service',
+                    SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no', ActiveState='inactive')
+        def read(path):
+            return broker.CHRONY_RULE if path == broker.CHRONY_POLICY else b'vendor unit'
+        with mock.patch.object(broker, 'public_file', side_effect=read):
+            with mock.patch.object(broker, 'systemd_properties', return_value=dict(good)):
+                self.assertEqual(64, len(broker.chrony_binding('chrony.service')))
+            for change in [dict(NeedDaemonReload='yes'), dict(DropInPaths='/etc/test.conf'),
+                           dict(Id='chronyd.service'), dict(FragmentPath='/etc/systemd/system/chrony.service')]:
+                with mock.patch.object(broker, 'systemd_properties', return_value=dict(good, **change)):
+                    with self.assertRaises(OSError):
+                        broker.chrony_binding('chrony.service')
 
 
 if __name__ == '__main__':

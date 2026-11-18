@@ -10,10 +10,12 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import (ACTOR_HOME, COHORT, HOME, LEGACY_UNITS, STATE, UNITS, Policy, public_file,
+from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, COHORT, HOME, LEGACY_UNITS, STATE, UNITS,
+                               Policy, public_file, publish_path,
                                remove_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 identifier, read, require, sync)
@@ -25,6 +27,32 @@ INTENT = Path('/etc/kura/clock-broker-account-intent.json')
 def run(*arguments):
     return subprocess.check_output(list(arguments), env={'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C'},
                                    text=True, timeout=20)
+
+
+def chrony_policy(action):
+    path = CHRONY_POLICY
+    require(unit_directory_present(path.parent), 'UNPAIRED_CHRONY_POLICY')
+    if os.path.lexists(path):
+        require(public_file(path) == CHRONY_RULE, 'UNPAIRED_CHRONY_POLICY')
+        if action == 'remove':
+            path.unlink()
+            sync(path.parent)
+    elif action == 'install':
+        fd, staged = tempfile.mkstemp(prefix='.kura-clock-chrony-', dir=path.parent)
+        try:
+            with os.fdopen(fd, 'wb') as stream:
+                os.fchown(stream.fileno(), 0, 0)
+                os.fchmod(stream.fileno(), 0o644)
+                stream.write(CHRONY_RULE)
+                stream.flush()
+                os.fsync(stream.fileno())
+            publish_path(staged, path, False)
+        finally:
+            if os.path.lexists(staged):
+                os.unlink(staged)
+            sync(path.parent)
+    elif action == 'verify':
+        raise Refused('UNPAIRED_CHRONY_POLICY')
 
 
 def main_masked():
@@ -203,7 +231,8 @@ def install():
     record = account(create_missing=True)
     private_state(record)
     current = maintenance(record) if os.path.lexists(STATE) else None
-    # Check every installed fragment before publishing any replacement code.
+    # Check every installed fragment and the rule before publishing replacement code.
+    chrony_policy('check')
     desired_units = {}
     for name in UNITS:
         desired = public_file(HOME / 'libexec/clock-broker' / name)
@@ -222,6 +251,7 @@ def install():
             with temporary.open('xb') as output:
                 os.fchmod(output.fileno(), 0o644); output.write(desired); output.flush(); os.fsync(output.fileno())
         os.replace(temporary, path); sync(path.parent)
+    chrony_policy('install')
     policy.check(effective=False)
 
 
@@ -274,6 +304,7 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
 
 def resume():
     policy = Policy(); policy.check(effective=False); record = account()
+    chrony_policy('verify')
     actor = Policy(actor=True); actor.check(effective=False)
     require(actor.cohort == policy.cohort, 'UNPAIRED_CODE')
     # A newly published fragment is not yet PID1's loaded configuration. Keep
@@ -292,6 +323,7 @@ def resume():
 
 def remove():
     quiesce()
+    chrony_policy('remove')
     remove_rtc_projection()
     for name in UNITS:
         run('/usr/bin/systemctl', 'disable', name)

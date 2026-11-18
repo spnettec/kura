@@ -19,10 +19,15 @@ MAX_SAMPLE_AGE_NS = 30 * 1000000000
 COMMAND_FIELDS = {'schema', 'namespace', 'requestId', 'action', 'cohortSha256'}
 RTC_NODE = re.compile(r'/dev/rtc(?:0|[1-9][0-9]{0,8})')
 RTC_ALIASES = ('/dev/rtc', '/dev/misc/rtc')
+CHRONY_UNITS = ('chrony.service', 'chronyd.service')
+CHRONY_ACTIONS = {'start-chrony': 'start', 'stop-chrony': 'stop'}
 OPERATIONS = {
     'adjust-realtime': ('adjust', 'correctionMillis', 'CLOCK_SET_RETURNED'),
     'sync-rtc': ('rtc', 'rtcDevice', 'RTC_SET_RETURNED'),
+    'start-chrony': ('chrony-start', 'chronyStartUnit', 'CHRONY_STARTED'),
+    'stop-chrony': ('chrony-stop', 'chronyStopUnit', 'CHRONY_STOPPED'),
 }
+BINDING_FIELDS = {'sync-rtc': 'rtcBinding', **dict.fromkeys(CHRONY_ACTIONS, 'chronyBinding')}
 
 
 class Refused(RuntimeError):
@@ -74,8 +79,10 @@ def digest(value):
 def validate_argument(field, value):
     if field == 'correctionMillis':
         require(type(value) is int and -9223372036854 <= value <= 9223372036854)
-    else:
+    elif field == 'rtcDevice':
         require(isinstance(value, str) and (RTC_NODE.fullmatch(value) is not None or value in RTC_ALIASES))
+    else:
+        require(isinstance(value, str) and value in CHRONY_UNITS)
 
 
 def command(value):
@@ -102,7 +109,7 @@ def terminal_receipt(result, reference, action):
                      and result['reason'] in reasons and result['errno'] != 0)))
 
 
-def valid_rtc_binding(binding):
+def valid_binding(binding):
     if type(binding) is not dict:
         return False
     if set(binding) == {'sha256'}:
@@ -205,9 +212,11 @@ class Journal:
     def read_prepared(self, path, reference, action):
         prepared = decode(read(path / 'prepared-context.json', self.owner))
         keys = set(reference) | {'bootId', 'preparedMonotonicNs'}
-        if action == 'sync-rtc' and 'rtcBinding' in prepared:
-            keys.add('rtcBinding')
-            require(valid_rtc_binding(prepared['rtcBinding']), 'UNRESOLVED_PREPARE')
+        field = BINDING_FIELDS.get(action)
+        # Completed legacy RTC records may predate their device binding.
+        if field and (action != 'sync-rtc' or field in prepared):
+            keys.add(field)
+            require(valid_binding(prepared.get(field)), 'UNRESOLVED_PREPARE')
         require(set(prepared) == keys and all(prepared[key] == value for key, value in reference.items())
                 and type(prepared['schema']) is int
                 and type(prepared['preparedMonotonicNs']) is int and prepared['preparedMonotonicNs'] >= 0,
@@ -270,7 +279,7 @@ class Journal:
             return False
         return True
 
-    def prepare(self, value, bind_rtc=None):
+    def prepare(self, value, bind=None):
         value = command(value)
         require(value['namespace'] == self.namespace(), 'FOREIGN_NAMESPACE')
         request_id = value['requestId']; request_hash = digest(value)
@@ -280,14 +289,15 @@ class Journal:
         require(self.accepting(), 'ADMISSION_CLOSED')
         reference = dict(schema=1, namespace=value['namespace'], requestId=request_id, requestSha256=request_hash)
         prepared = dict(reference, bootId=identifier(self.boot_id()), preparedMonotonicNs=time.monotonic_ns())
-        if value['action'] == 'sync-rtc':
-            require(callable(bind_rtc), 'UNRESOLVED_PREPARE')
+        field = BINDING_FIELDS.get(value['action'])
+        if field:
+            require(callable(bind), 'UNRESOLVED_PREPARE')
             try:
-                binding = dict(sha256=bind_rtc(value['rtcDevice']))
+                binding = dict(sha256=bind(value[OPERATIONS[value['action']][1]]))
             except OSError as error:
                 binding = dict(errno=error.errno)
-            require(valid_rtc_binding(binding), 'UNRESOLVED_PREPARE')
-            prepared['rtcBinding'] = binding
+            require(valid_binding(binding), 'UNRESOLVED_PREPARE')
+            prepared[field] = binding
         path.mkdir(mode=0o700); sync(path.parent)
         create(path / 'intent.json', value)
         require(read(path / 'intent.json', self.owner) == encode(value), 'UNRESOLVED_JOURNAL')
@@ -308,7 +318,8 @@ class Journal:
         require(read(path / 'intent.json', self.owner) == encode(value), 'CONFLICT')
         receipt = dict(schema=1, namespace=value['namespace'], requestId=request_id, requestSha256=request_hash)
         prepared = self.read_prepared(path, receipt, value['action'])
-        binding = prepared['rtcBinding'] if value['action'] == 'sync-rtc' else None
+        field = BINDING_FIELDS.get(value['action'])
+        binding = prepared[field] if field else None
         create(path / 'commit-intent.json', receipt)
         age = time.monotonic_ns() - prepared['preparedMonotonicNs']
         _, field, success = OPERATIONS[value['action']]

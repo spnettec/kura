@@ -5,12 +5,15 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/install/manage_kura_users.sh'
 FUNCTIONS = SCRIPT.read_text().split('function create_users {', 1)[0]
+sys.path.insert(0, str(SCRIPT.parent.parent / 'bin'))
+from kura_clock_broker import CHRONY_RULE
 
 
 class SystemdPolkitPolicyTest(unittest.TestCase):
@@ -100,7 +103,7 @@ class SystemdPolkitPolicyTest(unittest.TestCase):
         self.assertNotEqual(self.write('unexpected').returncode, 0)
         self.assertFalse(self.rules.exists())
 
-    def evaluate(self, profile, cases):
+    def evaluate(self, profile, cases, policy=None):
         if not shutil.which('node'):
             self.skipTest('Node is needed for the emitted JavaScript contract; native polkit is verified separately')
         result = self.write(profile)
@@ -115,27 +118,26 @@ vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
 process.stdout.write(JSON.stringify(cases.map(c => rule({
     id: c.action || 'org.freedesktop.systemd1.manage-units',
     lookup: k => (c.details || {})[k]
-}, {user: c.user || 'kurad'}))));
+}, {user: c.user || 'kurad', system_unit: c.systemUnit, no_new_privileges: c.nnp}))));
 '''
-        result = subprocess.run(['node', '-e', program, str(self.policy), json.dumps(cases)],
+        result = subprocess.run(['node', '-e', program, str(policy or self.policy), json.dumps(cases)],
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
     def test_only_required_service_operations_are_allowed(self):
         allowed = [(u, v) for u in ['named.service', 'bind9.service'] for v in ['start', 'stop', 'restart']]
-        allowed += [(u, v) for u in ['chrony.service', 'chronyd.service'] for v in ['start', 'stop']]
         denied = [('cron.service', 'restart'), ('bluetooth.service', 'start'),
                   ('named.service', 'reload'), ('named.service', 'kill'),
-                  ('chrony.service', 'restart'), ('named@other.service', 'start')]
+                  ('chrony.service', 'start'), ('chronyd.service', 'stop'), ('named@other.service', 'start')]
         cases = [dict(details=dict(unit=u, verb=v)) for u, v in allowed + denied]
         cases += [dict(details=dict(unit='named.service')), dict(details=dict(verb='start')), dict()]
         self.assertEqual(self.evaluate('NO', cases), ['yes'] * len(allowed) + ['no'] * (len(denied) + 3))
 
-    def test_no_network_profile_only_allows_clock(self):
+    def test_no_network_profile_has_no_service_control_grants(self):
         cases = [dict(details=dict(unit=u, verb='start')) for u in
                  ['chrony.service', 'chronyd.service', 'named.service', 'bind9.service']]
-        self.assertEqual(self.evaluate('YES', cases), ['yes', 'yes', 'no', 'no'])
+        self.assertEqual(self.evaluate('YES', cases), ['no'] * 4)
 
     def test_unit_files_reload_and_other_systemd_writes_are_denied(self):
         actions = ['manage-unit-files', 'reload-daemon', 'set-environment', 'unknown-future-operation']
@@ -148,6 +150,18 @@ process.stdout.write(JSON.stringify(cases.map(c => rule({
         cases += [dict(action='org.freedesktop.NetworkManager.enable-disable-network'),
                   dict(action='org.freedesktop.login1.reboot-multiple-sessions')]
         self.assertEqual(self.evaluate('NO', cases), [None, None, None, 'yes'])
+
+    def test_clock_rule_requires_exact_service_account_unit_verb_and_nnp(self):
+        policy = self.root / 'clock.rules'
+        policy.write_bytes(CHRONY_RULE)
+        base = dict(user='kura-clock', systemUnit='kura-clock-broker.service', nnp=True,
+                    details=dict(unit='chrony.service', verb='start'))
+        cases = [base, dict(base, details=dict(unit='chronyd.service', verb='stop')),
+                 dict(base, nnp=False), dict(base, nnp=None), dict(base, systemUnit='other.service'),
+                 dict(base, details=dict(unit='chrony.service', verb='restart')),
+                 dict(base, details=dict(unit='networking.service', verb='start')),
+                 dict(base, action='org.freedesktop.systemd1.manage-unit-files'), dict(base, user='kurad')]
+        self.assertEqual(self.evaluate('NO', cases, policy), ['yes', 'yes'] + ['no'] * 6 + [None])
 
 
 if __name__ == '__main__':

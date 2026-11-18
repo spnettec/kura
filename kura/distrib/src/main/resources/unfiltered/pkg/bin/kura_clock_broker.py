@@ -22,7 +22,8 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_journal import (Journal, Refused, command, create, decode, digest, directory, encode,
-                                identifier, identity, read, require, sync, MAX_BYTES, OPERATIONS, RTC_ALIASES, RTC_NODE)
+                                identifier, identity, read, require, sync, CHRONY_ACTIONS, CHRONY_UNITS,
+                                MAX_BYTES, OPERATIONS, RTC_ALIASES, RTC_NODE)
 
 HOME = Path('/opt/eclipse/kura')
 ACTOR_HOME = Path('/usr/libexec/kura-clock-broker')
@@ -36,9 +37,28 @@ COHORT = Path('libexec/clock-broker/cohort.json')
 LEGACY_UNITS = ('kura-clock-broker.socket', 'kura-clock-broker.service')
 RTC_UNIT = 'kura-clock-rtc-devices.service'
 UNITS = (*LEGACY_UNITS, RTC_UNIT)
-CHRONY_UNITS = ('chrony.service', 'chronyd.service')
 CHRONY_ACTIVE_STATES = {'active', 'reloading', 'inactive', 'failed', 'activating', 'deactivating',
                         'maintenance', 'refreshing'}
+CHRONY_POLICY = Path('/usr/share/polkit-1/rules.d/10-kura-clock-chrony.rules')
+CHRONY_RULE = b'''// Managed by the Kura clock broker installer.
+polkit.addRule(function(action, subject) {
+    if (subject.user !== "kura-clock" || action.id.indexOf("org.freedesktop.systemd1.") !== 0) {
+        return;
+    }
+    var unit = action.lookup("unit");
+    var verb = action.lookup("verb");
+    if (action.id === "org.freedesktop.systemd1.manage-units" &&
+        subject.system_unit === "kura-clock-broker.service" && subject.no_new_privileges === true &&
+        (unit === "chrony.service" || unit === "chronyd.service") &&
+        (verb === "start" || verb === "stop")) {
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NO;
+});
+'''
+CHRONY_JOB_TIMEOUT = 15
+STOP_CONTEXT = 'chrony-stop-context'
+TEARDOWN_REQUESTS = (STOP_CONTEXT, 'prepare-chrony-stop', 'commit-chrony-stop')
 HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
 SYS_TIME = 1 << 25
 RTC_PROJECTOR_CAPS = (1 << 0) | (1 << 27)  # CHOWN and MKNOD
@@ -230,6 +250,46 @@ def chrony_status():
     return dict(schema=1, unit='', active=False)
 
 
+def chrony_target(unit):
+    require(unit in CHRONY_UNITS)
+    if public_file(CHRONY_POLICY) != CHRONY_RULE:
+        raise OSError(errno.EPERM, 'Unpaired Chrony policy')
+    fields = ('Id', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths', 'NeedDaemonReload', 'Transient',
+              'ActiveState')
+    value = systemd_properties(fields, unit)
+    if (value['Id'] != unit or value['LoadState'] != 'loaded' or value['ActiveState'] not in CHRONY_ACTIVE_STATES
+            or value['FragmentPath'] not in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
+            or value['SourcePath'] != '' or value['DropInPaths'] != ''
+            or value['NeedDaemonReload'] != 'no' or value['Transient'] != 'no'):
+        raise OSError(errno.ESTALE, 'Unpaired loaded Chrony unit')
+    fragment = public_file(Path(value['FragmentPath']))
+    state = value.pop('ActiveState')
+    return digest(dict(unit=value, fragmentSha256=hashlib.sha256(fragment).hexdigest())), state
+
+
+def chrony_binding(unit):
+    return chrony_target(unit)[0]
+
+
+def change_chrony(action, unit, expected_binding):
+    verb = CHRONY_ACTIONS[action]
+    if chrony_binding(unit) != expected_binding:
+        raise OSError(errno.ESTALE, 'Chrony target changed after prepare')
+    try:
+        result = subprocess.run(['/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager',
+                                 '--job-mode=fail', verb, unit],
+                                env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'},
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                timeout=CHRONY_JOB_TIMEOUT)
+        require(result.returncode == 0, 'UNCERTAIN_CHRONY_RESULT')
+        binding, state = chrony_target(unit)
+        require(binding == expected_binding and state == ('active' if verb == 'start' else 'inactive'),
+                'UNCERTAIN_CHRONY_RESULT')
+    except (OSError, Refused, subprocess.SubprocessError) as error:
+        # A job can be queued in PID1 even when its client fails or times out.
+        raise Refused('UNCERTAIN_CHRONY_RESULT') from error
+
+
 class Policy:
     def __init__(self, actor=False):
         self.home = ACTOR_HOME if actor else HOME
@@ -241,7 +301,9 @@ class Policy:
         base = {'schema', 'protocol', 'files', 'clockBundle', 'actor', 'caller'}
         legacy = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'action'}
                   and value['action'] == 'adjust-realtime')
-        require((legacy or (set(value) == base | {'actions'} and value['actions'] == list(OPERATIONS)))
+        prior = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'actions'}
+                 and value['actions'] == ['adjust-realtime', 'sync-rtc'])
+        require((legacy or prior or (set(value) == base | {'actions'} and value['actions'] == list(OPERATIONS)))
                 and type(value['schema']) is int and value['schema'] == 1
                 and type(value['protocol']) is int and value['protocol'] == 1
                 and value['actor'] == 'kura-clock' and value['caller'] == 'kurad'
@@ -298,7 +360,7 @@ class Policy:
         directory(STATE, account.pw_uid)
         return account.pw_uid
 
-    def peer(self, peer):
+    def peer(self, peer, stopping=False):
         pid, uid, gid = peer
         account = pwd.getpwnam('kurad')
         require(account.pw_uid > 0 and uid == account.pw_uid, 'UNAUTHORIZED')
@@ -309,7 +371,8 @@ class Policy:
         fields = dict(line.split('=', 1) for line in subprocess.check_output(
             ['/usr/bin/systemctl', 'show', 'kura.service', '--property=MainPID,ActiveState'],
             env={'PATH': '/usr/bin:/bin', 'LANG': 'C'}, text=True, timeout=3).splitlines())
-        require(fields['ActiveState'] == 'active' and fields['MainPID'].isdigit() and int(fields['MainPID']) > 0
+        require((fields['ActiveState'] == 'active' or (stopping and fields['ActiveState'] == 'deactivating'))
+                and fields['MainPID'].isdigit() and int(fields['MainPID']) > 0
                 and values['PPid'].strip() == fields['MainPID'], 'UNAUTHORIZED')
         parent = Path('/proc/' + fields['MainPID'])
         parent_status = dict(line.split(':', 1) for line in (parent / 'status').read_text().splitlines() if ':' in line)
@@ -329,15 +392,17 @@ class Manager:
         self.bind_rtc = bind_rtc or rtc_binding
 
     def handle(self, value, peer):
-        self.policy.check(); self.policy.peer(peer)
         require(type(value) is dict and type(value.get('schema')) is int and value.get('schema') == 1)
-        if value.get('action') == 'chrony-status':
+        action = value.get('action')
+        require(isinstance(action, str))
+        stopping = action in TEARDOWN_REQUESTS
+        self.policy.check(); self.policy.peer(peer, stopping=stopping)
+        if action == 'chrony-status':
             require(set(value) == {'schema', 'action'})
             return chrony_status()
         with self.journal.lock():
             namespace = self.journal.namespace()
-            action = value.get('action')
-            if action == 'context':
+            if action in ('context', STOP_CONTEXT):
                 require(set(value) == {'schema', 'action'})
                 return dict(schema=1, state='READY', namespace=namespace, cohortSha256=self.policy.cohort,
                             acceptingWrites=self.journal.accepting())
@@ -353,7 +418,11 @@ class Manager:
             # Check again under admission immediately before any durable intent.
             self.policy.check()
             require(value['cohortSha256'] == self.policy.cohort, 'UNPAIRED_CODE')
-            self.policy.peer(peer)
+            self.policy.peer(peer, stopping=stopping)
+            if operation in CHRONY_ACTIONS:
+                if phase == 'prepare':
+                    return self.journal.prepare(value, chrony_binding)
+                return self.journal.commit(value, lambda unit, binding: change_chrony(operation, unit, binding))
             if phase == 'prepare':
                 return self.journal.prepare(value, self.bind_rtc)
             actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
@@ -456,9 +525,8 @@ def projected_rtc(device):
     return RTC_PROJECTION / name, hardware
 
 
-def publish_rtc(staged, target, replace):
-    # Both names are in the Root devtmpfs. NOREPLACE for fresh publication,
-    # EXCHANGE retains a fully checked old projection until the new one is ready.
+def publish_path(staged, target, replace):
+    # NOREPLACE for fresh publication. EXCHANGE retains a checked old entry.
     rename = ctypes.CDLL(None, use_errno=True).renameat2
     rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
     rename.restype = ctypes.c_int
@@ -511,7 +579,7 @@ def project_rtc():
         policy.check()
         if with_projection:
             require(rtc_catalog(RTC_SOURCE) == previous, 'UNPAIRED_RTC_PROJECTION')
-        publish_rtc(staged, RTC_SOURCE, with_projection)
+        publish_path(staged, RTC_SOURCE, with_projection)
     finally:
         if staged.exists():
             for entry in staged.iterdir():
@@ -524,7 +592,7 @@ def remove_rtc_projection():
         require(unit_directory_present(RTC_SOURCE.parent), 'UNPAIRED_RTC_PROJECTION')
         catalog = rtc_catalog(RTC_SOURCE)
         retired = RTC_SOURCE.with_name('.kura-clock-rtc-retired-' + uuid.uuid4().hex)
-        publish_rtc(RTC_SOURCE, retired, False)
+        publish_path(RTC_SOURCE, retired, False)
         for name in (*catalog['nodes'], RTC_MANIFEST):
             (retired / name).unlink()
         retired.rmdir()

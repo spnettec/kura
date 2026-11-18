@@ -17,6 +17,8 @@ class ClockPrivilegeClient {
 
     private static final String REALTIME_FIELD = "correctionMillis";
     private static final String RTC_FIELD = "rtcDevice";
+    private static final String CHRONY_START_FIELD = "chronyStartUnit";
+    private static final String CHRONY_STOP_FIELD = "chronyStopUnit";
     private static final long MAX_CORRECTION_MILLIS = 9223372036854L;
     private static final Pattern RTC_DEVICE = Pattern.compile("/dev/(?:rtc(?:0|[1-9][0-9]{0,8})?|misc/rtc)");
     private static final Pattern CORRECTION = Pattern.compile("0|-?[1-9][0-9]{0,12}");
@@ -69,13 +71,27 @@ class ClockPrivilegeClient {
         return chronyStatus(exchange(request));
     }
 
+    boolean setChronyRunning(String unit, boolean running) throws IOException, InterruptedException {
+        if (unit == null || !CHRONY_UNITS.contains(unit)) {
+            throw new IllegalArgumentException("Unsupported Chrony service");
+        }
+        String field = running ? CHRONY_START_FIELD : CHRONY_STOP_FIELD;
+        JsonObject request = new JsonObject();
+        request.addProperty(field, unit);
+        return appliedFor(exchange(request, 45), field, unit);
+    }
+
     private String exchange(JsonObject request) throws IOException, InterruptedException {
+        return exchange(request, 25);
+    }
+
+    private String exchange(JsonObject request, int timeoutSeconds) throws IOException, InterruptedException {
         Process process = startHelper();
         try {
             try (var input = process.getOutputStream()) {
                 input.write(request.toString().getBytes(US_ASCII));
             }
-            if (!process.waitFor(25, TimeUnit.SECONDS)) {
+            if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
                 throw new IOException("Clock helper timed out; original decision retained for status lookup");
             }
             byte[] reply = process.getInputStream().readNBytes(4097);
@@ -124,8 +140,8 @@ class ClockPrivilegeClient {
     private static boolean appliedFor(String raw, String expectedField, String expectedValue) throws IOException {
         try {
             JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
-            boolean rtc = result.has(RTC_FIELD);
-            String field = rtc ? RTC_FIELD : REALTIME_FIELD;
+            String field = Set.of(REALTIME_FIELD, RTC_FIELD, CHRONY_START_FIELD, CHRONY_STOP_FIELD).stream()
+                    .filter(result::has).findFirst().orElseThrow(IllegalArgumentException::new);
             if (!result.keySet().equals(Set.of("schema", "namespace", "requestId", field, "state", "reason",
                     "currentSample")) || !result.get("schema").getAsJsonPrimitive().isNumber()
                     || !"1".equals(result.get("schema").getAsString())
@@ -134,8 +150,12 @@ class ClockPrivilegeClient {
             }
             var argument = result.getAsJsonPrimitive(field);
             String value = argument.getAsString();
-            boolean valid = rtc ? argument.isString() && RTC_DEVICE.matcher(value).matches()
-                    : argument.isNumber() && CORRECTION.matcher(value).matches() && validCorrection(argument.getAsLong());
+            boolean valid = switch (field) {
+            case REALTIME_FIELD -> argument.isNumber() && CORRECTION.matcher(value).matches()
+                    && validCorrection(argument.getAsLong());
+            case RTC_FIELD -> argument.isString() && RTC_DEVICE.matcher(value).matches();
+            default -> argument.isString() && CHRONY_UNITS.contains(value);
+            };
             if (!valid) {
                 throw new IllegalArgumentException();
             }
@@ -147,10 +167,16 @@ class ClockPrivilegeClient {
             }
             String state = stringField(result, "state");
             String reason = stringField(result, "reason");
+            String success = switch (field) {
+            case REALTIME_FIELD -> "CLOCK_SET_RETURNED";
+            case RTC_FIELD -> "RTC_SET_RETURNED";
+            case CHRONY_START_FIELD -> "CHRONY_STARTED";
+            default -> "CHRONY_STOPPED";
+            };
             boolean validState = switch (state) {
-            case "APPLIED" -> reason.equals(rtc ? "RTC_SET_RETURNED" : "CLOCK_SET_RETURNED");
+            case "APPLIED" -> reason.equals(success);
             case "FAILED" -> reason.equals("OS_ERROR") || reason.equals("STALE_SAMPLE")
-                    || (!rtc && reason.equals("CLOCK_RANGE"));
+                    || (field.equals(REALTIME_FIELD) && reason.equals("CLOCK_RANGE"));
             case "UNKNOWN" -> UNKNOWN_REASONS.contains(reason);
             default -> false;
             };
