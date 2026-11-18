@@ -123,9 +123,73 @@ EOF
     [ ! -e "${legacy_file}" ] || rm -f "${legacy_file}" || return 1
 }
 
+function manage_network_polkit_policy {
+    python3 -I - "$1" <<'KURA_MANAGED_NETWORK_POLICY'
+import os, stat, sys, tempfile
+from pathlib import Path
+
+PATH = Path('/usr/share/polkit-1/rules.d/kura-nm.rules')
+POLICY = b'''polkit.addRule(function(action, subject) {
+        if ((action.id.indexOf("org.freedesktop.NetworkManager.") == 0 ||
+            action.id.indexOf("org.freedesktop.ModemManager1.") == 0 ||
+            action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&
+            subject.user == "kurad") {
+            return polkit.Result.YES;
+        }
+    });
+'''
+
+def require(value):
+    if not value:
+        raise RuntimeError('Unpaired Kura NetworkManager policy')
+
+def sync():
+    fd = os.open(PATH.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try: os.fsync(fd)
+    finally: os.close(fd)
+
+try:
+    require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[1] in ('check', 'install', 'remove'))
+    action = sys.argv[1]
+    for parent in PATH.parents:
+        m = parent.lstat()
+        require(stat.S_ISDIR(m.st_mode) and m.st_uid == 0 and not m.st_mode & 0o022)
+    if os.path.lexists(PATH):
+        fd = os.open(PATH, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC | os.O_NOATIME)
+        try:
+            m = os.fstat(fd)
+            require(stat.S_ISREG(m.st_mode) and m.st_uid == 0 and m.st_nlink == 1
+                    and not m.st_mode & 0o7022 and m.st_size <= 16384)
+            raw = os.read(fd, 16385)
+            identity = lambda x: (x.st_dev, x.st_ino, x.st_uid, x.st_gid, x.st_mode,
+                                  x.st_nlink, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
+            require(raw == POLICY and identity(m) == identity(os.fstat(fd)) == identity(PATH.lstat()))
+            if action == 'remove':
+                PATH.unlink(); sync()
+            elif action == 'install' and stat.S_IMODE(m.st_mode) != 0o644:
+                os.fchmod(fd, 0o644); os.fsync(fd)
+        finally:
+            os.close(fd)
+    elif action == 'install':
+        fd, temporary = tempfile.mkstemp(prefix='.kura-nm-policy-', dir=PATH.parent)
+        try:
+            with os.fdopen(fd, 'wb') as output:
+                os.fchown(output.fileno(), 0, 0); os.fchmod(output.fileno(), 0o644)
+                output.write(POLICY); output.flush(); os.fsync(output.fileno())
+            # Exclusive publication cannot replace a concurrently added site rule.
+            os.link(temporary, PATH, follow_symlinks=False)
+        finally:
+            os.unlink(temporary); sync()
+except (OSError, ValueError, RuntimeError):
+    sys.stderr.write('Refusing unpaired Kura NetworkManager policy; preserve local rules\n')
+    sys.exit(1)
+KURA_MANAGED_NETWORK_POLICY
+}
+
 function create_users {
     require_modern_polkit || return 1
     manage_su_pam_policy check || return 1
+    manage_network_polkit_policy check || return 1
     # create kura user without home directory
     useradd -M kura
     # disable login for kura user
@@ -143,16 +207,7 @@ function create_users {
     # The formal Ubuntu 24.04/26.04 release uses the JavaScript backend.
     write_systemd_polkit_policy || return 1
     if [[ $NN == "NO" ]]; then
-            if [ ! -f /usr/share/polkit-1/rules.d/kura-nm.rules ]; then
-                echo "polkit.addRule(function(action, subject) {
-        if ((action.id.indexOf(\"org.freedesktop.NetworkManager.\") == 0 ||
-            action.id.indexOf(\"org.freedesktop.ModemManager1.\") == 0 ||
-            action.id.indexOf(\"fi.w1.wpa_supplicant1.\") == 0) &&
-            subject.user == \"kurad\") {
-            return polkit.Result.YES;
-        }
-    });" >/usr/share/polkit-1/rules.d/kura-nm.rules
-            fi
+        manage_network_polkit_policy install || return 1
     fi
 
     # Keep the target restriction and caller grant in one atomic PAM update.
@@ -183,6 +238,9 @@ function delete_users {
     # retained with their UID/GID. Package lifecycle removes both listeners.
     # Revoke both halves before changing any account or other host policy.
     manage_su_pam_policy remove || return 1
+    # The retained kurad UID must not retain the package's broad NM grant.
+    # Unknown site rules are preserved and make removal fail explicitly.
+    manage_network_polkit_policy remove || return 1
     # A retained reinstall must keep the numeric owners of copied user data.
     # Both accounts are already locked; revoke grants without recycling a UID.
     if [ ! -e /var/lib/kura-retained ]; then
@@ -192,34 +250,38 @@ function delete_users {
     # we cannot delete kurad system user because there should be several process owned by this user,
     # so only try to remove it from sudoers.
     if [ -f /etc/sudoers.d/kurad ]; then
-        rm -f /etc/sudoers.d/kurad
+        rm -f /etc/sudoers.d/kurad || return 1
     fi
     # remove kurad from dialout group
-    gpasswd -d kurad dialout
+    local groups
+    groups=$(id -nG kurad) || return 1
+    case " ${groups} " in
+        *" dialout "*) gpasswd -d kurad dialout || return 1 ;;
+    esac
 
     # remove polkit policy
     if [ -f /usr/share/polkit-1/rules.d/kura.rules ]; then
-        rm -f /usr/share/polkit-1/rules.d/kura.rules
+        rm -f /usr/share/polkit-1/rules.d/kura.rules || return 1
     fi
     if [ -f /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla
+        rm -f /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla || return 1
     fi
     if [ -f /etc/polkit-1/localauthority/50-local.d/52-org.freedesktop.networkmanager.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/52-org.freedesktop.networkmanager.pkla
+        rm -f /etc/polkit-1/localauthority/50-local.d/52-org.freedesktop.networkmanager.pkla || return 1
     fi
     if [ -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla
+        rm -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla || return 1
     fi
     if [ -f /etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pkla
+        rm -f /etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pkla || return 1
     fi
 
     # recover old configs
     if [ -f /etc/dbus-1/system.d/bluetooth.conf.save ]; then
-        mv /etc/dbus-1/system.d/bluetooth.conf.save /etc/dbus-1/system.d/bluetooth.conf
+        mv /etc/dbus-1/system.d/bluetooth.conf.save /etc/dbus-1/system.d/bluetooth.conf || return 1
     fi
     if [ -f /etc/dbus-1/system.d/wpa_supplicant.conf.save ]; then
-        mv /etc/dbus-1/system.d/wpa_supplicant.conf.save /etc/dbus-1/system.d/wpa_supplicant.conf
+        mv /etc/dbus-1/system.d/wpa_supplicant.conf.save /etc/dbus-1/system.d/wpa_supplicant.conf || return 1
     fi
 }
 
@@ -238,6 +300,10 @@ while [[ $# > 0 ]]; do
     --check-pam)
         # Internal read-only preflight; preserve site policy on rejection.
         manage_su_pam_policy check
+        exit $?
+        ;;
+    --check-nm-policy)
+        manage_network_polkit_policy check
         exit $?
         ;;
     -i | --install)

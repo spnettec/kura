@@ -34,6 +34,7 @@ esac
 # Standalone invocation must reject an unsupported backend before any changes.
 bash "$(dirname "$0")/manage_kura_users.sh" --check-polkit || exit 1
 bash "$(dirname "$0")/manage_kura_users.sh" --check-pam || exit 1
+bash "$(dirname "$0")/manage_kura_users.sh" --check-nm-policy || exit 1
 python3 -I "$(dirname "$0")/../bin/kura_key_service_lifecycle.py" --enter install || exit 1
 
 # If ${INSTALL_DIR}/kura already exists as a real directory (e.g. an addon .deb such as
