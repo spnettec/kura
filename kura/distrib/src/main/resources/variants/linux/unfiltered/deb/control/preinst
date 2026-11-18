@@ -321,7 +321,7 @@ TIMEOUT_TIME=300
 # bash functions shadow the positional parameters.
 ACTION="$1"
 case "${ACTION}" in
-    install|upgrade) ;;
+    install|upgrade|--migrate-linked-main) ;;
     abort-upgrade) exit 0 ;;
     *) echo "Unsupported Kura preinst action: ${ACTION}" >&2; exit 1 ;;
 esac
@@ -350,6 +350,11 @@ raise RuntimeError("Kura key-journal reader was not embedded")
 raise RuntimeError("Kura key-service lifecycle was not embedded")
 PYKURAKEYSERVICE
 }
+if [ "${ACTION}" = "--migrate-linked-main" ]; then
+    [ "$#" -eq 1 ] || exit 1
+    keyServicePackageAdmission --migrate-linked-main
+    exit "$?"
+fi
 if [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; then
     keyServicePackageAdmission --check-retained-main-state || exit 1
 fi

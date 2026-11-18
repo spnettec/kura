@@ -4,6 +4,7 @@
 import hashlib
 import json
 import unittest
+from unittest.mock import patch
 
 import test_key_service_lifecycle as fixtures
 
@@ -134,6 +135,103 @@ class MainLayoutAdmissionTest(unittest.TestCase):
         self.assertEqual(marker, self.policy.enter('install'))
         self.assertEqual(secret, (self.policy.state / 'journal.key').read_bytes())
         self.assertFalse(any(args[1:3] == ['show', 'kura.service'] for args in self.fixture.calls))
+
+
+class MainLinkMigrationTest(unittest.TestCase):
+    def setUp(self):
+        self.fixture = fixtures.LifecycleTest()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.policy = self.fixture.policy
+        self.policy.initialize()
+        self.vendor = self.policy.path('/lib/systemd/system/kura.service')
+        self.source = self.policy.path('/var/lib/old-core/kura.service')
+        self.unit = b'[Service]\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n'
+        self.fixture.write(self.source, self.unit, 0o644)
+        self.manifest = {'schema': 2, 'generation': {'unitSha256': hashlib.sha256(self.unit).hexdigest()}}
+        self.commands = []
+        self.fail_reload = False
+        self.active = False
+        self.pairing_error = False
+        mock = patch.object(self.policy, 'assets', side_effect=self.assets)
+        mock.start()
+        self.addCleanup(mock.stop)
+        self.policy.runner = self.runner
+
+    def assets(self, *, generation_binding=False, _linked_main_unit=None):
+        if generation_binding:
+            self.assertEqual(self.unit, _linked_main_unit)
+            if self.pairing_error:
+                raise fixtures.lifecycle.Refused('Generation reader does not match')
+        return self.manifest
+
+    def setup_link(self, choice):
+        self.choice = choice
+        self.fragment = fixtures.lifecycle.MAIN_LINKS[choice]
+        self.link = self.policy.path(self.fragment)
+        self.link.parent.mkdir(parents=True, exist_ok=True)
+        self.link.symlink_to('/var/lib/old-core/kura.service')
+        self.saved = self.link.with_name(fixtures.lifecycle.MAIN_LINK_BACKUP)
+
+    def runner(self, args, **_):
+        self.commands.append(args[1])
+        if args[1:] == ['daemon-reload']:
+            if self.fail_reload:
+                return fixtures.types.SimpleNamespace(returncode=1)
+            self.choice = 'disabled'
+            self.fragment = '/lib/systemd/system/kura.service'
+            return fixtures.types.SimpleNamespace(returncode=0, stdout='')
+        field_string = args[-1].removeprefix('--property=')
+        props = dict(Id='kura.service', Names='kura.service', LoadState='loaded', SourcePath='',
+                     DropInPaths='', NeedDaemonReload='no', Transient='no', UnitFileState=self.choice,
+                     FragmentPath=self.fragment, ActiveState='active' if self.active else 'inactive',
+                     MainPID='0', ControlPID='0', Job='')
+        return fixtures.types.SimpleNamespace(returncode=0, stdout='\n'.join(
+            field + '=' + props[field] for field in field_string.split(',')) + '\n')
+
+    def test_package_paired_links_convert_without_boot_or_maintenance_intent(self):
+        for choice in ('linked', 'linked-runtime'):
+            with self.subTest(choice=choice):
+                self.setup_link(choice)
+                self.policy.migrate_linked_main()
+                self.assertEqual(self.vendor.read_bytes(), self.unit)
+                self.assertEqual(self.source.read_bytes(), self.unit)
+                self.assertFalse(self.link.is_symlink())
+                self.assertFalse(self.saved.is_symlink())
+                self.assertIsNone(self.policy.fence())
+                self.assertEqual(self.choice, 'disabled')
+        self.assertEqual(set(self.commands), {'show', 'daemon-reload'})
+
+    def test_daemon_reload_failure_preserves_same_link_for_continuation(self):
+        self.setup_link('linked-runtime')
+        self.fail_reload = True
+        with self.assertRaises(fixtures.lifecycle.Refused):
+            self.policy.migrate_linked_main()
+        self.assertTrue(self.saved.is_symlink())
+        self.assertEqual(self.vendor.read_bytes(), self.unit)
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Complete the existing Main link migration'):
+            self.policy.check_main_package_layout(self.manifest)
+        self.fail_reload = False
+        self.policy.migrate_linked_main()
+        self.assertFalse(self.saved.is_symlink())
+        self.assertEqual(self.source.read_bytes(), self.unit)
+
+    def test_busy_or_unpaired_link_refuses_before_vendor_publication(self):
+        self.setup_link('linked')
+        self.active = True
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Main must be inactive'):
+            self.policy.migrate_linked_main()
+        self.active = False
+        self.pairing_error = True
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Generation reader does not match'):
+            self.policy.migrate_linked_main()
+        self.pairing_error = False
+        self.source.write_bytes(b'Foreign unit')
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Linked Main differs'):
+            self.policy.migrate_linked_main()
+        self.assertFalse(self.vendor.exists())
+        self.assertTrue(self.link.is_symlink())
+        self.assertNotIn('daemon-reload', self.commands)
 
 
 if __name__ == '__main__':
