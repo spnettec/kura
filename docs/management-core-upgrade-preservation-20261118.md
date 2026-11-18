@@ -47,3 +47,9 @@
 
 
 后续需沿同一失败维护目的精确续接，实际保留重装/purge/中断/legacy及全部boot状态仍内部pending。Root配对不放宽，不能把已知失败4b包用于自动验收。
+
+## 2026-11-18 原维护续接及正常38a移除/重装
+
+原1fab失败在同一自有7fd夹具精确续接，随后14f正常保留重装由产品完成原维护；该局部修复不算通用中断恢复。38a修复残留NM授权、严格已知Root规则及错误传播，从新Git/private缓存/JDK21构建，正常单次升级/移除/同包保留重装均exit0。新正常remove维护4f52e089-e745-4f1b-83e6-ac2fe8059252由产品以同ID完成，原29输入22外部完整/7Core逻辑字段保持，新增1正常回执，总30，Main disabled/未启、原UID/密钥/历史.data及Root canary保持。实际polkit同一UID997/cap0/NNP1 subject授权0→1→0、daemon未重启、无网络写；探针已清理。
+
+原容器健康停止exit0，保留全部数据/身份；原1fab/4f52验收不重做。63宿主回归及12真实LinuxRoot条件通过，不累加旧JVM/crypto。详见`management-nm-polkit-policy-20261118.md`及console实际审查；purge/legacy/其他boot状态/通用中断/完整六组件及12父项仍内部pending。
