@@ -13,7 +13,7 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import ACTOR_HOME, COHORT, HOME, STATE, UNITS, Policy, protected, public_file, unit_sources
+from kura_clock_broker import ACTOR_HOME, COHORT, HOME, STATE, UNITS, Policy, protected, public_file, unit_sources, unit_directory_present
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 identifier, read, require, sync)
 
@@ -26,11 +26,34 @@ def run(*arguments):
                                    text=True, timeout=20)
 
 
+def main_masked():
+    """A fixed Root Main mask is an off state, never clock-unit authority."""
+    found = False
+    for prefix in ('/etc', '/run'):
+        path = Path(prefix + '/systemd/system/kura.service')
+        if not os.path.lexists(path):
+            continue
+        require(unit_directory_present(path.parent), 'UNSAFE_UNIT')
+        before = path.lstat()
+        require(stat.S_ISLNK(before.st_mode) and before.st_uid == 0 and before.st_nlink == 1, 'UNSAFE_UNIT')
+        target = os.readlink(path)
+        identity = lambda m: (m.st_dev, m.st_ino, m.st_uid, m.st_gid, m.st_mode,
+                              m.st_nlink, m.st_size, m.st_mtime_ns, m.st_ctime_ns)
+        require(target == '/dev/null' and identity(before) == identity(path.lstat()), 'UNSAFE_UNIT')
+        found = True
+    require(found, 'UNSAFE_UNIT')
+
+
 def properties(unit):
     result = subprocess.run(['/usr/bin/systemctl', 'show', unit, '--property=LoadState,ActiveState,MainPID,ControlPID'],
                             env={'PATH': '/usr/bin:/bin', 'LANG': 'C'}, capture_output=True, text=True, timeout=5)
     values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
-    require(values.get('LoadState') in ('loaded', 'not-found'), 'UNSAFE_UNIT')
+    if unit == 'kura.service' and values.get('LoadState') == 'masked':
+        main_masked()
+        require(values.get('MainPID') == '0' and values.get('ControlPID') == '0'
+                and values.get('ActiveState') == 'inactive', 'UNIT_RUNNING')
+    else:
+        require(values.get('LoadState') in ('loaded', 'not-found'), 'UNSAFE_UNIT')
     require(result.returncode == 0 or values['LoadState'] == 'not-found', 'UNSAFE_UNIT')
     return values
 

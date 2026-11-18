@@ -109,6 +109,37 @@ class ClockUnitPairingTest(unittest.TestCase):
 
 
 class ClockMaintenancePairingTest(unittest.TestCase):
+    def test_only_main_mask_is_an_inactive_install_state(self):
+        response=SimpleNamespace(returncode=0,stdout='LoadState=masked\nActiveState=inactive\nMainPID=0\nControlPID=0\n')
+        with mock.patch.object(setup.subprocess,'run',return_value=response), mock.patch.object(setup,'main_masked') as masks:
+            setup.inactive('kura.service');masks.assert_called_once()
+            for name in broker.UNITS:
+                with self.assertRaisesRegex(broker.Refused,'UNSAFE_UNIT'):setup.inactive(name)
+            self.assertEqual(1,masks.call_count)
+
+    def test_main_mask_still_requires_explicit_zero_processes_and_inactive_state(self):
+        for tail in ('ActiveState=active\nMainPID=5\nControlPID=0\n',
+                     'ActiveState=inactive\nMainPID=0\nControlPID=5\n',
+                     'ActiveState=inactive\nControlPID=0\n'):
+            response=SimpleNamespace(returncode=0,stdout='LoadState=masked\n'+tail)
+            with mock.patch.object(setup.subprocess,'run',return_value=response),mock.patch.object(setup,'main_masked'):
+                with self.assertRaisesRegex(broker.Refused,'UNIT_RUNNING'):setup.inactive('kura.service')
+
+    def test_main_mask_fixed_target_owner_link_count_and_parent_are_not_generalized(self):
+        good=dict(st_mode=stat.S_IFLNK|0o777,st_uid=0,st_gid=0,st_nlink=1,st_dev=1,st_ino=2,
+                  st_size=9,st_mtime_ns=3,st_ctime_ns=4)
+        for changes,target,parent in [({},'/dev/null',True),({'st_uid':1},'/dev/null',True),
+            ({'st_nlink':2},'/dev/null',True),({'st_mode':stat.S_IFREG|0o644},'/dev/null',True),
+            ({},'/elsewhere',True),({},'/dev/null',False)]:
+            with self.subTest(changes=changes,target=target,parent=parent), \
+                mock.patch.object(setup.os.path,'lexists',return_value=True), \
+                mock.patch.object(setup,'unit_directory_present',return_value=parent), \
+                mock.patch.object(setup.Path,'lstat',return_value=SimpleNamespace(**dict(good,**changes))), \
+                mock.patch.object(setup.os,'readlink',return_value=target):
+                if not changes and target=='/dev/null' and parent:setup.main_masked()
+                else:
+                    with self.assertRaisesRegex(broker.Refused,'UNSAFE_UNIT'):setup.main_masked()
+
     def test_override_preflight_precedes_account_state_and_code_mutation(self):
         with mock.patch.object(setup, 'Policy'), mock.patch.object(setup, 'inactive'), \
                 mock.patch.object(setup, 'unit_sources', side_effect=broker.Refused('UNPAIRED_CODE')), \
