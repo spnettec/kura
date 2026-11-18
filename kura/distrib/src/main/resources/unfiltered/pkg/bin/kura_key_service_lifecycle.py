@@ -1349,6 +1349,27 @@ class Lifecycle:
                 'Unsupported Main boot choice; preserve installation')
         return value
 
+    def check_main_package_layout(self, manifest=None):
+        """Reject unsupported existing layouts before a new maintenance fence.
+
+        This is package admission, not startup or cold-recovery admission. Do
+        not require an absent/broken Core reader merely to keep recovery alive,
+        and do not reinterpret an already admitted package transaction while
+        its files are being replaced.
+        """
+        if not self.path('/run/systemd/system').is_dir() or not any(
+                os.path.lexists(self.path(prefix + '/systemd/system/kura.service'))
+                for prefix in ('/etc', '/run', '/lib', '/usr/lib')):
+            return
+        choice = self.main_unit_state()
+        if choice == 'static' and manifest is not None and manifest['schema'] == 2:
+            generation = manifest['generation']
+            require(isinstance(generation, dict) and is_digest(generation.get('unitSha256')),
+                    'Static Main unit has no paired package definition; preserve installation')
+            unit = self.path('/lib/systemd/system/kura.service').resolve(strict=True)
+            require(hashlib.sha256(self.read(unit, private=False)).hexdigest() == generation['unitSha256'],
+                    'Static Main unit differs from its package; reviewed migration is required')
+
     @staticmethod
     def main_accounts():
         # cp -a preserves numeric data owners. Recreating either name with a
@@ -1679,6 +1700,7 @@ class Lifecycle:
                 require(properties.get("LoadState") in ("loaded", "masked", "not-found"))
                 registered |= properties["LoadState"] != "not-found"
         previous_fence = self.fence() if os.path.lexists(self.state) else None
+        manifest = None
         if registered and previous_fence is None:
             manifest=self.assets() # Never execute an unknown installed helper or silently adopt another unit.
             for name in set(UNITS)-set(manifest['units']):
@@ -1686,6 +1708,8 @@ class Lifecycle:
                 if self.path('/run/systemd/system').is_dir():
                     properties=dict(line.split('=',1) for line in self.command(['show',name,'--property=LoadState']).splitlines() if '=' in line)
                     require(properties.get('LoadState')=='not-found', 'Foreign recovery service requires reviewed migration')
+        if previous_fence is None:
+            self.check_main_package_layout(manifest)
         self.initialize()
         with self.sender_locked(), self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
             self.check_sender_admissions()
