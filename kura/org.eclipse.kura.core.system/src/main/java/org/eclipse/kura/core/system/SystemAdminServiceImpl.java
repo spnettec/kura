@@ -20,6 +20,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient;
 import org.eclipse.kura.executor.Command;
 import org.eclipse.kura.executor.CommandExecutorService;
 import org.eclipse.kura.executor.CommandStatus;
@@ -40,6 +41,15 @@ public class SystemAdminServiceImpl extends SuperSystemService implements System
     @SuppressWarnings("unused")
     private ComponentContext ctx;
     private CommandExecutorService executorService;
+    private final RebootBrokerClient rebootBroker;
+
+    public SystemAdminServiceImpl() {
+        this(new RebootBrokerClient());
+    }
+
+    SystemAdminServiceImpl(RebootBrokerClient rebootBroker) {
+        this.rebootBroker = rebootBroker;
+    }
 
     // ----------------------------------------------------------------
     //
@@ -149,7 +159,14 @@ public class SystemAdminServiceImpl extends SuperSystemService implements System
 
     @Override
     public void reboot() {
-        if (OS_LINUX.equals(getOsName()) || OS_MAC_OSX.equals(getOsName())) {
+        if (OS_LINUX.equals(getOsName())) {
+            switch (this.rebootBroker.request()) {
+            case ACCEPTED -> logger.info("Reboot broker accepted the request");
+            case NOT_STARTED -> logger.error("Reboot broker did not dispatch a reboot");
+            case PRIOR_BOOT_OBSERVED -> logger.info("Reboot broker observed a later boot for an earlier request");
+            case UNKNOWN -> logger.warn("Reboot broker outcome UNKNOWN or unavailable");
+            }
+        } else if (OS_MAC_OSX.equals(getOsName())) {
             executeCommand(new String[] { "reboot" });
         } else if (getOsName().toLowerCase().startsWith(OS_WINDOWS)) {
             executeCommand(new String[] { "shutdown", "-r" });

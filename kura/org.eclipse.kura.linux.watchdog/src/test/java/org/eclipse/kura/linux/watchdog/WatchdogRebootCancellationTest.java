@@ -5,8 +5,6 @@
 package org.eclipse.kura.linux.watchdog;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient.Outcome;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -31,7 +30,7 @@ class WatchdogRebootCancellationTest {
     void normalRebootKeepsSyncBeforeRebootUsingOnlyACommandRecorder() throws Exception {
         CommandRecorder service = new CommandRecorder();
         service.runDefaultRebootImplementation();
-        assertEquals(List.of("sync", "reboot"), service.commands);
+        assertEquals(List.of("sync", "broker"), service.commands);
     }
 
     @Test
@@ -65,29 +64,8 @@ class WatchdogRebootCancellationTest {
     }
 
     @Test
-    void nonzeroExitOfLaunchedRebootDoesNotRedispatch() throws Exception {
-        Process process = mock(Process.class);
-        when(process.waitFor(60, TimeUnit.SECONDS)).thenReturn(true);
-        when(process.exitValue()).thenReturn(1);
-        assertNoRedispatch(process);
-    }
-
-    @Test
-    void rebootReplyTimeoutDoesNotRedispatch() throws Exception {
-        Process process = mock(Process.class);
-        when(process.waitFor(60, TimeUnit.SECONDS)).thenReturn(false);
-        assertNoRedispatch(process);
-    }
-
-    @Test
-    void interruptedRebootReplyDoesNotRedispatch() throws Exception {
-        Process process = mock(Process.class);
-        when(process.waitFor(60, TimeUnit.SECONDS)).thenThrow(new InterruptedException("reply interrupted"));
-        assertNoRedispatch(process);
-    }
-
-    private void assertNoRedispatch(Process process) throws Exception {
-        ReplyRecorder service = new ReplyRecorder(process);
+    void unknownBrokerOutcomeDoesNotRedispatchEvenOnDeviceReconfiguration() throws Exception {
+        ReplyRecorder service = new ReplyRecorder();
         Path initialCause = this.temporaryDirectory.resolve("reboot-cause");
         Path nextCause = this.temporaryDirectory.resolve("changed-cause");
         service.activate(unavailableDevice("first-test-device", initialCause));
@@ -112,13 +90,8 @@ class WatchdogRebootCancellationTest {
     }
 
     private static final class ReplyRecorder extends SafeWatchdogService {
-        private final Process process;
         private final CountDownLatch launched = new CountDownLatch(1);
         private final AtomicInteger attempts = new AtomicInteger();
-
-        private ReplyRecorder(Process process) {
-            this.process = process;
-        }
 
         @Override
         protected boolean isWatchdogDeviceAvailable(String path) {
@@ -141,20 +114,15 @@ class WatchdogRebootCancellationTest {
         }
 
         @Override
-        protected void runCommand(String command) throws KuraException {
-            if ("reboot".equals(command)) {
-                runDefaultCommandImplementation(command);
-            } else {
-                assertEquals("sync", command);
-            }
+        protected void runCommand(String command) {
+            assertEquals("sync", command);
         }
 
         @Override
-        protected Process startCommand(String command) {
-            assertEquals("reboot", command);
+        protected Outcome requestBrokerReboot() {
             this.attempts.incrementAndGet();
             this.launched.countDown();
-            return this.process;
+            return Outcome.UNKNOWN;
         }
     }
 
@@ -165,6 +133,12 @@ class WatchdogRebootCancellationTest {
         protected void runCommand(String command) {
             commands.add(command);
             if ("sync".equals(command)) { afterSync.run(); }
+        }
+
+        @Override
+        protected Outcome requestBrokerReboot() {
+            commands.add("broker");
+            return Outcome.ACCEPTED;
         }
     }
 }

@@ -7,6 +7,7 @@ package org.eclipse.kura.linux.watchdog;
 import java.nio.file.Path;
 import java.util.Map;
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient;
 
 // All executable fixtures fail closed at native and operating-system boundaries.
 class SafeWatchdogService extends WatchdogServiceImpl {
@@ -35,8 +36,9 @@ class SafeWatchdogService extends WatchdogServiceImpl {
         throw new AssertionError("A test must not launch an operating-system process: " + command);
     }
 
-    protected final void runDefaultCommandImplementation(String command) throws KuraException {
-        super.runCommand(command);
+    @Override
+    protected RebootBrokerClient.Outcome requestBrokerReboot() {
+        throw new AssertionError("A test must not launch the production reboot helper");
     }
 
     protected final void runDefaultRebootImplementation() throws KuraException {

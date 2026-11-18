@@ -15,11 +15,15 @@ package org.eclipse.kura.core.system;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient;
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient.Outcome;
 import org.eclipse.kura.executor.Command;
 import org.eclipse.kura.executor.CommandExecutorService;
 import org.eclipse.kura.executor.CommandStatus;
@@ -70,6 +74,20 @@ class SystemAdminServiceTest {
         long latest = after - bootSeconds * 1000;
         assertTrue(uptime >= earliest && uptime <= latest,
                 () -> "Expected uptime between " + earliest + " and " + latest + " ms, got " + uptime);
+    }
+
+    @Test
+    void linuxRebootUsesTheBrokerExactlyOnceEvenOnUnknown() {
+        System.setProperty("os.name", "Linux");
+        RebootBrokerClient broker = mock(RebootBrokerClient.class);
+        when(broker.request()).thenReturn(Outcome.UNKNOWN);
+        var admin = new SystemAdminServiceImpl(broker);
+        admin.setExecutorService(this.executor);
+
+        admin.reboot();
+
+        verify(broker).request();
+        verifyNoInteractions(this.executor);
     }
 
     private void bootTime(long seconds) throws Exception {

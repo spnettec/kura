@@ -29,12 +29,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
+import org.eclipse.kura.core.system.reboot.RebootBrokerClient;
 import org.eclipse.kura.watchdog.CriticalComponent;
 import org.eclipse.kura.watchdog.WatchdogService;
 import org.eclipse.kura.watchdog.WatchdogState;
@@ -52,7 +52,6 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private static final long GRACE_PERIOD = Duration.ofMinutes(5).toMillis();
     private static final long REBOOT_RETRY_INTERVAL = Duration.ofMinutes(1).toMillis();
-    private static final long REBOOT_REPLY_TIMEOUT_SECONDS = 60;
 
     private enum RebootOutcome {
         NOT_STARTED, ACCEPTED, UNKNOWN
@@ -60,6 +59,7 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private Long refreshDeadlineAfterRebootRequest;
     private volatile RebootOutcome rebootOutcome = RebootOutcome.NOT_STARTED;
+    private final RebootBrokerClient rebootBroker = new RebootBrokerClient();
     private List<CriticalComponentRegistration> criticalComponentRegistrations;
     private ScheduledExecutorService pollExecutor;
     private ScheduledFuture<?> pollTask;
@@ -568,7 +568,19 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
             throw new CommandNotStartedException(new InterruptedException("Watchdog reboot cancelled during shutdown"));
         }
 
-        runCommand("reboot");
+        switch (requestBrokerReboot()) {
+        case ACCEPTED -> {
+            // The broker owns the accepted request and its durable receipt.
+        }
+        case NOT_STARTED, PRIOR_BOOT_OBSERVED ->
+            throw new CommandNotStartedException(new IOException("No reboot was dispatched during this request"));
+        case UNKNOWN -> throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR,
+                new IOException("Reboot broker outcome is unknown"));
+        }
+    }
+
+    protected RebootBrokerClient.Outcome requestBrokerReboot() {
+        return this.rebootBroker.request();
     }
 
     protected void runCommand(String command) throws KuraException {
@@ -579,16 +591,7 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
             throw new CommandNotStartedException(e);
         }
         try {
-            int exitCode;
-            if ("reboot".equals(command)) {
-                if (!process.waitFor(REBOOT_REPLY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    throw new KuraException(KuraErrorCode.PROCESS_EXECUTION_ERROR,
-                            new TimeoutException("The reboot command did not confirm its outcome"));
-                }
-                exitCode = process.exitValue();
-            } else {
-                exitCode = process.waitFor();
-            }
+            int exitCode = process.waitFor();
             if (exitCode != 0) {
                 throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, command, exitCode);
             }
