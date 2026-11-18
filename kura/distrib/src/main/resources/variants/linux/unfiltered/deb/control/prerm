@@ -69,6 +69,14 @@ function preserveUserData {
             fi
         fi
     done
+    # Historical script-shaped copies and snapshots are runtime data. Preserve
+    # them separately from the Root-owned addon code; never execute this tree.
+    if [ -d "${INSTALL_DIR}/kura/.data" ]; then
+        if ! cp -a "${INSTALL_DIR}/kura/.data" "${retained_tmp}/addon-data"; then
+            echo 'Cannot remove Kura: failed to preserve historical runtime data.' >&2
+            return 1
+        fi
+    fi
     if ! manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${retained_tmp}/libexec/addons"; then
         echo 'Cannot remove Kura: protected sibling code could not be retained.' >&2
         return 1
@@ -76,12 +84,13 @@ function preserveUserData {
     # The snapshot master key may be configured in the generated service unit.
     # prerm removes that unit, so it must travel with the snapshots and keys.
     if [ -f /lib/systemd/system/kura.service ]; then
-        if ! mkdir -p "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
+        if ! mkdir -m 0700 "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
             echo "Cannot remove Kura: failed to preserve the systemd service configuration." >&2
             rm -rf "${retained_tmp}"
             return 1
         fi
     fi
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --retain-main-state "${retained_tmp}" || return 1
     if [ -f /etc/kura/credentials/kura_encryption_key ]; then
         if ! python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" archive "${retained_tmp}/encryption"; then
             echo "Cannot remove Kura: encryption-key recovery copy failed; preserve the installation." >&2
@@ -130,6 +139,7 @@ function runPreRemove {
             sleep $REFRESH_TIME
         done
     fi
+    wait "$PID" || return 1
 }
 
 # Deactivate watchdog device if possible
@@ -143,12 +153,12 @@ function stopWatchdog {
 function preRemove {
     #Remove INIT scripts
     if [ -f /etc/init.d/kura ] ; then
-        rm /etc/init.d/kura
-        update-rc.d kura remove
+        rm /etc/init.d/kura || return 1
+        update-rc.d kura remove || return 1
     fi
     if [ -f /lib/systemd/system/kura.service ] ; then
-        systemctl disable kura
-        rm /lib/systemd/system/kura.service
+        systemctl disable kura.service || return 1
+        rm /lib/systemd/system/kura.service || return 1
     fi
     # Firewall/iptables/netplan teardown is owned by kura-networking's prerm
     # (it installs them in its postinst too). kura-core no longer touches the
@@ -221,13 +231,13 @@ if [ "$1" = "remove" ]; then
     # Upgrade keeps the installed policy until the new package reconciles it.
     python3 -I "${INSTALL_DIR}/kura/bin/kura_su_pam.py" remove || exit 1
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --remove-units || exit 1
-    bash "${INSTALL_DIR}/kura/bin/manage_kura_users.sh" -u || exit 1
+    bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -u || exit 1
 fi
 
 echo ""
 echo "Uninstalling KURA..."
 
-runPreRemove >> "$LOG" 2>&1
+runPreRemove >> "$LOG" 2>&1 || exit 1
 
 echo ""
 echo "Uninstalling KURA... Done!"

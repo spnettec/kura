@@ -54,6 +54,11 @@ ln -snf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 # bootstrap retains its separate fresh-key and ordinary-startup checks.
 # Failure must precede replacing the installed service or changing user state.
 python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare "${KEY_PROVISION_ACTION}" || exit 1
+if [ -e /var/lib/kura-retained ] || [ -L /var/lib/kura-retained ]; then
+    # Validate the original removal fence, saved unit and unchanged numeric
+    # identities before publishing a unit or creating any runtime accounts.
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-retained-main-state || exit 1
+fi
 
 # set up kura init
 # Upgrade leaves the managed unit and its enable/mask links in place. Publishing
@@ -67,7 +72,7 @@ for KURA_SERVICE_PATH in /lib/systemd/system/kura.service /usr/lib/systemd/syste
 done
 sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service || exit 1
 /usr/bin/systemctl daemon-reload || exit 1
-if [ "${KURA_MAIN_SERVICE_EXISTS}" = false ]; then
+if [ "${KURA_MAIN_SERVICE_EXISTS}" = false ] && [ ! -e /var/lib/kura-retained ]; then
     /usr/bin/systemctl enable kura.service || exit 1
 fi
 chmod +x ${INSTALL_DIR}/kura/bin/*.sh

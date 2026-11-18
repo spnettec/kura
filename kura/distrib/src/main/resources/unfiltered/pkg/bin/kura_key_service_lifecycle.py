@@ -1343,6 +1343,76 @@ class Lifecycle:
                 and value["state"] == "MAINTENANCE" and value["firstAction"] in ("install", "upgrade", "remove"))
         return value
 
+    def main_unit_state(self):
+        value = self.command(['show', 'kura.service', '--property=UnitFileState', '--value']).strip()
+        require(value in ('enabled', 'enabled-runtime', 'disabled', 'static', 'masked', 'masked-runtime'),
+                'Unsupported Main boot choice; preserve installation')
+        return value
+
+    @staticmethod
+    def main_accounts():
+        # cp -a preserves numeric data owners. Recreating either name with a
+        # different UID would leave the restored files owned by another user.
+        return {name: dict(uid=pwd.getpwnam(name).pw_uid, gid=pwd.getpwnam(name).pw_gid)
+                for name in ('kura', 'kurad')}
+
+    def retain_main_state(self, directory):
+        directory = Path(directory)
+        require(directory.parent == self.path('/var/lib')
+                and re.fullmatch(r'\.kura-retained\.tmp\.[A-Za-z0-9]{8}', directory.name),
+                'Unsupported Main retention directory')
+        self.directory(directory, private=True)
+        self.directory(directory / 'systemd', private=True)
+        with self.locked():
+            self.check_records()
+            fence = self.fence()
+            require(fence is not None and fence['firstAction'] == 'remove')
+            self.assets()
+            saved = self.read(directory / 'systemd/kura.service', private=False)
+            installed = self.read(self.path('/lib/systemd/system/kura.service').resolve(strict=True), private=False)
+            require(saved == installed, 'Saved Main unit changed before retention')
+            value = dict(schema=1, purpose='yofc.kura.retained-main.v1', maintenanceId=fence['id'],
+                         unitSha256=hashlib.sha256(saved).hexdigest(), unitFileState=self.main_unit_state(),
+                         accounts=self.main_accounts())
+            secret = self.read(self.state / 'journal.key', 32)
+            require(len(secret) == 32)
+            value['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + encoded(value), hashlib.sha256).hexdigest()
+            self.create(directory / 'systemd/main-state.json', encoded(value))
+
+    def retained_main_state(self, restore=False):
+        directory = self.path('/var/lib/kura-retained')
+        self.directory(directory, private=True)
+        with self.locked():
+            self.check_records()
+            fence = self.fence()
+            require(fence is not None and fence['firstAction'] == 'remove')
+            value = decode(self.read(directory / 'systemd/main-state.json', 8192))
+            require(set(value) == {'schema', 'purpose', 'maintenanceId', 'unitSha256',
+                                   'unitFileState', 'accounts', 'receiptTag'}
+                    and type(value['schema']) is int and value['schema'] == 1
+                    and value['purpose'] == 'yofc.kura.retained-main.v1'
+                    and value['maintenanceId'] == fence['id'] and is_digest(value['receiptTag'])
+                    and is_digest(value['unitSha256'])
+                    and value['unitFileState'] in ('enabled', 'enabled-runtime', 'disabled', 'static', 'masked', 'masked-runtime')
+                    and encoded(value['accounts']) == encoded(self.main_accounts()),
+                    'Retained Main state or numeric account identity changed')
+            body = {k: v for k, v in value.items() if k != 'receiptTag'}
+            secret = self.read(self.state / 'journal.key', 32)
+            require(len(secret) == 32 and hmac.compare_digest(value['receiptTag'], hmac.new(secret,
+                    b'yofc-kura-retained-main-v1\0' + encoded(body), hashlib.sha256).hexdigest()),
+                    'Retained Main state belongs to another package admission')
+            require(hashlib.sha256(self.read(directory / 'systemd/kura.service', private=False)).hexdigest()
+                    == value['unitSha256'], 'Retained Main unit changed')
+            if restore:
+                expected = value['unitFileState']
+                current = self.main_unit_state()
+                if current != expected:
+                    require(current == 'disabled' and expected in ('enabled', 'enabled-runtime'),
+                            'Main boot choice changed during retained reinstall')
+                    self.command(['enable', *(['--runtime'] if expected == 'enabled-runtime' else []), 'kura.service'])
+                    require(self.main_unit_state() == expected, 'Main boot choice was not restored')
+            return value
+
     def assets(self, *, generation_binding=False):
         logical = self.path("/opt/eclipse/kura")
         physical = logical.resolve(strict=True)
@@ -1723,6 +1793,12 @@ if __name__ == "__main__":
             lifecycle.leave()
         elif sys.argv[1:] == ["--remove-units"]:
             lifecycle.remove_units()
+        elif len(sys.argv) == 3 and sys.argv[1] == '--retain-main-state':
+            lifecycle.retain_main_state(sys.argv[2])
+        elif sys.argv[1:] == ['--check-retained-main-state']:
+            lifecycle.retained_main_state()
+        elif sys.argv[1:] == ['--restore-retained-main-state']:
+            lifecycle.retained_main_state(restore=True)
         else:
             raise Refused("Unsupported key-service package admission action")
     except Exception:

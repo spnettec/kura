@@ -507,6 +507,9 @@ function postInstall {
             # Repair installed code before releasing the recovery copy. Leave
             # intentional restored data/key owners and modes unchanged.
             python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+            if [ "${WAS_REINSTALL}" = "1" ]; then
+                python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --restore-retained-main-state >> ${LOG} 2>&1 || return 1
+            fi
             if ! rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1; then
                 echo "ERROR: restored data but could not remove its recovery copy at ${PRESERVE_DIR}." >> ${LOG} 2>&1
                 return 1

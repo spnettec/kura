@@ -183,8 +183,11 @@ function delete_users {
     # retained with their UID/GID. Package lifecycle removes both listeners.
     # Revoke both halves before changing any account or other host policy.
     manage_su_pam_policy remove || return 1
-    # delete kura user
-    userdel kura
+    # A retained reinstall must keep the numeric owners of copied user data.
+    # Both accounts are already locked; revoke grants without recycling a UID.
+    if [ ! -e /var/lib/kura-retained ]; then
+        userdel kura || return 1
+    fi
 
     # we cannot delete kurad system user because there should be several process owned by this user,
     # so only try to remove it from sudoers.
