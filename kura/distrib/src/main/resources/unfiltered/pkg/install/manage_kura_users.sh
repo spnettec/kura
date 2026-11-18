@@ -59,21 +59,24 @@ function archive_kura_polkit_file {
 function write_systemd_polkit_policy {
     local rules_dir="${1:-/usr/share/polkit-1/rules.d}"
     local legacy_file="${2:-/etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla}"
-    local allow_dns=false policy_file temporary
+    local allow_dns=false policy_file old_policy temporary
     case "${NN:-NO}" in
         NO) allow_dns=true ;;
         YES) ;;
         *) echo "Invalid Kura networking profile" >&2; return 1 ;;
     esac
     mkdir -p "${rules_dir}" || return 1
-    policy_file="${rules_dir}/kura.rules"
-    # Check and preserve the old backend grant before changing either policy.
+    # polkit reads basenames in order. Own systemd decisions before the legacy
+    # Networking package's 52-kura-networking.rules, even if it is still installed.
+    policy_file="${rules_dir}/51-kura-systemd.rules"
+    old_policy="${rules_dir}/kura.rules"
     archive_kura_polkit_file "${legacy_file}" || return 1
+    archive_kura_polkit_file "${old_policy}" || return 1
     if [ -L "${policy_file}" ] || { [ -e "${policy_file}" ] && [ ! -f "${policy_file}" ]; }; then
         echo "Refusing non-regular Kura polkit policy: ${policy_file}" >&2
         return 1
     fi
-    temporary=$(mktemp "${rules_dir}/.kura.rules.XXXXXX") || return 1
+    temporary=$(mktemp "${rules_dir}/.51-kura-systemd.rules.XXXXXX") || return 1
     if ! cat >"${temporary}" <<EOF
 // Managed by Kura. Put site overrides in /etc/polkit-1/rules.d/.
 polkit.addRule(function(action, subject) {
@@ -119,7 +122,8 @@ EOF
             return 1
         fi
     fi
-    # A retained legacy wildcard would bypass the new service restrictions.
+    # Publish the current rule before retiring either old active path.
+    [ ! -e "${old_policy}" ] || rm -f "${old_policy}" || return 1
     [ ! -e "${legacy_file}" ] || rm -f "${legacy_file}" || return 1
 }
 
@@ -260,9 +264,7 @@ function delete_users {
     esac
 
     # remove polkit policy
-    if [ -f /usr/share/polkit-1/rules.d/kura.rules ]; then
-        rm -f /usr/share/polkit-1/rules.d/kura.rules || return 1
-    fi
+    rm -f /usr/share/polkit-1/rules.d/51-kura-systemd.rules /usr/share/polkit-1/rules.d/kura.rules || return 1
     if [ -f /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla ]; then
         rm -f /etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla || return 1
     fi
