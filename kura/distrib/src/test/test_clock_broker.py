@@ -40,7 +40,9 @@ class ClockBrokerTest(unittest.TestCase):
         self.journal = journal.Journal(self.private, boot_id=lambda: "8119db2b-caa2-4d24-be38-471711ad9faa")
         self.writes = []
         self.rtc_writes = []
-        self.manager = broker.Manager(self.policy, self.journal, self.writes.append, self.rtc_writes.append)
+        self.manager = broker.Manager(self.policy, self.journal, self.writes.append,
+                                      lambda device, binding: self.rtc_writes.append(device),
+                                      bind_rtc=journal.digest)
         self.peer = (123, 996, 989)
         self.calls = []
         clock = mock.patch.object(journal.time, 'time_ns', return_value=1794949974000000000)
@@ -57,6 +59,11 @@ class ClockBrokerTest(unittest.TestCase):
         context = self.context()
         return dict(schema=1, namespace=context['namespace'], requestId=str(uuid.uuid4()),
                     action='adjust-realtime', correctionMillis=500, cohortSha256=self.policy.cohort)
+
+    def rtc_command(self, device='/dev/rtc0'):
+        value = self.command()
+        del value['correctionMillis']
+        return dict(value, action='sync-rtc', rtcDevice=device)
 
     def prepare(self, value):
         return self.exchange(dict(value, action='prepare-adjust'))
@@ -354,9 +361,7 @@ class ClockBrokerTest(unittest.TestCase):
         self.assertEqual(['/dev/rtc4'], self.rtc_writes)
 
     def test_rtc_protocol_rejects_non_rtc_paths_and_extra_fields(self):
-        value = self.command()
-        del value['correctionMillis']
-        value['action'] = 'prepare-rtc'
+        value = dict(self.rtc_command(), action='prepare-rtc')
         for device in ('/dev/null', '/dev/../dev/rtc0', '/dev/rtc01', '/tmp/rtc0', '/dev/rtc0\n', [], True):
             with self.subTest(device=device), self.assertRaisesRegex(journal.Refused, 'INVALID_ARGUMENT'):
                 self.exchange(dict(value, rtcDevice=device))
@@ -366,7 +371,8 @@ class ClockBrokerTest(unittest.TestCase):
         self.assertEqual([], self.rtc_writes)
 
     def test_rtc_ambiguous_ioctl_blocks_wall_clock_and_is_never_reissued(self):
-        def ambiguous(device):
+        def ambiguous(device, binding):
+            self.assertEqual(journal.digest(device), binding)
             self.rtc_writes.append(device)
             raise journal.Refused('UNCERTAIN_RTC_RESULT')
 
@@ -384,6 +390,68 @@ class ClockBrokerTest(unittest.TestCase):
                          [v['action'] for v in self.calls])
         self.assertEqual(['/dev/rtc0'], self.rtc_writes)
         self.assertEqual([], self.writes)
+
+    def test_rtc_prepared_device_identity_survives_actor_restart(self):
+        value = self.rtc_command()
+        original = '5' * 64
+        self.manager.bind_rtc = mock.Mock(return_value=original)
+        self.assertEqual('PREPARED', self.exchange(dict(value, action='prepare-rtc'))['state'])
+        self.manager.bind_rtc.assert_called_once_with(value['rtcDevice'])
+        context = self.private / 'operations' / value['requestId'] / 'prepared-context.json'
+        self.assertEqual({'sha256': original}, journal.decode(context.read_bytes())['rtcBinding'])
+        def dispatch(device, binding):
+            self.assertEqual((value['rtcDevice'], original), (device, binding))
+            raise OSError(errno.ESTALE, 'prepared device was replaced')
+        self.manager = broker.Manager(self.policy, self.journal, self.writes.append, sync_rtc=mock.Mock(side_effect=dispatch))
+        self.assertEqual('PREPARED', self.status(value)['state'])
+        result = self.exchange(dict(value, action='commit-rtc'))
+        self.assertEqual(('FAILED', errno.ESTALE), (result['state'], result['errno']))
+        self.assertEqual(result, self.status(value))
+        self.manager.sync_rtc.assert_called_once_with(value['rtcDevice'], original)
+
+    def test_rtc_device_absent_at_prepare_does_not_become_a_new_write(self):
+        value = self.rtc_command()
+        self.manager.bind_rtc = mock.Mock(side_effect=FileNotFoundError(errno.ENOENT, 'absent during prepare'))
+        self.assertEqual('PREPARED', self.exchange(dict(value, action='prepare-rtc'))['state'])
+        self.manager.bind_rtc.side_effect = None
+        self.manager.bind_rtc.return_value = '6' * 64
+        result = self.exchange(dict(value, action='commit-rtc'))
+        self.assertEqual(('FAILED', errno.ENOENT), (result['state'], result['errno']))
+        self.assertEqual(result, self.status(value))
+        self.manager.bind_rtc.assert_called_once()
+        self.assertEqual([], self.rtc_writes)
+
+    def test_legacy_unbound_rtc_prepare_is_unknown_and_cannot_dispatch(self):
+        value = self.rtc_command()
+        self.exchange(dict(value, action='prepare-rtc'))
+        operation = self.private / 'operations' / value['requestId']
+        path = operation / 'prepared-context.json'
+        prepared = journal.decode(path.read_bytes())
+        del prepared['rtcBinding']
+        original = journal.encode(prepared)
+        path.write_bytes(original)
+        found = self.status(value)
+        self.assertEqual(('UNKNOWN', 'UNRESOLVED_PREPARE'), (found['state'], found['reason']))
+        self.assertEqual(found, self.exchange(dict(value, action='commit-rtc')))
+        self.assertEqual(original, path.read_bytes())
+        self.assertFalse((operation / 'commit-intent.json').exists())
+        self.assertFalse(self.context()['acceptingWrites'])
+        self.assertEqual([], self.rtc_writes)
+
+    def test_legacy_terminal_rtc_result_stays_readable_without_binding(self):
+        value = self.rtc_command()
+        self.exchange(dict(value, action='prepare-rtc'))
+        original = self.exchange(dict(value, action='commit-rtc'))
+        operation = self.private / 'operations' / value['requestId']
+        path = operation / 'prepared-context.json'
+        prepared = journal.decode(path.read_bytes())
+        del prepared['rtcBinding']
+        path.write_bytes(journal.encode(prepared))
+        before = {file: file.read_bytes() for file in operation.iterdir()}
+        self.assertEqual(original, self.status(value))
+        self.assertTrue(self.context()['acceptingWrites'])
+        self.assertEqual(before, {file: file.read_bytes() for file in operation.iterdir()})
+        self.assertEqual([value['rtcDevice']], self.rtc_writes)
 
     def test_rtc_status_never_accepts_wall_clock_success_for_same_id(self):
         result = self.sender().submit('sync-rtc', '/dev/rtc0')
@@ -427,6 +495,7 @@ class RtcDeviceTest(unittest.TestCase):
         self.ioctl = self.enterContext(mock.patch.object(broker.ctypes, 'CDLL')).return_value.ioctl
         self.enterContext(mock.patch.object(broker.sys, 'platform', 'linux'))
         self.enterContext(mock.patch.object(broker.os, 'uname', return_value=SimpleNamespace(machine='aarch64')))
+        self.binding = broker.rtc_binding('/dev/rtc')
 
     def test_rtc_write_uses_utc_and_one_read_only_kernel_descriptor(self):
         def write(fd, request, fields):
@@ -437,7 +506,7 @@ class RtcDeviceTest(unittest.TestCase):
         self.ioctl.side_effect = write
         utc = broker.time.struct_time((2026, 2, 3, 4, 5, 6, 1, 34, 0))
         with mock.patch.object(broker.time, 'gmtime', return_value=utc):
-            broker.rtc_set_time('/dev/rtc')
+            broker.rtc_set_time('/dev/rtc', self.binding)
         self.opened.assert_called_once_with(broker.RTC_PROJECTION / 'rtc4',
                                             os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
         self.ioctl.assert_called_once()
@@ -446,21 +515,21 @@ class RtcDeviceTest(unittest.TestCase):
     def test_invalid_device_mapping_and_replaced_device_never_invoke_ioctl(self):
         self.kernel.return_value = dict(self.hardware, inode=925)
         with self.assertRaises(OSError) as failure:
-            broker.rtc_set_time('/dev/rtc4')
+            broker.rtc_set_time('/dev/rtc4', self.binding)
         self.assertEqual(errno.ENODEV, failure.exception.errno)
         self.opened.assert_not_called()
         self.kernel.return_value = self.hardware
         self.fd.return_value = SimpleNamespace(**vars(self.node))
         self.fd.return_value.st_ino = 30
         with self.assertRaises(OSError):
-            broker.rtc_set_time('/dev/rtc4')
+            broker.rtc_set_time('/dev/rtc4', self.binding)
         self.closed.assert_called_once_with(7)
         self.ioctl.assert_not_called()
 
     def test_kernel_identity_change_after_open_never_invokes_ioctl(self):
         self.kernel.side_effect = [self.hardware, dict(self.hardware, inode=925)]
         with self.assertRaises(OSError) as failure:
-            broker.rtc_set_time('/dev/rtc')
+            broker.rtc_set_time('/dev/rtc', self.binding)
         self.assertEqual(errno.ENODEV, failure.exception.errno)
         self.closed.assert_called_once_with(7)
         self.ioctl.assert_not_called()
@@ -469,9 +538,28 @@ class RtcDeviceTest(unittest.TestCase):
         self.ioctl.return_value = -1
         self.closed.side_effect = OSError(errno.EINTR, 'Close interrupted')
         with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_RTC_RESULT'):
-            broker.rtc_set_time('/dev/rtc4')
+            broker.rtc_set_time('/dev/rtc4', self.binding)
         self.ioctl.assert_called_once()
         self.closed.assert_called_once_with(7)
+
+    def test_republished_projection_does_not_substitute_device_even_with_same_number(self):
+        self.admitted.return_value = SimpleNamespace(**dict(vars(self.node), st_ino=self.node.st_ino + 1))
+        with self.assertRaises(OSError) as failure:
+            broker.rtc_set_time('/dev/rtc', self.binding)
+        self.assertEqual(errno.ESTALE, failure.exception.errno)
+        self.opened.assert_not_called()
+        self.ioctl.assert_not_called()
+
+    def test_retargeted_legacy_alias_does_not_open_the_replacement(self):
+        alternate = dict(self.hardware, inode=925, minor=6, path='/sys/devices/platform/example/rtc/rtc6')
+        self.catalog.return_value = dict(schema=1, nodes={'rtc6': alternate}, aliases={'/dev/rtc': 'rtc6'})
+        self.kernel.return_value = alternate
+        self.admitted.return_value = SimpleNamespace(**dict(vars(self.node), st_rdev=os.makedev(254, 6)))
+        with self.assertRaises(OSError) as failure:
+            broker.rtc_set_time('/dev/rtc', self.binding)
+        self.assertEqual(errno.ESTALE, failure.exception.errno)
+        self.opened.assert_not_called()
+        self.ioctl.assert_not_called()
 
 
 if __name__ == '__main__':

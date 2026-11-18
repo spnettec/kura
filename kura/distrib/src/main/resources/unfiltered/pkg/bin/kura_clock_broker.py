@@ -304,11 +304,12 @@ class Policy:
 
 
 class Manager:
-    def __init__(self, policy, journal, adjust_realtime=None, sync_rtc=None):
+    def __init__(self, policy, journal, adjust_realtime=None, sync_rtc=None, bind_rtc=None):
         self.policy = policy
         self.journal = journal
         self.adjust_realtime = adjust_realtime or (lambda nanos: time.clock_settime_ns(time.CLOCK_REALTIME, nanos))
         self.sync_rtc = sync_rtc or rtc_set_time
+        self.bind_rtc = bind_rtc or rtc_binding
 
     def handle(self, value, peer):
         self.policy.check(); self.policy.peer(peer)
@@ -334,17 +335,32 @@ class Manager:
             require(value['cohortSha256'] == self.policy.cohort, 'UNPAIRED_CODE')
             self.policy.peer(peer)
             if phase == 'prepare':
-                return self.journal.prepare(value)
+                return self.journal.prepare(value, self.bind_rtc)
             actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
             return self.journal.commit(value, actuate)
 
 
-def rtc_set_time(device):
+def rtc_candidate(device):
     if sys.platform != 'linux' or os.uname().machine not in ('aarch64', 'x86_64'):
         raise OSError(errno.ENOSYS, 'Unsupported RTC ioctl ABI')
     path, hardware = projected_rtc(device)
     before = path.lstat()
     check_rtc_node(before, hardware)
+    return path, hardware, before
+
+
+def rtc_identity(path, hardware, metadata):
+    return digest(dict(node=path.name, kernel=hardware, projection=identity(metadata)))
+
+
+def rtc_binding(device):
+    return rtc_identity(*rtc_candidate(device))
+
+
+def rtc_set_time(device, expected_binding):
+    path, hardware, before = rtc_candidate(device)
+    if rtc_identity(path, hardware, before) != expected_binding:
+        raise OSError(errno.ESTALE, 'RTC device does not match the prepared binding')
     fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
     try:
         opened = os.fstat(fd)

@@ -102,6 +102,15 @@ def terminal_receipt(result, reference, action):
                      and result['reason'] in reasons and result['errno'] != 0)))
 
 
+def valid_rtc_binding(binding):
+    if type(binding) is not dict:
+        return False
+    if set(binding) == {'sha256'}:
+        value = binding['sha256']
+        return isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value) is not None
+    return set(binding) == {'errno'} and type(binding['errno']) is int and 0 < binding['errno'] <= 4095
+
+
 def identity(metadata):
     return (metadata.st_dev, metadata.st_ino, metadata.st_uid, metadata.st_gid, metadata.st_mode,
             metadata.st_nlink, metadata.st_size, metadata.st_mtime_ns, metadata.st_ctime_ns)
@@ -193,6 +202,19 @@ class Journal:
         directory(operations, self.owner)
         return value['namespace']
 
+    def read_prepared(self, path, reference, action):
+        prepared = decode(read(path / 'prepared-context.json', self.owner))
+        keys = set(reference) | {'bootId', 'preparedMonotonicNs'}
+        if action == 'sync-rtc' and 'rtcBinding' in prepared:
+            keys.add('rtcBinding')
+            require(valid_rtc_binding(prepared['rtcBinding']), 'UNRESOLVED_PREPARE')
+        require(set(prepared) == keys and all(prepared[key] == value for key, value in reference.items())
+                and type(prepared['schema']) is int
+                and type(prepared['preparedMonotonicNs']) is int and prepared['preparedMonotonicNs'] >= 0,
+                'UNRESOLVED_PREPARE')
+        identifier(prepared['bootId'])
+        return prepared
+
     def status(self, namespace, request_id, request_hash):
         # Namespace admission always precedes looking up a caller's old ID.
         require(identifier(namespace) == self.namespace(), 'FOREIGN_NAMESPACE')
@@ -210,15 +232,13 @@ class Journal:
             return dict(result, state='UNKNOWN', reason='UNRESOLVED_INTENT')
         require(digest(intent) == request_hash, 'CONFLICT')
         try:
-            prepared = decode(read(path / 'prepared-context.json', self.owner))
-            require(set(prepared) == set(result) | {'bootId', 'preparedMonotonicNs'}
-                    and all(prepared[key] == value for key, value in result.items())
-                    and type(prepared['preparedMonotonicNs']) is int and prepared['preparedMonotonicNs'] >= 0)
-            identifier(prepared['bootId'])
+            prepared = self.read_prepared(path, result, intent['action'])
         except (OSError, Refused):
             return dict(result, state='UNKNOWN', reason='UNRESOLVED_PREPARE')
         if not os.path.lexists(path / 'commit-intent.json'):
             require(not os.path.lexists(path / 'result.json'), 'UNRESOLVED_JOURNAL')
+            if intent['action'] == 'sync-rtc' and 'rtcBinding' not in prepared:
+                return dict(result, state='UNKNOWN', reason='UNRESOLVED_PREPARE')
             return dict(result, state='PREPARED', reason='NOT_COMMITTED')
         try:
             require(decode(read(path / 'commit-intent.json', self.owner)) == result, 'UNRESOLVED_JOURNAL')
@@ -250,7 +270,7 @@ class Journal:
             return False
         return True
 
-    def prepare(self, value):
+    def prepare(self, value, bind_rtc=None):
         value = command(value)
         require(value['namespace'] == self.namespace(), 'FOREIGN_NAMESPACE')
         request_id = value['requestId']; request_hash = digest(value)
@@ -258,12 +278,20 @@ class Journal:
         if os.path.lexists(path):
             return self.status(value['namespace'], request_id, request_hash)
         require(self.accepting(), 'ADMISSION_CLOSED')
+        reference = dict(schema=1, namespace=value['namespace'], requestId=request_id, requestSha256=request_hash)
+        prepared = dict(reference, bootId=identifier(self.boot_id()), preparedMonotonicNs=time.monotonic_ns())
+        if value['action'] == 'sync-rtc':
+            require(callable(bind_rtc), 'UNRESOLVED_PREPARE')
+            try:
+                binding = dict(sha256=bind_rtc(value['rtcDevice']))
+            except OSError as error:
+                binding = dict(errno=error.errno)
+            require(valid_rtc_binding(binding), 'UNRESOLVED_PREPARE')
+            prepared['rtcBinding'] = binding
         path.mkdir(mode=0o700); sync(path.parent)
         create(path / 'intent.json', value)
         require(read(path / 'intent.json', self.owner) == encode(value), 'UNRESOLVED_JOURNAL')
-        create(path / 'prepared-context.json', dict(schema=1, namespace=value['namespace'], requestId=request_id,
-               requestSha256=request_hash, bootId=identifier(self.boot_id()),
-               preparedMonotonicNs=time.monotonic_ns()))
+        create(path / 'prepared-context.json', prepared)
         return self.status(value['namespace'], request_id, request_hash)
 
     def commit(self, value, actuate):
@@ -279,8 +307,9 @@ class Journal:
         path = self.root / 'operations' / request_id
         require(read(path / 'intent.json', self.owner) == encode(value), 'CONFLICT')
         receipt = dict(schema=1, namespace=value['namespace'], requestId=request_id, requestSha256=request_hash)
+        prepared = self.read_prepared(path, receipt, value['action'])
+        binding = prepared['rtcBinding'] if value['action'] == 'sync-rtc' else None
         create(path / 'commit-intent.json', receipt)
-        prepared = decode(read(path / 'prepared-context.json', self.owner))
         age = time.monotonic_ns() - prepared['preparedMonotonicNs']
         _, field, success = OPERATIONS[value['action']]
         argument = value[field]
@@ -290,9 +319,14 @@ class Journal:
             receipt.update(state='FAILED', reason='STALE_SAMPLE', errno=errno.ESTALE)
         elif field == 'correctionMillis' and not 0 <= argument <= 9223372036854775807:
             receipt.update(state='FAILED', reason='CLOCK_RANGE', errno=errno.EINVAL)
+        elif binding is not None and 'errno' in binding:
+            receipt.update(state='FAILED', reason='OS_ERROR', errno=binding['errno'])
         else:
             try:
-                actuate(argument)
+                if binding is None:
+                    actuate(argument)
+                else:
+                    actuate(argument, binding['sha256'])
                 receipt.update(state='APPLIED', reason=success, errno=0)
             except OSError as error:
                 require(type(error.errno) is int and 0 < error.errno <= 4095, 'UNRESOLVED_JOURNAL')
