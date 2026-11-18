@@ -123,7 +123,7 @@ class RetainedMainStateTest(unittest.TestCase):
         self.assertEqual(original, path.read_bytes())
         self.assertEqual(self.fence, self.policy.fence())
 
-    def test_schema_one_static_receipt_cannot_authorize_conversion(self):
+    def historical_static(self):
         path = self.retain_static()
         receipt = json.loads(path.read_bytes())
         receipt['schema'] = 1
@@ -132,10 +132,54 @@ class RetainedMainStateTest(unittest.TestCase):
         receipt['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + lifecycle.encoded(receipt),
                                          hashlib.sha256).hexdigest()
         self.fixture.write(path, lifecycle.encoded(receipt))
-        self.assertEqual(receipt, self.policy.retained_main_state())
+        manifest = (self.fixture.physical / 'libexec/key-backup/manifest.json').read_bytes()
+        history = self.policy.state / 'package-history'
+        history.mkdir(mode=0o700)
+        identity = str(fixtures.uuid.uuid4())
+        record = dict(schema=1, maintenanceId=identity, firstAction='install',
+                      manifestSha256=hashlib.sha256(manifest).hexdigest(), keySha256='0' * 64,
+                      precedingStartupIds=[], previousMaintenanceId=None)
+        self.policy.create(history / (identity + '.json'), lifecycle.encoded(record))
+        return path, manifest, record
+
+    def test_schema_one_static_receipt_cannot_authorize_conversion_by_itself(self):
+        self.historical_static()
         self.choice = 'disabled'
-        with self.assertRaisesRegex(lifecycle.Refused, 'boot choice changed'):
+        with self.assertRaisesRegex(lifecycle.Refused, 'requires the original package manifest'):
+            self.policy.retained_main_state()
+        with self.assertRaisesRegex(lifecycle.Refused, 'requires the original package manifest'):
             self.policy.retained_main_state(restore=True)
+
+    def test_historical_static_pairs_saved_manifest_and_current_vendor(self):
+        path, manifest, _ = self.historical_static()
+        original = path.read_bytes()
+        self.policy.create(path.parent / 'source-package-manifest.json', manifest)
+        self.assertEqual(1, self.policy.retained_main_state()['schema'])
+        self.pair_main(b'[Service]\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n')
+        self.choice = 'disabled'
+        self.policy.retained_main_state(restore=True)
+        self.assertEqual(original, path.read_bytes())
+        self.assertEqual(self.fence, self.policy.fence())
+        self.assertFalse(any(args[1] in ('enable', 'disable', 'start') for args in self.fixture.calls))
+
+    def test_historical_static_refuses_a_noncurrent_manifest_and_a_manifest_without_main_digest(self):
+        path, manifest, record = self.historical_static()
+        self.policy.create(path.parent / 'source-package-manifest.json', manifest)
+        history = self.policy.state / 'package-history'
+        identity = str(fixtures.uuid.uuid4())
+        newer = dict(record, maintenanceId=identity, previousMaintenanceId=record['maintenanceId'],
+                     manifestSha256='1' * 64)
+        self.policy.create(history / (identity + '.json'), lifecycle.encoded(newer))
+        with self.assertRaisesRegex(lifecycle.Refused, 'differs from the original package'):
+            self.policy.retained_main_state()
+        manifest = json.loads(manifest)
+        manifest.pop('generation')
+        source = lifecycle.encoded(manifest)
+        self.fixture.write(path.parent / 'source-package-manifest.json', source)
+        newer['manifestSha256'] = hashlib.sha256(source).hexdigest()
+        self.fixture.write(history / (identity + '.json'), lifecycle.encoded(newer))
+        with self.assertRaisesRegex(lifecycle.Refused, 'cannot pair'):
+            self.policy.retained_main_state()
 
     def test_changed_record_fence_root_secret_account_or_unit_refuses_before_enable(self):
         path = self.retain('enabled'); original = path.read_bytes(); self.choice = 'disabled'

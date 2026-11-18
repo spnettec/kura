@@ -350,6 +350,9 @@ raise RuntimeError("Kura key-journal reader was not embedded")
 raise RuntimeError("Kura key-service lifecycle was not embedded")
 PYKURAKEYSERVICE
 }
+if [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; then
+    keyServicePackageAdmission --check-retained-main-state || exit 1
+fi
 keyServicePackageAdmission --enter "${ACTION}" || exit 1
 
 provisionCryptoKey() {

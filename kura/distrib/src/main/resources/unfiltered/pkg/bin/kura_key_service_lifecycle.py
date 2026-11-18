@@ -1426,6 +1426,43 @@ class Lifecycle:
             value['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + encoded(value), hashlib.sha256).hexdigest()
             self.create(directory / 'systemd/main-state.json', encoded(value))
 
+    def check_legacy_static_source(self, directory, fence, unit_digest):
+        # A historical receipt authenticates the saved unit on this Root.
+        # Pair it to the exact manifest of the last installed package as well.
+        history = self.state / 'package-history'
+        self.directory(history, private=True)
+        receipts = {}
+        for path in history.iterdir():
+            record = validate_maintenance(decode(self.read(path)), path.name[:-5])
+            require(path.name.endswith('.json') and record['maintenanceId'] != fence['id'],
+                    'Unexpected package history for retained Main')
+            receipts[record['maintenanceId']] = record
+        previous = {record['previousMaintenanceId'] for record in receipts.values()}
+        heads = receipts.keys() - previous
+        require(len(heads) == 1, 'Retained static Main has no unique source package')
+        head = receipts[next(iter(heads))]
+        cursor = head
+        visited = set()
+        while cursor is not None:
+            identity = cursor['maintenanceId']
+            require(identity not in visited, 'Invalid source package history')
+            visited.add(identity)
+            predecessor = cursor['previousMaintenanceId']
+            require(predecessor is None or predecessor in receipts, 'Incomplete source package history')
+            cursor = receipts.get(predecessor)
+        require(len(visited) == len(receipts), 'Invalid source package history')
+
+        evidence = directory / 'systemd/source-package-manifest.json'
+        require(os.path.lexists(evidence), 'Retained static Main requires the original package manifest')
+        raw = self.read(evidence)
+        require(hashlib.sha256(raw).hexdigest() == head['manifestSha256'],
+                'Retained static Main manifest differs from the original package')
+        manifest = decode(raw)
+        require(type(manifest.get('schema')) is int and manifest['schema'] == 2
+                and isinstance(manifest.get('generation'), dict)
+                and manifest['generation'].get('unitSha256') == unit_digest,
+                'Original package cannot pair the retained static Main')
+
     def retained_main_state(self, restore=False):
         directory = self.path('/var/lib/kura-retained')
         self.directory(directory, private=True)
@@ -1451,10 +1488,12 @@ class Lifecycle:
                     'Retained Main state belongs to another package admission')
             require(hashlib.sha256(self.read(directory / 'systemd/kura.service', private=False)).hexdigest()
                     == value['unitSha256'], 'Retained Main unit changed')
+            expected = value['unitFileState']
+            if expected == 'static' and value['schema'] == 1:
+                self.check_legacy_static_source(directory, fence, value['unitSha256'])
             if restore:
-                expected = value['unitFileState']
                 current = self.main_unit_state()
-                if value['schema'] == 2:
+                if expected == 'static':
                     # When the new package adds [Install], the equivalent
                     # boot choice for a static unit is to leave it disabled.
                     require(current in ('static', 'disabled'), 'Main boot choice changed during retained reinstall')
