@@ -56,9 +56,20 @@ ln -snf ${INSTALL_DIR}/kura_* ${INSTALL_DIR}/kura
 python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare "${KEY_PROVISION_ACTION}" || exit 1
 
 # set up kura init
-sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service
-systemctl daemon-reload
-systemctl enable kura
+# Upgrade leaves the managed unit and its enable/mask links in place. Publishing
+# a new template must not re-enable a service the operator deliberately disabled,
+# or turn runtime enablement into a persistent boot choice.
+KURA_MAIN_SERVICE_EXISTS=false
+for KURA_SERVICE_PATH in /lib/systemd/system/kura.service /usr/lib/systemd/system/kura.service /etc/systemd/system/kura.service /run/systemd/system/kura.service; do
+    if [ -e "${KURA_SERVICE_PATH}" ] || [ -L "${KURA_SERVICE_PATH}" ]; then
+        KURA_MAIN_SERVICE_EXISTS=true
+    fi
+done
+sed "s|INSTALL_DIR|${INSTALL_DIR}|" ${INSTALL_DIR}/kura/install/kura.service > /lib/systemd/system/kura.service || exit 1
+/usr/bin/systemctl daemon-reload || exit 1
+if [ "${KURA_MAIN_SERVICE_EXISTS}" = false ]; then
+    /usr/bin/systemctl enable kura.service || exit 1
+fi
 chmod +x ${INSTALL_DIR}/kura/bin/*.sh
 
 # setup snapshot_0 recovery folder
@@ -72,7 +83,7 @@ mkdir -p ${INSTALL_DIR}/kura/data
 # time daemons. Anything network-related (NetworkManager, ModemManager,
 # dnsmasq, dhcpcd, systemd-networkd) is handled by kura-networking's own
 # install script when that sibling is installed.
-systemctl daemon-reload
+/usr/bin/systemctl daemon-reload || exit 1
 systemctl_if_present stop systemd-timesyncd
 systemctl_if_present disable systemd-timesyncd
 systemctl_if_present stop chrony
