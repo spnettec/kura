@@ -91,6 +91,18 @@ class ClockBrokerTest(unittest.TestCase):
         self.assertEqual([], list(self.private.iterdir()))
         self.assertEqual([], list(self.data.iterdir()))
 
+    def test_chrony_step_rejects_unpaired_peer_or_any_request_parameters(self):
+        request = dict(schema=1, action='chrony-last-step')
+        response = dict(schema=1, realtimeMicros=10, monotonicMicros=20)
+        with mock.patch.object(broker, 'chrony_last_step', return_value=response) as read:
+            with self.assertRaisesRegex(journal.Refused, 'UNAUTHORIZED'):
+                self.manager.handle(request, None)
+            with self.assertRaises(journal.Refused):
+                self.exchange(dict(request, requestId=str(uuid.uuid4())))
+            self.assertEqual(response, self.exchange(request))
+        read.assert_called_once_with()
+        self.assertEqual([], list(self.private.iterdir()))
+
     def test_chrony_job_timeout_blocks_a_second_dispatch(self):
         request = dict(schema=1, namespace=self.context()['namespace'], requestId=str(uuid.uuid4()),
                        action='start-chrony', chronyStartUnit='chrony.service', cohortSha256=self.policy.cohort)
@@ -705,6 +717,47 @@ class ChronyControlTest(unittest.TestCase):
                         broker.require_chrony_bus_identity()
                     self.assertEqual(errno.EOPNOTSUPP, error.exception.errno)
                 self.assertEqual(['GetConnectionCredentials', 's', 'org.freedesktop.systemd1'], probe.call_args.args[0][-3:])
+
+
+class ChronyJournalTest(unittest.TestCase):
+    def test_only_authenticated_fields_are_queried_and_only_timestamps_are_returned(self):
+        boot = uuid.uuid4()
+        entry = {'__REALTIME_TIMESTAMP': '1794949974000000', '__MONOTONIC_TIMESTAMP': '1000000',
+                 '_BOOT_ID': boot.hex, '_SYSTEMD_UNIT': 'chronyd.service', '_EXE': '/usr/sbin/chronyd'}
+        reply = SimpleNamespace(returncode=0, stdout=json.dumps(entry).encode(), stderr=b'')
+        with mock.patch.object(broker.subprocess, 'run', return_value=reply) as run, \
+                mock.patch.object(broker.Path, 'read_text', return_value=str(boot) + '\n'):
+            self.assertEqual(dict(schema=1, realtimeMicros=1794949974000000, monotonicMicros=1000000),
+                             broker.chrony_last_step())
+        arguments = run.call_args.args[0]
+        self.assertEqual('/usr/bin/journalctl', arguments[0])
+        self.assertIn('--boot', arguments)
+        self.assertIn('--lines=1', arguments)
+        self.assertIn('--output-fields=_EXE,_SYSTEMD_UNIT', arguments)
+        self.assertEqual(['_SYSTEMD_UNIT=chrony.service', '_SYSTEMD_UNIT=chronyd.service',
+                          '_EXE=/usr/sbin/chronyd', '_EXE=/usr/bin/chronyd'], arguments[-4:])
+        self.assertEqual(3, run.call_args.kwargs['timeout'])
+
+    def test_foreign_source_noncanonical_timestamp_and_failed_query_are_not_steps(self):
+        boot = uuid.uuid4()
+        entry = {'__REALTIME_TIMESTAMP': '1', '__MONOTONIC_TIMESTAMP': '1', '_BOOT_ID': boot.hex,
+                 '_SYSTEMD_UNIT': 'chrony.service', '_EXE': '/usr/sbin/chronyd'}
+        for fields in (dict(_EXE='/usr/bin/logger'), dict(_SYSTEMD_UNIT='other.service'), dict(_BOOT_ID=uuid.uuid4().hex),
+                       dict(__MONOTONIC_TIMESTAMP=['1', '2']), dict(__REALTIME_TIMESTAMP='9223372036854775808'),
+                       dict(__REALTIME_TIMESTAMP='0')):
+            data = json.dumps(dict(entry, **fields)).encode()
+            with self.subTest(fields=fields), mock.patch.object(broker.Path, 'read_text', return_value=str(boot)), \
+                    mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                        returncode=0, stdout=data, stderr=b'')):
+                with self.assertRaisesRegex(journal.Refused, 'UNAVAILABLE_CHRONY_JOURNAL'):
+                    broker.chrony_last_step()
+        with mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                returncode=1, stdout=b'', stderr=b'journal unavailable')):
+            with self.assertRaisesRegex(journal.Refused, 'UNAVAILABLE_CHRONY_JOURNAL'):
+                broker.chrony_last_step()
+        with mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                returncode=1, stdout=b'', stderr=b'')):
+            self.assertEqual(dict(schema=1, realtimeMicros=0, monotonicMicros=0), broker.chrony_last_step())
 
 
 if __name__ == '__main__':

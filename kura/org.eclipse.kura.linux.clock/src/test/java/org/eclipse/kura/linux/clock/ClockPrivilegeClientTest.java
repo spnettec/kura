@@ -112,6 +112,23 @@ class ClockPrivilegeClientTest {
     }
 
     @Test
+    void readsChronyStepWithoutSendingTargetsAndValidatesTheTwoTimestamps() throws Exception {
+        Process process = mock(Process.class);
+        ByteArrayOutputStream input = new ByteArrayOutputStream();
+        String response = "{\"schema\":1,\"realtimeMicros\":12345,\"monotonicMicros\":789}";
+        when(process.getOutputStream()).thenReturn(input);
+        when(process.waitFor(25, TimeUnit.SECONDS)).thenReturn(true);
+        when(process.getInputStream()).thenReturn(new ByteArrayInputStream(response.getBytes(US_ASCII)));
+        assertEquals(new ClockPrivilegeClient.ChronyStep(12345, 789), helper(process).latestChronyStep());
+        assertEquals("{\"latestChronyStep\":true}", input.toString(US_ASCII));
+        assertEquals(new ClockPrivilegeClient.ChronyStep(0, 0),
+                ClockPrivilegeClient.chronyStep(response.replace("12345", "0").replace("789", "0")));
+        for (String invalid : new String[] { "\"789\"", "0", "-1", "7e2", "9223372036854775808" }) {
+            assertThrows(IOException.class, () -> ClockPrivilegeClient.chronyStep(response.replace("789", invalid)));
+        }
+    }
+
+    @Test
     void chronyStopRequiresItsOwnCurrentReceiptAndCanonicalUnit() throws Exception {
         Process process = mock(Process.class);
         ByteArrayOutputStream input = new ByteArrayOutputStream();

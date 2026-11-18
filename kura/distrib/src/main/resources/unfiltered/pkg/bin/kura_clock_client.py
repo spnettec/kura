@@ -18,6 +18,7 @@ from kura_clock_journal import (Refused, command, create, decode, digest, direct
                                 MAX_BYTES, OPERATIONS)
 
 REQUEST_OPERATIONS = {field: action for action, (_, field, _) in OPERATIONS.items()}
+READ_OPERATIONS = {'inspectChrony': 'chrony-status', 'latestChronyStep': 'chrony-last-step'}
 
 
 def caller_uid():
@@ -169,9 +170,9 @@ if __name__ == '__main__':
         value = decode(sys.stdin.buffer.read(MAX_BYTES + 1))
         require(len(value) == 1)
         field, argument = next(iter(value.items()))
-        if field == 'inspectChrony':
+        if field in READ_OPERATIONS:
             require(argument is True)
-            result = root_exchange(Policy(), dict(schema=1, action='chrony-status'))
+            result = root_exchange(Policy(), dict(schema=1, action=READ_OPERATIONS[field]))
         else:
             require(field in REQUEST_OPERATIONS)
             result = Client(sys.argv[2]).submit(REQUEST_OPERATIONS[field], argument)

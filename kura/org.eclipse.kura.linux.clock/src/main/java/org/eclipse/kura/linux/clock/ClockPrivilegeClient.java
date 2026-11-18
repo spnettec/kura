@@ -22,6 +22,7 @@ class ClockPrivilegeClient {
     private static final long MAX_CORRECTION_MILLIS = 9223372036854L;
     private static final Pattern RTC_DEVICE = Pattern.compile("/dev/(?:rtc(?:0|[1-9][0-9]{0,8})?|misc/rtc)");
     private static final Pattern CORRECTION = Pattern.compile("0|-?[1-9][0-9]{0,12}");
+    private static final Pattern TIMESTAMP = Pattern.compile("0|[1-9][0-9]{0,18}");
     private static final Set<String> CHRONY_UNITS = Set.of("chrony.service", "chronyd.service");
     private static final Set<String> UNKNOWN_REASONS = Set.of("NO_LOCAL_INTENT", "UNRESOLVED_INTENT",
             "NO_DURABLE_RESULT", "UNRESOLVED_RESULT", "UNRESOLVED_COMMIT", "UNRESOLVED_PREPARE", "NOT_COMMITTED");
@@ -69,6 +70,15 @@ class ClockPrivilegeClient {
         JsonObject request = new JsonObject();
         request.addProperty("inspectChrony", true);
         return chronyStatus(exchange(request));
+    }
+
+    record ChronyStep(long realtimeMicros, long monotonicMicros) {
+    }
+
+    ChronyStep latestChronyStep() throws IOException, InterruptedException {
+        JsonObject request = new JsonObject();
+        request.addProperty("latestChronyStep", true);
+        return chronyStep(exchange(request));
     }
 
     boolean setChronyRunning(String unit, boolean running) throws IOException, InterruptedException {
@@ -131,6 +141,32 @@ class ClockPrivilegeClient {
         } catch (RuntimeException error) {
             throw new IOException("Invalid Chrony status response", error);
         }
+    }
+
+    static ChronyStep chronyStep(String raw) throws IOException {
+        try {
+            JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
+            if (!result.keySet().equals(Set.of("schema", "realtimeMicros", "monotonicMicros"))
+                    || !result.getAsJsonPrimitive("schema").isNumber() || !"1".equals(result.get("schema").getAsString())) {
+                throw new IllegalArgumentException();
+            }
+            long realtime = timestampField(result, "realtimeMicros");
+            long monotonic = timestampField(result, "monotonicMicros");
+            if ((realtime == 0) != (monotonic == 0)) {
+                throw new IllegalArgumentException();
+            }
+            return new ChronyStep(realtime, monotonic);
+        } catch (RuntimeException error) {
+            throw new IOException("Invalid Chrony step response", error);
+        }
+    }
+
+    private static long timestampField(JsonObject value, String name) {
+        var field = value.getAsJsonPrimitive(name);
+        if (!field.isNumber() || !TIMESTAMP.matcher(field.getAsString()).matches()) {
+            throw new IllegalArgumentException();
+        }
+        return Long.parseLong(field.getAsString());
     }
 
     private static boolean validCorrection(long value) {

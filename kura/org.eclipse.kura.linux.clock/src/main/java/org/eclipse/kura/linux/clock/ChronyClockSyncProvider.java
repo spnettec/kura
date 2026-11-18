@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.linux.clock;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,9 +35,6 @@ import org.eclipse.kura.executor.CommandStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-
 public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(ChronyClockSyncProvider.class);
@@ -54,11 +50,9 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     private String chronyServiceName;
 
-    private Date lastSyncValue;
+    private volatile Date lastSyncValue;
 
-    private Gson gson;
-
-    private long lastSyncTime;
+    private long lastStepMonotonicMicros;
 
     private final Path[] chronyConfigLocations = new Path[] { Paths.get("/etc/chrony.conf"),
             Paths.get("/etc/chrony/chrony.conf") };
@@ -78,7 +72,6 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         this.listener = listener;
         this.schedulerExecutor = scheduler;
 
-        this.gson = new Gson();
         this.chronyConfig = clockServiceConfig.getChronyAdvancedConfig();
 
         String unit = inspectChrony().unit();
@@ -174,48 +167,24 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         return clockSynced;
     }
 
-    private void readAndUpdateSyncInfo() {
-
-        logger.debug("Start reading the journal for clock updates...");
-
-        // Journal entries can use either distro unit name.
-        Command journalClockUpdateRead = new Command(new String[] { "/usr/bin/journalctl", "--no-pager", "--boot",
-                "--unit=chrony.service", "--unit=chronyd.service", "--since=today", "--output=json",
-                "--output-fields=MESSAGE", "--case-sensitive=true", "--grep=System clock was stepped by", "--lines=1" });
-        journalClockUpdateRead.setErrorStream(new ByteArrayOutputStream());
-        journalClockUpdateRead.setOutputStream(new ByteArrayOutputStream());
-        CommandStatus journalClockUpdateReadStatus = this.executorService.execute(journalClockUpdateRead);
-
-        if (journalClockUpdateReadStatus.getExitStatus().isSuccessful()
-                && journalClockUpdateReadStatus.getOutputStream() instanceof ByteArrayOutputStream) {
-            ByteArrayOutputStream journalClockUpdateReadStatusStream = (ByteArrayOutputStream) journalClockUpdateReadStatus
-                    .getOutputStream();
-
-            if (journalClockUpdateReadStatusStream.size() > 0) {
-
-                JournalChronyEntry journalEntry = this.gson.fromJson(
-                        new String(journalClockUpdateReadStatusStream.toByteArray(), StandardCharsets.UTF_8),
-                        JournalChronyEntry.class);
-
-                if (journalEntry.getTime() > this.lastSyncTime) {
-
-                    logger.info("Journal successfully readed. Last clock stepping event was at: {}",
-                            Instant.EPOCH.plus(journalEntry.getTime(), ChronoUnit.MICROS));
-
-                    this.lastSyncTime = journalEntry.getTime();
-                    this.lastSyncValue = new Date(
-                            TimeUnit.MILLISECONDS.convert(journalEntry.getTime(), TimeUnit.MICROSECONDS));
-
-                    this.listener.onClockUpdate(0, false);
-                }
-            } else {
-                logger.debug("No new clock stepping event");
-            }
-        } else {
-            logger.debug("Chrony stepping not found in system journal (may be not requested). {}",
-                    journalClockUpdateRead.getErrorStream());
+    private synchronized void readAndUpdateSyncInfo() {
+        ClockPrivilegeClient.ChronyStep step;
+        try {
+            step = this.clockPrivilegeClient.latestChronyStep();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            return;
+        } catch (IOException error) {
+            logger.debug("Unable to read the latest Chrony step", error);
+            return;
         }
-
+        if (step.monotonicMicros() <= this.lastStepMonotonicMicros) {
+            return;
+        }
+        logger.info("Last Chrony step was at {}", Instant.EPOCH.plus(step.realtimeMicros(), ChronoUnit.MICROS));
+        this.lastStepMonotonicMicros = step.monotonicMicros();
+        this.lastSyncValue = new Date(TimeUnit.MICROSECONDS.toMillis(step.realtimeMicros()));
+        this.listener.onClockUpdate(0, false);
     }
 
     @Override
@@ -271,22 +240,4 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         }
 
     }
-
-    private class JournalChronyEntry {
-
-        @SerializedName("__REALTIME_TIMESTAMP")
-        private final long time;
-
-        @SuppressWarnings("unused")
-        public JournalChronyEntry(long time) {
-            super();
-            this.time = time;
-        }
-
-        public long getTime() {
-            return this.time;
-        }
-
-    }
-
 }

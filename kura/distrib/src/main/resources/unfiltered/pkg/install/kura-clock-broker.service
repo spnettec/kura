@@ -8,6 +8,7 @@ After=kura-clock-broker.socket kura-clock-rtc-devices.service
 Type=simple
 User=kura-clock
 Group=kura-clock
+SupplementaryGroups=systemd-journal
 UMask=0077
 ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py serve
 StateDirectory=kura-clock-broker

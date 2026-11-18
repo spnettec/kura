@@ -4,6 +4,7 @@
 import contextlib
 import ctypes
 import errno
+import grp
 import hashlib
 import json
 import os
@@ -39,6 +40,9 @@ RTC_UNIT = 'kura-clock-rtc-devices.service'
 UNITS = (*LEGACY_UNITS, RTC_UNIT)
 CHRONY_ACTIVE_STATES = {'active', 'reloading', 'inactive', 'failed', 'activating', 'deactivating',
                         'maintenance', 'refreshing'}
+CHRONY_EXECUTABLES = ('/usr/sbin/chronyd', '/usr/bin/chronyd')
+CHRONY_STEP_MESSAGE = r'^System clock was stepped by [-+]?[0-9]+[.,][0-9]{6} seconds$'
+CHRONY_JOURNAL_GROUP = 'systemd-journal'
 CHRONY_POLICY = Path('/usr/share/polkit-1/rules.d/10-kura-clock-chrony.rules')
 CHRONY_RULE = b'''// Managed by the Kura clock broker installer.
 polkit.addRule(function(action, subject) {
@@ -250,6 +254,37 @@ def chrony_status():
     return dict(schema=1, unit='', active=False)
 
 
+def chrony_last_step():
+    """Return only the timestamps of the last step from the local Chrony service."""
+    try:
+        result = subprocess.run(
+            ['/usr/bin/journalctl', '--system', '--no-pager', '--quiet', '--boot', '--since=today',
+             '--output=json', '--output-fields=_EXE,_SYSTEMD_UNIT', '--case-sensitive=true',
+             '--grep=' + CHRONY_STEP_MESSAGE, '--lines=1',
+             *['_SYSTEMD_UNIT=' + unit for unit in CHRONY_UNITS],
+             *['_EXE=' + binary for binary in CHRONY_EXECUTABLES]],
+            env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}, capture_output=True, timeout=3)
+        reason = 'UNAVAILABLE_CHRONY_JOURNAL'
+        require(not result.stderr and result.returncode in (0, 1), reason)
+        if not result.stdout:
+            return dict(schema=1, realtimeMicros=0, monotonicMicros=0)
+        require(result.returncode == 0 and len(result.stdout) <= 4096, reason)
+        entry = decode(result.stdout)
+        boot_id = Path('/proc/sys/kernel/random/boot_id').read_text(encoding='ascii').strip().replace('-', '')
+        require(entry.get('_BOOT_ID') == boot_id and entry.get('_SYSTEMD_UNIT') in CHRONY_UNITS
+                and entry.get('_EXE') in CHRONY_EXECUTABLES, reason)
+        timestamps = []
+        for key in ('__REALTIME_TIMESTAMP', '__MONOTONIC_TIMESTAMP'):
+            timestamp = entry.get(key)
+            require(isinstance(timestamp, str) and re.fullmatch('[1-9][0-9]{0,18}', timestamp), reason)
+            number = int(timestamp)
+            require(number <= 9223372036854775807, reason)
+            timestamps.append(number)
+        return dict(schema=1, realtimeMicros=timestamps[0], monotonicMicros=timestamps[1])
+    except (Refused, OSError, ValueError, subprocess.SubprocessError) as error:
+        raise Refused('UNAVAILABLE_CHRONY_JOURNAL') from error
+
+
 def chrony_target(unit):
     require(unit in CHRONY_UNITS)
     if public_file(CHRONY_POLICY) != CHRONY_RULE:
@@ -371,10 +406,13 @@ class Policy:
 
     def actor(self):
         account = pwd.getpwnam('kura-clock')
+        journal_gid = grp.getgrnam(CHRONY_JOURNAL_GROUP).gr_gid
+        groups = set(os.getgroups())
         require(account.pw_uid > 0 and account.pw_gid > 0 and account.pw_shell == '/usr/sbin/nologin'
                 and account.pw_dir == '/nonexistent', 'UNSAFE_ACTOR')
         require(os.getuid() == os.geteuid() == account.pw_uid and os.getgid() == os.getegid() == account.pw_gid
-                and set(os.getgroups()) <= {account.pw_gid}, 'UNSAFE_ACTOR')
+                and journal_gid > 0 and journal_gid != account.pw_gid and journal_gid in groups
+                and groups <= {account.pw_gid, journal_gid}, 'UNSAFE_ACTOR')
         values = dict(line.split(':', 1) for line in Path('/proc/thread-self/status').read_text().splitlines() if ':' in line)
         require(values['Uid'].split() == [str(account.pw_uid)] * 4
                 and values['Gid'].split() == [str(account.pw_gid)] * 4 and values['NoNewPrivs'].strip() == '1', 'UNSAFE_ACTOR')
@@ -423,6 +461,9 @@ class Manager:
         if action == 'chrony-status':
             require(set(value) == {'schema', 'action'})
             return chrony_status()
+        if action == 'chrony-last-step':
+            require(set(value) == {'schema', 'action'})
+            return chrony_last_step()
         with self.journal.lock():
             namespace = self.journal.namespace()
             if action in ('context', STOP_CONTEXT):
