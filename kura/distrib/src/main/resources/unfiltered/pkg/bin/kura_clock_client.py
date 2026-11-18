@@ -20,12 +20,44 @@ from kura_clock_journal import (Refused, command, create, decode, digest, direct
 REQUEST_OPERATIONS = {field: action for action, (_, field, _) in OPERATIONS.items()}
 
 
+def caller_uid():
+    owner = os.geteuid()
+    require(owner > 0 and os.getuid() == owner, 'UNSAFE_CALLER')
+    return owner
+
+
+def root_exchange(policy, value):
+    caller_uid()
+    policy.check()
+    for path in (SOCKET.parent.parent, SOCKET.parent):
+        metadata = path.lstat()
+        require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0
+                and not metadata.st_mode & 0o022, 'UNSAFE_LISTENER')
+    metadata = SOCKET.lstat()
+    require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0
+            and metadata.st_gid == pwd.getpwnam('kurad').pw_gid
+            and stat.S_IMODE(metadata.st_mode) == 0o660, 'UNSAFE_LISTENER')
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
+        stream.settimeout(5)
+        stream.connect(str(SOCKET))
+        pid, uid, _ = struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+        # The Root listener was bound by PID1 and inherited by the non-Root actor.
+        require(pid == 1 and uid == 0, 'UNSAFE_LISTENER')
+        send(stream, value); stream.shutdown(socket.SHUT_WR)
+        reply = receive(stream)
+    require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
+    if not reply['ok']:
+        require(set(reply) == {'ok', 'reason'} and isinstance(reply['reason'], str), 'INVALID_REPLY')
+        raise Refused(reply['reason'])
+    require(set(reply) == {'ok', 'result'} and type(reply['result']) is dict, 'INVALID_REPLY')
+    return reply['result']
+
+
 class Client:
     def __init__(self, data_directory, exchange=None, policy=None):
         self.policy = policy or Policy()
-        self.exchange = exchange or self.root_exchange
-        self.owner = os.geteuid()
-        require(self.owner > 0 and os.getuid() == self.owner, 'UNSAFE_CALLER')
+        self.exchange = exchange or (lambda value: root_exchange(self.policy, value))
+        self.owner = caller_uid()
         data = Path(data_directory)
         require(data.is_absolute(), 'UNSAFE_STATE')
         metadata = data.lstat()
@@ -35,32 +67,6 @@ class Client:
         if not os.path.lexists(self.root):
             self.root.mkdir(mode=0o700); sync(data)
         directory(self.root, self.owner)
-
-    def root_exchange(self, value):
-        self.policy.check()
-        for path in (SOCKET.parent.parent, SOCKET.parent):
-            metadata = path.lstat()
-            require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0
-                    and not metadata.st_mode & 0o022, 'UNSAFE_LISTENER')
-        metadata = SOCKET.lstat()
-        require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0
-                and metadata.st_gid == pwd.getpwnam('kurad').pw_gid
-                and stat.S_IMODE(metadata.st_mode) == 0o660, 'UNSAFE_LISTENER')
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
-            stream.settimeout(5)
-            stream.connect(str(SOCKET))
-            pid, uid, _ = struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
-            # The root-owned listener was created by systemd PID1 and inherited
-            # by the distinct non-Root actor; peer credentials belong to bind.
-            require(pid == 1 and uid == 0, 'UNSAFE_LISTENER')
-            send(stream, value); stream.shutdown(socket.SHUT_WR)
-            reply = receive(stream)
-        require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
-        if not reply['ok']:
-            require(set(reply) == {'ok', 'reason'} and isinstance(reply['reason'], str), 'INVALID_REPLY')
-            raise Refused(reply['reason'])
-        require(set(reply) == {'ok', 'result'} and type(reply['result']) is dict, 'INVALID_REPLY')
-        return reply['result']
 
     def finish(self, pending, result):
         completed = self.root / 'completed'
@@ -159,8 +165,13 @@ if __name__ == '__main__':
         value = decode(sys.stdin.buffer.read(MAX_BYTES + 1))
         require(len(value) == 1)
         field, argument = next(iter(value.items()))
-        require(field in REQUEST_OPERATIONS)
-        print(encode(Client(sys.argv[2]).submit(REQUEST_OPERATIONS[field], argument)).decode('ascii'), flush=True)
+        if field == 'inspectChrony':
+            require(argument is True)
+            result = root_exchange(Policy(), dict(schema=1, action='chrony-status'))
+        else:
+            require(field in REQUEST_OPERATIONS)
+            result = Client(sys.argv[2]).submit(REQUEST_OPERATIONS[field], argument)
+        print(encode(result).decode('ascii'), flush=True)
     except (Refused, OSError, ValueError, KeyError) as error:
         print(error.reason if isinstance(error, Refused) else 'UNRESOLVED_OR_UNAVAILABLE', file=sys.stderr)
         raise SystemExit(1)

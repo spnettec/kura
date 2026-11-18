@@ -49,6 +49,14 @@ class ClockPackageTest(unittest.TestCase):
         self.assertEqual(['adjust-realtime', 'sync-rtc'], value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
+    def test_main_has_no_system_clock_capability(self):
+        raw = (SOURCE / 'filtered/pkg/install/kura.service').read_text()
+        for key in ('CapabilityBoundingSet', 'AmbientCapabilities'):
+            with self.subTest(key=key):
+                values = [line.partition('=')[2].split() for line in raw.splitlines() if line.startswith(key + '=')]
+                self.assertEqual(1, len(values))
+                self.assertNotIn('cap_sys_time', [cap.lower() for cap in values[0]])
+
     def test_cached_old_clock_bundle_cannot_be_paired(self):
         for capability, client in ((False, True), (True, False)):
             home = self.assembly(capability, client)

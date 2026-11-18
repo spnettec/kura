@@ -2,6 +2,7 @@
 package org.eclipse.kura.linux.clock;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -92,6 +93,22 @@ class ClockPrivilegeClientTest {
         assertTrue(input.toString(US_ASCII).equals("{\"rtcDevice\":\"/dev/rtc4\"}"));
         assertThrows(IllegalArgumentException.class, () -> helper(process).syncRtc("/dev/null"));
         verify(process, times(1)).waitFor(25, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void inspectsChronyWithoutSendingAUnitOrOperationId() throws Exception {
+        Process process = mock(Process.class);
+        ByteArrayOutputStream input = new ByteArrayOutputStream();
+        String response = "{\"schema\":1,\"unit\":\"chrony.service\",\"active\":false}";
+        when(process.getOutputStream()).thenReturn(input);
+        when(process.waitFor(25, TimeUnit.SECONDS)).thenReturn(true);
+        when(process.getInputStream()).thenReturn(new ByteArrayInputStream(response.getBytes(US_ASCII)));
+        assertEquals(new ClockPrivilegeClient.ChronyStatus("chrony.service", false), helper(process).inspectChrony());
+        assertEquals("{\"inspectChrony\":true}", input.toString(US_ASCII));
+        assertEquals(new ClockPrivilegeClient.ChronyStatus("", false),
+                ClockPrivilegeClient.chronyStatus(response.replace("chrony.service", "")));
+        assertThrows(IOException.class, () -> ClockPrivilegeClient.chronyStatus(response.replace("chrony.service", "kura.service")));
+        assertThrows(IOException.class, () -> ClockPrivilegeClient.chronyStatus(response.replace("false", "\"false\"")));
     }
 
     @Test

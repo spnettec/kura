@@ -78,6 +78,19 @@ class ClockBrokerTest(unittest.TestCase):
     def sender(self, exchange=None):
         return client.Client(self.data, exchange=exchange or self.exchange, policy=self.policy)
 
+    def test_chrony_status_uses_main_peer_without_allocating_a_clock_identity(self):
+        status = dict(schema=1, unit='chrony.service', active=False)
+        request = dict(schema=1, action='chrony-status')
+        with mock.patch.object(broker, 'chrony_status', return_value=status) as inspect:
+            with self.assertRaisesRegex(journal.Refused, 'UNAUTHORIZED'):
+                self.manager.handle(request, None)
+            with self.assertRaises(journal.Refused):
+                self.exchange(dict(request, unit='chrony.service'))
+            self.assertEqual(status, self.exchange(request))
+        inspect.assert_called_once_with()
+        self.assertEqual([], list(self.private.iterdir()))
+        self.assertEqual([], list(self.data.iterdir()))
+
     def test_prepare_does_not_write_and_first_commit_is_durable(self):
         value = self.command()
         self.assertEqual('PREPARED', self.prepare(value)['state']); self.assertEqual([], self.writes)
@@ -560,6 +573,34 @@ class RtcDeviceTest(unittest.TestCase):
         self.assertEqual(errno.ESTALE, failure.exception.errno)
         self.opened.assert_not_called()
         self.ioctl.assert_not_called()
+
+
+class ChronyStatusTest(unittest.TestCase):
+    def test_status_uses_only_fixed_units_and_preserves_canonical_alias(self):
+        with mock.patch.object(broker, 'systemd_properties', side_effect=[
+                dict(Id='chrony.service', LoadState='not-found', ActiveState='inactive'),
+                dict(Id='chronyd.service', LoadState='loaded', ActiveState='reloading')]) as read_unit:
+            self.assertEqual(dict(schema=1, unit='chronyd.service', active=True), broker.chrony_status())
+        self.assertEqual(list(broker.CHRONY_UNITS), [call.args[1] for call in read_unit.call_args_list])
+        with mock.patch.object(broker, 'systemd_properties', return_value=dict(
+                Id='chronyd.service', LoadState='loaded', ActiveState='inactive')) as read_unit:
+            self.assertEqual(dict(schema=1, unit='chronyd.service', active=False), broker.chrony_status())
+        read_unit.assert_called_once_with(('Id', 'LoadState', 'ActiveState'), 'chrony.service')
+
+    def test_no_provider_is_reported_only_when_both_units_are_missing(self):
+        def missing(properties, unit):
+            return dict(Id=unit, LoadState='not-found', ActiveState='inactive')
+        with mock.patch.object(broker, 'systemd_properties', side_effect=missing):
+            self.assertEqual(dict(schema=1, unit='', active=False), broker.chrony_status())
+
+    def test_masked_invalid_or_unexpected_unit_is_not_a_missing_provider(self):
+        for props in [dict(Id='chrony.service', LoadState='masked', ActiveState='inactive'),
+                      dict(Id='other.service', LoadState='loaded', ActiveState='active'),
+                      dict(Id='chrony.service', LoadState='loaded', ActiveState='bogus')]:
+            with mock.patch.object(broker, 'systemd_properties', return_value=props) as read_unit:
+                with self.assertRaisesRegex(journal.Refused, 'INVALID_CHRONY_STATUS'):
+                    broker.chrony_status()
+            read_unit.assert_called_once()
 
 
 if __name__ == '__main__':

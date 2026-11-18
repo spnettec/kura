@@ -194,7 +194,7 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             logger.error("NTPD clock provider is not supported anymore. Use JAVA_NTP or CHRONY_ADVANCED instead.");
             return;
         case CHRONY_ADVANCED:
-            this.provider = new ChronyClockSyncProvider(this.executorService, this.cryptoService);
+            this.provider = new ChronyClockSyncProvider(this.executorService, this.cryptoService, clockPrivilegeClient());
             break;
 
         default:

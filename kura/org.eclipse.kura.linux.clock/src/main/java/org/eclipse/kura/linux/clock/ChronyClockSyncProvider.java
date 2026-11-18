@@ -41,15 +41,12 @@ import com.google.gson.annotations.SerializedName;
 
 public class ChronyClockSyncProvider implements ClockSyncProvider {
 
-    private static final String[] CHRONY_SERVICE_NAMES = new String[] { "chrony", "chronyd" };
-
     private static final String SERVICE_MANAGER = "systemctl";
 
     private static final Logger logger = LoggerFactory.getLogger(ChronyClockSyncProvider.class);
 
-    private static final int SERVICE_STATUS_UNKNOWN = 4;
-
     private final CommandExecutorService executorService;
+    private final ClockPrivilegeClient clockPrivilegeClient;
     private ScheduledExecutorService schedulerExecutor;
     private ScheduledFuture<?> future;
 
@@ -70,9 +67,11 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     private final CryptoService cryptoService;
 
-    public ChronyClockSyncProvider(CommandExecutorService commandExecutorService, CryptoService cryptoService) {
+    ChronyClockSyncProvider(CommandExecutorService commandExecutorService, CryptoService cryptoService,
+            ClockPrivilegeClient clockPrivilegeClient) {
         this.executorService = commandExecutorService;
         this.cryptoService = cryptoService;
+        this.clockPrivilegeClient = clockPrivilegeClient;
     }
 
     @Override
@@ -84,7 +83,11 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         this.gson = new Gson();
         this.chronyConfig = clockServiceConfig.getChronyAdvancedConfig();
 
-        this.chronyServiceName = findChronyService();
+        String unit = inspectChrony().unit();
+        if (unit.isEmpty()) {
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Chrony service unavailable");
+        }
+        this.chronyServiceName = unit;
 
         writeConfiguration();
     }
@@ -135,7 +138,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
     @Override
     public void start() throws KuraException {
 
-        if (!isChronydRunning()) {
+        if (!inspectSelectedChrony().active()) {
             logger.info("chrony service down, trying to start...");
 
             boolean startChronyd = controlChronyd("start");
@@ -177,12 +180,10 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
         logger.debug("Start reading the journal for clock updates...");
 
-        // check either chronyd or chrony unit because both are used in journal alternatively
-        Command journalClockUpdateRead = new Command(new String[] { "journalctl", "-r", "-u", chronyServiceName, "-u",
-                "chrony", "-b", "-o", "json", "-S", "today", "--output-fields", "MESSAGE", "|", "grep",
-                "'System clock was stepped by'", "-m", "1" });
-
-        journalClockUpdateRead.setExecuteInAShell(true);
+        // Journal entries can use either distro unit name.
+        Command journalClockUpdateRead = new Command(new String[] { "/usr/bin/journalctl", "--no-pager", "--boot",
+                "--unit=chrony.service", "--unit=chronyd.service", "--since=today", "--output=json",
+                "--output-fields=MESSAGE", "--case-sensitive=true", "--grep=System clock was stepped by", "--lines=1" });
         journalClockUpdateRead.setErrorStream(new ByteArrayOutputStream());
         journalClockUpdateRead.setOutputStream(new ByteArrayOutputStream());
         CommandStatus journalClockUpdateReadStatus = this.executorService.execute(journalClockUpdateRead);
@@ -221,32 +222,25 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     @Override
     public void stop() throws KuraException {
-        logger.info("Stopping chrony service...");
-
-        if (controlChronyd("stop")) {
-            logger.info("chrony service stopped");
-        } else {
-            logger.warn("Unable to stop chrony service");
-        }
-
-        if (this.future != null) {
-            this.future.cancel(true);
+        try {
+            if (this.chronyServiceName != null) {
+                logger.info("Stopping chrony service...");
+                if (controlChronyd("stop")) {
+                    logger.info("chrony service stopped");
+                } else {
+                    logger.warn("Unable to stop chrony service");
+                }
+            }
+        } finally {
+            if (this.future != null) {
+                this.future.cancel(true);
+            }
         }
     }
 
     @Override
     public Date getLastSync() {
         return this.lastSyncValue;
-    }
-
-    private boolean isChronydRunning() {
-
-        logger.info("Checking chrony service status...");
-
-        Command checkChronyStatus = new Command(new String[] { SERVICE_MANAGER, "is-active", chronyServiceName });
-        CommandStatus chronyStatus = this.executorService.execute(checkChronyStatus);
-
-        return chronyStatus.getExitStatus().isSuccessful();
     }
 
     private boolean controlChronyd(String command) {
@@ -256,30 +250,23 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         return chronyStatus.getExitStatus().isSuccessful();
     }
 
-    private String findChronyService() throws KuraException {
-
-        String foundChronyDaemon = "";
-
-        for (String chronyServiceNameItem : CHRONY_SERVICE_NAMES) {
-            if (findWithSystemd(chronyServiceNameItem)) {
-                foundChronyDaemon = chronyServiceNameItem;
-                break;
-            }
+    private ClockPrivilegeClient.ChronyStatus inspectSelectedChrony() throws KuraException {
+        ClockPrivilegeClient.ChronyStatus status = inspectChrony();
+        if (!status.unit().equals(this.chronyServiceName)) {
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Selected Chrony service changed");
         }
-
-        if (foundChronyDaemon.isEmpty()) {
-            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR);
-        }
-
-        return foundChronyDaemon;
+        return status;
     }
 
-    private boolean findWithSystemd(String serviceName) {
-        Command chronyStatusCommand = new Command(new String[] { SERVICE_MANAGER, "status", serviceName });
-        chronyStatusCommand.setExecuteInAShell(true);
-        int exitCode = this.executorService.execute(chronyStatusCommand).getExitStatus().getExitCode();
-
-        return (exitCode >= 0 && exitCode != SERVICE_STATUS_UNKNOWN);
+    private ClockPrivilegeClient.ChronyStatus inspectChrony() throws KuraException {
+        try {
+            return this.clockPrivilegeClient.inspectChrony();
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, error, "Interrupted while inspecting Chrony");
+        } catch (IOException error) {
+            throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, error, "Unable to inspect Chrony");
+        }
 
     }
 

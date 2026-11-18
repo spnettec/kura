@@ -36,6 +36,9 @@ COHORT = Path('libexec/clock-broker/cohort.json')
 LEGACY_UNITS = ('kura-clock-broker.socket', 'kura-clock-broker.service')
 RTC_UNIT = 'kura-clock-rtc-devices.service'
 UNITS = (*LEGACY_UNITS, RTC_UNIT)
+CHRONY_UNITS = ('chrony.service', 'chronyd.service')
+CHRONY_ACTIVE_STATES = {'active', 'reloading', 'inactive', 'failed', 'activating', 'deactivating',
+                        'maintenance', 'refreshing'}
 HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
 SYS_TIME = 1 << 25
 RTC_PROJECTOR_CAPS = (1 << 0) | (1 << 27)  # CHOWN and MKNOD
@@ -125,7 +128,7 @@ def package_cohort(home):
 
 def systemd_properties(properties, unit=None):
     """Read PID1's configuration, with no caller environment or fallback."""
-    require(unit is None or unit in UNITS, 'UNPAIRED_CODE')
+    require(unit is None or unit in (*UNITS, *CHRONY_UNITS), 'UNPAIRED_CODE')
     arguments = ['/usr/bin/systemctl', '--system', '--no-ask-password', 'show', '--all',
                  '--property=' + ','.join(properties)]
     if unit is not None:
@@ -211,6 +214,20 @@ def effective_units():
                 and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}
                 and value['SourcePath'] == value['DropInPaths'] == ''
                 and value['NeedDaemonReload'] == value['Transient'] == 'no', 'UNPAIRED_CODE')
+
+
+def chrony_status():
+    """Read the fixed distro names. A status observation grants no service control."""
+    properties = ('Id', 'LoadState', 'ActiveState')
+    for name in CHRONY_UNITS:
+        value = systemd_properties(properties, name)
+        if value['LoadState'] == 'not-found':
+            require(value['Id'] == name and value['ActiveState'] == 'inactive', 'INVALID_CHRONY_STATUS')
+            continue
+        require(value['LoadState'] == 'loaded' and value['Id'] in CHRONY_UNITS
+                and value['ActiveState'] in CHRONY_ACTIVE_STATES, 'INVALID_CHRONY_STATUS')
+        return dict(schema=1, unit=value['Id'], active=value['ActiveState'] in ('active', 'reloading', 'refreshing'))
+    return dict(schema=1, unit='', active=False)
 
 
 class Policy:
@@ -314,6 +331,9 @@ class Manager:
     def handle(self, value, peer):
         self.policy.check(); self.policy.peer(peer)
         require(type(value) is dict and type(value.get('schema')) is int and value.get('schema') == 1)
+        if value.get('action') == 'chrony-status':
+            require(set(value) == {'schema', 'action'})
+            return chrony_status()
         with self.journal.lock():
             namespace = self.journal.namespace()
             action = value.get('action')

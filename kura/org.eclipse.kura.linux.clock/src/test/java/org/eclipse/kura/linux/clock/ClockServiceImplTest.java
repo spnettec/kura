@@ -28,7 +28,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,13 +93,16 @@ public class ClockServiceImplTest {
     }
 
     @Test
-    public void testActivateDeactivateChronyProvider() throws NoSuchFieldException {
+    public void testActivateDeactivateChronyProvider() throws Exception {
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         when(serviceMock.execute(any())).thenReturn(status);
 
         ClockServiceImpl clockService = new ClockServiceImpl();
         clockService.setExecutorService(serviceMock);
+        ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
+        when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
+        TestUtil.setFieldValue(clockService, "clockPrivilegeClient", broker);
 
         Map<String, Object> properties = new HashMap<>();
 
@@ -122,7 +124,7 @@ public class ClockServiceImplTest {
 
     @Test
     public void testActivateDeactivateChronyProviderWithConfiguration()
-            throws NoSuchFieldException, IOException, NoSuchAlgorithmException {
+            throws Exception {
         CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
         CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         when(serviceMock.execute(any())).thenReturn(status);
@@ -134,6 +136,9 @@ public class ClockServiceImplTest {
         ClockServiceImpl clockService = new ClockServiceImpl();
         clockService.setExecutorService(serviceMock);
         clockService.setCryptoService(cryptoServiceMock);
+        ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
+        when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
+        TestUtil.setFieldValue(clockService, "clockPrivilegeClient", broker);
 
         Map<String, Object> properties = new HashMap<>();
 
