@@ -630,14 +630,17 @@ public class WatchdogServiceImplTest {
     }
 
     @Test
-    public void rebootRequestedAgainWhenWatchdogIsToggledAfterCriticalComponentTimeout() throws Throwable {
+    public void acceptedRebootStaysPendingWhenWatchdogDeviceChanges() throws Throwable {
         givenSupervisingWatchdogService(getStatusProperties(true, WATCHDOG_TEST_DEVICE, 50));
         givenCriticalComponentTimedOut("testComponent");
+        givenRefreshDeadlineIsRecorded();
 
         whenStatusWatchdogServiceIsUpdated(getStatusProperties(true, OTHER_WATCHDOG_TEST_DEVICE, 50));
 
         thenWatchdogIsToggled();
-        thenRebootIsRequestedAgain();
+        thenStatusStateIs(WatchdogState.REBOOT_REQUESTED);
+        thenRefreshDeadlineIsUnchanged();
+        thenRebootIsRequestedOnlyOnce();
     }
 
     @Test
@@ -1199,10 +1202,6 @@ public class WatchdogServiceImplTest {
     private void thenRebootIsRequestedOnlyOnce() throws InterruptedException {
         Thread.sleep(500);
         assertEquals(1, this.rebootRecordingSvc.getRebootRequests());
-    }
-
-    private void thenRebootIsRequestedAgain() throws InterruptedException {
-        assertTrue(this.rebootRecordingSvc.waitForRebootRequests(2, 10000));
     }
 
     private void thenRebootCauseFileDoesNotExist(String rebootCauseFilePath) {

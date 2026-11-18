@@ -238,7 +238,9 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
             return;
         }
         setDeviceOpen(true);
-        setState(WatchdogState.SUPERVISING, null);
+        if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+            setState(WatchdogState.SUPERVISING, null);
+        }
 
         try (PrintWriter wdWriter = new PrintWriter(newOptions.getWatchdogEnabledTemporaryFilePath())) {
             wdWriter.write(newOptions.getWatchdogDevice());
@@ -277,7 +279,9 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
     }
 
     private void handleUnavailableDevice(final WatchdogServiceOptions newOptions, final String unavailableReason) {
-        setState(WatchdogState.DEVICE_UNAVAILABLE, unavailableReason);
+        if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+            setState(WatchdogState.DEVICE_UNAVAILABLE, unavailableReason);
+        }
 
         if (!newOptions.isFailOnUnavailableDevice()) {
             return;
@@ -288,7 +292,7 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
         final long rebootDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(gracePeriod);
 
         logger.error("Watchdog device is unavailable and fail on unavailable device property is enabled. "
-                + "System will reboot in {} ms if the device does not become available", gracePeriod);
+                + "Checking for device recovery for {} ms", gracePeriod);
 
         synchronized (this.lifecycleLock) {
             if (this.stopping) {
@@ -308,21 +312,25 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
         final Optional<String> unavailableReason = openWatchdogDevice(newOptions.getWatchdogDevice(), false);
 
         if (!unavailableReason.isPresent()) {
-            logger.info("Watchdog device '{}' is now available. Reboot cancelled", newOptions.getWatchdogDevice());
+            logger.info("Watchdog device '{}' is now available", newOptions.getWatchdogDevice());
             cancelPollTask();
             startSupervision(newOptions);
             return;
         }
 
-        setState(WatchdogState.DEVICE_UNAVAILABLE, unavailableReason.get());
+        if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+            setState(WatchdogState.DEVICE_UNAVAILABLE, unavailableReason.get());
+        }
 
         if (System.nanoTime() - rebootDeadline < 0) {
             return;
         }
 
         cancelPollTask();
-        logger.error("Watchdog device is still unavailable after the grace period. System will reboot");
-        requestReboot(newOptions, unavailableReason.get(), unavailableReason.get());
+        if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+            logger.error("Watchdog device is still unavailable after the grace period. Requesting reboot");
+            requestReboot(newOptions, unavailableReason.get(), unavailableReason.get());
+        }
     }
 
     private void scheduleRebootRetry() {
@@ -427,11 +435,15 @@ public class WatchdogServiceImpl implements WatchdogService, ConfigurableCompone
 
     private void resetStatus(final WatchdogServiceOptions newOptions) {
         synchronized (this.statusLock) {
-            this.state = WatchdogState.DISABLED;
+            if (this.rebootOutcome == RebootOutcome.NOT_STARTED) {
+                this.state = WatchdogState.DISABLED;
+                this.failureReason = null;
+            } else {
+                this.state = WatchdogState.REBOOT_REQUESTED;
+            }
             this.devicePath = newOptions.getWatchdogDevice();
             this.refreshIntervalMs = newOptions.getPingInterval();
             this.lastRefreshTime = null;
-            this.failureReason = null;
         }
     }
 
