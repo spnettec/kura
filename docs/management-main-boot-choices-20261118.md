@@ -12,3 +12,5 @@
 
 
 实际原ARM64单现场enabled-runtime/enabled在97包各一次正常remove/reinstall通过，masked-runtime/masked在完整44包各一次通过，mask字段及原身份/密钥/历史data保持，Main未启动。97 masked-runtime原失败已同ID2041在有界配对clock代码修复后完成，不作为未修改产品/通用中断恢复通过。详细证据与限制见console的`docs/reviews/core-main-boot-choice-matrix-review-20261118.md`；static/linked/legacy/purge/通用中断及全六组件/provider/launcher矩阵和12父项继续pending。
+
+后续源码e99df17793将不支持的Main布局拒绝前移至新维护围栏和stop之前；实际linked、linked-runtime、未配对static的拒绝保持数据和辅助服务，详见`management-main-layout-admission-20261118.md`。这是拒绝路径验收，合法旧static/linked审核迁移及其余完整矩阵仍pending。
