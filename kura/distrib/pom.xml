@@ -2526,28 +2526,31 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Responsible for retrieving the short git commit (defaults to length 7)-->
+            <!-- Read the HEAD belonging to this checkout, including linked worktrees. -->
             <plugin>
-                <groupId>io.github.git-commit-id</groupId>
-                <artifactId>git-commit-id-maven-plugin</artifactId>
-                <version>9.0.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>get-the-git-infos</id>
-                        <goals>
-                            <goal>revision</goal>
-                        </goals>
+                        <id>read-package-git-head</id>
                         <phase>initialize</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <exec executable="git" dir="${project.basedir}" newenvironment="true"
+                                      failonerror="true" outputproperty="git.commit.id.abbrev">
+                                    <env key="PATH" value="${env.PATH}"/>
+                                    <arg value="rev-parse"/>
+                                    <arg value="--short=7"/>
+                                    <arg value="--verify"/>
+                                    <arg value="HEAD"/>
+                                </exec>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <injectAllReactorProjects>true</injectAllReactorProjects>
-                    <generateGitPropertiesFile>false</generateGitPropertiesFile>
-                    <skipPoms>false</skipPoms>
-                    <includeOnlyProperties>
-                        <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-                    </includeOnlyProperties>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
