@@ -27,9 +27,9 @@ SuccessExitStatus=143
 KillMode=control-group
 TimeoutStopSec=45s
 # The clock, journal and modem actors hold their own host permissions.
-AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_tty_config
+AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
-CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_tty_config cap_setuid cap_setgid
+CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
 ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service
