@@ -62,7 +62,8 @@ def decode_fields(value):
         require(False, 'INVALID_BIND_CONFIGURATION')
     require(mode not in ENABLE_MODES or (bool(addresses) and bool(prefixes)), 'INVALID_BIND_CONFIGURATION')
     if dual:
-        require(all(not (address.is_unspecified or address.is_multicast or address.is_link_local)
+        require(all(not (address.is_unspecified or address.is_multicast
+                         or (address.version == 6 and address.is_link_local))
                     for address in upstreams), 'INVALID_BIND_CONFIGURATION')
     if mode in ('enable-lan', DUAL_STACK) and any(address.is_loopback for address in upstreams):
         require(len(addresses) == 1 and addresses[0] in LOCAL_STUBS, 'INVALID_BIND_CONFIGURATION')
