@@ -36,11 +36,14 @@ class ProviderFingerprintTest(unittest.TestCase):
         self.home = root / 'kura'
         self.home.symlink_to(self.installation.name)
         self.enterContext(patch.object(cohort, 'HOME', self.home))
+        self.share = root / 'usr-share'
+        self.enterContext(patch.object(cohort, 'SHARE', self.share))
         self.package = 'kura-networking'
         folder = self.home / 'siblings' / cohort.PROVIDERS[self.package] / '4'
         folder.mkdir(parents=True)
         self.provider = folder / 'org.eclipse.kura.linux.net-6.0.0.jar'
-        self.proof = root / 'modem-provider.json'
+        self.proof = self.share / self.package / 'modem-provider.json'
+        self.proof.parent.mkdir(parents=True)
         self.owner = self.enterContext(patch.object(cohort, 'require_ownership'))
 
     def test_provider_hash_binds_the_only_jar(self):
@@ -49,17 +52,38 @@ class ProviderFingerprintTest(unittest.TestCase):
             schema=1, modemProtocol=1, provider=self.provider.name,
             sha256=hashlib.sha256(self.provider.read_bytes()).hexdigest())))
         args = (self.package, self.provider.parent, self.proof)
-        cohort.check_provider(*args, {self.provider})
+        cohort.check_provider(*args, {self.provider}, cohort.MODEM_NAME, 'modemProtocol')
         self.owner.assert_any_call(self.provider, self.package)
         with self.assertRaisesRegex(ValueError, 'one paired'):
-            cohort.check_provider(*args, {self.provider, self.provider.with_name('old.jar')})
+            cohort.check_provider(*args, {self.provider, self.provider.with_name('old.jar')},
+                                  cohort.MODEM_NAME, 'modemProtocol')
         self.provider.write_bytes(b'other modem bundle')
         with self.assertRaisesRegex(ValueError, 'fingerprint changed'):
-            cohort.check_provider(*args, {self.provider})
+            cohort.check_provider(*args, {self.provider}, cohort.MODEM_NAME, 'modemProtocol')
 
     def test_core_alone_and_orphan_provider(self):
         with patch.object(cohort, 'active_provider', return_value=None):
             cohort.check()
             self.provider.write_bytes(b'detached modem bundle')
             with self.assertRaisesRegex(ValueError, 'Detached Networking'):
+                cohort.check()
+
+    def test_networking_needs_the_exact_typed_bind_provider(self):
+        self.provider.write_bytes(b'packaged modem bundle')
+        self.proof.write_text(json.dumps(dict(
+            schema=1, modemProtocol=1, provider=self.provider.name,
+            sha256=hashlib.sha256(self.provider.read_bytes()).hexdigest())))
+        bind_jar = self.provider.with_name('org.eclipse.kura.linux.systemd.provider-6.0.0.jar')
+        bind_jar.write_bytes(b'packaged DNS bundle')
+        bind_proof = self.proof.with_name('bind-provider.json')
+        with patch.object(cohort, 'active_provider', return_value=self.package):
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* bindProtocol'):
+                cohort.check()
+            bind_proof.write_text(json.dumps(dict(
+                schema=1, bindProtocol=1, provider=bind_jar.name,
+                sha256=hashlib.sha256(bind_jar.read_bytes()).hexdigest())))
+            cohort.check()
+            self.owner.assert_any_call(bind_jar, self.package)
+            bind_jar.write_bytes(b'different DNS bundle')
+            with self.assertRaisesRegex(ValueError, 'fingerprint changed .* bindProtocol'):
                 cohort.check()

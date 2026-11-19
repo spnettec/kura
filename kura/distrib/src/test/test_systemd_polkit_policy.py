@@ -142,14 +142,15 @@ process.stdout.write(JSON.stringify(JSON.parse(process.argv[1]).map(c => {
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
-    def test_only_required_service_operations_are_allowed(self):
-        allowed = [(u, v) for u in ['named.service', 'bind9.service'] for v in ['start', 'stop', 'restart']]
+    def test_direct_service_control_is_denied_in_the_networking_profile(self):
         denied = [('cron.service', 'restart'), ('bluetooth.service', 'start'),
                   ('named.service', 'reload'), ('named.service', 'kill'),
                   ('chrony.service', 'start'), ('chronyd.service', 'stop'), ('named@other.service', 'start')]
-        cases = [dict(details=dict(unit=u, verb=v)) for u, v in allowed + denied]
+        denied += [(unit, verb) for unit in ['named.service', 'bind9.service']
+                   for verb in ['start', 'stop', 'restart']]
+        cases = [dict(details=dict(unit=u, verb=v)) for u, v in denied]
         cases += [dict(details=dict(unit='named.service')), dict(details=dict(verb='start')), dict()]
-        self.assertEqual(self.evaluate('NO', cases), ['yes'] * len(allowed) + ['no'] * (len(denied) + 3))
+        self.assertEqual(self.evaluate('NO', cases), ['no'] * len(cases))
 
     def test_no_network_profile_has_no_service_control_grants(self):
         cases = [dict(details=dict(unit=u, verb='start')) for u in
@@ -183,7 +184,7 @@ process.stdout.write(JSON.stringify(JSON.parse(process.argv[1]).map(c => {
                  dict(details=dict(unit='named.service', verb='kill')),
                  dict(details=dict(unit='named.service', verb='restart')),
                  dict(action='org.freedesktop.NetworkManager.enable-disable-network')]
-        self.assertEqual(self.evaluate('NO', cases, networking, self.policy), ['no', 'no', 'no', 'yes', 'yes'])
+        self.assertEqual(self.evaluate('NO', cases, networking, self.policy), ['no', 'no', 'no', 'no', 'yes'])
         self.assertEqual(self.evaluate('YES', cases, networking, self.policy), ['no', 'no', 'no', 'no', 'yes'])
 
     def test_daemon_cannot_use_logind_to_change_host_power_state(self):

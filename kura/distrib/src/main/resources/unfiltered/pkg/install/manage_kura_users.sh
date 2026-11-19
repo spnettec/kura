@@ -59,10 +59,9 @@ function archive_kura_polkit_file {
 function write_systemd_polkit_policy {
     local rules_dir="${1:-/usr/share/polkit-1/rules.d}"
     local legacy_file="${2:-/etc/polkit-1/localauthority/50-local.d/51-org.freedesktop.systemd1.pkla}"
-    local allow_dns=false policy_file old_policy temporary
+    local policy_file old_policy temporary
     case "${NN:-NO}" in
-        NO) allow_dns=true ;;
-        YES) ;;
+        NO|YES) ;;
         *) echo "Invalid Kura networking profile" >&2; return 1 ;;
     esac
     mkdir -p "${rules_dir}" || return 1
@@ -83,18 +82,8 @@ polkit.addRule(function(action, subject) {
     if (subject.user != "kurad") {
         return;
     }
-    if (action.id == "org.freedesktop.systemd1.manage-units") {
-        var unit = action.lookup("unit");
-        var verb = action.lookup("verb");
-        var startOrStop = verb == "start" || verb == "stop";
-        var dns = ${allow_dns} && (unit == "named.service" || unit == "bind9.service");
-        if (dns && (startOrStop || verb == "restart")) {
-            return polkit.Result.YES;
-        }
-        return polkit.Result.NO;
-    }
-    // manage-unit-files implies arbitrary manage-units and reload-daemon.
-    // Unit-file installation belongs to the root package installer.
+    // Typed actors hold service-control authority. Unit-file installation
+    // continues to belong to the root package installer.
     if (action.id.indexOf("org.freedesktop.systemd1.") == 0) {
         return polkit.Result.NO;
     }

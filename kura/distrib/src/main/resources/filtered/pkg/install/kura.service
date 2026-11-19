@@ -32,7 +32,7 @@ AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_sear
 CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
-ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named
+ReadOnlyPaths=/opt/eclipse /etc/kura /etc/polkit-1 /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named
 # Core uses the typed socket, never the independent service's journal or HMAC key.
 InaccessiblePaths=/var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls /var/lib/kura-clock-broker /usr/libexec/kura-clock-broker -/var/lib/kura-reboot-broker /var/lib/kura-bind-service
 ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data

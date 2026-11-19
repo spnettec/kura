@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
-"""Require the installed Networking provider's typed modem ABI before Main starts."""
+"""Require the installed Networking release to use the typed modem and BIND protocols."""
 import hashlib
 import json
 import os
@@ -10,8 +10,10 @@ import subprocess
 import sys
 
 HOME = Path('/opt/eclipse/kura')
+SHARE = Path('/usr/share')
 PROVIDERS = {'kura-networking': 'networking', 'kura-firewall-only': 'firewall'}
-PROVIDER_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
+MODEM_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
+BIND_NAME = re.compile(r'org\.eclipse\.kura\.linux\.systemd\.provider-[0-9A-Za-z.+~-]+\.jar')
 ENVIRONMENT = {'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}
 
 
@@ -27,12 +29,12 @@ def protected(path, directory=False):
             protected(target, directory=True)
             continue
         if metadata.st_uid != 0 or metadata.st_mode & 0o022:
-            raise ValueError('Unprotected modem release asset')
+            raise ValueError('Unprotected Networking release asset')
         if entry != path or directory:
             if not stat.S_ISDIR(metadata.st_mode):
-                raise ValueError('Invalid modem release directory')
+                raise ValueError('Invalid Networking release directory')
         elif not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
-            raise ValueError('Invalid modem release file')
+            raise ValueError('Invalid Networking release file')
     return metadata
 
 
@@ -47,10 +49,10 @@ def snapshot(path, limit, read):
     with os.fdopen(fd, 'rb') as stream:
         before = os.fstat(stream.fileno())
         if stamp(recorded) != stamp(before) or not 0 < before.st_size <= limit:
-            raise ValueError('Invalid bounds or identity for modem release input')
+            raise ValueError('Invalid bounds or identity for Networking release input')
         result = read(stream)
         if stamp(before) != stamp(os.fstat(stream.fileno())) or stamp(before) != stamp(path.lstat()):
-            raise ValueError('Modem release input changed while reading')
+            raise ValueError('Networking release input changed while reading')
         return result
 
 
@@ -74,53 +76,63 @@ def provider_installed(package):
 def active_provider():
     configured = [package for package in PROVIDERS if provider_installed(package)]
     if len(configured) > 1:
-        raise ValueError('Multiple configured modem providers')
+        raise ValueError('Multiple configured Networking providers')
     return configured[0] if configured else None
 
 
 def require_ownership(path, package):
     result = dpkg('-S', str(path))
     if result.returncode != 0 or result.stdout.strip() != os.fsencode(package + ': ' + str(path)):
-        raise ValueError('Modem provider is not the installed Networking payload')
+        raise ValueError('Provider is not the installed Networking payload')
 
 
 def check():
     installed = active_provider()
     for package, directory in PROVIDERS.items():
         provider_dir = HOME / 'siblings' / directory / '4'
-        proof_path = Path('/usr/share') / package / 'modem-provider.json'
-        jars = set()
+        proof_dir = SHARE / package
+        files = ()
         if os.path.lexists(provider_dir):
             protected(provider_dir, directory=True)
-            jars = {path for path in provider_dir.iterdir() if PROVIDER_NAME.fullmatch(path.name)}
-        if installed == package:
-            check_provider(package, provider_dir, proof_path, jars)
-        elif jars or os.path.lexists(proof_path):
-            raise ValueError('Detached Networking modem provider files')
+            files = tuple(provider_dir.iterdir())
+        check_asset(package, provider_dir, files, proof_dir / 'modem-provider.json',
+                    MODEM_NAME, 'modemProtocol', installed == package)
+        check_asset(package, provider_dir, files, proof_dir / 'bind-provider.json',
+                    BIND_NAME, 'bindProtocol', installed == package == 'kura-networking')
 
 
-def check_provider(package, provider_dir, proof_path, jars):
+def check_asset(package, provider_dir, files, proof_path, name, protocol, present):
+    jars = {path for path in files if name.fullmatch(path.name)}
+    if present:
+        check_provider(package, provider_dir, proof_path, jars, name, protocol)
+    elif jars or os.path.lexists(proof_path):
+        raise ValueError(f'Detached Networking provider files for {protocol}')
+
+
+def check_provider(package, provider_dir, proof_path, jars, name, protocol):
+    if not os.path.lexists(proof_path):
+        raise ValueError(f'Missing paired Networking release proof for {protocol}')
     require_ownership(proof_path, package)
     proof = snapshot(proof_path, 4096, json.load)
-    if (type(proof) is not dict or set(proof) != {'schema', 'modemProtocol', 'provider', 'sha256'}
+    if (type(proof) is not dict or set(proof) != {'schema', protocol, 'provider', 'sha256'}
             or type(proof['schema']) is not int or proof['schema'] != 1
-            or type(proof['modemProtocol']) is not int or proof['modemProtocol'] != 1
-            or not isinstance(proof['provider'], str) or not PROVIDER_NAME.fullmatch(proof['provider'])
+            or type(proof[protocol]) is not int or proof[protocol] != 1
+            or not isinstance(proof['provider'], str) or not name.fullmatch(proof['provider'])
             or not isinstance(proof['sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', proof['sha256'])):
-        raise ValueError('Networking modem provider contract is invalid')
+        raise ValueError(f'Networking provider contract is invalid for {protocol}')
     provider = provider_dir / proof['provider']
     if jars != {provider}:
-        raise ValueError('Expected one paired Networking modem provider')
+        raise ValueError(f'Expected one paired Networking provider for {protocol}')
     require_ownership(provider, package)
     if snapshot(provider, 64 * 1024 * 1024,
                 lambda stream: hashlib.file_digest(stream, 'sha256').hexdigest()) != proof['sha256']:
-        raise ValueError('Networking modem provider fingerprint changed')
+        raise ValueError(f'Networking provider fingerprint changed for {protocol}')
 
 
 if __name__ == '__main__':
     try:
         check()
     except (OSError, ValueError, TypeError, subprocess.SubprocessError) as error:
-        print('Cannot start or replace Kura Main: install the paired typed Networking modem provider. '
+        print('Cannot start or replace Kura Main: install the paired typed Networking providers. '
               + str(error), file=sys.stderr)
         sys.exit(1)
