@@ -316,19 +316,25 @@ cp() {
             self.assertNotEqual(0,result.returncode);self.assertEqual('keep installed unit\n',unit.read_text())
             self.assertEqual(['disable kura.service','disable --runtime kura.service'],calls.read_text().splitlines())
 
-    def test_real_callback_exit_status_is_propagated_in_both_watchdog_paths(self):
+    def test_real_callback_exit_status_is_propagated_with_the_watchdog_helper(self):
         raw = CONTROL.read_text(); start = raw.index('function runPreRemove {')
         end = raw.index('# Pre-remove script', start); definitions = raw[start:end]
         for status in (0, 47):
-            for watchdog in (False, True):
-                with self.subTest(status=status, watchdog=watchdog), fixtures.tempfile.TemporaryDirectory() as tmp:
-                    root = Path(tmp); device = root / 'device'; marker = root / 'watchdog'
-                    if watchdog: marker.write_text(str(device))
-                    env = dict(os.environ, WD_TMP_FILE=str(marker), REFRESH_TIME='0.01',
-                               TIMEOUT_TIME='10', TEST_STATUS=str(status))
-                    script = definitions + '\npreRemove() { return "$TEST_STATUS"; }\nrunPreRemove\n'
-                    result = subprocess.run(['bash', '-c', script], env=env, capture_output=True, timeout=5)
-                    self.assertEqual(status != 0, result.returncode != 0)
+            with self.subTest(status=status), fixtures.tempfile.TemporaryDirectory() as tmp:
+                calls = Path(tmp) / 'watchdog-actions'
+                env = dict(os.environ, WATCHDOG_ACTIONS=str(calls), REFRESH_TIME='0.01',
+                           TIMEOUT_TIME='10', TEST_STATUS=str(status))
+                script = definitions + """
+watchdogMaintenance() { printf '%s\n' "$1" >> "$WATCHDOG_ACTIONS"; }
+preRemove() { return "$TEST_STATUS"; }
+runPreRemove
+"""
+                result = subprocess.run(['bash', '-c', script], env=env, capture_output=True, timeout=5)
+                self.assertEqual(status != 0, result.returncode != 0, result.stderr)
+                actions = calls.read_text().splitlines()
+                self.assertEqual('check', actions[0])
+                self.assertEqual('disarm', actions[-1])
+                self.assertTrue(all(action == 'pulse' for action in actions[1:-1]))
 
 
 if __name__ == '__main__':
