@@ -125,11 +125,15 @@ def check(links, cgroup, *, ready=False):
     if not links:
         return
     local = []
+    # dnsmasq binds UDP/67 to one device only for a single configured link.
+    # Its multi-link socket has host-wide IPv4 scope.
+    wildcard = len(links) > 1
     for listener in snapshot():
         if cgroup is not None and listener.cgroup == cgroup:
-            local.append(listener.interface)
+            local.append(listener)
         else:
-            require(not overlaps(listener, links), 'DHCP_PORT_IN_USE')
+            require(not wildcard and not overlaps(listener, links), 'DHCP_PORT_IN_USE')
     if ready:
-        require(cgroup is not None and sorted(local) == sorted(link.interface for link in links),
+        device = 0 if wildcard else links[0].interface
+        require(local == [Listener(device, IPv4Address(0), cgroup)] and cgroup is not None,
                 'DHCP_SOCKET_OWNERSHIP_UNVERIFIED')

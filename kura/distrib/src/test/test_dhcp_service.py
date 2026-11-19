@@ -97,3 +97,34 @@ class DhcpServiceTest(unittest.TestCase):
                          listeners.listen_record(bytes(payload), socket.AF_INET6))
         payload.extend(struct.pack('=HHB3x', 5, listeners.INET_DIAG_SKV6ONLY, 1))
         self.assertIsNone(listeners.listen_record(bytes(payload), socket.AF_INET6))
+
+    def test_multiple_links_use_one_owned_wildcard_socket(self):
+        links = (listeners.Link(9, frozenset()), listeners.Link(10, frozenset()))
+        managed = listeners.Listener(0, IPv4Address(0), 312)
+        foreign = listeners.Listener(11, IPv4Address(0), 314)
+        with patch.object(listeners, 'snapshot', return_value=[managed]):
+            listeners.check(links, 312, ready=True)
+            with self.assertRaisesRegex(Refused, 'DHCP_SOCKET_OWNERSHIP_UNVERIFIED'):
+                listeners.check(links[:1], 312, ready=True)
+        with patch.object(listeners, 'snapshot', return_value=[managed, foreign]):
+            with self.assertRaisesRegex(Refused, 'DHCP_PORT_IN_USE'):
+                listeners.check(links, 312)
+        with patch.object(listeners, 'snapshot', return_value=[foreign]):
+            with self.assertRaisesRegex(Refused, 'DHCP_PORT_IN_USE'):
+                listeners.check(links, None)
+
+    def test_active_credential_must_match_and_belong_to_uninterrupted_service(self):
+        model = config.render(config.parse(FIRST))
+        links = (listeners.Link(9, frozenset()),)
+        unit = ('release', 'active', 'invocation', 312)
+        with patch.object(service, 'snapshot', return_value=model), patch.object(
+                listeners, 'check') as check, patch.object(service, 'target', return_value=unit):
+            service.check_active_target({}, unit, links, model)
+            check.assert_called_once_with(links, 312, ready=True)
+        with patch.object(service, 'snapshot', return_value=config.DEFAULT):
+            with self.assertRaisesRegex(Refused, 'DHCP_ACTIVE_CONFIGURATION_MISMATCH'):
+                service.check_active_target({}, unit, links, model)
+        with patch.object(service, 'snapshot', return_value=model), patch.object(listeners, 'check'), patch.object(
+                service, 'target', return_value=('release', 'active', 'changed', 312)):
+            with self.assertRaisesRegex(Refused, 'DHCP_TARGET_CHANGED'):
+                service.check_active_target({}, unit, links, model)

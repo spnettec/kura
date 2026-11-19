@@ -35,6 +35,7 @@ WORKER_UNIT = 'kura-dhcp-service@.service'
 DAEMON_UNIT = 'kura-dhcp.service'
 DAEMON = Path('/usr/sbin/dnsmasq')
 DAEMON_CGROUP = '/system.slice/' + DAEMON_UNIT
+DAEMON_CONFIG = Path('/run/credentials') / DAEMON_UNIT / CONFIG.name
 CGROUP_ROOT = Path('/sys/fs/cgroup')
 HELPER = 'bin/kura_dhcp_service.py'
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
@@ -180,6 +181,17 @@ def observe_interfaces(interfaces):
     return tuple(result)
 
 
+def check_active_target(cohort, unit, interfaces, model):
+    if not interfaces:
+        return
+    # The native service loads a protected per-invocation copy at startup.
+    # Check it as well as the socket and recheck the exact service identity.
+    active = snapshot(DAEMON_CONFIG, configuration.LIMIT, lambda stream: stream.read())
+    require(active == model, 'DHCP_ACTIVE_CONFIGURATION_MISMATCH')
+    listeners.check(interfaces, unit[3], ready=True)
+    require(target(cohort) == unit, 'DHCP_TARGET_CHANGED')
+
+
 def checked_history(root):
     entries = list(STATE.glob('*.intent'))
     require(len(entries) < MAX_OPERATIONS, 'DHCP_HISTORY_FULL')
@@ -255,7 +267,7 @@ def apply(expected, root, cohort, authorize):
             require(current[0] == unit[0] and current[1] == desired and current_config()[1] == model
                     and observe_interfaces(records) == interfaces
                     and (verb != 'restart' or model == before[1] or current[2] != unit[2]), 'DHCP_OUTCOME_UNKNOWN')
-            listeners.check(interfaces, current[3], ready=True)
+            check_active_target(cohort, current, interfaces, model)
             return ('APPLIED', outcomes.commit(STATE / (operation + '.result'), intent))
         finally:
             staged.unlink(missing_ok=True)
@@ -284,7 +296,7 @@ def operate(expected, cohort, authorize):
             interfaces = observe_interfaces(records)
             unit = target(cohort)
             if unit[1] == ('active' if records else 'inactive'):
-                listeners.check(interfaces, unit[3], ready=True)
+                check_active_target(cohort, unit, interfaces, current[1])
                 return ('APPLIED', None)
         return ('DIFFERENT', None)
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
