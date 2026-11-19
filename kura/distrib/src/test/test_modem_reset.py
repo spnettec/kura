@@ -98,6 +98,15 @@ class ModemResetOutcomeTest(unittest.TestCase):
         self.bus.call_blocking.assert_not_called()
 
 
+    def test_main_must_still_be_paired_after_rechecking_the_target(self):
+        expected = service.request(f'gps-disabled:{self.scope}:{DEVICE}:{DEVICE_ID}', self.operation)
+        authorize = Mock(side_effect=[True, True, False])
+        with patch.object(service, 'property_value', side_effect=[22, 6]), self.assertRaisesRegex(
+                Refused, 'UNAUTHORIZED'):
+            service.operate(expected, authorize)
+        self.assertEqual(self.operate('outcome:' + self.scope), ('UNKNOWN', None))
+        self.bus.call_blocking.assert_not_called()
+
     def test_managed_location_uses_one_intent_for_enable_clear_and_final_setup(self):
         self.target.return_value = (self.target.return_value[0], 3)
         with patch.object(service, 'property_value', side_effect=[22, 16]):

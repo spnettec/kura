@@ -252,6 +252,7 @@ def mutate(expected, root, authorize):
                               targetSha256=digest(observed))
                 create(STATE / (operation + '.intent'), intent)
             require(observed == target(bus, expected, dbus)[0], 'MODEM_RESET_TARGET_CHANGED')
+            require(state_binding() == root and authorize(), 'UNAUTHORIZED')
             legacy_owner()
             bus_call(bus, mm[0], modem, interface, method, signature, args, timeout=20)
 
