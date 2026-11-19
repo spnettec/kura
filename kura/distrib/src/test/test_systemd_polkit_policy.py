@@ -201,12 +201,13 @@ process.stdout.write(JSON.stringify(JSON.parse(process.argv[1]).map(c => {
         policy.write_bytes(CHRONY_RULE)
         base = dict(user='kura-clock', systemUnit='kura-clock-broker.service', nnp=True,
                     details=dict(unit='chrony.service', verb='start'))
-        cases = [base, dict(base, details=dict(unit='chronyd.service', verb='stop')),
+        restart = dict(base, details=dict(unit='chrony.service', verb='restart'))
+        cases = [base, dict(base, details=dict(unit='chronyd.service', verb='stop')), restart,
                  dict(base, nnp=False), dict(base, nnp=None), dict(base, systemUnit='other.service'),
-                 dict(base, details=dict(unit='chrony.service', verb='restart')),
+                 dict(restart, systemUnit='other.service'), dict(restart, nnp=False),
                  dict(base, details=dict(unit='networking.service', verb='start')),
                  dict(base, action='org.freedesktop.systemd1.manage-unit-files'), dict(base, user='kurad')]
-        self.assertEqual(self.evaluate('NO', cases, policy), ['yes', 'yes'] + ['no'] * 6 + [None])
+        self.assertEqual(self.evaluate('NO', cases, policy), ['yes'] * 3 + ['no'] * 7 + [None])
 
 
 if __name__ == '__main__':
