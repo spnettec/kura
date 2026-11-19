@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
-"""Retire the exact WPA grants installed by historical Kura packages."""
+"""Retire the exact direct network grants installed by historical Kura packages."""
 import os
 from pathlib import Path
 import stat
@@ -16,6 +16,14 @@ PKLA = Path('/etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pk
 PKLA_GRANT = b'''[No password prompt for kurad user when using Wpa Supplicant]
 Identity=unix-user:kurad
 Action=fi.w1.wpa_supplicant1.*
+ResultInactive=no
+ResultActive=no
+ResultAny=yes
+'''
+MODEM_PKLA = Path('/etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla')
+MODEM_PKLA_GRANT = b'''[No password prompt for kurad user when using ModemManager]
+Identity=unix-user:kurad
+Action=org.freedesktop.ModemManager1.*
 ResultInactive=no
 ResultActive=no
 ResultAny=yes
@@ -56,7 +64,7 @@ def read(path):
         except FileNotFoundError:
             return None
         require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and not info.st_mode & 0o022,
-                f'Unsafe parent of WPA policy {path}')
+                f'Unsafe parent of network policy {path}')
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_NOATIME | os.O_CLOEXEC)
     except FileNotFoundError:
@@ -65,12 +73,12 @@ def read(path):
         before = os.fstat(fd)
         require(stat.S_ISREG(before.st_mode) and before.st_uid == before.st_gid == 0
                 and before.st_nlink == 1 and not before.st_mode & 0o7022 and before.st_size <= LIMIT,
-                f'Unsafe WPA policy file {path}')
+                f'Unsafe network policy file {path}')
         data = stream.read(LIMIT + 1)
         attrs = tuple((key, os.getxattr(fd, key)) for key in sorted(os.listxattr(fd)))
         original = identity(before)
         require(len(data) == before.st_size and original == identity(os.fstat(fd)) == identity(path.lstat()),
-                f'WPA policy changed while reading {path}')
+                f'Network policy changed while reading {path}')
         return Policy(data, original, stat.S_IMODE(before.st_mode), attrs)
 
 
@@ -145,21 +153,30 @@ def restore_xml(path, current, paired):
         Path(temporary).unlink(missing_ok=True)
 
 
+def plan_pkla(path, historical, namespace):
+    policy = read(path)
+    if policy is None:
+        return None
+    if policy.data == historical:
+        return path, policy
+    require(b'unix-user:kurad' not in policy.data or namespace not in policy.data,
+            f'{path.name} is not the historical Kura grant')
+    return None
+
+
 def settle(action):
     work = [plan_xml(path) for path in XML_FILES]
-    pkla = read(PKLA)
-    if pkla is not None and pkla.data != PKLA_GRANT:
-        require(b'unix-user:kurad' not in pkla.data or b'fi.w1.wpa_supplicant1.' not in pkla.data,
-                'WPA pkla is not the historical Kura grant')
+    pkla = [plan_pkla(PKLA, PKLA_GRANT, b'fi.w1.wpa_supplicant1.'),
+            plan_pkla(MODEM_PKLA, MODEM_PKLA_GRANT, b'org.freedesktop.ModemManager1.')]
     if action == 'check':
         return
     for change, _ in work:
         if change:
             restore_xml(*change)
-    if pkla is not None and pkla.data == PKLA_GRANT:
-        require(read(PKLA) == pkla, 'WPA pkla changed before removal')
-        PKLA.unlink()
-        sync_parent(PKLA)
+    for path, policy in filter(None, pkla):
+        require(read(path) == policy, f'{path.name} changed before retirement')
+        path.unlink()
+        sync_parent(path)
     # Reload even if publication was completed by an interrupted installer.
     if any(reload_needed for _, reload_needed in work) and os.path.lexists(SYSTEM_BUS):
         require(stat.S_ISSOCK(SYSTEM_BUS.lstat().st_mode), 'Unpaired system D-Bus socket')
@@ -174,7 +191,7 @@ if __name__ == '__main__':
         require(os.getuid() == os.geteuid() == 0 and sys.argv[1:] in (['check'], ['apply'])
                 and os.environ.get('DPKG_ROOT', '') in ('', '/')
                 and os.environ.get('DPKG_ADMINDIR', '/var/lib/dpkg') == '/var/lib/dpkg',
-                'WPA policy maintenance requires the canonical package Root')
+                'Network policy maintenance requires the canonical package Root')
         settle(sys.argv[1])
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
-        sys.exit('Cannot retire the WPA policy: ' + str(exc))
+        sys.exit('Cannot retire the historical network policy: ' + str(exc))

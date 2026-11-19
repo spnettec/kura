@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
-"""Require the installed Networking release to use the typed modem, DNS and DHCP protocols."""
+"""Require the installed Networking release to use the paired modem, DNS, DHCP and authorization contracts."""
 import hashlib
 import json
 import os
@@ -12,6 +12,7 @@ import sys
 HOME = Path('/opt/eclipse/kura')
 SHARE = Path('/usr/share')
 NETWORKING_RULE = Path('/usr/share/polkit-1/rules.d/52-kura-networking.rules')
+NETWORKING_LOCATION_POLICY_SHA256 = '52936e9d56c0f8d979d1531a9e6a837eaed527b0cd6d340c3f27d250d3e88652'
 PROVIDERS = {'kura-networking': 'networking', 'kura-firewall-only': 'firewall'}
 MODEM_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
 BIND_NAME = re.compile(r'org\.eclipse\.kura\.linux\.systemd\.provider-[0-9A-Za-z.+~-]+\.jar')
@@ -115,6 +116,12 @@ def check():
                 jars = tuple(folder.iterdir())
             check_asset(package, folder, jars, proof_dir / 'wifi-nm-provider.json',
                         NM_NAME, 'wifiNmProtocol', installed == package, policy=NETWORKING_RULE)
+            if installed == package:
+                check_modem_reset_provider(True)
+                check_modem_location_provider(True)
+                rule = snapshot(NETWORKING_RULE, 16 * 1024, lambda stream: stream.read())
+                if hashlib.sha256(rule).hexdigest() != NETWORKING_LOCATION_POLICY_SHA256:
+                    raise ValueError('Networking still needs the paired read-only ModemManager policy')
 
 
 def check_modem_reset_provider(present):

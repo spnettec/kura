@@ -133,8 +133,13 @@ LEGACY = b'''polkit.addRule(function(action, subject) {
 '''
 LEGACY_NETWORKING = LEGACY.splitlines(keepends=True)[0] + b''.join(
     line[4:] for line in LEGACY.splitlines(keepends=True)[1:])
-POLICY = LEGACY.replace(b' == 0 ||\n            action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&',
+PREVIOUS = LEGACY.replace(b' == 0 ||\n            action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&',
                         b' == 0) &&')
+PREVIOUS_NETWORKING = PREVIOUS.splitlines(keepends=True)[0] + b''.join(
+    line[4:] for line in PREVIOUS.splitlines(keepends=True)[1:])
+POLICY = PREVIOUS.replace(b'action.id.indexOf("org.freedesktop.ModemManager1.") == 0',
+                          b'action.id === "org.freedesktop.ModemManager1.Location"')
+
 
 
 def require(value):
@@ -147,7 +152,10 @@ def sync():
     finally: os.close(fd)
 
 try:
-    require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[1] in ('check', 'install', 'remove', 'retire-wpa'))
+    require(os.getuid() == os.geteuid() == 0 and len(sys.argv) == 2
+            and sys.argv[1] in ('check', 'install', 'remove', 'retire-legacy')
+            and os.environ.get('DPKG_ROOT', '') in ('', '/')
+            and os.environ.get('DPKG_ADMINDIR', '/var/lib/dpkg') == '/var/lib/dpkg')
     action = sys.argv[1]
     for parent in PATH.parents:
         m = parent.lstat()
@@ -161,11 +169,11 @@ try:
             raw = os.read(fd, 16385)
             identity = lambda x: (x.st_dev, x.st_ino, x.st_uid, x.st_gid, x.st_mode,
                                   x.st_nlink, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
-            require(raw in (POLICY, LEGACY, LEGACY_NETWORKING)
+            require(raw in (POLICY, PREVIOUS, PREVIOUS_NETWORKING, LEGACY, LEGACY_NETWORKING)
                     and identity(m) == identity(os.fstat(fd)) == identity(PATH.lstat()))
             if action == 'remove':
                 PATH.unlink(); sync()
-            elif action in ('install', 'retire-wpa') and raw != POLICY:
+            elif action in ('install', 'retire-legacy') and raw != POLICY:
                 attrs = tuple((key, os.getxattr(fd, key)) for key in os.listxattr(fd))
                 out, temporary = tempfile.mkstemp(prefix='.kura-nm-policy-', dir=PATH.parent)
                 try:
@@ -231,7 +239,7 @@ function create_users {
     if [[ $NN == "NO" ]]; then
         manage_network_polkit_policy install || return 1
     else
-        manage_network_polkit_policy retire-wpa || return 1
+        manage_network_polkit_policy retire-legacy || return 1
     fi
     manage_wpa_policy apply || return 1
 
@@ -248,6 +256,7 @@ function delete_users {
     # The locked recovery account/control group and independent TLS/journal are
     # retained with their UID/GID. Package lifecycle removes both listeners.
     # Revoke both halves before changing any account or other host policy.
+    manage_wpa_policy check || return 1
     manage_su_pam_policy remove || return 1
     # The retained kurad UID must not retain the package's broad NM grant.
     # Unknown site rules are preserved and make removal fail explicitly.
@@ -278,9 +287,6 @@ function delete_users {
     fi
     if [ -f /etc/polkit-1/localauthority/50-local.d/52-org.freedesktop.networkmanager.pkla ]; then
         rm -f /etc/polkit-1/localauthority/50-local.d/52-org.freedesktop.networkmanager.pkla || return 1
-    fi
-    if [ -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla || return 1
     fi
 
     # recover old configs

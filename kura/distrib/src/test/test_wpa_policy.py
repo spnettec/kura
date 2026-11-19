@@ -23,9 +23,11 @@ class WpaPolicyTest(unittest.TestCase):
         for name in (self.site, self.vendor):
             name.parent.mkdir()
         self.pkla = root / 'kura-wifi.pkla'
+        self.modem_pkla = root / 'kura-modem.pkla'
         self.bus_path = root / 'system_bus_socket'
         self.enterContext(patch.object(policy, 'XML_FILES', (self.site, self.vendor)))
         self.enterContext(patch.object(policy, 'PKLA', self.pkla))
+        self.enterContext(patch.object(policy, 'MODEM_PKLA', self.modem_pkla))
         self.enterContext(patch.object(policy, 'SYSTEM_BUS', self.bus_path))
         self.reload = self.enterContext(patch.object(policy.subprocess, 'run'))
 
@@ -70,6 +72,27 @@ class WpaPolicyTest(unittest.TestCase):
         policy.settle('apply')
         self.assertEqual(before, policy.read(self.site))
         self.reload.assert_not_called()
+
+    def test_exact_legacy_modem_grant_retires_and_unrelated_site_pkla_survives(self):
+        self.modem_pkla.write_bytes(policy.MODEM_PKLA_GRANT)
+        before = policy.read(self.modem_pkla)
+        policy.settle('check')
+        self.assertEqual(before, policy.read(self.modem_pkla))
+        policy.settle('apply')
+        self.assertFalse(self.modem_pkla.exists())
+        self.modem_pkla.write_bytes(policy.MODEM_PKLA_GRANT.replace(b'kurad', b'operator'))
+        before = policy.read(self.modem_pkla)
+        policy.settle('apply')
+        self.assertEqual(before, policy.read(self.modem_pkla))
+
+    def test_ambiguous_modem_grant_fails_before_any_publication(self):
+        self.write_legacy(self.site, '.save')
+        self.modem_pkla.write_bytes(policy.MODEM_PKLA_GRANT + b'# Site modification\n')
+        before = policy.read(self.site), policy.read(self.modem_pkla)
+        for action in ('check', 'apply'):
+            with self.assertRaisesRegex(ValueError, 'not the historical Kura grant'):
+                policy.settle(action)
+            self.assertEqual(before, (policy.read(self.site), policy.read(self.modem_pkla)))
 
     def test_completed_publication_resumes_reload_without_replacing_file(self):
         self.write_legacy(self.site, '.save')

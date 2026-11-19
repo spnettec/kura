@@ -63,29 +63,34 @@ class NetworkPolkitPolicyTest(unittest.TestCase):
         self.invoke('check'); self.assertFalse(self.path.exists())
         self.invoke('install'); self.assertEqual(0, self.path.stat().st_uid)
         self.assertEqual(0o644, stat.S_IMODE(self.path.stat().st_mode))
-        self.assertEqual('16bc6c9aa7aa9a916a18e7ed8d5eb26d1a86094af98dc4a04b04902daaa55721',
+        self.assertEqual('78df43043fe23a169f69ee8b3b54d674d3d9a019a2ce22b08056cf0b078f3936',
                          self.fingerprint()[-1])
         before = self.fingerprint(); self.invoke('check'); self.invoke('install')
         self.assertEqual(before, self.fingerprint())
         self.invoke('remove'); self.invoke('remove'); self.assertFalse(self.path.exists())
         self.assertEqual([], list(self.rules.iterdir()))
 
-    def test_both_known_historical_rules_migrate_to_the_same_narrower_policy(self):
+    def test_known_historical_rules_migrate_to_the_same_read_only_location_policy(self):
         legacy = self.body.split("LEGACY = b" + "'" * 3, 1)[1].split("'" * 3, 1)[0].encode()
         lines = legacy.splitlines(keepends=True)
         networking = lines[0] + b''.join(line[4:] for line in lines[1:])
-        for rule in (legacy, networking):
+        previous = legacy.replace(b' == 0 ||\n            action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&',
+                                  b' == 0) &&')
+        lines = previous.splitlines(keepends=True)
+        previous_networking = lines[0] + b''.join(line[4:] for line in lines[1:])
+        for rule in (legacy, networking, previous, previous_networking):
             self.path.write_bytes(rule)
             before = self.fingerprint()
             self.invoke('check')
             self.assertEqual(before, self.fingerprint())
-            self.invoke('retire-wpa')
+            self.invoke('retire-legacy')
             current = self.path.read_bytes()
             self.assertIn(b'org.freedesktop.NetworkManager.', current)
-            self.assertIn(b'org.freedesktop.ModemManager1.', current)
+            self.assertIn(b'action.id === "org.freedesktop.ModemManager1.Location"', current)
+            self.assertNotIn(b'indexOf("org.freedesktop.ModemManager1.")', current)
             self.assertNotIn(b'fi.w1.wpa_supplicant1.', current)
             self.invoke('remove')
-        self.invoke('retire-wpa')
+        self.invoke('retire-legacy')
         self.assertFalse(self.path.exists())
 
     def test_custom_rule_is_preserved_including_all_metadata(self):

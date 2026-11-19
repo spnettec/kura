@@ -22,8 +22,17 @@ checkWpaPolicy() {
 raise RuntimeError("Kura WPA policy admission was not embedded")
 KURA_WPA_POLICY
 }
+checkManagedNmPolicy() {
+    /usr/bin/python3 -I -B - check <<'KURA_MANAGED_NM_PREFLIGHT'
+raise RuntimeError("Kura managed NM policy admission was not embedded")
+KURA_MANAGED_NM_PREFLIGHT
+}
 case "${1:-}" in
-    install|upgrade) checkModemCohort || exit 1; checkWpaPolicy || exit 1 ;;
+    install|upgrade)
+        checkModemCohort || exit 1
+        checkManagedNmPolicy || exit 1
+        checkWpaPolicy || exit 1
+        ;;
 esac
 
 # YOFC ORDINARY BOOT INSTALL GUARD V1

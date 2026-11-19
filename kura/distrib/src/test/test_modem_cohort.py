@@ -111,10 +111,22 @@ class ProviderFingerprintTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Missing paired .* wifiNmProtocol'):
                 cohort.check()
             self.rule.write_bytes(b'known packaged Networking policy')
-            self.proof.with_name('wifi-nm-provider.json').write_text(json.dumps(dict(
-                schema=1, wifiNmProtocol=1, provider=nm_name.name,
-                sha256=hashlib.sha256(nm_name.read_bytes()).hexdigest(),
-                policySha256=hashlib.sha256(self.rule.read_bytes()).hexdigest())))
+            wifi = dict(schema=1, wifiNmProtocol=1, provider=nm_name.name,
+                        sha256=hashlib.sha256(nm_name.read_bytes()).hexdigest(),
+                        policySha256=hashlib.sha256(self.rule.read_bytes()).hexdigest())
+            wifi_proof = self.proof.with_name('wifi-nm-provider.json')
+            wifi_proof.write_text(json.dumps(wifi))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* modemResetProtocol'):
+                cohort.check()
+            self.proof.with_name('modem-reset-provider.json').write_text(json.dumps(dict(
+                schema=1, modemResetProtocol=1, provider=nm_name.name, sha256=wifi['sha256'])))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* modemLocationProtocol'):
+                cohort.check()
+            self.proof.with_name('modem-location-provider.json').write_text(json.dumps(dict(
+                schema=1, modemLocationProtocol=1, provider=nm_name.name, sha256=wifi['sha256'])))
+            with self.assertRaisesRegex(ValueError, 'paired read-only ModemManager policy'):
+                cohort.check()
+            self.enterContext(patch.object(cohort, 'NETWORKING_LOCATION_POLICY_SHA256', wifi['policySha256']))
             cohort.check()
             self.owner.assert_any_call(self.rule, self.package)
             self.rule.write_bytes(b'foreign policy file')

@@ -189,6 +189,18 @@ def embed_package_helper(control, policy, label):
     control.write_text(content.replace(token, source))
 
 
+def embed_managed_nm_preflight(control, installer):
+    token = 'raise RuntimeError("Kura managed NM policy admission was not embedded")'
+    marker = "<<'KURA_MANAGED_NETWORK_POLICY'\n"
+    script = installer.read_text()
+    require(script.count(marker) == 1)
+    body = script.split(marker, 1)[1].split('\nKURA_MANAGED_NETWORK_POLICY', 1)[0]
+    compile(body, str(installer), 'exec', dont_inherit=True)
+    content = control.read_text()
+    require(content.count(token) == 1)
+    control.write_text(content.replace(token, body))
+
+
 def prepare_clock_service(assembly):
     destination = assembly / 'libexec/clock-broker'
     destination.mkdir(parents=True, exist_ok=True)
@@ -248,6 +260,8 @@ if __name__ == "__main__":
                          Path(sys.argv[1])/'bin/kura_modem_cohort.py', 'modem cohort')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
                          Path(sys.argv[1])/'bin/kura_wpa_policy.py', 'WPA policy admission')
+    embed_managed_nm_preflight(Path(sys.argv[1]).parent/'filtered-control/preinst',
+                               Path(sys.argv[1])/'install/manage_kura_users.sh')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
     for hook in ('preinst', 'postinst', 'prerm'):
