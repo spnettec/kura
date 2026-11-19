@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import HOME, public_file
+from kura_clock_broker import public_file
 from kura_clock_journal import Refused, decode, encode, require
 from kura_journal_export import main_peer, paired_unit
 from kura_reboot_broker import (MAIN_UNIT, file_hash, proc_status, socket_peer, verify_alive,
@@ -25,7 +25,7 @@ SOCKET = Path('/run/kura-command-executor.sock')
 SOCKET_UNIT = 'kura-command-executor.socket'
 SERVICE = 'kura-command-executor@.service'
 ACTOR_HOME = Path('/usr/libexec/kura-command-executor')
-CLIENT_FILE = HOME / 'bin/kura_command_executor.py'
+CLIENT_FILE = ACTOR_HOME / 'kura_command_executor.py'
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(CLIENT_FILE), 'client')
 ACCOUNT = 'kura'
 CALLER = 'kurad'
@@ -68,7 +68,6 @@ def verify_actor(unit):
             and re.fullmatch(r'[0-9a-f]{64}', manifest['mainUnitSha256']), 'UNPAIRED_EXECUTOR')
     for name, expected in manifest['files'].items():
         require(file_hash(public_file(ACTOR_HOME / name)) == expected, 'UNPAIRED_EXECUTOR')
-    require(file_hash(public_file(CLIENT_FILE)) == manifest['files'][CLIENT_FILE.name], 'UNPAIRED_EXECUTOR')
     paired_unit(SOCKET_UNIT, SOCKET_UNIT, manifest['files'][SOCKET_UNIT])
     paired_unit(unit, SERVICE, manifest['files'][SERVICE])
     return manifest['mainUnitSha256']
@@ -91,15 +90,15 @@ def read_command_line(pid):
 def receive_stdio(stream, files):
     stream.settimeout(5)
     integer_size = array.array('i').itemsize
-    marker, controls, flags, _ = stream.recvmsg(1, socket.CMSG_SPACE(3 * integer_size), socket.MSG_CMSG_CLOEXEC)
+    marker, controls, flags, _ = stream.recvmsg(1, socket.CMSG_SPACE(4 * integer_size), socket.MSG_CMSG_CLOEXEC)
     for level, kind, data in controls:
         if level == socket.SOL_SOCKET and kind == socket.SCM_RIGHTS:
             values = array.array('i')
             values.frombytes(data[:len(data) - len(data) % integer_size])
             files.extend(values)
-    require(marker == READY and len(controls) == 1 and len(files) == 3
+    require(marker == READY and len(controls) == 1 and len(files) == 4
             and not flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC), 'INVALID_EXECUTION_STREAMS')
-    for index, file in enumerate(files):
+    for index, file in enumerate(files[:3]):
         actual = os.fstat(file)
         mode = fcntl.fcntl(file, fcntl.F_GETFL)
         require((stat.S_ISFIFO(actual.st_mode)
@@ -107,10 +106,15 @@ def receive_stdio(stream, files):
                 and not mode & os.O_PATH
                 and mode & os.O_ACCMODE in ((os.O_RDONLY, os.O_RDWR) if index == 0
                                          else (os.O_WRONLY, os.O_RDWR)), 'INVALID_EXECUTION_STREAMS')
+    require(stat.S_ISDIR(os.fstat(files[3]).st_mode) and fcntl.fcntl(files[3], fcntl.F_GETFL) & os.O_PATH,
+            'INVALID_EXECUTION_DIRECTORY')
 
 
-def execute(stream, peer, directory, command, files):
-    child = subprocess.Popen(command, stdin=files[0], stdout=files[1], stderr=files[2], cwd=directory)
+def execute(stream, peer, command, files):
+    # su previously inherited the client's working directory before changing UID.
+    # Keep that directory identity without giving the worker access to its parents.
+    os.fchdir(files[3])
+    child = subprocess.Popen(command, stdin=files[0], stdout=files[1], stderr=files[2])
     for file in files:
         os.close(file)
     files.clear()
@@ -142,7 +146,7 @@ def serve(stream, unit):
             receive_stdio(stream, files)
             require(main_peer(peer, unit_hash, CLIENT, None, command_from_args,
                               command_line=read_command_line) == (directory, command), 'UNAUTHORIZED')
-            execute(stream, peer, directory, command, files)
+            execute(stream, peer, command, files)
     finally:
         for file in files:
             os.close(file)
@@ -159,8 +163,12 @@ def client(directory):
         stream.connect(str(SOCKET))
         require(struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)) == (1, 0, 0),
                 'UNPAIRED_EXECUTOR')
-        rights = [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array('i', [0, 1, 2]))]
-        require(stream.sendmsg([READY], rights) == 1, 'EXECUTOR_UNAVAILABLE')
+        working = os.open('.', os.O_PATH | os.O_DIRECTORY | os.O_CLOEXEC)
+        try:
+            rights = [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array('i', [0, 1, 2, working]))]
+            require(stream.sendmsg([READY], rights) == 1, 'EXECUTOR_UNAVAILABLE')
+        finally:
+            os.close(working)
         stream.settimeout(None)
         result = stream.recv(1)
         require(len(result) == 1, 'EXECUTOR_RESULT_UNAVAILABLE')

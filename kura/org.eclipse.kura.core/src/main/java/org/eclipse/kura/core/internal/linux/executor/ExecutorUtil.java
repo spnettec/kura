@@ -59,7 +59,7 @@ public class ExecutorUtil {
     private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"));
     private static final String DEFAULT_COMMAND_USERNAME = "kura";
     private static final Path MANAGED_EXECUTOR = Path.of("/usr/libexec/kura-command-executor/cohort.json");
-    private static final String MANAGED_EXECUTOR_CLIENT = "/opt/eclipse/kura/bin/kura_command_executor.py";
+    private static final String MANAGED_EXECUTOR_CLIENT = "/usr/libexec/kura-command-executor/kura_command_executor.py";
 
     private String commandUsername;
 
