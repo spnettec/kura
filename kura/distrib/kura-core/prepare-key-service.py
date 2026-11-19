@@ -209,6 +209,22 @@ def embed_reboot_guard(control):
     control.write_text(content.replace(token, source))
 
 
+def embed_configure_phases(control, assembly):
+    token = 'raise RuntimeError("Kura Core configure phases were not embedded")'
+    names = dict(CORE_CONFIGURE_HOME=assembly.name)
+    for name, relative in (
+            ('CORE_CONFIGURE_LIFECYCLE_SHA', 'bin/kura_key_service_lifecycle.py'),
+            ('CORE_CONFIGURE_MANIFEST_SHA', 'libexec/key-backup/manifest.json'),
+            ('CORE_CONFIGURE_INSTALLER_SHA', 'install/kura_install.sh')):
+        names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()
+    source = Path(__file__).with_name('postinst-configure.py').read_text()
+    source = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
+    compile(source, 'postinst-configure.py', 'exec', dont_inherit=True)
+    content = control.read_text()
+    require(content.count(token) == 1)
+    control.write_text(content.replace(token, source))
+
+
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
@@ -221,6 +237,7 @@ if __name__ == "__main__":
     for hook in ('preinst', 'postinst', 'prerm'):
         embed_addon_code_policy(Path(sys.argv[1]).parent/'filtered-control'/hook,
                                Path(__file__).with_name('addon-code-policy.py'))
+    embed_configure_phases(Path(sys.argv[1]).parent/'filtered-control/postinst', Path(sys.argv[1]))
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

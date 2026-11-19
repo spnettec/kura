@@ -386,6 +386,12 @@ raise RuntimeError("Kura addon-code policy was not embedded")
 KURA_ADDON_CODE_POLICY
 }
 
+function packageConfigure {
+    python3 -I -B - "$1" <<'KURA_CORE_CONFIGURE_PHASES'
+raise RuntimeError("Kura Core configure phases were not embedded")
+KURA_CORE_CONFIGURE_PHASES
+}
+
 function postInstall {
 
     # The credential workflow uses umask 077. A newly created code prefix must
@@ -401,143 +407,150 @@ function postInstall {
         return 1
     fi
 
-    #install KURA files — deb unpacks directly under ${INSTALL_DIR}/kura (no zip intermediate)
-    if [ -d "${INSTALL_DIR}/kura/install" ]; then
-        sh ${INSTALL_DIR}/kura/install/kura_install.sh --defer-key-service >> ${LOG} 2>&1 || return 1
-    else
-        # Fallback for legacy installations that still use zip-based layout
-        KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
-        if [ -n "${KURA_VERSION_DIR}" ]; then
-            sh ${KURA_VERSION_DIR}install/kura_install.sh --defer-key-service >> ${LOG} 2>&1 || return 1
-        else
-            echo "ERROR: No KURA installation files found" >> ${LOG} 2>&1
-            exit 1
-        fi
+    CONFIGURE_STATE=$(packageConfigure status 2>>"${LOG}") || return 1
+    read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
+    if [ "${CONFIGURE_PHASE}" = NEW ]; then
+        CONFIGURE_STATE=$(packageConfigure begin 2>>"${LOG}") || return 1
+        read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
+        [ "${CONFIGURE_PHASE}" = NEW ] || return 1
+        sh "${CONFIGURE_HOME}/install/kura_install.sh" --defer-key-service >> "${LOG}" 2>&1 || return 1
+        packageConfigure prepared >> "${LOG}" 2>&1 || return 1
+        CONFIGURE_PHASE=PREPARED
     fi
-
-    #clean up
-    rm -rf ${INSTALL_DIR}/kura/install >> ${LOG} 2>&1
-
-    # Create siblings/ and the install-order registry. Each sibling .deb's
-    # postinst appends its own directory name to this file; the postrm deletes
-    # its line on remove|purge. gen_config_ini.sh reads this file to iterate
-    # siblings in install order (first-installed wins for duplicate JARs).
-    mkdir -p ${INSTALL_DIR}/kura/siblings
-    mkdir -p ${INSTALL_DIR}/kura/framework
-    if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
-        : > "${INSTALL_DIR}/kura/framework/sibling-install-order"
-    fi
-
-    # Migration: drop the obsolete precedence config left by older kura-core
-    # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
-    rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
-
-    # Ensure the runtime log directory exists. Install logs are kept in /var/log
-    # so they survive package removal.
-    mkdir -p ${INSTALL_DIR}/kura/log
-
-    # Restore the runtime trees preserved by preinst across an in-place upgrade
-    # (user/ snapshots + keys, data/, packages/ deployment packages + registry,
-    # siblings/ sibling bundles, framework/sibling-install-order precedence).
-    # This overwrites the factory defaults just laid down by kura_install.sh with
-    # the user's state. Staging is left in place if the copy-back fails, so
-    # nothing is lost.
-    PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
-    RETAINED_DIR=/var/lib/kura-retained
     WAS_UPGRADE=0
     WAS_REINSTALL=0
-    if [ -e "${PRESERVE_DIR}" ] && [ -e "${RETAINED_DIR}" ]; then
-        echo "ERROR: both upgrade and removal recovery copies exist; neither will be overwritten." >> ${LOG} 2>&1
-        return 1
-    fi
-    if [ -d "${RETAINED_DIR}" ]; then
-        PRESERVE_DIR=${RETAINED_DIR}
-        WAS_REINSTALL=1
-    fi
-    if [ -d "${PRESERVE_DIR}" ]; then
-        if [ "${WAS_REINSTALL}" = "0" ]; then
-            WAS_UPGRADE=1
+    case "${CONFIGURE_MODE}" in
+        upgrade) WAS_UPGRADE=1 ;;
+        reinstall) WAS_REINSTALL=1 ;;
+        install) ;;
+        *) return 1 ;;
+    esac
+
+    if [ "${CONFIGURE_PHASE}" = PREPARED ]; then
+        # The original packaged installer returned successfully. Its durable
+        # receipt precedes cleanup so configure can resume without running it again.
+        rm -rf "${CONFIGURE_HOME}/install" >> "${LOG}" 2>&1 || return 1
+
+        # Create siblings/ and the install-order registry. Each sibling .deb's
+        # postinst appends its own directory name to this file; the postrm deletes
+        # its line on remove|purge. gen_config_ini.sh reads this file to iterate
+        # siblings in install order (first-installed wins for duplicate JARs).
+        mkdir -p ${INSTALL_DIR}/kura/siblings
+        mkdir -p ${INSTALL_DIR}/kura/framework
+        if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
+            : > "${INSTALL_DIR}/kura/framework/sibling-install-order"
         fi
-        echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
-        RESTORE_OK=1
-        for d in user data packages log; do
-            if [ -d "${PRESERVE_DIR}/${d}" ]; then
-                mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
-                cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
-            fi
-        done
-        # .data contains preserved runtime state and historical copies. Trusted
-        # addon code is published separately below; fresh defaults must not win
-        # over the gateway's old data, even when their names look like scripts.
-        if [ -d "${PRESERVE_DIR}/addon-data" ]; then
-            mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1 || RESTORE_OK=0
-            cp -a "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
-        fi
-        manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
-        if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
-            MAIN_RESTORE=$(python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" \
-                --package-main-restore-decision "${PRESERVE_DIR}" 2>>"${LOG}") || return 1
-            case "${MAIN_RESTORE}" in
-                vendor) ;;
-                restore) restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" \
-                    /lib/systemd/system/kura.service >> "${LOG}" 2>&1 || RESTORE_OK=0 ;;
-                *) return 1 ;;
-            esac
-            systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
-        fi
-        # dpkg unpacks every package in a transaction before configuring the
-        # core. A sibling directory already present here therefore contains
-        # the newly unpacked package; copying the backup over it would silently
-        # revert its bundles while dpkg records the new version as installed.
-        # Restore only whole sibling directories that were not unpacked again.
-        for sibling in "${PRESERVE_DIR}"/siblings/*; do
-            [ -d "${sibling}" ] || continue
-            sibling_name=${sibling##*/}
-            if [ ! -e "${INSTALL_DIR}/kura/siblings/${sibling_name}" ]; then
-                cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${sibling_name}" >> ${LOG} 2>&1 || RESTORE_OK=0
-            fi
-        done
-        # Restore the sibling install-order registry so gen_config_ini.sh
-        # keeps the correct bundle precedence after the upgrade.
-        if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
-            cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
-        fi
-        # Keep an existing recovery copy, including an intentionally different
-        # historical snapshot. Only fill a missing copy; never follow a data link.
-        if [ ! -e "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ ! -L "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
-            cp -a "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || RESTORE_OK=0
-        fi
-        # cp -a retains the gateway's numeric data/key owners and modes on both
-        # upgrade and reinstall. The code-only ownership pass below protects
-        # installed executables without changing those restored data owners.
-        if [ "${RESTORE_OK}" = "1" ]; then
-            # Repair installed code before releasing the recovery copy. Leave
-            # intentional restored data/key owners and modes unchanged.
-            python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
-            if [ "${WAS_REINSTALL}" = "1" ]; then
-                python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --restore-retained-main-state >> ${LOG} 2>&1 || return 1
-            fi
-            python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
-            if ! rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1; then
-                echo "ERROR: restored data but could not remove its recovery copy at ${PRESERVE_DIR}." >> ${LOG} 2>&1
-                return 1
-            fi
-            echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
-        else
-            echo "ERROR: could not fully restore preserved data; kept at ${PRESERVE_DIR} for recovery" >> ${LOG} 2>&1
+
+        # Migration: drop the obsolete precedence config left by older kura-core
+        # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
+        rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
+
+        # Ensure the runtime log directory exists. Install logs are kept in /var/log
+        # so they survive package removal.
+        mkdir -p ${INSTALL_DIR}/kura/log
+
+        # Restore the runtime trees preserved by preinst across an in-place upgrade
+        # (user/ snapshots + keys, data/, packages/ deployment packages + registry,
+        # siblings/ sibling bundles, framework/sibling-install-order precedence).
+        # This overwrites the factory defaults just laid down by kura_install.sh with
+        # the user's state. Staging is left in place if the copy-back fails, so
+        # nothing is lost.
+        PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+        RETAINED_DIR=/var/lib/kura-retained
+        if [ -e "${PRESERVE_DIR}" ] && [ -e "${RETAINED_DIR}" ]; then
+            echo "ERROR: both upgrade and removal recovery copies exist; neither will be overwritten." >> ${LOG} 2>&1
             return 1
         fi
+        if [ -d "${RETAINED_DIR}" ]; then
+            PRESERVE_DIR=${RETAINED_DIR}
+            WAS_REINSTALL=1
+        fi
+        if [ -d "${PRESERVE_DIR}" ]; then
+            if [ "${WAS_REINSTALL}" = "0" ]; then
+                WAS_UPGRADE=1
+            fi
+            echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
+            RESTORE_OK=1
+            for d in user data packages log; do
+                if [ -d "${PRESERVE_DIR}/${d}" ]; then
+                    mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
+                    cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
+                fi
+            done
+            # .data contains preserved runtime state and historical copies. Trusted
+            # addon code is published separately below; fresh defaults must not win
+            # over the gateway's old data, even when their names look like scripts.
+            if [ -d "${PRESERVE_DIR}/addon-data" ]; then
+                mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1 || RESTORE_OK=0
+                cp -a "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
+            if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
+                MAIN_RESTORE=$(python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" \
+                    --package-main-restore-decision "${PRESERVE_DIR}" 2>>"${LOG}") || return 1
+                case "${MAIN_RESTORE}" in
+                    vendor) ;;
+                    restore) restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" \
+                        /lib/systemd/system/kura.service >> "${LOG}" 2>&1 || RESTORE_OK=0 ;;
+                    *) return 1 ;;
+                esac
+                systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            # dpkg unpacks every package in a transaction before configuring the
+            # core. A sibling directory already present here therefore contains
+            # the newly unpacked package; copying the backup over it would silently
+            # revert its bundles while dpkg records the new version as installed.
+            # Restore only whole sibling directories that were not unpacked again.
+            for sibling in "${PRESERVE_DIR}"/siblings/*; do
+                [ -d "${sibling}" ] || continue
+                sibling_name=${sibling##*/}
+                if [ ! -e "${INSTALL_DIR}/kura/siblings/${sibling_name}" ]; then
+                    cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${sibling_name}" >> ${LOG} 2>&1 || RESTORE_OK=0
+                fi
+            done
+            # Restore the sibling install-order registry so gen_config_ini.sh
+            # keeps the correct bundle precedence after the upgrade.
+            if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
+                cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
+            fi
+            # Keep an existing recovery copy, including an intentionally different
+            # historical snapshot. Only fill a missing copy; never follow a data link.
+            if [ ! -e "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ ! -L "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
+                cp -a "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            # cp -a retains the gateway's numeric data/key owners and modes on both
+            # upgrade and reinstall. The code-only ownership pass below protects
+            # installed executables without changing those restored data owners.
+            if [ "${RESTORE_OK}" = "1" ]; then
+                # Repair installed code before releasing the recovery copy. Leave
+                # intentional restored data/key owners and modes unchanged.
+                python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+                if [ "${WAS_REINSTALL}" = "1" ]; then
+                    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --restore-retained-main-state >> ${LOG} 2>&1 || return 1
+                fi
+                python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
+                echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
+            else
+                echo "ERROR: could not fully restore preserved data; kept at ${PRESERVE_DIR} for recovery" >> ${LOG} 2>&1
+                return 1
+            fi
+        fi
+
+        # The outer postinst may have restored an old framework registry. Code-only
+        # normalization never rewrites retained key/data ownership or permissions.
+        python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+        if [ "${WAS_UPGRADE}" = "0" ] && [ "${WAS_REINSTALL}" = "0" ]; then
+            python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
+        fi
+
+        # The retained data and root code are final before new key operations are admitted.
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1
+        packageConfigure ready >> "${LOG}" 2>&1 || return 1
+    elif [ "${CONFIGURE_PHASE}" != READY ]; then
+        return 1
     fi
 
-    # The outer postinst may have restored an old framework registry. Code-only
-    # normalization never rewrites retained key/data ownership or permissions.
-    python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
-    if [ "${WAS_UPGRADE}" = "0" ] && [ "${WAS_REINSTALL}" = "0" ]; then
-        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
-    fi
-
-    # The retained data and root code are final before new key operations are admitted.
-    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1
+    packageConfigure retire-copy >> "${LOG}" 2>&1 || return 1
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --leave >> ${LOG} 2>&1 || return 1
     systemctl daemon-reload >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-service.socket >> ${LOG} 2>&1 || return 1

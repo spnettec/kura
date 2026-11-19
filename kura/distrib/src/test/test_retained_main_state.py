@@ -247,7 +247,7 @@ class RemoveCallbackTest(unittest.TestCase):
         self.assertIn(callback, raw)
         self.assertNotIn('bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -u', raw)
         postinst = (CONTROL.parent / 'postinst').read_text()
-        self.assertIn('rm -rf ${INSTALL_DIR}/kura/install', postinst)
+        self.assertIn('rm -rf "${CONFIGURE_HOME}/install"', postinst)
         # Exercise the shipped callback after the entire install tree is gone.
         with fixtures.tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); helper = root / 'kura/bin/manage_kura_users.sh'

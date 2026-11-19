@@ -168,19 +168,22 @@ class RuntimeOwnership(unittest.TestCase):
         control=HELPER.parents[3]/'variants/linux/unfiltered/deb/control/postinst'
         # Use the actual shipped function; a failed child must stop it before cleanup.
         function=re.search(r'^function postInstall \{\n.*?^\}',control.read_text(),re.M|re.S).group()
-        for fallback in [False,True]:
-            with self.subTest(fallback=fallback):
-                root=self.base/('fallback' if fallback else 'canonical')
-                folder=root/('kura_test/install' if fallback else 'kura/install')
-                folder.mkdir(parents=True)
-                marker=root/'child-ran'
-                driver=folder/'kura_install.sh'
-                driver.write_text('#!/bin/sh\nprintf attempted > "$INSTALL_DIR/child-ran"\nexit 42\n')
-                env=dict(os.environ,INSTALL_DIR=str(root),LOG=str(root/'installer.log'))
-                result=subprocess.run(['bash','-c',function+'\npostInstall\n'],env=env,capture_output=True,text=True)
-                self.assertEqual(result.returncode,1)
-                self.assertEqual(marker.read_text(),'attempted')
-                self.assertTrue(driver.exists())
+        root=self.base/'candidate'
+        folder=root/'kura_test/install'
+        folder.mkdir(parents=True)
+        marker=root/'child-ran'
+        driver=folder/'kura_install.sh'
+        driver.write_text('#!/bin/sh\nprintf attempted > "$INSTALL_DIR/child-ran"\nexit 42\n')
+        phase='''packageConfigure() {
+            printf '%s\n' "$1" >> "$INSTALL_DIR/phases"
+            printf 'NEW install %s/kura_test\n' "$INSTALL_DIR"
+        }'''
+        env=dict(os.environ,INSTALL_DIR=str(root),LOG=str(root/'installer.log'))
+        result=subprocess.run(['bash','-c',phase+'\n'+function+'\npostInstall\n'],env=env,capture_output=True,text=True)
+        self.assertEqual(result.returncode,1)
+        self.assertEqual(marker.read_text(),'attempted')
+        self.assertEqual((root/'phases').read_text(),'status\nbegin\n')
+        self.assertTrue(driver.exists())
 
     def test_installer_cli_rejects_arguments_without_touching_layout(self):
         before=self.state()

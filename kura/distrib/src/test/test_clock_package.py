@@ -105,7 +105,7 @@ class ClockPackageTest(unittest.TestCase):
     def prefix(self, path):
         raw = (SOURCE / 'variants/linux/unfiltered/deb/control/postinst').read_text()
         start = raw.index('    # The credential workflow uses umask 077.')
-        end = raw.index('    #install KURA files', start)
+        end = raw.index('    CONFIGURE_STATE=', start)
         script = 'umask 077\ncheck_prefix() {\n' + raw[start:end] + '\n}\ncheck_prefix\n'
         environment = os.environ.copy(); environment['INSTALL_DIR'] = str(path); environment['LOG'] = str(self.root / 'install.log')
         return subprocess.run(['/bin/bash', '-c', script], env=environment, capture_output=True, text=True)
