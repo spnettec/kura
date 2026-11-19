@@ -33,6 +33,7 @@ ROLES = {
 }
 LAUNCHERS = ("start_kura.sh", "start_kura_background.sh", "start_kura_debug.sh")
 OFFLINE = "libexec/key-recovery/kura-offline-recovery.jar"
+FRAMEWORK_STOP = "bin/kura_framework_stop.py"
 TEMPLATES = "libexec/key-backup/launchers/"
 FIXED_FILES = frozenset(("bin/kura_key_cohort.py", "bin/kura_credential_env.sh", "bin/kura_key_generation.py",
                          "bin/kura_key_validation.py", "share/key-management/key-generations.conf",
@@ -174,6 +175,12 @@ def managed_unit(raw):
     require(values.get(("[Service]", "ExecStart")) == ["/bin/sh /opt/eclipse/kura/bin/start_kura_background.sh"])
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
     require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
+    if ("[Service]", "ExecStop") in values:
+        require(values[("[Service]", "ExecStop")] == ["/usr/bin/python3 -I -B /opt/eclipse/kura/" + FRAMEWORK_STOP + " ${MAINPID}"]
+                and values.get(("[Service]", "TimeoutStopSec")) == ["45s"]
+                and "kura-clock-broker.service" in " ".join(values.get(("[Unit]", "After"), [])).split())
+        return {FRAMEWORK_STOP}
+    return set()
 
 
 def catalog(home, owner=None):
@@ -227,10 +234,9 @@ def validate(home, manifest, read, owner=None, base_files=frozenset(), unit=None
     require(type(manifest.get('writerProtocol')) is int and manifest['writerProtocol'] == 1)
     native = read(home / 'bin/kura_key_store.py')
     require(re.search(rb'(?m)^LOADED_CREDENTIAL_PROOF_PROTOCOL = 1$', native) is not None)
-    managed_unit(unit)
     roles, libraries = reader_files(home, owner)
     require(roles == manifest["readers"])
-    expected = set(FIXED_FILES) | set(roles.values()) | set(libraries)
+    expected = set(FIXED_FILES) | set(roles.values()) | set(libraries) | managed_unit(unit)
     require(set(manifest["files"]) == set(base_files) | expected)
     observed = {}
     for name in LAUNCHERS:

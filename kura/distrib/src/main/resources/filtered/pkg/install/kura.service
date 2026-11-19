@@ -15,13 +15,14 @@ Type=forking
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
+ExecStop=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_stop.py ${MAINPID}
 ExecStopPost=/bin/sh -c 'if [ -f /tmp/watchdog ]; then echo w > `cat /tmp/watchdog`; fi'
 PIDFile=/var/run/kura.pid
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143
-# Let the JVM stop OSGi and wait for its typed helpers before the cgroup is killed.
-KillMode=mixed
+# The synchronous ExecStop drains the JVM before the final cgroup cleanup.
+KillMode=control-group
 TimeoutStopSec=45s
 # Realtime and RTC changes belong to the clock actor, not the JVM.
 AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_syslog

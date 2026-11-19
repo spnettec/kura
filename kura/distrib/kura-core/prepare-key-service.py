@@ -123,7 +123,9 @@ def prepare(assembly, cipher_target, offline_target):
     readers, libraries = cohort.reader_files(assembly, os.geteuid())
     base_files = set(helpers + static + ["libexec/key-backup/kura-key-crypto.jar",
                                       "libexec/key-backup/lib/bcprov-jdk18on-1.86.jar"])
-    generation_files = set(cohort.FIXED_FILES) | set(readers.values()) | set(libraries)
+    stop_files = cohort.managed_unit(unit_bytes)
+    require(all((assembly / name).is_file() and not (assembly / name).is_symlink() for name in stop_files))
+    generation_files = set(cohort.FIXED_FILES) | set(readers.values()) | set(libraries) | stop_files
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     generation = dict(files={name: digest(assembly / name) for name in sorted(generation_files)}, readers=readers,
                       unitSha256=digest(main_unit), writerProtocol=1)

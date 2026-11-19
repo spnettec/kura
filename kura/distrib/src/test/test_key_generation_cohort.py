@@ -33,7 +33,7 @@ class GenerationPackageTest(unittest.TestCase):
         self.root = Path(temporary.name)
         self.home = self.root / "opt/eclipse/kura"
         self.home.mkdir(parents=True, mode=0o750)
-        for name in lifecycle.ASSETS | cohort.FIXED_FILES:
+        for name in lifecycle.ASSETS | cohort.FIXED_FILES | {cohort.FRAMEWORK_STOP}:
             if name.startswith(cohort.TEMPLATES) or name.startswith("libexec/"):
                 continue
             self.copy(SOURCE / "unfiltered/pkg" / name, self.home / name)
@@ -135,7 +135,8 @@ class GenerationPackageTest(unittest.TestCase):
         self.assertEqual([], list((state / 'operations').iterdir()))
 
     def test_missing_main_unit_or_generation_helper_does_not_disable_cold_base(self):
-        for path in (self.root / 'lib/systemd/system/kura.service', self.home / 'bin/kura_key_cohort.py'):
+        for path in (self.root / 'lib/systemd/system/kura.service', self.home / 'bin/kura_key_cohort.py',
+                     self.home / cohort.FRAMEWORK_STOP):
             raw = path.read_bytes()
             path.unlink()
             self.assertEqual(2, self.policy.assets()['protocol'])
@@ -257,6 +258,17 @@ class GenerationPackageTest(unittest.TestCase):
         self.save_manifest()
         with self.assertRaises(lifecycle.Refused):
             self.policy.generation_assets()
+
+    def test_unpaired_stop_program_and_changed_kill_mode_are_refused(self):
+        path = self.root / "lib/systemd/system/kura.service"
+        original = path.read_bytes()
+        for raw in (original.replace(b"kura_framework_stop.py", b"kura_other_stop.py"),
+                    original.replace(b"KillMode=control-group", b"KillMode=mixed")):
+            path.write_bytes(raw)
+            self.generation["unitSha256"] = hashlib.sha256(raw).hexdigest()
+            self.save_manifest()
+            with self.assertRaises(lifecycle.Refused):
+                self.policy.generation_assets()
 
     def test_bad_offline_classpath_cannot_escape_the_private_library_set(self):
         self.rewrite_jar(cohort.OFFLINE, lambda raw: raw.replace(b"Class-Path: lib/", b"Class-Path: ../", 1))
