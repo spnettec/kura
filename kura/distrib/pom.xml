@@ -3375,7 +3375,7 @@
                 </property>
             </activation>
             <properties>
-                <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+                <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
                 <package.snapshot>git${maven.build.timestamp}.${git.commit.id.abbrev}</package.snapshot>
                 <package.version>${release.version}~${package.snapshot}</package.version>
                 <package.revision>1</package.revision>
