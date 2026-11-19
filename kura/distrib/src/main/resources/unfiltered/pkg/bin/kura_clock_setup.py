@@ -15,7 +15,7 @@ import tempfile
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, COHORT, CONFIG_SOCKET_UNIT, HOME,
+from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, PREVIOUS_CHRONY_RULE, COHORT, CONFIG_SOCKET_UNIT, HOME,
                                LEGACY_UNITS, PREVIOUS_UNITS, STATE, STEP_SOCKET_UNIT, STEP_UNITS, UNITS,
                                Policy, public_file, publish_path,
                                remove_rtc_projection, unit_sources, unit_directory_present)
@@ -36,15 +36,19 @@ def run(*arguments):
                                    text=True, timeout=20)
 
 
-def chrony_policy(action):
+def chrony_policy(action, previous_paired=False):
     path = CHRONY_POLICY
     require(unit_directory_present(path.parent), 'UNPAIRED_CHRONY_POLICY')
-    if os.path.lexists(path):
-        require(public_file(path) == CHRONY_RULE, 'UNPAIRED_CHRONY_POLICY')
+    existing = public_file(path) if os.path.lexists(path) else None
+    if existing == CHRONY_RULE:
         if action == 'remove':
             path.unlink()
             sync(path.parent)
-    elif action == 'install':
+        return
+    replace = existing is not None
+    require(not replace or (previous_paired and existing == PREVIOUS_CHRONY_RULE and action in ('check', 'install')),
+            'UNPAIRED_CHRONY_POLICY')
+    if action == 'install':
         fd, staged = tempfile.mkstemp(prefix='.kura-clock-chrony-', dir=path.parent)
         try:
             with os.fdopen(fd, 'wb') as stream:
@@ -53,7 +57,8 @@ def chrony_policy(action):
                 stream.write(CHRONY_RULE)
                 stream.flush()
                 os.fsync(stream.fileno())
-            publish_path(staged, path, False)
+            require((public_file(path) if os.path.lexists(path) else None) == existing, 'UNPAIRED_CHRONY_POLICY')
+            publish_path(staged, path, replace)
         finally:
             if os.path.lexists(staged):
                 os.unlink(staged)
@@ -401,7 +406,12 @@ def install():
     private_state(record)
     current = maintenance(record) if os.path.lexists(STATE) else None
     # Check every installed fragment and the rule before publishing replacement code.
-    chrony_policy('check')
+    previous_paired = False
+    if current is not None and os.path.lexists(ACTOR_HOME):
+        original_actor = Policy(actor=True)
+        original_actor.check(installed=False, allow_legacy=True)
+        previous_paired = original_actor.cohort == current['cohortSha256']
+    chrony_policy('check', previous_paired)
     desired_units = {}
     for name in UNITS:
         desired = public_file(HOME / 'libexec/clock-broker' / name)
@@ -420,7 +430,7 @@ def install():
             with temporary.open('xb') as output:
                 os.fchmod(output.fileno(), 0o644); output.write(desired); output.flush(); os.fsync(output.fileno())
         os.replace(temporary, path); sync(path.parent)
-    chrony_policy('install')
+    chrony_policy('install', previous_paired)
     policy.check(effective=False)
 
 

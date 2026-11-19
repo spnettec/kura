@@ -23,7 +23,7 @@ class ClockPackageTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
 
-    def assembly(self, capability='1.2.0', client=True):
+    def assembly(self, capability='1.2.1', client=True):
         home = self.root / 'package'; home.mkdir()
         for name in broker.HELPERS:
             target = home / name; target.parent.mkdir(parents=True, exist_ok=True)
@@ -59,7 +59,7 @@ class ClockPackageTest(unittest.TestCase):
                 self.assertNotIn('cap_sys_time', [cap.lower() for cap in values[0]])
 
     def test_cached_old_clock_bundle_cannot_be_paired(self):
-        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', True), ('1.2.0', False)):
+        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', True), ('1.2.0', True), ('1.2.1', False)):
             home = self.assembly(capability, client)
             with self.assertRaises((broker.Refused, KeyError)):
                 broker.package_cohort(home)

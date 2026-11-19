@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: EPL-2.0
 import base64
 import errno
+from hashlib import sha256
 from pathlib import Path
 import os
 import sys
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import Mock, patch
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_chrony_config as chrony
+import kura_clock_broker as broker
 import kura_clock_journal as journal
 
 
@@ -38,6 +41,48 @@ class DirectiveTest(unittest.TestCase):
         for content in ('Zh==', '/w==', base64.b64encode(b'a' * 16385).decode('ascii')):
             with self.subTest(contentLength=len(content)), self.assertRaises(journal.Refused):
                 journal.chrony_configuration(dict(value, content=content))
+
+
+class ActiveConfigurationTest(unittest.TestCase):
+    def setUp(self):
+        self.argument = dict(unit=UNIT, content=base64.b64encode(CANDIDATE).decode('ascii'))
+        self.before = dict(fragment='paired-distro-unit', state='active', pid=123, started=1234)
+        self.after = dict(self.before, pid=321, started=5678)
+        self.request = str(uuid.uuid4())
+        self.binding = 'a' * 64
+        self.wanted = sha256(CANDIDATE).hexdigest()
+
+    def test_changed_active_profile_restarts_once_and_verifies_new_process_and_file(self):
+        with patch.object(broker, 'chrony_config_runtime', side_effect=[self.before]*3 + [self.after]), \
+                patch.object(broker, 'require_chrony_bus_identity') as authorize, \
+                patch.object(broker, 'chrony_config_exchange',
+                             side_effect=[sha256(ORIGINAL).hexdigest(), self.binding, self.wanted, self.wanted]) as exchange, \
+                patch.object(broker.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
+            broker.configure_chrony(self.argument, self.request, self.binding)
+        authorize.assert_called_once()
+        self.assertEqual(exchange.call_args_list[1].args, (self.argument, self.request, self.binding))
+        self.assertEqual(exchange.call_count, 4)
+        run.assert_called_once()
+        self.assertEqual(run.call_args.args[0], ['/usr/bin/systemctl', '--system', '--no-ask-password', 'restart', UNIT])
+
+    def test_lost_restart_result_remains_unresolved_after_publication(self):
+        with patch.object(broker, 'chrony_config_runtime', return_value=self.before), \
+                patch.object(broker, 'require_chrony_bus_identity'), \
+                patch.object(broker, 'chrony_config_exchange',
+                             side_effect=[sha256(ORIGINAL).hexdigest(), self.binding, self.wanted]), \
+                patch.object(broker.subprocess, 'run', side_effect=subprocess.TimeoutExpired('systemctl', 15)) as run, \
+                self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_CHRONY_CONFIG_ACTIVATION'):
+            broker.configure_chrony(self.argument, self.request, self.binding)
+        run.assert_called_once()
+
+    def test_changed_runtime_refuses_before_publication(self):
+        with patch.object(broker, 'chrony_config_runtime', side_effect=[self.before, self.after]), \
+                patch.object(broker, 'require_chrony_bus_identity'), \
+                patch.object(broker, 'chrony_config_exchange', return_value=sha256(ORIGINAL).hexdigest()) as exchange, \
+                patch.object(broker.subprocess, 'run') as run, self.assertRaisesRegex(OSError, 'changed before publication'):
+            broker.configure_chrony(self.argument, self.request, self.binding)
+        exchange.assert_called_once_with(UNIT)
+        run.assert_not_called()
 
 
 @unittest.skipUnless(sys.platform == 'linux' and os.getuid() == 0, 'Linux Root file metadata')

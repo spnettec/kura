@@ -53,7 +53,9 @@ def root_exchange(policy, value):
             stream.settimeout(10)
         elif value['action'] in ('prepare-chrony-step', 'commit-chrony-step'):
             stream.settimeout(STEP_TIMEOUT + 5)
-        elif value['action'] in ('chrony-config-status', 'prepare-chrony-config', 'commit-chrony-config'):
+        elif value['action'] == 'commit-chrony-config':
+            stream.settimeout(3 * CONFIG_TIMEOUT + CHRONY_JOB_TIMEOUT + 10)
+        elif value['action'] in ('chrony-config-status', 'prepare-chrony-config'):
             stream.settimeout(CONFIG_TIMEOUT + 5)
         reply = receive(stream)
     require(type(reply.get('ok')) is bool, 'INVALID_REPLY')

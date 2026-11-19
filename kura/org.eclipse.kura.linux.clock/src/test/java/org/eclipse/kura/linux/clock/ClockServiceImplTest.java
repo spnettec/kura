@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -133,6 +134,7 @@ public class ClockServiceImplTest {
         this.activatedService = clockService;
         clockService.activate(properties);
         verify(broker).configureChrony("chrony.service", configuration);
+        verify(broker, never()).stepChrony("chrony.service");
 
         Object provider = TestUtil.getFieldValue(clockService, "provider");
         assertNotNull(provider);

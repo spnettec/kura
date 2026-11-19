@@ -65,7 +65,7 @@ CHRONY_NULL_REPLY = 1
 CHRONY_PACKET_BYTES = 28
 CHRONY_COMMAND_TIMEOUT = 2
 CHRONY_POLICY = Path('/usr/share/polkit-1/rules.d/10-kura-clock-chrony.rules')
-CHRONY_RULE = b'''// Managed by the Kura clock broker installer.
+PREVIOUS_CHRONY_RULE = b'''// Managed by the Kura clock broker installer.
 polkit.addRule(function(action, subject) {
     if (subject.user !== "kura-clock" || action.id.indexOf("org.freedesktop.systemd1.") !== 0) {
         return;
@@ -81,6 +81,7 @@ polkit.addRule(function(action, subject) {
     return polkit.Result.NO;
 });
 '''
+CHRONY_RULE = PREVIOUS_CHRONY_RULE.replace(b'verb === "stop")', b'verb === "stop" || verb === "restart")')
 CHRONY_JOB_TIMEOUT = 15
 STOP_CONTEXT = 'chrony-stop-context'
 TEARDOWN_REQUESTS = (STOP_CONTEXT, 'prepare-chrony-stop', 'commit-chrony-stop')
@@ -136,7 +137,7 @@ def public_file(path, maximum=MAX_BYTES):
     return read(path, 0, stat.S_IMODE(metadata.st_mode), maximum)
 
 
-def jar_contract(path, capability='1.2.0'):
+def jar_contract(path, *capabilities):
     require(path.is_file() and not path.is_symlink(), 'UNPAIRED_CODE')
     with zipfile.ZipFile(path) as archive:
         raw = archive.read('META-INF/MANIFEST.MF')
@@ -144,7 +145,8 @@ def jar_contract(path, capability='1.2.0'):
         joined = raw.replace(b'\r\n', b'\n').replace(b'\n ', b'').decode('ascii')
         headers = dict(line.split(': ', 1) for line in joined.split('\n\n', 1)[0].splitlines() if ': ' in line)
         require(headers.get('Bundle-SymbolicName', '').split(';', 1)[0] == 'org.eclipse.kura.linux.clock', 'UNPAIRED_CODE')
-        version = re.escape(capability)
+        capabilities = capabilities or ('1.2.1',)
+        version = '(?:' + '|'.join(map(re.escape, capabilities)) + ')'
         require(re.search(r'(?:^|,)\s*kura\.clock\.privilege\s*;\s*version:Version="?' + version + r'"?(?:;|,|$)',
                           headers.get('Provide-Capability', '')) is not None, 'UNPAIRED_CODE')
         prefix = archive.read('org/eclipse/kura/linux/clock/ClockPrivilegeClient.class')[:8]
@@ -516,6 +518,58 @@ def chrony_config_exchange(value, request_id=None, binding=None):
         raise OSError(error_number, 'Chrony configuration refused before publication')
 
 
+def chrony_config_runtime(unit):
+    fragment, state = chrony_target(unit)
+    observed = systemd_properties(('ActiveState', 'MainPID', 'ExecMainStartTimestampMonotonic'), unit)
+    pid = observed['MainPID']
+    started = observed['ExecMainStartTimestampMonotonic']
+    if (state != observed['ActiveState'] or state not in ('active', 'inactive')
+            or re.fullmatch(r'0|[1-9][0-9]{0,9}', pid) is None
+            or re.fullmatch(r'0|[1-9][0-9]{0,19}', started) is None
+            or (state == 'active' and (pid in ('0', '1') or started == '0'))
+            or (state == 'inactive' and pid != '0')):
+        raise OSError(errno.ESTALE, 'Chrony runtime is not in a stable paired state')
+    return dict(fragment=fragment, state=state, pid=int(pid), started=int(started))
+
+
+def prepare_chrony_config(argument, request_id):
+    if chrony_config_runtime(argument['unit'])['state'] == 'active':
+        require_chrony_bus_identity()
+    return chrony_config_exchange(argument, request_id)
+
+
+def configure_chrony(argument, request_id, binding):
+    unit = argument['unit']
+    before = chrony_config_runtime(unit)
+    running = before['state'] == 'active'
+    if running:
+        require_chrony_bus_identity()
+    wanted = hashlib.sha256(chrony_configuration(argument)).hexdigest()
+    original = chrony_config_exchange(unit)
+    if chrony_config_runtime(unit) != before:
+        raise OSError(errno.ESTALE, 'Chrony runtime changed before publication')
+    chrony_config_exchange(argument, request_id, binding)
+    if not running or original == wanted:
+        return
+
+    # Publication already returned. Losing the observation or the systemd job
+    # now leaves the original clock decision unresolved, never retryable.
+    try:
+        require(chrony_config_runtime(unit) == before and chrony_config_exchange(unit) == wanted,
+                'UNCERTAIN_CHRONY_CONFIG_ACTIVATION')
+        result = subprocess.run(['/usr/bin/systemctl', '--system', '--no-ask-password', 'restart', unit],
+                                env={'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}, timeout=CHRONY_JOB_TIMEOUT,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        require(result.returncode == 0, 'UNCERTAIN_CHRONY_CONFIG_ACTIVATION')
+        after = chrony_config_runtime(unit)
+        require(after['state'] == 'active' and after['fragment'] == before['fragment']
+                and after['pid'] != before['pid'] and after['started'] > before['started']
+                and chrony_config_exchange(unit) == wanted,
+                'UNCERTAIN_CHRONY_CONFIG_ACTIVATION')
+    except (OSError, Refused, subprocess.SubprocessError) as error:
+        raise Refused('UNCERTAIN_CHRONY_CONFIG_ACTIVATION') from error
+
+
 class Policy:
     def __init__(self, actor=False):
         self.home = ACTOR_HOME if actor else HOME
@@ -565,7 +619,15 @@ class Policy:
             require(isinstance(expected_hash, str) and re.fullmatch('[0-9a-f]{64}', expected_hash) is not None, 'UNPAIRED_CODE')
             actual = public_file(self.home / name, 256 * 1024 * 1024 if name == bundle else MAX_BYTES)
             require(hashlib.sha256(actual).hexdigest() == expected_hash, 'UNPAIRED_CODE')
-        jar_contract(self.home / bundle, '1.0.0' if legacy or prior else '1.1.0' if step else '1.2.0')
+        if legacy or prior:
+            capabilities = ('1.0.0',)
+        elif step:
+            capabilities = ('1.1.0',)
+        elif allow_legacy and self.actor_copy and not installed:
+            capabilities = ('1.2.1', '1.2.0')
+        else:
+            capabilities = ('1.2.1',)
+        jar_contract(self.home / bundle, *capabilities)
         if installed:
             unit_sources()
             for name in UNITS:
@@ -669,8 +731,8 @@ class Manager:
             if operation == 'configure-chrony':
                 request_id = value['requestId']
                 if phase == 'prepare':
-                    return self.journal.prepare(value, lambda config: chrony_config_exchange(config, request_id))
-                return self.journal.commit(value, lambda config, binding: chrony_config_exchange(config, request_id, binding))
+                    return self.journal.prepare(value, lambda config: prepare_chrony_config(config, request_id))
+                return self.journal.commit(value, lambda config, binding: configure_chrony(config, request_id, binding))
             if phase == 'prepare':
                 return self.journal.prepare(value, self.bind_rtc)
             actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
@@ -937,7 +999,7 @@ def serve_chrony_step():
 def chrony_config_target(unit):
     from kura_chrony_config import CHRONYD, CONFIG_FILE
 
-    fragment, _ = chrony_target(unit)
+    runtime = chrony_config_runtime(unit)
     fields = systemd_properties(('ExecStart', 'EnvironmentFiles', 'Environment'), unit)
     command_line = '{ path=/usr/sbin/chronyd ; argv[]=/usr/sbin/chronyd $DAEMON_OPTS ; ignore_errors=no ;'
     if (not fields['ExecStart'].startswith(command_line) or not fields['ExecStart'].endswith(' }')
@@ -953,7 +1015,7 @@ def chrony_config_target(unit):
         raise OSError(errno.EOPNOTSUPP, 'Unsupported effective Chrony options')
     protected(CHRONYD)
     protected(CONFIG_FILE)
-    return digest(dict(fragment=fragment, options=hashlib.sha256(options).hexdigest(), binary=identity(CHRONYD.lstat())))
+    return digest(dict(runtime=runtime, options=hashlib.sha256(options).hexdigest(), binary=identity(CHRONYD.lstat())))
 
 
 def serve_chrony_config():

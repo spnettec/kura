@@ -36,6 +36,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
     private ClockSyncListener listener;
 
     private String chronyServiceName;
+    private boolean managedConfiguration;
 
     private volatile Date lastSyncValue;
 
@@ -55,7 +56,9 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
         if (unit.isEmpty()) {
             throw new KuraException(KuraErrorCode.OS_COMMAND_ERROR, "Chrony service unavailable");
         }
-        writeConfiguration(unit, clockServiceConfig.getChronyAdvancedConfig());
+        String configuration = clockServiceConfig.getChronyAdvancedConfig();
+        writeConfiguration(unit, configuration);
+        this.managedConfiguration = configuration != null && !configuration.isEmpty();
         this.chronyServiceName = unit;
     }
 
@@ -93,7 +96,11 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
             logger.info("chrony service is up.");
         }
 
-        syncClock();
+        // With a managed profile Chrony applies its own configured step policy.
+        // Configuration admission does not implicitly issue another clock write.
+        if (!this.managedConfiguration) {
+            syncClock();
+        }
 
         this.future = this.schedulerExecutor.scheduleAtFixedRate(this::readAndUpdateSyncInfo, 0, 60, TimeUnit.SECONDS);
 
