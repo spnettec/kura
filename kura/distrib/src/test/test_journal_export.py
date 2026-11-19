@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: EPL-2.0
 from io import BytesIO
 from pathlib import Path
+import shutil
 import socket
 import struct
 import subprocess
 import sys
 from threading import Thread
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
@@ -14,6 +16,22 @@ import kura_journal_export as export
 
 
 class JournalExportTest(unittest.TestCase):
+    def test_release_pair_survives_installer_removing_staging_tree(self):
+        with TemporaryDirectory() as folder:
+            home = Path(folder)
+            (home / 'libexec').mkdir()
+            for name in [path for path in export.FILES if path.startswith('bin/')] + [
+                    'install/' + unit for unit in export.UNITS]:
+                target = home / name
+                target.parent.mkdir(exist_ok=True)
+                target.write_text(name)
+            export.package_cohort(home)
+            shutil.rmtree(home / 'install')
+            manifest = export.decode((home / export.COHORT).read_bytes())
+            self.assertEqual(set(manifest['files']), set(export.FILES))
+            for name, digest in manifest['files'].items():
+                self.assertEqual(export.file_hash((home / name).read_bytes()), digest)
+
     def test_typed_scope_and_fields(self):
         self.assertEqual(export.request('kura', 'MESSAGE,_BOOT_ID'),
                          {'schema': 1, 'scope': 'kura', 'fields': 'MESSAGE,_BOOT_ID'})

@@ -6,6 +6,7 @@ from pathlib import Path
 import pwd
 import re
 import selectors
+import shutil
 import socket
 import stat
 import struct
@@ -27,11 +28,12 @@ ACTOR_UNIT = 'kura-journal-export@.service'
 ACTOR = 'kura-journal-export'
 CALLER = 'kurad'
 HELPER = 'bin/kura_journal_export.py'
-COHORT = Path('libexec/journal-export.json')
+PAIR_DIRECTORY = Path('libexec/journal-export')
+COHORT = PAIR_DIRECTORY / 'cohort.json'
 UNITS = (SOCKET_UNIT, ACTOR_UNIT)
 FILES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
          'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
-         *(f'install/{name}' for name in UNITS))
+         *((PAIR_DIRECTORY / name).as_posix() for name in UNITS))
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
 NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
 NETWORKING_SHA = 'eb1079ba9bc662b196ef873cfc860cc1b53ab3b50813c2ee4437352c4cd65b18'
@@ -40,6 +42,11 @@ READ_TIME = 25
 
 
 def package_cohort(home):
+    (home / PAIR_DIRECTORY).mkdir()
+    for name in UNITS:
+        source = home / 'install' / name
+        require(source.is_file() and not source.is_symlink(), 'UNPAIRED_EXPORT')
+        shutil.copyfile(source, home / PAIR_DIRECTORY / name)
     for name in FILES:
         path = home / name
         require(path.is_file() and not path.is_symlink(), 'UNPAIRED_EXPORT')
@@ -101,8 +108,8 @@ def verify_actor(unit):
             and manifest['files'].keys() == set(FILES), 'UNPAIRED_EXPORT')
     for name, expected in manifest['files'].items():
         require(file_hash(public_file(HOME / name)) == expected, 'UNPAIRED_EXPORT')
-    paired_unit(SOCKET_UNIT, SOCKET_UNIT, manifest['files']['install/' + SOCKET_UNIT])
-    paired_unit(unit, ACTOR_UNIT, manifest['files']['install/' + ACTOR_UNIT])
+    paired_unit(SOCKET_UNIT, SOCKET_UNIT, manifest['files'][(PAIR_DIRECTORY / SOCKET_UNIT).as_posix()])
+    paired_unit(unit, ACTOR_UNIT, manifest['files'][(PAIR_DIRECTORY / ACTOR_UNIT).as_posix()])
 
 
 def main_peer(peer):
