@@ -110,10 +110,23 @@ def receive_stdio(stream, files):
             'INVALID_EXECUTION_DIRECTORY')
 
 
-def execute(stream, peer, command, files):
-    # su previously inherited the client's working directory before changing UID.
-    # Keep that directory identity without giving the worker access to its parents.
-    os.fchdir(files[3])
+def enter_directory(directory, inherited):
+    try:
+        local = os.open(directory, os.O_PATH | os.O_DIRECTORY | os.O_CLOEXEC)
+    except PermissionError:
+        # The former su path retained an already opened working directory.
+        os.fchdir(inherited)
+        return
+    try:
+        require(os.path.samestat(os.fstat(local), os.fstat(inherited)), 'INVALID_EXECUTION_DIRECTORY')
+        os.fchdir(local)
+    finally:
+        os.close(local)
+
+
+def execute(stream, peer, directory, command, files):
+    # Prefer the local mount so getcwd() works across systemd's mount namespaces.
+    enter_directory(directory, files[3])
     child = subprocess.Popen(command, stdin=files[0], stdout=files[1], stderr=files[2])
     for file in files:
         os.close(file)
@@ -146,7 +159,7 @@ def serve(stream, unit):
             receive_stdio(stream, files)
             require(main_peer(peer, unit_hash, CLIENT, None, command_from_args,
                               command_line=read_command_line) == (directory, command), 'UNAUTHORIZED')
-            execute(stream, peer, command, files)
+            execute(stream, peer, directory, command, files)
     finally:
         for file in files:
             os.close(file)
