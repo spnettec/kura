@@ -5,7 +5,7 @@ Wants=NetworkManager.service ModemManager.service dbus.service
 Requires=kura-key-service.socket
 Requires=kura-clock-broker.socket
 After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
-After=kura-clock-broker.socket
+After=kura-clock-broker.socket kura-clock-broker.service
 
 [Service]
 User=kurad
@@ -20,7 +20,9 @@ PIDFile=/var/run/kura.pid
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143
-KillMode=control-group
+# Let the JVM stop OSGi and wait for its typed helpers before the cgroup is killed.
+KillMode=mixed
+TimeoutStopSec=45s
 # Realtime and RTC changes belong to the clock actor, not the JVM.
 AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_syslog
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
