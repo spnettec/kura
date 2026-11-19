@@ -45,8 +45,8 @@ public class HttpService implements ConfigurableComponent, EventHandler {
     private String keystoreServicePid;
 
     private JettyServerHolder jettyServerHolder;
-    private boolean httpServiceStartRequested;
-    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private boolean refreshQueued;
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private Future<?> restartTask = CompletableFuture.completedFuture(null);
 
     public void setDispatcherServlet(HttpServlet dispatcherServlet) {
@@ -63,10 +63,10 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         this.options = new HttpServiceOptions(properties);
 
         if (this.keystoreService == null) {
-            startKeystoreServiceMonitor();
+            this.restartTask = this.executorService.schedule(this::startWithoutKeystore, 12, TimeUnit.SECONDS);
             logger.info("Activating... Done. Waiting for KeystoreService");
         } else {
-            startHttpService(this.options);
+            refreshHttpService();
             logger.info("Activating... Done.");
         }
     }
@@ -81,64 +81,76 @@ public class HttpService implements ConfigurableComponent, EventHandler {
             this.options = updatedOptions;
 
             cancelRestartTask();
-            restartHttpService();
+            refreshHttpService();
         }
 
         logger.info("Updating... Done.");
     }
 
-    public synchronized void deactivate() {
+    public void deactivate() {
         logger.info("Deactivating {}", this.getClass().getSimpleName());
 
-        cancelRestartTask();
-        stopHttpService();
-        shutdownExecutor();
+        synchronized (this) {
+            if (this.executorService.isShutdown()) {
+                return;
+            }
+            this.options = null;
+            cancelRestartTask();
+            this.executorService.execute(this::stopHttpService);
+            this.executorService.shutdown();
+        }
+        awaitExecutorShutdown();
     }
 
-    private synchronized void restartHttpService() {
-        stopHttpService();
-        startHttpService(this.options);
+    private synchronized void refreshHttpService() {
+        if (this.options != null && !this.refreshQueued) {
+            this.refreshQueued = true;
+            this.executorService.execute(this::applyHttpConfiguration);
+        }
     }
 
-    private synchronized void startHttpService(final HttpServiceOptions options) {
-        if (this.httpServiceStartRequested) {
+    private void applyHttpConfiguration() {
+        boolean stopped = stopHttpService();
+        final HttpServiceOptions currentOptions;
+        final KeystoreService currentKeystore;
+        synchronized (this) {
+            this.refreshQueued = false;
+            currentOptions = this.options;
+            currentKeystore = this.keystoreService;
+        }
+        if (!stopped || currentOptions == null) {
             return;
         }
-        this.httpServiceStartRequested = true;
-        this.executorService.submit(() -> {
-            try {
-                logger.info("starting Jetty instance...");
-                this.jettyServerHolder = new JettyServerHolder(options, Optional.ofNullable(this.keystoreService),
-                        this.dispatcherServlet, this.eventListener);
-                logger.info("starting Jetty instance...done");
-            } catch (final Exception e) {
-                synchronized (HttpService.this) {
-                    HttpService.this.httpServiceStartRequested = false;
-                }
-                logger.error("Could not start Jetty Web server", e);
-            }
-        });
-    }
-
-    private synchronized void stopHttpService() {
-        this.httpServiceStartRequested = false;
-        this.executorService.submit(() -> {
-            try {
-                logger.info("stopping Jetty instance...");
-                if (this.jettyServerHolder != null) {
-                    this.jettyServerHolder.stop();
-                    this.jettyServerHolder = null;
-                }
-            } catch (final Exception e) {
-                logger.error("Could not stop Jetty Web server", e);
-            }
-        });
-    }
-
-    private synchronized void shutdownExecutor() {
         try {
-            this.executorService.shutdown();
-            this.executorService.awaitTermination(30, TimeUnit.SECONDS);
+            logger.info("starting Jetty instance...");
+            this.jettyServerHolder = new JettyServerHolder(currentOptions, Optional.ofNullable(currentKeystore),
+                    this.dispatcherServlet, this.eventListener);
+            logger.info("starting Jetty instance...done");
+        } catch (final Exception e) {
+            logger.error("Could not start Jetty Web server", e);
+        }
+    }
+
+    private boolean stopHttpService() {
+        if (this.jettyServerHolder == null) {
+            return true;
+        }
+        try {
+            logger.info("stopping Jetty instance...");
+            this.jettyServerHolder.stop();
+            this.jettyServerHolder = null;
+            return true;
+        } catch (final Exception e) {
+            logger.error("Could not stop Jetty Web server", e);
+            return false;
+        }
+    }
+
+    private void awaitExecutorShutdown() {
+        try {
+            if (!this.executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                logger.error("Timed out stopping the HTTP service executor");
+            }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Could not stop executor", e);
@@ -153,64 +165,46 @@ public class HttpService implements ConfigurableComponent, EventHandler {
         }
     }
 
-    private int keystoreServiceWaitCount = 0;
-
     private synchronized void scheduleDeferredRestart() {
         cancelRestartTask();
+        this.restartTask = this.executorService.schedule(this::refreshHttpService, 10, TimeUnit.SECONDS);
+    }
 
-        try {
-            this.restartTask = this.executorService.schedule(this::restartHttpService, 10, TimeUnit.SECONDS);
-        } catch (final Exception e) {
-            logger.warn("failed to schedule restart task", e);
+    private synchronized void startWithoutKeystore() {
+        if (this.options != null && this.keystoreService == null) {
+            logger.warn("KeystoreService not available. Starting without HTTPS.");
+            refreshHttpService();
         }
     }
 
-    private void startKeystoreServiceMonitor() {
-        scheduleNextKeystoreCheck(2);
-    }
-
-    private void scheduleNextKeystoreCheck(long delaySeconds) {
-        this.restartTask = this.executorService.schedule(() -> {
-            KeystoreService ks;
-            synchronized (HttpService.this) {
-                ks = HttpService.this.keystoreService;
-                if (ks != null) {
-                    logger.info("KeystoreService injected after {} checks. Starting HTTP service.",
-                            HttpService.this.keystoreServiceWaitCount);
-                    HttpService.this.startHttpService(HttpService.this.options);
-                    return;
-                }
-                if (HttpService.this.keystoreServiceWaitCount >= 10) {
-                    logger.warn("KeystoreService not available after 10 checks. Starting without HTTPS.");
-                    HttpService.this.startHttpService(HttpService.this.options);
-                    return;
-                }
-                HttpService.this.keystoreServiceWaitCount++;
-            }
-            scheduleNextKeystoreCheck(1);
-        }, delaySeconds, TimeUnit.SECONDS);
-    }
-
     public synchronized void setKeystoreService(KeystoreService keystoreService, final Map<String, Object> properties) {
+        boolean changed = this.keystoreService != keystoreService;
         this.keystoreService = keystoreService;
         this.keystoreServicePid = (String) properties.get(ConfigurationService.KURA_SERVICE_PID);
 
-        if (this.options != null && !this.httpServiceStartRequested) {
+        if (this.options != null && changed) {
             cancelRestartTask();
-            logger.info("KeystoreService injected before HTTP service started. Starting now.");
-            startHttpService(this.options);
+            refreshHttpService();
+        }
+    }
+
+    public synchronized void unsetKeystoreService(KeystoreService keystoreService) {
+        // SCR can bind the replacement before unbinding the old service.
+        if (this.keystoreService == keystoreService) {
+            this.keystoreService = null;
+            this.keystoreServicePid = null;
+            if (this.options != null) {
+                cancelRestartTask();
+                refreshHttpService();
+            }
         }
     }
 
     @Override
-    public void handleEvent(final Event event) {
-        if (!(event instanceof KeystoreChangedEvent)) {
-            return;
-        }
-
-        final KeystoreChangedEvent keystoreChangedEvent = (KeystoreChangedEvent) event;
-
-        if (keystoreChangedEvent.getSenderPid().equals(keystoreServicePid)) {
+    public synchronized void handleEvent(final Event event) {
+        if (this.options != null && this.keystoreServicePid != null
+                && event instanceof KeystoreChangedEvent changed
+                && this.keystoreServicePid.equals(changed.getSenderPid())) {
             scheduleDeferredRestart();
         }
     }

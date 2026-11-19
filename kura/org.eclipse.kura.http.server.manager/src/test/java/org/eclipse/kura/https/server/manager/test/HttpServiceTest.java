@@ -176,9 +176,43 @@ class HttpServiceTest {
 
     @Test
     void shouldNotSupportHttpsWithoutKeystore() throws Exception {
-        // Retain the fork's real, bounded keystore monitor before the HTTP-only fallback.
         configure(Map.of("https.ports", new Integer[] { 0 }, "https.client.auth.ports", new Integer[] { 0 }));
         assertEquals(0, server().getConnectors().length);
+
+        createKeystore(false);
+        drainManager();
+        assertEquals(2, server().getConnectors().length);
+        assertEquals(404, request(connector(0), true, false));
+        assertEquals(404, request(connector(1), true, true));
+    }
+
+    @Test
+    void shouldCloseOldTlsConnectorsOnKeystoreUnbindAndRestoreThemOnRebind() throws Exception {
+        createKeystore(false);
+        configure(Map.of("http.ports", new Integer[] { 0 }, "https.ports", new Integer[] { 0 },
+                "https.client.auth.ports", new Integer[] { 0 }));
+        Server original = server();
+        ServerConnector https = connector(1);
+        ServerConnector mutualTls = connector(2);
+
+        invoke("unsetKeystoreService", KeystoreService.class, mock(KeystoreService.class));
+        drainManager();
+        assertEquals(original, server());
+
+        invoke("unsetKeystoreService", KeystoreService.class, this.keystore);
+        drainManager();
+        assertTrue(original.isStopped());
+        assertFalse(https.isOpen());
+        assertFalse(mutualTls.isOpen());
+        assertEquals(1, server().getConnectors().length);
+        assertEquals(404, request(connector(0), false, false));
+
+        this.manager.getClass().getMethod("setKeystoreService", KeystoreService.class, Map.class)
+                .invoke(this.manager, this.keystore, Map.of("kura.service.pid", "test-keystore"));
+        drainManager();
+        assertEquals(3, server().getConnectors().length);
+        assertEquals(404, request(connector(1), true, false));
+        assertEquals(404, request(connector(2), true, true));
     }
 
     @Test
