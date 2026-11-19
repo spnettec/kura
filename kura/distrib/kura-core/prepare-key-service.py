@@ -172,8 +172,8 @@ def embed_policy_readers(preinst,lifecycle,journal):
     preinst.write_text(content.replace(token,'\n'.join(assignments)))
 
 
-def embed_addon_code_policy(control, policy):
-    token = 'raise RuntimeError("Kura addon-code policy was not embedded")'
+def embed_package_helper(control, policy, label):
+    token = f'raise RuntimeError("Kura {label} was not embedded")'
     require(control.is_file() and not control.is_symlink())
     require(policy.is_file() and not policy.is_symlink())
     source = policy.read_text()
@@ -237,8 +237,9 @@ if __name__ == "__main__":
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
     for hook in ('preinst', 'postinst', 'prerm'):
-        embed_addon_code_policy(Path(sys.argv[1]).parent/'filtered-control'/hook,
-                               Path(__file__).with_name('addon-code-policy.py'))
+        control = Path(sys.argv[1]).parent / 'filtered-control' / hook
+        embed_package_helper(control, Path(__file__).with_name('addon-code-policy.py'), 'addon-code policy')
+        embed_package_helper(control, Path(sys.argv[1]) / 'bin/kura_watchdog_maintenance.py', 'watchdog maintenance')
     embed_configure_phases(Path(sys.argv[1]).parent/'filtered-control/postinst', Path(sys.argv[1]))
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

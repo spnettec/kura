@@ -13,7 +13,6 @@
 #
 
 INSTALL_DIR=/opt/eclipse
-WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
 TIMESTAMP=$(date +%Y%m%d%H%M)
@@ -115,44 +114,26 @@ function preserveUserData {
 ##############################################
 # Run preRemove function and start watchdog if needed
 function runPreRemove {
-    if [ -f "${WD_TMP_FILE}" ]; then
-        WATCHDOG_DEVICE=`cat ${WD_TMP_FILE}`
-        preRemove &
-        PID=$!
-        START=$(date +%s)
-        
-        while [ -d "/proc/$PID" ]; do
-            echo w > ${WATCHDOG_DEVICE}
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-        stopWatchdog
-    else
-        preRemove &
-        PID=$!
-        START=$(date +%s)
-        
-        while [ -d "/proc/$PID" ]; do
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-    fi
-    wait "$PID" || return 1
-}
+    watchdogMaintenance check || return 1
 
-# Deactivate watchdog device if possible
-function stopWatchdog {
-    if [ -n "${WATCHDOG_DEVICE}" ]; then
-        echo V > ${WATCHDOG_DEVICE}
-    fi
+    local pid start elapsed worker_status=0 watchdog_status=0
+    preRemove &
+    pid=$!
+    start=$(date +%s)
+
+    while [ -d "/proc/$pid" ]; do
+        watchdogMaintenance pulse || watchdog_status=1
+        elapsed=$(($(date +%s) - start))
+        if [ "$elapsed" -ge "$TIMEOUT_TIME" ]; then
+            echo "The installation process is not responding. It'll be stopped."
+            kill -9 "$pid" >> /dev/null 2>&1
+            break
+        fi
+        sleep "$REFRESH_TIME"
+    done
+    wait "$pid" || worker_status=$?
+    watchdogMaintenance disarm || watchdog_status=1
+    [ "$worker_status" -eq 0 ] && [ "$watchdog_status" -eq 0 ]
 }
 
 # Pre-remove script
@@ -196,7 +177,13 @@ function preRemove {
 if [ "$1" = "failed-upgrade" ]; then
     exit 0
 fi
+watchdogMaintenance() {
+    python3 -I -B - "$@" <<'KURA_WATCHDOG_MAINTENANCE'
+raise RuntimeError("Kura watchdog maintenance was not embedded")
+KURA_WATCHDOG_MAINTENANCE
+}
 clockMaintenanceGuard check || exit 1
+watchdogMaintenance check || exit 1
 python3 -I -B - <<'KURA_REBOOT_MAINTENANCE_GUARD' || exit 1
 raise RuntimeError("Kura reboot maintenance guard was not embedded")
 KURA_REBOOT_MAINTENANCE_GUARD

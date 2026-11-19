@@ -132,12 +132,12 @@ class AddonCodePolicyTests(unittest.TestCase):
         token = 'raise RuntimeError("Kura addon-code policy was not embedded")'
         path = self.root / 'control'
         path.write_text(token)
-        builder.embed_addon_code_policy(path, SOURCE / 'addon-code-policy.py')
+        builder.embed_package_helper(path, SOURCE / 'addon-code-policy.py', 'addon-code policy')
         self.assertEqual((SOURCE / 'addon-code-policy.py').read_text(), path.read_text())
         for content in ('', token + '\n' + token):
             path.write_text(content)
             with self.assertRaises(RuntimeError):
-                builder.embed_addon_code_policy(path, SOURCE / 'addon-code-policy.py')
+                builder.embed_package_helper(path, SOURCE / 'addon-code-policy.py', 'addon-code policy')
 
 
 if __name__ == '__main__':

@@ -33,7 +33,7 @@ class GenerationPackageTest(unittest.TestCase):
         self.root = Path(temporary.name)
         self.home = self.root / "opt/eclipse/kura"
         self.home.mkdir(parents=True, mode=0o750)
-        for name in lifecycle.ASSETS | cohort.FIXED_FILES | {cohort.FRAMEWORK_STOP}:
+        for name in lifecycle.ASSETS | cohort.FIXED_FILES | {cohort.FRAMEWORK_STOP, cohort.WATCHDOG_MAINTENANCE}:
             if name.startswith(cohort.TEMPLATES) or name.startswith("libexec/"):
                 continue
             self.copy(SOURCE / "unfiltered/pkg" / name, self.home / name)
@@ -263,6 +263,7 @@ class GenerationPackageTest(unittest.TestCase):
         path = self.root / "lib/systemd/system/kura.service"
         original = path.read_bytes()
         for raw in (original.replace(b"kura_framework_stop.py", b"kura_other_stop.py"),
+                    original.replace(b"kura_watchdog_maintenance.py pulse", b"kura_watchdog_maintenance.py disarm"),
                     original.replace(b"KillMode=control-group", b"KillMode=mixed")):
             path.write_bytes(raw)
             self.generation["unitSha256"] = hashlib.sha256(raw).hexdigest()

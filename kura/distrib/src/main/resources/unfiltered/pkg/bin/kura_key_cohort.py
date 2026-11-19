@@ -34,6 +34,7 @@ ROLES = {
 LAUNCHERS = ("start_kura.sh", "start_kura_background.sh", "start_kura_debug.sh")
 OFFLINE = "libexec/key-recovery/kura-offline-recovery.jar"
 FRAMEWORK_STOP = "bin/kura_framework_stop.py"
+WATCHDOG_MAINTENANCE = "bin/kura_watchdog_maintenance.py"
 TEMPLATES = "libexec/key-backup/launchers/"
 FIXED_FILES = frozenset(("bin/kura_key_cohort.py", "bin/kura_credential_env.sh", "bin/kura_key_generation.py",
                          "bin/kura_key_validation.py", "share/key-management/key-generations.conf",
@@ -175,12 +176,19 @@ def managed_unit(raw):
     require(values.get(("[Service]", "ExecStart")) == ["/bin/sh /opt/eclipse/kura/bin/start_kura_background.sh"])
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
     require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
+    helpers = set()
+    stop_post = values.get(("[Service]", "ExecStopPost"), [])
+    if stop_post == ["/usr/bin/python3 -I -B /opt/eclipse/kura/" + WATCHDOG_MAINTENANCE + " pulse"]:
+        helpers.add(WATCHDOG_MAINTENANCE)
+    else:
+        legacy = "/bin/sh -c 'if [ -f /tmp/watchdog ]; then echo w > `cat /tmp/watchdog`; fi'"
+        require(stop_post in ([], [legacy]))
     if ("[Service]", "ExecStop") in values:
         require(values[("[Service]", "ExecStop")] == ["/usr/bin/python3 -I -B /opt/eclipse/kura/" + FRAMEWORK_STOP + " ${MAINPID}"]
                 and values.get(("[Service]", "TimeoutStopSec")) == ["45s"]
                 and "kura-clock-broker.service" in " ".join(values.get(("[Unit]", "After"), [])).split())
-        return {FRAMEWORK_STOP}
-    return set()
+        helpers.add(FRAMEWORK_STOP)
+    return helpers
 
 
 def catalog(home, owner=None):
