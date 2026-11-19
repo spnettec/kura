@@ -5,7 +5,9 @@ import errno
 import json
 import os
 from pathlib import Path
+import socket
 import stat
+import struct
 import sys
 import tempfile
 import unittest
@@ -28,6 +30,33 @@ class Policy:
 
     def peer(self, value, stopping=False):
         journal.require(value == (123, 996, 989), 'UNAUTHORIZED')
+
+
+@unittest.skipUnless(sys.platform == 'linux', 'Linux Unix socket credentials')
+class ChronyStepDatagramTest(unittest.TestCase):
+    def test_accepts_only_paired_reply_and_never_resends(self):
+        daemon = (123, 101, 102)
+        sequence = b'1234'
+        accepted = struct.pack('!BBBBHHHHHH', 6, 2, 0, 0, 43, 1, 0, 0, 0, 0) + sequence + bytes(8)
+        credential = (socket.SOL_SOCKET, socket.SCM_CREDENTIALS, struct.pack('3i', *daemon))
+        for reply, ancillary, flags, success in (
+                (accepted, [credential], 0, True),
+                (b'\x05' + accepted[1:], [credential], 0, False),
+                (accepted[:16] + b'4321' + accepted[20:], [credential], 0, False),
+                (accepted, [], 0, False), (accepted, [credential], socket.MSG_TRUNC, False),
+                (accepted, [(credential[0], credential[1], struct.pack('3i', 124, 101, 102))], 0, False)):
+            with self.subTest(reply=reply, ancillary=ancillary, flags=flags), \
+                    mock.patch.object(broker.os, 'urandom', return_value=sequence):
+                stream = mock.Mock()
+                stream.send.return_value = 28
+                stream.recvmsg.return_value = reply, ancillary, flags, None
+                if success:
+                    broker.chrony_datagram(stream, broker.CHRONY_MAKESTEP, daemon)
+                else:
+                    with self.assertRaisesRegex(journal.Refused, 'INVALID_CHRONY_ACK'):
+                        broker.chrony_datagram(stream, broker.CHRONY_MAKESTEP, daemon)
+                frame = struct.pack('!BBBBHH', 6, 1, 0, 0, 43, 0) + sequence + bytes(16)
+                stream.send.assert_called_once_with(frame)
 
 
 class ClockBrokerTest(unittest.TestCase):
@@ -163,6 +192,32 @@ class ClockBrokerTest(unittest.TestCase):
             self.assertEqual('UNKNOWN', self.exchange(dict(request, action='commit-chrony-start'))['state'])
             run.assert_called_once_with('start-chrony', 'chrony.service', 'd' * 64)
         self.assertFalse(self.context()['acceptingWrites'])
+
+    def test_chrony_step_recovers_pending_by_original_status_only(self):
+        command = ('chrony.service', 'd' * 64)
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()), \
+                mock.patch.object(broker, 'chrony_step_exchange', side_effect=[command[1],
+                                  journal.Refused('UNCERTAIN_CHRONY_STEP')]) as step:
+            sender = self.sender()
+            with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_CHRONY_STEP'):
+                sender.submit('step-chrony', command[0])
+            pending = self.data / 'clock-broker' / 'pending.json'
+            original = journal.decode(pending.read_bytes())
+            self.calls.clear()
+            recovered = sender.submit('step-chrony', command[0])
+            self.assertEqual(['context', 'status'], [value['action'] for value in self.calls])
+            self.assertEqual((original['namespace'], original['requestId']),
+                             (recovered['namespace'], recovered['requestId']))
+            self.assertEqual(journal.encode(original), pending.read_bytes())
+            self.assertEqual('UNKNOWN', recovered['state'])
+            self.assertEqual([mock.call(command[0]), mock.call(*command)], step.mock_calls)
+
+    def test_chrony_step_terminal_receipt_preserves_the_paired_binding(self):
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()), \
+                mock.patch.object(broker, 'chrony_step_exchange', return_value='c' * 64) as step:
+            result = self.sender().submit('step-chrony', 'chrony.service')
+        self.assertEqual(('APPLIED', 'CHRONY_STEP_ACCEPTED'), (result['state'], result['reason']))
+        self.assertEqual([mock.call('chrony.service'), mock.call('chrony.service', 'c' * 64)], step.mock_calls)
 
     def test_missing_bus_identity_is_a_terminal_failure_without_actuation(self):
         with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()), \

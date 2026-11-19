@@ -12,7 +12,7 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import CHRONY_JOB_TIMEOUT, HOME, SOCKET, STOP_CONTEXT, Policy, receive, send
+from kura_clock_broker import CHRONY_JOB_TIMEOUT, HOME, SOCKET, STEP_TIMEOUT, STOP_CONTEXT, Policy, receive, send
 from kura_clock_journal import (Refused, command, create, decode, digest, directory, encode,
                                 identifier, read, require, sync, terminal_receipt, validate_argument,
                                 MAX_BYTES, OPERATIONS)
@@ -49,6 +49,8 @@ def root_exchange(policy, value):
             stream.settimeout(CHRONY_JOB_TIMEOUT + 12)
         elif value['action'] in ('prepare-chrony-start', 'prepare-chrony-stop'):
             stream.settimeout(10)
+        elif value['action'] in ('prepare-chrony-step', 'commit-chrony-step'):
+            stream.settimeout(STEP_TIMEOUT + 5)
         reply = receive(stream)
     require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
     if not reply['ok']:

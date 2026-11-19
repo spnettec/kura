@@ -185,11 +185,12 @@ class ClockMaintenancePairingTest(unittest.TestCase):
         self.assertEqual([('check', False, False), ('check', True, False),
                           ('/usr/bin/systemctl', 'daemon-reload'), ('check', False, True), ('check', True, True),
                           ('/usr/bin/systemctl', 'enable', '--now', 'kura-clock-broker.socket'),
+                          ('/usr/bin/systemctl', 'enable', '--now', broker.STEP_SOCKET_UNIT),
                           ('check', False, True), ('check', True, True)], calls)
 
     def test_reload_pairing_and_socket_failures_retain_the_original_gate(self):
         for fail in ['daemon-reload', ('check', 4), ('check', 5), 'kura-clock-broker.socket',
-                     ('check', 7), ('check', 8)]:
+                     broker.STEP_SOCKET_UNIT, ('check', 8), ('check', 9)]:
             with self.subTest(failure=fail):
                 self.resume_case(fail)
 

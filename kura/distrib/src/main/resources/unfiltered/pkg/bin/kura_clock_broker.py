@@ -37,12 +37,27 @@ RTC_MANIFEST = 'devices.json'
 COHORT = Path('libexec/clock-broker/cohort.json')
 LEGACY_UNITS = ('kura-clock-broker.socket', 'kura-clock-broker.service')
 RTC_UNIT = 'kura-clock-rtc-devices.service'
-UNITS = (*LEGACY_UNITS, RTC_UNIT)
+PREVIOUS_UNITS = (*LEGACY_UNITS, RTC_UNIT)
+STEP_SOCKET_UNIT = 'kura-clock-chrony-step.socket'
+STEP_SERVICE_UNIT = 'kura-clock-chrony-step.service'
+UNITS = (*PREVIOUS_UNITS, STEP_SOCKET_UNIT, STEP_SERVICE_UNIT)
+STEP_SOCKET = Path('/run/kura-clock-broker/chrony-step.sock')
+STEP_RUNTIME = Path('/run/kura-chrony-step')
+STEP_USER = '_chrony'
+STEP_TIMEOUT = 12
 CHRONY_ACTIVE_STATES = {'active', 'reloading', 'inactive', 'failed', 'activating', 'deactivating',
                         'maintenance', 'refreshing'}
 CHRONY_EXECUTABLES = ('/usr/sbin/chronyd', '/usr/bin/chronyd')
+CHRONY_STARTERS = (*CHRONY_EXECUTABLES, '/usr/lib/systemd/scripts/chronyd-starter.sh')
 CHRONY_STEP_MESSAGE = r'^System clock was stepped by [-+]?[0-9]+[.,][0-9]{6} seconds$'
 CHRONY_JOURNAL_GROUP = 'systemd-journal'
+CHRONY_COMMAND = Path('/run/chrony/chronyd.sock')
+CHRONY_PROTOCOL_VERSION = 6
+CHRONY_PROBE = 0
+CHRONY_MAKESTEP = 43
+CHRONY_NULL_REPLY = 1
+CHRONY_PACKET_BYTES = 28
+CHRONY_COMMAND_TIMEOUT = 2
 CHRONY_POLICY = Path('/usr/share/polkit-1/rules.d/10-kura-clock-chrony.rules')
 CHRONY_RULE = b'''// Managed by the Kura clock broker installer.
 polkit.addRule(function(action, subject) {
@@ -114,7 +129,7 @@ def public_file(path, maximum=MAX_BYTES):
     return read(path, 0, stat.S_IMODE(metadata.st_mode), maximum)
 
 
-def jar_contract(path):
+def jar_contract(path, previous=False):
     require(path.is_file() and not path.is_symlink(), 'UNPAIRED_CODE')
     with zipfile.ZipFile(path) as archive:
         raw = archive.read('META-INF/MANIFEST.MF')
@@ -122,7 +137,8 @@ def jar_contract(path):
         joined = raw.replace(b'\r\n', b'\n').replace(b'\n ', b'').decode('ascii')
         headers = dict(line.split(': ', 1) for line in joined.split('\n\n', 1)[0].splitlines() if ': ' in line)
         require(headers.get('Bundle-SymbolicName', '').split(';', 1)[0] == 'org.eclipse.kura.linux.clock', 'UNPAIRED_CODE')
-        require(re.search(r'(?:^|,)\s*kura\.clock\.privilege\s*;\s*version:Version="?1\.0\.0"?(?:;|,|$)',
+        version = re.escape('1.0.0' if previous else '1.1.0')
+        require(re.search(r'(?:^|,)\s*kura\.clock\.privilege\s*;\s*version:Version="?' + version + r'"?(?:;|,|$)',
                           headers.get('Provide-Capability', '')) is not None, 'UNPAIRED_CODE')
         prefix = archive.read('org/eclipse/kura/linux/clock/ClockPrivilegeClient.class')[:8]
         require(prefix == b'\xca\xfe\xba\xbe\0\0\0A', 'UNPAIRED_CODE')
@@ -348,6 +364,118 @@ def change_chrony(action, unit, expected_binding):
         raise Refused('UNCERTAIN_CHRONY_RESULT') from error
 
 
+def chrony_datagram(stream, operation, daemon):
+    """Chrony v6 null request/reply frames, with no compatibility retransmission."""
+    sequence = os.urandom(4)
+    request = struct.pack('!BBBBHH', CHRONY_PROTOCOL_VERSION, 1, 0, 0, operation, 0)
+    require(stream.send(request + sequence + bytes(16)) == CHRONY_PACKET_BYTES, 'INVALID_CHRONY_DATAGRAM')
+    credential_size = struct.calcsize('3i')
+    reply, ancillary, flags, _ = stream.recvmsg(CHRONY_PACKET_BYTES, socket.CMSG_SPACE(credential_size))
+    expected_reply = struct.pack('!BBBBHHHHHH', CHRONY_PROTOCOL_VERSION, 2, 0, 0, operation,
+                                 CHRONY_NULL_REPLY, 0, 0, 0, 0) + sequence + bytes(8)
+    require(not flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC) and reply == expected_reply
+            and ancillary == [(socket.SOL_SOCKET, socket.SCM_CREDENTIALS, struct.pack('3i', *daemon))],
+            'INVALID_CHRONY_ACK')
+
+
+def chrony_command(runtime, target, expected_binding=None):
+    """Probe the paired daemon, or issue exactly one step on the same connected socket."""
+    sent = False
+    try:
+        binding, daemon = target()
+        if expected_binding is not None and binding != expected_binding:
+            raise OSError(errno.ESTALE, 'Chrony command endpoint changed after prepare')
+        with tempfile.TemporaryDirectory(prefix='reply-', dir=runtime) as staged, \
+                socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as stream:
+            # Chrony v6 copies pathnames as C strings. An abstract socket cannot receive its replies.
+            parent = Path(staged)
+            reply = parent / 'chronyc.sock'
+            stream.settimeout(CHRONY_COMMAND_TIMEOUT)
+            stream.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+            stream.bind(str(reply))
+            reply.chmod(0o600)
+            stream.connect(str(CHRONY_COMMAND))
+            chrony_datagram(stream, CHRONY_PROBE, daemon)
+            if target() != (binding, daemon):
+                raise OSError(errno.ESTALE, 'Chrony command endpoint changed during admission')
+            if expected_binding is not None:
+                # Failures during submission or acknowledgement cannot prove that the daemon did not act.
+                sent = True
+                chrony_datagram(stream, CHRONY_MAKESTEP, daemon)
+                require(target() == (binding, daemon), 'CHRONY_ENDPOINT_CHANGED')
+        return binding
+    except (OSError, Refused) as error:
+        if sent:
+            raise Refused('UNCERTAIN_CHRONY_STEP') from error
+        if isinstance(error, Refused):
+            raise OSError(errno.EPROTO, 'Chrony command endpoint could not be verified') from error
+        raise
+
+
+def process_status(pid):
+    return dict(line.split(':', 1) for line in (Path('/proc') / str(pid) / 'status').read_text().splitlines()
+                if ':' in line)
+
+
+def chrony_step_target(unit):
+    fragment, state = chrony_target(unit)
+    fields = systemd_properties(('ExecStart', 'MainPID', 'ControlGroup', 'User', 'RuntimeDirectory', 'ActiveState'), unit)
+    account = pwd.getpwnam(STEP_USER)
+    executable = fields['ExecStart'].removeprefix('{ path=').partition(' ; ')[0]
+    require(state == fields['ActiveState'] == 'active' and account.pw_uid > 0 and account.pw_gid > 0
+            and fields['User'] == account.pw_name and fields['RuntimeDirectory'] == 'chrony'
+            and executable in CHRONY_STARTERS and fields['ControlGroup'] == '/system.slice/' + unit
+            and re.fullmatch('[1-9][0-9]{0,9}', fields['MainPID']), 'UNPAIRED_CHRONY_COMMAND')
+    protected(Path(executable))
+    pid = int(fields['MainPID'])
+    uid, gid = account.pw_uid, account.pw_gid
+    proc = Path('/proc') / str(pid)
+    require((proc / 'cgroup').read_text().splitlines() == ['0::' + fields['ControlGroup']], 'UNPAIRED_CHRONY_COMMAND')
+    status = process_status(pid)
+    require(status['Uid'].split() == [str(uid)] * 4 and status['Gid'].split() == [str(gid)] * 4,
+            'UNPAIRED_CHRONY_COMMAND')
+    birth = (proc / 'stat').read_text().rpartition(') ')[2].split()[19]
+    require(birth.isascii() and birth.isdigit(), 'UNPAIRED_CHRONY_COMMAND')
+    require(unit_directory_present(CHRONY_COMMAND.parent.parent), 'UNPAIRED_CHRONY_COMMAND')
+    parent, endpoint = CHRONY_COMMAND.parent.lstat(), CHRONY_COMMAND.lstat()
+    require(stat.S_ISDIR(parent.st_mode) and stat.S_ISSOCK(endpoint.st_mode)
+            and all(value.st_uid == uid and value.st_gid == gid and not value.st_mode & 0o022
+                    for value in (parent, endpoint)), 'UNPAIRED_CHRONY_COMMAND')
+    return digest(dict(fragment=fragment, pid=pid, birth=birth, uid=uid, gid=gid,
+                       parent=identity(parent), endpoint=identity(endpoint))), (pid, uid, gid)
+
+
+def chrony_step_exchange(unit, binding=None):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
+        stream.settimeout(STEP_TIMEOUT)
+        try:
+            require(unit_directory_present(STEP_SOCKET.parent), 'UNSAFE_LISTENER')
+            metadata = STEP_SOCKET.lstat()
+            require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0
+                    and metadata.st_gid == pwd.getpwnam('kura-clock').pw_gid
+                    and stat.S_IMODE(metadata.st_mode) == 0o660, 'UNSAFE_LISTENER')
+            stream.connect(str(STEP_SOCKET))
+            require(socket_peer(stream) == (1, 0, 0), 'UNSAFE_LISTENER')
+        except Refused as error:
+            raise OSError(errno.EPERM, 'Unpaired Chrony step listener') from error
+        try:
+            send(stream, dict(schema=1, unit=unit, binding=binding))
+            stream.shutdown(socket.SHUT_WR)
+            reply = receive(stream)
+            if set(reply) == {'errno'} and type(reply['errno']) is int and 0 < reply['errno'] <= 4095:
+                error_number = reply['errno']
+            else:
+                value = reply.get('binding')
+                require(set(reply) == {'binding'} and isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value)
+                        and (binding is None or binding == value), 'UNPAIRED_CHRONY_REPLY')
+                return value
+        except (OSError, Refused) as error:
+            if binding is None:
+                raise OSError(errno.EPROTO, 'Chrony step preflight did not complete') from error
+            raise Refused('UNCERTAIN_CHRONY_STEP') from error
+        raise OSError(error_number, 'Chrony step was refused before submission')
+
+
 class Policy:
     def __init__(self, actor=False):
         self.home = ACTOR_HOME if actor else HOME
@@ -360,7 +488,8 @@ class Policy:
         legacy = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'action'}
                   and value['action'] == 'adjust-realtime')
         prior = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'actions'}
-                 and value['actions'] == ['adjust-realtime', 'sync-rtc'])
+                 and value['actions'] in (['adjust-realtime', 'sync-rtc'],
+                                          ['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony']))
         require((legacy or prior or (set(value) == base | {'actions'} and value['actions'] == list(OPERATIONS)))
                 and type(value['schema']) is int and value['schema'] == 1
                 and type(value['protocol']) is int and value['protocol'] == 1
@@ -369,7 +498,7 @@ class Policy:
         bundle = value['clockBundle']
         require(isinstance(bundle, str) and re.fullmatch(r'plugins/(?:[A-Za-z0-9_.-]+/)?org\.eclipse\.kura\.linux\.clock[A-Za-z0-9_.-]*\.jar', bundle) is not None,
                 'UNPAIRED_CODE')
-        units = LEGACY_UNITS if legacy else UNITS
+        units = LEGACY_UNITS if legacy else PREVIOUS_UNITS if prior else UNITS
         expected = {*HELPERS, *['libexec/clock-broker/' + name for name in units], bundle}
         require(set(value['files']) == expected, 'UNPAIRED_CODE')
         if self.actor_copy:
@@ -393,7 +522,7 @@ class Policy:
             require(isinstance(expected_hash, str) and re.fullmatch('[0-9a-f]{64}', expected_hash) is not None, 'UNPAIRED_CODE')
             actual = public_file(self.home / name, 256 * 1024 * 1024 if name == bundle else MAX_BYTES)
             require(hashlib.sha256(actual).hexdigest() == expected_hash, 'UNPAIRED_CODE')
-        jar_contract(self.home / bundle)
+        jar_contract(self.home / bundle, previous=legacy or prior)
         if installed:
             unit_sources()
             for name in UNITS:
@@ -487,6 +616,10 @@ class Manager:
                 if phase == 'prepare':
                     return self.journal.prepare(value, chrony_binding)
                 return self.journal.commit(value, lambda unit, binding: change_chrony(operation, unit, binding))
+            if operation == 'step-chrony':
+                if phase == 'prepare':
+                    return self.journal.prepare(value, chrony_step_exchange)
+                return self.journal.commit(value, chrony_step_exchange)
             if phase == 'prepare':
                 return self.journal.prepare(value, self.bind_rtc)
             actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
@@ -684,23 +817,82 @@ def send(stream, value):
     stream.sendall(struct.pack('>I', len(raw)) + raw)
 
 
-def serve():
-    policy = Policy(actor=True); policy.check(); owner = policy.actor()
+def socket_peer(stream):
+    format_string = '3i'
+    return struct.unpack(format_string, stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED,
+                                                         struct.calcsize(format_string)))
+
+
+def activated_listener(path, descriptor):
     require(os.environ.get('LISTEN_PID') == str(os.getpid()) and os.environ.get('LISTEN_FDS') == '1'
-            and os.environ.get('LISTEN_FDNAMES') == 'control', 'INVALID_LISTENER')
+            and os.environ.get('LISTEN_FDNAMES') == descriptor, 'INVALID_LISTENER')
     listener = socket.socket(fileno=3)
     require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
-            and listener.getsockname() == str(SOCKET) and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) == 1,
+            and listener.getsockname() == str(path) and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) == 1,
             'INVALID_LISTENER')
+    return listener
+
+
+def chrony_step_peer(peer):
+    pid, uid, gid = peer
+    account = pwd.getpwnam('kura-clock')
+    require(pid > 1 and uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
+    value = systemd_properties(('ActiveState', 'MainPID'), 'kura-clock-broker.service')
+    require(value == dict(ActiveState='active', MainPID=str(pid)), 'UNAUTHORIZED')
+    status = process_status(pid)
+    require(status['Uid'].split() == [str(uid)] * 4 and status['Gid'].split() == [str(gid)] * 4
+            and status['NoNewPrivs'].strip() == '1' and int(status['CapEff'].strip(), 16) == SYS_TIME,
+            'UNAUTHORIZED')
+
+
+def serve_chrony_step():
+    account = pwd.getpwnam(STEP_USER)
+    broker_gid = pwd.getpwnam('kura-clock').pw_gid
+    status = process_status('thread-self')
+    groups = set(os.getgroups())
+    require(os.getuid() == os.geteuid() == account.pw_uid > 0
+            and os.getgid() == os.getegid() == account.pw_gid > 0 and account.pw_gid != broker_gid
+            and broker_gid in groups and groups <= {account.pw_gid, broker_gid} and status['NoNewPrivs'].strip() == '1'
+            and all(int(status[name].strip(), 16) == 0 for name in ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')),
+            'UNSAFE_CHRONY_STEP_SERVICE')
+    directory(STEP_RUNTIME, account.pw_uid)
+    policy = Policy(actor=True); policy.check()
+    with activated_listener(STEP_SOCKET, 'chrony-step') as listener:
+        while True:
+            stream, _ = listener.accept()
+            with stream:
+                stream.settimeout(2)
+                try:
+                    policy.check()
+                    chrony_step_peer(socket_peer(stream))
+                    request = receive(stream)
+                    require(set(request) == {'schema', 'unit', 'binding'} and type(request['schema']) is int
+                            and request['schema'] == 1 and isinstance(request['unit'], str)
+                            and request['unit'] in CHRONY_UNITS, 'INVALID_CHRONY_COMMAND')
+                    binding = request['binding']
+                    require(binding is None or (isinstance(binding, str) and re.fullmatch('[0-9a-f]{64}', binding)),
+                            'INVALID_CHRONY_COMMAND')
+                    try:
+                        actual = chrony_command(STEP_RUNTIME, lambda: chrony_step_target(request['unit']), binding)
+                        reply = dict(binding=actual)
+                    except OSError as error:
+                        reply = dict(errno=error.errno or errno.EIO)
+                    send(stream, reply)
+                except (OSError, Refused, ValueError, KeyError, IndexError, zipfile.BadZipFile):
+                    # Close without claiming a result if a submitted command lost a paired acknowledgement.
+                    continue
+
+
+def serve():
+    policy = Policy(actor=True); policy.check(); owner = policy.actor()
     manager = Manager(policy, Journal(STATE, owner))
-    with listener:
+    with activated_listener(SOCKET, 'control') as listener:
         while True:
             stream, _ = listener.accept()
             with stream:
                 stream.settimeout(5)
                 try:
-                    peer = struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
-                    result = manager.handle(receive(stream), peer)
+                    result = manager.handle(receive(stream), socket_peer(stream))
                     send(stream, dict(ok=True, result=result))
                 except Refused as error:
                     try:
@@ -721,6 +913,8 @@ if __name__ == '__main__':
         require(len(sys.argv) == 2 and sys.argv[0] == entrypoint, 'INVALID_ENTRYPOINT')
         if sys.argv[1] == 'serve':
             serve()
+        elif sys.argv[1] == 'serve-chrony-step':
+            serve_chrony_step()
         else:
             require(sys.argv[1] == 'project-rtc', 'INVALID_ENTRYPOINT')
             project_rtc()

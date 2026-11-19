@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
@@ -34,13 +33,9 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eclipse.kura.clock.ClockEvent;
-import org.eclipse.kura.core.linux.executor.LinuxExitStatus;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.core.util.IOUtil;
 import org.eclipse.kura.crypto.CryptoService;
-import org.eclipse.kura.executor.Command;
-import org.eclipse.kura.executor.CommandExecutorService;
-import org.eclipse.kura.executor.CommandStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.osgi.service.event.EventAdmin;
@@ -94,12 +89,8 @@ public class ClockServiceImplTest {
 
     @Test
     public void testActivateDeactivateChronyProvider() throws Exception {
-        CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
-        CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(any())).thenReturn(status);
 
         ClockServiceImpl clockService = new ClockServiceImpl();
-        clockService.setExecutorService(serviceMock);
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
         when(broker.latestChronyStep()).thenReturn(new ClockPrivilegeClient.ChronyStep(0, 0));
@@ -126,16 +117,12 @@ public class ClockServiceImplTest {
     @Test
     public void testActivateDeactivateChronyProviderWithConfiguration()
             throws Exception {
-        CommandStatus status = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
-        CommandExecutorService serviceMock = mock(CommandExecutorService.class);
-        when(serviceMock.execute(any())).thenReturn(status);
 
         CryptoService cryptoServiceMock = mock(CryptoService.class);
         when(cryptoServiceMock.sha256Hash(anyString()))
                 .thenReturn("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 
         ClockServiceImpl clockService = new ClockServiceImpl();
-        clockService.setExecutorService(serviceMock);
         clockService.setCryptoService(cryptoServiceMock);
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
@@ -251,9 +238,7 @@ public class ClockServiceImplTest {
     public void testClockUpdateLinux() throws Throwable {
         // Mocked broker/RTC contract: no OS clock mutation or Root is required.
 
-        CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         ClockServiceImpl svc = new ClockServiceImpl();
-        svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
         when(clockClient.adjustRealtime(anyLong())).thenReturn(true);
         when(clockClient.syncRtc("/dev/rtc4")).thenReturn(true);
@@ -273,7 +258,6 @@ public class ClockServiceImplTest {
         var calls = inOrder(clockClient);
         calls.verify(clockClient).adjustRealtime(1);
         calls.verify(clockClient).syncRtc("/dev/rtc4");
-        verify(serviceMock, times(0)).execute(any());
         verify(eaMock, times(1)).postEvent(isA(ClockEvent.class)); // sys clock updated successfully
     }
 
@@ -281,9 +265,7 @@ public class ClockServiceImplTest {
     public void testClockUpdateErrors() throws Throwable {
         // test the service's onClockUpdate() with clock update failures; test of proper logging, mostly
 
-        CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         ClockServiceImpl svc = new ClockServiceImpl();
-        svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
         when(clockClient.adjustRealtime(anyLong())).thenReturn(false);
         TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
@@ -300,16 +282,13 @@ public class ClockServiceImplTest {
 
         verify(eaMock, times(0)).postEvent(isA(ClockEvent.class)); // sys clock not updated
         verify(clockClient, times(0)).syncRtc("/dev/rtc0");
-        verify(serviceMock, times(0)).execute(any());
     }
 
     @Test
     public void testClockUpdate() throws Throwable {
         // test the service's onClockUpdate()
 
-        CommandExecutorService serviceMock = mock(CommandExecutorService.class);
         ClockServiceImpl svc = new ClockServiceImpl();
-        svc.setExecutorService(serviceMock);
         ClockPrivilegeClient clockClient = mock(ClockPrivilegeClient.class);
         when(clockClient.syncRtc("/dev/rtc0")).thenThrow(new IOException("Uncertain RTC response"));
         TestUtil.setFieldValue(svc, "clockPrivilegeClient", clockClient);
@@ -326,7 +305,6 @@ public class ClockServiceImplTest {
 
         verify(clockClient, times(0)).adjustRealtime(anyLong());
         verify(clockClient, times(1)).syncRtc("/dev/rtc0");
-        verify(serviceMock, times(0)).execute(any());
         verify(eaMock, times(1)).postEvent(isA(ClockEvent.class)); // wall clock is already current
     }
 }

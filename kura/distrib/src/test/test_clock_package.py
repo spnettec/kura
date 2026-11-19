@@ -23,7 +23,7 @@ class ClockPackageTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
 
-    def assembly(self, capability=True, client=True):
+    def assembly(self, capability='1.1.0', client=True):
         home = self.root / 'package'; home.mkdir()
         for name in broker.HELPERS:
             target = home / name; target.parent.mkdir(parents=True, exist_ok=True)
@@ -35,7 +35,7 @@ class ClockPackageTest(unittest.TestCase):
         jar.parent.mkdir(parents=True)
         manifest = 'Manifest-Version: 1.0\nBundle-SymbolicName: org.eclipse.kura.linux.clock\n'
         if capability:
-            manifest += 'Provide-Capability: kura.clock.privilege;version:Version=1.0.0\n'
+            manifest += f'Provide-Capability: kura.clock.privilege;version:Version={capability}\n'
         with zipfile.ZipFile(jar, 'w') as archive:
             archive.writestr('META-INF/MANIFEST.MF', manifest + '\n')
             if client:
@@ -44,9 +44,9 @@ class ClockPackageTest(unittest.TestCase):
 
     def test_manifest_binds_all_helpers_units_and_clock_consumer(self):
         home = self.assembly(); value = broker.package_cohort(home)
-        self.assertEqual(8, len(value['files']))
+        self.assertEqual(10, len(value['files']))
         self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
-        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony'], value['actions'])
+        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony', 'step-chrony'], value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
     def test_main_has_no_system_clock_capability(self):
@@ -58,7 +58,7 @@ class ClockPackageTest(unittest.TestCase):
                 self.assertNotIn('cap_sys_time', [cap.lower() for cap in values[0]])
 
     def test_cached_old_clock_bundle_cannot_be_paired(self):
-        for capability, client in ((False, True), (True, False)):
+        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', False)):
             home = self.assembly(capability, client)
             with self.assertRaises((broker.Refused, KeyError)):
                 broker.package_cohort(home)
@@ -91,6 +91,16 @@ class ClockPackageTest(unittest.TestCase):
         self.assertIn('\nCapabilityBoundingSet=CAP_MKNOD CAP_CHOWN\n', projection)
         self.assertIn('\nDevicePolicy=closed\n', projection)
         self.assertIn('\nDeviceAllow=char-rtc m\n', projection)
+
+    def test_step_relay_is_optional_and_capability_free(self):
+        relay = (SOURCE / 'unfiltered/pkg/install' / broker.STEP_SERVICE_UNIT).read_text()
+        self.assertIn('\nUser=_chrony\n', relay)
+        self.assertIn('\nSupplementaryGroups=kura-clock\n', relay)
+        self.assertIn('\nCapabilityBoundingSet=\nAmbientCapabilities=\n', relay)
+        self.assertIn('\nNoNewPrivileges=true\n', relay)
+        self.assertIn('\nRestrictAddressFamilies=AF_UNIX\n', relay)
+        raw = (SOURCE / 'unfiltered/pkg/install/kura-clock-broker.service').read_text()
+        self.assertNotIn(broker.STEP_SERVICE_UNIT, raw)
 
     def prefix(self, path):
         raw = (SOURCE / 'variants/linux/unfiltered/deb/control/postinst').read_text()

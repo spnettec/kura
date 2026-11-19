@@ -1,0 +1,15 @@
+[Unit]
+Description=YOFC Kura typed Chrony step socket
+
+[Socket]
+ListenStream=/run/kura-clock-broker/chrony-step.sock
+SocketUser=root
+SocketGroup=kura-clock
+SocketMode=0660
+DirectoryMode=0755
+FileDescriptorName=chrony-step
+Accept=no
+Backlog=4
+
+[Install]
+WantedBy=sockets.target

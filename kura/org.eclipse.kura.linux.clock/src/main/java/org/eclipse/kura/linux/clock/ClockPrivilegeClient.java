@@ -19,6 +19,7 @@ class ClockPrivilegeClient {
     private static final String RTC_FIELD = "rtcDevice";
     private static final String CHRONY_START_FIELD = "chronyStartUnit";
     private static final String CHRONY_STOP_FIELD = "chronyStopUnit";
+    private static final String CHRONY_STEP_FIELD = "chronyStepUnit";
     private static final long MAX_CORRECTION_MILLIS = 9223372036854L;
     private static final Pattern RTC_DEVICE = Pattern.compile("/dev/(?:rtc(?:0|[1-9][0-9]{0,8})?|misc/rtc)");
     private static final Pattern CORRECTION = Pattern.compile("0|-?[1-9][0-9]{0,12}");
@@ -82,10 +83,17 @@ class ClockPrivilegeClient {
     }
 
     boolean setChronyRunning(String unit, boolean running) throws IOException, InterruptedException {
+        return changeChrony(running ? CHRONY_START_FIELD : CHRONY_STOP_FIELD, unit);
+    }
+
+    boolean stepChrony(String unit) throws IOException, InterruptedException {
+        return changeChrony(CHRONY_STEP_FIELD, unit);
+    }
+
+    private boolean changeChrony(String field, String unit) throws IOException, InterruptedException {
         if (unit == null || !CHRONY_UNITS.contains(unit)) {
             throw new IllegalArgumentException("Unsupported Chrony service");
         }
-        String field = running ? CHRONY_START_FIELD : CHRONY_STOP_FIELD;
         JsonObject request = new JsonObject();
         request.addProperty(field, unit);
         return appliedFor(exchange(request, 45), field, unit);
@@ -176,7 +184,7 @@ class ClockPrivilegeClient {
     private static boolean appliedFor(String raw, String expectedField, String expectedValue) throws IOException {
         try {
             JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
-            String field = Set.of(REALTIME_FIELD, RTC_FIELD, CHRONY_START_FIELD, CHRONY_STOP_FIELD).stream()
+            String field = Set.of(REALTIME_FIELD, RTC_FIELD, CHRONY_START_FIELD, CHRONY_STOP_FIELD, CHRONY_STEP_FIELD).stream()
                     .filter(result::has).findFirst().orElseThrow(IllegalArgumentException::new);
             if (!result.keySet().equals(Set.of("schema", "namespace", "requestId", field, "state", "reason",
                     "currentSample")) || !result.get("schema").getAsJsonPrimitive().isNumber()
@@ -207,7 +215,9 @@ class ClockPrivilegeClient {
             case REALTIME_FIELD -> "CLOCK_SET_RETURNED";
             case RTC_FIELD -> "RTC_SET_RETURNED";
             case CHRONY_START_FIELD -> "CHRONY_STARTED";
-            default -> "CHRONY_STOPPED";
+            case CHRONY_STOP_FIELD -> "CHRONY_STOPPED";
+            case CHRONY_STEP_FIELD -> "CHRONY_STEP_ACCEPTED";
+            default -> throw new IllegalArgumentException();
             };
             boolean validState = switch (state) {
             case "APPLIED" -> reason.equals(success);

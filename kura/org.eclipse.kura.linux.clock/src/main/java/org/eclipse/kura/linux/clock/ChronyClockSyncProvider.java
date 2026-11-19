@@ -29,9 +29,6 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.crypto.CryptoService;
-import org.eclipse.kura.executor.Command;
-import org.eclipse.kura.executor.CommandExecutorService;
-import org.eclipse.kura.executor.CommandStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +36,6 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(ChronyClockSyncProvider.class);
 
-    private final CommandExecutorService executorService;
     private final ClockPrivilegeClient clockPrivilegeClient;
     private ScheduledExecutorService schedulerExecutor;
     private ScheduledFuture<?> future;
@@ -59,9 +55,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     private final CryptoService cryptoService;
 
-    ChronyClockSyncProvider(CommandExecutorService commandExecutorService, CryptoService cryptoService,
-            ClockPrivilegeClient clockPrivilegeClient) {
-        this.executorService = commandExecutorService;
+    ChronyClockSyncProvider(CryptoService cryptoService, ClockPrivilegeClient clockPrivilegeClient) {
         this.cryptoService = cryptoService;
         this.clockPrivilegeClient = clockPrivilegeClient;
     }
@@ -141,11 +135,7 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
             logger.info("chrony service is up.");
         }
 
-        if (syncClock()) {
-            logger.info("Clock synced");
-        } else {
-            logger.info("Clock not synced");
-        }
+        syncClock();
 
         this.future = this.schedulerExecutor.scheduleAtFixedRate(this::readAndUpdateSyncInfo, 0, 60, TimeUnit.SECONDS);
 
@@ -153,18 +143,18 @@ public class ChronyClockSyncProvider implements ClockSyncProvider {
 
     protected boolean syncClock() {
 
-        logger.info("Forcing clock synchronization...");
-
-        Command chronycMakeStep = new Command(new String[] { "chronyc", "makestep" });
-        CommandStatus chronycMakeStepStatus = this.executorService.execute(chronycMakeStep);
-
-        boolean clockSynced = chronycMakeStepStatus.getExitStatus().isSuccessful();
-
-        if (clockSynced) {
-            readAndUpdateSyncInfo();
+        try {
+            if (this.clockPrivilegeClient.stepChrony(this.chronyServiceName)) {
+                logger.info("Chrony acknowledged the clock step request");
+                readAndUpdateSyncInfo();
+                return true;
+            }
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+        } catch (IOException error) {
+            logger.debug("Unable to confirm the Chrony clock step request", error);
         }
-
-        return clockSynced;
+        return false;
     }
 
     private synchronized void readAndUpdateSyncInfo() {

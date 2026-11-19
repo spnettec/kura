@@ -26,8 +26,10 @@ OPERATIONS = {
     'sync-rtc': ('rtc', 'rtcDevice', 'RTC_SET_RETURNED'),
     'start-chrony': ('chrony-start', 'chronyStartUnit', 'CHRONY_STARTED'),
     'stop-chrony': ('chrony-stop', 'chronyStopUnit', 'CHRONY_STOPPED'),
+    'step-chrony': ('chrony-step', 'chronyStepUnit', 'CHRONY_STEP_ACCEPTED'),
 }
-BINDING_FIELDS = {'sync-rtc': 'rtcBinding', **dict.fromkeys(CHRONY_ACTIONS, 'chronyBinding')}
+BINDING_FIELDS = {'sync-rtc': 'rtcBinding', **dict.fromkeys(CHRONY_ACTIONS, 'chronyBinding'),
+                  'step-chrony': 'chronyStepBinding'}
 
 
 class Refused(RuntimeError):
