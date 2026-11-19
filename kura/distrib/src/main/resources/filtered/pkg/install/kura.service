@@ -1,11 +1,12 @@
 [Unit]
 OnFailure=kura-key-recovery.service
 Description=Kura
-Wants=NetworkManager.service ModemManager.service dbus.service
+Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket
 Requires=kura-key-service.socket
 Requires=kura-clock-broker.socket
 After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
 After=kura-clock-broker.socket kura-clock-broker.service
+After=kura-journal-export.socket
 
 [Service]
 User=kurad
