@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import public_file
+from kura_clock_broker import HOME, canonical_alias, public_file
 from kura_clock_journal import Refused, decode, encode, require
 from kura_journal_export import main_peer, paired_unit
 from kura_reboot_broker import (MAIN_UNIT, file_hash, proc_status, socket_peer, verify_alive,
@@ -30,6 +30,7 @@ CLIENT = ('/usr/bin/python3', '-I', '-B', str(CLIENT_FILE), 'client')
 ACCOUNT = 'kura'
 CALLER = 'kurad'
 READY = b'\x01'
+MUTABLE_DIRECTORIES = ('user', 'data', 'packages', 'log', '.data')
 SOURCES = ('bin/kura_command_executor.py', 'bin/kura_journal_export.py',
            'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_reboot_broker.py',
            'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
@@ -74,7 +75,8 @@ def verify_actor(unit):
 
 
 def command_from_args(directory, *command):
-    require(os.path.isabs(directory) and len(command) > 2 and command[:2] == ('/usr/bin/env', '--'),
+    require(os.path.isabs(directory) and directory == os.path.normpath(directory)
+            and len(command) > 2 and command[:2] == ('/usr/bin/env', '--'),
             'INVALID_EXECUTION')
     return directory, command
 
@@ -114,7 +116,10 @@ def enter_directory(directory, inherited):
     try:
         local = os.open(directory, os.O_PATH | os.O_DIRECTORY | os.O_CLOEXEC)
     except PermissionError:
-        # The former su path retained an already opened working directory.
+        # Inherit private application data, never a directory outside the worker's policy.
+        home = canonical_alias(HOME)
+        require(any(Path(directory).is_relative_to(home / name) for name in MUTABLE_DIRECTORIES),
+                'INVALID_EXECUTION_DIRECTORY')
         os.fchdir(inherited)
         return
     try:
@@ -166,7 +171,7 @@ def serve(stream, unit):
 
 
 def client(directory):
-    require(os.path.samefile(os.getcwd(), directory), 'INVALID_EXECUTION_DIRECTORY')
+    require(os.getcwd() == directory, 'INVALID_EXECUTION_DIRECTORY')
     metadata = SOCKET.lstat()
     caller = pwd.getpwnam(CALLER)
     require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0 and metadata.st_gid == caller.pw_gid

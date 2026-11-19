@@ -410,9 +410,15 @@ public class ExecutorUtil {
         if (DEFAULT_COMMAND_USERNAME.equals(username)
                 && "kurad".equals(ProcessHandle.current().info().user().orElse(""))
                 && Files.isRegularFile(MANAGED_EXECUTOR, LinkOption.NOFOLLOW_LINKS)) {
+            String directory;
+            try {
+                directory = workingDirectory(command).toPath().toRealPath().toString();
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Cannot resolve the command working directory", e);
+            }
             CommandLine commandLine = new CommandLine("/usr/bin/python3");
             commandLine.addArguments(new String[] { "-I", "-B", MANAGED_EXECUTOR_CLIENT, "client",
-                    workingDirectory(command).getAbsolutePath() }, false);
+                    directory }, false);
             commandLine.addArguments(c.toArray(new String[0]), false);
             return commandLine;
         }
