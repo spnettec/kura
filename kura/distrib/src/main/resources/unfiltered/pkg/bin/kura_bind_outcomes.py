@@ -14,7 +14,7 @@ READ_ONLY = ('scope', 'outcome')
 
 def request_fields(action):
     verb, separator, proof = action.partition(':')
-    if verb not in ('outcome', 'acknowledge'):
+    if verb not in ('outcome', 'acknowledge', 'settle-publication'):
         return None
     require(separator, 'INVALID_BIND_REQUEST')
     if verb == 'acknowledge':
@@ -45,9 +45,12 @@ def intent_at(state, root, operation):
     return intent
 
 
-def commit(path, intent):
+def commit(path, intent, *, recovered=False):
     token = secrets.token_hex(32)
-    create(path, dict(intentSha256=digest(intent), state='APPLIED', deliveryToken=token))
+    record = dict(intentSha256=digest(intent), state='APPLIED', deliveryToken=token)
+    if recovered:
+        record['recovery'] = 'paired-file-publication'
+    create(path, record)
     return token
 
 
@@ -61,6 +64,10 @@ def result_at(state, operation, intent):
         token = receipt.get('deliveryToken')
         require(isinstance(token, str) and PROOF.fullmatch(token), 'UNPAIRED_BIND_STATE')
         original['deliveryToken'] = token
+    if 'recovery' in receipt:
+        require('stagedPublication' in intent and intent['request']['action'] == 'configure'
+                and intent['request']['configuration']['mode'] == 'keep', 'UNPAIRED_BIND_STATE')
+        original['recovery'] = 'paired-file-publication'
     require(receipt == original, 'UNPAIRED_BIND_STATE')
     return receipt
 

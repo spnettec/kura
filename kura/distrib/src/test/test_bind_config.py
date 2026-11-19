@@ -57,9 +57,13 @@ class BindConfigFileTest(unittest.TestCase):
         file.chmod(0o640)
         with patch.object(config, 'CONFIG', file):
             identity, _ = config.read_current()
-            config.publish(identity, b'paired publication')
-            observed, raw = config.read_current()
-            self.assertEqual(observed[2:5], identity[2:5])
-            self.assertEqual(raw, b'paired publication')
-            with self.assertRaisesRegex(bind.Refused, 'BIND_CONFIGURATION_CHANGED'):
-                config.publish(identity, b'stale application')
+            payload = b'paired publication'
+            with (patch.object(config.subprocess, 'run'),
+                  config.stage(identity, payload, lambda: None, {}) as (staged, expected)):
+                config.publish(identity, payload, staged, expected)
+                observed, raw = config.read_current()
+                self.assertEqual(observed[2:5], identity[2:5])
+                self.assertEqual(config.publication_identity(observed), expected)
+                self.assertEqual(raw, payload)
+                with self.assertRaisesRegex(bind.Refused, 'BIND_CONFIGURATION_CHANGED'):
+                    config.publish(identity, payload, staged, expected)

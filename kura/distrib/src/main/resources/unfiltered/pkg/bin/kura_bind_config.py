@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Prepare and publish only the paired Debian BIND resolver configuration."""
 import base64
+from contextlib import contextmanager
 import hashlib
 from ipaddress import IPv4Address, IPv4Network
 import os
@@ -162,24 +163,14 @@ def prepare(configuration, history, environment):
     return file_identity, candidate, publication
 
 
-def stage(candidate, verify, environment):
-    with tempfile.NamedTemporaryFile(dir=CONFIG.parent, prefix='.kura-bind-check-', delete=False) as stream:
-        path = Path(stream.name)
-        try:
-            stream.write(candidate)
-            stream.flush()
-            verify()
-            subprocess.run([str(CHECKER), '-z', str(path)], env=environment, check=True, timeout=8,
-                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        finally:
-            path.unlink()
+def publication_identity(identity):
+    # rename changes ctime. Device, inode, permissions and mtime still identify
+    # the exact file fsynced and validated before the mutation was admitted.
+    return [*identity[:-2], identity[-1]]
 
 
-def publish(expected, candidate):
-    identity, current = read_current()
-    require(identity == expected, 'BIND_CONFIGURATION_CHANGED')
-    if candidate == current:
-        return
+@contextmanager
+def stage(expected, candidate, verify, environment):
     with tempfile.NamedTemporaryFile(dir=CONFIG.parent, prefix='.kura-bind-release-', delete=False) as stream:
         path = Path(stream.name)
         try:
@@ -188,10 +179,34 @@ def publish(expected, candidate):
             stream.write(candidate)
             stream.flush()
             os.fsync(stream.fileno())
-            require(read_current()[0] == identity, 'BIND_CONFIGURATION_CHANGED')
-            os.replace(path, CONFIG)
-            sync(CONFIG.parent)
+            validated = stamp(os.fstat(stream.fileno()))
+            verify()
+            subprocess.run([str(CHECKER), '-z', str(path)], env=environment, check=True, timeout=8,
+                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            require(stamp(path.lstat()) == validated, 'BIND_STAGING_CHANGED')
+            yield path, publication_identity(validated)
         finally:
             path.unlink(missing_ok=True)
-    updated, contents = read_current()
-    require(updated[2:5] == expected[2:5] and contents == candidate, 'BIND_CONFIGURATION_UNVERIFIED')
+
+
+def publish(expected, candidate, staged, prepared):
+    identity, current = read_current()
+    require(identity == expected, 'BIND_CONFIGURATION_CHANGED')
+    if candidate == current:
+        return
+    require(publication_identity(stamp(staged.lstat())) == prepared
+            and snapshot(staged, LIMIT, lambda stream: stream.read()) == candidate, 'BIND_STAGING_CHANGED')
+    os.replace(staged, CONFIG)
+    sync(CONFIG.parent)
+    require(published(prepared, sha(candidate)), 'BIND_CONFIGURATION_UNVERIFIED')
+
+
+def published(expected, expected_sha):
+    identity, contents = read_current()
+    return publication_identity(identity) == expected and sha(contents) == expected_sha
+
+
+def sync_publication():
+    # Bytes were fsynced in the staged inode before rename. Ensure the file
+    # name is durable as well if the original worker exited before that step.
+    sync(CONFIG.parent)

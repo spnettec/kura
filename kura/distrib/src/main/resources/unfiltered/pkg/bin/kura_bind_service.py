@@ -165,8 +165,8 @@ def validate_checker():
     checked_package_asset(configuration.CHECKER, manifest, maximum=8 * 1024 * 1024, package='bind9-utils')
 
 
-def apply_configuration(phase, payload, identity, before):
-    configuration.publish(identity, payload)
+def apply_configuration(phase, payload, identity, staged, prepared, before):
+    configuration.publish(identity, payload, staged, prepared)
     fingerprint, state, invocation = before
     if phase == 'enable':
         action = 'restart' if state == 'active' else 'start'
@@ -183,8 +183,65 @@ def apply_configuration(phase, payload, identity, before):
             and configuration.read_current()[1] == payload, 'BIND_OUTCOME_UNKNOWN')
 
 
+def boot_identity():
+    return identifier(Path('/proc/sys/kernel/random/boot_id').read_text(encoding='ascii').strip())
+
+
+def admit_intent(intent_path, intent, before, authorize):
+    require(authorize() and target() == before, 'BIND_TARGET_CHANGED')
+    anchor = STATE / 'root.json'
+    if not os.path.lexists(anchor):
+        create(anchor, dict(schema=1, root=intent['root']))
+    create(intent_path, intent)
+    require(authorize() and target() == before, 'BIND_TARGET_CHANGED')
+
+
+def configure_operation(expected, intent_path, receipt, intent, history, target_before, authorize):
+    typed = expected['configuration']
+    identity, payload, publication = configuration.prepare(typed, history, ENVIRONMENT)
+    with configuration.stage(identity, payload, validate_checker, ENVIRONMENT) as (staged, prepared):
+        require(configuration.prepare(typed, history, ENVIRONMENT) == (identity, payload, publication),
+                'BIND_CONFIGURATION_CHANGED')
+        intent['publication'] = publication
+        intent['stagedPublication'] = dict(boot=boot_identity(), file=prepared)
+        admit_intent(intent_path, intent, target_before, authorize)
+        apply_configuration(typed['mode'], payload, identity, staged, prepared, target_before)
+        return ('APPLIED', outcomes.commit(receipt, intent))
+
+
+def settle_publication(expected, root, authorize):
+    scope = outcomes.binding(STATE, root, required=True)
+    require(scope == expected['proof'] and authorize(), 'UNPAIRED_BIND_QUERY')
+    operation = expected['operationId']
+    original = outcomes.intent_at(STATE, root, operation)
+    if original is None:
+        return ('NOT_FOUND', None)
+    receipt = outcomes.result_at(STATE, operation, original)
+    if receipt is not None:
+        return ('APPLIED', receipt.get('deliveryToken'))
+    # A service start/stop/restart cannot be inferred from a changed process
+    # alone. Only a file-only publication with its recorded inode is eligible.
+    proof = original.get('stagedPublication')
+    request = original['request']
+    if (not proof or request['action'] != 'configure' or request['configuration']['mode'] != 'keep'
+            or proof['boot'] != boot_identity()):
+        return ('UNKNOWN', None)
+
+    before = (original['target'], original['state'], original['invocation'])
+    desired = original['publication']['published']
+    if target() != before or not configuration.published(proof['file'], desired):
+        return ('UNKNOWN', None)
+    configuration.sync_publication()
+    require(authorize() and target() == before and configuration.published(proof['file'], desired),
+            'BIND_PUBLICATION_UNVERIFIED')
+    record = STATE / (operation + '.result')
+    return ('APPLIED', outcomes.commit(record, original, recovered=True))
+
+
 def locked_operation(expected, authorize):
     root = state_binding()
+    if expected['action'] == 'settle-publication':
+        return settle_publication(expected, root, authorize)
     if expected['action'] == 'acknowledge':
         require(authorize(), 'UNAUTHORIZED')
         return outcomes.acknowledge(STATE, root, expected)
@@ -219,29 +276,14 @@ def locked_operation(expected, authorize):
     intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation,
                   deliveryProtocol=outcomes.PROTOCOL)
     if action == 'configure':
-        typed = expected['configuration']
-        identity, payload, publication = configuration.prepare(typed, history, ENVIRONMENT)
-        configuration.stage(payload, validate_checker, ENVIRONMENT)
-        intent['publication'] = publication
-    require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
-    if action == 'configure':
-        check_identity, check_payload, check_publication = configuration.prepare(typed, history, ENVIRONMENT)
-        require((identity, payload, publication) == (check_identity, check_payload, check_publication),
-                'BIND_CONFIGURATION_CHANGED')
-    anchor = STATE / 'root.json'
-    if not os.path.lexists(anchor):
-        create(anchor, dict(schema=1, root=root))
-    create(intent_path, intent)
-    require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
-    if action == 'configure':
-        apply_configuration(typed['mode'], payload, identity, target_before)
-    else:
-        desired = 'inactive' if action == 'stop' else 'active'
-        if action == 'restart' or state != desired:
-            write_job(action)
-        current, after, next_invocation = target()
-        require(current == fingerprint and after == desired
-                and (action != 'restart' or next_invocation != invocation), 'BIND_OUTCOME_UNKNOWN')
+        return configure_operation(expected, intent_path, receipt, intent, history, target_before, authorize)
+    admit_intent(intent_path, intent, target_before, authorize)
+    desired = 'inactive' if action == 'stop' else 'active'
+    if action == 'restart' or state != desired:
+        write_job(action)
+    current, after, next_invocation = target()
+    require(current == fingerprint and after == desired
+            and (action != 'restart' or next_invocation != invocation), 'BIND_OUTCOME_UNKNOWN')
     return ('APPLIED', outcomes.commit(receipt, intent))
 
 
@@ -258,6 +300,9 @@ def operate(expected, authorize):
     if action == 'acknowledge':
         require(outcomes.binding(STATE, state_binding(), required=True) == expected['rootScope'],
                 'UNPAIRED_BIND_DELIVERY')
+    if action == 'settle-publication':
+        require(outcomes.binding(STATE, state_binding(), required=True) == expected['proof'],
+                'UNPAIRED_BIND_QUERY')
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
     try:
         value = os.fstat(fd)
@@ -317,7 +362,7 @@ def client(expected):
         action = expected['action']
         if proof is not None:
             require(isinstance(proof, str) and outcomes.PROOF.fullmatch(proof) and reply.get('state') == 'APPLIED'
-                    and action in (*WRITES, *outcomes.READ_ONLY), 'INVALID_BIND_RESPONSE')
+                    and action in (*WRITES, *outcomes.READ_ONLY, 'settle-publication'), 'INVALID_BIND_RESPONSE')
             wire['proof'] = proof
         require(type(reply.get('schema')) is int and reply == wire and reply['state'] in RESULTS
                 and (reply['state'] != 'APPLIED' or action not in (*WRITES, 'scope') or proof is not None),

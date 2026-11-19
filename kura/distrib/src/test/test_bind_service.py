@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import subprocess
@@ -111,9 +112,11 @@ class BindJournalTest(unittest.TestCase):
         publication = dict(revision=1, before='a' * 64, published='b' * 64, stockSha256='a' * 64)
         effects = []
 
+        @contextmanager
         def stage(*_):
             self.assertFalse(list(self.state.glob('*.intent')))
             effects.append('validated')
+            yield Path('/staged'), [1, 2, 0, 0, 0o100640, 1, 10, 3000]
 
         def publish(*_):
             self.assertTrue((self.state / (expected['operationId'] + '.intent')).exists())
@@ -151,4 +154,47 @@ class BindJournalTest(unittest.TestCase):
         query = bind.request('outcome:' + bind.digest(root), operation)
         self.assertEqual(bind.operate(query, lambda: True), ('APPLIED', None))
         self.assertEqual(bind.operate(self.scoped('stop'), lambda: True)[0], 'APPLIED')
+        self.job.assert_not_called()
+
+    def unsettled_file_intent(self, *, mode='keep', paired_boot=True):
+        operation = str(uuid.uuid4())
+        root = self.root.return_value
+        request = self.scoped('configure:' + mode + ':127.0.0.2:127.0.0.1/32', operation)
+        file = [1, 2, 0, 0, 0o100640, 1, 10, 3000]
+        boot = bind.boot_identity() if paired_boot else str(uuid.uuid4())
+        intent = dict(root=root, request=request, target=self.runtime[0], state=self.runtime[1],
+                      invocation=self.runtime[2], deliveryProtocol=1, publication=dict(published='c' * 64),
+                      stagedPublication=dict(boot=boot, file=file))
+        bind.create(self.state / 'root.json', dict(schema=1, root=root))
+        bind.create(self.state / (operation + '.intent'), intent)
+        return intent, bind.request('settle-publication:' + bind.digest(root), operation)
+
+    def test_file_publication_settlement_commits_without_dispatching_or_acknowledging(self):
+        intent, settle = self.unsettled_file_intent()
+        operation = settle['operationId']
+        with (patch.object(bind.configuration, 'published', return_value=True) as proof,
+              patch.object(bind.configuration, 'sync_publication') as sync):
+            state, token = bind.operate(settle, lambda: True)
+        self.assertEqual(state, 'APPLIED')
+        proof.assert_called_with(intent['stagedPublication']['file'], intent['publication']['published'])
+        sync.assert_called_once_with()
+        receipt = bind.outcomes.result_at(self.state, operation, intent)
+        self.assertEqual(receipt['recovery'], 'paired-file-publication')
+        self.assertEqual(receipt['deliveryToken'], token)
+        self.assertFalse((self.state / (operation + '.delivered')).exists())
+        self.job.assert_not_called()
+
+    def test_mismatched_published_inode_leaves_original_intent_unsettled(self):
+        _, settle = self.unsettled_file_intent()
+        with patch.object(bind.configuration, 'published', return_value=False):
+            self.assertEqual(bind.operate(settle, lambda: True), ('UNKNOWN', None))
+        self.assertFalse(list(self.state.glob('*.result')))
+        self.job.assert_not_called()
+
+    def test_service_activation_cannot_be_inferred_from_a_matching_file(self):
+        _, settle = self.unsettled_file_intent(mode='enable')
+        with patch.object(bind.configuration, 'published') as verifier:
+            self.assertEqual(bind.operate(settle, lambda: True), ('UNKNOWN', None))
+        verifier.assert_not_called()
+        self.assertFalse(list(self.state.glob('*.result')))
         self.job.assert_not_called()
