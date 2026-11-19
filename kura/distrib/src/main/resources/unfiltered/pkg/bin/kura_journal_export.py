@@ -102,6 +102,7 @@ def verify_actor(unit):
     status = proc_status(os.getpid())
     groups = set(os.getgroups())
     require(actor.pw_uid > 0 and actor.pw_gid > 0 and journal_gid > 0 and os.geteuid() == actor.pw_uid
+            and actor.pw_shell == '/usr/sbin/nologin' and actor.pw_dir == '/nonexistent'
             and journal_gid in groups and groups <= {actor.pw_gid, journal_gid}
             and status['NoNewPrivs'].strip() == '1'
             and all(int(status[name], 16) == 0 for name in ('CapInh','CapPrm','CapEff','CapBnd','CapAmb')),

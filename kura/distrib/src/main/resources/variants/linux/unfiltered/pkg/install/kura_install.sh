@@ -94,6 +94,9 @@ configure_layout() {
 }
 
 configure_brokers() {
+    if [ -f /usr/lib/sysusers.d/kura-journal-export.conf ]; then
+        /usr/bin/systemd-sysusers /usr/lib/sysusers.d/kura-journal-export.conf || exit 1
+    fi
     # manage running services — kura.core.clock owns NTP, so stop the system
     # time daemons. Anything network-related (NetworkManager, ModemManager,
     # dnsmasq, dhcpcd, systemd-networkd) is handled by kura-networking's own

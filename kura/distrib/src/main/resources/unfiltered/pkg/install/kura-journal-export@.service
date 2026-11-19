@@ -2,11 +2,12 @@
 Description=Kura read-only journal export
 PartOf=kura.service
 Requisite=kura.service
+CollectMode=inactive-or-failed
 
 [Service]
 Type=exec
-DynamicUser=yes
 User=kura-journal-export
+Group=kura-journal-export
 SupplementaryGroups=systemd-journal
 UMask=0077
 ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-journal-export/kura_journal_export.py serve %n
