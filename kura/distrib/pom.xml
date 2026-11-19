@@ -2526,32 +2526,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Read the HEAD belonging to this checkout, including linked worktrees. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>read-package-git-head</id>
-                        <phase>initialize</phase>
-                        <goals><goal>run</goal></goals>
-                        <configuration>
-                            <exportAntProperties>true</exportAntProperties>
-                            <target>
-                                <exec executable="git" dir="${project.basedir}" newenvironment="true"
-                                      failonerror="true" outputproperty="git.commit.id.abbrev">
-                                    <env key="PATH" value="${env.PATH}"/>
-                                    <arg value="rev-parse"/>
-                                    <arg value="--short=7"/>
-                                    <arg value="--verify"/>
-                                    <arg value="HEAD"/>
-                                </exec>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.6.1</version>
@@ -3255,6 +3229,32 @@
                                 <argument>${dist.assembly.name}.catalog</argument>
                                 <argument>${dist.build.name}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Read this checkout’s HEAD. Keep AntRun after resource staging for the gateway package. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>read-package-git-head</id>
+                        <phase>initialize</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <exec executable="git" dir="${project.basedir}" newenvironment="true"
+                                      failonerror="true" outputproperty="git.commit.id.abbrev">
+                                    <env key="PATH" value="${env.PATH}"/>
+                                    <arg value="rev-parse"/>
+                                    <arg value="--short=7"/>
+                                    <arg value="--verify"/>
+                                    <arg value="HEAD"/>
+                                </exec>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
