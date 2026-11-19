@@ -113,18 +113,20 @@ class DhcpServiceTest(unittest.TestCase):
             with self.assertRaisesRegex(Refused, 'DHCP_PORT_IN_USE'):
                 listeners.check(links, None)
 
-    def test_active_credential_must_match_and_belong_to_uninterrupted_service(self):
+    def test_socket_verification_rechecks_configuration_identity_and_invocation(self):
         model = config.render(config.parse(FIRST))
+        published = ((1, 2, 3), model)
         links = (listeners.Link(9, frozenset()),)
         unit = ('release', 'active', 'invocation', 312)
-        with patch.object(service, 'snapshot', return_value=model), patch.object(
+        with patch.object(service, 'current_config', return_value=published), patch.object(
                 listeners, 'check') as check, patch.object(service, 'target', return_value=unit):
-            service.check_active_target({}, unit, links, model)
+            service.check_active_target({}, unit, links, published)
             check.assert_called_once_with(links, 312, ready=True)
-        with patch.object(service, 'snapshot', return_value=config.DEFAULT):
-            with self.assertRaisesRegex(Refused, 'DHCP_ACTIVE_CONFIGURATION_MISMATCH'):
-                service.check_active_target({}, unit, links, model)
-        with patch.object(service, 'snapshot', return_value=model), patch.object(listeners, 'check'), patch.object(
-                service, 'target', return_value=('release', 'active', 'changed', 312)):
+        with patch.object(service, 'current_config', return_value=((1, 2, 4), model)), patch.object(
+                listeners, 'check'), patch.object(service, 'target', return_value=unit):
             with self.assertRaisesRegex(Refused, 'DHCP_TARGET_CHANGED'):
-                service.check_active_target({}, unit, links, model)
+                service.check_active_target({}, unit, links, published)
+        with patch.object(service, 'current_config', return_value=published), patch.object(
+                listeners, 'check'), patch.object(service, 'target', return_value=('release','active','changed',312)):
+            with self.assertRaisesRegex(Refused, 'DHCP_TARGET_CHANGED'):
+                service.check_active_target({}, unit, links, published)
