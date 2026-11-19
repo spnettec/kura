@@ -20,17 +20,17 @@ class JournalExportTest(unittest.TestCase):
         with TemporaryDirectory() as folder:
             home = Path(folder)
             (home / 'libexec').mkdir()
-            for name in [path for path in export.FILES if path.startswith('bin/')] + [
-                    'install/' + unit for unit in export.UNITS]:
+            for name in [*export.SOURCES, 'install/' + export.MAIN_UNIT]:
                 target = home / name
                 target.parent.mkdir(exist_ok=True)
                 target.write_text(name)
             export.package_cohort(home)
             shutil.rmtree(home / 'install')
-            manifest = export.decode((home / export.COHORT).read_bytes())
+            retained = home / export.PAIR_DIRECTORY
+            manifest = export.decode((retained / export.COHORT).read_bytes())
             self.assertEqual(set(manifest['files']), set(export.FILES))
             for name, digest in manifest['files'].items():
-                self.assertEqual(export.file_hash((home / name).read_bytes()), digest)
+                self.assertEqual(export.file_hash((retained / name).read_bytes()), digest)
 
     def test_typed_scope_and_fields(self):
         self.assertEqual(export.request('kura', 'MESSAGE,_BOOT_ID'),

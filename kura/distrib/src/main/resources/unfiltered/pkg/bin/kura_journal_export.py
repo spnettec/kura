@@ -28,12 +28,14 @@ ACTOR_UNIT = 'kura-journal-export@.service'
 ACTOR = 'kura-journal-export'
 CALLER = 'kurad'
 HELPER = 'bin/kura_journal_export.py'
+ACTOR_HOME = Path('/usr/libexec/kura-journal-export')
 PAIR_DIRECTORY = Path('libexec/journal-export')
-COHORT = PAIR_DIRECTORY / 'cohort.json'
+COHORT = 'cohort.json'
 UNITS = (SOCKET_UNIT, ACTOR_UNIT)
-FILES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
-         'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
-         *((PAIR_DIRECTORY / name).as_posix() for name in UNITS))
+SOURCES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
+           'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
+           *(f'install/{name}' for name in UNITS))
+FILES = tuple(Path(name).name for name in SOURCES)
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
 NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
 NETWORKING_SHA = 'eb1079ba9bc662b196ef873cfc860cc1b53ab3b50813c2ee4437352c4cd65b18'
@@ -42,16 +44,18 @@ READ_TIME = 25
 
 
 def package_cohort(home):
-    (home / PAIR_DIRECTORY).mkdir()
-    for name in UNITS:
-        source = home / 'install' / name
-        require(source.is_file() and not source.is_symlink(), 'UNPAIRED_EXPORT')
-        shutil.copyfile(source, home / PAIR_DIRECTORY / name)
-    for name in FILES:
+    destination = home / PAIR_DIRECTORY
+    destination.mkdir()
+    main = home / 'install' / MAIN_UNIT
+    require(main.is_file() and not main.is_symlink(), 'UNPAIRED_EXPORT')
+    files = {}
+    for name in SOURCES:
         path = home / name
         require(path.is_file() and not path.is_symlink(), 'UNPAIRED_EXPORT')
-    manifest = {'schema': 1, 'files': {name: file_hash((home / name).read_bytes()) for name in FILES}}
-    (home / COHORT).write_bytes(encode(manifest) + b'\n')
+        shutil.copyfile(path, destination / path.name)
+        files[path.name] = file_hash(path.read_bytes())
+    manifest = {'schema': 1, 'mainUnitSha256': file_hash(main.read_bytes()), 'files': files}
+    (destination / COHORT).write_bytes(encode(manifest) + b'\n')
 
 
 def request(scope, fields):
@@ -103,22 +107,22 @@ def verify_actor(unit):
             and all(int(status[name], 16) == 0 for name in ('CapInh','CapPrm','CapEff','CapBnd','CapAmb')),
             'UNPAIRED_EXPORT')
     verify_identity(status, actor.pw_uid, actor.pw_gid)
-    manifest = decode(public_file(HOME / COHORT))
-    require(set(manifest) == {'schema', 'files'} and type(manifest['schema']) is int and manifest['schema'] == 1
-            and manifest['files'].keys() == set(FILES), 'UNPAIRED_EXPORT')
+    manifest = decode(public_file(ACTOR_HOME / COHORT))
+    require(set(manifest) == {'schema', 'files', 'mainUnitSha256'} and type(manifest['schema']) is int
+            and manifest['schema'] == 1 and manifest['files'].keys() == set(FILES)
+            and re.fullmatch(r'[0-9a-f]{64}', manifest['mainUnitSha256']), 'UNPAIRED_EXPORT')
     for name, expected in manifest['files'].items():
-        require(file_hash(public_file(HOME / name)) == expected, 'UNPAIRED_EXPORT')
-    paired_unit(SOCKET_UNIT, SOCKET_UNIT, manifest['files'][(PAIR_DIRECTORY / SOCKET_UNIT).as_posix()])
-    paired_unit(unit, ACTOR_UNIT, manifest['files'][(PAIR_DIRECTORY / ACTOR_UNIT).as_posix()])
+        require(file_hash(public_file(ACTOR_HOME / name)) == expected, 'UNPAIRED_EXPORT')
+    paired_unit(SOCKET_UNIT, SOCKET_UNIT, manifest['files'][SOCKET_UNIT])
+    paired_unit(unit, ACTOR_UNIT, manifest['files'][ACTOR_UNIT])
+    return manifest['mainUnitSha256']
 
 
-def main_peer(peer):
+def main_peer(peer, unit_sha):
     pid, uid, gid, pidfd = peer
     account = pwd.getpwnam(CALLER)
     require(uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
     verify_alive(pidfd)
-    cohort = decode(public_file(HOME / 'libexec/key-backup/manifest.json'))
-    unit_sha = cohort['generation']['unitSha256']
     names = MAIN_PROPERTIES + ('User', 'Group')
     main = paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True)
     parent = int(main['MainPID'])
@@ -177,15 +181,15 @@ def read_journal(selection, output):
 
 
 def serve(stream, unit):
-    verify_actor(unit)
+    unit_sha = verify_actor(unit)
     with socket_peer(stream) as peer:
-        expected = main_peer(peer)
+        expected = main_peer(peer, unit_sha)
         actual = receive(stream)
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_EXPORT')
-        require(main_peer(peer) == expected, 'UNAUTHORIZED')
+        require(main_peer(peer, unit_sha) == expected, 'UNAUTHORIZED')
         with tempfile.TemporaryFile() as contents:
             size = read_journal(expected, contents)
-            require(main_peer(peer) == expected, 'UNAUTHORIZED')
+            require(main_peer(peer, unit_sha) == expected, 'UNAUTHORIZED')
             stream.settimeout(5)
             stream.sendall(struct.pack('>I', size))
             while block := contents.read(65536):
