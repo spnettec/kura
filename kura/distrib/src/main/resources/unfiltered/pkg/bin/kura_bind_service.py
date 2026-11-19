@@ -14,6 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import kura_bind_config as configuration
 from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, read, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
@@ -31,7 +32,7 @@ NAMED = Path('/usr/sbin/named')
 HELPER = 'bin/kura_bind_service.py'
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
 SYSTEMCTL = ('/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager')
-SOURCES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
+SOURCES = (HELPER, 'bin/kura_bind_config.py', 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
            'bin/kura_modem_cohort.py', 'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py',
            'bin/kura_reboot_protocol.py', f'install/{SOCKET_UNIT}', f'install/{ACTOR_UNIT}')
 FILES = {Path(name).name for name in SOURCES}
@@ -70,12 +71,14 @@ def verify_actor(unit):
 
 
 def request(action, operation):
-    require(action in ACTIONS, 'INVALID_BIND_REQUEST')
     identifier(operation)
+    if action.startswith('configure:'):
+        return dict(schema=1, action='configure', operationId=operation, configuration=configuration.decode_fields(action))
+    require(action in ACTIONS, 'INVALID_BIND_REQUEST')
     return dict(schema=1, action=action, operationId=operation)
 
 
-def checked_package_asset(path, manifest, *, maximum=1024 * 1024):
+def checked_package_asset(path, manifest, *, maximum=1024 * 1024, package='bind9'):
     canonical = path.resolve(strict=True)
     require(canonical == path or (path.parent == Path('/lib/systemd/system')
                                   and canonical == Path('/usr/lib/systemd/system') / path.name),
@@ -84,7 +87,7 @@ def checked_package_asset(path, manifest, *, maximum=1024 * 1024):
     # original package checksum, then bind the observed content with SHA-256.
     owner = subprocess.check_output(['/usr/bin/dpkg-query', '-S', str(canonical)],
                                     env=ENVIRONMENT, timeout=3).rstrip()
-    require(owner == os.fsencode('bind9: ' + str(canonical)), 'UNPAIRED_BIND_UNIT')
+    require(owner == os.fsencode(package + ': ' + str(canonical)), 'UNPAIRED_BIND_UNIT')
     records = [line.split(b'  ', 1)[0] for line in manifest.splitlines()
                if line.endswith(b'  ' + os.fsencode(str(canonical)[1:]))]
     require(len(records) == 1 and re.fullmatch(rb'[0-9a-f]{32}', records[0]), 'UNPAIRED_BIND_UNIT')
@@ -144,6 +147,29 @@ def write_job(action):
                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+def validate_checker():
+    manifest = public_file(Path('/var/lib/dpkg/info/bind9-utils.md5sums'))
+    checked_package_asset(configuration.CHECKER, manifest, maximum=8 * 1024 * 1024, package='bind9-utils')
+
+
+def apply_configuration(phase, payload, identity, before):
+    configuration.publish(identity, payload)
+    fingerprint, state, invocation = before
+    if phase == 'enable':
+        action = 'restart' if state == 'active' else 'start'
+        write_job(action)
+        wanted = 'active'
+    elif phase == 'disable':
+        if state != 'inactive':
+            write_job('stop')
+        wanted = 'inactive'
+    else:
+        wanted = state
+    current, after, observed = target()
+    require(current == fingerprint and after == wanted and (phase != 'enable' or observed != invocation)
+            and configuration.read_current()[1] == payload, 'BIND_OUTCOME_UNKNOWN')
+
+
 def resolve_result(path, intent):
     receipt = decode(read(path, 0))
     require(receipt == dict(intentSha256=digest(intent), state='APPLIED'), 'UNPAIRED_BIND_STATE')
@@ -167,6 +193,7 @@ def locked_operation(expected, authorize):
 
     intents = list(STATE.glob('*.intent'))
     require(len(intents) < MAX_OPERATIONS, 'BIND_HISTORY_FULL')
+    history = []
     for previous in intents:
         intent = decode(read(previous, 0))
         require(os.path.lexists(anchor) and intent['root'] == root, 'UNPAIRED_BIND_STATE')
@@ -174,21 +201,34 @@ def locked_operation(expected, authorize):
         if not os.path.lexists(terminal):
             return 'UNKNOWN'
         resolve_result(terminal, intent)
+        history.append(intent)
     target_before = target()
-    require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
     fingerprint, state, invocation = target_before
     action = expected['action']
-    desired = 'inactive' if action == 'stop' else 'active'
+    intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation)
+    if action == 'configure':
+        typed = expected['configuration']
+        identity, payload, publication = configuration.prepare(typed, history, ENVIRONMENT)
+        configuration.stage(payload, validate_checker, ENVIRONMENT)
+        intent['publication'] = publication
+    require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
+    if action == 'configure':
+        check_identity, check_payload, check_publication = configuration.prepare(typed, history, ENVIRONMENT)
+        require((identity, payload, publication) == (check_identity, check_payload, check_publication),
+                'BIND_CONFIGURATION_CHANGED')
     if not os.path.lexists(anchor):
         create(anchor, binding)
-    intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation)
     create(intent_path, intent)
     require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
-    if action == 'restart' or state != desired:
-        write_job(action)
-    current, after, next_invocation = target()
-    require(current == fingerprint and after == desired
-            and (action != 'restart' or next_invocation != invocation), 'BIND_OUTCOME_UNKNOWN')
+    if action == 'configure':
+        apply_configuration(typed['mode'], payload, identity, target_before)
+    else:
+        desired = 'inactive' if action == 'stop' else 'active'
+        if action == 'restart' or state != desired:
+            write_job(action)
+        current, after, next_invocation = target()
+        require(current == fingerprint and after == desired
+                and (action != 'restart' or next_invocation != invocation), 'BIND_OUTCOME_UNKNOWN')
     create(receipt, dict(intentSha256=digest(intent), state='APPLIED'))
     return 'APPLIED'
 
@@ -238,7 +278,7 @@ def client(expected):
         credentials = stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
         require(struct.unpack('3i', credentials) == (1, 0, 0), 'UNPAIRED_BIND_RELEASE')
         send(stream, expected)
-        reply = receive(stream, timeout=38)
+        reply = receive(stream, timeout=55 if expected['action'] == 'configure' else 38)
         require(type(reply.get('schema')) is int
                 and reply == dict(schema=1, operationId=expected['operationId'], state=reply.get('state'))
                 and reply['state'] in RESULTS, 'INVALID_BIND_RESPONSE')

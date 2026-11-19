@@ -78,3 +78,38 @@ class BindJournalTest(unittest.TestCase):
         with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_STATE'):
             bind.operate(self.operation('start'), lambda: True)
         self.job.assert_not_called()
+
+    def test_configuration_refusal_precedes_intent_publication_and_service_jobs(self):
+        expected = bind.request('configure:enable:127.0.0.2:127.0.0.1/32', str(uuid.uuid4()))
+        with patch.object(bind.configuration, 'prepare', side_effect=bind.Refused('UNOWNED_BIND_CONFIGURATION')):
+            with self.assertRaisesRegex(bind.Refused, 'UNOWNED_BIND_CONFIGURATION'):
+                bind.operate(expected, lambda: True)
+        self.assertFalse(list(self.state.glob('*.intent')))
+        self.job.assert_not_called()
+
+    def test_configuration_is_staged_then_journaled_before_publication_and_activation(self):
+        expected = bind.request('configure:enable:127.0.0.2:127.0.0.1/32', str(uuid.uuid4()))
+        payload = b'typed configuration'
+        publication = dict(revision=1, before='a' * 64, published='b' * 64, stockSha256='a' * 64)
+        effects = []
+
+        def stage(*_):
+            self.assertFalse(list(self.state.glob('*.intent')))
+            effects.append('validated')
+
+        def publish(*_):
+            self.assertTrue((self.state / (expected['operationId'] + '.intent')).exists())
+            effects.append('published')
+
+        def start(action):
+            self.assertEqual(action, 'start')
+            effects.append('activated')
+            self.runtime = ('a' * 64, 'active', 'c' * 32)
+
+        self.job.side_effect = start
+        with (patch.object(bind.configuration, 'prepare', return_value=('original', payload, publication)),
+              patch.object(bind.configuration, 'stage', side_effect=stage),
+              patch.object(bind.configuration, 'publish', side_effect=publish),
+              patch.object(bind.configuration, 'read_current', return_value=('published',payload))):
+            self.assertEqual(bind.operate(expected, lambda: True), 'APPLIED')
+        self.assertEqual(effects, ['validated', 'published', 'activated'])

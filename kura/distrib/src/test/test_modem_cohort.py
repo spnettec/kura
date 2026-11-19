@@ -82,6 +82,11 @@ class ProviderFingerprintTest(unittest.TestCase):
             bind_proof.write_text(json.dumps(dict(
                 schema=1, bindProtocol=1, provider=bind_jar.name,
                 sha256=hashlib.sha256(bind_jar.read_bytes()).hexdigest())))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* bindConfigurationProtocol'):
+                cohort.check()
+            bind_proof.with_name('bind-config-provider.json').write_text(json.dumps(dict(
+                schema=1, bindConfigurationProtocol=1, provider=bind_jar.name,
+                sha256=hashlib.sha256(bind_jar.read_bytes()).hexdigest())))
             cohort.check()
             self.owner.assert_any_call(bind_jar, self.package)
             bind_jar.write_bytes(b'different DNS bundle')

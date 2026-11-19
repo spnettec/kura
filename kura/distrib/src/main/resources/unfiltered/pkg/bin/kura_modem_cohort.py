@@ -99,6 +99,8 @@ def check():
                     MODEM_NAME, 'modemProtocol', installed == package)
         check_asset(package, provider_dir, files, proof_dir / 'bind-provider.json',
                     BIND_NAME, 'bindProtocol', installed == package == 'kura-networking')
+        check_asset(package, provider_dir, files, proof_dir / 'bind-config-provider.json',
+                    BIND_NAME, 'bindConfigurationProtocol', installed == package == 'kura-networking')
 
 
 def check_asset(package, provider_dir, files, proof_path, name, protocol, present):
