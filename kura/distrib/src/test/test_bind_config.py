@@ -47,6 +47,31 @@ class BindConfigurationTest(unittest.TestCase):
             self.assertIn(('forwarders {' + resolver + ';};').encode(), result)
             self.assertIn(b'forward only;', result)
 
+    def test_dual_stack_listener_and_upstream_are_typed_independently(self):
+        value = config.decode_fields('configure:enable-lan-dual:20010db8000200000000000000000053:'
+                                     '203.0.113.1/24,fd370000000000000000000000000001/64')
+        self.assertEqual(value['forwarders'], ['2001:db8:2::53'])
+        self.assertEqual(value['networks'], ['203.0.113.0/24', 'fd37::/64'])
+        result = config.render(value, STOCK)
+        self.assertIn(b'listen-on {!127.0.0.0/8;203.0.113.0/24;};', result)
+        self.assertIn(b'listen-on-v6 {!::1;fd37::/64;};', result)
+        self.assertIn(b'allow-query {!localhost;203.0.113.0/24;fd37::/64;};', result)
+        self.assertIn(b'forwarders {2001:db8:2::53;};', result)
+        value['networks'] = ['fd37::/64']
+        self.assertIn(b'listen-on { none; };', config.render(value, STOCK))
+
+    def test_dual_stack_rejects_unscoped_upstream_wildcards_and_unsafe_lan_prefixes(self):
+        v6_lan = 'fd370000000000000000000000000001/64'
+        for address in ('fe800000000000000000000000000053', 'ff010000000000000000000000000053',
+                        '00000000000000000000ffff7f000001', '00000000000000000000000000000000',
+                        '127.0.0.53,192.0.2.53'):
+            with self.subTest(address=address), self.assertRaisesRegex(bind.Refused, 'INVALID_BIND_CONFIGURATION'):
+                config.decode_fields('configure:enable-lan-dual:' + address + ':' + v6_lan)
+        for network in ('fd370000000000000000000000000001/0', 'fd370000000000000000000000000001/129',
+                        'fe800000000000000000000000000001/64'):
+            with self.subTest(network=network), self.assertRaisesRegex(bind.Refused, 'INVALID_BIND_CONFIGURATION'):
+                config.decode_fields('configure:enable-lan-dual:192.0.2.53:' + network)
+
     def test_only_stock_or_the_latest_matched_publication_is_eligible(self):
         files = {str(config.CONFIG): config.md5(STOCK)}
         self.assertEqual(config.paired_stock(STOCK, [], files), STOCK)

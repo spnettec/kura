@@ -37,8 +37,8 @@ SOURCES = (HELPER, 'bin/kura_bind_config.py', 'bin/kura_bind_outcomes.py', 'bin/
            'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
            'bin/kura_modem_cohort.py', 'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py',
            'bin/kura_reboot_protocol.py', f'install/{SOCKET_UNIT}', f'install/{ACTOR_UNIT}')
-LAN_CAPABILITY = 'lan-listener-v1'
-FILES = {Path(name).name for name in SOURCES} | {LAN_CAPABILITY}
+LAN_CAPABILITIES = ('lan-listener-v1', 'lan-dual-stack-v1')
+FILES = {Path(name).name for name in SOURCES} | set(LAN_CAPABILITIES)
 WRITES = ('start', 'stop', 'restart', 'configure')
 ACTIONS = ('status', 'scope')
 RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'INACTIVE', 'NOT_FOUND')
@@ -53,9 +53,10 @@ def package_cohort(home):
         require(source.is_file() and not source.is_symlink(), 'UNPAIRED_BIND_RELEASE')
         shutil.copyfile(source, target / source.name)
         files[source.name] = file_hash(source.read_bytes())
-    capability = b'1\n'
-    (target / LAN_CAPABILITY).write_bytes(capability)
-    files[LAN_CAPABILITY] = file_hash(capability)
+    for name in LAN_CAPABILITIES:
+        capability = b'1\n'
+        (target / name).write_bytes(capability)
+        files[name] = file_hash(capability)
     main = (home / 'install/kura.service').read_bytes()
     (target / 'cohort.json').write_bytes(encode(dict(schema=1, mainUnitSha256=file_hash(main), files=files)) + b'\n')
 

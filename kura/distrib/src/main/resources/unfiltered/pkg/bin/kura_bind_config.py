@@ -3,7 +3,7 @@
 import base64
 from contextlib import contextmanager
 import hashlib
-from ipaddress import IPv4Address, IPv4Network
+from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 import os
 from pathlib import Path
 import re
@@ -18,10 +18,31 @@ CONFIG = Path('/etc/bind/named.conf')
 ENV_FILE = Path('/etc/default/named')
 CHECKER = Path('/usr/bin/named-checkconf')
 LIMIT = 8192
-ENABLE_MODES = ('enable', 'enable-lan')
+DUAL_STACK = 'enable-lan-dual'
+ENABLE_MODES = ('enable', 'enable-lan', DUAL_STACK)
 MODES = ('keep', 'disable', *ENABLE_MODES)
 LOCAL_STUBS = ('127.0.0.1', '127.0.0.53', '127.0.0.54')
+LAN_V6_RANGES = (IPv6Network('2000::/3'), IPv6Network('fc00::/7'))
 INCLUDES = frozenset(('named.conf.options', 'named.conf.local', 'named.conf.root-hints', 'named.conf.default-zones'))
+
+
+def typed_address(token, dual):
+    if dual and re.fullmatch('[0-9a-f]{32}', token):
+        address = IPv6Address(int(token, 16))
+        require(address.ipv4_mapped is None, 'INVALID_BIND_CONFIGURATION')
+        return address
+    return IPv4Address(token)
+
+
+def typed_prefix(token, dual):
+    address, separator, length = token.partition('/')
+    require(separator and re.fullmatch(r'0|[1-9][0-9]{0,2}', length), 'INVALID_BIND_CONFIGURATION')
+    address = typed_address(address, dual)
+    network_type = IPv6Network if address.version == 6 else IPv4Network
+    network = network_type((address, int(length)), strict=False)
+    if network.version == 6:
+        require(any(network.subnet_of(scope) for scope in LAN_V6_RANGES), 'INVALID_BIND_CONFIGURATION')
+    return str(network)
 
 
 def decode_fields(value):
@@ -32,15 +53,18 @@ def decode_fields(value):
     addresses = forwarders.split(',') if forwarders else []
     prefixes = networks.split(',') if networks else []
     require(len(addresses) <= 16 and len(prefixes) <= 128, 'INVALID_BIND_CONFIGURATION')
-    require(all(re.fullmatch(r'[0-9.]+/(?:[0-9]|[12][0-9]|3[0-2])', prefix) for prefix in prefixes),
-            'INVALID_BIND_CONFIGURATION')
+    dual = mode == DUAL_STACK
     try:
-        addresses = sorted({str(IPv4Address(address)) for address in addresses})
-        prefixes = sorted({str(IPv4Network(prefix, strict=False)) for prefix in prefixes})
+        upstreams = {typed_address(address, dual) for address in addresses}
+        addresses = sorted(map(str, upstreams))
+        prefixes = sorted({typed_prefix(prefix, dual) for prefix in prefixes})
     except ValueError:
         require(False, 'INVALID_BIND_CONFIGURATION')
     require(mode not in ENABLE_MODES or (bool(addresses) and bool(prefixes)), 'INVALID_BIND_CONFIGURATION')
-    if mode == 'enable-lan' and any(IPv4Address(address).is_loopback for address in addresses):
+    if dual:
+        require(all(not (address.is_unspecified or address.is_multicast or address.is_link_local)
+                    for address in upstreams), 'INVALID_BIND_CONFIGURATION')
+    if mode in ('enable-lan', DUAL_STACK) and any(address.is_loopback for address in upstreams):
         require(len(addresses) == 1 and addresses[0] in LOCAL_STUBS, 'INVALID_BIND_CONFIGURATION')
     return dict(mode=mode, forwarders=addresses, networks=prefixes)
 
@@ -91,8 +115,15 @@ def render(configuration, stock):
         return stock
     forwarders = ''.join(address + ';' for address in configuration['forwarders'])
     networks = ''.join(prefix + ';' for prefix in configuration['networks'])
-    lan_only = configuration['mode'] == 'enable-lan'
+    lan_only = configuration['mode'] in ('enable-lan', DUAL_STACK)
     listen = f'\tlisten-on {{!127.0.0.0/8;{networks}}};\n' if lan_only else ''
+    listen_v6 = '\tlisten-on-v6 { none; };\n'
+    if configuration['mode'] == DUAL_STACK:
+        v4 = ''.join(prefix + ';' for prefix in configuration['networks'] if ':' not in prefix)
+        v6 = ''.join(prefix + ';' for prefix in configuration['networks'] if ':' in prefix)
+        listen = f'\tlisten-on {{!127.0.0.0/8;{v4}}};\n' if v4 else '\tlisten-on { none; };\n'
+        if v6:
+            listen_v6 = f'\tlisten-on-v6 {{!::1;{v6}}};\n'
     clients = '!localhost;' + networks if lan_only else networks
     template = (
         '// Managed by Kura through the paired BIND configuration broker.\n'
@@ -100,7 +131,7 @@ def render(configuration, stock):
         '\tdirectory "/var/cache/bind";\n'
         '\tversion "not currently available";\n'
         f'{listen}'
-        '\tlisten-on-v6 { none; };\n'
+        f'{listen_v6}'
         f'\tforwarders {{{forwarders}}};\n'
         '\tforward only;\n'
         '\tallow-transfer { none; };\n'
