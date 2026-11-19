@@ -2,6 +2,8 @@
 Description=Kura ordinary command executor
 PartOf=kura.service
 Requisite=kura.service
+# The manager stops accepted command cgroups before the Main stop hook.
+After=kura.service
 CollectMode=inactive-or-failed
 
 [Service]
