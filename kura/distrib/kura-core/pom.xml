@@ -299,7 +299,29 @@
                                     </mapper>
                                 </data>
                                 <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-reset.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
                                     <src>${project.build.directory}/${dist.assembly.name}/install/kura-dhcp-service@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-reset@.service</src>
                                     <type>file</type>
                                     <mapper>
                                         <type>perm</type>
@@ -326,6 +348,18 @@
                                     <mapper>
                                         <type>perm</type>
                                         <prefix>/usr/libexec/kura-dhcp-service</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/modem-reset</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-modem-reset</prefix>
                                         <filemode>644</filemode>
                                         <dirmode>755</dirmode>
                                         <user>root</user>

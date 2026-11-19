@@ -71,6 +71,7 @@ configure_layout() {
     # Main must start with this journal already hidden in its mount namespace.
     /usr/bin/python3 -I -B "${INSTALL_DIR}/kura/bin/kura_bind_service.py" provision || exit 1
     /usr/bin/python3 -I -B "${INSTALL_DIR}/kura/bin/kura_dhcp_service.py" provision || exit 1
+    /usr/bin/python3 -I -B "${INSTALL_DIR}/kura/bin/kura_modem_reset.py" provision || exit 1
 
     # set up kura init
     # Upgrade leaves the managed unit and its enable/mask links in place. Publishing

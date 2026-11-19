@@ -15,7 +15,7 @@ Version: [[version]]-[[package.revision]]
 Section: admin
 Priority: optional
 Pre-Depends: python3, polkitd (>= 0.106)
-Depends: systemd, kmod, openjdk-21-jre-headless | temurin-21-jdk | openjdk-25-jre-headless | temurin-25-jdk,
+Depends: systemd, kmod, python3-dbus, openjdk-21-jre-headless | temurin-21-jdk | openjdk-25-jre-headless | temurin-25-jdk,
  setserial, zip, gzip, unzip, procps, usbutils, socat, gawk, sed, inetutils-telnet,
  ssh | openssh, openssl, busybox, openvpn,
  chrony, chronyc | chrony, cron | cronie,

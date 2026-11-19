@@ -117,6 +117,16 @@ def check():
                         NM_NAME, 'wifiNmProtocol', installed == package, policy=NETWORKING_RULE)
 
 
+def check_modem_reset_provider(present):
+    folder = HOME / 'siblings' / 'networking' / '5s'
+    jars = ()
+    if os.path.lexists(folder):
+        protected(folder, directory=True)
+        jars = tuple(folder.iterdir())
+    check_asset('kura-networking', folder, jars, SHARE / 'kura-networking/modem-reset-provider.json',
+                NM_NAME, 'modemResetProtocol', present)
+
+
 def check_dhcp_provider(present):
     package = 'kura-networking'
     root = HOME / 'siblings' / 'networking'
