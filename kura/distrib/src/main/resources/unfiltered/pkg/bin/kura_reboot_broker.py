@@ -231,8 +231,8 @@ def dispatch_reboot():
     return ('ACCEPTED', 'MANAGER_ACCEPTED') if code == 0 else ('UNKNOWN', 'DISPATCH_UNCONFIRMED')
 
 
-def receive(stream):
-    deadline = time.monotonic() + REPLY_TIMEOUT
+def receive(stream, *, timeout=REPLY_TIMEOUT):
+    deadline = time.monotonic() + timeout
 
     def get(count):
         value = bytearray()

@@ -24,10 +24,12 @@ class ModemProtocolTest(unittest.TestCase):
     def test_kmod_arguments_contain_only_the_selected_driver(self):
         with patch.object(broker,'protected'), patch.object(broker.subprocess,'run') as run:
             broker.run_kmod('load','option')
-            self.assertEqual(run.call_args.args[0], ['/usr/bin/kmod','modprobe','--config','/dev/null',
+            self.assertEqual(run.call_args.args[0], ['modprobe','--config','/dev/null',
                                                     '--ignore-install','--first-time','--','option'])
+            self.assertEqual(run.call_args.kwargs['executable'], '/usr/bin/kmod')
             broker.run_kmod('unload','option')
-            self.assertEqual(run.call_args.args[0], ['/usr/bin/kmod','rmmod','--','option'])
+            self.assertEqual(run.call_args.args[0], ['rmmod','--','option'])
+            self.assertEqual(run.call_args.kwargs['executable'], '/usr/bin/kmod')
 
 
 @unittest.skipUnless(os.geteuid() == 0, 'exercise real immutable Root journal only as root')

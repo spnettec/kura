@@ -154,7 +154,8 @@ def run_kmod(action, module):
         args = ['modprobe','--config','/dev/null','--ignore-install','--first-time','--',module]
     else:
         args = ['rmmod','--',module]
-    subprocess.run([str(KMOD),*args], env=ENVIRONMENT, timeout=15, check=True, stdin=subprocess.DEVNULL,
+    # Debian kmod chooses these compatibility modes from argv[0].
+    subprocess.run(args, executable=str(KMOD), env=ENVIRONMENT, timeout=15, check=True, stdin=subprocess.DEVNULL,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -283,7 +284,7 @@ def client(expected):
         require(struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET,socket.SO_PEERCRED,12))==(1,0,0),
                 'UNPAIRED_MODEM_RELEASE')
         send(stream, expected)
-        result = receive(stream)
+        result = receive(stream, timeout=30)
         require(result == dict(schema=1, operationId=expected['operationId'], state=result.get('state'))
                 and type(result['schema']) is int and result['state'] in ('APPLIED','REFUSED','UNKNOWN'),
                 'INVALID_MODEM_RESPONSE')
