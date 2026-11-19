@@ -13,6 +13,7 @@ import kura_modem_reset as service
 from kura_clock_journal import Refused, digest
 
 DEVICE = '/org/freedesktop/NetworkManager/Devices/12'
+DEVICE_ID = '1-4'
 MODEM = '/org/freedesktop/ModemManager1/Modem/1'
 
 
@@ -20,7 +21,7 @@ class ModemResetRequestTest(unittest.TestCase):
     def test_only_nm_device_paths_and_fixed_actions_are_accepted(self):
         scope = 'a' * 64
         operation = str(uuid4())
-        self.assertEqual(service.request(f'reset:{scope}:{DEVICE}', operation)['device'], DEVICE)
+        self.assertEqual(service.request(f'reset:{scope}:{DEVICE}:{DEVICE_ID}', operation)['device'], DEVICE)
         for unsupported in (f'reset:{scope}:{MODEM}', f'reset:{scope}:{DEVICE}/child',
                             f'reset:{scope.upper()}:{DEVICE}', f'settle-publication:{scope}',
                             f'enable:{scope}:{DEVICE}'):
@@ -49,7 +50,7 @@ class ModemResetOutcomeTest(unittest.TestCase):
         return service.operate(service.request(action, operation or self.operation), lambda: True)
 
     def reset(self, operation=None):
-        return self.operate(f'reset:{self.scope}:{DEVICE}', operation)
+        return self.operate(f'reset:{self.scope}:{DEVICE}:{DEVICE_ID}', operation)
 
     def test_positive_reply_must_be_observed_and_acknowledged(self):
         status, proof = self.reset()

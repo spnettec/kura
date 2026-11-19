@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_bind_outcomes as outcomes
 from kura_bind_service import checked_package_asset
 from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
-from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, directory, encode, identifier, require
+from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
 from kura_modem_cohort import active_provider, check_modem_reset_provider
 from kura_reboot_broker import ENVIRONMENT, UNIT_PROPERTIES, file_hash, proc_file, proc_status, receive, send, socket_peer
@@ -82,10 +82,11 @@ def request(action, operation):
     if action.startswith(('outcome:', 'acknowledge:')):
         return dict(**fields, **outcomes.request_fields(action))
     verb, _, params = action.partition(':')
-    scope, _, device = params.partition(':')
-    require(verb == 'reset' and outcomes.PROOF.fullmatch(scope) and NM_PATH.fullmatch(device),
-            'INVALID_MODEM_RESET_REQUEST')
-    return dict(**fields, action='reset', rootScope=scope, device=device)
+    scope, _, target = params.partition(':')
+    device, _, device_id = target.partition(':')
+    require(verb == 'reset' and outcomes.PROOF.fullmatch(scope) and NM_PATH.fullmatch(device)
+            and re.fullmatch(r'[a-zA-Z0-9_.:@-]{1,96}', device_id), 'INVALID_MODEM_RESET_REQUEST')
+    return dict(**fields, action='reset', rootScope=scope, device=device, deviceId=device_id)
 
 
 def provision():
@@ -152,6 +153,8 @@ def target(bus, requested, dbus):
     modem = str(property_value(bus, nm[0], device, NM + '.Device', 'Udi', dbus.String))
     require(MM_PATH.fullmatch(modem), 'UNPAIRED_MODEM_DEVICE')
     mm = service(bus, MM, 'ModemManager.service', 'modemmanager', Path('/usr/sbin/ModemManager'))
+    configured = str(property_value(bus, mm[0], modem, MM + '.Modem', 'Device', dbus.String))
+    require(configured.rsplit('/', 1)[-1] == requested['deviceId'], 'MODEM_CONFIGURATION_TARGET_CHANGED')
     hardware = str(property_value(bus, mm[0], modem, MM + '.Modem', 'Physdev', dbus.String))
     require(re.fullmatch(r'/sys/devices/(?:[a-zA-Z0-9_.:@-]+/)*[a-zA-Z0-9_.:@-]+', hardware)
             and Path(hardware).resolve(strict=True) == Path(hardware), 'UNPAIRED_MODEM_DEVICE')
@@ -163,7 +166,7 @@ def target(bus, requested, dbus):
     # NM's activated state and MM's connected state are independently authoritative.
     require(nm_state in range(10, 130, 10) and mm_state in (-1, *range(1, 12)), 'UNKNOWN_MODEM_STATE')
     require((nm_state, mm_state) != (100, 11), 'MODEM_ALREADY_CONNECTED')
-    return nm, mm, modem, hardware, identity.st_dev, identity.st_ino
+    return nm, mm, modem, configured, hardware, identity.st_dev, identity.st_ino
 
 
 def legacy_owner():
@@ -202,7 +205,8 @@ def reset(expected, root, authorize):
         anchor = STATE / 'root.json'
         if not os.path.lexists(anchor):
             create(anchor, dict(schema=1, root=root))
-        intent = dict(root=root, request=expected, deliveryProtocol=outcomes.PROTOCOL)
+        intent = dict(root=root, request=expected, deliveryProtocol=outcomes.PROTOCOL,
+                      targetSha256=digest(observed))
         create(STATE / (operation + '.intent'), intent)
         require(observed == target(bus, expected, dbus) and authorize(), 'MODEM_RESET_TARGET_CHANGED')
         legacy_owner()
