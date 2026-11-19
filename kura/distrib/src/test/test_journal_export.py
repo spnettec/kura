@@ -16,6 +16,14 @@ import kura_journal_export as export
 
 
 class JournalExportTest(unittest.TestCase):
+    def test_main_uses_the_export_socket_without_kernel_log_capability(self):
+        template = Path(__file__).resolve().parents[1] / 'main/resources/filtered/pkg/install/kura.service'
+        unit = dict(line.split('=', 1) for line in template.read_text().splitlines()
+                    if line.startswith(('Wants=', 'AmbientCapabilities=', 'CapabilityBoundingSet=')))
+        self.assertIn(export.SOCKET_UNIT, unit['Wants'].split())
+        for key in ('AmbientCapabilities', 'CapabilityBoundingSet'):
+            self.assertNotIn('cap_syslog', unit[key].lower().split())
+
     def test_release_pair_survives_installer_removing_staging_tree(self):
         with TemporaryDirectory() as folder:
             home = Path(folder)

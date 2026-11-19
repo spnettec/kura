@@ -25,10 +25,10 @@ SuccessExitStatus=143
 # The synchronous ExecStop drains the JVM before the final cgroup cleanup.
 KillMode=control-group
 TimeoutStopSec=45s
-# Realtime and RTC changes belong to the clock actor, not the JVM.
-AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_syslog
+# The clock and journal actors hold their own host permissions.
+AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
-CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_syslog cap_setuid cap_setgid
+CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
 ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service
