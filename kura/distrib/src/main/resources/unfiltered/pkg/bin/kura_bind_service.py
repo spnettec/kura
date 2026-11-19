@@ -15,8 +15,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_bind_config as configuration
+import kura_bind_outcomes as outcomes
 from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
-from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, read, require
+from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
 from kura_modem_cohort import active_provider
 from kura_reboot_broker import ENVIRONMENT, UNIT_PROPERTIES, file_hash, proc_status, receive, send, socket_peer
@@ -32,12 +33,14 @@ NAMED = Path('/usr/sbin/named')
 HELPER = 'bin/kura_bind_service.py'
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
 SYSTEMCTL = ('/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager')
-SOURCES = (HELPER, 'bin/kura_bind_config.py', 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
+SOURCES = (HELPER, 'bin/kura_bind_config.py', 'bin/kura_bind_outcomes.py', 'bin/kura_clock_broker.py',
+           'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
            'bin/kura_modem_cohort.py', 'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py',
            'bin/kura_reboot_protocol.py', f'install/{SOCKET_UNIT}', f'install/{ACTOR_UNIT}')
 FILES = {Path(name).name for name in SOURCES}
-ACTIONS = ('status', 'start', 'stop', 'restart')
-RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'INACTIVE')
+WRITES = ('start', 'stop', 'restart', 'configure')
+ACTIONS = ('status', 'scope')
+RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'INACTIVE', 'NOT_FOUND')
 
 
 def package_cohort(home):
@@ -72,10 +75,20 @@ def verify_actor(unit):
 
 def request(action, operation):
     identifier(operation)
-    if action.startswith('configure:'):
-        return dict(schema=1, action='configure', operationId=operation, configuration=configuration.decode_fields(action))
+    fields = dict(schema=1, operationId=operation)
+    if action.startswith('scoped:'):
+        _, scope, action = action.split(':', 2)
+        require(outcomes.PROOF.fullmatch(scope), 'INVALID_BIND_REQUEST')
+        fields['rootScope'] = scope
+        if action.startswith('configure:'):
+            return dict(**fields, action='configure', configuration=configuration.decode_fields(action))
+        require(action in WRITES and action != 'configure', 'INVALID_BIND_REQUEST')
+        return dict(**fields, action=action)
+    delivery = outcomes.request_fields(action)
+    if delivery is not None:
+        return dict(**fields, **delivery)
     require(action in ACTIONS, 'INVALID_BIND_REQUEST')
-    return dict(schema=1, action=action, operationId=operation)
+    return dict(**fields, action=action)
 
 
 def checked_package_asset(path, manifest, *, maximum=1024 * 1024, package='bind9'):
@@ -170,42 +183,41 @@ def apply_configuration(phase, payload, identity, before):
             and configuration.read_current()[1] == payload, 'BIND_OUTCOME_UNKNOWN')
 
 
-def resolve_result(path, intent):
-    receipt = decode(read(path, 0))
-    require(receipt == dict(intentSha256=digest(intent), state='APPLIED'), 'UNPAIRED_BIND_STATE')
-    return receipt['state']
-
-
 def locked_operation(expected, authorize):
     root = state_binding()
-    anchor = STATE / 'root.json'
-    binding = dict(schema=1, root=root)
-    if os.path.lexists(anchor):
-        require(decode(read(anchor, 0)) == binding, 'UNPAIRED_BIND_STATE')
+    if expected['action'] == 'acknowledge':
+        require(authorize(), 'UNAUTHORIZED')
+        return outcomes.acknowledge(STATE, root, expected)
+    require(outcomes.binding(STATE, root) == expected.get('rootScope'), 'UNPAIRED_BIND_REQUEST')
     operation = expected['operationId']
     intent_path = STATE / (operation + '.intent')
     receipt = STATE / (operation + '.result')
     if os.path.lexists(intent_path):
-        intent = decode(read(intent_path, 0))
-        require(os.path.lexists(anchor) and intent['root'] == root, 'UNPAIRED_BIND_STATE')
+        outcomes.binding(STATE, root, required=True)
+        intent = outcomes.intent_at(STATE, root, operation)
         require(intent['request'] == expected, 'BIND_OPERATION_ID_CONFLICT')
-        return resolve_result(receipt, intent) if os.path.lexists(receipt) else 'UNKNOWN'
+        # An observed outcome has a distinct read-only request. A repeated
+        # mutation never acts as a query and never dispatches another job.
+        return ('UNKNOWN', None)
 
     intents = list(STATE.glob('*.intent'))
     require(len(intents) < MAX_OPERATIONS, 'BIND_HISTORY_FULL')
     history = []
+    if intents:
+        outcomes.binding(STATE, root, required=True)
     for previous in intents:
-        intent = decode(read(previous, 0))
-        require(os.path.lexists(anchor) and intent['root'] == root, 'UNPAIRED_BIND_STATE')
-        terminal = previous.with_suffix('.result')
-        if not os.path.lexists(terminal):
-            return 'UNKNOWN'
-        resolve_result(terminal, intent)
+        original_id = identifier(previous.stem)
+        intent = outcomes.intent_at(STATE, root, original_id)
+        require(intent is not None, 'UNPAIRED_BIND_STATE')
+        result = outcomes.result_at(STATE, original_id, intent)
+        if result is None or not outcomes.delivered_at(STATE, original_id, intent, result):
+            return ('UNKNOWN', None)
         history.append(intent)
     target_before = target()
     fingerprint, state, invocation = target_before
     action = expected['action']
-    intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation)
+    intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation,
+                  deliveryProtocol=outcomes.PROTOCOL)
     if action == 'configure':
         typed = expected['configuration']
         identity, payload, publication = configuration.prepare(typed, history, ENVIRONMENT)
@@ -216,8 +228,9 @@ def locked_operation(expected, authorize):
         check_identity, check_payload, check_publication = configuration.prepare(typed, history, ENVIRONMENT)
         require((identity, payload, publication) == (check_identity, check_payload, check_publication),
                 'BIND_CONFIGURATION_CHANGED')
+    anchor = STATE / 'root.json'
     if not os.path.lexists(anchor):
-        create(anchor, binding)
+        create(anchor, dict(schema=1, root=root))
     create(intent_path, intent)
     require(authorize() and target() == target_before, 'BIND_TARGET_CHANGED')
     if action == 'configure':
@@ -229,16 +242,22 @@ def locked_operation(expected, authorize):
         current, after, next_invocation = target()
         require(current == fingerprint and after == desired
                 and (action != 'restart' or next_invocation != invocation), 'BIND_OUTCOME_UNKNOWN')
-    create(receipt, dict(intentSha256=digest(intent), state='APPLIED'))
-    return 'APPLIED'
+    return ('APPLIED', outcomes.commit(receipt, intent))
 
 
 def operate(expected, authorize):
-    if expected['action'] == 'status':
+    action = expected['action']
+    if action == 'status':
         require(authorize(), 'UNAUTHORIZED')
-        return 'APPLIED' if target()[1] == 'active' else 'INACTIVE'
+        return ('APPLIED' if target()[1] == 'active' else 'INACTIVE', None)
     directory(STATE, 0)
     require(STATE.lstat().st_gid == 0, 'UNPAIRED_BIND_STATE')
+    if action in outcomes.READ_ONLY:
+        require(authorize(), 'UNAUTHORIZED')
+        return outcomes.query(STATE, state_binding(), expected)
+    if action == 'acknowledge':
+        require(outcomes.binding(STATE, state_binding(), required=True) == expected['rootScope'],
+                'UNPAIRED_BIND_DELIVERY')
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
     try:
         value = os.fstat(fd)
@@ -250,6 +269,17 @@ def operate(expected, authorize):
         os.close(fd)
 
 
+def admitted_operation(expected):
+    try:
+        root = state_binding()
+        scope = outcomes.binding(STATE, root, required=True)
+        if scope != expected.get('rootScope'):
+            return False
+        return outcomes.intent_at(STATE, root, expected['operationId']) is not None
+    except (Refused, OSError, TypeError, KeyError, ValueError):
+        return False
+
+
 def serve(stream, unit):
     main_sha = verify_actor(unit)
     with socket_peer(stream) as peer:
@@ -259,13 +289,16 @@ def serve(stream, unit):
         expected = peer_request()
         actual = receive(stream)
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_BIND_REQUEST')
+        proof = None
         try:
-            result = operate(expected, lambda: peer_request() == expected)
+            result, proof = operate(expected, lambda: peer_request() == expected)
         except (Refused, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
-            intent = STATE / (expected['operationId'] + '.intent')
-            result = 'UNKNOWN' if os.path.lexists(intent) else 'REFUSED'
+            result = 'UNKNOWN' if expected['action'] in WRITES and admitted_operation(expected) else 'REFUSED'
             print(error.reason if isinstance(error, Refused) else 'BIND_JOB_FAILED', file=sys.stderr)
-        send(stream, dict(schema=1, operationId=expected['operationId'], state=result))
+        reply = dict(schema=1, operationId=expected['operationId'], state=result)
+        if proof is not None:
+            reply['proof'] = proof
+        send(stream, reply)
 
 
 def client(expected):
@@ -279,9 +312,18 @@ def client(expected):
         require(struct.unpack('3i', credentials) == (1, 0, 0), 'UNPAIRED_BIND_RELEASE')
         send(stream, expected)
         reply = receive(stream, timeout=55 if expected['action'] == 'configure' else 38)
-        require(type(reply.get('schema')) is int
-                and reply == dict(schema=1, operationId=expected['operationId'], state=reply.get('state'))
-                and reply['state'] in RESULTS, 'INVALID_BIND_RESPONSE')
+        wire = dict(schema=1, operationId=expected['operationId'], state=reply.get('state'))
+        proof = reply.get('proof')
+        action = expected['action']
+        if proof is not None:
+            require(isinstance(proof, str) and outcomes.PROOF.fullmatch(proof) and reply.get('state') == 'APPLIED'
+                    and action in (*WRITES, *outcomes.READ_ONLY), 'INVALID_BIND_RESPONSE')
+            wire['proof'] = proof
+        require(type(reply.get('schema')) is int and reply == wire and reply['state'] in RESULTS
+                and (reply['state'] != 'APPLIED' or action not in (*WRITES, 'scope') or proof is not None),
+                'INVALID_BIND_RESPONSE')
+        if proof is not None:
+            print(proof)
         return RESULTS.index(reply['state'])
 
 

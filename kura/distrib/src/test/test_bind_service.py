@@ -44,11 +44,20 @@ class BindJournalTest(unittest.TestCase):
         self.target = self.enterContext(patch.object(bind, 'target', side_effect=lambda: self.runtime))
         self.job = self.enterContext(patch.object(bind, 'write_job'))
 
-    def operation(self, verb):
-        return bind.request(verb, str(uuid.uuid4()))
+    def scoped(self, verb, operation=None):
+        scope = bind.digest(self.root.return_value)
+        return bind.request('scoped:' + scope + ':' + verb, operation or str(uuid.uuid4()))
+
+    def lookup(self, expected):
+        scope = expected['rootScope']
+        return bind.request('outcome:' + scope, expected['operationId'])
+
+    def acknowledge(self, expected, token):
+        action = 'acknowledge:' + expected['rootScope'] + ':' + token
+        return bind.request(action, expected['operationId'])
 
     def test_restart_receipt_answers_exact_request_without_another_service_job(self):
-        expected = self.operation('restart')
+        expected = self.scoped('restart')
 
         def activate(verb):
             self.assertEqual(verb, 'restart')
@@ -56,31 +65,40 @@ class BindJournalTest(unittest.TestCase):
             self.runtime = ('a' * 64, 'active', 'b' * 32)
 
         self.job.side_effect = activate
-        self.assertEqual(bind.operate(expected, lambda: True), 'APPLIED')
-        self.assertEqual(bind.operate(expected, lambda: True), 'APPLIED')
+        state, token = bind.operate(expected, lambda: True)
+        self.assertEqual(state, 'APPLIED')
+        self.assertEqual(bind.operate(expected, lambda: True), ('UNKNOWN', None))
+        self.assertEqual(bind.operate(self.lookup(expected), lambda: True), ('APPLIED', token))
+        self.assertFalse((self.state / (expected['operationId'] + '.delivered')).exists())
+        self.assertEqual(bind.operate(self.scoped('stop'), lambda: True), ('UNKNOWN', None))
+        with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_DELIVERY'):
+            bind.operate(self.acknowledge(expected, '0' * 64), lambda: True)
+        self.assertEqual(bind.operate(self.acknowledge(expected, token), lambda: True), ('APPLIED', None))
+        self.assertTrue((self.state / (expected['operationId'] + '.delivered')).is_file())
         self.job.assert_called_once_with('restart')
         with self.assertRaisesRegex(bind.Refused, 'BIND_OPERATION_ID_CONFLICT'):
             bind.operate(dict(expected, action='stop'), lambda: True)
 
     def test_unknown_fences_new_mutations_but_allows_read_only_status(self):
-        expected = self.operation('restart')
+        expected = self.scoped('restart')
         self.job.side_effect = subprocess.TimeoutExpired('systemctl', 28)
         with self.assertRaises(subprocess.TimeoutExpired):
             bind.operate(expected, lambda: True)
-        self.assertEqual(bind.operate(expected, lambda: True), 'UNKNOWN')
-        self.assertEqual(bind.operate(self.operation('stop'), lambda: True), 'UNKNOWN')
-        self.assertEqual(bind.operate(self.operation('status'), lambda: True), 'INACTIVE')
+        self.assertEqual(bind.operate(self.lookup(expected), lambda: True), ('UNKNOWN', None))
+        self.assertEqual(bind.operate(self.scoped('stop'), lambda: True), ('UNKNOWN', None))
+        status = bind.request('status', str(uuid.uuid4()))
+        self.assertEqual(bind.operate(status, lambda: True), ('INACTIVE', None))
         self.job.assert_called_once_with('restart')
 
     def test_replaced_root_fails_before_any_further_write(self):
-        self.assertEqual(bind.operate(self.operation('stop'), lambda: True), 'APPLIED')
+        self.assertEqual(bind.operate(self.scoped('stop'), lambda: True)[0], 'APPLIED')
         self.root.return_value = ['machine', 1, 3]
         with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_STATE'):
-            bind.operate(self.operation('start'), lambda: True)
+            bind.operate(self.scoped('start'), lambda: True)
         self.job.assert_not_called()
 
     def test_configuration_refusal_precedes_intent_publication_and_service_jobs(self):
-        expected = bind.request('configure:enable:127.0.0.2:127.0.0.1/32', str(uuid.uuid4()))
+        expected = self.scoped('configure:enable:127.0.0.2:127.0.0.1/32')
         with patch.object(bind.configuration, 'prepare', side_effect=bind.Refused('UNOWNED_BIND_CONFIGURATION')):
             with self.assertRaisesRegex(bind.Refused, 'UNOWNED_BIND_CONFIGURATION'):
                 bind.operate(expected, lambda: True)
@@ -88,7 +106,7 @@ class BindJournalTest(unittest.TestCase):
         self.job.assert_not_called()
 
     def test_configuration_is_staged_then_journaled_before_publication_and_activation(self):
-        expected = bind.request('configure:enable:127.0.0.2:127.0.0.1/32', str(uuid.uuid4()))
+        expected = self.scoped('configure:enable:127.0.0.2:127.0.0.1/32')
         payload = b'typed configuration'
         publication = dict(revision=1, before='a' * 64, published='b' * 64, stockSha256='a' * 64)
         effects = []
@@ -111,5 +129,26 @@ class BindJournalTest(unittest.TestCase):
               patch.object(bind.configuration, 'stage', side_effect=stage),
               patch.object(bind.configuration, 'publish', side_effect=publish),
               patch.object(bind.configuration, 'read_current', return_value=('published',payload))):
-            self.assertEqual(bind.operate(expected, lambda: True), 'APPLIED')
+            self.assertEqual(bind.operate(expected, lambda: True)[0], 'APPLIED')
         self.assertEqual(effects, ['validated', 'published', 'activated'])
+
+    def test_another_root_does_not_look_up_the_original_operation(self):
+        expected = self.scoped('stop')
+        read_only = self.lookup(expected)
+        self.root.return_value = ['another-machine', 1, 2]
+        with (patch.object(bind.outcomes, 'intent_at') as lookup,
+              self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_QUERY')):
+            bind.operate(read_only, lambda: True)
+        lookup.assert_not_called()
+
+    def test_previous_terminal_receipts_are_compatible_on_the_original_root(self):
+        operation = str(uuid.uuid4())
+        root = self.root.return_value
+        intent = dict(root=root, request=dict(schema=1, action='stop', operationId=operation))
+        bind.create(self.state / 'root.json', dict(schema=1, root=root))
+        bind.create(self.state / (operation + '.intent'), intent)
+        bind.create(self.state / (operation + '.result'), dict(intentSha256=bind.digest(intent), state='APPLIED'))
+        query = bind.request('outcome:' + bind.digest(root), operation)
+        self.assertEqual(bind.operate(query, lambda: True), ('APPLIED', None))
+        self.assertEqual(bind.operate(self.scoped('stop'), lambda: True)[0], 'APPLIED')
+        self.job.assert_not_called()

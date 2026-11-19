@@ -101,6 +101,8 @@ def check():
                     BIND_NAME, 'bindProtocol', installed == package == 'kura-networking')
         check_asset(package, provider_dir, files, proof_dir / 'bind-config-provider.json',
                     BIND_NAME, 'bindConfigurationProtocol', installed == package == 'kura-networking')
+        check_asset(package, provider_dir, files, proof_dir / 'bind-outcome-provider.json',
+                    BIND_NAME, 'bindOutcomeProtocol', installed == package == 'kura-networking')
 
 
 def check_asset(package, provider_dir, files, proof_path, name, protocol, present):
