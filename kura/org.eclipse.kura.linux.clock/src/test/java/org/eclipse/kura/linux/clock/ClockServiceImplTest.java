@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -35,7 +34,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.core.util.IOUtil;
-import org.eclipse.kura.crypto.CryptoService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.osgi.service.event.EventAdmin;
@@ -118,12 +116,7 @@ public class ClockServiceImplTest {
     public void testActivateDeactivateChronyProviderWithConfiguration()
             throws Exception {
 
-        CryptoService cryptoServiceMock = mock(CryptoService.class);
-        when(cryptoServiceMock.sha256Hash(anyString()))
-                .thenReturn("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-
         ClockServiceImpl clockService = new ClockServiceImpl();
-        clockService.setCryptoService(cryptoServiceMock);
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
         when(broker.latestChronyStep()).thenReturn(new ClockPrivilegeClient.ChronyStep(0, 0));
@@ -133,10 +126,13 @@ public class ClockServiceImplTest {
 
         properties.put("enabled", true);
         properties.put("clock.provider", ClockProviderType.CHRONY_ADVANCED.getValue());
-        properties.put("chrony.advanced.config", IOUtil.readResource("chrony.conf"));
+        String configuration = IOUtil.readResource("chrony.conf");
+        properties.put("chrony.advanced.config", configuration);
+        when(broker.configureChrony("chrony.service", configuration)).thenReturn(true);
 
         this.activatedService = clockService;
         clockService.activate(properties);
+        verify(broker).configureChrony("chrony.service", configuration);
 
         Object provider = TestUtil.getFieldValue(clockService, "provider");
         assertNotNull(provider);

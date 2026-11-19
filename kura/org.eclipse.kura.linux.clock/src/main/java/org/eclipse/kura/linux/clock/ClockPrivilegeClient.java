@@ -2,8 +2,13 @@
 package org.eclipse.kura.linux.clock;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +25,8 @@ class ClockPrivilegeClient {
     private static final String CHRONY_START_FIELD = "chronyStartUnit";
     private static final String CHRONY_STOP_FIELD = "chronyStopUnit";
     private static final String CHRONY_STEP_FIELD = "chronyStepUnit";
+    private static final String CHRONY_CONFIG_HASH = "chronyConfigSha256";
+    private static final int MAX_CHRONY_CONFIGURATION_BYTES = 16384;
     private static final long MAX_CORRECTION_MILLIS = 9223372036854L;
     private static final Pattern RTC_DEVICE = Pattern.compile("/dev/(?:rtc(?:0|[1-9][0-9]{0,8})?|misc/rtc)");
     private static final Pattern CORRECTION = Pattern.compile("0|-?[1-9][0-9]{0,12}");
@@ -88,6 +95,47 @@ class ClockPrivilegeClient {
 
     boolean stepChrony(String unit) throws IOException, InterruptedException {
         return changeChrony(CHRONY_STEP_FIELD, unit);
+    }
+
+    boolean configureChrony(String unit, String configuration) throws IOException, InterruptedException {
+        if (!CHRONY_UNITS.contains(unit) || configuration.length() > MAX_CHRONY_CONFIGURATION_BYTES
+                || !UTF_8.newEncoder().canEncode(configuration)) {
+            throw new IllegalArgumentException("Unsupported Chrony configuration");
+        }
+        byte[] bytes = configuration.getBytes(UTF_8);
+        if (bytes.length == 0 || bytes.length > MAX_CHRONY_CONFIGURATION_BYTES) {
+            throw new IllegalArgumentException("Unsupported Chrony configuration size");
+        }
+        String digest;
+        try {
+            digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        } catch (NoSuchAlgorithmException error) {
+            throw new IOException("Unable to hash Chrony configuration", error);
+        }
+        JsonObject input = new JsonObject();
+        input.addProperty("unit", unit);
+        input.addProperty("content", Base64.getEncoder().encodeToString(bytes));
+        JsonObject request = new JsonObject();
+        request.add("chronyConfiguration", input);
+        String response = exchange(request, 90);
+        return unchangedConfiguration(response, unit, digest) || appliedFor(response, CHRONY_CONFIG_HASH, digest);
+    }
+
+    static boolean unchangedConfiguration(String raw, String unit, String digest) throws IOException {
+        try {
+            JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
+            if (!"UNCHANGED".equals(stringField(result, "state"))) {
+                return false;
+            }
+            if (!result.keySet().equals(Set.of("schema", "unit", "sha256", "state"))
+                    || !result.getAsJsonPrimitive("schema").isNumber() || !"1".equals(result.get("schema").getAsString())
+                    || !unit.equals(stringField(result, "unit")) || !digest.equals(stringField(result, "sha256"))) {
+                throw new IllegalArgumentException();
+            }
+            return true;
+        } catch (RuntimeException error) {
+            throw new IOException("Invalid Chrony configuration response; original decision retained", error);
+        }
     }
 
     private boolean changeChrony(String field, String unit) throws IOException, InterruptedException {
@@ -184,7 +232,8 @@ class ClockPrivilegeClient {
     private static boolean appliedFor(String raw, String expectedField, String expectedValue) throws IOException {
         try {
             JsonObject result = JsonParser.parseString(raw).getAsJsonObject();
-            String field = Set.of(REALTIME_FIELD, RTC_FIELD, CHRONY_START_FIELD, CHRONY_STOP_FIELD, CHRONY_STEP_FIELD).stream()
+            String field = Set.of(REALTIME_FIELD, RTC_FIELD, CHRONY_START_FIELD, CHRONY_STOP_FIELD, CHRONY_STEP_FIELD,
+                    CHRONY_CONFIG_HASH).stream()
                     .filter(result::has).findFirst().orElseThrow(IllegalArgumentException::new);
             if (!result.keySet().equals(Set.of("schema", "namespace", "requestId", field, "state", "reason",
                     "currentSample")) || !result.get("schema").getAsJsonPrimitive().isNumber()
@@ -198,6 +247,7 @@ class ClockPrivilegeClient {
             case REALTIME_FIELD -> argument.isNumber() && CORRECTION.matcher(value).matches()
                     && validCorrection(argument.getAsLong());
             case RTC_FIELD -> argument.isString() && RTC_DEVICE.matcher(value).matches();
+            case CHRONY_CONFIG_HASH -> argument.isString() && value.matches("[0-9a-f]{64}");
             default -> argument.isString() && CHRONY_UNITS.contains(value);
             };
             if (!valid) {
@@ -217,6 +267,7 @@ class ClockPrivilegeClient {
             case CHRONY_START_FIELD -> "CHRONY_STARTED";
             case CHRONY_STOP_FIELD -> "CHRONY_STOPPED";
             case CHRONY_STEP_FIELD -> "CHRONY_STEP_ACCEPTED";
+            case CHRONY_CONFIG_HASH -> "CHRONY_CONFIGURED";
             default -> throw new IllegalArgumentException();
             };
             boolean validState = switch (state) {

@@ -26,7 +26,6 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.clock.ClockService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
-import org.eclipse.kura.crypto.CryptoService;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,6 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
     private static final Logger logger = LoggerFactory.getLogger(ClockServiceImpl.class);
 
     private EventAdmin eventAdmin;
-    private CryptoService cryptoService;
     private org.eclipse.kura.system.SystemService systemService;
     private ClockPrivilegeClient clockPrivilegeClient;
     private ClockSyncProvider provider;
@@ -58,10 +56,6 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
 
     public void unsetEventAdmin(EventAdmin eventAdmin) {
         this.eventAdmin = null;
-    }
-
-    public void setCryptoService(CryptoService cryptoService) {
-        this.cryptoService = cryptoService;
     }
 
     public void setSystemService(org.eclipse.kura.system.SystemService systemService) {
@@ -184,7 +178,7 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             logger.error("NTPD clock provider is not supported anymore. Use JAVA_NTP or CHRONY_ADVANCED instead.");
             return;
         case CHRONY_ADVANCED:
-            this.provider = new ChronyClockSyncProvider(this.cryptoService, clockPrivilegeClient());
+            this.provider = new ChronyClockSyncProvider(clockPrivilegeClient());
             break;
 
         default:

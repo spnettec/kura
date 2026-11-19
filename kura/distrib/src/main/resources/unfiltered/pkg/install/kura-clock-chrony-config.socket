@@ -1,0 +1,15 @@
+[Unit]
+Description=YOFC Kura paired Chrony configuration socket
+
+[Socket]
+ListenStream=/run/kura-clock-broker/chrony-config.sock
+SocketUser=root
+SocketGroup=kura-clock
+SocketMode=0660
+DirectoryMode=0755
+FileDescriptorName=chrony-config
+Accept=no
+Backlog=4
+
+[Install]
+WantedBy=sockets.target

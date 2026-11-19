@@ -23,7 +23,8 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_journal import (Journal, Refused, command, create, decode, digest, directory, encode,
-                                identifier, identity, read, require, sync, CHRONY_ACTIONS, CHRONY_UNITS,
+                                chrony_configuration, identifier, identity, read, require, sync,
+                                CHRONY_ACTIONS, CHRONY_UNITS,
                                 MAX_BYTES, OPERATIONS, RTC_ALIASES, RTC_NODE)
 
 HOME = Path('/opt/eclipse/kura')
@@ -40,7 +41,12 @@ RTC_UNIT = 'kura-clock-rtc-devices.service'
 PREVIOUS_UNITS = (*LEGACY_UNITS, RTC_UNIT)
 STEP_SOCKET_UNIT = 'kura-clock-chrony-step.socket'
 STEP_SERVICE_UNIT = 'kura-clock-chrony-step.service'
-UNITS = (*PREVIOUS_UNITS, STEP_SOCKET_UNIT, STEP_SERVICE_UNIT)
+STEP_UNITS = (*PREVIOUS_UNITS, STEP_SOCKET_UNIT, STEP_SERVICE_UNIT)
+CONFIG_SOCKET_UNIT = 'kura-clock-chrony-config.socket'
+CONFIG_SERVICE_UNIT = 'kura-clock-chrony-config.service'
+UNITS = (*STEP_UNITS, CONFIG_SOCKET_UNIT, CONFIG_SERVICE_UNIT)
+CONFIG_SOCKET = Path('/run/kura-clock-broker/chrony-config.sock')
+CONFIG_TIMEOUT = 15
 STEP_SOCKET = Path('/run/kura-clock-broker/chrony-step.sock')
 STEP_RUNTIME = Path('/run/kura-chrony-step')
 STEP_USER = '_chrony'
@@ -78,7 +84,8 @@ polkit.addRule(function(action, subject) {
 CHRONY_JOB_TIMEOUT = 15
 STOP_CONTEXT = 'chrony-stop-context'
 TEARDOWN_REQUESTS = (STOP_CONTEXT, 'prepare-chrony-stop', 'commit-chrony-stop')
-HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
+LEGACY_HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
+HELPERS = (*LEGACY_HELPERS, 'bin/kura_chrony_config.py')
 SYS_TIME = 1 << 25
 RTC_PROJECTOR_CAPS = (1 << 0) | (1 << 27)  # CHOWN and MKNOD
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
@@ -129,7 +136,7 @@ def public_file(path, maximum=MAX_BYTES):
     return read(path, 0, stat.S_IMODE(metadata.st_mode), maximum)
 
 
-def jar_contract(path, previous=False):
+def jar_contract(path, capability='1.2.0'):
     require(path.is_file() and not path.is_symlink(), 'UNPAIRED_CODE')
     with zipfile.ZipFile(path) as archive:
         raw = archive.read('META-INF/MANIFEST.MF')
@@ -137,7 +144,7 @@ def jar_contract(path, previous=False):
         joined = raw.replace(b'\r\n', b'\n').replace(b'\n ', b'').decode('ascii')
         headers = dict(line.split(': ', 1) for line in joined.split('\n\n', 1)[0].splitlines() if ': ' in line)
         require(headers.get('Bundle-SymbolicName', '').split(';', 1)[0] == 'org.eclipse.kura.linux.clock', 'UNPAIRED_CODE')
-        version = re.escape('1.0.0' if previous else '1.1.0')
+        version = re.escape(capability)
         require(re.search(r'(?:^|,)\s*kura\.clock\.privilege\s*;\s*version:Version="?' + version + r'"?(?:;|,|$)',
                           headers.get('Provide-Capability', '')) is not None, 'UNPAIRED_CODE')
         prefix = archive.read('org/eclipse/kura/linux/clock/ClockPrivilegeClient.class')[:8]
@@ -476,6 +483,39 @@ def chrony_step_exchange(unit, binding=None):
         raise OSError(error_number, 'Chrony step was refused before submission')
 
 
+def chrony_config_exchange(value, request_id=None, binding=None):
+    request = dict(schema=1, unit=value) if request_id is None else dict(
+        schema=1, configuration=value, requestId=request_id, binding=binding)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as stream:
+        stream.settimeout(CONFIG_TIMEOUT)
+        try:
+            require(unit_directory_present(CONFIG_SOCKET.parent), 'UNSAFE_LISTENER')
+            metadata = CONFIG_SOCKET.lstat()
+            require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0
+                    and metadata.st_gid == pwd.getpwnam('kura-clock').pw_gid
+                    and stat.S_IMODE(metadata.st_mode) == 0o660, 'UNSAFE_LISTENER')
+            stream.connect(str(CONFIG_SOCKET))
+            require(socket_peer(stream) == (1, 0, 0), 'UNSAFE_LISTENER')
+        except (OSError, Refused) as error:
+            raise OSError(errno.EPERM, 'Unpaired Chrony configuration listener') from error
+        try:
+            send(stream, request)
+            stream.shutdown(socket.SHUT_WR)
+            reply = receive(stream)
+            if set(reply) == {'errno'} and type(reply['errno']) is int and 0 < reply['errno'] <= 4095:
+                error_number = reply['errno']
+            else:
+                require(set(reply) == {'sha256'} and isinstance(reply['sha256'], str)
+                        and re.fullmatch('[0-9a-f]{64}', reply['sha256'])
+                        and (binding is None or binding == reply['sha256']), 'UNPAIRED_CHRONY_CONFIG_REPLY')
+                return reply['sha256']
+        except (OSError, Refused) as error:
+            if binding is not None:
+                raise Refused('UNCERTAIN_CHRONY_CONFIG') from error
+            raise OSError(errno.EIO, 'Chrony configuration inspection did not complete') from error
+        raise OSError(error_number, 'Chrony configuration refused before publication')
+
+
 class Policy:
     def __init__(self, actor=False):
         self.home = ACTOR_HOME if actor else HOME
@@ -490,7 +530,9 @@ class Policy:
         prior = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'actions'}
                  and value['actions'] in (['adjust-realtime', 'sync-rtc'],
                                           ['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony']))
-        require((legacy or prior or (set(value) == base | {'actions'} and value['actions'] == list(OPERATIONS)))
+        step = (allow_legacy and self.actor_copy and not installed and set(value) == base | {'actions'}
+                and value['actions'] == list(OPERATIONS)[:-1])
+        require((legacy or prior or step or (set(value) == base | {'actions'} and value['actions'] == list(OPERATIONS)))
                 and type(value['schema']) is int and value['schema'] == 1
                 and type(value['protocol']) is int and value['protocol'] == 1
                 and value['actor'] == 'kura-clock' and value['caller'] == 'kurad'
@@ -498,8 +540,9 @@ class Policy:
         bundle = value['clockBundle']
         require(isinstance(bundle, str) and re.fullmatch(r'plugins/(?:[A-Za-z0-9_.-]+/)?org\.eclipse\.kura\.linux\.clock[A-Za-z0-9_.-]*\.jar', bundle) is not None,
                 'UNPAIRED_CODE')
-        units = LEGACY_UNITS if legacy else PREVIOUS_UNITS if prior else UNITS
-        expected = {*HELPERS, *['libexec/clock-broker/' + name for name in units], bundle}
+        units = LEGACY_UNITS if legacy else PREVIOUS_UNITS if prior else STEP_UNITS if step else UNITS
+        helpers = LEGACY_HELPERS if legacy or prior or step else HELPERS
+        expected = {*helpers, *['libexec/clock-broker/' + name for name in units], bundle}
         require(set(value['files']) == expected, 'UNPAIRED_CODE')
         if self.actor_copy:
             # This copy is a closed code cohort, unlike the complete Core tree.
@@ -522,7 +565,7 @@ class Policy:
             require(isinstance(expected_hash, str) and re.fullmatch('[0-9a-f]{64}', expected_hash) is not None, 'UNPAIRED_CODE')
             actual = public_file(self.home / name, 256 * 1024 * 1024 if name == bundle else MAX_BYTES)
             require(hashlib.sha256(actual).hexdigest() == expected_hash, 'UNPAIRED_CODE')
-        jar_contract(self.home / bundle, previous=legacy or prior)
+        jar_contract(self.home / bundle, '1.0.0' if legacy or prior else '1.1.0' if step else '1.2.0')
         if installed:
             unit_sources()
             for name in UNITS:
@@ -593,6 +636,9 @@ class Manager:
         if action == 'chrony-last-step':
             require(set(value) == {'schema', 'action'})
             return chrony_last_step()
+        if action == 'chrony-config-status':
+            require(set(value) == {'schema', 'action', 'unit'} and value['unit'] in CHRONY_UNITS)
+            return dict(schema=1, unit=value['unit'], sha256=chrony_config_exchange(value['unit']))
         with self.journal.lock():
             namespace = self.journal.namespace()
             if action in ('context', STOP_CONTEXT):
@@ -620,6 +666,11 @@ class Manager:
                 if phase == 'prepare':
                     return self.journal.prepare(value, chrony_step_exchange)
                 return self.journal.commit(value, chrony_step_exchange)
+            if operation == 'configure-chrony':
+                request_id = value['requestId']
+                if phase == 'prepare':
+                    return self.journal.prepare(value, lambda config: chrony_config_exchange(config, request_id))
+                return self.journal.commit(value, lambda config, binding: chrony_config_exchange(config, request_id, binding))
             if phase == 'prepare':
                 return self.journal.prepare(value, self.bind_rtc)
             actuate = self.adjust_realtime if operation == 'adjust-realtime' else self.sync_rtc
@@ -833,7 +884,7 @@ def activated_listener(path, descriptor):
     return listener
 
 
-def chrony_step_peer(peer):
+def chrony_actor_peer(peer):
     pid, uid, gid = peer
     account = pwd.getpwnam('kura-clock')
     require(pid > 1 and uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
@@ -864,7 +915,7 @@ def serve_chrony_step():
                 stream.settimeout(2)
                 try:
                     policy.check()
-                    chrony_step_peer(socket_peer(stream))
+                    chrony_actor_peer(socket_peer(stream))
                     request = receive(stream)
                     require(set(request) == {'schema', 'unit', 'binding'} and type(request['schema']) is int
                             and request['schema'] == 1 and isinstance(request['unit'], str)
@@ -880,6 +931,75 @@ def serve_chrony_step():
                     send(stream, reply)
                 except (OSError, Refused, ValueError, KeyError, IndexError, zipfile.BadZipFile):
                     # Close without claiming a result if a submitted command lost a paired acknowledgement.
+                    continue
+
+
+def chrony_config_target(unit):
+    from kura_chrony_config import CHRONYD, CONFIG_FILE
+
+    fragment, _ = chrony_target(unit)
+    fields = systemd_properties(('ExecStart', 'EnvironmentFiles', 'Environment'), unit)
+    command_line = '{ path=/usr/sbin/chronyd ; argv[]=/usr/sbin/chronyd $DAEMON_OPTS ; ignore_errors=no ;'
+    if (not fields['ExecStart'].startswith(command_line) or not fields['ExecStart'].endswith(' }')
+            or fields['ExecStart'].count('{') != 1 or fields['Environment'] != ''
+            or fields['EnvironmentFiles'] != '/etc/default/chrony (ignore_errors=yes)'
+            or os.path.lexists('/etc/chrony.conf')):
+        raise OSError(errno.EOPNOTSUPP, 'Unsupported effective Chrony configuration path')
+    options_path = Path('/etc/default/chrony')
+    options = public_file(options_path, 4096) if os.path.lexists(options_path) else b''
+    directives = [line.strip() for line in options.split(b'\n') if line.strip() and not line.lstrip().startswith(b'#')]
+    allowed_options = rb'DAEMON_OPTS="(?:-F [0-2](?: -x)?|-x)?"'
+    if len(directives) > 1 or (directives and not re.fullmatch(allowed_options, directives[0])):
+        raise OSError(errno.EOPNOTSUPP, 'Unsupported effective Chrony options')
+    protected(CHRONYD)
+    protected(CONFIG_FILE)
+    return digest(dict(fragment=fragment, options=hashlib.sha256(options).hexdigest(), binary=identity(CHRONYD.lstat())))
+
+
+def serve_chrony_config():
+    from kura_chrony_config import CONFIG_FILE, Config, parse_configuration
+
+    status = process_status('thread-self')
+    require(os.getuid() == os.geteuid() == os.getgid() == os.getegid() == 0
+            and set(os.getgroups()) <= {0} and status['NoNewPrivs'].strip() == '1'
+            and all(int(status[name].strip(), 16) == 0 for name in ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')),
+            'UNSAFE_CHRONY_CONFIG_SERVICE')
+    policy = Policy(actor=True); policy.check()
+    config = Config(CONFIG_FILE, chrony_config_target)
+    with activated_listener(CONFIG_SOCKET, 'chrony-config') as listener:
+        while True:
+            stream, _ = listener.accept()
+            with stream:
+                stream.settimeout(3)
+                try:
+                    policy.check()
+                    chrony_actor_peer(socket_peer(stream))
+                    request = receive(stream)
+                    require(type(request.get('schema')) is int and request['schema'] == 1)
+                    try:
+                        if set(request) == {'schema', 'unit'}:
+                            unit = request['unit']
+                            require(unit in CHRONY_UNITS)
+                            _, raw, _, _ = config.observation(unit)
+                            value = hashlib.sha256(raw).hexdigest()
+                        else:
+                            require(set(request) == {'schema', 'configuration', 'requestId', 'binding'})
+                            argument = request['configuration']
+                            candidate = chrony_configuration(argument)
+                            request_id = identifier(request['requestId'])
+                            binding = request['binding']
+                            unit = argument['unit']
+                            if binding is None:
+                                value = config.prepare(unit, candidate)
+                            else:
+                                require(isinstance(binding, str) and re.fullmatch('[0-9a-f]{64}', binding))
+                                value = config.commit(unit, candidate, binding, request_id, parse_configuration)
+                        reply = dict(sha256=value)
+                    except OSError as error:
+                        reply = dict(errno=error.errno or errno.EIO)
+                    send(stream, reply)
+                except (OSError, Refused, ValueError, KeyError, IndexError, subprocess.SubprocessError, zipfile.BadZipFile):
+                    # No success or deterministic failure can be inferred across a lost reply.
                     continue
 
 
@@ -915,6 +1035,8 @@ if __name__ == '__main__':
             serve()
         elif sys.argv[1] == 'serve-chrony-step':
             serve_chrony_step()
+        elif sys.argv[1] == 'serve-chrony-config':
+            serve_chrony_config()
         else:
             require(sys.argv[1] == 'project-rtc', 'INVALID_ENTRYPOINT')
             project_rtc()

@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.Map;
 
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.crypto.CryptoService;
 import org.junit.jupiter.api.Test;
 
 public class ChronyClockSyncProviderTest {
@@ -41,7 +40,7 @@ public class ChronyClockSyncProviderTest {
         var laterAfterWallClockMovedBack = new ClockPrivilegeClient.ChronyStep(1000000, 31);
         when(broker.latestChronyStep()).thenReturn(first, first, new ClockPrivilegeClient.ChronyStep(0, 0),
                 laterAfterWallClockMovedBack);
-        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(mock(CryptoService.class), broker);
+        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(broker);
         ClockSyncListener listener = mock(ClockSyncListener.class);
         provider.init(new ClockServiceConfig(Map.of()), null, listener);
 
@@ -58,7 +57,7 @@ public class ChronyClockSyncProviderTest {
         ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
         when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", false),
                 new ClockPrivilegeClient.ChronyStatus("chronyd.service", true));
-        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(mock(CryptoService.class), broker);
+        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(broker);
         provider.init(new ClockServiceConfig(Map.of()), null, (offset, update) -> {});
         assertThrows(KuraException.class, provider::start);
         verify(broker, never()).stepChrony(anyString());

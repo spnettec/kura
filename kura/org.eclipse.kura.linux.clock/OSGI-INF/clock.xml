@@ -26,6 +26,5 @@
               bind="setEventAdmin"
               unbind="unsetEventAdmin"
               interface="org.osgi.service.event.EventAdmin"/>
-   <reference bind="setCryptoService" cardinality="1..1" interface="org.eclipse.kura.crypto.CryptoService" name="CryptoService" policy="static"/>
    <reference bind="setSystemService" cardinality="1..1" interface="org.eclipse.kura.system.SystemService" name="SystemService" policy="static"/>
 </scr:component>

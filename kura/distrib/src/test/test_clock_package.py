@@ -23,7 +23,7 @@ class ClockPackageTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
 
-    def assembly(self, capability='1.1.0', client=True):
+    def assembly(self, capability='1.2.0', client=True):
         home = self.root / 'package'; home.mkdir()
         for name in broker.HELPERS:
             target = home / name; target.parent.mkdir(parents=True, exist_ok=True)
@@ -44,9 +44,10 @@ class ClockPackageTest(unittest.TestCase):
 
     def test_manifest_binds_all_helpers_units_and_clock_consumer(self):
         home = self.assembly(); value = broker.package_cohort(home)
-        self.assertEqual(10, len(value['files']))
+        self.assertEqual(13, len(value['files']))
         self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
-        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony', 'step-chrony'], value['actions'])
+        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony', 'step-chrony', 'configure-chrony'],
+                         value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
     def test_main_has_no_system_clock_capability(self):
@@ -58,7 +59,7 @@ class ClockPackageTest(unittest.TestCase):
                 self.assertNotIn('cap_sys_time', [cap.lower() for cap in values[0]])
 
     def test_cached_old_clock_bundle_cannot_be_paired(self):
-        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', False)):
+        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', True), ('1.2.0', False)):
             home = self.assembly(capability, client)
             with self.assertRaises((broker.Refused, KeyError)):
                 broker.package_cohort(home)

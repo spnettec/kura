@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Private, append-only clock decisions. Never replay an admitted write."""
+import base64
+import binascii
 import contextlib
 import errno
 import fcntl
@@ -14,6 +16,7 @@ import time
 import uuid
 
 MAX_BYTES = 65536
+MAX_CHRONY_CONFIGURATION_BYTES = 16384
 MAX_OPERATIONS = 4096
 MAX_SAMPLE_AGE_NS = 30 * 1000000000
 COMMAND_FIELDS = {'schema', 'namespace', 'requestId', 'action', 'cohortSha256'}
@@ -27,9 +30,10 @@ OPERATIONS = {
     'start-chrony': ('chrony-start', 'chronyStartUnit', 'CHRONY_STARTED'),
     'stop-chrony': ('chrony-stop', 'chronyStopUnit', 'CHRONY_STOPPED'),
     'step-chrony': ('chrony-step', 'chronyStepUnit', 'CHRONY_STEP_ACCEPTED'),
+    'configure-chrony': ('chrony-config', 'chronyConfiguration', 'CHRONY_CONFIGURED'),
 }
 BINDING_FIELDS = {'sync-rtc': 'rtcBinding', **dict.fromkeys(CHRONY_ACTIONS, 'chronyBinding'),
-                  'step-chrony': 'chronyStepBinding'}
+                  'step-chrony': 'chronyStepBinding', 'configure-chrony': 'chronyConfigBinding'}
 
 
 class Refused(RuntimeError):
@@ -78,11 +82,27 @@ def digest(value):
     return hashlib.sha256(encode(value)).hexdigest()
 
 
+def chrony_configuration(value):
+    require(type(value) is dict and set(value) == {'unit', 'content'}
+            and value['unit'] in CHRONY_UNITS and isinstance(value['content'], str)
+            and 0 < len(value['content']) <= 4 * ((MAX_CHRONY_CONFIGURATION_BYTES + 2) // 3))
+    try:
+        raw = base64.b64decode(value['content'], validate=True)
+        raw.decode('utf-8', errors='strict')
+    except (ValueError, binascii.Error):
+        raise Refused('INVALID_ARGUMENT') from None
+    require(0 < len(raw) <= MAX_CHRONY_CONFIGURATION_BYTES
+            and base64.b64encode(raw).decode('ascii') == value['content'])
+    return raw
+
+
 def validate_argument(field, value):
     if field == 'correctionMillis':
         require(type(value) is int and -9223372036854 <= value <= 9223372036854)
     elif field == 'rtcDevice':
         require(isinstance(value, str) and (RTC_NODE.fullmatch(value) is not None or value in RTC_ALIASES))
+    elif field == 'chronyConfiguration':
+        chrony_configuration(value)
     else:
         require(isinstance(value, str) and value in CHRONY_UNITS)
 

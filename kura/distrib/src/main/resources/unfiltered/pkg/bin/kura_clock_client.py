@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Core's fixed clock sender; persist first and never resend a write."""
 import fcntl
+import hashlib
 import os
 from pathlib import Path
 import pwd
@@ -12,8 +13,9 @@ import sys
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import CHRONY_JOB_TIMEOUT, HOME, SOCKET, STEP_TIMEOUT, STOP_CONTEXT, Policy, receive, send
-from kura_clock_journal import (Refused, command, create, decode, digest, directory, encode,
+from kura_clock_broker import (CHRONY_JOB_TIMEOUT, CONFIG_TIMEOUT, HOME, SOCKET, STEP_TIMEOUT,
+                               STOP_CONTEXT, Policy, receive, send)
+from kura_clock_journal import (Refused, chrony_configuration, command, create, decode, digest, directory, encode,
                                 identifier, read, require, sync, terminal_receipt, validate_argument,
                                 MAX_BYTES, OPERATIONS)
 
@@ -51,6 +53,8 @@ def root_exchange(policy, value):
             stream.settimeout(10)
         elif value['action'] in ('prepare-chrony-step', 'commit-chrony-step'):
             stream.settimeout(STEP_TIMEOUT + 5)
+        elif value['action'] in ('chrony-config-status', 'prepare-chrony-config', 'commit-chrony-config'):
+            stream.settimeout(CONFIG_TIMEOUT + 5)
         reply = receive(stream)
     require(type(reply.get('ok')) is bool, 'INVALID_REPLY')
     if not reply['ok']:
@@ -121,6 +125,15 @@ class Client:
                                             requestId=pending['requestId'], requestSha256=digest(pending)))
             else:
                 require(context['acceptingWrites'], 'ADMISSION_CLOSED')
+                if action == 'configure-chrony':
+                    unit = argument['unit']
+                    actual = self.exchange(dict(schema=1, action='chrony-config-status', unit=unit))
+                    require(set(actual) == {'schema', 'unit', 'sha256'} and type(actual['schema']) is int
+                            and actual['schema'] == 1 and actual['unit'] == unit and isinstance(actual['sha256'], str)
+                            and len(actual['sha256']) == 64 and all(c in '0123456789abcdef' for c in actual['sha256']),
+                            'INVALID_REPLY')
+                    if actual['sha256'] == hashlib.sha256(chrony_configuration(argument)).hexdigest():
+                        return dict(actual, state='UNCHANGED')
                 pending = command(dict(schema=1, namespace=namespace, requestId=str(uuid.uuid4()),
                                        action=action, cohortSha256=self.policy.cohort, **{field: argument}))
                 create(path, pending)
@@ -159,7 +172,11 @@ class Client:
                         and result['reason'] in ('NO_LOCAL_INTENT', 'UNRESOLVED_INTENT', 'NO_DURABLE_RESULT', 'UNRESOLVED_RESULT',
                                                  'UNRESOLVED_COMMIT', 'UNRESOLVED_PREPARE', 'NOT_COMMITTED'),
                         'INVALID_REPLY')
-            return dict(schema=1, namespace=namespace, requestId=pending['requestId'], **{field: pending[field]},
+            argument = pending[field]
+            if pending['action'] == 'configure-chrony':
+                field = 'chronyConfigSha256'
+                argument = hashlib.sha256(chrony_configuration(argument)).hexdigest()
+            return dict(schema=1, namespace=namespace, requestId=pending['requestId'], **{field: argument},
                         state='UNKNOWN' if result['state'] in ('UNSEEN', 'PREPARED') else result['state'],
                         reason=result['reason'], currentSample=current_sample)
         finally:

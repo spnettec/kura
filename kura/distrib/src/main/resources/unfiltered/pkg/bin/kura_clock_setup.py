@@ -15,8 +15,8 @@ import tempfile
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, COHORT, HOME, LEGACY_UNITS,
-                               PREVIOUS_UNITS, STATE, STEP_SOCKET_UNIT, UNITS,
+from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, COHORT, CONFIG_SOCKET_UNIT, HOME,
+                               LEGACY_UNITS, PREVIOUS_UNITS, STATE, STEP_SOCKET_UNIT, STEP_UNITS, UNITS,
                                Policy, public_file, publish_path,
                                remove_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
@@ -193,7 +193,8 @@ def maintenance(record):
     value = decode(read(flag, 0, 0o644))
     require(set(value) == {'schema', 'purposeId', 'namespace', 'cohortSha256', 'units'}
             and type(value['schema']) is int and value['schema'] == 1 and type(value['units']) is dict
-            and set(value['units']) in (set(LEGACY_UNITS), set(PREVIOUS_UNITS), set(UNITS)), 'UNPAIRED_MAINTENANCE')
+            and set(value['units']) in (set(LEGACY_UNITS), set(PREVIOUS_UNITS), set(STEP_UNITS), set(UNITS)),
+            'UNPAIRED_MAINTENANCE')
     identifier(value['purposeId'])
     require(isinstance(value['cohortSha256'], str) and re.fullmatch('[0-9a-f]{64}', value['cohortSha256']) is not None
             and all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) is not None for v in value['units'].values()),
@@ -482,6 +483,7 @@ def resume():
     policy.check(); actor.check()
     run('/usr/bin/systemctl', 'enable', '--now', 'kura-clock-broker.socket')
     run('/usr/bin/systemctl', 'enable', '--now', STEP_SOCKET_UNIT)
+    run('/usr/bin/systemctl', 'enable', '--now', CONFIG_SOCKET_UNIT)
     policy.check(); actor.check()
     if os.path.lexists(STATE):
         journal = Journal(STATE, record['uid'])

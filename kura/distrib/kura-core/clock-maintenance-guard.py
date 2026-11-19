@@ -52,7 +52,10 @@ if os.path.lexists(setup):
                 require(stat.S_ISDIR(value.st_mode) and value.st_uid == 0 and not value.st_mode & 0o022)
     descriptor = json.loads(read(manifest))
     require(descriptor.get('schema') == 1 and descriptor.get('protocol') == 1)
-    for name in ('kura_clock_setup.py', 'kura_clock_broker.py', 'kura_clock_client.py', 'kura_clock_journal.py'):
+    helpers = ('kura_clock_setup.py', 'kura_clock_broker.py', 'kura_clock_client.py', 'kura_clock_journal.py')
+    if 'configure-chrony' in descriptor.get('actions', []):
+        helpers += ('kura_chrony_config.py',)
+    for name in helpers:
         raw = read(home / 'bin' / name)
         require(hashlib.sha256(raw).hexdigest() == descriptor['files']['bin/' + name])
     subprocess.run(['/usr/bin/python3', '-I', '-B', str(setup), 'quiesce'], check=True, timeout=30)
@@ -73,7 +76,8 @@ elif os.path.lexists(state):
     else:
         require(flag.get('namespace') is None and not os.path.lexists(state / 'operations'))
     for name in ('kura-clock-broker.socket', 'kura-clock-broker.service', 'kura-clock-rtc-devices.service',
-                 'kura-clock-chrony-step.socket', 'kura-clock-chrony-step.service'):
+                 'kura-clock-chrony-step.socket', 'kura-clock-chrony-step.service',
+                 'kura-clock-chrony-config.socket', 'kura-clock-chrony-config.service'):
         result = subprocess.run(['/usr/bin/systemctl', 'show', name, '--property=MainPID,ControlPID,ActiveState'],
                                 capture_output=True, text=True, timeout=5)
         values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
