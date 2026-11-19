@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import HOME, protected, public_file
 from kura_clock_journal import Refused, create, decode, directory, encode, identifier, read, require
 from kura_journal_export import main_peer, paired_unit
+from kura_modem_cohort import active_provider
 from kura_reboot_broker import ENVIRONMENT, file_hash, proc_status, receive, send, socket_peer
 
 ACTOR_HOME = Path('/usr/libexec/kura-modem-driver')
@@ -32,7 +33,7 @@ HELPER = 'bin/kura_modem_driver.py'
 PAIR = Path('libexec/modem-driver')
 CAP_MODULE = 1 << 16
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
-SOURCES = (HELPER, 'bin/kura_journal_export.py', 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
+SOURCES = (HELPER, 'bin/kura_modem_cohort.py', 'bin/kura_journal_export.py', 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
            'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
            f'install/{SOCKET_UNIT}', f'install/{ACTOR_UNIT}')
 FILES = {Path(value).name for value in SOURCES}
@@ -258,7 +259,9 @@ def serve(stream, unit):
     main_sha, capability = verify_actor(unit)
     with socket_peer(stream) as peer:
         def peer_request():
-            return main_peer(peer, main_sha, CLIENT, 4, request, networking=True)
+            package = active_provider()
+            require(package is not None, 'UNPAIRED_MODEM_RELEASE')
+            return main_peer(peer, main_sha, CLIENT, 4, request, networking=package == 'kura-networking')
         expected = peer_request()
         actual = receive(stream)
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_MODEM_REQUEST')

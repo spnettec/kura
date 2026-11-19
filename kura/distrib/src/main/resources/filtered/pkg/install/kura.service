@@ -15,6 +15,7 @@ UMask=0077
 Type=forking
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
+ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
 ExecStop=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_stop.py ${MAINPID}
 ExecStopPost=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_watchdog_maintenance.py pulse
@@ -25,10 +26,10 @@ SuccessExitStatus=143
 # The synchronous ExecStop drains the JVM before the final cgroup cleanup.
 KillMode=control-group
 TimeoutStopSec=45s
-# The clock and journal actors hold their own host permissions.
-AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config
+# The clock, journal and modem actors hold their own host permissions.
+AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_tty_config
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
-CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_module cap_sys_tty_config cap_setuid cap_setgid
+CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_sys_tty_config cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
 ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service

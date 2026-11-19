@@ -119,7 +119,7 @@ def verify_actor(unit):
     return manifest['mainUnitSha256']
 
 
-def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=False):
+def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=None):
     pid, uid, gid, pidfd = peer
     account = pwd.getpwnam(CALLER)
     require(uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
@@ -130,8 +130,8 @@ def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=
     require(main['ActiveState'] == 'active' and main['ControlGroup'] == '/system.slice/kura.service'
             and main['User'] == main['Group'] == CALLER and parent > 1 and pid != parent
             and re.fullmatch(r'[0-9a-f]{32}', main['InvocationID']), 'UNAUTHORIZED')
-    if networking:
-        require(main['DropInPaths'] == str(NETWORKING_DROPIN), 'UNAUTHORIZED')
+    if networking is not None:
+        require(main['DropInPaths'] == (str(NETWORKING_DROPIN) if networking else ''), 'UNAUTHORIZED')
     status = proc_status(pid)
     verify_identity(status, uid, gid)
     require(status['PPid'].strip() == str(parent), 'UNAUTHORIZED')

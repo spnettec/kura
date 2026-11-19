@@ -238,6 +238,8 @@ if __name__ == "__main__":
     modem_driver.package_cohort(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
+    embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
+                         Path(sys.argv[1])/'bin/kura_modem_cohort.py', 'modem cohort')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
     for hook in ('preinst', 'postinst', 'prerm'):

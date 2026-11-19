@@ -177,6 +177,9 @@ def managed_unit(raw):
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
     require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
     helpers = set()
+    modem_cohort = "bin/kura_modem_cohort.py"
+    if "/usr/bin/python3 -I -B /opt/eclipse/kura/" + modem_cohort in starts:
+        helpers.add(modem_cohort)
     stop_post = values.get(("[Service]", "ExecStopPost"), [])
     if stop_post == ["/usr/bin/python3 -I -B /opt/eclipse/kura/" + WATCHDOG_MAINTENANCE + " pulse"]:
         helpers.add(WATCHDOG_MAINTENANCE)
