@@ -27,9 +27,9 @@ SuccessExitStatus=143
 KillMode=control-group
 TimeoutStopSec=45s
 # Host operations are dispatched through their dedicated actors.
-AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill
+AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
-CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_setuid cap_setgid
+CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
 ReadOnlyPaths=/opt/eclipse /etc/kura /etc/polkit-1 /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named -/etc/bind -/etc/default/dnsmasq -/etc/dnsmasq.d -/etc/dnsmasq.conf
