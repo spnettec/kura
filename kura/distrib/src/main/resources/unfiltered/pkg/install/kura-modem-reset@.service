@@ -1,5 +1,5 @@
 [Unit]
-Description=Kura typed modem reset actor
+Description=Kura typed modem reset and GPS policy actor
 PartOf=kura.service
 Requisite=kura.service
 CollectMode=inactive-or-failed
@@ -30,5 +30,5 @@ LockPersonality=yes
 InaccessiblePaths=-/etc/kura/credentials -/etc/kura/recovery-tls -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service -/opt/eclipse/kura/user -/opt/eclipse/kura/data -/opt/eclipse/kura/packages -/opt/eclipse/kura/.data
 MemoryMax=64M
 TasksMax=8
-RuntimeMaxSec=75s
+RuntimeMaxSec=115s
 TimeoutStopSec=5s

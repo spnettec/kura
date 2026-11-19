@@ -118,13 +118,20 @@ def check():
 
 
 def check_modem_reset_provider(present):
+    check_nm_bundle('modem-reset-provider.json', 'modemResetProtocol', present)
+
+
+def check_modem_location_provider(present):
+    check_nm_bundle('modem-location-provider.json', 'modemLocationProtocol', present)
+
+
+def check_nm_bundle(proof, protocol, present):
     folder = HOME / 'siblings' / 'networking' / '5s'
     jars = ()
     if os.path.lexists(folder):
         protected(folder, directory=True)
         jars = tuple(folder.iterdir())
-    check_asset('kura-networking', folder, jars, SHARE / 'kura-networking/modem-reset-provider.json',
-                NM_NAME, 'modemResetProtocol', present)
+    check_asset('kura-networking', folder, jars, SHARE / 'kura-networking' / proof, NM_NAME, protocol, present)
 
 
 def check_dhcp_provider(present):

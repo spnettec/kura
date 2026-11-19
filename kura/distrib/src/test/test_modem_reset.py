@@ -5,7 +5,7 @@ import sys
 from tempfile import TemporaryDirectory
 import types
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
@@ -24,7 +24,7 @@ class ModemResetRequestTest(unittest.TestCase):
         self.assertEqual(service.request(f'reset:{scope}:{DEVICE}:{DEVICE_ID}', operation)['device'], DEVICE)
         for unsupported in (f'reset:{scope}:{MODEM}', f'reset:{scope}:{DEVICE}/child',
                             f'reset:{scope.upper()}:{DEVICE}', f'settle-publication:{scope}',
-                            f'enable:{scope}:{DEVICE}'):
+                            f'enable:{scope}:{DEVICE}', f'gps-raw:{scope}:{DEVICE}:{DEVICE_ID}'):
             with self.subTest(action=unsupported), self.assertRaises(Refused):
                 service.request(unsupported, operation)
 
@@ -38,19 +38,23 @@ class ModemResetOutcomeTest(unittest.TestCase):
         self.scope = digest(self.root)
         self.operation = str(uuid4())
         self.bus = Mock()
-        dbus = types.SimpleNamespace(bus=types.SimpleNamespace(BusConnection=Mock(return_value=self.bus)))
+        dbus = types.SimpleNamespace(bus=types.SimpleNamespace(BusConnection=Mock(return_value=self.bus)),
+                                     UInt32=int, DBusException=RuntimeError)
         self.enterContext(patch.dict(sys.modules, {'dbus': dbus}))
         self.enterContext(patch.object(service, 'STATE', self.state))
         self.enterContext(patch.object(service, 'state_binding', side_effect=lambda: self.root))
         self.enterContext(patch.object(service, 'legacy_owner'))
         self.target = self.enterContext(patch.object(service, 'target',
-                                        return_value=((':1.2',), (':1.3',), MODEM, '/sys/devices/a', 5, 6)))
+                                        return_value=(((':1.2',), (':1.3',), MODEM, '/sys/devices/a', 5, 6), 6)))
 
     def operate(self, action, operation=None):
         return service.operate(service.request(action, operation or self.operation), lambda: True)
 
     def reset(self, operation=None):
-        return self.operate(f'reset:{self.scope}:{DEVICE}:{DEVICE_ID}', operation)
+        return self.mutate('reset', operation)
+
+    def mutate(self, mode, operation=None):
+        return self.operate(f'{mode}:{self.scope}:{DEVICE}:{DEVICE_ID}', operation)
 
     def test_positive_reply_must_be_observed_and_acknowledged(self):
         status, proof = self.reset()
@@ -79,8 +83,8 @@ class ModemResetOutcomeTest(unittest.TestCase):
         self.assertFalse((self.state / (self.operation + '.result')).exists())
 
     def test_target_change_after_intent_stops_dispatch(self):
-        first = self.target.return_value
-        self.target.side_effect = [first, (*first[:-1], 99)]
+        first, state = self.target.return_value
+        self.target.side_effect = [(first, state), ((*first[:-1], 99), state)]
         with self.assertRaisesRegex(Refused, 'MODEM_RESET_TARGET_CHANGED'):
             self.reset()
         self.assertEqual(self.operate('outcome:' + self.scope), ('UNKNOWN', None))
@@ -92,6 +96,55 @@ class ModemResetOutcomeTest(unittest.TestCase):
             self.reset()
         self.assertEqual({item.name for item in self.state.iterdir()}, {'lock'})
         self.bus.call_blocking.assert_not_called()
+
+
+    def test_managed_location_uses_one_intent_for_enable_clear_and_final_setup(self):
+        self.target.return_value = (self.target.return_value[0], 3)
+        with patch.object(service, 'property_value', side_effect=[22, 16]):
+            result, proof = self.mutate('gps-managed')
+        self.assertEqual(result, 'APPLIED')
+        self.assertEqual(self.bus.call_blocking.call_args_list, [
+            call(':1.3', MODEM, service.MM + '.Modem', 'Enable', 'b', (True,), timeout=20),
+            call(':1.3', MODEM, service.LOCATION, 'Setup', 'ub', (0, False), timeout=20),
+            call(':1.3', MODEM, service.LOCATION, 'Setup', 'ub', (6, False), timeout=20)])
+        self.assertEqual(len(list(self.state.glob('*.intent'))), 1)
+        self.assertEqual(self.operate('outcome:' + self.scope), ('APPLIED', proof))
+        with self.assertRaisesRegex(Refused, 'UNPAIRED_MODEM_OPERATION'):
+            self.reset()
+
+    def test_unknown_intermediate_location_call_stops_before_final_setup(self):
+        self.target.return_value = (self.target.return_value[0], 3)
+        self.bus.call_blocking.side_effect = [None, OSError('uncertain clear')]
+        with patch.object(service, 'property_value', side_effect=[22, 16]), self.assertRaises(OSError):
+            self.mutate('gps-managed')
+        self.assertEqual(self.bus.call_blocking.call_count, 2)
+        self.assertEqual(self.operate('outcome:' + self.scope), ('UNKNOWN', None))
+        with self.assertRaisesRegex(Refused, 'PENDING_MODEM_RESET_OUTCOME'):
+            self.operate('ready-gps')
+        with self.assertRaisesRegex(Refused, 'PENDING_MODEM_RESET_OUTCOME'):
+            self.reset(str(uuid4()))
+
+    def test_disabled_and_unmanaged_modes_keep_the_existing_call_order(self):
+        with patch.object(service, 'property_value', side_effect=[22, 6]):
+            result, proof = self.mutate('gps-disabled')
+        self.assertEqual(result, 'APPLIED')
+        self.bus.call_blocking.assert_called_once_with(':1.3', MODEM, service.LOCATION,
+                                                       'Setup', 'ub', (0, False), timeout=20)
+        self.operate(f'acknowledge:{self.scope}:{proof}')
+        self.bus.call_blocking.reset_mock()
+        with patch.object(service, 'property_value', side_effect=[22, 6]):
+            self.assertEqual(self.mutate('gps-unmanaged', str(uuid4()))[0], 'APPLIED')
+        self.assertEqual(self.bus.call_blocking.call_args_list, [
+            call(':1.3', MODEM, service.LOCATION, 'Setup', 'ub', (0, False), timeout=20),
+            call(':1.3', MODEM, service.LOCATION, 'Setup', 'ub', (16, False), timeout=20)])
+
+    def test_already_configured_or_unsupported_location_has_no_intent(self):
+        for capabilities, enabled in ((22, 6), (16, 16)):
+            with self.subTest(capabilities=capabilities), patch.object(
+                    service, 'property_value', side_effect=[capabilities, enabled]):
+                self.assertEqual(self.mutate('gps-managed'), ('UNCHANGED', None))
+        self.bus.call_blocking.assert_not_called()
+        self.assertEqual({item.name for item in self.state.iterdir()}, {'lock'})
 
 
 if __name__ == '__main__':

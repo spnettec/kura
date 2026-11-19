@@ -1,5 +1,5 @@
 [Unit]
-Description=Kura typed modem reset socket
+Description=Kura typed modem reset and GPS policy socket
 PartOf=kura.service
 
 [Socket]

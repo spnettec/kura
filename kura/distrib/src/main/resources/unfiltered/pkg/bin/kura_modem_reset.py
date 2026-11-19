@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
-"""Delegate the scheduled NetworkManager modem reset through a paired local actor."""
+"""Delegate NetworkManager modem reset and GPS policy through the paired local actor."""
 from contextlib import closing
 import fcntl
 import os
@@ -19,7 +19,7 @@ from kura_bind_service import checked_package_asset
 from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
-from kura_modem_cohort import active_provider, check_modem_reset_provider
+from kura_modem_cohort import active_provider, check_modem_location_provider, check_modem_reset_provider
 from kura_reboot_broker import ENVIRONMENT, UNIT_PROPERTIES, file_hash, proc_file, proc_status, receive, send, socket_peer
 
 ACTOR_HOME = Path('/usr/libexec/kura-modem-reset')
@@ -39,7 +39,12 @@ BUS = 'org.freedesktop.DBus'
 BUS_PATH = '/org/freedesktop/DBus'
 NM_PATH = re.compile(r'/org/freedesktop/NetworkManager/Devices/[0-9]{1,10}')
 MM_PATH = re.compile(r'/org/freedesktop/ModemManager1/Modem/[0-9]{1,10}')
-RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'NOT_FOUND')
+RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'NOT_FOUND', 'UNCHANGED')
+LOCATION = MM + '.Modem.Location'
+GPS_MODES = {'gps-disabled': 0, 'gps-managed': 6, 'gps-unmanaged': 16}
+UNAVAILABLE_LOCATION = {'org.freedesktop.DBus.Error.UnknownInterface',
+                        'org.freedesktop.DBus.Error.UnknownProperty',
+                        MM + '.Error.Core.Unsupported'}
 
 
 def package_cohort(home):
@@ -77,16 +82,16 @@ def verify_actor(unit):
 def request(action, operation):
     identifier(operation)
     fields = dict(schema=1, operationId=operation)
-    if action in ('scope', 'ready'):
+    if action in ('scope', 'ready', 'ready-gps'):
         return dict(**fields, action=action)
     if action.startswith(('outcome:', 'acknowledge:')):
         return dict(**fields, **outcomes.request_fields(action))
     verb, _, params = action.partition(':')
     scope, _, target = params.partition(':')
     device, _, device_id = target.partition(':')
-    require(verb == 'reset' and outcomes.PROOF.fullmatch(scope) and NM_PATH.fullmatch(device)
+    require((verb == 'reset' or verb in GPS_MODES) and outcomes.PROOF.fullmatch(scope) and NM_PATH.fullmatch(device)
             and re.fullmatch(r'[a-zA-Z0-9_.:@-]{1,96}', device_id), 'INVALID_MODEM_RESET_REQUEST')
-    return dict(**fields, action='reset', rootScope=scope, device=device, deviceId=device_id)
+    return dict(**fields, action=verb, rootScope=scope, device=device, deviceId=device_id)
 
 
 def provision():
@@ -165,8 +170,9 @@ def target(bus, requested, dbus):
     mm_state = property_value(bus, mm[0], modem, MM + '.Modem', 'State', dbus.Int32)
     # NM's activated state and MM's connected state are independently authoritative.
     require(nm_state in range(10, 130, 10) and mm_state in (-1, *range(1, 12)), 'UNKNOWN_MODEM_STATE')
-    require((nm_state, mm_state) != (100, 11), 'MODEM_ALREADY_CONNECTED')
-    return nm, mm, modem, configured, hardware, identity.st_dev, identity.st_ino
+    if requested['action'] == 'reset':
+        require((nm_state, mm_state) != (100, 11), 'MODEM_ALREADY_CONNECTED')
+    return (nm, mm, modem, configured, hardware, identity.st_dev, identity.st_ino), int(mm_state)
 
 
 def legacy_owner():
@@ -182,12 +188,40 @@ def require_ready(root):
         identifier(previous)
         intent = outcomes.intent_at(STATE, root, previous)
         result = outcomes.result_at(STATE, previous, intent)
-        # Physical paths and bus object numbers can change when a reset
-        # reenumerates a device. Preserve one unresolved reset per Root.
+        # Bringing a modem up or resetting it can change object and physical paths.
+        # Preserve one unresolved modem mutation per Root.
         require(result is not None and outcomes.delivered_at(STATE, previous, intent, result),
                 'PENDING_MODEM_RESET_OUTCOME')
 
-def reset(expected, root, authorize):
+
+def configure_location(bus, observed, state, mode, dispatch, dbus):
+    _, mm, modem, *_ = observed
+    if state < 6:
+        # Match the existing GPS configuration order, including when GPS is disabled.
+        dispatch(MM + '.Modem', 'Enable', 'b', (True,))
+    try:
+        capabilities = property_value(bus, mm[0], modem, LOCATION, 'Capabilities', dbus.UInt32)
+        enabled = property_value(bus, mm[0], modem, LOCATION, 'Enabled', dbus.UInt32)
+    except dbus.DBusException as error:
+        if error.get_dbus_name() not in UNAVAILABLE_LOCATION:
+            raise
+        print('MODEM_LOCATION_UNAVAILABLE', file=sys.stderr)
+        return
+
+    desired = GPS_MODES[mode]
+    if (capabilities & desired) != desired:
+        print('MODEM_LOCATION_UNSUPPORTED', file=sys.stderr)
+        return
+    # Preserve Location sources unknown to this Kura version.
+    require(enabled & ~0x7f == 0, 'UNKNOWN_MODEM_LOCATION_SOURCES')
+    if enabled == desired:
+        return
+    if desired:
+        dispatch(LOCATION, 'Setup', 'ub', (0, False))
+    dispatch(LOCATION, 'Setup', 'ub', (desired, False))
+
+
+def mutate(expected, root, authorize):
     # A private, fixed-system-bus connection binds unique names to this bus
     # lifetime. Losing the bus can never reconnect and dispatch to reused names.
     import dbus
@@ -195,30 +229,45 @@ def reset(expected, root, authorize):
     operation = expected['operationId']
     scope = outcomes.binding(STATE, root)
     require(expected['rootScope'] == scope, 'UNPAIRED_MODEM_RESET_SCOPE')
-    if outcomes.intent_at(STATE, root, operation) is not None:
+    prior = outcomes.intent_at(STATE, root, operation)
+    if prior is not None:
+        require(prior['request'] == expected, 'UNPAIRED_MODEM_OPERATION')
         return outcomes.query(STATE, root, dict(action='outcome', proof=scope, operationId=operation))
     require_ready(root)
     legacy_owner()
     with closing(dbus.bus.BusConnection('unix:path=/run/dbus/system_bus_socket')) as bus:
-        observed = target(bus, expected, dbus)
-        require(authorize(), 'UNAUTHORIZED')
-        anchor = STATE / 'root.json'
-        if not os.path.lexists(anchor):
-            create(anchor, dict(schema=1, root=root))
-        intent = dict(root=root, request=expected, deliveryProtocol=outcomes.PROTOCOL,
-                      targetSha256=digest(observed))
-        create(STATE / (operation + '.intent'), intent)
-        require(observed == target(bus, expected, dbus) and authorize(), 'MODEM_RESET_TARGET_CHANGED')
-        legacy_owner()
+        observed, state = target(bus, expected, dbus)
         _, mm, modem, *_ = observed
-        bus_call(bus, mm[0], modem, MM + '.Modem', 'Reset', timeout=20)
+        intent = None
+
+        def dispatch(interface, method, signature='', args=()):
+            nonlocal intent
+            require(authorize(), 'UNAUTHORIZED')
+            legacy_owner()
+            if intent is None:
+                anchor = STATE / 'root.json'
+                if not os.path.lexists(anchor):
+                    create(anchor, dict(schema=1, root=root))
+                intent = dict(root=root, request=expected, deliveryProtocol=outcomes.PROTOCOL,
+                              targetSha256=digest(observed))
+                create(STATE / (operation + '.intent'), intent)
+            require(observed == target(bus, expected, dbus)[0], 'MODEM_RESET_TARGET_CHANGED')
+            legacy_owner()
+            bus_call(bus, mm[0], modem, interface, method, signature, args, timeout=20)
+
+        if expected['action'] == 'reset':
+            dispatch(MM + '.Modem', 'Reset')
+        else:
+            configure_location(bus, observed, state, expected['action'], dispatch, dbus)
+        if intent is None:
+            return 'UNCHANGED', None
         return 'APPLIED', outcomes.commit(STATE / (operation + '.result'), intent)
 
 
 def operate(expected, authorize):
     require(authorize(), 'UNAUTHORIZED')
     root = state_binding()
-    if expected['action'] == 'ready':
+    if expected['action'] in ('ready', 'ready-gps'):
         require_ready(root)
         return 'APPLIED', outcomes.binding(STATE, root)
     if expected['action'] in outcomes.READ_ONLY:
@@ -235,7 +284,7 @@ def operate(expected, authorize):
         require(state_binding() == root, 'UNPAIRED_MODEM_RESET_STATE')
         if expected['action'] == 'acknowledge':
             return outcomes.acknowledge(STATE, root, expected)
-        return reset(expected, root, authorize)
+        return mutate(expected, root, authorize)
     finally:
         os.close(fd)
 
@@ -249,6 +298,8 @@ def serve(stream, unit):
             identity = main_peer(peer, paired_main, CLIENT, 2, request, networking=True)
             require(active_provider() == 'kura-networking', 'UNPAIRED_MODEM_RESET_PROVIDER')
             check_modem_reset_provider(True)
+            if identity['action'] == 'ready-gps' or identity['action'] in GPS_MODES:
+                check_modem_location_provider(True)
             return identity
 
         expected = paired_request()
@@ -260,7 +311,7 @@ def serve(stream, unit):
         except (Refused, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError,
                 dbus.DBusException) as error:
             state = 'REFUSED'
-            if expected['action'] == 'reset':
+            if expected['action'] == 'reset' or expected['action'] in GPS_MODES:
                 # If checking the original intent fails, preserve UNKNOWN.
                 state = 'UNKNOWN'
                 try:
@@ -287,14 +338,15 @@ def client(expected):
         require(struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)) == (1, 0, 0),
                 'UNPAIRED_MODEM_RESET_RELEASE')
         send(stream, expected)
-        response = receive(stream, timeout=65)
+        response = receive(stream, timeout=105)
     state, proof = response.get('state'), response.get('proof')
     reply = dict(schema=1, operationId=expected['operationId'], state=state)
     if state == 'APPLIED' and expected['action'] != 'acknowledge':
         require(isinstance(proof, str) and outcomes.PROOF.fullmatch(proof), 'INVALID_MODEM_RESET_RESPONSE')
         reply['proof'] = proof
         print(proof)
-    require(type(response.get('schema')) is int and response == reply and state in RESULTS,
+    require(type(response.get('schema')) is int and response == reply and state in RESULTS
+            and (state != 'UNCHANGED' or expected['action'] in GPS_MODES),
             'INVALID_MODEM_RESET_RESPONSE')
     return RESULTS.index(state)
 
