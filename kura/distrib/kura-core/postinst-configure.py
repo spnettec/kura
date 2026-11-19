@@ -12,6 +12,12 @@ import sys
 import types
 
 
+INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
+CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json'} | {
+    f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'complete')
+}
+
+
 def load_lifecycle(physical, expected):
     path = physical / 'bin/kura_key_service_lifecycle.py'
     for parent in reversed(path.parents):
@@ -78,12 +84,87 @@ class Configure:
         result['tag'] = hmac.new(secret, b'kura-core-postinst-v1\0' + self.api.encoded(result), hashlib.sha256).hexdigest()
         return self.api.encoded(result)
 
-    def paired_setup(self):
+    def paired_home(self):
         logical = self.policy.path('/opt/eclipse/kura')
-        self.api.require(logical.is_symlink() and logical.resolve(strict=True) == self.physical,
+        self.api.require(logical.is_symlink() and logical.lstat().st_uid == self.policy.owner
+                         and logical.resolve(strict=True) == self.physical,
                          'Configure is not using the paired Core runtime link')
+
+    def paired_setup(self):
+        self.paired_home()
         self.policy.no_overrides()
         self.policy.generation_assets()
+
+    def read_intent(self, directory, original):
+        policy, require = self.policy, self.api.require
+        policy.directory(directory, private=True)
+        require({p.name for p in directory.iterdir()} <= CONFIGURE_FILES)
+        secret = policy.read(policy.state / 'journal.key', limit=32)
+        require(len(secret) == 32)
+        raw = policy.read(directory / 'intent.json', limit=4096)
+        recovery = self.api.decode(raw)['recovery']
+        require(type(recovery) is dict and set(recovery) == {'mode', 'device', 'inode'})
+        mode = recovery['mode']
+        require((mode == 'install' and recovery['device'] is None and recovery['inode'] is None)
+                or (mode in self.copies and all(type(recovery[k]) is int and recovery[k] > 0
+                                               for k in ('device', 'inode'))))
+        require(raw == self.body(original, 'intent', recovery, secret), 'Configure intent belongs to another package or Root')
+        return recovery, secret
+
+    def completed_steps(self, directory, original, recovery, secret, *, live_step=None):
+        completed = []
+        gap = False
+        for step in INSTALLER_STEPS:
+            intent = directory / f'setup-{step}-intent.json'
+            receipt = directory / f'setup-{step}-complete.json'
+            if not os.path.lexists(intent) and not os.path.lexists(receipt):
+                gap = True
+                continue
+            self.api.require(not gap and os.path.lexists(intent), 'Out-of-order installer evidence')
+            self.api.require(self.policy.read(intent, limit=4096) == self.body(original, f'setup-{step}-intent', recovery, secret),
+                             'Invalid installer step intent')
+            if not os.path.lexists(receipt):
+                self.api.require(live_step == step, f'Installer step {step} is unresolved; preserve the original intent')
+                gap = True
+                continue
+            self.api.require(self.policy.read(receipt, limit=4096) == self.body(original, f'setup-{step}-complete', recovery, secret),
+                             'Invalid installer step receipt')
+            completed.append(step)
+        return completed
+
+    def run_step(self, step, invoke):
+        policy, require = self.policy, self.api.require
+        require(step in INSTALLER_STEPS)
+        with policy.locked():
+            policy.check_records()
+            fence = policy.fence()
+            require(fence is not None, 'Installer step has no original fence')
+            original = fence['id']
+            directory = self.state / original
+            recovery, secret = self.read_intent(directory, original)
+            require(not os.path.lexists(directory / 'prepared.json') and not os.path.lexists(directory / 'ready.json'),
+                    'Installer is already prepared')
+            require(self.source() == recovery, 'Original configure recovery copy changed')
+            completed = self.completed_steps(directory, original, recovery, secret)
+            if step in completed:
+                return
+            require(step == INSTALLER_STEPS[len(completed)], 'Out-of-order installer step')
+            policy.no_overrides()
+            if step != 'layout':
+                self.paired_home()
+            intent = directory / f'setup-{step}-intent.json'
+            policy.create(intent, self.body(original, f'setup-{step}-intent', recovery, secret))
+
+        invoke()
+
+        with policy.locked():
+            require(policy.fence() == fence and self.read_intent(directory, original) == (recovery, secret)
+                    and self.source() == recovery, 'Installer fence changed before receipt')
+            self.paired_home()
+            require(os.path.lexists(intent)
+                    and self.completed_steps(directory, original, recovery, secret, live_step=step) == completed,
+                    'Installer evidence changed before receipt')
+            policy.create(directory / f'setup-{step}-complete.json', self.body(original, f'setup-{step}-complete', recovery, secret))
 
     def apply(self, action):
         policy, require = self.policy, self.api.require
@@ -104,29 +185,24 @@ class Configure:
                     require(len(secret) == 32)
                     policy.create(directory / 'intent.json', self.body(original, 'intent', recovery, secret))
                 return 'NEW', recovery['mode']
-            policy.directory(directory, private=True)
-            require({p.name for p in directory.iterdir()} <= {'intent.json', 'prepared.json', 'ready.json'})
-            secret = policy.read(policy.state / 'journal.key', limit=32)
-            require(len(secret) == 32)
-            raw = policy.read(directory / 'intent.json', limit=4096)
-            recovery = self.api.decode(raw)['recovery']
-            require(type(recovery) is dict and set(recovery) == {'mode', 'device', 'inode'})
+            recovery, secret = self.read_intent(directory, original)
             mode = recovery['mode']
-            require((mode == 'install' and recovery['device'] is None and recovery['inode'] is None)
-                    or (mode in self.copies and all(type(recovery[k]) is int and recovery[k] > 0
-                                                   for k in ('device', 'inode'))))
-            require(raw == self.body(original, 'intent', recovery, secret), 'Configure intent belongs to another package or Root')
+            completed = self.completed_steps(directory, original, recovery, secret)
             prepared = directory / 'prepared.json'
             ready = directory / 'ready.json'
             prepared_body = self.body(original, 'prepared', recovery, secret)
             ready_body = self.body(original, 'ready', recovery, secret)
             if not os.path.lexists(prepared):
-                require(action == 'prepared' and fence is not None and not os.path.lexists(ready),
+                require(action in ('status', 'prepared') and fence is not None and not os.path.lexists(ready),
                         'Installer completion is unresolved; keep the original configure intent')
-                self.paired_setup()
                 require(self.source() == recovery, 'Original configure recovery copy changed')
+                if action == 'status':
+                    return 'INSTALLER', mode
+                require(tuple(completed) == INSTALLER_STEPS, 'Missing completed installer steps')
+                self.paired_setup()
                 policy.create(prepared, prepared_body)
                 return 'PREPARED', mode
+            require(tuple(completed) == INSTALLER_STEPS, 'Missing completed installer steps')
             require(policy.read(prepared, limit=4096) == prepared_body, 'Invalid configure setup receipt')
             self.paired_setup()
             if not os.path.lexists(ready):
@@ -148,21 +224,34 @@ class Configure:
 
 
 def main():
-    if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in ('status', 'begin', 'prepared', 'ready', 'retire-copy'):
+    actions = {'status', 'begin', 'prepared', 'ready', 'retire-copy'} | {f'setup-{step}' for step in INSTALLER_STEPS}
+    if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in actions:
         raise ValueError('Invalid Core configure action')
+    action = sys.argv[1]
     physical = Path('/opt/eclipse') / CORE_CONFIGURE_HOME
     lifecycle = load_lifecycle(physical, CORE_CONFIGURE_LIFECYCLE_SHA)
     policy = lifecycle.Lifecycle()
     manifest_sha = hashlib.sha256(policy.read(physical / 'libexec/key-backup/manifest.json', private=False)).hexdigest()
     lifecycle.require(manifest_sha == CORE_CONFIGURE_MANIFEST_SHA, 'Unpaired incoming Core configure manifest')
-    if sys.argv[1] == 'begin':
-        installer = policy.read(physical / 'install/kura_install.sh', private=False)
-        lifecycle.require(hashlib.sha256(installer).hexdigest() == CORE_CONFIGURE_INSTALLER_SHA,
+    installer = physical / 'install/kura_install.sh'
+    if action == 'begin' or action.startswith('setup-'):
+        installer_source = policy.read(installer, private=False)
+        lifecycle.require(hashlib.sha256(installer_source).hexdigest() == CORE_CONFIGURE_INSTALLER_SHA,
                           'Unpaired incoming Core installer')
     control = policy.read(Path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
     version = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version}', 'kura-core'], text=True)
     lifecycle.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version))
-    phase, mode = Configure(lifecycle, policy, physical, version, manifest_sha, hashlib.sha256(control).hexdigest()).apply(sys.argv[1])
+    configure = Configure(lifecycle, policy, physical, version, manifest_sha, hashlib.sha256(control).hexdigest())
+    if action.startswith('setup-'):
+        step = action.removeprefix('setup-')
+
+        def invoke():
+            subprocess.run(['/bin/sh', str(installer), f'--configure-{step}'], check=True)
+            os.sync()
+
+        configure.run_step(step, invoke)
+        return
+    phase, mode = configure.apply(action)
     print(phase, mode, physical)
 
 

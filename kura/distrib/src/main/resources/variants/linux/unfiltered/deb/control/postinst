@@ -413,7 +413,13 @@ function postInstall {
         CONFIGURE_STATE=$(packageConfigure begin 2>>"${LOG}") || return 1
         read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
         [ "${CONFIGURE_PHASE}" = NEW ] || return 1
-        sh "${CONFIGURE_HOME}/install/kura_install.sh" --defer-key-service >> "${LOG}" 2>&1 || return 1
+        CONFIGURE_PHASE=INSTALLER
+    fi
+    if [ "${CONFIGURE_PHASE}" = INSTALLER ]; then
+        local step
+        for step in layout brokers runtime https ownership; do
+            packageConfigure "setup-${step}" >> "${LOG}" 2>&1 || return 1
+        done
         packageConfigure prepared >> "${LOG}" 2>&1 || return 1
         CONFIGURE_PHASE=PREPARED
     fi

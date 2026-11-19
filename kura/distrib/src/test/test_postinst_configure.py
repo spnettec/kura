@@ -32,10 +32,15 @@ class ConfigureTest(unittest.TestCase):
     def controller(self, version='6.0.0-1'):
         return configure.Configure(lifecycle, self.policy, self.fixture.physical.resolve(), version, self.manifest_sha, '1' * 64)
 
+    def install_steps(self):
+        for name in configure.INSTALLER_STEPS:
+            self.configure.run_step(name, lambda: None)
+
     def test_prepared_resumes_configuration_and_original_history_after_leave(self):
         self.assertEqual(('NEW', 'install'), self.configure.apply('status'))
         self.assertFalse(self.stage.exists())
         self.configure.apply('begin')
+        self.install_steps()
         self.configure.apply('prepared')
         self.assertEqual(('PREPARED', 'install'), self.controller().apply('status'))
         self.assertEqual(('READY', 'install'), self.configure.apply('ready'))
@@ -51,15 +56,26 @@ class ConfigureTest(unittest.TestCase):
     def test_an_unresolved_installer_is_never_dispatched_again(self):
         self.configure.apply('begin')
         before = (self.stage/'intent.json').read_bytes()
-        for command in ('status', 'begin', 'ready', 'retire-copy'):
+        calls = []
+
+        def interrupt():
+            calls.append('layout')
+            raise InterruptedError()
+        with self.assertRaises(InterruptedError):
+            self.configure.run_step('layout', interrupt)
+        for command in ('status', 'begin', 'prepared', 'ready', 'retire-copy'):
             with self.subTest(command=command), self.assertRaisesRegex(lifecycle.Refused, 'unresolved'):
                 self.controller().apply(command)
+        with self.assertRaisesRegex(lifecycle.Refused, 'layout is unresolved'):
+            self.configure.run_step('layout', interrupt)
+        self.assertEqual(calls, ['layout'])
         self.assertEqual(before, (self.stage/'intent.json').read_bytes())
         self.assertEqual(self.fence, self.policy.fence())
         self.pairing.assert_not_called()
 
     def test_configuration_rejects_other_package_versions_and_incomplete_receipts(self):
         self.configure.apply('begin')
+        self.install_steps()
         self.configure.apply('prepared')
         with self.assertRaisesRegex(lifecycle.Refused, 'another package or Root'):
             self.controller('6.0.0-2').apply('status')
@@ -73,6 +89,7 @@ class ConfigureTest(unittest.TestCase):
         copy.mkdir(mode=0o700)
         self.fixture.write(copy/'snapshot.xml', b'original')
         self.assertEqual(('NEW', 'upgrade'), self.configure.apply('begin'))
+        self.install_steps()
         self.configure.apply('prepared')
         with self.assertRaises(lifecycle.Refused):
             self.configure.apply('retire-copy')
@@ -87,3 +104,27 @@ class ConfigureTest(unittest.TestCase):
         self.configure.apply('retire-copy')
         self.assertFalse(copy.exists())
         self.assertEqual(('READY', 'upgrade'), self.configure.apply('retire-copy'))
+
+    def test_resume_dispatches_only_remaining_steps_in_order(self):
+        self.configure.apply('begin')
+        self.assertEqual(('INSTALLER', 'install'), self.controller().apply('status'))
+        with self.assertRaisesRegex(lifecycle.Refused, 'Out-of-order'):
+            self.configure.run_step('brokers', lambda: self.fail('Out-of-order dispatch'))
+        with self.assertRaisesRegex(lifecycle.Refused, 'Missing completed'):
+            self.configure.apply('prepared')
+        calls = []
+        self.configure.run_step('layout', lambda: calls.append('layout'))
+        self.assertEqual(('INSTALLER', 'install'), self.controller().apply('status'))
+        for step in configure.INSTALLER_STEPS:
+            self.controller().run_step(step, lambda: calls.append(step))
+        self.assertEqual(list(configure.INSTALLER_STEPS), calls)
+        self.configure.apply('prepared')
+
+    def test_step_receipt_cannot_be_substituted_for_another_step(self):
+        self.configure.apply('begin')
+        self.configure.run_step('layout', lambda: None)
+        self.configure.run_step('brokers', lambda: None)
+        (self.stage/'setup-brokers-complete.json').write_bytes((self.stage/'setup-layout-complete.json').read_bytes())
+        with self.assertRaisesRegex(lifecycle.Refused, 'Invalid installer step receipt'):
+            self.controller().run_step('runtime', lambda: self.fail('Dispatch after invalid receipt'))
+        self.assertEqual(self.fence, self.policy.fence())

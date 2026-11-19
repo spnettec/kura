@@ -176,13 +176,16 @@ class RuntimeOwnership(unittest.TestCase):
         driver.write_text('#!/bin/sh\nprintf attempted > "$INSTALL_DIR/child-ran"\nexit 42\n')
         phase='''packageConfigure() {
             printf '%s\n' "$1" >> "$INSTALL_DIR/phases"
-            printf 'NEW install %s/kura_test\n' "$INSTALL_DIR"
+            case "$1" in
+                setup-layout) sh "$INSTALL_DIR/kura_test/install/kura_install.sh" ;;
+                *) printf 'NEW install %s/kura_test\n' "$INSTALL_DIR" ;;
+            esac
         }'''
         env=dict(os.environ,INSTALL_DIR=str(root),LOG=str(root/'installer.log'))
         result=subprocess.run(['bash','-c',phase+'\n'+function+'\npostInstall\n'],env=env,capture_output=True,text=True)
         self.assertEqual(result.returncode,1)
         self.assertEqual(marker.read_text(),'attempted')
-        self.assertEqual((root/'phases').read_text(),'status\nbegin\n')
+        self.assertEqual((root/'phases').read_text(),'status\nbegin\nsetup-layout\n')
         self.assertTrue(driver.exists())
 
     def test_installer_cli_rejects_arguments_without_touching_layout(self):
