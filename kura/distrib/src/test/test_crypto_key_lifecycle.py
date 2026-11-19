@@ -102,6 +102,22 @@ class EncryptionKeyLifecycleTests(unittest.TestCase):
         replacement=mask.with_name('replacement');replacement.symlink_to('/dev/null');replacement.replace(mask)
         with self.assertRaises(policy.Refused):self.store.stable()
 
+    def test_stability_preserves_the_original_read_bound(self):
+        original = b"p" * (128 * 1024)
+        archive = self.put("/packages/retained.dp", original)
+        with self.assertRaisesRegex(policy.Refused, "exceeds its limit"):
+            self.store.read(archive)
+        self.assertEqual(original, self.store.read(archive, limit=len(original)))
+        self.store.stable()
+
+        archive.write_bytes(original + b"p")
+        with self.assertRaisesRegex(policy.Refused, "exceeds its limit"):
+            self.store.stable()
+        replacement = self.put("/packages/replacement.dp", original)
+        replacement.replace(archive)
+        with self.assertRaisesRegex(policy.Refused, "source changed"):
+            self.store.stable()
+
     def test_fresh_install_gets_private_random_key_and_is_byte_idempotent(self):
         self.assertEqual(self.store.prepare("install")["source"],"fresh")
         value = self.key.read_bytes()

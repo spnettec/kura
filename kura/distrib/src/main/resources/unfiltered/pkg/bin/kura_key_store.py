@@ -193,7 +193,7 @@ class Store:
                     "Key-policy source changed while being read")
             identity = (m.st_dev,m.st_ino,m.st_uid,m.st_gid,stat.S_IMODE(m.st_mode),
                         m.st_size,m.st_mtime_ns,m.st_ctime_ns,m.st_nlink)
-            self.observed[path] = (identity,hashlib.sha256(data).digest(),private,owners,loaded_for_uid)
+            self.observed[path] = (identity,hashlib.sha256(data).digest(),private,owners,loaded_for_uid,limit)
             return data
         finally:
             os.close(fd)
@@ -229,8 +229,8 @@ class Store:
             os.close(fd)
 
     def stable(self):
-        for path,(identity,digest,private,owners,loaded_for_uid) in list(self.observed.items()):
-            data = self.read(path,private=private,owners=owners,loaded_for_uid=loaded_for_uid)
+        for path,(identity,digest,private,owners,loaded_for_uid,limit) in list(self.observed.items()):
+            data = self.read(path,private=private,limit=limit,owners=owners,loaded_for_uid=loaded_for_uid)
             now = self.observed[path]
             require(now[:2] == (identity,digest) and hashlib.sha256(data).digest() == digest,
                     "Key-policy source changed before publication")
