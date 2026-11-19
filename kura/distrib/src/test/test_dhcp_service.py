@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: EPL-2.0
+from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
 import socket
+import struct
 import sys
 import unittest
 from unittest.mock import patch
@@ -9,6 +11,7 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_dhcp_configuration as config
 import kura_dhcp_service as service
+import kura_dhcp_listeners as listeners
 from kura_clock_journal import Refused
 from kura_reboot_broker import receive, send
 
@@ -51,7 +54,46 @@ class DhcpServiceTest(unittest.TestCase):
         model = config.parse(FIRST)
         payload = b'[{"ifname":"link0","ifindex":9,"flags":["UP"],"addr_info":[{"local":"192.0.2.1","prefixlen":24}]}]'
         with patch.object(service.subprocess, 'check_output', return_value=payload):
-            self.assertEqual((9,), service.observe_interfaces(model))
+            self.assertEqual((listeners.Link(9, frozenset({IPv4Address('192.0.2.1')})),),
+                             service.observe_interfaces(model))
         with patch.object(service.subprocess, 'check_output', return_value=payload.replace(b'24', b'25')):
             with self.assertRaises(Refused):
                 service.observe_interfaces(model)
+
+    def test_only_exact_cgroup_can_own_the_requested_listener(self):
+        requested = listeners.Link(9, frozenset(map(IPv4Address, ('192.0.2.1', '192.0.2.255'))), 42)
+        other = listeners.Listener(10, IPv4Address(0), 311)
+        managed = listeners.Listener(9, IPv4Address(0), 312)
+        with patch.object(listeners, 'snapshot', return_value=[other, managed]):
+            listeners.check((requested,), 312, ready=True)
+            with self.assertRaisesRegex(Refused, 'DHCP_PORT_IN_USE'):
+                listeners.check((requested,), None)
+        with patch.object(listeners, 'snapshot', return_value=[other]):
+            listeners.check((requested,), None)
+            with self.assertRaisesRegex(Refused, 'DHCP_SOCKET_OWNERSHIP_UNVERIFIED'):
+                listeners.check((requested,), 312, ready=True)
+
+    def test_exact_wildcard_and_master_scope_conflicts(self):
+        link = listeners.Link(3, frozenset(map(IPv4Address, ('192.0.2.1', '192.0.2.255'))), 13)
+        for index, host in ((3, '0.0.0.0'), (13, '0.0.0.0'), (0, '0.0.0.0'), (0, '255.255.255.255'),
+                            (0, '192.0.2.255'), (0, '192.0.2.1')):
+            with self.subTest(index=index, address=host), patch.object(
+                    listeners, 'snapshot', return_value=[listeners.Listener(index, IPv4Address(host), None)]):
+                with self.assertRaisesRegex(Refused, 'DHCP_PORT_IN_USE'):
+                    listeners.check((link,), None)
+        for index, host in ((4, '0.0.0.0'), (0, '198.51.100.1')):
+            with self.subTest(index=index, address=host), patch.object(
+                    listeners, 'snapshot', return_value=[listeners.Listener(index, IPv4Address(host), None)]):
+                listeners.check((link,), None)
+
+    def test_linux_diagnostic_keeps_dual_stack_and_cgroup_identity(self):
+        payload = bytearray(72)
+        payload[0] = socket.AF_INET6
+        struct.pack_into('!H', payload, 4, 67)
+        struct.pack_into('=I', payload, 40, 3)
+        payload[8:24] = IPv6Address('::ffff:192.0.2.1').packed
+        payload.extend(struct.pack('=HHQ', 12, listeners.INET_DIAG_CGROUP_ID, 123456789))
+        self.assertEqual(listeners.Listener(3, IPv4Address('192.0.2.1'), 123456789),
+                         listeners.listen_record(bytes(payload), socket.AF_INET6))
+        payload.extend(struct.pack('=HHB3x', 5, listeners.INET_DIAG_SKV6ONLY, 1))
+        self.assertIsNone(listeners.listen_record(bytes(payload), socket.AF_INET6))

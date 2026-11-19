@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Root-paired control of the dedicated Kura dnsmasq DHCP instance."""
 import fcntl
+from ipaddress import IPv4Address
 import json
 import os
 from pathlib import Path
@@ -17,6 +18,7 @@ import tempfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_bind_outcomes as outcomes
 import kura_dhcp_configuration as configuration
+import kura_dhcp_listeners as listeners
 import kura_bind_service as bind
 from kura_clock_broker import HOME, public_file, unit_directory_present
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require, sync
@@ -32,9 +34,12 @@ SOCKET_UNIT = 'kura-dhcp-service.socket'
 WORKER_UNIT = 'kura-dhcp-service@.service'
 DAEMON_UNIT = 'kura-dhcp.service'
 DAEMON = Path('/usr/sbin/dnsmasq')
+DAEMON_CGROUP = '/system.slice/' + DAEMON_UNIT
+CGROUP_ROOT = Path('/sys/fs/cgroup')
 HELPER = 'bin/kura_dhcp_service.py'
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
-SOURCES = (HELPER, 'bin/kura_dhcp_configuration.py', 'bin/kura_bind_service.py', 'bin/kura_bind_config.py',
+SOURCES = (HELPER, 'bin/kura_dhcp_configuration.py', 'bin/kura_dhcp_listeners.py',
+           'bin/kura_bind_service.py', 'bin/kura_bind_config.py',
            'bin/kura_bind_outcomes.py', 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
            'bin/kura_journal_export.py', 'bin/kura_modem_cohort.py', 'bin/kura_reboot_broker.py',
            'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
@@ -131,7 +136,7 @@ def current_config():
 
 def target(cohort):
     loaded = paired_unit(DAEMON_UNIT, DAEMON_UNIT, cohort['files'][DAEMON_UNIT],
-                         ('ActiveState', 'MainPID', 'InvocationID'))
+                         ('ActiveState', 'MainPID', 'InvocationID', 'ControlGroup'))
     package = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${db:Status-Status} ${Version}', 'dnsmasq-base'],
                                       env=ENVIRONMENT, timeout=3).decode('ascii')
     require(re.fullmatch(r'installed [0-9A-Za-z:.+~\-]+', package), 'UNPAIRED_DHCP_DAEMON')
@@ -140,9 +145,19 @@ def target(cohort):
     state = loaded.pop('ActiveState')
     invocation = loaded.pop('InvocationID')
     pid = int(loaded.pop('MainPID'))
+    control_group = loaded.pop('ControlGroup')
     require(state in ('active', 'inactive', 'failed') and (pid > 1 if state == 'active' else pid == 0)
             and (re.fullmatch('[0-9a-f]{32}', invocation) if state == 'active' else True), 'DHCP_SERVICE_BUSY')
-    return digest(dict(loaded=loaded, package=package, executable=executable)), state, invocation
+    cgroup = None
+    if state == 'active':
+        require(control_group == DAEMON_CGROUP and (CGROUP_ROOT / 'cgroup.controllers').is_file()
+                and Path(f'/proc/{pid}/cgroup').read_bytes() == ('0::' + DAEMON_CGROUP + '\n').encode(),
+                'UNPAIRED_DHCP_DAEMON')
+        metadata = (CGROUP_ROOT / DAEMON_CGROUP.lstrip('/')).lstat()
+        require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == 0 and metadata.st_ino > 0,
+                'UNPAIRED_DHCP_DAEMON')
+        cgroup = metadata.st_ino
+    return digest(dict(loaded=loaded, package=package, executable=executable)), state, invocation, cgroup
 
 
 def observe_interfaces(interfaces):
@@ -152,14 +167,17 @@ def observe_interfaces(interfaces):
                                   env=ENVIRONMENT, timeout=3)
     require(len(raw) <= 256 * 1024, 'DHCP_INTERFACE_UNAVAILABLE')
     links = {link['ifname']: link for link in json.loads(raw)}
-    indices = []
+    result = []
     for entry in interfaces:
         link = links.get(entry['interface'])
         require(link is not None and 'UP' in link['flags'] and link['ifindex'] > 0
                 and any(ip.get('local') == entry['address'] and ip.get('prefixlen') == entry['prefix']
                         for ip in link['addr_info']), 'DHCP_INTERFACE_UNAVAILABLE')
-        indices.append(link['ifindex'])
-    return tuple(indices)
+        addresses = frozenset(IPv4Address(address[key]) for address in link['addr_info']
+                              for key in ('local', 'broadcast') if key in address)
+        master = links[link['master']]['ifindex'] if 'master' in link else None
+        result.append(listeners.Link(link['ifindex'], addresses, master))
+    return tuple(result)
 
 
 def checked_history(root):
@@ -203,6 +221,7 @@ def apply(expected, root, cohort, authorize):
     interfaces = observe_interfaces(records)
     unit = target(cohort)
     desired = 'active' if records else 'inactive'
+    listeners.check(interfaces, unit[3])
     with tempfile.NamedTemporaryFile(dir=CONFIG.parent, prefix='.dnsmasq-', delete=False) as stream:
         staged = Path(stream.name)
         try:
@@ -215,6 +234,7 @@ def apply(expected, root, cohort, authorize):
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             require(authorize() and current_config() == before and target(cohort) == unit, 'DHCP_TARGET_CHANGED')
             require(observe_interfaces(records) == interfaces, 'DHCP_INTERFACE_CHANGED')
+            listeners.check(interfaces, unit[3])
             if not os.path.lexists(STATE / 'root.json'):
                 create(STATE / 'root.json', dict(schema=1, root=root))
             intent = dict(root=root, request=expected, target=unit[0], deliveryProtocol=outcomes.PROTOCOL,
@@ -222,6 +242,7 @@ def apply(expected, root, cohort, authorize):
             create(prepared, intent)
             require(authorize() and current_config() == before and target(cohort) == unit, 'DHCP_TARGET_CHANGED')
             require(observe_interfaces(records) == interfaces, 'DHCP_INTERFACE_CHANGED')
+            listeners.check(interfaces, unit[3])
             if model != before[1]:
                 os.replace(staged, CONFIG)
                 sync(CONFIG.parent)
@@ -234,6 +255,7 @@ def apply(expected, root, cohort, authorize):
             require(current[0] == unit[0] and current[1] == desired and current_config()[1] == model
                     and observe_interfaces(records) == interfaces
                     and (verb != 'restart' or model == before[1] or current[2] != unit[2]), 'DHCP_OUTCOME_UNKNOWN')
+            listeners.check(interfaces, current[3], ready=True)
             return ('APPLIED', outcomes.commit(STATE / (operation + '.result'), intent))
         finally:
             staged.unlink(missing_ok=True)
@@ -259,8 +281,10 @@ def operate(expected, cohort, authorize):
         require(file_hash(current[1]) == expected_sha and current_config() == current, 'UNOWNED_DHCP_CONFIGURATION')
         matched = current[1] == configuration.render(records)
         if matched:
-            observe_interfaces(records)
-            if target(cohort)[1] == ('active' if records else 'inactive'):
+            interfaces = observe_interfaces(records)
+            unit = target(cohort)
+            if unit[1] == ('active' if records else 'inactive'):
+                listeners.check(interfaces, unit[3], ready=True)
                 return ('APPLIED', None)
         return ('DIFFERENT', None)
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
