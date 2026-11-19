@@ -72,6 +72,23 @@ class BindConfigurationTest(unittest.TestCase):
             with self.subTest(network=network), self.assertRaisesRegex(bind.Refused, 'INVALID_BIND_CONFIGURATION'):
                 config.decode_fields('configure:enable-lan-dual:192.0.2.53:' + network)
 
+    def test_link_local_forwarders_preserve_their_bound_zone_identity(self):
+        base = 'configure:enable-lan-scoped:fe800000000000000000000000000053'
+        network = ':fd370000000000000000000000000001/64'
+        value = config.decode_fields(base + '%wan0.15@104' + network)
+        self.assertEqual(value['forwarders'], ['fe80::53%wan0.15'])
+        self.assertEqual(value['scopes'], {'wan0.15': 104})
+        self.assertIn(b'forwarders {fe80::53%104;};', config.render(value, STOCK))
+        with patch.object(config.socket, 'if_nametoindex', return_value=104):
+            config.check_scopes(value)
+        with (patch.object(config.socket, 'if_nametoindex', return_value=105),
+              self.assertRaisesRegex(bind.Refused, 'BIND_RESOLVER_INTERFACE_CHANGED')):
+            config.check_scopes(value)
+        for suffix in ('', '%wan0@0', '%wan0@1;include', '%wan0@2147483648',
+                       '%wan0@7,fe800000000000000000000000000053%wan0@8'):
+            with self.subTest(suffix=suffix), self.assertRaisesRegex(bind.Refused, 'INVALID_BIND_CONFIGURATION'):
+                config.decode_fields(base + suffix + network)
+
     def test_only_stock_or_the_latest_matched_publication_is_eligible(self):
         files = {str(config.CONFIG): config.md5(STOCK)}
         self.assertEqual(config.paired_stock(STOCK, [], files), STOCK)

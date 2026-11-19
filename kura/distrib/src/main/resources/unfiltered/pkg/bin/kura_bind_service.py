@@ -37,7 +37,7 @@ SOURCES = (HELPER, 'bin/kura_bind_config.py', 'bin/kura_bind_outcomes.py', 'bin/
            'bin/kura_clock_journal.py', 'bin/kura_journal_export.py',
            'bin/kura_modem_cohort.py', 'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py',
            'bin/kura_reboot_protocol.py', f'install/{SOCKET_UNIT}', f'install/{ACTOR_UNIT}')
-LAN_CAPABILITIES = ('lan-listener-v1', 'lan-dual-stack-v1')
+LAN_CAPABILITIES = ('lan-listener-v1', 'lan-dual-stack-v1', 'lan-scoped-forwarders-v1')
 FILES = {Path(name).name for name in SOURCES} | set(LAN_CAPABILITIES)
 WRITES = ('start', 'stop', 'restart', 'configure')
 ACTIONS = ('status', 'scope')
@@ -204,14 +204,18 @@ def admit_intent(intent_path, intent, before, authorize):
 
 def configure_operation(expected, intent_path, receipt, intent, history, target_before, authorize):
     typed = expected['configuration']
+    configuration.check_scopes(typed)
     identity, payload, publication = configuration.prepare(typed, history, ENVIRONMENT)
     with configuration.stage(identity, payload, validate_checker, ENVIRONMENT) as (staged, prepared):
         require(configuration.prepare(typed, history, ENVIRONMENT) == (identity, payload, publication),
                 'BIND_CONFIGURATION_CHANGED')
         intent['publication'] = publication
         intent['stagedPublication'] = dict(boot=boot_identity(), file=prepared)
+        configuration.check_scopes(typed)
         admit_intent(intent_path, intent, target_before, authorize)
+        configuration.check_scopes(typed)
         apply_configuration(typed['mode'], payload, identity, staged, prepared, target_before)
+        configuration.check_scopes(typed)
         return ('APPLIED', outcomes.commit(receipt, intent))
 
 

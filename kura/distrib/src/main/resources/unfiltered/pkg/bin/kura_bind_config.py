@@ -7,6 +7,7 @@ from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 import os
 from pathlib import Path
 import re
+import socket
 import stat
 import subprocess
 import tempfile
@@ -19,7 +20,8 @@ ENV_FILE = Path('/etc/default/named')
 CHECKER = Path('/usr/bin/named-checkconf')
 LIMIT = 8192
 DUAL_STACK = 'enable-lan-dual'
-ENABLE_MODES = ('enable', 'enable-lan', DUAL_STACK)
+SCOPED_LAN = 'enable-lan-scoped'
+ENABLE_MODES = ('enable', 'enable-lan', DUAL_STACK, SCOPED_LAN)
 MODES = ('keep', 'disable', *ENABLE_MODES)
 LOCAL_STUBS = ('127.0.0.1', '127.0.0.53', '127.0.0.54')
 LAN_V6_RANGES = (IPv6Network('2000::/3'), IPv6Network('fc00::/7'))
@@ -45,6 +47,33 @@ def typed_prefix(token, dual):
     return str(network)
 
 
+def resolver_addresses(tokens, mode):
+    dual = mode in (DUAL_STACK, SCOPED_LAN)
+    scopes = {}
+    forwarders = set()
+    loopback = False
+    for token in tokens:
+        literal, separator, scope = token.partition('%')
+        address = typed_address(literal, dual)
+        loopback = loopback or address.is_loopback
+        linked = address.version == 6 and address.is_link_local
+        if dual:
+            require(not (address.is_unspecified or address.is_multicast), 'INVALID_BIND_CONFIGURATION')
+        if separator:
+            match = re.fullmatch(r'([A-Za-z_][A-Za-z0-9_.-]{0,14})@([1-9][0-9]{0,9})', scope)
+            require(mode == SCOPED_LAN and match and linked, 'INVALID_BIND_CONFIGURATION')
+            name, index = match[1], int(match[2])
+            require(index <= 2147483647 and scopes.setdefault(name, index) == index, 'INVALID_BIND_CONFIGURATION')
+            forwarders.add(f'{address}%{name}')
+        else:
+            require(not linked, 'INVALID_BIND_CONFIGURATION')
+            forwarders.add(str(address))
+    require(mode != SCOPED_LAN or bool(scopes), 'INVALID_BIND_CONFIGURATION')
+    if mode in ('enable-lan', DUAL_STACK, SCOPED_LAN) and loopback:
+        require(len(forwarders) == 1 and next(iter(forwarders)) in LOCAL_STUBS, 'INVALID_BIND_CONFIGURATION')
+    return sorted(forwarders), scopes
+
+
 def decode_fields(value):
     require(len(value) <= 3500, 'INVALID_BIND_CONFIGURATION')
     fields = value.split(':')
@@ -53,21 +82,25 @@ def decode_fields(value):
     addresses = forwarders.split(',') if forwarders else []
     prefixes = networks.split(',') if networks else []
     require(len(addresses) <= 16 and len(prefixes) <= 128, 'INVALID_BIND_CONFIGURATION')
-    dual = mode == DUAL_STACK
     try:
-        upstreams = {typed_address(address, dual) for address in addresses}
-        addresses = sorted(map(str, upstreams))
-        prefixes = sorted({typed_prefix(prefix, dual) for prefix in prefixes})
+        addresses, scopes = resolver_addresses(addresses, mode)
+        prefixes = sorted({typed_prefix(prefix, mode in (DUAL_STACK, SCOPED_LAN)) for prefix in prefixes})
     except ValueError:
         require(False, 'INVALID_BIND_CONFIGURATION')
     require(mode not in ENABLE_MODES or (bool(addresses) and bool(prefixes)), 'INVALID_BIND_CONFIGURATION')
-    if dual:
-        require(all(not (address.is_unspecified or address.is_multicast
-                         or (address.version == 6 and address.is_link_local))
-                    for address in upstreams), 'INVALID_BIND_CONFIGURATION')
-    if mode in ('enable-lan', DUAL_STACK) and any(address.is_loopback for address in upstreams):
-        require(len(addresses) == 1 and addresses[0] in LOCAL_STUBS, 'INVALID_BIND_CONFIGURATION')
-    return dict(mode=mode, forwarders=addresses, networks=prefixes)
+    result = dict(mode=mode, forwarders=addresses, networks=prefixes)
+    if scopes:
+        result['scopes'] = scopes
+    return result
+
+
+def check_scopes(configuration):
+    for name, expected in configuration.get('scopes', {}).items():
+        try:
+            actual = socket.if_nametoindex(name)
+        except OSError:
+            actual = 0
+        require(actual == expected, 'BIND_RESOLVER_INTERFACE_CHANGED')
 
 
 def sha(raw):
@@ -114,12 +147,15 @@ def render(configuration, stock):
     includes = get_includes(stock)
     if configuration['mode'] == 'disable' or not (configuration['forwarders'] and configuration['networks']):
         return stock
-    forwarders = ''.join(address + ';' for address in configuration['forwarders'])
+    forwarders = []
+    for address in configuration['forwarders']:
+        literal, separator, name = address.partition('%')
+        forwarders.append(f"{literal}%{configuration['scopes'][name]};" if separator else literal + ';')
     networks = ''.join(prefix + ';' for prefix in configuration['networks'])
-    lan_only = configuration['mode'] in ('enable-lan', DUAL_STACK)
+    lan_only = configuration['mode'] in ('enable-lan', DUAL_STACK, SCOPED_LAN)
     listen = f'\tlisten-on {{!127.0.0.0/8;{networks}}};\n' if lan_only else ''
     listen_v6 = '\tlisten-on-v6 { none; };\n'
-    if configuration['mode'] == DUAL_STACK:
+    if configuration['mode'] in (DUAL_STACK, SCOPED_LAN):
         v4 = ''.join(prefix + ';' for prefix in configuration['networks'] if ':' not in prefix)
         v6 = ''.join(prefix + ';' for prefix in configuration['networks'] if ':' in prefix)
         listen = f'\tlisten-on {{!127.0.0.0/8;{v4}}};\n' if v4 else '\tlisten-on { none; };\n'
@@ -133,7 +169,7 @@ def render(configuration, stock):
         '\tversion "not currently available";\n'
         f'{listen}'
         f'{listen_v6}'
-        f'\tforwarders {{{forwarders}}};\n'
+        f"\tforwarders {{{''.join(forwarders)}}};\n"
         '\tforward only;\n'
         '\tallow-transfer { none; };\n'
         f'\tallow-query {{{clients}}};\n'
