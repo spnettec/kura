@@ -21,16 +21,31 @@ class BindConfigurationTest(unittest.TestCase):
         result = config.render(value, STOCK)
         self.assertIn(b'allow-query {192.0.2.0/24;};', result)
         self.assertIn(b'allow-recursion {192.0.2.0/24;};', result)
+        self.assertNotIn(b'listen-on {', result)
         self.assertIn(b'include "/etc/bind/named.conf.local";', result)
         self.assertNotIn(b'include "/etc/bind/named.conf.options";', result)
 
     def test_rejects_untyped_text_and_incomplete_active_configuration(self):
         for field in ('configure:enable:127.0.0.2:192.0.2.0/128',
                       'configure:enable:127.0.0.2:',
+                      'configure:enable-lan:127.0.0.1,192.0.2.5:203.0.113.0/24',
+                      'configure:enable-lan:127.0.0.1,127.0.0.53:203.0.113.0/24',
+                      'configure:enable-lan:127.0.0.2:203.0.113.0/24',
+                      'configure:enable-lan::203.0.113.0/24',
                       'configure:keep:127.0.0.2,include "file";:',
                       'configure:enable:127.0.0.2:192.0.2.0/24,'):
             with self.subTest(field=field), self.assertRaisesRegex(bind.Refused, 'INVALID_BIND_CONFIGURATION'):
                 config.decode_fields(field)
+
+    def test_lan_listener_excludes_loopback_and_uses_only_verified_client_prefixes(self):
+        for resolver in ('127.0.0.1', '127.0.0.53', '127.0.0.54', '192.0.2.10'):
+            candidate = config.decode_fields('configure:enable-lan:' + resolver + ':203.0.113.9/24')
+            result = config.render(candidate, STOCK)
+            self.assertIn(b'listen-on {!127.0.0.0/8;203.0.113.0/24;};', result)
+            self.assertIn(b'listen-on-v6 { none; };', result)
+            self.assertIn(b'allow-recursion {!localhost;203.0.113.0/24;};', result)
+            self.assertIn(('forwarders {' + resolver + ';};').encode(), result)
+            self.assertIn(b'forward only;', result)
 
     def test_only_stock_or_the_latest_matched_publication_is_eligible(self):
         files = {str(config.CONFIG): config.md5(STOCK)}

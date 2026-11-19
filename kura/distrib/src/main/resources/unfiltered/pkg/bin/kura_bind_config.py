@@ -18,7 +18,9 @@ CONFIG = Path('/etc/bind/named.conf')
 ENV_FILE = Path('/etc/default/named')
 CHECKER = Path('/usr/bin/named-checkconf')
 LIMIT = 8192
-MODES = ('keep', 'enable', 'disable')
+ENABLE_MODES = ('enable', 'enable-lan')
+MODES = ('keep', 'disable', *ENABLE_MODES)
+LOCAL_STUBS = ('127.0.0.1', '127.0.0.53', '127.0.0.54')
 INCLUDES = frozenset(('named.conf.options', 'named.conf.local', 'named.conf.root-hints', 'named.conf.default-zones'))
 
 
@@ -37,7 +39,9 @@ def decode_fields(value):
         prefixes = sorted({str(IPv4Network(prefix, strict=False)) for prefix in prefixes})
     except ValueError:
         require(False, 'INVALID_BIND_CONFIGURATION')
-    require(mode != 'enable' or (bool(addresses) and bool(prefixes)), 'INVALID_BIND_CONFIGURATION')
+    require(mode not in ENABLE_MODES or (bool(addresses) and bool(prefixes)), 'INVALID_BIND_CONFIGURATION')
+    if mode == 'enable-lan' and any(IPv4Address(address).is_loopback for address in addresses):
+        require(len(addresses) == 1 and addresses[0] in LOCAL_STUBS, 'INVALID_BIND_CONFIGURATION')
     return dict(mode=mode, forwarders=addresses, networks=prefixes)
 
 
@@ -87,18 +91,22 @@ def render(configuration, stock):
         return stock
     forwarders = ''.join(address + ';' for address in configuration['forwarders'])
     networks = ''.join(prefix + ';' for prefix in configuration['networks'])
+    lan_only = configuration['mode'] == 'enable-lan'
+    listen = f'\tlisten-on {{!127.0.0.0/8;{networks}}};\n' if lan_only else ''
+    clients = '!localhost;' + networks if lan_only else networks
     template = (
         '// Managed by Kura through the paired BIND configuration broker.\n'
         'options {\n'
         '\tdirectory "/var/cache/bind";\n'
         '\tversion "not currently available";\n'
+        f'{listen}'
         '\tlisten-on-v6 { none; };\n'
         f'\tforwarders {{{forwarders}}};\n'
         '\tforward only;\n'
         '\tallow-transfer { none; };\n'
-        f'\tallow-query {{{networks}}};\n'
-        f'\tallow-recursion {{{networks}}};\n'
-        f'\tallow-query-cache {{{networks}}};\n'
+        f'\tallow-query {{{clients}}};\n'
+        f'\tallow-recursion {{{clients}}};\n'
+        f'\tallow-query-cache {{{clients}}};\n'
         '\trecursion yes;\n'
         '\tmax-cache-ttl 30;\n'
         '\tmax-ncache-ttl 30;\n'
