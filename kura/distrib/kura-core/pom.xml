@@ -254,6 +254,40 @@
                                     </mapper>
                                 </data>
                                 <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-bind-service.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-bind-service@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/bind-service</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-bind-service</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
                                     <src>${basedir}/target/kura_${project.version}_linux</src>
                                     <type>directory</type>
                                     <mapper>

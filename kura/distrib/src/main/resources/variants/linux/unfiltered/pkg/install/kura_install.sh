@@ -68,6 +68,9 @@ configure_layout() {
         python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-retained-main-state || exit 1
     fi
 
+    # Main must start with this journal already hidden in its mount namespace.
+    /usr/bin/python3 -I -B "${INSTALL_DIR}/kura/bin/kura_bind_service.py" provision || exit 1
+
     # set up kura init
     # Upgrade leaves the managed unit and its enable/mask links in place. Publishing
     # a new template must not re-enable a service the operator deliberately disabled,

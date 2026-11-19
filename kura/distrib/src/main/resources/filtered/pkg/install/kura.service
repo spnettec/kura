@@ -1,12 +1,12 @@
 [Unit]
 OnFailure=kura-key-recovery.service
 Description=Kura
-Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-modem-driver.socket
+Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-modem-driver.socket kura-bind-service.socket
 Requires=kura-key-service.socket
 Requires=kura-clock-broker.socket
 After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
 After=kura-clock-broker.socket kura-clock-broker.service
-After=kura-journal-export.socket kura-modem-driver.socket
+After=kura-journal-export.socket kura-modem-driver.socket kura-bind-service.socket
 
 [Service]
 User=kurad
@@ -26,15 +26,15 @@ SuccessExitStatus=143
 # The synchronous ExecStop drains the JVM before the final cgroup cleanup.
 KillMode=control-group
 TimeoutStopSec=45s
-# The clock, journal and modem actors hold their own host permissions.
+# Host operations are dispatched through their dedicated actors.
 AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill
 # su needs setuid/setgid in its bounding set, but the JVM receives neither.
 CapabilityBoundingSet=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_kill cap_setuid cap_setgid
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
-ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service
+ReadOnlyPaths=/opt/eclipse /etc/kura /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named
 # Core uses the typed socket, never the independent service's journal or HMAC key.
-InaccessiblePaths=/var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls /var/lib/kura-clock-broker /usr/libexec/kura-clock-broker -/var/lib/kura-reboot-broker
+InaccessiblePaths=/var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls /var/lib/kura-clock-broker /usr/libexec/kura-clock-broker -/var/lib/kura-reboot-broker /var/lib/kura-bind-service
 ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data
 LoadCredential=kura_encryption_key:/etc/kura/credentials/kura_encryption_key
 
