@@ -15,6 +15,7 @@ import kura_key_cohort as cohort
 import kura_clock_broker as clock_broker
 import kura_reboot_broker as reboot_broker
 import kura_journal_export as journal_export
+import kura_modem_driver as modem_driver
 
 
 def require(ok):
@@ -234,6 +235,7 @@ if __name__ == "__main__":
     prepare_clock_service(Path(sys.argv[1]))
     reboot_broker.package_cohort(Path(sys.argv[1]))
     journal_export.package_cohort(Path(sys.argv[1]))
+    modem_driver.package_cohort(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',

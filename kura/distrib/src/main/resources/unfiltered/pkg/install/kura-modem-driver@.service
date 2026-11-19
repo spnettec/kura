@@ -1,0 +1,34 @@
+[Unit]
+Description=Kura typed USB modem driver actor
+PartOf=kura.service
+Requisite=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=root
+Group=root
+StateDirectory=kura-modem-driver
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-modem-driver/kura_modem_driver.py serve %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_SYS_MODULE
+AmbientCapabilities=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+MemoryMax=64M
+TasksMax=8
+RuntimeMaxSec=45s
+TimeoutStopSec=5s

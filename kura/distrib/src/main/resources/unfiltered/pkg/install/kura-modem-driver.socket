@@ -1,0 +1,13 @@
+[Unit]
+Description=Kura typed USB modem driver socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-modem-driver.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+Accept=yes
+MaxConnections=4
+Backlog=4
+RemoveOnStop=yes

@@ -119,7 +119,7 @@ def verify_actor(unit):
     return manifest['mainUnitSha256']
 
 
-def main_peer(peer, unit_sha):
+def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=False):
     pid, uid, gid, pidfd = peer
     account = pwd.getpwnam(CALLER)
     require(uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
@@ -130,6 +130,8 @@ def main_peer(peer, unit_sha):
     require(main['ActiveState'] == 'active' and main['ControlGroup'] == '/system.slice/kura.service'
             and main['User'] == main['Group'] == CALLER and parent > 1 and pid != parent
             and re.fullmatch(r'[0-9a-f]{32}', main['InvocationID']), 'UNAUTHORIZED')
+    if networking:
+        require(main['DropInPaths'] == str(NETWORKING_DROPIN), 'UNAUTHORIZED')
     status = proc_status(pid)
     verify_identity(status, uid, gid)
     require(status['PPid'].strip() == str(parent), 'UNAUTHORIZED')
@@ -140,9 +142,9 @@ def main_peer(peer, unit_sha):
         for process in (pid, parent):
             require(proc_file(process, 'cgroup').splitlines() == [MAIN_CGROUP.encode()], 'UNAUTHORIZED')
         raw = proc_file(pid, 'cmdline').split(b'\0')
-        require(len(raw) == len(CLIENT) + 3 and raw[-1] == b''
-                and raw[:len(CLIENT)] == list(map(os.fsencode, CLIENT)), 'UNAUTHORIZED')
-        expected = request(raw[-3].decode('ascii'), raw[-2].decode('ascii'))
+        require(len(raw) == len(client_args) + argument_count + 1 and raw[-1] == b''
+                and raw[:len(client_args)] == list(map(os.fsencode, client_args)), 'UNAUTHORIZED')
+        expected = decode_args(*(arg.decode('ascii') for arg in raw[len(client_args):-1]))
         require(paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True) == main, 'UNAUTHORIZED')
         verify_alive(with_parent)
         verify_alive(pidfd)
