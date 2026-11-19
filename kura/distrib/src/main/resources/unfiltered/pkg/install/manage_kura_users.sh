@@ -122,7 +122,7 @@ import os, stat, sys, tempfile
 from pathlib import Path
 
 PATH = Path('/usr/share/polkit-1/rules.d/kura-nm.rules')
-POLICY = b'''polkit.addRule(function(action, subject) {
+LEGACY = b'''polkit.addRule(function(action, subject) {
         if ((action.id.indexOf("org.freedesktop.NetworkManager.") == 0 ||
             action.id.indexOf("org.freedesktop.ModemManager1.") == 0 ||
             action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&
@@ -131,6 +131,11 @@ POLICY = b'''polkit.addRule(function(action, subject) {
         }
     });
 '''
+LEGACY_NETWORKING = LEGACY.splitlines(keepends=True)[0] + b''.join(
+    line[4:] for line in LEGACY.splitlines(keepends=True)[1:])
+POLICY = LEGACY.replace(b' == 0 ||\n            action.id.indexOf("fi.w1.wpa_supplicant1.") == 0) &&',
+                        b' == 0) &&')
+
 
 def require(value):
     if not value:
@@ -142,7 +147,7 @@ def sync():
     finally: os.close(fd)
 
 try:
-    require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[1] in ('check', 'install', 'remove'))
+    require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[1] in ('check', 'install', 'remove', 'retire-wpa'))
     action = sys.argv[1]
     for parent in PATH.parents:
         m = parent.lstat()
@@ -156,9 +161,26 @@ try:
             raw = os.read(fd, 16385)
             identity = lambda x: (x.st_dev, x.st_ino, x.st_uid, x.st_gid, x.st_mode,
                                   x.st_nlink, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
-            require(raw == POLICY and identity(m) == identity(os.fstat(fd)) == identity(PATH.lstat()))
+            require(raw in (POLICY, LEGACY, LEGACY_NETWORKING)
+                    and identity(m) == identity(os.fstat(fd)) == identity(PATH.lstat()))
             if action == 'remove':
                 PATH.unlink(); sync()
+            elif action in ('install', 'retire-wpa') and raw != POLICY:
+                attrs = tuple((key, os.getxattr(fd, key)) for key in os.listxattr(fd))
+                out, temporary = tempfile.mkstemp(prefix='.kura-nm-policy-', dir=PATH.parent)
+                try:
+                    with os.fdopen(out, 'wb') as output:
+                        os.fchown(output.fileno(), 0, m.st_gid)
+                        os.fchmod(output.fileno(), 0o644)
+                        output.write(POLICY); output.flush()
+                        for key, value in attrs:
+                            os.setxattr(output.fileno(), key, value)
+                        os.fsync(output.fileno())
+                    require(identity(m) == identity(os.fstat(fd)) == identity(PATH.lstat()))
+                    os.replace(temporary, PATH)
+                    sync()
+                finally:
+                    Path(temporary).unlink(missing_ok=True)
             elif action == 'install' and stat.S_IMODE(m.st_mode) != 0o644:
                 os.fchmod(fd, 0o644); os.fsync(fd)
         finally:
@@ -179,10 +201,17 @@ except (OSError, ValueError, RuntimeError):
 KURA_MANAGED_NETWORK_POLICY
 }
 
+function manage_wpa_policy {
+    local helper_dir
+    helper_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../bin" && pwd) || return 1
+    /usr/bin/python3 -I -B "${helper_dir}/kura_wpa_policy.py" "$1"
+}
+
 function create_users {
     require_modern_polkit || return 1
     manage_su_pam_policy check || return 1
     manage_network_polkit_policy check || return 1
+    manage_wpa_policy check || return 1
     # create kura user without home directory
     useradd -M kura
     # disable login for kura user
@@ -201,26 +230,15 @@ function create_users {
     write_systemd_polkit_policy || return 1
     if [[ $NN == "NO" ]]; then
         manage_network_polkit_policy install || return 1
+    else
+        manage_network_polkit_policy retire-wpa || return 1
     fi
+    manage_wpa_policy apply || return 1
 
     # Keep the target restriction and caller grant in one atomic PAM update.
     manage_su_pam_policy install || return 1
 
     # Bluetooth support was removed from this YOFC distribution.
-
-    # grant kurad user the privileges to manage wpa supplicant via dbus
-    if [ -f /etc/dbus-1/system.d/wpa_supplicant.conf ] && ! grep -q kurad /etc/dbus-1/system.d/wpa_supplicant.conf && [ $NN == "NO" ]; then
-        cp /etc/dbus-1/system.d/wpa_supplicant.conf /etc/dbus-1/system.d/wpa_supplicant.conf.save
-        awk 'done != 1 && /^<\/busconfig>/ {
-            print "    <policy user=\"kurad\">"
-            print "        <allow own=\"fi.w1.wpa_supplicant1\"/>"
-            print "        <allow send_destination=\"fi.w1.wpa_supplicant1\"/>"
-            print "        <allow send_interface=\"fi.w1.wpa_supplicant1\"/>"
-            print "        <allow receive_sender=\"fi.w1.wpa_supplicant1\" receive_type=\"signal\"/>"
-            print "    </policy>\n"
-            done = 1
-        } 1' /etc/dbus-1/system.d/wpa_supplicant.conf >tempfile && mv tempfile /etc/dbus-1/system.d/wpa_supplicant.conf
-    fi
 
     # Code and root installer helpers must not belong to the running daemon.
     python3 -I /opt/eclipse/kura/bin/kura_runtime_ownership.py || return 1
@@ -234,6 +252,7 @@ function delete_users {
     # The retained kurad UID must not retain the package's broad NM grant.
     # Unknown site rules are preserved and make removal fail explicitly.
     manage_network_polkit_policy remove || return 1
+    manage_wpa_policy apply || return 1
     # A retained reinstall must keep the numeric owners of copied user data.
     # Both accounts are already locked; revoke grants without recycling a UID.
     if [ ! -e /var/lib/kura-retained ]; then
@@ -263,16 +282,10 @@ function delete_users {
     if [ -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla ]; then
         rm -f /etc/polkit-1/localauthority/50-local.d/53-org.freedesktop.modemmanager.pkla || return 1
     fi
-    if [ -f /etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pkla ]; then
-        rm -f /etc/polkit-1/localauthority/50-local.d/54-fi.w1.wpa_supplicant1.pkla || return 1
-    fi
 
     # recover old configs
     if [ -f /etc/dbus-1/system.d/bluetooth.conf.save ]; then
         mv /etc/dbus-1/system.d/bluetooth.conf.save /etc/dbus-1/system.d/bluetooth.conf || return 1
-    fi
-    if [ -f /etc/dbus-1/system.d/wpa_supplicant.conf.save ]; then
-        mv /etc/dbus-1/system.d/wpa_supplicant.conf.save /etc/dbus-1/system.d/wpa_supplicant.conf || return 1
     fi
 }
 

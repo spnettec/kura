@@ -11,6 +11,7 @@ import sys
 
 HOME = Path('/opt/eclipse/kura')
 SHARE = Path('/usr/share')
+NETWORKING_RULE = Path('/usr/share/polkit-1/rules.d/52-kura-networking.rules')
 PROVIDERS = {'kura-networking': 'networking', 'kura-firewall-only': 'firewall'}
 MODEM_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
 BIND_NAME = re.compile(r'org\.eclipse\.kura\.linux\.systemd\.provider-[0-9A-Za-z.+~-]+\.jar')
@@ -107,6 +108,13 @@ def check():
 
         if package == 'kura-networking':
             check_dhcp_provider(installed == package)
+            folder = HOME / 'siblings' / 'networking' / '5s'
+            jars = ()
+            if os.path.lexists(folder):
+                protected(folder, directory=True)
+                jars = tuple(folder.iterdir())
+            check_asset(package, folder, jars, proof_dir / 'wifi-nm-provider.json',
+                        NM_NAME, 'wifiNmProtocol', installed == package, policy=NETWORKING_RULE)
 
 
 def check_dhcp_provider(present):
@@ -124,20 +132,23 @@ def check_dhcp_provider(present):
         check_asset(package, provider_dir, files, SHARE / package / filename, pattern, protocol, present)
 
 
-def check_asset(package, provider_dir, files, proof_path, name, protocol, present):
+def check_asset(package, provider_dir, files, proof_path, name, protocol, present, *, policy=None):
     jars = {path for path in files if name.fullmatch(path.name)}
     if present:
-        check_provider(package, provider_dir, proof_path, jars, name, protocol)
+        check_provider(package, provider_dir, proof_path, jars, name, protocol, policy=policy)
     elif jars or os.path.lexists(proof_path):
         raise ValueError(f'Detached Networking provider files for {protocol}')
 
 
-def check_provider(package, provider_dir, proof_path, jars, name, protocol):
+def check_provider(package, provider_dir, proof_path, jars, name, protocol, *, policy=None):
     if not os.path.lexists(proof_path):
         raise ValueError(f'Missing paired Networking release proof for {protocol}')
     require_ownership(proof_path, package)
     proof = snapshot(proof_path, 4096, json.load)
-    if (type(proof) is not dict or set(proof) != {'schema', protocol, 'provider', 'sha256'}
+    keys = {'schema', protocol, 'provider', 'sha256'}
+    if policy is not None:
+        keys.add('policySha256')
+    if (type(proof) is not dict or set(proof) != keys
             or type(proof['schema']) is not int or proof['schema'] != 1
             or type(proof[protocol]) is not int or proof[protocol] != 1
             or not isinstance(proof['provider'], str) or not name.fullmatch(proof['provider'])
@@ -150,6 +161,11 @@ def check_provider(package, provider_dir, proof_path, jars, name, protocol):
     if snapshot(provider, 64 * 1024 * 1024,
                 lambda stream: hashlib.file_digest(stream, 'sha256').hexdigest()) != proof['sha256']:
         raise ValueError(f'Networking provider fingerprint changed for {protocol}')
+    if policy is not None:
+        require_ownership(policy, package)
+        if snapshot(policy, 16 * 1024,
+                    lambda stream: hashlib.file_digest(stream, 'sha256').hexdigest()) != proof['policySha256']:
+            raise ValueError('Unpaired Networking Wi-Fi policy')
 
 
 if __name__ == '__main__':

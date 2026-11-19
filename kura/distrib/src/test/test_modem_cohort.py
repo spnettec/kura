@@ -45,6 +45,8 @@ class ProviderFingerprintTest(unittest.TestCase):
         self.proof = self.share / self.package / 'modem-provider.json'
         self.proof.parent.mkdir(parents=True)
         self.owner = self.enterContext(patch.object(cohort, 'require_ownership'))
+        self.rule = root / '52-kura-networking.rules'
+        self.enterContext(patch.object(cohort, 'NETWORKING_RULE', self.rule))
 
     def test_provider_hash_binds_the_only_jar(self):
         self.provider.write_bytes(b'built modem bundle')
@@ -106,7 +108,18 @@ class ProviderFingerprintTest(unittest.TestCase):
             self.proof.with_name('dhcp-nm-provider.json').write_text(json.dumps(dict(
                 schema=1, dhcpNmProtocol=1, provider=nm_name.name,
                 sha256=hashlib.sha256(nm_name.read_bytes()).hexdigest())))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* wifiNmProtocol'):
+                cohort.check()
+            self.rule.write_bytes(b'known packaged Networking policy')
+            self.proof.with_name('wifi-nm-provider.json').write_text(json.dumps(dict(
+                schema=1, wifiNmProtocol=1, provider=nm_name.name,
+                sha256=hashlib.sha256(nm_name.read_bytes()).hexdigest(),
+                policySha256=hashlib.sha256(self.rule.read_bytes()).hexdigest())))
             cohort.check()
+            self.owner.assert_any_call(self.rule, self.package)
+            self.rule.write_bytes(b'foreign policy file')
+            with self.assertRaisesRegex(ValueError, 'Unpaired Networking Wi-Fi policy'):
+                cohort.check()
             self.owner.assert_any_call(nm_name, self.package)
             self.owner.assert_any_call(bind_jar, self.package)
             bind_jar.write_bytes(b'different DNS bundle')

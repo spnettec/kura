@@ -63,12 +63,30 @@ class NetworkPolkitPolicyTest(unittest.TestCase):
         self.invoke('check'); self.assertFalse(self.path.exists())
         self.invoke('install'); self.assertEqual(0, self.path.stat().st_uid)
         self.assertEqual(0o644, stat.S_IMODE(self.path.stat().st_mode))
-        self.assertEqual('ff81d098ed539b00d0de3e83dfa81ea6a103aa5b59c1758c6aa6069cfa10609e',
+        self.assertEqual('16bc6c9aa7aa9a916a18e7ed8d5eb26d1a86094af98dc4a04b04902daaa55721',
                          self.fingerprint()[-1])
         before = self.fingerprint(); self.invoke('check'); self.invoke('install')
         self.assertEqual(before, self.fingerprint())
         self.invoke('remove'); self.invoke('remove'); self.assertFalse(self.path.exists())
         self.assertEqual([], list(self.rules.iterdir()))
+
+    def test_both_known_historical_rules_migrate_to_the_same_narrower_policy(self):
+        legacy = self.body.split("LEGACY = b" + "'" * 3, 1)[1].split("'" * 3, 1)[0].encode()
+        lines = legacy.splitlines(keepends=True)
+        networking = lines[0] + b''.join(line[4:] for line in lines[1:])
+        for rule in (legacy, networking):
+            self.path.write_bytes(rule)
+            before = self.fingerprint()
+            self.invoke('check')
+            self.assertEqual(before, self.fingerprint())
+            self.invoke('retire-wpa')
+            current = self.path.read_bytes()
+            self.assertIn(b'org.freedesktop.NetworkManager.', current)
+            self.assertIn(b'org.freedesktop.ModemManager1.', current)
+            self.assertNotIn(b'fi.w1.wpa_supplicant1.', current)
+            self.invoke('remove')
+        self.invoke('retire-wpa')
+        self.assertFalse(self.path.exists())
 
     def test_custom_rule_is_preserved_including_all_metadata(self):
         self.path.write_bytes(b'// Root site rule must be retained\n'); self.path.chmod(0o600)

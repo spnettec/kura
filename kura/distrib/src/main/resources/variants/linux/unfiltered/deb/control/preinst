@@ -17,8 +17,13 @@ checkModemCohort() {
 raise RuntimeError("Kura modem cohort was not embedded")
 KURA_MODEM_COHORT
 }
+checkWpaPolicy() {
+    /usr/bin/python3 -I -B - check <<'KURA_WPA_POLICY'
+raise RuntimeError("Kura WPA policy admission was not embedded")
+KURA_WPA_POLICY
+}
 case "${1:-}" in
-    install|upgrade) checkModemCohort || exit 1 ;;
+    install|upgrade) checkModemCohort || exit 1; checkWpaPolicy || exit 1 ;;
 esac
 
 # YOFC ORDINARY BOOT INSTALL GUARD V1
