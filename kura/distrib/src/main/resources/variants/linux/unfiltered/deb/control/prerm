@@ -20,6 +20,12 @@ TIMESTAMP=$(date +%Y%m%d%H%M)
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log
 RETAINED_DIR=/var/lib/kura-retained
 
+clockMaintenanceGuard() {
+    python3 -I -B - "$@" <<'KURA_CLOCK_MAINTENANCE_GUARD'
+raise RuntimeError("Kura clock maintenance guard was not embedded")
+KURA_CLOCK_MAINTENANCE_GUARD
+}
+
 # A plain JVM signal leaves Restart=on-failure armed while files are replaced.
 # A synchronous manager stop cancels both the process and any queued restart.
 function stopKuraForPackage {
@@ -190,6 +196,7 @@ function preRemove {
 if [ "$1" = "failed-upgrade" ]; then
     exit 0
 fi
+clockMaintenanceGuard check || exit 1
 python3 -I -B - <<'KURA_REBOOT_MAINTENANCE_GUARD' || exit 1
 raise RuntimeError("Kura reboot maintenance guard was not embedded")
 KURA_REBOOT_MAINTENANCE_GUARD
@@ -201,9 +208,7 @@ if [ "$1" = "upgrade" ]; then
 fi
 # Stop synchronously on both paths; never fall through to a raw JVM signal when
 # a managed stop failed or the manager still reports live/start/stop processes.
-python3 -I - <<'KURA_CLOCK_MAINTENANCE_GUARD' || exit 1
-raise RuntimeError("Kura clock maintenance guard was not embedded")
-KURA_CLOCK_MAINTENANCE_GUARD
+clockMaintenanceGuard || exit 1
 if [ -f /lib/systemd/system/kura.service ]; then
     stopKuraForPackage || exit 1
 else

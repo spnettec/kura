@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: EPL-2.0
 """Embedded package guard; invoke only paired installed clock code before unpack."""
+import fcntl
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ import pwd
 import re
 import stat
 import subprocess
+import sys
 
 home = Path('/opt/eclipse/kura')
 setup = home / 'bin/kura_clock_setup.py'
@@ -35,6 +37,41 @@ def read(path, owner=0, mode=None):
         os.close(fd)
 
 
+def check_existing_operations(journal_source):
+    """Inspect the paired installed namespace without creating state or stopping units."""
+    if not os.path.lexists(state):
+        return
+    user = pwd.getpwnam('kura-clock')
+    record = json.loads(read(account, mode=0o644))
+    require(record.get('schema') == 1 and type(record.get('uid')) is int
+            and user.pw_uid == record['uid'] > 0 and user.pw_gid == record.get('gid'))
+    namespace = {'__name__': 'kura_clock_journal'}
+    exec(compile(journal_source, str(home / 'bin/kura_clock_journal.py'), 'exec'), namespace)
+    journal = namespace['Journal'](state, owner=user.pw_uid)
+    path = state / 'admission.lock'
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        metadata = os.fstat(fd)
+        require(stat.S_ISREG(metadata.st_mode) and metadata.st_uid == user.pw_uid and metadata.st_nlink == 1
+                and stat.S_IMODE(metadata.st_mode) == 0o600 and metadata.st_size == 0)
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        require(os.path.samestat(metadata, path.lstat()))
+        marker, operations = state / 'namespace.json', state / 'operations'
+        if not os.path.lexists(marker):
+            require(not os.path.lexists(operations))
+            return
+        namespace['directory'](operations, user.pw_uid)
+        original = journal.namespace()
+        for entry in operations.iterdir():
+            namespace['identifier'](entry.name)
+            namespace['directory'](entry, user.pw_uid)
+            intent = namespace['decode'](namespace['read'](entry / 'intent.json', user.pw_uid))
+            require(journal.status(original, entry.name, namespace['digest'](intent))['state'] in ('APPLIED', 'FAILED'))
+    finally:
+        os.close(fd)
+
+
+require(sys.argv[1:] in ([], ['check']))
 if os.path.lexists(setup):
     manifest = home / 'libexec/clock-broker/cohort.json'
     for path in [setup, manifest]:
@@ -55,10 +92,16 @@ if os.path.lexists(setup):
     helpers = ('kura_clock_setup.py', 'kura_clock_broker.py', 'kura_clock_client.py', 'kura_clock_journal.py')
     if 'configure-chrony' in descriptor.get('actions', []):
         helpers += ('kura_chrony_config.py',)
+    journal_source = None
     for name in helpers:
         raw = read(home / 'bin' / name)
         require(hashlib.sha256(raw).hexdigest() == descriptor['files']['bin/' + name])
-    subprocess.run(['/usr/bin/python3', '-I', '-B', str(setup), 'quiesce'], check=True, timeout=30)
+        if name == 'kura_clock_journal.py':
+            journal_source = raw
+    if sys.argv[1:] == ['check']:
+        check_existing_operations(journal_source)
+    else:
+        subprocess.run(['/usr/bin/python3', '-I', '-B', str(setup), 'quiesce'], check=True, timeout=30)
 elif os.path.lexists(state):
     # Managed remove/purge retains its namespace and Root maintenance purpose.
     # Do not import absent code, recreate an identity or query any old operation.
