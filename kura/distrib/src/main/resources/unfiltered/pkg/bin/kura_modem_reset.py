@@ -77,7 +77,7 @@ def verify_actor(unit):
 def request(action, operation):
     identifier(operation)
     fields = dict(schema=1, operationId=operation)
-    if action == 'scope':
+    if action in ('scope', 'ready'):
         return dict(**fields, action=action)
     if action.startswith(('outcome:', 'acknowledge:')):
         return dict(**fields, **outcomes.request_fields(action))
@@ -171,16 +171,7 @@ def legacy_owner():
         Path('/etc/kura/network-owner-agent'), HOME / 'framework/network-owner-agent')), 'MODEM_OWNED_BY_AGENT')
 
 
-def reset(expected, root, authorize):
-    # A private, fixed-system-bus connection binds unique names to this bus
-    # lifetime. Losing the bus can never reconnect and dispatch to reused names.
-    import dbus
-
-    operation = expected['operationId']
-    scope = outcomes.binding(STATE, root)
-    require(expected['rootScope'] == scope, 'UNPAIRED_MODEM_RESET_SCOPE')
-    if outcomes.intent_at(STATE, root, operation) is not None:
-        return outcomes.query(STATE, root, dict(action='outcome', proof=scope, operationId=operation))
+def require_ready(root):
     intents = sorted(STATE.glob('*.intent'))
     require(len(intents) < MAX_OPERATIONS, 'MODEM_RESET_JOURNAL_FULL')
     for entry in intents:
@@ -192,6 +183,18 @@ def reset(expected, root, authorize):
         # reenumerates a device. Preserve one unresolved reset per Root.
         require(result is not None and outcomes.delivered_at(STATE, previous, intent, result),
                 'PENDING_MODEM_RESET_OUTCOME')
+
+def reset(expected, root, authorize):
+    # A private, fixed-system-bus connection binds unique names to this bus
+    # lifetime. Losing the bus can never reconnect and dispatch to reused names.
+    import dbus
+
+    operation = expected['operationId']
+    scope = outcomes.binding(STATE, root)
+    require(expected['rootScope'] == scope, 'UNPAIRED_MODEM_RESET_SCOPE')
+    if outcomes.intent_at(STATE, root, operation) is not None:
+        return outcomes.query(STATE, root, dict(action='outcome', proof=scope, operationId=operation))
+    require_ready(root)
     legacy_owner()
     with closing(dbus.bus.BusConnection('unix:path=/run/dbus/system_bus_socket')) as bus:
         observed = target(bus, expected, dbus)
@@ -211,6 +214,9 @@ def reset(expected, root, authorize):
 def operate(expected, authorize):
     require(authorize(), 'UNAUTHORIZED')
     root = state_binding()
+    if expected['action'] == 'ready':
+        require_ready(root)
+        return 'APPLIED', outcomes.binding(STATE, root)
     if expected['action'] in outcomes.READ_ONLY:
         return outcomes.query(STATE, root, expected)
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
