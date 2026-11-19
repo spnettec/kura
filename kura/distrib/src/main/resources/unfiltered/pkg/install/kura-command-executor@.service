@@ -1,0 +1,27 @@
+[Unit]
+Description=Kura ordinary command executor
+PartOf=kura.service
+Requisite=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=kura
+Group=kura
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py serve %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+KillMode=control-group
+TimeoutStopSec=5s
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+ReadOnlyPaths=/opt/eclipse /etc/kura /etc/polkit-1 /usr /etc/systemd /run/systemd /var/lib/dpkg
+ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data
+InaccessiblePaths=-/etc/kura/credentials -/etc/kura/recovery-tls -/run/credentials/kura.service -/run/kura-key-service -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-clock-broker -/var/lib/kura-reboot-broker -/var/lib/kura-bind-service -/var/lib/kura-dhcp-service -/var/lib/kura-modem-reset

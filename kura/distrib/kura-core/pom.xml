@@ -220,6 +220,40 @@
                                     </mapper>
                                 </data>
                                 <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-command-executor.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-command-executor@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/command-executor</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-command-executor</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
                                     <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-driver.socket</src>
                                     <type>file</type>
                                     <mapper>

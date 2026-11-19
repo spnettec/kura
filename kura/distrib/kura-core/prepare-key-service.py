@@ -13,6 +13,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src/main/resources/unfiltered/pkg/bin"))
 import kura_key_cohort as cohort
 import kura_clock_broker as clock_broker
+import kura_command_executor as command_executor
 import kura_reboot_broker as reboot_broker
 import kura_journal_export as journal_export
 import kura_modem_driver as modem_driver
@@ -250,6 +251,7 @@ if __name__ == "__main__":
     prepare_clock_service(Path(sys.argv[1]))
     reboot_broker.package_cohort(Path(sys.argv[1]))
     journal_export.package_cohort(Path(sys.argv[1]))
+    command_executor.package_cohort(Path(sys.argv[1]))
     modem_driver.package_cohort(Path(sys.argv[1]))
     bind_service.package_cohort(Path(sys.argv[1]))
     dhcp_service.package_cohort(Path(sys.argv[1]))

@@ -119,7 +119,8 @@ def verify_actor(unit):
     return manifest['mainUnitSha256']
 
 
-def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=None):
+def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=None,
+              command_line=None):
     pid, uid, gid, pidfd = peer
     account = pwd.getpwnam(CALLER)
     require(uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
@@ -141,10 +142,11 @@ def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=
         verify_identity(proc_status(parent), uid, gid)
         for process in (pid, parent):
             require(proc_file(process, 'cgroup').splitlines() == [MAIN_CGROUP.encode()], 'UNAUTHORIZED')
-        raw = proc_file(pid, 'cmdline').split(b'\0')
-        require(len(raw) == len(client_args) + argument_count + 1 and raw[-1] == b''
+        raw = (proc_file(pid, 'cmdline') if command_line is None else command_line(pid)).split(b'\0')
+        require((argument_count is None or len(raw) == len(client_args) + argument_count + 1) and raw[-1] == b''
                 and raw[:len(client_args)] == list(map(os.fsencode, client_args)), 'UNAUTHORIZED')
-        expected = decode_args(*(arg.decode('ascii') for arg in raw[len(client_args):-1]))
+        expected = decode_args(*(arg.decode('ascii') if command_line is None else os.fsdecode(arg)
+                                 for arg in raw[len(client_args):-1]))
         require(paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True) == main, 'UNAUTHORIZED')
         verify_alive(with_parent)
         verify_alive(pidfd)

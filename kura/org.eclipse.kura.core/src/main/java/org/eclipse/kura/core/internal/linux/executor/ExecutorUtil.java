@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +58,8 @@ public class ExecutorUtil {
     private static final String FAILED_TO_GET_PID_MESSAGE = "Failed to get pid for command '{}'";
     private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir"));
     private static final String DEFAULT_COMMAND_USERNAME = "kura";
+    private static final Path MANAGED_EXECUTOR = Path.of("/usr/libexec/kura-command-executor/cohort.json");
+    private static final String MANAGED_EXECUTOR_CLIENT = "/opt/eclipse/kura/bin/kura_command_executor.py";
 
     private String commandUsername;
 
@@ -295,13 +299,14 @@ public class ExecutorUtil {
         }
         executor.setStreamHandler(handler);
 
-        String directory = command.getDirectory();
-
-        File workingDir = directory == null || directory.isEmpty() || !Files.isDirectory(Paths.get(directory))
-                ? TEMP_DIR
-                : new File(directory);
-        executor.setWorkingDirectory(workingDir);
+        executor.setWorkingDirectory(workingDirectory(command));
         return executor;
+    }
+
+    private File workingDirectory(Command command) {
+        String directory = command.getDirectory();
+        return directory == null || directory.isEmpty() || !Files.isDirectory(Paths.get(directory))
+                ? TEMP_DIR : new File(directory);
     }
 
     protected Executor getExecutor() {
@@ -400,6 +405,15 @@ public class ExecutorUtil {
         if (UnprivilegedProcessIdentity.isCurrentUser(username)) {
             CommandLine commandLine = new CommandLine(c.get(0));
             commandLine.addArguments(c.subList(1, c.size()).toArray(new String[0]), false);
+            return commandLine;
+        }
+        if (DEFAULT_COMMAND_USERNAME.equals(username)
+                && "kurad".equals(ProcessHandle.current().info().user().orElse(""))
+                && Files.isRegularFile(MANAGED_EXECUTOR, LinkOption.NOFOLLOW_LINKS)) {
+            CommandLine commandLine = new CommandLine("/usr/bin/python3");
+            commandLine.addArguments(new String[] { "-I", "-B", MANAGED_EXECUTOR_CLIENT, "client",
+                    workingDirectory(command).getAbsolutePath() }, false);
+            commandLine.addArguments(c.toArray(new String[0]), false);
             return commandLine;
         }
         String script = "exec " + c.stream().map(ExecutorUtil::shellArgument).collect(Collectors.joining(" "));
