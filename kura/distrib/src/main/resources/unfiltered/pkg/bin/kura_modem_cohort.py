@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
-"""Require the installed Networking release to use the typed modem and BIND protocols."""
+"""Require the installed Networking release to use the typed modem, DNS and DHCP protocols."""
 import hashlib
 import json
 import os
@@ -14,6 +14,7 @@ SHARE = Path('/usr/share')
 PROVIDERS = {'kura-networking': 'networking', 'kura-firewall-only': 'firewall'}
 MODEM_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
 BIND_NAME = re.compile(r'org\.eclipse\.kura\.linux\.systemd\.provider-[0-9A-Za-z.+~-]+\.jar')
+NM_NAME = re.compile(r'org\.eclipse\.kura\.nm-[0-9A-Za-z.+~-]+\.jar')
 ENVIRONMENT = {'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}
 
 
@@ -103,6 +104,24 @@ def check():
                     BIND_NAME, 'bindConfigurationProtocol', installed == package == 'kura-networking')
         check_asset(package, provider_dir, files, proof_dir / 'bind-outcome-provider.json',
                     BIND_NAME, 'bindOutcomeProtocol', installed == package == 'kura-networking')
+
+        if package == 'kura-networking':
+            check_dhcp_provider(installed == package)
+
+
+def check_dhcp_provider(present):
+    package = 'kura-networking'
+    root = HOME / 'siblings' / 'networking'
+    for tier, filename, pattern, protocol in (
+        ('4', 'dhcp-provider.json', MODEM_NAME, 'dhcpProtocol'),
+        ('5s', 'dhcp-nm-provider.json', NM_NAME, 'dhcpNmProtocol'),
+    ):
+        provider_dir = root / tier
+        files = ()
+        if os.path.lexists(provider_dir):
+            protected(provider_dir, directory=True)
+            files = tuple(provider_dir.iterdir())
+        check_asset(package, provider_dir, files, SHARE / package / filename, pattern, protocol, present)
 
 
 def check_asset(package, provider_dir, files, proof_path, name, protocol, present):

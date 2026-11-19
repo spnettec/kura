@@ -92,7 +92,22 @@ class ProviderFingerprintTest(unittest.TestCase):
             bind_proof.with_name('bind-outcome-provider.json').write_text(json.dumps(dict(
                 schema=1, bindOutcomeProtocol=1, provider=bind_jar.name,
                 sha256=hashlib.sha256(bind_jar.read_bytes()).hexdigest())))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* dhcpProtocol'):
+                cohort.check()
+            self.proof.with_name('dhcp-provider.json').write_text(json.dumps(dict(
+                schema=1, dhcpProtocol=1, provider=self.provider.name,
+                sha256=hashlib.sha256(self.provider.read_bytes()).hexdigest())))
+            with self.assertRaisesRegex(ValueError, 'Missing paired .* dhcpNmProtocol'):
+                cohort.check()
+            nm_directory = self.provider.parent.with_name('5s')
+            nm_directory.mkdir()
+            nm_name = nm_directory / 'org.eclipse.kura.nm-2.0.0.jar'
+            nm_name.write_bytes(b'packaged NM DHCP monitor')
+            self.proof.with_name('dhcp-nm-provider.json').write_text(json.dumps(dict(
+                schema=1, dhcpNmProtocol=1, provider=nm_name.name,
+                sha256=hashlib.sha256(nm_name.read_bytes()).hexdigest())))
             cohort.check()
+            self.owner.assert_any_call(nm_name, self.package)
             self.owner.assert_any_call(bind_jar, self.package)
             bind_jar.write_bytes(b'different DNS bundle')
             with self.assertRaisesRegex(ValueError, 'fingerprint changed .* bindProtocol'):

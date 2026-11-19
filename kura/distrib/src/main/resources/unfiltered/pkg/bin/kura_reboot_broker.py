@@ -231,7 +231,7 @@ def dispatch_reboot():
     return ('ACCEPTED', 'MANAGER_ACCEPTED') if code == 0 else ('UNKNOWN', 'DISPATCH_UNCONFIRMED')
 
 
-def receive(stream, *, timeout=REPLY_TIMEOUT):
+def receive(stream, *, timeout=REPLY_TIMEOUT, maximum=MAX_FRAME):
     deadline = time.monotonic() + timeout
 
     def get(count):
@@ -246,7 +246,7 @@ def receive(stream, *, timeout=REPLY_TIMEOUT):
         return bytes(value)
 
     size, = struct.unpack('>I', get(4))
-    require(0 < size <= MAX_FRAME, 'INVALID_FRAME')
+    require(0 < size <= maximum, 'INVALID_FRAME')
     value = decode(get(size))
     remaining = deadline - time.monotonic()
     require(remaining > 0, 'INVALID_FRAME')
@@ -255,9 +255,9 @@ def receive(stream, *, timeout=REPLY_TIMEOUT):
     return value
 
 
-def send(stream, value):
+def send(stream, value, *, maximum=MAX_FRAME):
     raw = encode(value)
-    require(len(raw) <= MAX_FRAME, 'INVALID_FRAME')
+    require(len(raw) <= maximum, 'INVALID_FRAME')
     stream.settimeout(REPLY_TIMEOUT)
     stream.sendall(struct.pack('>I', len(raw)) + raw)
     stream.shutdown(socket.SHUT_WR)

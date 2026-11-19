@@ -1,0 +1,35 @@
+[Unit]
+Description=Kura typed DHCP service actor
+PartOf=kura.service
+Requisite=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=root
+Group=root
+StateDirectory=kura-dhcp-service
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-dhcp-service/kura_dhcp_service.py serve %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ReadWritePaths=/etc/kura/dhcp-service
+ProtectHome=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/etc/kura/credentials -/etc/kura/recovery-tls -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service -/opt/eclipse/kura/user -/opt/eclipse/kura/data -/opt/eclipse/kura/packages -/opt/eclipse/kura/.data
+MemoryMax=64M
+TasksMax=8
+RuntimeMaxSec=70s
+TimeoutStopSec=5s
