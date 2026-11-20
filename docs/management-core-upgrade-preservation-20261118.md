@@ -59,3 +59,14 @@
 97补runtime disable并传播清理失败；原有凭据/回执完整时只识别固定Root/dev/null Main mask，拒绝key bootstrap/真实override。44令clock安装仅把严格Main mask+明确PID0/inactive视为off，不接受clock helper masked、不读key、不放宽代码配对。135选择134过/1既有Linux-only归档用例在macOS skip，7 nativeRoot mask/key及6实际shipped preRemove条件通过；不累加旧选择。实际enabled-runtime/enabled在97、masked-runtime/masked在完整44各自单次正常remove/reinstall通过、每次同目的完成，38输入/原UID/密钥/.data历史/Root canary保持，Main始终未启。97 masked-runtime已知clock拒绝原2041仅有界修复后完成，不计正常产品/通用中断通过；随后完整44 masked upgrade及独立正常模式通过。详见`management-main-boot-choices-20261118.md`及console实际审查。四profile验证后才单独恢复夹具disabled停放，正常停止保留；所有完成目的不重做。
 
 本轮overlay重挂仅st_dev变、30原文件其余九字段精确，原失败/旧基线保留，当前boot新基线独立记录，产品Root/namespace检查未改。static/linked实际Core、purge/通用中断/旧态及完整矩阵仍内部pending。
+
+## 旧 Networking 与 Core 原位联合升级
+
+旧 Networking 可能仍在运行合法的已安装版本，但没有新版 Core 所需的 typed provider 证明。新版 Networking 的 `preinst` 又要读取已解包的新版 Core broker。核对两包的发行摘要后，由 Root 从不可被其他用户写入的目录传入两份归档的规范绝对路径，先传 Core，再传 Networking。
+
+```sh
+sudo env KURA_NETWORKING_COHORT_SHA256='<已审批的 Networking SHA-256>' \
+  /usr/bin/dpkg --install /root/approved/kura-core.deb /root/approved/kura-networking.deb
+```
+
+该入口仅用于已安装 Networking 因旧版未声明证明文件而缺少 typed 证明的 Core 升级。Core 在实际调用它的同 Root、同挂载命名空间 dpkg 进程中核对两个有序路径、Core 目标版本、Networking 新旧版本、归档摘要、九个 provider 合同和只读 ModemManager 策略。当前包已声明但缺失的证明、已存在的错误证明和游离的兼容包继续拒绝。归档检查只读取文件，不执行，也不产生可跨事务使用的批准记录。普通 Main 启动仍检查实际已配置的 Networking、每个 provider 证明及已装文件。实际 dpkg 返回错误时，按同 Root 的原围栏和包状态核定中断点。

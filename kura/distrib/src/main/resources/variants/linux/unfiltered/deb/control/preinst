@@ -13,7 +13,7 @@
 #
 
 checkModemCohort() {
-    /usr/bin/python3 -I -B - <<'KURA_MODEM_COHORT'
+    /usr/bin/python3 -I -B - "$@" <<'KURA_MODEM_COHORT'
 raise RuntimeError("Kura modem cohort was not embedded")
 KURA_MODEM_COHORT
 }
@@ -384,7 +384,7 @@ if [ "${ACTION}" = "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE
     keyServicePackageAdmission --restore-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" || exit 1
     PUBLISHED_UPGRADE=1
 fi
-checkModemCohort || exit 1
+checkModemCohort "${ACTION}" "${OLD_VERSION}" "${NEW_VERSION}" || exit 1
 watchdogMaintenance() {
     python3 -I -B - "$@" <<'KURA_WATCHDOG_MAINTENANCE'
 raise RuntimeError("Kura watchdog maintenance was not embedded")

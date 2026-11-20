@@ -8,6 +8,7 @@ import re
 import stat
 import subprocess
 import sys
+import tarfile
 
 HOME = Path('/opt/eclipse/kura')
 SHARE = Path('/usr/share')
@@ -18,6 +19,35 @@ MODEM_NAME = re.compile(r'org\.eclipse\.kura\.linux\.net-[0-9A-Za-z.+~-]+\.jar')
 BIND_NAME = re.compile(r'org\.eclipse\.kura\.linux\.systemd\.provider-[0-9A-Za-z.+~-]+\.jar')
 NM_NAME = re.compile(r'org\.eclipse\.kura\.nm-[0-9A-Za-z.+~-]+\.jar')
 ENVIRONMENT = {'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}
+DPKG = Path('/usr/bin/dpkg')
+DPKG_DEB = '/usr/bin/dpkg-deb'
+COHORT_HASH = 'KURA_NETWORKING_COHORT_SHA256'
+
+
+class MissingProviderProof(ValueError):
+    def __init__(self, package, path, protocol):
+        super().__init__(f'Missing paired Networking release proof for {protocol}')
+        self.package = package
+        self.path = path
+
+
+def provider_contracts(package):
+    modem = ('4', 'modem-provider.json', MODEM_NAME, 'modemProtocol', None)
+    bind = (
+        ('4', 'bind-provider.json', BIND_NAME, 'bindProtocol', None),
+        ('4', 'bind-config-provider.json', BIND_NAME, 'bindConfigurationProtocol', None),
+        ('4', 'bind-outcome-provider.json', BIND_NAME, 'bindOutcomeProtocol', None),
+    )
+    if package == 'kura-firewall-only':
+        return (modem, *bind)
+    return (
+        modem, *bind,
+        ('4', 'dhcp-provider.json', MODEM_NAME, 'dhcpProtocol', None),
+        ('5s', 'dhcp-nm-provider.json', NM_NAME, 'dhcpNmProtocol', None),
+        ('5s', 'wifi-nm-provider.json', NM_NAME, 'wifiNmProtocol', NETWORKING_RULE),
+        ('5s', 'modem-reset-provider.json', NM_NAME, 'modemResetProtocol', None),
+        ('5s', 'modem-location-provider.json', NM_NAME, 'modemLocationProtocol', None),
+    )
 
 
 def protected(path, directory=False):
@@ -89,39 +119,40 @@ def require_ownership(path, package):
         raise ValueError('Provider is not the installed Networking payload')
 
 
-def check():
+def check(on_missing=None):
     installed = active_provider()
     for package, directory in PROVIDERS.items():
-        provider_dir = HOME / 'siblings' / directory / '4'
         proof_dir = SHARE / package
-        files = ()
-        if os.path.lexists(provider_dir):
-            protected(provider_dir, directory=True)
-            files = tuple(provider_dir.iterdir())
-        check_asset(package, provider_dir, files, proof_dir / 'modem-provider.json',
-                    MODEM_NAME, 'modemProtocol', installed == package)
-        check_asset(package, provider_dir, files, proof_dir / 'bind-provider.json',
-                    BIND_NAME, 'bindProtocol', installed == package == 'kura-networking')
-        check_asset(package, provider_dir, files, proof_dir / 'bind-config-provider.json',
-                    BIND_NAME, 'bindConfigurationProtocol', installed == package == 'kura-networking')
-        check_asset(package, provider_dir, files, proof_dir / 'bind-outcome-provider.json',
-                    BIND_NAME, 'bindOutcomeProtocol', installed == package == 'kura-networking')
-
-        if package == 'kura-networking':
-            check_dhcp_provider(installed == package)
-            folder = HOME / 'siblings' / 'networking' / '5s'
-            jars = ()
-            if os.path.lexists(folder):
-                protected(folder, directory=True)
-                jars = tuple(folder.iterdir())
-            check_asset(package, folder, jars, proof_dir / 'wifi-nm-provider.json',
-                        NM_NAME, 'wifiNmProtocol', installed == package, policy=NETWORKING_RULE)
-            if installed == package:
-                check_modem_reset_provider(True)
-                check_modem_location_provider(True)
-                rule = snapshot(NETWORKING_RULE, 16 * 1024, lambda stream: stream.read())
-                if hashlib.sha256(rule).hexdigest() != NETWORKING_LOCATION_POLICY_SHA256:
-                    raise ValueError('Networking still needs the paired read-only ModemManager policy')
+        folders = {}
+        missing = False
+        for tier, filename, name, protocol, policy in provider_contracts(package):
+            if installed != package and protocol in {'modemResetProtocol', 'modemLocationProtocol'}:
+                continue
+            folder = HOME / 'siblings' / directory / tier
+            if folder not in folders:
+                folders[folder] = ()
+                if os.path.lexists(folder):
+                    protected(folder, directory=True)
+                    folders[folder] = tuple(folder.iterdir())
+            present = installed == package and (package == 'kura-networking' or protocol == 'modemProtocol')
+            try:
+                check_asset(package, folder, folders[folder], proof_dir / filename, name, protocol,
+                            present, policy=policy)
+            except MissingProviderProof as error:
+                if on_missing is None:
+                    raise
+                on_missing(error)
+                jars = {path for path in folders[folder] if name.fullmatch(path.name)}
+                if len(jars) != 1:
+                    raise ValueError('Expected one installed legacy Networking bundle')
+                jar = next(iter(jars))
+                require_ownership(jar, package)
+                protected(jar)
+                missing = True
+        if installed == package == 'kura-networking' and not missing:
+            rule = snapshot(NETWORKING_RULE, 16 * 1024, lambda stream: stream.read())
+            if hashlib.sha256(rule).hexdigest() != NETWORKING_LOCATION_POLICY_SHA256:
+                raise ValueError('Networking still needs the paired read-only ModemManager policy')
 
 
 def check_modem_reset_provider(present):
@@ -166,18 +197,10 @@ def check_asset(package, provider_dir, files, proof_path, name, protocol, presen
 
 def check_provider(package, provider_dir, proof_path, jars, name, protocol, *, policy=None):
     if not os.path.lexists(proof_path):
-        raise ValueError(f'Missing paired Networking release proof for {protocol}')
+        raise MissingProviderProof(package, proof_path, protocol)
     require_ownership(proof_path, package)
     proof = snapshot(proof_path, 4096, json.load)
-    keys = {'schema', protocol, 'provider', 'sha256'}
-    if policy is not None:
-        keys.add('policySha256')
-    if (type(proof) is not dict or set(proof) != keys
-            or type(proof['schema']) is not int or proof['schema'] != 1
-            or type(proof[protocol]) is not int or proof[protocol] != 1
-            or not isinstance(proof['provider'], str) or not name.fullmatch(proof['provider'])
-            or not isinstance(proof['sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', proof['sha256'])):
-        raise ValueError(f'Networking provider contract is invalid for {protocol}')
+    validate_proof(proof, name, protocol, policy=policy)
     provider = provider_dir / proof['provider']
     if jars != {provider}:
         raise ValueError(f'Expected one paired Networking provider for {protocol}')
@@ -192,10 +215,164 @@ def check_provider(package, provider_dir, proof_path, jars, name, protocol, *, p
             raise ValueError('Unpaired Networking Wi-Fi policy')
 
 
+def validate_proof(proof, name, protocol, *, policy):
+    keys = {'schema', protocol, 'provider', 'sha256'}
+    if policy is not None:
+        keys.add('policySha256')
+    if (type(proof) is not dict or set(proof) != keys
+            or type(proof['schema']) is not int or proof['schema'] != 1
+            or type(proof[protocol]) is not int or proof[protocol] != 1
+            or not isinstance(proof['provider'], str) or not name.fullmatch(proof['provider'])
+            or not isinstance(proof['sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', proof['sha256'])):
+        raise ValueError(f'Networking provider contract is invalid for {protocol}')
+
+
+def current_dpkg_archives():
+    # The same system dpkg process must be consuming these exact paths. An
+    # operator's digest alone cannot authorize a Core-only maintenance command.
+    pid = os.getppid()
+    executable = DPKG.stat()
+    for _ in range(10):
+        process = Path('/proc') / str(pid)
+        if os.path.samestat((process / 'exe').stat(), executable):
+            if (process.stat().st_uid != 0 or not Path('/').samefile(process / 'root')
+                    or not Path('/proc/self/ns/mnt').samefile(process / 'ns/mnt')):
+                raise ValueError('Debian cohort invocation belongs to another Root')
+            arguments = (process / 'cmdline').read_bytes().split(b'\0')[:-1]
+            if len(arguments) != 4 or arguments[:2] != [os.fsencode(DPKG), b'--install']:
+                raise ValueError('Expected one dpkg --install with Core followed by Networking')
+            paths = tuple(Path(os.fsdecode(arg)) for arg in arguments[2:])
+            if any(not path.is_absolute() or path.resolve(strict=True) != path for path in paths):
+                raise ValueError('Debian cohort archives must use canonical absolute paths')
+            return paths
+        pid = int((process / 'stat').read_text().rsplit(')', 1)[1].split()[1])
+        if pid <= 1:
+            break
+    raise ValueError('Debian cohort requires the active dpkg installation process')
+
+
+def package_field(archive, field, **kwargs):
+    return subprocess.check_output(
+        [DPKG_DEB, '--field', str(archive), field], env=ENVIRONMENT, timeout=5, **kwargs
+    ).decode().strip()
+
+
+def newer_version(new, old):
+    subprocess.run([str(DPKG), '--compare-versions', new, 'gt', old],
+                   env=ENVIRONMENT, timeout=5, check=True)
+
+
+def read_networking_assets(stream):
+    package = 'kura-networking'
+    contracts = provider_contracts(package)
+    prefix = HOME / 'siblings' / 'networking'
+    proofs = {SHARE / package / spec[1] for spec in contracts}
+    assets = {}
+    with tarfile.open(fileobj=stream, mode='r|') as archive:
+        for entry in archive:
+            path = Path('/') / entry.name.removeprefix('./')
+            if path in proofs:
+                limit = 4096
+            elif path == NETWORKING_RULE:
+                limit = 16 * 1024
+            elif any(path.parent == prefix / tier and name.fullmatch(path.name)
+                     for tier, _, name, _, _ in contracts):
+                limit = 64 * 1024 * 1024
+            else:
+                continue
+            if (path in assets or not entry.isfile() or entry.uid != 0 or entry.gid != 0
+                    or entry.mode & 0o022 or not 0 < entry.size <= limit):
+                raise ValueError('Unsafe or duplicate Networking archive asset')
+            with archive.extractfile(entry) as source:
+                assets[path] = json.load(source) if path in proofs else hashlib.file_digest(source, 'sha256').hexdigest()
+    for tier, filename, name, protocol, policy in contracts:
+        proof = assets.get(SHARE / package / filename)
+        validate_proof(proof, name, protocol, policy=policy)
+        path = prefix / tier / proof['provider']
+        jars = {candidate for candidate in assets if candidate.parent == path.parent
+                and name.fullmatch(candidate.name)}
+        if jars != {path} or assets[path] != proof['sha256']:
+            raise ValueError(f'Incoming Networking archive has an unpaired {protocol} provider')
+        if policy is not None and assets.get(policy) != proof['policySha256']:
+            raise ValueError('Incoming Networking archive has an unpaired Wi-Fi policy')
+    if assets.get(NETWORKING_RULE) != NETWORKING_LOCATION_POLICY_SHA256:
+        raise ValueError('Incoming Networking archive lacks the read-only ModemManager policy')
+
+
+def check_networking_archive(path, expected_hash, old_version):
+    def inspect(stream):
+        if hashlib.file_digest(stream, 'sha256').hexdigest() != expected_hash:
+            raise ValueError('Incoming Networking archive differs from its approved SHA-256')
+        stream.seek(0)
+        inherited = dict(pass_fds=(stream.fileno(),))
+        member = f'/proc/self/fd/{stream.fileno()}'
+        if (package_field(member, 'Package', **inherited) != 'kura-networking'
+                or package_field(member, 'Architecture', **inherited) != 'all'):
+            raise ValueError('Expected the ordinary kura-networking archive')
+        newer_version(package_field(member, 'Version', **inherited), old_version)
+        command = ['/usr/bin/timeout', '45', DPKG_DEB, '--fsys-tarfile', member]
+        with subprocess.Popen(command, env=ENVIRONMENT, stdout=subprocess.PIPE, **inherited) as process:
+            try:
+                read_networking_assets(process.stdout)
+                # Consume tar padding so dpkg-deb can finish and be checked.
+                while process.stdout.read(64 * 1024):
+                    pass
+                if process.wait(timeout=5) != 0:
+                    raise ValueError('Could not read exact Networking archive payload')
+            finally:
+                if process.poll() is None:
+                    process.kill()
+
+    snapshot(path, 256 * 1024 * 1024, inspect)
+
+
+def check_package_upgrade(old_version, new_version):
+    expected = os.environ.get(COHORT_HASH, '')
+    if (not re.fullmatch(r'[0-9a-f]{64}', expected)
+            or os.environ.get('DPKG_MAINTSCRIPT_PACKAGE') != 'kura-core'
+            or os.environ.get('DPKG_MAINTSCRIPT_NAME') != 'preinst'
+            or os.environ.get('DPKG_ROOT', '') not in ('', '/')
+            or os.environ.get('DPKG_ADMINDIR') != '/var/lib/dpkg'):
+        check()
+        return
+
+    installed_paths = None
+
+    def missing_from_package(error):
+        nonlocal installed_paths
+        if error.package != 'kura-networking':
+            raise error
+        # An installed package that claims this file has damaged payload, even
+        # when the selected incoming archive has a compatible replacement.
+        if installed_paths is None:
+            listing = dpkg('-L', error.package)
+            if listing.returncode != 0 or not listing.stdout:
+                raise error
+            installed_paths = set(listing.stdout.splitlines())
+        if os.fsencode(error.path) in installed_paths:
+            raise error
+
+    check(on_missing=missing_from_package)
+    if installed_paths is not None:
+        core, provider = current_dpkg_archives()
+        protected(core)
+        if (package_field(core, 'Package') != 'kura-core'
+                or package_field(core, 'Version') != new_version):
+            raise ValueError('The active dpkg cohort does not match this Core preinst')
+        newer_version(new_version, old_version)
+        installed = dpkg('-W', '-f=${Version}\n', 'kura-networking')
+        if installed.returncode != 0 or not installed.stdout.strip():
+            raise ValueError('Cannot prove the installed Networking version')
+        check_networking_archive(provider, expected, installed.stdout.decode().strip())
+
+
 if __name__ == '__main__':
     try:
-        check()
-    except (OSError, ValueError, TypeError, subprocess.SubprocessError) as error:
+        if len(sys.argv) == 4 and sys.argv[1] == 'upgrade':
+            check_package_upgrade(*sys.argv[2:])
+        else:
+            check()
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError, tarfile.TarError) as error:
         print('Cannot start or replace Kura Main: install the paired typed Networking providers. '
               + str(error), file=sys.stderr)
         sys.exit(1)

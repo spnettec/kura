@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: EPL-2.0
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -25,6 +27,80 @@ class PackageAdmissionTest(unittest.TestCase):
         unit = (RESOURCES / 'filtered/pkg/install/kura.service').read_text()
         self.assertNotIn('cap_sys_module', unit.lower())
         self.assertIn('ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py', unit)
+
+    def test_only_native_core_preinst_can_consider_a_replacement_archive(self):
+        missing = cohort.MissingProviderProof(
+            'kura-networking', Path('/usr/share/kura-networking/modem-provider.json'), 'modemProtocol')
+        with patch.dict(os.environ, {cohort.COHORT_HASH: 'a' * 64}, clear=True), \
+                patch.object(cohort, 'check', side_effect=missing) as installed, \
+                patch.object(cohort, 'current_dpkg_archives') as archives:
+            with self.assertRaises(cohort.MissingProviderProof):
+                cohort.check_package_upgrade('1', '2')
+            installed.assert_called_once_with()
+            archives.assert_not_called()
+
+    def test_missing_file_claimed_by_installed_package_does_not_admit_cohort(self):
+        path = Path('/usr/share/kura-networking/modem-provider.json')
+
+        def check(on_missing):
+            on_missing(cohort.MissingProviderProof('kura-networking', path, 'modemProtocol'))
+
+        environment = {
+            cohort.COHORT_HASH: 'a' * 64, 'DPKG_MAINTSCRIPT_PACKAGE': 'kura-core',
+            'DPKG_MAINTSCRIPT_NAME': 'preinst', 'DPKG_ADMINDIR': '/var/lib/dpkg'
+        }
+        listed = subprocess.CompletedProcess([], 0, stdout=os.fsencode(path) + b'\n', stderr=b'')
+        with patch.dict(os.environ, environment, clear=True), patch.object(cohort, 'check', check), \
+                patch.object(cohort, 'dpkg', return_value=listed), \
+                patch.object(cohort, 'current_dpkg_archives') as archives:
+            with self.assertRaises(cohort.MissingProviderProof):
+                cohort.check_package_upgrade('1', '2')
+            archives.assert_not_called()
+
+
+class ArchiveProofTest(unittest.TestCase):
+    def setUp(self):
+        package = 'kura-networking'
+        prefix = cohort.HOME / 'siblings' / 'networking'
+        names = {
+            cohort.MODEM_NAME: 'org.eclipse.kura.linux.net-6.0.0.jar',
+            cohort.BIND_NAME: 'org.eclipse.kura.linux.systemd.provider-6.0.0.jar',
+            cohort.NM_NAME: 'org.eclipse.kura.nm-2.0.0.jar',
+        }
+        rules = b'synthetic Networking policy'
+        rule_digest = hashlib.sha256(rules).hexdigest()
+        self.enterContext(patch.object(cohort, 'NETWORKING_LOCATION_POLICY_SHA256', rule_digest))
+        self.members = {cohort.NETWORKING_RULE: rules}
+        for tier, filename, pattern, protocol, policy in cohort.provider_contracts(package):
+            jar = prefix / tier / names[pattern]
+            content = os.fsencode(jar.name)
+            self.members[jar] = content
+            proof = {'schema': 1, protocol: 1, 'provider': jar.name, 'sha256': hashlib.sha256(content).hexdigest()}
+            if policy is not None:
+                proof['policySha256'] = rule_digest
+            self.members[cohort.SHARE / package / filename] = json.dumps(proof).encode()
+
+    def tar_stream(self):
+        result = io.BytesIO()
+        with tarfile.open(mode='w', fileobj=result) as archive:
+            for path, data in self.members.items():
+                entry = tarfile.TarInfo('.' + str(path))
+                entry.size = len(data)
+                archive.addfile(entry, io.BytesIO(data))
+        result.seek(0)
+        return result
+
+    def test_exact_cohort_is_accepted_and_replaced_bundle_is_refused(self):
+        cohort.read_networking_assets(self.tar_stream())
+        jar = cohort.HOME / 'siblings/networking/5s/org.eclipse.kura.nm-2.0.0.jar'
+        self.members[jar] = b'different bundle'
+        with self.assertRaisesRegex(ValueError, 'unpaired dhcpNmProtocol provider'):
+            cohort.read_networking_assets(self.tar_stream())
+
+    def test_archive_with_only_some_of_the_protocols_is_refused(self):
+        self.members.pop(cohort.SHARE / 'kura-networking/modem-location-provider.json')
+        with self.assertRaisesRegex(ValueError, 'invalid for modemLocationProtocol'):
+            cohort.read_networking_assets(self.tar_stream())
 
 
 @unittest.skipUnless(os.geteuid() == 0, 'exercise the installed file rules as Root')
