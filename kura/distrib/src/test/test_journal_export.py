@@ -40,6 +40,25 @@ class JournalExportTest(unittest.TestCase):
             for name, digest in manifest['files'].items():
                 self.assertEqual(export.file_hash((retained / name).read_bytes()), digest)
 
+    def test_main_only_pairs_reviewed_networking_drop_ins(self):
+        main = b'reviewed main'
+        unit = export.MAIN_UNIT
+        fragment = next(iter(export.VENDOR_UNIT_ROOTS)) / unit
+        loaded = {'Id': unit, 'Names': unit, 'LoadState': 'loaded', 'FragmentPath': str(fragment),
+                  'SourcePath': '', 'DropInPaths': str(export.NETWORKING_DROPIN),
+                  'NeedDaemonReload': 'no', 'Transient': 'no'}
+        dependencies = (b'[Unit]\nWants=NetworkManager.service ModemManager.service\n'
+                        b'After=NetworkManager.service ModemManager.service\n')
+        legacy = dependencies + b'\n[Service]\nAmbientCapabilities=cap_net_admin cap_net_raw\n'
+        with patch.object(export, 'unit_properties', return_value=loaded), \
+                patch.object(export, 'public_file') as read:
+            for template in (dependencies, legacy):
+                read.side_effect = [main, template]
+                self.assertEqual(export.paired_unit(unit, unit, export.file_hash(main), main=True), loaded)
+            read.side_effect = [main, dependencies + b'\n']
+            with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                export.paired_unit(unit, unit, export.file_hash(main), main=True)
+
     def test_typed_scope_and_fields(self):
         self.assertEqual(export.request('kura', 'MESSAGE,_BOOT_ID'),
                          {'schema': 1, 'scope': 'kura', 'fields': 'MESSAGE,_BOOT_ID'})

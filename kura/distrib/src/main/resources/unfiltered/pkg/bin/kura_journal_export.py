@@ -38,7 +38,10 @@ SOURCES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
 FILES = tuple(Path(name).name for name in SOURCES)
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
 NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
-NETWORKING_SHA = 'eb1079ba9bc662b196ef873cfc860cc1b53ab3b50813c2ee4437352c4cd65b18'
+NETWORKING_SHAS = frozenset((
+    'eb1079ba9bc662b196ef873cfc860cc1b53ab3b50813c2ee4437352c4cd65b18',
+    '06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473',
+))
 MAX_DATA = 32 * 1024 * 1024
 READ_TIME = 25
 
@@ -90,7 +93,7 @@ def paired_unit(unit, template, template_hash, names=(), main=False):
             and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_EXPORT')
     require(file_hash(public_file(Path(loaded['FragmentPath']))) == template_hash, 'UNPAIRED_EXPORT')
     if loaded['DropInPaths']:
-        require(file_hash(public_file(NETWORKING_DROPIN)) == NETWORKING_SHA, 'UNPAIRED_EXPORT')
+        require(file_hash(public_file(NETWORKING_DROPIN)) in NETWORKING_SHAS, 'UNPAIRED_EXPORT')
     return loaded
 
 
