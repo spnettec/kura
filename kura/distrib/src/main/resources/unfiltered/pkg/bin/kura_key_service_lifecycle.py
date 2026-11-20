@@ -1992,7 +1992,8 @@ if __name__ == "__main__":
             print(lifecycle.package_main_restore_decision(sys.argv[2]))
         elif sys.argv[1:] == ['--check-main-reboot-permissions']:
             lifecycle.check_main_reboot_permissions()
-        elif (sys.argv[1:2] in (['--prepare-upgrade-copy'], ['--publish-upgrade-copy'])
+        elif (len(sys.argv) > 1 and sys.argv[1] in ('--prepare-upgrade-copy', '--publish-upgrade-copy',
+                                                   '--restore-upgrade-source', '--detach-upgrade-source')
               and '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE' in globals()):
             namespace = {}
             exec(compile(_KURA_EMBEDDED_UPGRADE_COPY_SOURCE, '<incoming upgrade copy>', 'exec'), namespace)

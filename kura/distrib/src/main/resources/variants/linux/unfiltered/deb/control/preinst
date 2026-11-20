@@ -27,14 +27,6 @@ checkManagedNmPolicy() {
 raise RuntimeError("Kura managed NM policy admission was not embedded")
 KURA_MANAGED_NM_PREFLIGHT
 }
-case "${1:-}" in
-    install|upgrade)
-        checkModemCohort || exit 1
-        checkManagedNmPolicy || exit 1
-        checkWpaPolicy || exit 1
-        ;;
-esac
-
 # YOFC ORDINARY BOOT INSTALL GUARD V1
 guardOrdinaryBootPolicy() {
     python3 - "$0" "$@" <<'PYGUARD'
@@ -349,15 +341,14 @@ case "${ACTION}" in
     abort-upgrade) exit 0 ;;
     *) echo "Unsupported Kura preinst action: ${ACTION}" >&2; exit 1 ;;
 esac
-# Staging area for data preserved across an in-place upgrade. NOTE: the name
-# must NOT start with "kura" so the "rm -fr /opt/eclipse/kura*" wipe below skips
-# it (the glob only matches paths beginning literally with "kura").
+# The published copy is available to postinst for the original upgrade.
 PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
 RETAINED_DIR=/var/lib/kura-retained
+PUBLISHED_UPGRADE=0
 
 # Do not erase an interrupted upgrade recovery copy or overwrite a retained
 # removal copy while upgrading an existing installation.
-if [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; then
+if [ "${ACTION}" != "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; }; then
     echo "Cannot install Kura: an upgrade recovery copy already exists at ${PRESERVE_DIR}." >&2
     exit 1
 fi
@@ -386,6 +377,14 @@ if [ "${ACTION}" = "--migrate-linked-main" ]; then
     keyServicePackageAdmission --migrate-linked-main
     exit "$?"
 fi
+checkManagedNmPolicy || exit 1
+checkWpaPolicy || exit 1
+if [ "${ACTION}" = "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; }; then
+    # Recover the exact stopped source before running the normal provider checks.
+    keyServicePackageAdmission --restore-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" || exit 1
+    PUBLISHED_UPGRADE=1
+fi
+checkModemCohort || exit 1
 watchdogMaintenance() {
     python3 -I -B - "$@" <<'KURA_WATCHDOG_MAINTENANCE'
 raise RuntimeError("Kura watchdog maintenance was not embedded")
@@ -490,7 +489,7 @@ function preInstall {
     #   siblings/   - sibling bundles installed by other kura-*.deb packages
     # The security keys MUST travel with the snapshots, otherwise the (encrypted)
     # snapshots can no longer be decrypted.
-    if [ "${ACTION}" = "upgrade" ] && [ -e "${INSTALL_DIR}/kura" ]; then
+    if [ "${ACTION}" = "upgrade" ] && [ "${PUBLISHED_UPGRADE}" = "0" ] && [ -e "${INSTALL_DIR}/kura" ]; then
         local staging
         echo "Upgrade detected: preserving user/, data/, packages/ and siblings/ (snapshots, keys, deployment packages, sibling bundles)" >> "${LOG}" 2>&1
         staging=$(keyServicePackageAdmission --prepare-upgrade-copy "$0" "${OLD_VERSION}" "${NEW_VERSION}" 2>>"${LOG}") || return 1
@@ -525,8 +524,13 @@ function preInstall {
         keyServicePackageAdmission --publish-upgrade-copy "$0" "${OLD_VERSION}" "${NEW_VERSION}" "${staging}" >> "${LOG}" 2>&1 || return 1
     fi
 
-    #clean up old installation if present
-    rm -fr "${INSTALL_DIR}"/kura* >> "${LOG}" 2>&1 || return 1
+    if [ "${ACTION}" = "upgrade" ]; then
+        if [ -d "${PRESERVE_DIR}" ]; then
+            keyServicePackageAdmission --detach-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" >> "${LOG}" 2>&1 || return 1
+        fi
+    else
+        rm -fr "${INSTALL_DIR}"/kura* >> "${LOG}" 2>&1 || return 1
+    fi
     rm -fr /tmp/.kura/ >> "${LOG}" 2>&1
     rm -f /etc/init.d/firewall >> "${LOG}" 2>&1
     rm -f /tmp/coninfo-* >> "${LOG}" 2>&1

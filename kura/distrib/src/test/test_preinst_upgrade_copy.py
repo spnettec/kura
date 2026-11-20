@@ -23,6 +23,8 @@ class UpgradeCopyTest(unittest.TestCase):
         self.fence = self.policy.enter('upgrade')
         self.control = self.policy.path('/var/lib/dpkg/tmp.ci/preinst')
         self.fixture.write(self.control, b'incoming preinst', 0o750)
+        self.boot = self.policy.path('/proc/sys/kernel/random/boot_id')
+        self.fixture.write(self.boot, b'196840f8-e95f-41ce-8507-312ffe0400b9\n')
         self.copy = self.controller()
         self.original = self.fixture.physical / 'user/snapshots/snapshot_1.xml'
         self.fixture.write(self.original, b'original retained data')
@@ -50,7 +52,41 @@ class UpgradeCopyTest(unittest.TestCase):
         self.fixture.write(self.copy.destination / 'data', b'historical')
         with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Existing recovery copy'):
             self.copy.prepare()
+        with self.assertRaises(FileNotFoundError):
+            self.copy.arrange_source(restore=True)
         self.assertEqual(b'historical', (self.copy.destination / 'data').read_bytes())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
+    def test_published_copy_reattaches_the_exact_old_tree_only_on_the_original_boot(self):
+        staged = self.copy.prepare()
+        for name in ('kura_encryption_key', 'provisioned.json'):
+            credential = self.policy.path('/etc/kura/credentials') / name
+            self.fixture.write(staged / 'encryption' / name, credential.read_bytes())
+        with patch.object(upgrade.os, 'sync'):
+            self.copy.publish(staged)
+        old = self.original.lstat()
+        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'):
+            self.copy.arrange_source(restore=False)
+            parked = self.copy.destination / '.old-home'
+            self.assertFalse(self.original.exists())
+            self.assertEqual(old.st_ino, (parked / self.original.relative_to(self.fixture.physical)).stat().st_ino)
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'source, package, boot or Root'):
+                self.controller('6.0.0-3').arrange_source(restore=True)
+            original_boot = self.boot.read_bytes()
+            self.fixture.write(self.boot, b'4aa07f18-4fd4-46a0-9233-a680c8cbc65f\n')
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'source, package, boot or Root'):
+                self.copy.arrange_source(restore=True)
+            self.fixture.write(self.boot, original_boot)
+            self.fixture.physical.mkdir(mode=0o750)
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Original Core home is missing or ambiguous'):
+                self.copy.arrange_source(restore=True)
+            self.fixture.physical.rmdir()
+            self.copy.arrange_source(restore=True)
+        self.assertEqual(old.st_ino, self.original.stat().st_ino)
+        self.assertEqual(b'original retained data', self.original.read_bytes())
+        self.assertFalse(parked.exists())
+        self.assertTrue((self.copy.destination / '.capture.json').exists())
+        self.assertEqual(self.fence, self.policy.fence())
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
     def test_sync_failure_leaves_the_original_unpublished_copy_and_never_replaces_a_destination(self):

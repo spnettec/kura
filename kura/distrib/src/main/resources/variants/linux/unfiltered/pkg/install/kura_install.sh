@@ -44,11 +44,23 @@ configure_layout() {
     bash "$(dirname "$0")/manage_kura_users.sh" --check-nm-policy || exit 1
     python3 -I "$(dirname "$0")/../bin/kura_key_service_lifecycle.py" --enter install || exit 1
 
+    if [ "${KEY_PROVISION_ACTION}" = package ]; then
+        # A package phase runs its attested installer inside the incoming tree.
+        # Other physical installations must not influence the selected link.
+        KURA_VERSION_DIR=$(cd -P -- "$(dirname -- "$0")/.." && pwd) || exit 1
+        [ "$(dirname -- "${KURA_VERSION_DIR}")" = "${INSTALL_DIR}" ] || exit 1
+        case "${KURA_VERSION_DIR##*/}" in
+            kura_*) ;;
+            *) return 1 ;;
+        esac
+    else
+        KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
+    fi
+
     # If ${INSTALL_DIR}/kura already exists as a real directory (e.g. an addon .deb such as
     # kura-management-ui was unpacked before kura's setup ran), merge its files into the
     # unpacked kura_*/ tree so they survive the symlink replacement below.
     if [ -d "${INSTALL_DIR}/kura" ] && [ ! -L "${INSTALL_DIR}/kura" ]; then
-        KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
         if [ -n "${KURA_VERSION_DIR}" ]; then
             cp -rn "${INSTALL_DIR}/kura/." "${KURA_VERSION_DIR}" 2>/dev/null || true
             rm -rf "${INSTALL_DIR}/kura"
@@ -56,7 +68,11 @@ configure_layout() {
     fi
 
     # create known kura install location
-    ln -snf ${INSTALL_DIR}/kura_* "${INSTALL_DIR}/kura" || exit 1
+    if [ "${KEY_PROVISION_ACTION}" = package ]; then
+        ln -snf "${KURA_VERSION_DIR}" "${INSTALL_DIR}/kura" || exit 1
+    else
+        ln -snf ${INSTALL_DIR}/kura_* "${INSTALL_DIR}/kura" || exit 1
+    fi
 
     # Package mode requires preinst's captured key and maintenance fence. Standalone
     # bootstrap retains its separate fresh-key and ordinary-startup checks.

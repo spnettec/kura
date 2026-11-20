@@ -37,7 +37,17 @@ class PackageServiceStop(unittest.TestCase):
                 source = source.replace(absolute, str(root / absolute.lstrip("/")))
             (root / "var/log").mkdir(parents=True)
             prelude = r'''
-python3() { echo "key:$*" >> "$EVENTS"; return "$KEY_STATUS"; }
+python3() {
+    echo "key:$*" >> "$EVENTS"
+    [ "$KEY_STATUS" = 0 ] || return "$KEY_STATUS"
+    case "$*" in
+        *--prepare-upgrade-copy*) mkdir "$CAPTURE_STAGE" && printf '%s\n' "$CAPTURE_STAGE" ;;
+        *--publish-upgrade-copy*) mv "$CAPTURE_STAGE" "$CAPTURE_COPY" ;;
+    esac
+}
+checkManagedNmPolicy() { return 0; }
+checkWpaPolicy() { return 0; }
+checkModemCohort() { return 0; }
 systemctl() {
     echo "systemctl:$*" >> "$EVENTS"
     case "$1" in
@@ -58,6 +68,8 @@ sleep() { return 0; }
             script = root / "entrypoint"
             script.write_text(prelude + source)
             env = dict(os.environ, EVENTS=str(events), KEY_STATUS=str(key_status),
+                       CAPTURE_STAGE=str(root / "opt/eclipse/.kura-preserve.tmp"),
+                       CAPTURE_COPY=str(root / "opt/eclipse/.kura-preserve"),
                        STOP_STATUS=str(stop_status), SHOW_STATUS=str(show_status),
                        STATE=state, MAIN=main, CONTROL_PID=control)
             result = subprocess.run(["bash", str(script), action], env=env,
