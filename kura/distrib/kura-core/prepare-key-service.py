@@ -162,6 +162,16 @@ def embed_main_link_migration(preinst):
     preinst.write_text(content.replace(token, '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE = ' + repr(source)))
 
 
+def embed_upgrade_copy(preinst):
+    token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
+    source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
+    require(0 < len(source) <= 32768)
+    compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
+    content = preinst.read_text()
+    require(content.count(token) == 1)
+    preinst.write_text(content.replace(token, '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)))
+
+
 def embed_policy_readers(preinst,lifecycle,journal):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
     require(preinst.is_file() and not preinst.is_symlink())
@@ -258,6 +268,7 @@ if __name__ == "__main__":
     modem_reset.package_cohort(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
+    embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
                          Path(sys.argv[1])/'bin/kura_modem_cohort.py', 'modem cohort')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',

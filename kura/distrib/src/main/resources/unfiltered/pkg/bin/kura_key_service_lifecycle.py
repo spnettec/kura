@@ -1992,6 +1992,11 @@ if __name__ == "__main__":
             print(lifecycle.package_main_restore_decision(sys.argv[2]))
         elif sys.argv[1:] == ['--check-main-reboot-permissions']:
             lifecycle.check_main_reboot_permissions()
+        elif (sys.argv[1:2] in (['--prepare-upgrade-copy'], ['--publish-upgrade-copy'])
+              and '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE' in globals()):
+            namespace = {}
+            exec(compile(_KURA_EMBEDDED_UPGRADE_COPY_SOURCE, '<incoming upgrade copy>', 'exec'), namespace)
+            namespace['run_upgrade_copy'](sys.modules[__name__], lifecycle, sys.argv[1:])
         elif sys.argv[1:] == ['--migrate-linked-main'] and '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE' in globals():
             namespace = {}
             exec(compile(_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE, '<incoming Main link migration>', 'exec'), namespace)

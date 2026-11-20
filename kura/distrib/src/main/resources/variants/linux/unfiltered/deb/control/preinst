@@ -342,6 +342,8 @@ TIMEOUT_TIME=300
 # Captured here at top level because preInstall() runs as a background job and
 # bash functions shadow the positional parameters.
 ACTION="$1"
+OLD_VERSION="${2:-}"
+NEW_VERSION="${3:-}"
 case "${ACTION}" in
     install|upgrade|--migrate-linked-main) ;;
     abort-upgrade) exit 0 ;;
@@ -355,11 +357,11 @@ RETAINED_DIR=/var/lib/kura-retained
 
 # Do not erase an interrupted upgrade recovery copy or overwrite a retained
 # removal copy while upgrading an existing installation.
-if [ -e "${PRESERVE_DIR}" ]; then
+if [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; then
     echo "Cannot install Kura: an upgrade recovery copy already exists at ${PRESERVE_DIR}." >&2
     exit 1
 fi
-if [ "${ACTION}" = "upgrade" ] && [ -e "${RETAINED_DIR}" ]; then
+if [ "${ACTION}" = "upgrade" ] && { [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; }; then
     echo "Cannot upgrade Kura: a removal recovery copy already exists at ${RETAINED_DIR}." >&2
     exit 1
 fi
@@ -370,6 +372,7 @@ keyServicePackageAdmission() {
     python3 -I - "$@" <<'PYKURAKEYSERVICE'
 raise RuntimeError("Kura key-journal reader was not embedded")
 raise RuntimeError("Kura Main link migration was not embedded")
+raise RuntimeError("Kura upgrade copy was not embedded")
 raise RuntimeError("Kura key-service lifecycle was not embedded")
 PYKURAKEYSERVICE
 }
@@ -479,8 +482,8 @@ KURA_ADDON_CODE_POLICY
 function preInstall {
     # On an in-place upgrade (apt install of a newer kura-core over an existing
     # one), preserve the user's runtime state across the wipe. The runtime trees
-    # of the current install (reached via the kura symlink) are copied out to
-    # PRESERVE_DIR here and restored by postinst after the new tree is laid down:
+    # of the current install (reached via the kura symlink) are staged privately
+    # and published as one recovery directory before the old tree is replaced:
     #   user/       - snapshots (config history) + security keys + kura_custom
     #   data/       - persisted runtime state (e.g. H2 db)
     #   packages/   - installed deployment packages (.dp) + dpa.properties registry
@@ -488,41 +491,42 @@ function preInstall {
     # The security keys MUST travel with the snapshots, otherwise the (encrypted)
     # snapshots can no longer be decrypted.
     if [ "${ACTION}" = "upgrade" ] && [ -e "${INSTALL_DIR}/kura" ]; then
+        local staging
         echo "Upgrade detected: preserving user/, data/, packages/ and siblings/ (snapshots, keys, deployment packages, sibling bundles)" >> "${LOG}" 2>&1
-        mkdir -m 700 "${PRESERVE_DIR}" >> "${LOG}" 2>&1 || return 1
+        staging=$(keyServicePackageAdmission --prepare-upgrade-copy "$0" "${OLD_VERSION}" "${NEW_VERSION}" 2>>"${LOG}") || return 1
         # cp -a follows into the symlinked kura dir and keeps perms/ownership.
         for d in user data packages siblings log; do
             if [ -d "${INSTALL_DIR}/kura/${d}" ]; then
-                cp -a "${INSTALL_DIR}/kura/${d}" "${PRESERVE_DIR}/${d}" >> "${LOG}" 2>&1 || return 1
+                cp -a "${INSTALL_DIR}/kura/${d}" "${staging}/${d}" >> "${LOG}" 2>&1 || return 1
             fi
         done
-        provisionCryptoKey archive "${PRESERVE_DIR}/encryption" >> "${LOG}" 2>&1 || return 1
+        provisionCryptoKey archive "${staging}/encryption" >> "${LOG}" 2>&1 || return 1
         # Sibling packages also install their removal scripts and network
         # recovery helpers under .data. A core-only upgrade must not strand
         # those installed packages without their removal hooks.
         if [ -d "${INSTALL_DIR}/kura/.data" ]; then
-            cp -a "${INSTALL_DIR}/kura/.data" "${PRESERVE_DIR}/addon-data" >> "${LOG}" 2>&1 || return 1
+            cp -a "${INSTALL_DIR}/kura/.data" "${staging}/addon-data" >> "${LOG}" 2>&1 || return 1
         fi
-        manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${PRESERVE_DIR}/libexec/addons" >> "${LOG}" 2>&1 || return 1
+        manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${staging}/libexec/addons" >> "${LOG}" 2>&1 || return 1
         if [ -f /lib/systemd/system/kura.service ]; then
-            mkdir -m 700 "${PRESERVE_DIR}/systemd" >> "${LOG}" 2>&1 || return 1
-            cp -a /lib/systemd/system/kura.service "${PRESERVE_DIR}/systemd/kura.service" >> "${LOG}" 2>&1 || return 1
+            mkdir -m 700 "${staging}/systemd" >> "${LOG}" 2>&1 || return 1
+            cp -a /lib/systemd/system/kura.service "${staging}/systemd/kura.service" >> "${LOG}" 2>&1 || return 1
             if [ -f "${INSTALL_DIR}/kura/libexec/key-backup/manifest.json" ]; then
                 install -m 600 "${INSTALL_DIR}/kura/libexec/key-backup/manifest.json" \
-                    "${PRESERVE_DIR}/systemd/source-package-manifest.json" >> "${LOG}" 2>&1 || return 1
+                    "${staging}/systemd/source-package-manifest.json" >> "${LOG}" 2>&1 || return 1
             fi
         fi
         # Preserve the sibling install-order registry so gen_config_ini.sh
         # maintains the correct bundle precedence after the upgrade.
         if [ -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
-            mkdir -p "${PRESERVE_DIR}/framework" >> "${LOG}" 2>&1 || return 1
-            cp -a "${INSTALL_DIR}/kura/framework/sibling-install-order" "${PRESERVE_DIR}/framework/sibling-install-order" >> "${LOG}" 2>&1 || return 1
+            mkdir -p "${staging}/framework" >> "${LOG}" 2>&1 || return 1
+            cp -a "${INSTALL_DIR}/kura/framework/sibling-install-order" "${staging}/framework/sibling-install-order" >> "${LOG}" 2>&1 || return 1
         fi
+        keyServicePackageAdmission --publish-upgrade-copy "$0" "${OLD_VERSION}" "${NEW_VERSION}" "${staging}" >> "${LOG}" 2>&1 || return 1
     fi
 
     #clean up old installation if present
-    rm -fr /opt/eclipse/kura* >> "${LOG}" 2>&1
-    rm -fr ${INSTALL_DIR}/kura* >> "${LOG}" 2>&1
+    rm -fr "${INSTALL_DIR}"/kura* >> "${LOG}" 2>&1 || return 1
     rm -fr /tmp/.kura/ >> "${LOG}" 2>&1
     rm -f /etc/init.d/firewall >> "${LOG}" 2>&1
     rm -f /tmp/coninfo-* >> "${LOG}" 2>&1

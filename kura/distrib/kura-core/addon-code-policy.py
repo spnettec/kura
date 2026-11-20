@@ -148,7 +148,8 @@ def main(arguments):
     source, destination = Path(left), Path(right)
     installed = Path('/opt/eclipse/kura/libexec/addons')
     recovery = re.compile(r'(?:/opt/eclipse/\.kura-preserve|/var/lib/kura-retained|/var/lib/\.kura-retained\.tmp\.[A-Za-z0-9]+)/libexec/addons')
-    if not ((action == 'preserve' and source == installed and recovery.fullmatch(right))
+    capture = re.compile(r'/opt/eclipse/\.kura-preserve\.tmp\.[0-9a-f-]{36}\.[a-z0-9_]{8}/libexec/addons')
+    if not ((action == 'preserve' and source == installed and (recovery.fullmatch(right) or capture.fullmatch(right)))
             or (action == 'restore' and destination == installed and recovery.fullmatch(left))):
         raise RuntimeError('Sibling code paths are outside package lifecycle scope')
     transfer(action, source, destination)
