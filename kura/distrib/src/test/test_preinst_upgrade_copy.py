@@ -102,7 +102,8 @@ class UpgradeCopyTest(unittest.TestCase):
         with patch.object(upgrade.os, 'sync'):
             self.copy.publish(stage)
         old_inode = self.original.stat().st_ino
-        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'), +                patch.object(upgrade.UpgradeCopy, 'dpkg_payload_state'):
+        with (patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'),
+              patch.object(upgrade.UpgradeCopy, 'dpkg_payload_state')):
             self.copy.arrange_source(restore=False)
             incoming = self.fixture.physical / 'install/payload.dpkg-new'
             self.fixture.write(incoming, b'incoming pack')
