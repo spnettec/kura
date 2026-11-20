@@ -185,7 +185,7 @@ class RuntimeOwnership(unittest.TestCase):
         result=subprocess.run(['bash','-c',phase+'\n'+function+'\npostInstall\n'],env=env,capture_output=True,text=True)
         self.assertEqual(result.returncode,1)
         self.assertEqual(marker.read_text(),'attempted')
-        self.assertEqual((root/'phases').read_text(),'status\nbegin\nsetup-layout\n')
+        self.assertEqual((root/'phases').read_text(),'resume\nbegin\nsetup-layout\n')
         self.assertTrue(driver.exists())
 
     def test_installer_cli_rejects_arguments_without_touching_layout(self):
