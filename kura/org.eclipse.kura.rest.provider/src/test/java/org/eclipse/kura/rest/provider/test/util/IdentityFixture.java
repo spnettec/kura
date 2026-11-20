@@ -39,6 +39,7 @@ public class IdentityFixture {
         this.passwordStrength.activate(Map.of("new.password.min.length", 8));
         this.service.setCryptoService(this.crypto);
         this.service.setUserAdmin(this.userAdmin);
+        this.service.setIdentityPersistence(change -> change.apply());
         this.service.setPasswordStrengthVerificationService(this.passwordStrength);
         this.service.activate();
     }

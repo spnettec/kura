@@ -41,6 +41,7 @@ import org.eclipse.kura.identity.PasswordHash;
 import org.eclipse.kura.identity.PasswordStrengthVerificationService;
 import org.eclipse.kura.identity.Permission;
 import org.eclipse.kura.identity.configuration.extension.IdentityConfigurationExtension;
+import org.eclipse.kura.internal.useradmin.store.persistence.IdentityPersistence;
 import org.eclipse.kura.util.useradmin.UserAdminHelper;
 import org.eclipse.kura.util.useradmin.UserAdminHelper.AuthenticationException;
 import org.osgi.service.useradmin.Role;
@@ -65,6 +66,7 @@ public class IdentityServiceImpl implements IdentityService {
     private CryptoService cryptoService;
     private UserAdminHelper userAdminHelper;
     private PasswordStrengthVerificationService passwordStrengthVerificationService;
+    private IdentityPersistence identityPersistence;
 
     private final Map<String, IdentityConfigurationExtension> extensions = new ConcurrentHashMap<>();
 
@@ -74,6 +76,16 @@ public class IdentityServiceImpl implements IdentityService {
 
     public void setUserAdmin(final UserAdmin userAdmin) {
         this.userAdmin = userAdmin;
+    }
+
+    public synchronized void setIdentityPersistence(IdentityPersistence persistence) {
+        this.identityPersistence = persistence;
+    }
+
+    public synchronized void unsetIdentityPersistence(IdentityPersistence persistence) {
+        if (this.identityPersistence == persistence) {
+            this.identityPersistence = null;
+        }
     }
 
     public void setPasswordStrengthVerificationService(
@@ -201,15 +213,20 @@ public class IdentityServiceImpl implements IdentityService {
             throws KuraException {
 
         audit(() -> {
-            final Optional<User> user = this.userAdminHelper.getUser(identityConfiguration.getName());
-
-            if (!user.isPresent()) {
-                throw new KuraException(KuraErrorCode.INVALID_PARAMETER, "Identity does not exist");
+            IdentityPersistence.Change change = () -> {
+                User user = this.userAdminHelper.getUser(identityConfiguration.getName()).orElseThrow(
+                        () -> new KuraException(KuraErrorCode.INVALID_PARAMETER, "Identity does not exist"));
+                validateIdentityConfiguration(identityConfiguration);
+                updateIdentityConfigurationInternal(user, identityConfiguration);
+            };
+            if (identityConfiguration.getComponent(PasswordConfiguration.class).isPresent()) {
+                if (this.identityPersistence == null) {
+                    throw new KuraException(KuraErrorCode.SERVICE_UNAVAILABLE, "Identity persistence is unavailable");
+                }
+                this.identityPersistence.commit(change);
+            } else {
+                change.apply();
             }
-
-            validateIdentityConfiguration(identityConfiguration);
-
-            updateIdentityConfigurationInternal(user.get(), identityConfiguration);
         }, "Update configuration for identity " + identityConfiguration.getName());
 
     }
