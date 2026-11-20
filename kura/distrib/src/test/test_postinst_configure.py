@@ -2,6 +2,8 @@
 import hashlib
 import importlib.util
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -140,6 +142,49 @@ class ConfigureTest(unittest.TestCase):
         self.configure.apply('retire-copy')
         self.assertFalse(copy.exists())
         self.assertEqual(('READY', 'upgrade'), self.configure.apply('retire-copy'))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
+    def test_sibling_resume_ignores_partial_staging_and_preserves_an_unpacked_sibling(self):
+        source = self.configure.copies['upgrade']
+        source.mkdir(mode=0o700)
+        self.fixture.write(source / 'siblings/retained/6s/bundle.jar', b'original bundle')
+        self.fixture.write(source / 'siblings/replaced/6s/bundle.jar', b'old bundle')
+        installed = self.fixture.physical / 'siblings'
+        incoming = installed / 'replaced/6s/bundle.jar'
+        self.fixture.write(incoming, b'incoming package bundle')
+        incoming_inode = incoming.stat().st_ino
+        self.configure.apply('begin')
+        self.install_steps()
+        self.configure.apply('prepared')
+        stage = installed / ('.kura-restore-' + self.fence['id'])
+        stale = stage / 'copy-abandoned' / 'retained/6s/bundle.jar'
+        self.fixture.write(stale, b'orig')
+        installed_bundle = installed / 'retained/6s/bundle.jar'
+
+        def fail_copy(args, **kwargs):
+            self.assertFalse(stale.exists())
+            self.assertFalse(installed_bundle.exists())
+            self.fixture.write(Path(args[-1]) / '6s/bundle.jar', b'ori')
+            raise subprocess.CalledProcessError(1, args)
+
+        with patch.object(configure.subprocess, 'run', side_effect=fail_copy), self.assertRaises(subprocess.CalledProcessError):
+            self.controller().apply('restore-siblings')
+        self.assertFalse(installed_bundle.exists())
+        self.assertFalse((self.stage / 'ready.json').exists())
+        self.assertTrue(source.is_dir())
+
+        with patch.object(configure.os, 'sync'):
+            self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('restore-siblings'))
+            installed_inode = installed_bundle.stat().st_ino
+            self.controller().apply('restore-siblings')
+        self.assertEqual(b'original bundle', installed_bundle.read_bytes())
+        self.assertEqual(installed_inode, installed_bundle.stat().st_ino)
+        self.assertEqual(b'incoming package bundle', incoming.read_bytes())
+        self.assertEqual(incoming_inode, incoming.stat().st_ino)
+        self.assertFalse(stage.exists())
+        self.assertTrue(source.is_dir())
+        self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('status'))
+        self.assertEqual(self.fence, self.policy.fence())
 
     def test_resume_dispatches_only_remaining_steps_in_order(self):
         self.configure.apply('begin')

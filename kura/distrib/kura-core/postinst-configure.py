@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: EPL-2.0
 """Embedded dpkg configure phases, bound to the original key-service fence."""
+import ctypes
 import hashlib
 import hmac
 import os
@@ -17,6 +18,18 @@ INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
 CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
 }
+
+
+def publish_sibling(staged, target):
+    libc = ctypes.CDLL(None, use_errno=True)
+    rename = libc.renameat2
+    rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    rename.restype = ctypes.c_int
+    at_fdcwd = -100
+    rename_noreplace = 1
+    if rename(at_fdcwd, os.fsencode(staged), at_fdcwd, os.fsencode(target), rename_noreplace):
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(target))
 
 
 def load_lifecycle(physical, expected):
@@ -185,6 +198,40 @@ class Configure:
             # can publish this witness. Resume never invokes an issued step.
             self.publish(directory, original, f'setup-{step}-returned', recovery, secret)
 
+    def restore_siblings(self, original, mode):
+        source = self.copies[mode] / 'siblings'
+        if not os.path.lexists(source):
+            return
+        self.api.require(stat.S_ISDIR(source.lstat().st_mode), 'Invalid preserved sibling bundle directory')
+        destination = self.physical / 'siblings'
+        self.policy.directory(destination)
+        stage = destination / f'.kura-restore-{original}'
+        if os.path.lexists(stage):
+            # Only the authenticated fence's private unpublished work is disposable.
+            self.policy.directory(stage, private=True)
+            shutil.rmtree(stage)
+        stage.mkdir(mode=0o700)
+        try:
+            with tempfile.TemporaryDirectory(prefix='copy-', dir=stage) as directory:
+                pending = []
+                for sibling in sorted(source.iterdir()):
+                    if sibling.name.startswith('.') or not stat.S_ISDIR(sibling.lstat().st_mode):
+                        continue
+                    target = destination / sibling.name
+                    if os.path.lexists(target):
+                        # dpkg may have unpacked a newer package in this transaction.
+                        continue
+                    staged = Path(directory) / sibling.name
+                    subprocess.run(['/bin/cp', '-a', '--', str(sibling), str(staged)], check=True)
+                    pending.append((staged, target))
+                if pending:
+                    os.sync()
+                    for staged, target in pending:
+                        publish_sibling(staged, target)
+        finally:
+            stage.rmdir()
+            self.policy.sync(destination)
+
     def apply(self, action):
         policy, require = self.policy, self.api.require
         with policy.locked():
@@ -241,8 +288,12 @@ class Configure:
             require(policy.read(prepared, limit=4096) == prepared_body, 'Invalid configure setup receipt')
             self.paired_setup()
             if not os.path.lexists(ready):
-                require(fence is not None and action in ('status', 'ready'), 'Configure data readiness is unresolved')
+                require(fence is not None and action in ('status', 'restore-siblings', 'ready'),
+                        'Configure data readiness is unresolved')
                 require(self.source() == recovery, 'Original configure recovery copy changed')
+                if action == 'restore-siblings':
+                    require(mode in self.copies, 'No preserved sibling bundles to restore')
+                    self.restore_siblings(original, mode)
                 if action == 'ready':
                     # The staged source may be retired as soon as READY is
                     # durable. Flush the restored runtime trees first.
@@ -262,7 +313,9 @@ class Configure:
 
 
 def main():
-    actions = {'status', 'resume', 'begin', 'prepared', 'ready', 'retire-copy'} | {f'setup-{step}' for step in INSTALLER_STEPS}
+    actions = {'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy'} | {
+        f'setup-{step}' for step in INSTALLER_STEPS
+    }
     if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in actions:
         raise ValueError('Invalid Core configure action')
     action = sys.argv[1]

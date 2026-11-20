@@ -494,17 +494,11 @@ function postInstall {
             # the newly unpacked package; copying the backup over it would silently
             # revert its bundles while dpkg records the new version as installed.
             # Restore only whole sibling directories that were not unpacked again.
-            for sibling in "${PRESERVE_DIR}"/siblings/*; do
-                [ -d "${sibling}" ] || continue
-                sibling_name=${sibling##*/}
-                if [ ! -e "${INSTALL_DIR}/kura/siblings/${sibling_name}" ]; then
-                    cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${sibling_name}" >> ${LOG} 2>&1 || RESTORE_OK=0
-                fi
-            done
+            packageConfigure restore-siblings >> "${LOG}" 2>&1 || return 1
             # Restore the sibling install-order registry so gen_config_ini.sh
             # keeps the correct bundle precedence after the upgrade.
             if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
-                cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
+                cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> "${LOG}" 2>&1 || RESTORE_OK=0
             fi
             # Keep an existing recovery copy, including an intentionally different
             # historical snapshot. Only fill a missing copy; never follow a data link.
