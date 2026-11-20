@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,6 +219,50 @@ public class ClockServiceImplTest {
         ScheduledExecutorService scheduler = (ScheduledExecutorService) TestUtil.getFieldValue(provider, "scheduler");
         List<Runnable> list = scheduler.shutdownNow();
         assertTrue(list.isEmpty()); // task has not been re-scheduled
+    }
+
+    @Test
+    void lastSyncRequiresAConfirmedSystemClockUpdate() throws Throwable {
+        ClockServiceImpl service = new ClockServiceImpl();
+        this.activatedService = service;
+        ClockPrivilegeClient client = mock(ClockPrivilegeClient.class);
+        when(client.adjustRealtime(anyLong())).thenReturn(false, true, false);
+        EventAdmin events = mock(EventAdmin.class);
+        service.setEventAdmin(events);
+        TestUtil.setFieldValue(service, "clockPrivilegeClient", client);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        try (DatagramSocket server = new DatagramSocket(0, loopback);
+                var worker = Executors.newVirtualThreadPerTaskExecutor()) {
+            server.setSoTimeout(5000);
+            service.activate(Map.of("clock.ntp.refresh-interval", -1, "clock.ntp.host", loopback.getHostAddress(),
+                    "clock.ntp.port", server.getLocalPort(), "clock.ntp.timeout", 5000, "clock.set.hwclock", false));
+            JavaNtpClockSyncProvider provider = (JavaNtpClockSyncProvider) TestUtil.getFieldValue(service, "provider");
+            Date confirmed = null;
+            for (int i = 0; i < 3; i++) {
+                var sample = worker.submit(provider::syncClock);
+                DatagramPacket request = new DatagramPacket(new byte[48], 48);
+                server.receive(request);
+                byte[] reply = request.getData().clone();
+                reply[0] = 0x24;
+                reply[1] = 1;
+                ByteBuffer times = ByteBuffer.wrap(reply);
+                long origin = times.getLong(40);
+                times.putLong(24, origin);
+                times.putLong(32, origin + (2L << 32));
+                times.putLong(40, origin + (2L << 32));
+                server.send(new DatagramPacket(reply, reply.length, request.getSocketAddress()));
+                // A received sample must not request another dispatch if the actor has no confirmation.
+                assertTrue(sample.get(5, TimeUnit.SECONDS));
+                if (i == 1) {
+                    confirmed = service.getLastSync();
+                    assertNotNull(confirmed);
+                } else {
+                    assertEquals(confirmed, service.getLastSync());
+                }
+            }
+        }
+        verify(client, times(3)).adjustRealtime(anyLong());
+        verify(events).postEvent(isA(ClockEvent.class));
     }
 
     @Test

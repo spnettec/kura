@@ -189,8 +189,18 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         }
 
         ClockSyncProvider source = this.provider;
-        source.init(this.clockServiceConfig, this.scheduler,
-                (offset, changeSystemClock) -> onProviderUpdate(source, offset, changeSystemClock));
+        source.init(this.clockServiceConfig, this.scheduler, new ClockSyncListener() {
+
+            @Override
+            public void onClockUpdate(long offset, boolean changeSystemClock) {
+                onProviderUpdate(source, offset, changeSystemClock);
+            }
+
+            @Override
+            public boolean applyNtpSample(long offset) {
+                return onProviderUpdate(source, offset, true);
+            }
+        });
         setCallbackSource(source);
         try {
             source.start();
@@ -204,10 +214,8 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         this.callbackSource = source;
     }
 
-    private synchronized void onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock) {
-        if (source == this.callbackSource) {
-            onClockUpdate(offset, changeSystemClock);
-        }
+    private synchronized boolean onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock) {
+        return source == this.callbackSource && applyClockUpdate(offset, changeSystemClock);
     }
 
     private void stopClockSyncProvider() throws KuraException {
@@ -223,6 +231,10 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
      */
     @Override
     public void onClockUpdate(long offset, boolean changeSystemClock) {
+        applyClockUpdate(offset, changeSystemClock);
+    }
+
+    private boolean applyClockUpdate(long offset, boolean changeSystemClock) {
 
         logger.info("Clock update. Offset: {}", offset);
 
@@ -265,6 +277,7 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         if (bClockUpToDate) {
             this.eventAdmin.postEvent(EMPTY_EVENT);
         }
+        return bClockUpToDate;
     }
 
 }

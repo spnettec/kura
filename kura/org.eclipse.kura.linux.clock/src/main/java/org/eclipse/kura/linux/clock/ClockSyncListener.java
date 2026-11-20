@@ -14,5 +14,11 @@ package org.eclipse.kura.linux.clock;
 
 public interface ClockSyncListener {
 
-    public void onClockUpdate(long offset, boolean changeSystemClock);
+    void onClockUpdate(long offset, boolean changeSystemClock);
+
+    /** Whether the system clock was confirmed after this Java NTP sample. */
+    default boolean applyNtpSample(long offset) {
+        onClockUpdate(offset, true);
+        return true;
+    }
 }

@@ -32,7 +32,7 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
     protected int ntpTimeout;
     protected int retryInterval;
     protected int refreshInterval;
-    protected Date lastSync;
+    protected volatile Date lastSync;
     protected ScheduledExecutorService scheduler;
     protected int maxRetry;
     protected int numRetry;
@@ -145,7 +145,8 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
 
     @Override
     public Date getLastSync() {
-        return this.lastSync;
+        Date confirmed = this.lastSync;
+        return confirmed == null ? null : new Date(confirmed.getTime());
     }
 
     // ----------------------------------------------------------------
