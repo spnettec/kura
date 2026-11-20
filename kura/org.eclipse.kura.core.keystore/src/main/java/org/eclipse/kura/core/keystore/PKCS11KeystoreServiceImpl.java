@@ -61,39 +61,35 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
 
     @Override
     public void activate(ComponentContext context, Map<String, Object> properties) {
-
+        this.options = new PKCS11KeystoreServiceOptions(properties, (String) properties.get(KURA_SERVICE_PID));
         super.activate(context, properties);
-
-        options = new PKCS11KeystoreServiceOptions(properties, ownPid);
-
     }
 
     @Override
     public void updated(Map<String, Object> properties) {
-
-        super.updated(properties);
-
         PKCS11KeystoreServiceOptions newOptions = new PKCS11KeystoreServiceOptions(properties, ownPid);
-
-        if (!newOptions.equals(this.options)) {
-            logger.info("Options changed...");
-
-            removeProvider();
-            this.options = newOptions;
+        boolean changed;
+        synchronized (this) {
+            changed = !newOptions.equals(this.options);
+            if (changed) {
+                removeProvider();
+                this.options = newOptions;
+            }
         }
-
+        super.updated(properties, changed);
+        if (changed) {
+            postChangedEvent();
+        }
     }
 
     @Override
     public void deactivate() {
-
-        removeProvider();
-
         super.deactivate();
+        removeProvider();
     }
 
     @Override
-    protected KeystoreInstance loadKeystore() throws KuraException {
+    protected synchronized KeystoreInstance loadKeystore() throws KuraException {
         final Provider currentProvider = getOrRegisterProvider();
 
         try {

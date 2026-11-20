@@ -139,11 +139,15 @@ public abstract class BaseKeystoreService implements KeystoreService, Configurab
     }
 
     public void updated(Map<String, Object> properties) {
+        updated(properties, false);
+    }
+
+    protected void updated(Map<String, Object> properties, boolean reloadCrlManager) {
         logger.info("Bundle {} is updating!", properties.get(KURA_SERVICE_PID));
 
         final CRLManagerOptions newCRLManagerOptions = new CRLManagerOptions(properties);
 
-        if (!this.crlManagerOptions.equals(newCRLManagerOptions)) {
+        if (reloadCrlManager || !this.crlManagerOptions.equals(newCRLManagerOptions)) {
             this.crlManagerOptions = newCRLManagerOptions;
 
             updateCRLManager(newCRLManagerOptions);
