@@ -37,7 +37,7 @@ FRAMEWORK_STOP = "bin/kura_framework_stop.py"
 WATCHDOG_MAINTENANCE = "bin/kura_watchdog_maintenance.py"
 TEMPLATES = "libexec/key-backup/launchers/"
 FIXED_FILES = frozenset(("bin/kura_key_cohort.py", "bin/kura_credential_env.sh", "bin/kura_key_generation.py",
-                         "bin/kura_key_validation.py", "share/key-management/key-generations.conf",
+                         "bin/kura_framework_config.py", "bin/kura_key_validation.py", "share/key-management/key-generations.conf",
                          "share/key-management/credential-owner.json", *[TEMPLATES + n for n in LAUNCHERS]))
 
 

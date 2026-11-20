@@ -1,4 +1,5 @@
 """Run the shipped shell argument path with recording executables, without Java."""
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -37,7 +38,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
                 source = source.replace('@' + key + '@', value)
             (self.bin / name).write_text(source)
         resources = SCRIPT.parents[3] / 'unfiltered/pkg/bin'
-        for name in ['kura_key_store.py', 'kura_credential_env.sh']:
+        for name in ['kura_key_store.py', 'kura_credential_env.sh', 'kura_framework_config.py']:
             shutil.copyfile(resources / name, self.bin / name)
         # These tests record shell/JVM arguments; the native suite separately exercises
         # the actual Linux Root peer, descriptor and JVM lifetime. Isolate those
@@ -145,6 +146,27 @@ sys.exit(module['main'](sys.argv[1:]))
         self.assertEqual(config.read_bytes(), expected)
         self.assertEqual(config.stat().st_ino, complete.st_ino)
         self.assertEqual(set(config.parent.iterdir()), {config})
+
+    def test_live_writer_keeps_its_partial_file_and_next_launch_clears_a_stale_one(self):
+        directory = self.root / 'configuration'
+        directory.mkdir()
+        config = directory / 'config.ini'
+        config.write_bytes(b'previous complete configuration')
+        pending = directory / '.config.ini.pending'
+        pending.write_bytes(b'incomplete')
+        lock = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.launch()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(pending.read_bytes(), b'incomplete')
+            self.assertEqual(config.read_bytes(), b'previous complete configuration')
+            self.assertFalse((self.root / 'lease-entry-called').exists())
+        finally:
+            os.close(lock)
+        self.assertEqual(self.launch().returncode, 0)
+        self.assertFalse(pending.exists())
+        self.assertIn(b'osgi.bundles=', config.read_bytes())
 
     def test_partial_bundle_list_is_discarded_before_claiming_a_writer_lease(self):
         generator = self.bin / 'gen_config_ini.sh'

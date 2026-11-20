@@ -59,7 +59,7 @@ done
 # Use the same credential for the installed service and direct launchers.
 . "${DIR}/bin/kura_credential_env.sh" || exit 1
 
-kura_prepare_configuration /tmp/.kura/configuration/config.ini || exit 1
+python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configuration || exit 1
 
 if [[ -n "${KURA_DEBUG_MODE}" && "${KURA_DEBUG_MODE}" == "true" ]]; then
     IS_DEBUG_MODE="true"
