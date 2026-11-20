@@ -20,7 +20,7 @@ from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directo
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
 from kura_modem_cohort import active_provider
-from kura_reboot_broker import ENVIRONMENT, UNIT_PROPERTIES, file_hash, proc_status, receive, send, socket_peer
+from kura_reboot_broker import ENVIRONMENT, MAX_FRAME, UNIT_PROPERTIES, file_hash, proc_status, receive, send, socket_peer
 
 ACTOR_HOME = Path('/usr/libexec/kura-bind-service')
 STATE = Path('/var/lib/kura-bind-service')
@@ -81,6 +81,10 @@ def verify_actor(unit):
 def request(action, operation):
     identifier(operation)
     fields = dict(schema=1, operationId=operation)
+    if action.startswith('paired-outcome:'):
+        scoped = action.removeprefix('paired-outcome:')
+        require(scoped.startswith('scoped:'), 'INVALID_BIND_REQUEST')
+        return dict(**fields, action='paired-outcome', request=request(scoped, operation))
     if action.startswith('scoped:'):
         _, scope, action = action.split(':', 2)
         require(outcomes.PROOF.fullmatch(scope), 'INVALID_BIND_REQUEST')
@@ -304,6 +308,9 @@ def operate(expected, authorize):
         return ('APPLIED' if target()[1] == 'active' else 'INACTIVE', None)
     directory(STATE, 0)
     require(STATE.lstat().st_gid == 0, 'UNPAIRED_BIND_STATE')
+    if action == 'paired-outcome':
+        require(authorize(), 'UNAUTHORIZED')
+        return outcomes.paired_query(STATE, state_binding(), expected)
     if action in outcomes.READ_ONLY:
         require(authorize(), 'UNAUTHORIZED')
         return outcomes.query(STATE, state_binding(), expected)
@@ -331,7 +338,7 @@ def serve(stream, unit):
             require(active_provider() == 'kura-networking', 'UNPAIRED_BIND_PROVIDER')
             return main_peer(peer, main_sha, CLIENT, 2, request, networking=True)
         expected = peer_request()
-        actual = receive(stream)
+        actual = receive(stream, maximum=outcomes.request_limit(expected, MAX_FRAME))
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_BIND_REQUEST')
         proof = None
         try:
@@ -356,17 +363,17 @@ def client(expected):
         stream.connect(str(SOCKET))
         credentials = stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
         require(struct.unpack('3i', credentials) == (1, 0, 0), 'UNPAIRED_BIND_RELEASE')
-        send(stream, expected)
+        send(stream, expected, maximum=outcomes.request_limit(expected, MAX_FRAME))
         reply = receive(stream, timeout=55 if expected['action'] == 'configure' else 38)
         wire = dict(schema=1, operationId=expected['operationId'], state=reply.get('state'))
         proof = reply.get('proof')
         action = expected['action']
         if proof is not None:
             require(isinstance(proof, str) and outcomes.PROOF.fullmatch(proof) and reply.get('state') == 'APPLIED'
-                    and action in (*WRITES, *outcomes.READ_ONLY, 'settle-publication'), 'INVALID_BIND_RESPONSE')
+                    and action in (*WRITES, *outcomes.READ_ONLY, 'paired-outcome', 'settle-publication'), 'INVALID_BIND_RESPONSE')
             wire['proof'] = proof
         require(type(reply.get('schema')) is int and reply == wire and reply['state'] in RESULTS
-                and (reply['state'] != 'APPLIED' or action not in (*WRITES, 'scope') or proof is not None),
+                and (reply['state'] != 'APPLIED' or action not in (*WRITES, 'scope', 'paired-outcome') or proof is not None),
                 'INVALID_BIND_RESPONSE')
         if proof is not None:
             print(proof)

@@ -274,9 +274,7 @@ def operate(expected, authorize):
         require_ready(root)
         return 'APPLIED', outcomes.binding(STATE, root)
     if expected['action'] == 'paired-outcome':
-        original = expected['request']
-        return outcomes.query(STATE, root, dict(action='outcome', proof=original['rootScope'],
-                              operationId=expected['operationId']), original_request=original)
+        return outcomes.paired_query(STATE, root, expected)
     if expected['action'] in outcomes.READ_ONLY:
         return outcomes.query(STATE, root, expected)
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)

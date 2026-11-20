@@ -156,6 +156,17 @@ def delivered_at(state, operation, intent, result, *, acknowledge=False):
     return False
 
 
+def request_limit(expected, maximum):
+    # A recovery query encloses one complete original request in a fixed-size envelope.
+    return maximum + 128 if expected['action'] == 'paired-outcome' else maximum
+
+
+def paired_query(state, root, expected):
+    original = expected['request']
+    lookup = dict(action='outcome', proof=original['rootScope'], operationId=expected['operationId'])
+    return query(state, root, lookup, original_request=original)
+
+
 def query(state, root, expected, *, original_request=None):
     scope = binding(state, root)
     if expected['action'] == 'scope':

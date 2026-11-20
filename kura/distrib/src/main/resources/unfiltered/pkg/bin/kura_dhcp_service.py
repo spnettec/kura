@@ -86,6 +86,10 @@ def request(action, operation):
         return dict(**values, action=action)
     if action.startswith('compare:'):
         return dict(**values, action='compare', interfaces=configuration.parse(action[len('compare:'):]))
+    if action.startswith('paired-outcome:'):
+        original = action.removeprefix('paired-outcome:')
+        require(original.startswith('apply:'), 'INVALID_DHCP_REQUEST')
+        return dict(**values, action='paired-outcome', request=request(original, operation))
     if action.startswith('apply:'):
         _, scope, model = action.split(':', 2)
         require(outcomes.PROOF.fullmatch(scope), 'INVALID_DHCP_REQUEST')
@@ -276,6 +280,8 @@ def operate(expected, cohort, authorize):
     require(STATE.lstat().st_gid == 0, 'UNPAIRED_DHCP_STATE')
     root = state_binding()
     action = expected['action']
+    if action == 'paired-outcome':
+        return outcomes.paired_query(STATE, root, expected)
     if action in outcomes.READ_ONLY:
         return outcomes.query(STATE, root, expected)
     if action == 'compare':
@@ -318,7 +324,7 @@ def serve(stream, unit):
             check_dhcp_provider(True)
             return identity
         expected = paired_request()
-        actual = receive(stream, maximum=REQUEST_LIMIT)
+        actual = receive(stream, maximum=outcomes.request_limit(expected, REQUEST_LIMIT))
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_DHCP_REQUEST')
         proof = None
         try:
@@ -343,17 +349,17 @@ def client(expected):
         stream.connect(str(SOCKET))
         peer = stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
         require(struct.unpack('3i', peer) == (1, 0, 0), 'UNPAIRED_DHCP_RELEASE')
-        send(stream, expected, maximum=REQUEST_LIMIT)
+        send(stream, expected, maximum=outcomes.request_limit(expected, REQUEST_LIMIT))
         response = receive(stream, timeout=50)
         proof = response.get('proof')
         reply = dict(schema=1, operationId=expected['operationId'], state=response.get('state'))
         action = expected['action']
         if proof is not None:
             require(isinstance(proof, str) and outcomes.PROOF.fullmatch(proof) and response['state'] == 'APPLIED'
-                    and action in ('scope', 'apply', 'outcome'), 'INVALID_DHCP_RESPONSE')
+                    and action in ('scope', 'apply', 'outcome', 'paired-outcome'), 'INVALID_DHCP_RESPONSE')
             reply['proof'] = proof
         require(type(response.get('schema')) is int and response == reply and response['state'] in RESULTS
-                and (response['state'] != 'APPLIED' or action not in ('scope', 'apply') or proof is not None),
+                and (response['state'] != 'APPLIED' or action not in ('scope', 'apply', 'paired-outcome') or proof is not None),
                 'INVALID_DHCP_RESPONSE')
         if proof is not None:
             print(proof)

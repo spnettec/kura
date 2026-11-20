@@ -70,6 +70,12 @@ class BindJournalTest(unittest.TestCase):
         self.assertEqual(state, 'APPLIED')
         self.assertEqual(bind.operate(expected, lambda: True), ('UNKNOWN', None))
         self.assertEqual(bind.operate(self.lookup(expected), lambda: True), ('APPLIED', token))
+        prefix = 'paired-outcome:scoped:' + expected['rootScope'] + ':'
+        original = bind.request(prefix + 'restart', expected['operationId'])
+        self.assertEqual(bind.operate(original, lambda: True), ('APPLIED', token))
+        with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_OUTCOME_REQUEST'):
+            bind.operate(bind.request(prefix + 'stop', expected['operationId']), lambda: True)
+        self.job.assert_called_once_with('restart')
         self.assertFalse((self.state / (expected['operationId'] + '.delivered')).exists())
         self.assertEqual(bind.operate(self.scoped('stop'), lambda: True), ('UNKNOWN', None))
         with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_DELIVERY'):

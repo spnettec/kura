@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: EPL-2.0
 from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
+import os
+import tempfile
 import socket
 import struct
 import sys
@@ -38,6 +40,27 @@ class DhcpServiceTest(unittest.TestCase):
                       FIRST + ';' + SECOND.replace('198.51.100.', '192.0.2.')):
             with self.subTest(value=value), self.assertRaises(Refused):
                 config.parse(value)
+
+    @unittest.skipUnless(os.geteuid() == 0, 'exercise the root-owned actor journal')
+    def test_only_the_original_dhcp_model_can_recover_its_receipt(self):
+        with tempfile.TemporaryDirectory() as temp, patch.object(service, 'STATE', Path(temp)), patch.object(
+                service, 'state_binding', return_value=['machine', 1, 2]) as binding:
+            root = binding.return_value
+            scope = service.digest(root)
+            operation = str(uuid4())
+            action = 'apply:' + scope + ':'
+            original = service.request(action + FIRST, operation)
+            intent = dict(root=root, request=original, deliveryProtocol=service.outcomes.PROTOCOL)
+            service.create(service.STATE / 'root.json', dict(schema=1, root=root))
+            service.create(service.STATE / (operation + '.intent'), intent)
+            token = service.outcomes.commit(service.STATE / (operation + '.result'), intent)
+            def lookup(model):
+                expected = service.request('paired-outcome:' + action + model, operation)
+                return service.operate(expected, {}, lambda: True)
+            self.assertEqual(lookup(FIRST), ('APPLIED', token))
+            with self.assertRaisesRegex(Refused, 'UNPAIRED_OUTCOME_REQUEST'):
+                lookup(SECOND)
+            self.assertFalse((service.STATE / (operation + '.delivered')).exists())
 
     def test_original_scope_and_binary_frame_are_bounded(self):
         model = ';'.join(f'link{n},192.0.{n}.1,24,192.0.{n}.100,192.0.{n}.120,,900,0' for n in range(48))
