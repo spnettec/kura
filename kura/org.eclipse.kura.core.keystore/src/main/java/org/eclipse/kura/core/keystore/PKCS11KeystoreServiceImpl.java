@@ -21,17 +21,23 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.security.AuthProvider;
 import java.security.KeyStore;
 import java.security.KeyStore.Entry;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.ProviderException;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.security.auth.login.LoginException;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
@@ -47,6 +53,9 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
 
     Optional<Provider> provider = Optional.empty();
     private PKCS11KeystoreServiceOptions options;
+    private AuthProvider authenticatedProvider;
+    private boolean logoutFailed;
+    private boolean pinRejected;
 
     private CryptoService cryptoService;
     private SystemService systemService;
@@ -72,6 +81,9 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
         synchronized (this) {
             changed = !newOptions.equals(this.options);
             if (changed) {
+                if (!this.options.hasSameAuthentication(newOptions)) {
+                    retireAuthentication();
+                }
                 removeProvider();
                 this.options = newOptions;
             }
@@ -90,21 +102,47 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
 
     @Override
     protected synchronized KeystoreInstance loadKeystore() throws KuraException {
+        if (this.logoutFailed || this.pinRejected) {
+            throw new KuraException(KuraErrorCode.SECURITY_EXCEPTION);
+        }
         final Provider currentProvider = getOrRegisterProvider();
-
+        final char[] pin = this.options.getPin(cryptoService).orElse(null);
         try {
             final KeyStore store = KeyStore.getInstance("PKCS11", currentProvider);
-
-            final char[] pin = this.options.getPin(cryptoService).orElse(null);
-
             store.load(null, pin);
-
+            if (currentProvider instanceof AuthProvider authenticated) {
+                this.authenticatedProvider = authenticated;
+            }
             return new KeystoreInstanceImpl(store, pin);
-
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+            if (pin != null) {
+                Arrays.fill(pin, '\0');
+            }
+            if (e instanceof IOException && e.getCause() instanceof UnrecoverableKeyException) {
+                this.pinRejected = true;
+                logger.warn("PKCS11 PIN rejected; further loads require new authentication settings");
+            }
             removeProvider();
             logger.warn("Keystore exception", e);
             throw new KuraException(KuraErrorCode.SECURITY_EXCEPTION);
+        }
+    }
+
+    private void retireAuthentication() {
+        this.pinRejected = false;
+        // SunPKCS11 can keep a token logged in across provider registrations.
+        if (this.authenticatedProvider == null && this.provider.orElse(null) instanceof AuthProvider authenticated) {
+            this.authenticatedProvider = authenticated;
+        }
+        if (this.authenticatedProvider != null) {
+            try {
+                this.authenticatedProvider.logout();
+                this.authenticatedProvider = null;
+                this.logoutFailed = false;
+            } catch (LoginException | ProviderException | SecurityException e) {
+                this.logoutFailed = true;
+                logger.warn("Could not retire the previous PKCS11 login", e);
+            }
         }
     }
 

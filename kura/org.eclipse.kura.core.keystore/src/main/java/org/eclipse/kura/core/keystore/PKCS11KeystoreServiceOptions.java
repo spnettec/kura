@@ -95,6 +95,11 @@ public class PKCS11KeystoreServiceOptions {
         return crlStorePath;
     }
 
+    boolean hasSameAuthentication(PKCS11KeystoreServiceOptions other) {
+        return Objects.equals(libraryPath, other.libraryPath) && Objects.equals(slot, other.slot)
+                && Objects.equals(slotListIndex, other.slotListIndex) && Objects.equals(pin, other.pin);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(attributes, crlStorePath, disabledMechanisms, enabledMechanisms, libraryPath, ownPid, pin,
