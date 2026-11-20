@@ -396,8 +396,10 @@ def quiesce():
                    cohortSha256=policy.cohort, units=units), 0o644)
         else:
             require(current['cohortSha256'] == policy.cohort and current['units'] == units, 'UNPAIRED_MAINTENANCE')
+    # Include the listening sockets in the same stop transaction as their services.
+    run('/usr/bin/systemctl', 'stop', *UNITS)
     for name in UNITS:
-        run('/usr/bin/systemctl', 'stop', name); inactive(name)
+        inactive(name)
 
 
 def reassert_quiescence():
