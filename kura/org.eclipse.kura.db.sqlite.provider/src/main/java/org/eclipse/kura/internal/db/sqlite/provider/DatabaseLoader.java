@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.internal.db.sqlite.provider.SqliteDbServiceOptions.EncryptionKeyFormat;
@@ -34,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
+import org.sqlite.SQLiteErrorCode;
 
 public class DatabaseLoader {
 
@@ -51,27 +51,6 @@ public class DatabaseLoader {
     }
 
     public SQLiteDataSource openDataSource() throws SQLException, KuraException {
-        try {
-            return openDataSourceInternal();
-        } catch (final Exception e) {
-
-            final boolean isConfigurationAttributeInvalidException = (e instanceof KuraException
-                    && ((KuraException) e).getCode() == KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID);
-
-            if (this.newOptions.isDeleteDbFilesOnFailure() && this.newOptions.getMode() != Mode.IN_MEMORY
-                    && !isConfigurationAttributeInvalidException) {
-                logger.warn("failed to open database, deleting database files and retrying", e);
-                deleteDbFiles(newOptions.getPath());
-                return openDataSourceInternal();
-            }
-
-            throw e;
-        }
-
-    }
-
-    protected SQLiteDataSource openDataSourceInternal() throws SQLException, KuraException {
-
         final String dbUrl = this.newOptions.getDbUrl();
 
         if (newOptions.getMode() != Mode.PERSISTED) {
@@ -98,29 +77,43 @@ public class DatabaseLoader {
 
         applicableEncryptionKeys.add(Optional.empty());
 
-        Exception lastException = null;
+        SQLException lastFailure = null;
         final Optional<JournalMode> journalMode = Optional.of(this.newOptions.getJournalMode());
 
         for (final Optional<EncryptionKeySpec> encryptionKey : applicableEncryptionKeys) {
+            SQLiteDataSource result;
             try {
-                SQLiteDataSource result = openDataSource(dbUrl, encryptionKey, journalMode);
-
-                if (!encryptionKey.equals(keyFromNewOptions)) {
-                    changeEncryptionKey(result, keyFromNewOptions, newOptions);
-                    result = openDataSource(dbUrl, keyFromNewOptions, journalMode);
-                }
-
-                updateCryptoServiceEntry(newOptions.getPath(), keyFromNewOptions);
-
-                return result;
-            } catch (final Exception e) {
+                result = openDataSource(dbUrl, encryptionKey, journalMode);
+            } catch (SQLException e) {
                 logger.debug("database open attempt failed", e);
-                lastException = e;
-                // try next one
+                lastFailure = e;
+                continue;
             }
+
+            // Once opened, a rekey or credential-store failure must leave the database in place.
+            if (!encryptionKey.equals(keyFromNewOptions)) {
+                changeEncryptionKey(result, keyFromNewOptions, this.newOptions);
+                result = openDataSource(dbUrl, keyFromNewOptions, journalMode);
+            }
+            updateCryptoServiceEntry(this.newOptions.getPath(), keyFromNewOptions);
+            return result;
         }
 
-        throw new SQLException("Failed to open database", lastException);
+        // An encrypted file opened with an unavailable key can also report SQLITE_NOTADB.
+        if (this.newOptions.isDeleteDbFilesOnFailure() && applicableEncryptionKeys.size() == 1
+                && lastFailure != null && isDatabaseFormatError(lastFailure)) {
+            logger.warn("recreating unreadable SQLite database as configured", lastFailure);
+            deleteDbFiles(this.newOptions.getPath());
+            SQLiteDataSource result = openDataSource(dbUrl, Optional.empty(), journalMode);
+            updateCryptoServiceEntry(this.newOptions.getPath(), Optional.empty());
+            return result;
+        }
+        throw new SQLException("Failed to open database", lastFailure);
+    }
+
+    private static boolean isDatabaseFormatError(SQLException failure) {
+        int primaryCode = failure.getErrorCode() & 0xff;
+        return primaryCode == SQLiteErrorCode.SQLITE_CORRUPT.code || primaryCode == SQLiteErrorCode.SQLITE_NOTADB.code;
     }
 
     private void addEncryptionKey(final List<Optional<EncryptionKeySpec>> applicableEncryptionKeys,

@@ -120,7 +120,7 @@ class SqliteDbServiceOptions {
     private static final Property<String> ENCRYPTION_KEY_FORMAT_PROPERTY = new Property<>("db.key.format",
             EncryptionKeyFormat.ASCII.name());
     private static final Property<Boolean> DELETE_DB_FILES_ON_FAILURE = new Property<>("delete.db.files.on.failure",
-            true);
+            false);
     private static final Property<String> KURA_SERVICE_PID_PROPERTY = new Property<>(
             ConfigurationService.KURA_SERVICE_PID, "sqlitedb");
 
