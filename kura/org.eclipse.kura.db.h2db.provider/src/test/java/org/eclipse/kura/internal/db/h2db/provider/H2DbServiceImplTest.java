@@ -13,29 +13,28 @@
 package org.eclipse.kura.internal.db.h2db.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.testutil.TestUtil;
 import org.eclipse.kura.crypto.CryptoService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class H2DbServiceImplTest {
 
@@ -238,53 +237,64 @@ public class H2DbServiceImplTest {
     }
 
     @Test
-    public void testUpdateFile() throws Throwable {
-        final String filePathString = "/tmp/kurah2/testdb";
-        final String enc = "enc";
-        char[] encPass = enc.toCharArray();
-        String pass = "pass";
-        String user = "USR";
-
-        H2DbServiceImpl svc = new H2DbServiceImpl();
-        CryptoService csMock = mock(CryptoService.class);
-        when(csMock.decryptAes(any(char[].class))).thenReturn(new char[0]);
-        when(csMock.decryptAes(encPass)).thenReturn(pass.toCharArray());
-        svc.setCryptoService(csMock);
-        svc.activate(Collections.emptyMap());
-
-        Map<String, Object> props = new HashMap<>();
-        props.put("db.user", user);
-        props.put("db.password", enc);
-        props.put("db.connection.pool.max.size", 10);
-        File f = new File(filePathString);
-        props.put("db.connector.url", "jdbc:h2:file:" + f.getAbsolutePath());
-
+    public void testFileMaintenanceTasksRetiredOnUpdate(@TempDir Path directory) throws Exception {
+        H2DbServiceImpl service = new H2DbServiceImpl();
+        CryptoService crypto = mock(CryptoService.class);
+        when(crypto.decryptAes(any(char[].class))).thenReturn(new char[0]);
+        service.setCryptoService(crypto);
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("db.connector.url", "jdbc:h2:file:" + directory.resolve("maintenance"));
+        service.activate(properties);
         try {
-            svc.getConnection();
-        } catch (SQLException e) {
-            assertTrue(e.getMessage().contains("not initialized"));
+            service.getConnection().close();
+            var checkpoint = (ScheduledFuture<?>) TestUtil.getFieldValue(service, "checkpointTask");
+            var defrag = (ScheduledFuture<?>) TestUtil.getFieldValue(service, "defragTask");
+            properties.put("db.defrag.interval.minutes", 0);
+            service.updated(properties);
+            service.getConnection().close();
+            assertTrue(checkpoint.isCancelled());
+            assertTrue(defrag.isCancelled());
+        } finally {
+            service.deactivate();
+        }
+    }
+
+    @Test
+    public void testRetainedFileAfterFailedOpen(@TempDir Path directory) throws Exception {
+        String url = "jdbc:h2:file:" + directory.resolve("business");
+        CryptoService crypto = mock(CryptoService.class);
+        when(crypto.decryptAes(any(char[].class))).thenAnswer(call -> call.getArgument(0));
+        Map<String, Object> properties = Map.of("db.connector.url", url, "db.user", "USR", "db.password", "original");
+
+        H2DbServiceImpl first = new H2DbServiceImpl();
+        first.setCryptoService(crypto);
+        first.activate(properties);
+        try (Connection connection = first.getConnection(); var statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE retained_record (value_id INTEGER)");
+            statement.executeUpdate("INSERT INTO retained_record VALUES (413)");
+            connection.commit();
+        } finally {
+            first.deactivate();
         }
 
-        svc.updated(props);
-
-        Connection conn = svc.getConnection();
-        PreparedStatement statement = conn.prepareStatement("SELECT USER()");
-
-        ResultSet rs = statement.executeQuery();
-        rs.next();
-        String result = rs.getString(1);
-
-        assertEquals(user, result);
-
-        svc.deactivate();
-
-        Path filePath = Paths.get(filePathString + ".mv.db");
-        assertTrue(Files.exists(filePath));
-
-        H2DbServiceOptions cfg = (H2DbServiceOptions) TestUtil.getFieldValue(svc, "configuration");
-        TestUtil.invokePrivate(svc, "deleteDbFiles", cfg);
-
-        assertFalse(Files.exists(filePath));
+        Map<String, Object> unavailable = new HashMap<>(properties);
+        unavailable.put("db.password", "unavailable");
+        H2DbServiceImpl restarted = new H2DbServiceImpl();
+        restarted.setCryptoService(crypto);
+        restarted.activate(unavailable);
+        try {
+            assertThrows(SQLException.class, restarted::getConnection);
+            assertTrue(Files.isRegularFile(directory.resolve("business.mv.db")));
+            restarted.updated(properties);
+            try (Connection connection = restarted.getConnection();
+                    var statement = connection.createStatement();
+                    var rows = statement.executeQuery("SELECT value_id FROM retained_record")) {
+                assertTrue(rows.next());
+                assertEquals(413, rows.getInt(1));
+            }
+        } finally {
+            restarted.deactivate();
+        }
     }
 
 }

@@ -53,7 +53,6 @@ import org.eclipse.kura.wire.store.provider.WireRecordStore;
 import org.eclipse.kura.wire.store.provider.WireRecordStoreProvider;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.h2.jdbcx.JdbcDataSource;
-import org.h2.tools.DeleteDbFiles;
 import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -357,9 +356,8 @@ public class H2DbServiceImpl implements H2DbService, MessageStoreProvider, WireR
             try {
                 shutdownDb();
             } catch (SQLException sqlException) {
-                disposeConnectionPool();
+                e.addSuppressed(sqlException);
             }
-            stopCheckpointTask();
             logger.error("Database initialization failed", e);
         } finally {
             lock.unlock();
@@ -447,12 +445,11 @@ public class H2DbServiceImpl implements H2DbService, MessageStoreProvider, WireR
 
     private void shutdownDb() throws SQLException {
         this.lastSessionPassword = null;
+        stopDefragTask();
+        stopCheckpointTask();
         if (this.connectionPool == null) {
             return;
         }
-
-        stopDefragTask();
-        stopCheckpointTask();
 
         Connection conn = null;
         Statement stmt = null;
@@ -463,11 +460,12 @@ public class H2DbServiceImpl implements H2DbService, MessageStoreProvider, WireR
         } finally {
             close(stmt);
             close(conn);
+            disposeConnectionPool();
+            this.listenerManager.dispatchDisconnected();
+            if (this.configuration != null) {
+                activeInstances.remove(this.configuration.getBaseUrl(), this);
+            }
         }
-
-        disposeConnectionPool();
-        this.listenerManager.dispatchDisconnected();
-        activeInstances.remove(this.configuration.getBaseUrl());
     }
 
     private void openConnectionPool(H2DbServiceOptions configuration, String password) {
@@ -481,41 +479,11 @@ public class H2DbServiceImpl implements H2DbService, MessageStoreProvider, WireR
 
         this.connectionPool = JdbcConnectionPool.create(this.dataSource);
 
-        openDatabase(configuration, true);
-    }
-
-    private void openDatabase(H2DbServiceOptions configuration, boolean deleteDbOnError) {
-        Connection conn = null;
-        try {
-            conn = getConnectionInternal();
+        try (Connection connection = getConnectionInternal()) {
             this.listenerManager.dispatchConnected();
         } catch (SQLException e) {
-            logger.error("Failed to open database", e);
-            if (deleteDbOnError && configuration.isFileBased()) {
-                logger.warn("Deleting database files...");
-                deleteDbFiles(configuration);
-                logger.warn("Deleting database files...done");
-                openDatabase(configuration, false);
-            } else {
-                disposeConnectionPool();
-                throw new ComponentException(e);
-            }
-        } finally {
-            close(conn);
-        }
-    }
-
-    private void deleteDbFiles(H2DbServiceOptions configuration) {
-        try {
-            final String directory = configuration.getDbDirectory();
-            final String dbName = configuration.getDatabaseName();
-            if (directory == null || dbName == null) {
-                logger.warn("Failed to determine database directory or name, not deleting db");
-                return;
-            }
-            DeleteDbFiles.execute(directory, dbName, false);
-        } catch (Exception e) {
-            logger.warn("Failed to remove DB files", e);
+            disposeConnectionPool();
+            throw new ComponentException("Failed to open database", e);
         }
     }
 
@@ -563,7 +531,7 @@ public class H2DbServiceImpl implements H2DbService, MessageStoreProvider, WireR
         if (delayMinutes <= 0) {
             return;
         }
-        this.checkpointTask = this.executor.scheduleWithFixedDelay(new DefragTask(config), delayMinutes, delayMinutes,
+        this.defragTask = this.executor.scheduleWithFixedDelay(new DefragTask(config), delayMinutes, delayMinutes,
                 TimeUnit.MINUTES);
     }
 

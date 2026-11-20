@@ -12,7 +12,6 @@
  *******************************************************************************/
 package org.eclipse.kura.internal.db.h2db.provider;
 
-import java.io.File;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,8 +47,6 @@ class H2DbServiceOptions {
     private boolean isFileBasedLogLevelSpecified;
 
     private String baseUrl;
-    private String dbDirectory;
-    private String dbName;
 
     public H2DbServiceOptions(Map<String, Object> properties) {
         this.password = PASSWORD_PROP.get(properties).toCharArray();
@@ -110,15 +107,6 @@ class H2DbServiceOptions {
 
         this.baseUrl = "jdbc:h2:" + protocol + ':' + url;
 
-        if (this.isFileBased) {
-            File file = new File(url);
-            this.dbDirectory = file.getParent();
-            if (this.dbDirectory == null) {
-                this.dbDirectory = ".";
-            }
-            this.dbName = file.getName();
-        }
-
         this.isFileBasedLogLevelSpecified = FILE_LOG_LEVEL_PATTERN.matcher(this.dbUrl).find();
     }
 
@@ -152,14 +140,6 @@ class H2DbServiceOptions {
 
     public boolean isRemote() {
         return this.isRemote;
-    }
-
-    public String getDbDirectory() {
-        return this.dbDirectory;
-    }
-
-    public String getDatabaseName() {
-        return this.dbName;
     }
 
     public long getCheckpointIntervalSeconds() {
