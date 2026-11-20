@@ -33,7 +33,9 @@ class GenerationPackageTest(unittest.TestCase):
         self.root = Path(temporary.name)
         self.home = self.root / "opt/eclipse/kura"
         self.home.mkdir(parents=True, mode=0o750)
-        for name in lifecycle.ASSETS | cohort.FIXED_FILES | {cohort.FRAMEWORK_STOP, cohort.WATCHDOG_MAINTENANCE}:
+        main_template = SOURCE / "filtered/pkg/install/kura.service"
+        unit_files = cohort.managed_unit(main_template.read_bytes().replace(b"INSTALL_DIR", b"/opt/eclipse"))
+        for name in lifecycle.ASSETS | cohort.FIXED_FILES | unit_files:
             if name.startswith(cohort.TEMPLATES) or name.startswith("libexec/"):
                 continue
             self.copy(SOURCE / "unfiltered/pkg" / name, self.home / name)
