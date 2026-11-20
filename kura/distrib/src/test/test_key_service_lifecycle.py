@@ -145,16 +145,23 @@ class LifecycleTest(unittest.TestCase):
         lease = self.root / 'run/kura-key-service/writers/lease.lock'
         self.write(lease, b'')
         lease.parent.chmod(0o700)
-        descriptor = self.root / 'proc/432/fd/9'
-        descriptor.parent.mkdir(parents=True)
-        descriptor.symlink_to(lease)
+        process = self.root / 'proc/432'
+        process.mkdir(parents=True)
+        (process / 'stat').write_text('432 (java) ' + ' '.join(['0'] * 19 + ['123']))
+        boot = str(uuid.uuid4())
+        self.write(self.root / 'proc/sys/kernel/random/boot_id', boot.encode())
+        info = lease.stat()
+        record = lease.parent / '432-123.json'
+        self.write(record, lifecycle.encoded(dict(schema=1, state='LEASE_GRANTED', pid=432, startTicks='123',
+                                                 bootId=boot, uid=process.stat().st_uid,
+                                                 lockDevice=info.st_dev, lockInode=info.st_ino)))
         self.policy.runner = lambda *args, **kwargs: types.SimpleNamespace(returncode=0, stdout='MainPID=432\n')
         with lease.open('rb') as main, lease.open('rb') as direct:
             fcntl.flock(main, fcntl.LOCK_SH)
             fcntl.flock(direct, fcntl.LOCK_SH)
             self.policy.check_package_writers(allow_main=True)
             fcntl.flock(main, fcntl.LOCK_UN)
-            descriptor.unlink()
+            record.unlink()
             with self.assertRaises(lifecycle.ActiveWriter):
                 self.policy.check_package_writers()
             with self.assertRaises(lifecycle.ActiveWriter):

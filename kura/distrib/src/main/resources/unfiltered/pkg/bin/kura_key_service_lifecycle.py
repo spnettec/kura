@@ -1878,18 +1878,32 @@ class Lifecycle:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                if allow_main:
-                    status = self.command(['show', 'kura.service', '--property=MainPID'])
-                    pid = next((line[8:] for line in status.splitlines() if line.startswith('MainPID=')), '')
-                    if re.fullmatch(r'[1-9][0-9]*', pid) and pid != '1':
-                        try:
-                            if os.path.samestat(self.path('/proc/' + pid + '/fd/9').stat(), info):
-                                return  # The maintainer script drains Main and checks again.
-                        except FileNotFoundError:
-                            pass
+                if allow_main and self.managed_writer_registered(writers, info):
+                    return  # The maintainer script drains Main and checks the kernel lock again.
                 raise ActiveWriter('A Kura writer is still active; package change refused') from None
         finally:
             os.close(fd)
+
+    def managed_writer_registered(self, writers, lock):
+        status = self.command(['show', 'kura.service', '--property=MainPID'])
+        match = re.fullmatch(r'MainPID=([1-9][0-9]*)', status.strip())
+        if not match or match[1] == '1':
+            return False
+        pid = match[1]
+        process = self.path('/proc/' + pid)
+        # The Root broker records the lease before exec. A maintainer may read
+        # start ticks without having ptrace access to a non-root JVM's fd table.
+        try:
+            ticks = (process / 'stat').read_text().rsplit(')', 1)[-1].split()[19]
+            require(ticks.isdigit(), 'Invalid managed writer start time')
+            record = decode(self.read(writers / (pid + '-' + ticks + '.json'), limit=4096))
+            uid = process.stat().st_uid
+        except (FileNotFoundError, ProcessLookupError):
+            return False
+        expected = dict(schema=1, state='LEASE_GRANTED', pid=int(pid), startTicks=ticks,
+                        bootId=self.path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                        uid=uid, lockDevice=lock.st_dev, lockInode=lock.st_ino)
+        return all(record.get(key) == value for key, value in expected.items())
 
     def enter(self, action):
         require(action in ("install", "upgrade", "remove"))
