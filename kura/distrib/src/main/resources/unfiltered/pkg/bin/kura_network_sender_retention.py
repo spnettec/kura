@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import pwd
 import re
+import secrets
 import stat
 import sys
 import tempfile
@@ -83,14 +84,16 @@ def restore_files(data, records, uid):
         raw = content.encode('ascii')
         if not os.path.lexists(pending):
             # The same account as the Java sender publishes only a complete record.
-            with tempfile.TemporaryDirectory(dir=folder) as staging:
-                source = Path(staging) / 'pending'
-                fd = os.open(source, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            source = folder / ('.restore-' + secrets.token_hex(16))
+            fd = os.open(source, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC, 0o600)
+            try:
                 with os.fdopen(fd, 'wb') as output:
                     output.write(raw)
                     output.flush()
                     os.fsync(output.fileno())
                 publish_path(source, pending, False)
+            finally:
+                source.unlink(missing_ok=True)
         require(read(pending, uid, maximum=SENDERS[name][1]) == raw, INVALID)
         sync(folder)
     sync(data)
@@ -112,10 +115,17 @@ def restore():
     child = os.fork()
     if not child:
         try:
+            # The versioned install is searchable only by kura-key-control. Pin the
+            # sender's directory before dropping privileges; writes need no group grant.
+            fd = os.open(HOME / 'data', os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            try:
+                os.fchdir(fd)
+            finally:
+                os.close(fd)
             os.setgroups([])
             os.setgid(user.pw_gid)
             os.setuid(user.pw_uid)
-            restore_files(HOME / 'data', records, user.pw_uid)
+            restore_files(Path('.'), records, user.pw_uid)
         except Exception as error:
             print(error, file=sys.stderr, flush=True)
             os._exit(1)

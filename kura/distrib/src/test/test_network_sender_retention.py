@@ -23,7 +23,6 @@ class NetworkSenderRetentionTest(unittest.TestCase):
         self.stage.mkdir(0o700)
         self.addCleanup(shutil.rmtree, self.stage)
         self.site = Path(self.enterContext(tempfile.TemporaryDirectory(dir='/var/lib')))
-        self.site.chmod(0o711)
         self.archive = self.site / 'retention.json'
         for target, value in [('ARCHIVE', self.archive), ('HOME', self.site)]:
             self.enterContext(patch.object(retention, target, value))
