@@ -35,7 +35,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
             source = source.replace('/var/run/kura.pid', str(self.root / 'kura.pid'))
             source = source.replace('/var/log/', str(self.root) + '/')
             for key, value in {'kura.mem.size': '512m', 'kura.os.version': 'linux', 'kura.arch': 'arm64', 'target.device': 'linux', 'org.eclipse.equinox.launcher.version': 'fixture'}.items():
-                source = source.replace('@' + key + '@', value)
+                source = source.replace('@' + key + '@', value).replace('${' + key + '}', value)
             (self.bin / name).write_text(source)
         resources = SCRIPT.parents[3] / 'unfiltered/pkg/bin'
         for name in ['kura_key_store.py', 'kura_credential_env.sh', 'kura_framework_config.py']:
@@ -78,7 +78,7 @@ sys.exit(module['main'](sys.argv[1:]))
         for path in [self.bin / 'gen_config_ini.sh', *self.fake.iterdir()]:
             path.chmod(0o700)
 
-    def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh'):
+    def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh', arguments=(), pass_fds=()):
         env = dict(os.environ, YOFC_LAUNCH_ARGUMENTS=str(self.record))
         env.pop('KURA_JVM_ARGS_FILE', None)
         env['CREDENTIALS_DIRECTORY'] = str(self.credentials)
@@ -88,7 +88,49 @@ sys.exit(module['main'](sys.argv[1:]))
         if argument_file is not None:
             env['KURA_JVM_ARGS_FILE'] = str(argument_file)
         interpreter = '/bin/bash' if script == 'start_kura.sh' else '/bin/sh'
-        return subprocess.run([interpreter, str(self.bin / script)], env=env, capture_output=True, text=True, timeout=5)
+        return subprocess.run([interpreter, str(self.bin / script), *arguments], env=env, capture_output=True, text=True, timeout=5, pass_fds=pass_fds)
+
+    def test_detached_java_pid_matches_file_and_cannot_write_through_launcher_fd(self):
+        pidfile = self.root / 'kura.pid'
+        recorder = self.fake / 'java'
+        recorder.write_text('#!' + shutil.which('python3') + '\n' + """import json, os
+from pathlib import Path
+try:
+    os.fstat(3)
+    fd_closed = False
+except OSError:
+    fd_closed = True
+Path(os.environ['YOFC_LAUNCH_ARGUMENTS']).write_text(json.dumps([os.getpid(), fd_closed]))
+""")
+        for name, args in [('start_kura_background.sh', ()), ('start_kura.sh', ('--detached',))]:
+            with self.subTest(name=name):
+                self.record.unlink(missing_ok=True)
+                pidfile.write_text('1000000000\n')
+                result = self.launch(script=name, arguments=args)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                pid, closed = self.args()
+                self.assertEqual(pidfile.read_text(), str(pid) + '\n')
+                self.assertTrue(closed)
+
+    def test_pid_open_failure_does_not_start_detached_process(self):
+        # A directory makes the PID destination unwritable even when tests run as root.
+        (self.root / 'kura.pid').mkdir()
+        for name, args in [('start_kura.sh', ('--detached',)), ('start_kura_background.sh', ())]:
+            with self.subTest(name=name):
+                (self.root / 'lease-entry-called').unlink(missing_ok=True)
+                self.record.unlink(missing_ok=True)
+                reader, writer = os.pipe()
+                with os.fdopen(reader, 'rb') as pipe:
+                    try:
+                        result = self.launch(script=name, arguments=args, pass_fds=(writer,))
+                    finally:
+                        os.close(writer)
+                    # EOF waits for every recording child that inherited the pipe to exit.
+                    self.assertEqual(pipe.read(), b'')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('kura.pid', result.stderr)
+                self.assertFalse((self.root / 'lease-entry-called').exists())
+                self.assertFalse(self.record.exists())
 
     def args(self):
         for _ in range(100):

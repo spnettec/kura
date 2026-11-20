@@ -109,12 +109,18 @@ KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
     $EQUINOX_DEBUG_OPTS"
 
 if [[ $IS_DETACHED_MODE == "true" ]]; then
-    eval "$KURA_CMD &"
+    # Open the PID file before starting a process that maintenance must be able to find.
+    exec 3>/var/run/kura.pid || exit 1
+    eval "$KURA_CMD 3>&- &"
 
-    #Save the PID
     KURA_PID=$!
+    if ! printf '%s\n' "$KURA_PID" >&3; then
+        kill "$KURA_PID" 2>/dev/null
+        wait "$KURA_PID" 2>/dev/null
+        exit 1
+    fi
+    exec 3>&-
     echo "Kura Started (pid=$KURA_PID) ..."
-    echo $KURA_PID > /var/run/kura.pid
 else
     eval "$KURA_CMD"
 fi

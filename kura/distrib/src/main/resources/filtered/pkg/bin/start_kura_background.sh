@@ -34,6 +34,8 @@ python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configur
 KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
 
 if [ -z "$KURA_RUNNING" ] ; then
+    # Open the PID file before starting a process that maintenance must be able to find.
+    exec 3>/var/run/kura.pid || exit 1
   nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
         -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
         -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
@@ -57,12 +59,16 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Dosgi.console=5002 \
         -Declipse.consoleLog=true >> /var/log/kura-console.log 2>> /var/log/kura-console.log \
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
-        -configuration /tmp/.kura/configuration &
+        -configuration /tmp/.kura/configuration 3>&- &
 
-    #Save the PID
     KURA_PID=$!
-    echo "Kura Started (pid="$KURA_PID") ..." >> /var/log/kura-console.log
-    echo $KURA_PID > /var/run/kura.pid
+    if ! printf '%s\n' "$KURA_PID" >&3; then
+        kill "$KURA_PID" 2>/dev/null
+        wait "$KURA_PID" 2>/dev/null
+        exit 1
+    fi
+    exec 3>&-
+    echo "Kura Started (pid=$KURA_PID) ..." >> /var/log/kura-console.log
 else
     echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
 fi
