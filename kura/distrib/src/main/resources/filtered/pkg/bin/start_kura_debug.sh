@@ -12,8 +12,7 @@ cd $DIR
 # Use the same credential for the installed service and direct launchers.
 . "${DIR}/bin/kura_credential_env.sh" || exit 1
 
-mkdir -p /tmp/.kura/configuration
-${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/siblings > /tmp/.kura/configuration/config.ini
+kura_prepare_configuration /tmp/.kura/configuration/config.ini || exit 1
 
 KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
 

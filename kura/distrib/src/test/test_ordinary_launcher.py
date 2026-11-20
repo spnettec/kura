@@ -22,6 +22,8 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.fake.mkdir()
         self.record = self.root / 'arguments.json'
         self.generator = self.root / 'generator-called'
+        (self.root / 'framework').mkdir()
+        (self.root / 'framework/config.ini').write_text('osgi.framework=fixture\n')
         for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
             source = (SCRIPT.parent / name).read_text()
             # Only isolate the test's PATH and existing global output paths. The
@@ -116,6 +118,69 @@ sys.exit(module['main'](sys.argv[1:]))
         self.assertEqual(sum(arg.startswith('@') for arg in args), 1)
         self.assertTrue(self.admission.exists())
         self.assertTrue((self.root / 'lease-entry-called').exists())
+
+    def test_configuration_output_matches_stdout_and_survives_template_read_failure(self):
+        generator = self.bin / 'gen_config_ini.sh'
+        shutil.copyfile(SCRIPT.parents[3] / 'unfiltered/pkg/bin/gen_config_ini.sh', generator)
+        template = self.root / 'framework/config.ini'
+        plugins = self.root / 'plugins'
+        (plugins / '4s').mkdir(parents=True)
+        (plugins / '4s' / 'example.jar').touch()
+        config = self.root / 'configuration/config.ini'
+        config.parent.mkdir()
+        config.write_bytes(b'earlier configuration')
+        before = config.stat()
+        expected = subprocess.check_output(['/bin/sh', str(generator), str(template), str(plugins), ''])
+        self.assertIn(b'example.jar@4', expected)
+        self.assertEqual(self.launch().returncode, 0)
+        self.assertEqual(config.read_bytes(), expected)
+        self.assertNotEqual(config.stat().st_ino, before.st_ino)
+        self.assertEqual(config.stat().st_mode & 0o777, 0o600)
+
+        template.unlink()
+        template.mkdir()
+        complete = config.stat()
+        result = self.launch()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(config.read_bytes(), expected)
+        self.assertEqual(config.stat().st_ino, complete.st_ino)
+        self.assertEqual(set(config.parent.iterdir()), {config})
+
+    def test_partial_bundle_list_is_discarded_before_claiming_a_writer_lease(self):
+        generator = self.bin / 'gen_config_ini.sh'
+        generator.write_text('#!/bin/sh\nprintf "partial bundle list"\nexit 1\n')
+        config = self.root / 'configuration/config.ini'
+        config.parent.mkdir()
+        config.write_bytes(b'previous complete configuration')
+        before = config.stat()
+        result = self.launch()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(config.read_bytes(), b'previous complete configuration')
+        self.assertEqual(config.stat().st_ino, before.st_ino)
+        self.assertEqual(set(config.parent.iterdir()), {config})
+        self.assertFalse((self.root / 'lease-entry-called').exists())
+
+    def test_failed_generation_preserves_last_configuration_for_every_launcher(self):
+        generator = self.bin / 'gen_config_ini.sh'
+        shutil.copyfile(SCRIPT.parents[3] / 'unfiltered/pkg/bin/gen_config_ini.sh', generator)
+        # An incomplete package layout may have no framework configuration template.
+        (self.root / 'framework/config.ini').unlink()
+        (self.root / 'plugins').mkdir()
+        directory = self.root / 'configuration'
+        directory.mkdir()
+        config = directory / 'config.ini'
+        config.write_bytes(b'previous complete configuration\n')
+        before = config.stat()
+        for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
+            with self.subTest(launcher=name):
+                result = self.launch(script=name)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('framework/config.ini', result.stderr)
+                self.assertEqual(config.read_bytes(), b'previous complete configuration\n')
+                self.assertEqual(config.stat().st_ino, before.st_ino)
+                self.assertEqual(set(directory.iterdir()), {config})
+                self.assertFalse((self.root / 'lease-entry-called').exists())
+                self.assertFalse((self.root / 'kura.pid').exists())
 
     def test_root_unknown_refuses_before_generator_or_java_even_with_a_valid_credential(self):
         before = self.credential.read_bytes()
