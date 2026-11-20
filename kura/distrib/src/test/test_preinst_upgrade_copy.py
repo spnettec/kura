@@ -119,6 +119,11 @@ class UpgradeCopyTest(unittest.TestCase):
             self.assertTrue(incoming.exists())
             intruder.unlink()
             partial_inode = incoming.stat().st_ino
+            backup = incoming.with_name('payload.dpkg-tmp')
+            self.fixture.write(backup, b'incoming package body')
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Unexpected file'):
+                self.copy.arrange_source(restore=True)
+            backup.unlink()
             self.copy.arrange_source(restore=True)
             self.copy.arrange_source(restore=True)
             self.assertEqual(old_inode, self.original.stat().st_ino)
@@ -163,9 +168,20 @@ class UpgradeCopyTest(unittest.TestCase):
                     resumed.arrange_source(restore=True)
                 self.assertEqual(incoming_inode, incoming.lstat().st_ino)
                 self.fixture.write(postinst, self.release_hooks['postinst'], 0o750)
+                # An earlier retry already returned this same payload to dpkg.
+                resumed.arrange_source(restore=True)
+                resumed.arrange_source(restore=False)
+                backup = incoming.with_suffix('.dpkg-tmp')
+                self.fixture.write(backup, b'tampered package body')
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'differs from the incoming payload'):
+                    resumed.arrange_source(restore=True)
+                self.assertEqual(b'tampered package body', backup.read_bytes())
+                self.fixture.write(backup, incoming.read_bytes())
+                backup_inode = backup.lstat().st_ino
                 resumed.arrange_source(restore=True)
                 self.assertEqual(old_ino, self.original.lstat().st_ino)
                 self.controller(predecessor='6.0.0-2').arrange_source(restore=False)
+                self.assertEqual(backup_inode, backup.lstat().st_ino)
             self.assertEqual(incoming_inode, incoming.lstat().st_ino)
             self.assertEqual(original_record, (self.copy.destination / '.capture.json').read_bytes())
             self.assertEqual(self.fence, self.policy.fence())

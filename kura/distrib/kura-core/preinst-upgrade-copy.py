@@ -192,7 +192,7 @@ class UpgradeCopy:
             rename_upgrade_copy(pending, path)
         self.policy.sync(self.destination)
 
-    def check_partial_payload(self, path):
+    def check_partial_payload(self, path, *, relocated):
         require = self.api.require
         self.policy.directory(path)
         found_file = False
@@ -209,11 +209,17 @@ class UpgradeCopy:
                 require(name in self.payload_directories, 'Unexpected directory in interrupted dpkg payload')
                 continue
             require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'Unsafe entry in interrupted dpkg payload')
+            writing = name.endswith('.dpkg-new')
+            # A second unpack can leave dpkg's backup of the already returned
+            # incoming file. Require the existing relocation record and verify
+            # the backup as a complete file from the same package.
             base = name.removesuffix('.dpkg-new')
+            if relocated and not writing:
+                base = base.removesuffix('.dpkg-tmp')
             require(base in self.payload_files, 'Unexpected file in interrupted dpkg payload')
             maximum, expected = self.payload_files[base]
             require(info.st_size <= maximum, 'Interrupted dpkg file exceeds its incoming size')
-            if name == base:
+            if not writing:
                 require(info.st_size == maximum, 'Published dpkg file has the wrong size')
                 fd = os.open(entry, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
                 with os.fdopen(fd, 'rb') as stream:
@@ -243,12 +249,13 @@ class UpgradeCopy:
         require(self.policy.read(handoff, limit=4096) == self.payload_record('issued', capture, secret),
                 'Missing original dpkg payload handoff')
         self.dpkg_payload_state()
-        self.check_partial_payload(existing)
         marker = self.destination / '.partial-payload.json'
         expected = self.payload_record('preserved', capture, secret, payload=self.identity(existing))
-        if os.path.lexists(marker):
+        relocated = os.path.lexists(marker)
+        if relocated:
             require(self.policy.read(marker, limit=4096) == expected, 'Interrupted dpkg payload identity changed')
-        else:
+        self.check_partial_payload(existing, relocated=relocated)
+        if not relocated:
             require(public and restore, 'Interrupted dpkg payload has no paired relocation record')
             self.publish_payload_record(marker, expected)
         if public:
