@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
+import hashlib
 import importlib.util
 from pathlib import Path
 import sys
@@ -30,7 +31,10 @@ class UpgradeCopyTest(unittest.TestCase):
         self.fixture.write(self.original, b'original retained data')
 
     def controller(self, successor='6.0.0-2'):
-        return upgrade.UpgradeCopy(fixtures.lifecycle, self.policy, self.control, '6.0.0-1', successor)
+        payload = b'incoming package body'
+        return upgrade.UpgradeCopy(fixtures.lifecycle, self.policy, self.control, '6.0.0-1', successor,
+                                   dict(home=self.fixture.physical.name, directories=['install'],
+                                        files={'install/payload': (len(payload), hashlib.sha256(payload).hexdigest())}))
 
     def test_retries_only_the_authenticated_unpublished_copy_from_the_intact_source(self):
         partial = self.copy.prepare()
@@ -78,7 +82,8 @@ class UpgradeCopyTest(unittest.TestCase):
                 self.copy.arrange_source(restore=True)
             self.fixture.write(self.boot, original_boot)
             self.fixture.physical.mkdir(mode=0o750)
-            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Original Core home is missing or ambiguous'):
+            with patch.object(upgrade.UpgradeCopy, 'dpkg_payload_state'), self.assertRaisesRegex(
+                    fixtures.lifecycle.Refused, 'Interrupted dpkg payload has no incoming file evidence'):
                 self.copy.arrange_source(restore=True)
             self.fixture.physical.rmdir()
             self.copy.arrange_source(restore=True)
@@ -87,6 +92,41 @@ class UpgradeCopyTest(unittest.TestCase):
         self.assertFalse(parked.exists())
         self.assertTrue((self.copy.destination / '.capture.json').exists())
         self.assertEqual(self.fence, self.policy.fence())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
+    def test_partial_payload_is_held_across_old_source_checks_and_returned_without_replacement(self):
+        stage = self.copy.prepare()
+        for name in ('kura_encryption_key', 'provisioned.json'):
+            credential = self.policy.path('/etc/kura/credentials') / name
+            self.fixture.write(stage / 'encryption' / name, credential.read_bytes())
+        with patch.object(upgrade.os, 'sync'):
+            self.copy.publish(stage)
+        old_inode = self.original.stat().st_ino
+        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'), +                patch.object(upgrade.UpgradeCopy, 'dpkg_payload_state'):
+            self.copy.arrange_source(restore=False)
+            incoming = self.fixture.physical / 'install/payload.dpkg-new'
+            self.fixture.write(incoming, b'incoming pack')
+            self.fixture.write(incoming.with_name('payload'), b'incoming package body')
+            intruder = incoming.with_name('site-file')
+            self.fixture.write(intruder, b'preserve')
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Unexpected file'):
+                self.copy.arrange_source(restore=True)
+            self.assertEqual(b'preserve', intruder.read_bytes())
+            self.assertTrue(incoming.exists())
+            intruder.unlink()
+            partial_inode = incoming.stat().st_ino
+            self.copy.arrange_source(restore=True)
+            self.copy.arrange_source(restore=True)
+            self.assertEqual(old_inode, self.original.stat().st_ino)
+            self.assertFalse(incoming.exists())
+            held = self.copy.destination / '.partial-payload/install/payload.dpkg-new'
+            self.assertEqual(partial_inode, held.stat().st_ino)
+            self.copy.arrange_source(restore=False)
+            self.assertEqual(partial_inode, incoming.stat().st_ino)
+            self.assertEqual(b'incoming pack', incoming.read_bytes())
+            self.assertFalse(held.exists())
+            self.assertFalse(self.original.exists())
+            self.assertEqual(self.fence, self.policy.fence())
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
     def test_sync_failure_leaves_the_original_unpublished_copy_and_never_replaces_a_destination(self):

@@ -1997,7 +1997,8 @@ if __name__ == "__main__":
               and '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE' in globals()):
             namespace = {}
             exec(compile(_KURA_EMBEDDED_UPGRADE_COPY_SOURCE, '<incoming upgrade copy>', 'exec'), namespace)
-            namespace['run_upgrade_copy'](sys.modules[__name__], lifecycle, sys.argv[1:])
+            namespace['run_upgrade_copy'](sys.modules[__name__], lifecycle, sys.argv[1:],
+                                          _KURA_EMBEDDED_UPGRADE_PAYLOAD)
         elif sys.argv[1:] == ['--migrate-linked-main'] and '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE' in globals():
             namespace = {}
             exec(compile(_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE, '<incoming Main link migration>', 'exec'), namespace)

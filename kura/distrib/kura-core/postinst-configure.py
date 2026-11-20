@@ -90,6 +90,8 @@ class Configure:
             return dict(mode='install', device=None, inode=None)
         (mode, path), = present
         self.policy.directory(path, private=True)
+        self.api.require(not os.path.lexists(path / '.partial-payload'),
+                         'Interrupted dpkg payload still needs its original unpack')
         info = path.lstat()
         return dict(mode=mode, device=info.st_dev, inode=info.st_ino)
 

@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
+import subprocess
 import tempfile
 import uuid
 
@@ -21,12 +23,16 @@ def rename_upgrade_copy(stage, destination):
 
 
 class UpgradeCopy:
-    def __init__(self, api, policy, control, old_version, new_version):
+    def __init__(self, api, policy, control, old_version, new_version, payload):
         self.api = api
         self.policy = policy
         self.base = policy.path('/opt/eclipse')
         self.destination = self.base / '.kura-preserve'
         self.control = control
+        api.require(re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+', payload['home']), 'Invalid incoming Core home')
+        self.incoming = self.base / payload['home']
+        self.payload_files = payload['files']
+        self.payload_directories = frozenset(payload['directories'])
         for version in (old_version, new_version):
             api.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version), 'Invalid upgrade version')
         self.versions = dict(oldVersion=old_version, newVersion=new_version)
@@ -129,10 +135,16 @@ class UpgradeCopy:
         require(name == 'kura' or re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+', name), 'Invalid original Core home')
         live = self.base / name
         parked = self.destination / '.old-home'
-        require(os.path.lexists(live) != os.path.lexists(parked), 'Original Core home is missing or ambiguous')
-        original = live if os.path.lexists(live) else parked
-        policy.directory(original)
-        require(dict(name=name, **self.identity(original)) == source, 'Original Core home was replaced')
+        originals = []
+        for path in (live, parked):
+            if not os.path.lexists(path):
+                continue
+            policy.directory(path)
+            if dict(name=name, **self.identity(path)) == source:
+                originals.append(path)
+            else:
+                require(path == self.incoming and path == live, 'Original Core home was replaced')
+        require(len(originals) == 1, 'Original Core home is missing or ambiguous')
         if name != 'kura':
             logical = self.base / 'kura'
             require(logical.is_symlink() and logical.lstat().st_uid == policy.owner
@@ -143,26 +155,114 @@ class UpgradeCopy:
                                      '--property=MainPID', '--property=ControlPID'])
             require(set(output.splitlines()) == {'ActiveState=inactive', 'MainPID=0', 'ControlPID=0'},
                     'Main must be stopped under the original maintenance fence')
-        return live, parked, original
+        return live, parked, originals[0], hashlib.sha256(raw).hexdigest(), secret
+
+    def payload_record(self, phase, capture, secret, **fields):
+        record = dict(schema=1, phase=phase, captureSha256=capture, home=self.incoming.name, **fields)
+        record['tag'] = hmac.new(secret, b'kura-core-dpkg-payload-v1\0' + self.api.encoded(record),
+                                 hashlib.sha256).hexdigest()
+        return self.api.encoded(record)
+
+    def publish_payload_record(self, path, record):
+        with tempfile.TemporaryDirectory(prefix='.payload-record-', dir=self.destination) as temporary:
+            pending = Path(temporary) / path.name
+            self.policy.create(pending, record)
+            rename_upgrade_copy(pending, path)
+        self.policy.sync(self.destination)
+
+    def check_partial_payload(self, path):
+        require = self.api.require
+        self.policy.directory(path)
+        found_file = False
+        def stamp(info):
+            return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid, info.st_nlink,
+                    info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+        for entry in path.rglob('*'):
+            name = entry.relative_to(path).as_posix()
+            info = entry.lstat()
+            require(info.st_uid == self.policy.owner and not info.st_mode & 0o7022,
+                    'Unprotected entry in interrupted dpkg payload')
+            if stat.S_ISDIR(info.st_mode):
+                require(name in self.payload_directories, 'Unexpected directory in interrupted dpkg payload')
+                continue
+            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'Unsafe entry in interrupted dpkg payload')
+            base = name.removesuffix('.dpkg-new')
+            require(base in self.payload_files, 'Unexpected file in interrupted dpkg payload')
+            maximum, expected = self.payload_files[base]
+            require(info.st_size <= maximum, 'Interrupted dpkg file exceeds its incoming size')
+            if name == base:
+                require(info.st_size == maximum, 'Published dpkg file has the wrong size')
+                fd = os.open(entry, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+                with os.fdopen(fd, 'rb') as stream:
+                    actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+                    require(actual == expected and stamp(os.fstat(stream.fileno())) == stamp(info) == stamp(entry.lstat()),
+                            'Published dpkg file differs from the incoming payload')
+            found_file = True
+        require(found_file, 'Interrupted dpkg payload has no incoming file evidence')
+
+    def dpkg_payload_state(self):
+        state = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version} ${db:Status-Status}', 'kura-core'],
+                                        text=True, timeout=5).split()
+        self.api.require(state == [self.versions['oldVersion'], 'half-installed'],
+                         'Expected an interrupted unpack of the original Core upgrade')
+
+    def pending_payload(self, original, capture, secret, *, restore):
+        require = self.api.require
+        held = self.destination / '.partial-payload'
+        public = self.incoming != original and os.path.lexists(self.incoming)
+        require(not (public and os.path.lexists(held)), 'Two interrupted dpkg payloads are present')
+        existing = self.incoming if public else held
+        if not os.path.lexists(existing):
+            return None
+        handoff = self.destination / '.payload-issued.json'
+        require(self.policy.read(handoff, limit=4096) == self.payload_record('issued', capture, secret),
+                'Missing original dpkg payload handoff')
+        self.dpkg_payload_state()
+        self.check_partial_payload(existing)
+        marker = self.destination / '.partial-payload.json'
+        expected = self.payload_record('preserved', capture, secret, payload=self.identity(existing))
+        if os.path.lexists(marker):
+            require(self.policy.read(marker, limit=4096) == expected, 'Interrupted dpkg payload identity changed')
+        else:
+            require(public and restore, 'Interrupted dpkg payload has no paired relocation record')
+            self.publish_payload_record(marker, expected)
+        if public:
+            require(restore, 'Interrupted dpkg payload must first be checked by the original preinst')
+            rename_upgrade_copy(existing, held)
+            self.policy.sync(self.base)
+            self.policy.sync(self.destination)
+        return held
 
     def arrange_source(self, *, restore):
         with self.policy.locked():
-            live, parked, original = self.published_source()
+            live, parked, original, capture, secret = self.published_source()
+            held = self.pending_payload(original, capture, secret, restore=restore)
             target = live if restore else parked
             if original != target:
                 # Move the whole original tree. A retry can use the same files
                 # for the ordinary package checks even if unpack never began.
                 rename_upgrade_copy(original, target)
+            if not restore:
+                issued = self.destination / '.payload-issued.json'
+                record = self.payload_record('issued', capture, secret)
+                if os.path.lexists(issued):
+                    self.api.require(self.policy.read(issued, limit=4096) == record, 'Invalid original dpkg handoff')
+                else:
+                    self.api.require(not os.path.lexists(self.incoming), 'Incoming Core path is already in use')
+                    self.publish_payload_record(issued, record)
+                if held is not None:
+                    rename_upgrade_copy(held, self.incoming)
             self.policy.sync(self.destination)
             self.policy.sync(self.base)
 
 
-def run_upgrade_copy(api, policy, arguments):
+def run_upgrade_copy(api, policy, arguments, payload):
     action, control, old_version, new_version, *extra = arguments
     api.require(os.environ.get('DPKG_MAINTSCRIPT_NAME') == 'preinst'
                 and os.environ.get('DPKG_MAINTSCRIPT_PACKAGE') == 'kura-core',
                 'Upgrade preservation requires the package preinst')
-    capture = UpgradeCopy(api, policy, Path(control), old_version, new_version)
+    capture = UpgradeCopy(api, policy, Path(control), old_version, new_version, payload)
     if action == '--prepare-upgrade-copy' and not extra:
         print(capture.prepare())
     elif action == '--publish-upgrade-copy' and len(extra) == 1:

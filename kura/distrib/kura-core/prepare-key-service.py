@@ -162,14 +162,27 @@ def embed_main_link_migration(preinst):
     preinst.write_text(content.replace(token, '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE = ' + repr(source)))
 
 
-def embed_upgrade_copy(preinst):
+def embed_upgrade_copy(preinst, assembly):
     token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
     source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
     require(0 < len(source) <= 32768)
     compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
     content = preinst.read_text()
     require(content.count(token) == 1)
-    preinst.write_text(content.replace(token, '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)))
+    directories, files = [], {}
+    for path in sorted(assembly.rglob('*')):
+        name = path.relative_to(assembly).as_posix()
+        require(not path.is_symlink())
+        if path.is_dir():
+            directories.append(name)
+        else:
+            require(path.is_file())
+            with path.open('rb') as stream:
+                files[name] = (path.stat().st_size, hashlib.file_digest(stream, 'sha256').hexdigest())
+    data = dict(home=assembly.name, directories=directories, files=files)
+    inputs = '_KURA_EMBEDDED_UPGRADE_PAYLOAD = ' + repr(data)
+    helper = '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)
+    preinst.write_text(content.replace(token, inputs + '\n' + helper))
 
 
 def embed_policy_readers(preinst,lifecycle,journal):
@@ -268,7 +281,7 @@ if __name__ == "__main__":
     modem_reset.package_cohort(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
-    embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst')
+    embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst', Path(sys.argv[1]))
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
                          Path(sys.argv[1])/'bin/kura_modem_cohort.py', 'modem cohort')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
