@@ -28,6 +28,10 @@ import org.eclipse.kura.testing.osgi.EquinoxExtension;
 import org.eclipse.kura.testing.osgi.EquinoxRuntime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.osgi.framework.Bundle;
 
 /** The test controller deliberately has no Kura business API JAR on its classpath. */
@@ -97,7 +101,25 @@ class BundleRuntimeIT {
         }
     }
 
-    @Test void attachesLocalizationFragmentAndFindsFallbackResources(EquinoxRuntime runtime) throws Exception {
+    @ParameterizedTest
+    @CsvSource({ "en-US, Activating Asset...", "zh-CN, AssetMessages.activating" })
+    @ResourceLock(Resources.LOCALE)
+    void attachesLocalizationFragmentAndFindsFallbackResources(String languageTag, String expectedFallback,
+            EquinoxRuntime runtime) throws Exception {
+        Locale previous = Locale.getDefault();
+        Locale display = Locale.getDefault(Locale.Category.DISPLAY);
+        Locale format = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            Locale.setDefault(Locale.forLanguageTag(languageTag));
+            verifyAssetMessages(runtime, expectedFallback);
+        } finally {
+            Locale.setDefault(previous);
+            Locale.setDefault(Locale.Category.DISPLAY, display);
+            Locale.setDefault(Locale.Category.FORMAT, format);
+        }
+    }
+
+    private void verifyAssetMessages(EquinoxRuntime runtime, String expectedFallback) throws Exception {
         start(runtime, null);
         var host = runtime.bundle("org.eclipse.kura.localization");
         assertEquals(Bundle.RESOLVED, runtime.bundle("org.eclipse.kura.localization.resources").getState());
@@ -108,8 +130,8 @@ class BundleRuntimeIT {
         Object english = EquinoxRuntime.invoke(c10n, null, "get", messages, Locale.ENGLISH);
         assertEquals("Activating Asset...", EquinoxRuntime.invoke(messages, english, "activating"));
         Object fallback = EquinoxRuntime.invoke(c10n, null, "get", messages, Locale.CHINESE);
-        // Frozen Tycho baseline returns the key for a locale without an annotation.
-        assertEquals("AssetMessages.activating", EquinoxRuntime.invoke(messages, fallback, "activating"));
+        // With no Chinese annotation, c10n tries the JVM locale before returning the message key.
+        assertEquals(expectedFallback, EquinoxRuntime.invoke(messages, fallback, "activating"));
     }
 
     @Test void detectsIncorrectImportRange(EquinoxRuntime runtime) throws Exception {
