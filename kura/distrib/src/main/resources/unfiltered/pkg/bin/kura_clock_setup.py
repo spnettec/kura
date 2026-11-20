@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Root package lifecycle for the dedicated clock actor; keep all decisions."""
+import fcntl
 import grp
 import hashlib
 import json
@@ -490,6 +491,49 @@ def install():
     policy.check(effective=False)
 
 
+def stage_actor_directory(path, group):
+    try:
+        path.mkdir(mode=0o750)
+    except FileExistsError:
+        pass
+    info = path.lstat()
+    require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0, 'UNPAIRED_CODE')
+    if (info.st_gid, stat.S_IMODE(info.st_mode)) != (group, 0o750):
+        # mkdir can finish before chown/chmod. Only an empty, protected
+        # directory in its initial ownership and mode can finish this step.
+        require(info.st_gid in (0, group) and stat.S_IMODE(info.st_mode) in (0o700, 0o750)
+                and not any(path.iterdir()), 'UNPAIRED_CODE')
+        os.chown(path, 0, group)
+        os.chmod(path, 0o750)
+    sync(path.parent)
+
+
+def stage_actor_file(path, group, source):
+    # Only the private, unpublished candidate may contain a short copy.
+    flags = os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+    try:
+        fd = os.open(path, flags | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        info = path.lstat()
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1, 'UNPAIRED_CODE')
+        fd = os.open(path, flags)
+    with os.fdopen(fd, 'r+b') as output:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        info = os.fstat(fd)
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1, 'UNPAIRED_CODE')
+        if (info.st_gid, stat.S_IMODE(info.st_mode)) != (group, 0o640):
+            require(info.st_size == 0 and info.st_gid in (0, group)
+                    and stat.S_IMODE(info.st_mode) in (0o600, 0o640, 0o644), 'UNPAIRED_CODE')
+            os.fchown(fd, 0, group)
+            os.fchmod(fd, 0o640)
+        require(info.st_size <= len(source) and output.read() == source[:info.st_size], 'UNPAIRED_CODE')
+        if info.st_size < len(source):
+            output.write(memoryview(source)[info.st_size:])
+            output.flush()
+        os.fsync(fd)
+    sync(path.parent)
+
+
 def install_actor_code(policy, descriptor, record, maintenance_record):
     """Root-only copies, exactly paired to canonical Core; no key-control group."""
     parent = ACTOR_HOME.parent
@@ -505,24 +549,17 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
             return
         require(maintenance_record is not None and installed.cohort == maintenance_record['cohortSha256'], 'UNPAIRED_CODE')
     staged = parent / ('.kura-clock-broker-staged-' + policy.cohort)
-    if not os.path.lexists(staged):
-        staged.mkdir(mode=0o750); os.chown(staged, 0, record['gid']); os.chmod(staged, 0o750)
-        for name in [*descriptor['files'], COHORT.as_posix()]:
-            destination = staged / name
-            missing = []
-            for folder in destination.parents:
-                if folder == staged:
-                    break
-                if not os.path.lexists(folder):
-                    missing.append(folder)
-            for folder in reversed(missing):
-                folder.mkdir(mode=0o750); os.chown(folder, 0, record['gid']); os.chmod(folder, 0o750)
+    if maintenance_record is None or os.path.lexists(ACTOR_HOME):
+        names = [*descriptor['files'], COHORT.as_posix()]
+        directories = {parent for name in names for parent in Path(name).parents}
+        for relative in sorted(directories, key=lambda path: (len(path.parts), path)):
+            stage_actor_directory(staged / relative, record['gid'])
+        for name in names:
             raw = public_file(HOME / name, 256 * 1024 * 1024)
-            with destination.open('xb') as output:
-                os.fchown(output.fileno(), 0, record['gid']); os.fchmod(output.fileno(), 0o640)
-                output.write(raw); output.flush(); os.fsync(output.fileno())
-            sync(destination.parent)
+            stage_actor_file(staged / name, record['gid'], raw)
         sync(staged)
+    # Once the original actor has been archived, the staged tree must already
+    # be complete. Check it without writing anything before the second rename.
     staged_policy = Policy(actor=True); staged_policy.home = staged
     staged_policy.check(installed=False)
     require(staged_policy.cohort == policy.cohort, 'UNPAIRED_CODE')

@@ -108,6 +108,34 @@ class ClockUnitPairingTest(unittest.TestCase):
                     broker.unit_directory_present(Path('/etc/systemd/system'))
 
 
+@unittest.skipUnless(os.geteuid() == 0, 'uses actual Root-owned actor staging metadata')
+class ClockActorStagingTest(unittest.TestCase):
+    def test_partial_copy_preserves_inode_and_completes_exact_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            stage = Path(directory) / 'stage'
+            stage.mkdir(mode=0o700)
+            setup.stage_actor_directory(stage, 65534)
+            path = stage / 'actor'
+            setup.stage_actor_file(path, 65534, b'paired-')
+            inode = path.stat().st_ino
+            setup.stage_actor_file(path, 65534, b'paired-actor')
+            self.assertEqual((path.read_bytes(), path.stat().st_ino), (b'paired-actor', inode))
+            modified = path.stat().st_ctime_ns
+            setup.stage_actor_file(path, 65534, b'paired-actor')
+            self.assertEqual(path.stat().st_ctime_ns, modified)
+
+    def test_different_prefix_and_linked_file_preserved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'actor'
+            setup.stage_actor_file(path, 65534, b'original')
+            with self.assertRaisesRegex(broker.Refused, 'UNPAIRED_CODE'):
+                setup.stage_actor_file(path, 65534, b'otherwise')
+            os.link(path, path.with_suffix('.saved'))
+            with self.assertRaisesRegex(broker.Refused, 'UNPAIRED_CODE'):
+                setup.stage_actor_file(path, 65534, b'original-bundle')
+            self.assertEqual(path.read_bytes(), b'original')
+
+
 class ClockMaintenancePairingTest(unittest.TestCase):
     def test_interrupted_publication_requires_the_original_archive(self):
         with tempfile.TemporaryDirectory() as directory:
