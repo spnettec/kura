@@ -70,3 +70,5 @@ sudo env KURA_NETWORKING_COHORT_SHA256='<已审批的 Networking SHA-256>' \
 ```
 
 该入口仅用于已安装 Networking 因旧版未声明证明文件而缺少 typed 证明的 Core 升级。Core 在实际调用它的同 Root、同挂载命名空间 dpkg 进程中核对两个有序路径、Core 目标版本、Networking 新旧版本、归档摘要、九个 provider 合同和只读 ModemManager 策略。当前包已声明但缺失的证明、已存在的错误证明和游离的兼容包继续拒绝。归档检查只读取文件，不执行，也不产生可跨事务使用的批准记录。普通 Main 启动仍检查实际已配置的 Networking、每个 provider 证明及已装文件。实际 dpkg 返回错误时，按同 Root 的原围栏和包状态核定中断点。
+
+已装的是独立 `kura-firewall-only` 时，使用 `KURA_FIREWALL_ONLY_COHORT_SHA256` 和同变体的后续版本归档。其 modem 证明绑定该包的 `siblings/firewall/4` JAR。归档校验拒绝混入标准 Networking 变体、BIND bundle 或 NetworkManager 策略；批准摘要只对对应的已装变体生效。

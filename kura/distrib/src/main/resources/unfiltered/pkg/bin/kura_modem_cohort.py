@@ -21,7 +21,10 @@ NM_NAME = re.compile(r'org\.eclipse\.kura\.nm-[0-9A-Za-z.+~-]+\.jar')
 ENVIRONMENT = {'PATH': '/usr/bin:/bin', 'LANG': 'C', 'LC_ALL': 'C'}
 DPKG = Path('/usr/bin/dpkg')
 DPKG_DEB = '/usr/bin/dpkg-deb'
-COHORT_HASH = 'KURA_NETWORKING_COHORT_SHA256'
+COHORT_HASHES = {
+    'kura-networking': 'KURA_NETWORKING_COHORT_SHA256',
+    'kura-firewall-only': 'KURA_FIREWALL_ONLY_COHORT_SHA256',
+}
 
 
 class MissingProviderProof(ValueError):
@@ -240,7 +243,7 @@ def current_dpkg_archives():
                 raise ValueError('Debian cohort invocation belongs to another Root')
             arguments = (process / 'cmdline').read_bytes().split(b'\0')[:-1]
             if len(arguments) != 4 or arguments[:2] != [os.fsencode(DPKG), b'--install']:
-                raise ValueError('Expected one dpkg --install with Core followed by Networking')
+                raise ValueError('Expected one dpkg --install with Core followed by its provider')
             paths = tuple(Path(os.fsdecode(arg)) for arg in arguments[2:])
             if any(not path.is_absolute() or path.resolve(strict=True) != path for path in paths):
                 raise ValueError('Debian cohort archives must use canonical absolute paths')
@@ -262,15 +265,21 @@ def newer_version(new, old):
                    env=ENVIRONMENT, timeout=5, check=True)
 
 
-def read_networking_assets(stream):
-    package = 'kura-networking'
+def read_provider_assets(stream, package):
     contracts = provider_contracts(package)
-    prefix = HOME / 'siblings' / 'networking'
+    prefix = HOME / 'siblings' / PROVIDERS[package]
+    foreign = {path for name, folder in PROVIDERS.items() if name != package
+               for path in (HOME / 'siblings' / folder, SHARE / name)}
     proofs = {SHARE / package / spec[1] for spec in contracts}
     assets = {}
     with tarfile.open(fileobj=stream, mode='r|') as archive:
         for entry in archive:
             path = Path('/') / entry.name.removeprefix('./')
+            if path in foreign or any(parent in foreign for parent in path.parents):
+                raise ValueError('Provider archive contains the other Networking variant')
+            if package == 'kura-firewall-only' and (path == NETWORKING_RULE
+                    or (path.parent == prefix / '5s' and NM_NAME.fullmatch(path.name))):
+                raise ValueError('Firewall-only archive contains NetworkManager provider assets')
             if path in proofs:
                 limit = 4096
             elif path == NETWORKING_RULE:
@@ -287,33 +296,37 @@ def read_networking_assets(stream):
                 assets[path] = json.load(source) if path in proofs else hashlib.file_digest(source, 'sha256').hexdigest()
     for tier, filename, name, protocol, policy in contracts:
         proof = assets.get(SHARE / package / filename)
+        jars = {candidate for candidate in assets if candidate.parent == prefix / tier
+                and name.fullmatch(candidate.name)}
+        if package == 'kura-firewall-only' and protocol != 'modemProtocol':
+            if proof is not None or jars:
+                raise ValueError(f'Unexpected firewall-only archive asset for {protocol}')
+            continue
         validate_proof(proof, name, protocol, policy=policy)
         path = prefix / tier / proof['provider']
-        jars = {candidate for candidate in assets if candidate.parent == path.parent
-                and name.fullmatch(candidate.name)}
         if jars != {path} or assets[path] != proof['sha256']:
             raise ValueError(f'Incoming Networking archive has an unpaired {protocol} provider')
         if policy is not None and assets.get(policy) != proof['policySha256']:
             raise ValueError('Incoming Networking archive has an unpaired Wi-Fi policy')
-    if assets.get(NETWORKING_RULE) != NETWORKING_LOCATION_POLICY_SHA256:
+    if package == 'kura-networking' and assets.get(NETWORKING_RULE) != NETWORKING_LOCATION_POLICY_SHA256:
         raise ValueError('Incoming Networking archive lacks the read-only ModemManager policy')
 
 
-def check_networking_archive(path, expected_hash, old_version):
+def check_provider_archive(path, package, expected_hash, old_version):
     def inspect(stream):
         if hashlib.file_digest(stream, 'sha256').hexdigest() != expected_hash:
             raise ValueError('Incoming Networking archive differs from its approved SHA-256')
         stream.seek(0)
         inherited = dict(pass_fds=(stream.fileno(),))
         member = f'/proc/self/fd/{stream.fileno()}'
-        if (package_field(member, 'Package', **inherited) != 'kura-networking'
+        if (package_field(member, 'Package', **inherited) != package
                 or package_field(member, 'Architecture', **inherited) != 'all'):
-            raise ValueError('Expected the ordinary kura-networking archive')
+            raise ValueError(f'Expected a {package} archive for the installed provider')
         newer_version(package_field(member, 'Version', **inherited), old_version)
         command = ['/usr/bin/timeout', '45', DPKG_DEB, '--fsys-tarfile', member]
         with subprocess.Popen(command, env=ENVIRONMENT, stdout=subprocess.PIPE, **inherited) as process:
             try:
-                read_networking_assets(process.stdout)
+                read_provider_assets(process.stdout, package)
                 # Consume tar padding so dpkg-deb can finish and be checked.
                 while process.stdout.read(64 * 1024):
                     pass
@@ -327,8 +340,9 @@ def check_networking_archive(path, expected_hash, old_version):
 
 
 def check_package_upgrade(old_version, new_version):
-    expected = os.environ.get(COHORT_HASH, '')
-    if (not re.fullmatch(r'[0-9a-f]{64}', expected)
+    approvals = [(package, os.environ[variable]) for package, variable in COHORT_HASHES.items()
+                 if variable in os.environ]
+    if (len(approvals) != 1 or not re.fullmatch(r'[0-9a-f]{64}', approvals[0][1])
             or os.environ.get('DPKG_MAINTSCRIPT_PACKAGE') != 'kura-core'
             or os.environ.get('DPKG_MAINTSCRIPT_NAME') != 'preinst'
             or os.environ.get('DPKG_ROOT', '') not in ('', '/')
@@ -336,11 +350,12 @@ def check_package_upgrade(old_version, new_version):
         check()
         return
 
+    package, expected = approvals[0]
     installed_paths = None
 
     def missing_from_package(error):
         nonlocal installed_paths
-        if error.package != 'kura-networking':
+        if error.package != package:
             raise error
         # An installed package that claims this file has damaged payload, even
         # when the selected incoming archive has a compatible replacement.
@@ -360,10 +375,10 @@ def check_package_upgrade(old_version, new_version):
                 or package_field(core, 'Version') != new_version):
             raise ValueError('The active dpkg cohort does not match this Core preinst')
         newer_version(new_version, old_version)
-        installed = dpkg('-W', '-f=${Version}\n', 'kura-networking')
+        installed = dpkg('-W', '-f=${Version}\n', package)
         if installed.returncode != 0 or not installed.stdout.strip():
             raise ValueError('Cannot prove the installed Networking version')
-        check_networking_archive(provider, expected, installed.stdout.decode().strip())
+        check_provider_archive(provider, package, expected, installed.stdout.decode().strip())
 
 
 if __name__ == '__main__':
