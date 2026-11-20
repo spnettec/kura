@@ -52,6 +52,7 @@ class WatchdogMaintenanceTest(unittest.TestCase):
                                   st_rdev=os.makedev(250, 0))
         with patch.object(watchdog, "request_path", return_value=path), \
                 patch.object(watchdog, "verified_device", return_value=(path, sampled)), \
+                patch.object(watchdog, "watchdog_setting", return_value=None), \
                 patch.object(os, "open", return_value=9) as opened, patch.object(os, "close") as closed, \
                 patch.object(os, "fstat", return_value=sampled) as current, patch.object(os, "write", return_value=1) as write:
             watchdog.maintain("check")
@@ -67,6 +68,29 @@ class WatchdogMaintenanceTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watchdog.maintain("pulse")
             write.assert_not_called()
+
+    def test_nowayout_refuses_maintenance_without_opening_the_device(self):
+        path = Path("/dev/watchdog0")
+        with patch.object(watchdog, "request_path", return_value=path), \
+                patch.object(watchdog, "verified_device", return_value=(path, None)), \
+                patch.object(watchdog, "watchdog_setting", side_effect=lambda info, rows, name:
+                             {"nowayout": "1", "state": "inactive"}[name]), patch.object(os, "open") as opened:
+            for action in ("check", "pulse", "disarm"):
+                with self.subTest(action=action), self.assertRaises(watchdog.HandoffUnavailable):
+                    watchdog.maintain(action)
+            opened.assert_not_called()
+
+    def test_active_nowayout_can_still_be_fed(self):
+        path = Path("/dev/watchdog0")
+        sampled = SimpleNamespace(st_dev=1, st_ino=3, st_ctime_ns=5, st_mode=stat.S_IFCHR | 0o660,
+                                  st_rdev=os.makedev(250, 0))
+        with patch.object(watchdog, "request_path", return_value=path), \
+                patch.object(watchdog, "verified_device", return_value=(path, sampled)), \
+                patch.object(watchdog, "watchdog_setting", side_effect=["1", "active"]), \
+                patch.object(os, "open", return_value=9), patch.object(os, "close"), \
+                patch.object(os, "fstat", return_value=sampled), patch.object(os, "write", return_value=1) as write:
+            watchdog.maintain("pulse")
+            write.assert_called_once_with(9, b"w")
 
     def test_registered_device_must_belong_to_watchdog_subsystem(self):
         with patch.object(Path, "read_text", return_value="250:0\n"), patch.object(

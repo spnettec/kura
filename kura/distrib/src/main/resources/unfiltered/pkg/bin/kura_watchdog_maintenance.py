@@ -14,6 +14,7 @@ import sys
 MARKER = Path("/tmp/watchdog")
 DEVICES = Path("/dev")
 SYSTEM_DEVICES = Path("/sys/dev/char")
+WATCHDOG_CLASS = Path("/sys/class/watchdog")
 MAX_PATH_BYTES = 512
 WRITES = {"pulse": b"w", "disarm": b"V"}
 
@@ -56,6 +57,21 @@ def registered_watchdog(number, system_devices):
     return (major, minor) == (10, 130) and target.name == "watchdog" and subsystem == Path("/sys/class/misc")
 
 
+class HandoffUnavailable(ValueError):
+    pass
+
+
+def watchdog_setting(info, system_devices, name):
+    major, minor = os.major(info.st_rdev), os.minor(info.st_rdev)
+    # The Linux watchdog core also registers watchdog0 as the legacy misc device.
+    row = WATCHDOG_CLASS / "watchdog0" if (major, minor) == (10, 130) else system_devices / f"{major}:{minor}"
+    try:
+        return (row / name).read_text(encoding="ascii").strip()
+    except FileNotFoundError:
+        # Older misc-only drivers do not publish the class attributes.
+        return None
+
+
 def verified_device(request, devices, system_devices):
     device = request.resolve(strict=True)
     if not device.is_relative_to(devices):
@@ -83,6 +99,14 @@ def maintain(action, *, marker=MARKER, devices=DEVICES, system_devices=SYSTEM_DE
     if request is None:
         return
     path, info = verified_device(request, devices, system_devices)
+    nowayout = watchdog_setting(info, system_devices, "nowayout")
+    if nowayout not in (None, "0", "1"):
+        raise ValueError("Invalid watchdog nowayout state")
+    if nowayout == "1":
+        # Keep feeding a running watchdog, but do not start an unstoppable timer
+        # or enter package maintenance that ends by disarming it.
+        if action != "pulse" or watchdog_setting(info, system_devices, "state") != "active":
+            raise HandoffUnavailable("Kura watchdog maintenance cannot disarm the configured nowayout device.")
     if action == "check":
         return
     try:
@@ -99,6 +123,8 @@ def maintain(action, *, marker=MARKER, devices=DEVICES, system_devices=SYSTEM_DE
             raise OSError("Incomplete watchdog maintenance write")
     finally:
         os.close(fd)
+    if action == "disarm" and watchdog_setting(info, system_devices, "state") == "active":
+        raise HandoffUnavailable("Kura watchdog remains active after Magic Close.")
 
 
 if __name__ == "__main__":
@@ -106,6 +132,9 @@ if __name__ == "__main__":
         if len(sys.argv) != 2:
             raise ValueError("Expected one watchdog maintenance action")
         maintain(sys.argv[1])
+    except HandoffUnavailable as error:
+        print(error, file=sys.stderr)
+        sys.exit(1)
     except (OSError, ValueError):
         # The legacy marker is data from an unprivileged service.
         print("Kura watchdog maintenance refused; check the installed watchdog device.", file=sys.stderr)
