@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 
 
@@ -40,6 +41,7 @@ import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.KuraPartialSuccessException;
 import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.configuration.ConfigurationRevisionService;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.metatype.OCDService;
 import org.eclipse.kura.system.SystemService;
@@ -590,6 +592,24 @@ public class ConfigurationServiceScenarios {
 
         thenLatestSnapshotPropertyIsAPassword("pwd_update_pid", TEST_COMPONENT_PASSWORD_PROPERTY_KEY, UPDATED_PASSWORD);
         thenNoExceptionOccurred();
+    }
+
+    public String submitIdentifiedPlan() throws KuraException {
+        var revisionService = (ConfigurationRevisionService) this.configurationService;
+        var before = revisionService.readRevision(TEST_COMPONENT_PID);
+        String operationId = "op-" + UUID.randomUUID();
+        String instancePid = "recorded_plan_fixture";
+        var creation = new ConfigurationRevisionService.Creation(TEST_COMPONENT_FPID, instancePid,
+                Map.of(TEST_COMPONENT_PASSWORD_PROPERTY_KEY, new Password(UPDATED_PASSWORD.toCharArray())));
+        var update = new ComponentConfigurationImpl(TEST_COMPONENT_PID, null, Map.of(TEST_COMPONENT_PROPERTY_KEY, 7));
+        revisionService.applyConfigurationPlanIfUnchanged(operationId, List.of(update), List.of(creation),
+                Set.of(), Map.of(TEST_COMPONENT_PID, before.revision()));
+
+        givenComponentConfigurationIsAvailable(TEST_COMPONENT_PID);
+        assertEquals(7, this.configuration.getConfigurationProperties().get(TEST_COMPONENT_PROPERTY_KEY));
+        thenComponentConfigurationPropertyIsAPassword(instancePid, TEST_COMPONENT_PASSWORD_PROPERTY_KEY, UPDATED_PASSWORD);
+        thenLatestSnapshotPropertyIsAPassword(instancePid, TEST_COMPONENT_PASSWORD_PROPERTY_KEY, UPDATED_PASSWORD);
+        return operationId;
     }
 
     @Test
