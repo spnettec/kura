@@ -393,7 +393,7 @@ function postInstall {
         return 1
     fi
 
-    CONFIGURE_STATE=$(packageConfigure status 2>>"${LOG}") || return 1
+    CONFIGURE_STATE=$(packageConfigure resume 2>>"${LOG}") || return 1
     read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
     if [ "${CONFIGURE_PHASE}" = NEW ]; then
         CONFIGURE_STATE=$(packageConfigure begin 2>>"${LOG}") || return 1
@@ -405,6 +405,7 @@ function postInstall {
         local step
         for step in layout brokers runtime https ownership; do
             packageConfigure "setup-${step}" >> "${LOG}" 2>&1 || return 1
+            packageConfigure resume >> "${LOG}" 2>&1 || return 1
         done
         packageConfigure prepared >> "${LOG}" 2>&1 || return 1
         CONFIGURE_PHASE=PREPARED

@@ -35,6 +35,7 @@ class ConfigureTest(unittest.TestCase):
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
             self.configure.run_step(name, lambda: None)
+            self.configure.apply('resume')
 
     def test_prepared_resumes_configuration_and_original_history_after_leave(self):
         self.assertEqual(('NEW', 'install'), self.configure.apply('status'))
@@ -93,7 +94,7 @@ class ConfigureTest(unittest.TestCase):
             raise InterruptedError()
         with self.assertRaises(InterruptedError):
             self.configure.run_step('layout', interrupt)
-        for command in ('status', 'begin', 'prepared', 'ready', 'retire-copy'):
+        for command in ('status', 'resume', 'begin', 'prepared', 'ready', 'retire-copy'):
             with self.subTest(command=command), self.assertRaisesRegex(lifecycle.Refused, 'unresolved'):
                 self.controller().apply(command)
         with self.assertRaisesRegex(lifecycle.Refused, 'layout is unresolved'):
@@ -130,6 +131,11 @@ class ConfigureTest(unittest.TestCase):
             self.configure.apply('ready')
         copy.rmdir()
         original.rename(copy)
+        with patch.object(configure.os, 'sync', side_effect=InterruptedError), self.assertRaises(InterruptedError):
+            self.configure.apply('ready')
+        self.assertTrue(copy.is_dir())
+        self.assertFalse((self.stage / 'ready.json').exists())
+        self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('resume'))
         self.assertEqual(('READY', 'upgrade'), self.configure.apply('ready'))
         self.configure.apply('retire-copy')
         self.assertFalse(copy.exists())
@@ -144,17 +150,46 @@ class ConfigureTest(unittest.TestCase):
             self.configure.apply('prepared')
         calls = []
         self.configure.run_step('layout', lambda: calls.append('layout'))
+        self.configure.apply('resume')
         self.assertEqual(('INSTALLER', 'install'), self.controller().apply('status'))
         for step in configure.INSTALLER_STEPS:
             self.controller().run_step(step, lambda: calls.append(step))
+            self.controller().apply('resume')
         self.assertEqual(list(configure.INSTALLER_STEPS), calls)
         self.configure.apply('prepared')
 
     def test_step_receipt_cannot_be_substituted_for_another_step(self):
         self.configure.apply('begin')
         self.configure.run_step('layout', lambda: None)
+        self.configure.apply('resume')
         self.configure.run_step('brokers', lambda: None)
+        self.configure.apply('resume')
         (self.stage/'setup-brokers-complete.json').write_bytes((self.stage/'setup-layout-complete.json').read_bytes())
         with self.assertRaisesRegex(lifecycle.Refused, 'Invalid installer step receipt'):
             self.controller().run_step('runtime', lambda: self.fail('Dispatch after invalid receipt'))
         self.assertEqual(self.fence, self.policy.fence())
+
+    def test_resume_completes_only_the_exact_original_returned_step(self):
+        self.configure.apply('begin')
+        self.configure.run_step('layout', lambda: None)
+        witness = self.stage / 'setup-layout-returned.json'
+        receipt = self.stage / 'setup-layout-complete.json'
+        before = self.fixture.data_identity()
+        self.assertFalse(receipt.exists())
+        with self.assertRaisesRegex(lifecycle.Refused, 'layout is unresolved'):
+            self.controller().run_step('layout', lambda: self.fail('Dispatched again'))
+        with self.assertRaisesRegex(lifecycle.Refused, 'another package or Root'):
+            self.controller('6.0.0-2').apply('resume')
+        self.assertFalse(receipt.exists())
+        proof = witness.read_bytes()
+        witness.write_bytes(b'{}')
+        with self.assertRaisesRegex(lifecycle.Refused, 'Invalid installer success evidence'):
+            self.controller().apply('resume')
+        self.assertFalse(receipt.exists())
+        witness.write_bytes(proof)
+        self.assertEqual(('INSTALLER', 'install'), self.controller().apply('resume'))
+        self.assertTrue(receipt.is_file())
+        self.assertEqual(proof, witness.read_bytes())
+        self.controller().run_step('layout', lambda: self.fail('Dispatched after completion'))
+        self.assertEqual(self.fence, self.policy.fence())
+        self.assertEqual(before, self.fixture.data_identity())

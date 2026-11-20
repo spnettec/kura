@@ -15,7 +15,7 @@ import types
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
 CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json'} | {
-    f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'complete')
+    f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
 }
 
 
@@ -112,26 +112,42 @@ class Configure:
         require(raw == self.body(original, 'intent', recovery, secret), 'Configure intent belongs to another package or Root')
         return recovery, secret
 
-    def completed_steps(self, directory, original, recovery, secret, *, live_step=None):
+    def publish(self, directory, original, phase, recovery, secret):
+        destination = directory / f'{phase}.json'
+        self.api.require(not os.path.lexists(destination), 'Configure record already exists')
+        with tempfile.TemporaryDirectory(prefix=f'.{original}-', dir=self.state) as pending:
+            staged = Path(pending) / destination.name
+            self.policy.create(staged, self.body(original, phase, recovery, secret))
+            os.rename(staged, destination)
+            self.policy.sync(directory)
+
+    def setup_state(self, directory, original, recovery, secret):
         completed = []
+        issued = None
+        returned = False
         gap = False
         for step in INSTALLER_STEPS:
             intent = directory / f'setup-{step}-intent.json'
+            success = directory / f'setup-{step}-returned.json'
             receipt = directory / f'setup-{step}-complete.json'
-            if not os.path.lexists(intent) and not os.path.lexists(receipt):
+            has_success = os.path.lexists(success)
+            if not os.path.lexists(intent) and not os.path.lexists(receipt) and not has_success:
                 gap = True
                 continue
             self.api.require(not gap and os.path.lexists(intent), 'Out-of-order installer evidence')
             self.api.require(self.policy.read(intent, limit=4096) == self.body(original, f'setup-{step}-intent', recovery, secret),
                              'Invalid installer step intent')
+            if has_success:
+                self.api.require(self.policy.read(success, limit=4096) == self.body(original, f'setup-{step}-returned', recovery, secret),
+                                 'Invalid installer success evidence')
             if not os.path.lexists(receipt):
-                self.api.require(live_step == step, f'Installer step {step} is unresolved; preserve the original intent')
+                issued, returned = step, has_success
                 gap = True
                 continue
             self.api.require(self.policy.read(receipt, limit=4096) == self.body(original, f'setup-{step}-complete', recovery, secret),
                              'Invalid installer step receipt')
             completed.append(step)
-        return completed
+        return completed, issued, returned
 
     def run_step(self, step, invoke):
         policy, require = self.policy, self.api.require
@@ -146,26 +162,28 @@ class Configure:
             require(not os.path.lexists(directory / 'prepared.json') and not os.path.lexists(directory / 'ready.json'),
                     'Installer is already prepared')
             require(self.source() == recovery, 'Original configure recovery copy changed')
-            completed = self.completed_steps(directory, original, recovery, secret)
+            completed, issued, _ = self.setup_state(directory, original, recovery, secret)
+            require(issued is None, f'Installer step {issued} is unresolved; preserve the original intent')
             if step in completed:
                 return
             require(step == INSTALLER_STEPS[len(completed)], 'Out-of-order installer step')
             policy.no_overrides()
             if step != 'layout':
                 self.paired_home()
-            intent = directory / f'setup-{step}-intent.json'
-            policy.create(intent, self.body(original, f'setup-{step}-intent', recovery, secret))
+            self.publish(directory, original, f'setup-{step}-intent', recovery, secret)
 
         invoke()
 
         with policy.locked():
             require(policy.fence() == fence and self.read_intent(directory, original) == (recovery, secret)
                     and self.source() == recovery, 'Installer fence changed before receipt')
+            policy.no_overrides()
             self.paired_home()
-            require(os.path.lexists(intent)
-                    and self.completed_steps(directory, original, recovery, secret, live_step=step) == completed,
+            require(self.setup_state(directory, original, recovery, secret) == (completed, step, False),
                     'Installer evidence changed before receipt')
-            policy.create(directory / f'setup-{step}-complete.json', self.body(original, f'setup-{step}-complete', recovery, secret))
+            # Only the launcher observing the successful original invocation
+            # can publish this witness. Resume never invokes an issued step.
+            self.publish(directory, original, f'setup-{step}-returned', recovery, secret)
 
     def apply(self, action):
         policy, require = self.policy, self.api.require
@@ -175,7 +193,7 @@ class Configure:
             original = fence['id'] if fence else self.head()
             directory = self.state / original
             if not os.path.lexists(directory):
-                require(fence is not None and action in ('status', 'begin'), 'Missing original configure intent')
+                require(fence is not None and action in ('status', 'resume', 'begin'), 'Missing original configure intent')
                 recovery = self.source()
                 if action == 'begin':
                     policy.directory(self.state, private=True, create=True)
@@ -193,9 +211,20 @@ class Configure:
                 return 'NEW', recovery['mode']
             recovery, secret = self.read_intent(directory, original)
             mode = recovery['mode']
-            completed = self.completed_steps(directory, original, recovery, secret)
             prepared = directory / 'prepared.json'
             ready = directory / 'ready.json'
+            completed, issued, returned = self.setup_state(directory, original, recovery, secret)
+            if issued is not None:
+                require(action == 'resume' and returned and fence is not None,
+                        f'Installer step {issued} is unresolved; preserve the original intent')
+                require(not os.path.lexists(prepared) and not os.path.lexists(ready)
+                        and self.source() == recovery, 'Installer evidence changed before completion')
+                policy.no_overrides()
+                self.paired_home()
+                self.publish(directory, original, f'setup-{issued}-complete', recovery, secret)
+                completed.append(issued)
+            if action == 'resume':
+                action = 'status'
             prepared_body = self.body(original, 'prepared', recovery, secret)
             ready_body = self.body(original, 'ready', recovery, secret)
             if not os.path.lexists(prepared):
@@ -206,7 +235,7 @@ class Configure:
                     return 'INSTALLER', mode
                 require(tuple(completed) == INSTALLER_STEPS, 'Missing completed installer steps')
                 self.paired_setup()
-                policy.create(prepared, prepared_body)
+                self.publish(directory, original, 'prepared', recovery, secret)
                 return 'PREPARED', mode
             require(tuple(completed) == INSTALLER_STEPS, 'Missing completed installer steps')
             require(policy.read(prepared, limit=4096) == prepared_body, 'Invalid configure setup receipt')
@@ -215,7 +244,10 @@ class Configure:
                 require(fence is not None and action in ('status', 'ready'), 'Configure data readiness is unresolved')
                 require(self.source() == recovery, 'Original configure recovery copy changed')
                 if action == 'ready':
-                    policy.create(ready, ready_body)
+                    # The staged source may be retired as soon as READY is
+                    # durable. Flush the restored runtime trees first.
+                    os.sync()
+                    self.publish(directory, original, 'ready', recovery, secret)
                     return 'READY', mode
                 return 'PREPARED', mode
             require(policy.read(ready, limit=4096) == ready_body and action in ('status', 'retire-copy'),
@@ -230,7 +262,7 @@ class Configure:
 
 
 def main():
-    actions = {'status', 'begin', 'prepared', 'ready', 'retire-copy'} | {f'setup-{step}' for step in INSTALLER_STEPS}
+    actions = {'status', 'resume', 'begin', 'prepared', 'ready', 'retire-copy'} | {f'setup-{step}' for step in INSTALLER_STEPS}
     if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in actions:
         raise ValueError('Invalid Core configure action')
     action = sys.argv[1]
