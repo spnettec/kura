@@ -239,6 +239,37 @@ def prepare_clock_service(assembly):
     return clock_broker.package_cohort(assembly)
 
 
+def prepare_broker_packages(assembly):
+    # These eight flat directories are generated exclusively by this build.
+    # Each builder writes its manifest into a fresh directory.
+    libexec = assembly / 'libexec'
+    require(assembly.is_dir() and not assembly.is_symlink()
+            and libexec.is_dir() and not libexec.is_symlink())
+    builders = {
+        'clock-broker': prepare_clock_service,
+        'reboot-broker': reboot_broker.package_cohort,
+        'journal-export': journal_export.package_cohort,
+        'command-executor': command_executor.package_cohort,
+        'modem-driver': modem_driver.package_cohort,
+        'bind-service': bind_service.package_cohort,
+        'dhcp-service': dhcp_service.package_cohort,
+        'modem-reset': modem_reset.package_cohort,
+    }
+    for name in builders:
+        destination = libexec / name
+        require(not destination.is_symlink())
+        if destination.exists():
+            require(destination.is_dir() and all(
+                entry.is_file() and not entry.is_symlink() for entry in destination.iterdir()))
+    for name, build in builders.items():
+        destination = libexec / name
+        if destination.exists():
+            for entry in destination.iterdir():
+                entry.unlink()
+            destination.rmdir()
+        build(assembly)
+
+
 def embed_clock_guard(control):
     token = 'raise RuntimeError("Kura clock maintenance guard was not embedded")'
     source = Path(__file__).with_name('clock-maintenance-guard.py').read_text()
@@ -277,14 +308,7 @@ def embed_configure_phases(control, assembly):
 if __name__ == "__main__":
     require(len(sys.argv) == 4)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
-    prepare_clock_service(Path(sys.argv[1]))
-    reboot_broker.package_cohort(Path(sys.argv[1]))
-    journal_export.package_cohort(Path(sys.argv[1]))
-    command_executor.package_cohort(Path(sys.argv[1]))
-    modem_driver.package_cohort(Path(sys.argv[1]))
-    bind_service.package_cohort(Path(sys.argv[1]))
-    dhcp_service.package_cohort(Path(sys.argv[1]))
-    modem_reset.package_cohort(Path(sys.argv[1]))
+    prepare_broker_packages(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',

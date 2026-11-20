@@ -50,6 +50,42 @@ class ClockPackageTest(unittest.TestCase):
                          value['actions'])
         self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
 
+    def test_repeated_assembly_regenerates_brokers_and_preserves_other_outputs(self):
+        spec = importlib.util.spec_from_file_location('prepare_key_service',
+                SOURCE.parents[2] / 'kura-core/prepare-key-service.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        home = self.assembly()
+        for name in ('bin', 'install'):
+            shutil.copytree(SOURCE / 'unfiltered/pkg' / name, home / name, dirs_exist_ok=True)
+        shutil.copyfile(SOURCE / 'filtered/pkg/install/kura.service', home / 'install/kura.service')
+        builder.prepare_broker_packages(home)
+        libexec = home / 'libexec'
+        manifests = sorted(libexec.glob('*/cohort.json'))
+        self.assertEqual(8, len(manifests))
+        original = (home / broker.COHORT).read_bytes()
+        for manifest in manifests:
+            (manifest.parent / 'retired-unit.service').touch()
+        other = libexec / 'key-backup'
+        other.mkdir()
+        (other / 'manifest.json').write_bytes(b'original')
+        with (home / broker.HELPERS[0]).open('ab') as stream:
+            stream.write(b'\n# Updated build input\n')
+        builder.prepare_broker_packages(home)
+        self.assertEqual(manifests, sorted(libexec.glob('*/cohort.json')))
+        self.assertFalse(list(libexec.glob('*/retired-unit.service')))
+        self.assertNotEqual(original, (home / broker.COHORT).read_bytes())
+        self.assertEqual(b'original', (other / 'manifest.json').read_bytes())
+
+        # Reject unexpected layouts before erasing any earlier broker output.
+        marker = manifests[0].parent / 'queued'
+        marker.touch()
+        (manifests[-1].parent / 'foreign-output').symlink_to(other)
+        with self.assertRaises(RuntimeError):
+            builder.prepare_broker_packages(home)
+        self.assertTrue(marker.is_file())
+        self.assertEqual(b'original', (other / 'manifest.json').read_bytes())
+
     def test_main_has_no_system_clock_capability(self):
         raw = (SOURCE / 'filtered/pkg/install/kura.service').read_text()
         for key in ('CapabilityBoundingSet', 'AmbientCapabilities'):
