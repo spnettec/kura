@@ -39,10 +39,15 @@ public final class ClockProviderLinuxProbe {
                     }
                     throw new UnsupportedOperationException(method.getName());
                 }));
+        Path rtcDispatch = runtime.resolve("dispatch-virtual-rtc");
+        Path clockDispatch = runtime.resolve("dispatch");
+        if (Files.exists(rtcDispatch) || Files.exists(clockDispatch)) {
+            throw new IllegalStateException("A clock dispatch already exists");
+        }
         service.activate(Map.of("enabled", false, "clock.set.hwclock", false));
         Files.writeString(runtime.resolve("ready"), Long.toString(ProcessHandle.current().pid()));
         long until = System.nanoTime() + 120_000_000_000L;
-        while (!Files.isRegularFile(runtime.resolve("dispatch"))) {
+        while (!Files.isRegularFile(clockDispatch) && !Files.isRegularFile(rtcDispatch)) {
             if (System.nanoTime() > until) {
                 throw new IllegalStateException("No explicit VM-only clock dispatch");
             }
@@ -50,14 +55,29 @@ public final class ClockProviderLinuxProbe {
         }
         long wallBefore = System.currentTimeMillis();
         long monoBefore = System.nanoTime();
-        // A 1 ms correction is confined to the Parallels guest. No shared
-        // OrbStack kernel or host clock may be used for this entrypoint.
-        service.onClockUpdate(1, true);
+        boolean virtualRtc = Files.isRegularFile(rtcDispatch);
+        if (virtualRtc) {
+            Path bus = Path.of("/sys/bus/i2c/devices/i2c-0");
+            Path chip = Path.of("/sys/bus/i2c/devices/0-0068");
+            Path rtc = Path.of("/sys/class/rtc/rtc1");
+            if (Files.exists(clockDispatch) || !Files.readString(bus.resolve("name")).strip().equals("SMBus stub driver")
+                    || !Files.readString(chip.resolve("name")).strip().equals("ds1307")
+                    || !chip.toRealPath().getParent().equals(bus.toRealPath())
+                    || !rtc.toRealPath().startsWith(chip.toRealPath())) {
+                throw new IllegalStateException("Expected only the RTC on the memory-backed I2C bus");
+            }
+            service.updated(Map.of("enabled", false, "clock.set.hwclock", true, "rtc.filename", "/dev/rtc1"));
+            service.onClockUpdate(0, true);
+        } else {
+            // The explicit 1 ms correction is confined to the existing Parallels fixture.
+            service.onClockUpdate(1, true);
+        }
         long monoAfter = System.nanoTime();
         long wallAfter = System.currentTimeMillis();
         JsonObject result = new JsonObject();
         result.addProperty("pid", ProcessHandle.current().pid());
         result.addProperty("clockEvents", events.get());
+        result.addProperty("operation", virtualRtc ? "sync-rtc" : "adjust-realtime");
         result.addProperty("wallBeforeMillis", wallBefore);
         result.addProperty("wallAfterMillis", wallAfter);
         result.addProperty("elapsedMonotonicNs", monoAfter - monoBefore);
