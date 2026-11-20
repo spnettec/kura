@@ -20,8 +20,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.crypto.CryptoService;
@@ -75,6 +77,15 @@ public class DatabaseLoader {
         addEncryptionKey(applicableEncryptionKeys, getCryptoServiceEntry(newOptions.getPath()),
                 "key from CryptoService");
 
+        if (!applicableEncryptionKeys.isEmpty()) {
+            Set<String> supported = supportedPragmas();
+            for (Optional<EncryptionKeySpec> key : applicableEncryptionKeys) {
+                boolean hex = key.orElseThrow().getFormat() == EncryptionKeyFormat.HEX_SSE;
+                if (!supported.contains(hex ? "hexkey" : "key") || !supported.contains(hex ? "hexrekey" : "rekey")) {
+                    throw new SQLException("The SQLite driver does not support the requested encryption key format");
+                }
+            }
+        }
         applicableEncryptionKeys.add(Optional.empty());
 
         SQLException lastFailure = null;
@@ -109,6 +120,21 @@ public class DatabaseLoader {
             return result;
         }
         throw new SQLException("Failed to open database", lastFailure);
+    }
+
+    // Unknown PRAGMAs are silently ignored by SQLite. Inspect the loaded library
+    // before opening a customer file or recording a wrapping key.
+    Set<String> supportedPragmas() throws SQLException {
+        SQLiteDataSource probe = new SQLiteDataSource();
+        probe.setUrl("jdbc:sqlite::memory:");
+        Set<String> names = new HashSet<>();
+        try (Connection connection = probe.getConnection(); Statement statement = connection.createStatement();
+                var rows = statement.executeQuery("PRAGMA pragma_list")) {
+            while (rows.next()) {
+                names.add(rows.getString(1));
+            }
+        }
+        return names;
     }
 
     private static boolean isDatabaseFormatError(SQLException failure) {

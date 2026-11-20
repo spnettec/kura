@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
@@ -402,6 +403,22 @@ public class DatabaseLoaderTest {
     }
 
     @Test
+    public void rejectMissingEncryptionPragmasBeforeOpeningDatabase(@TempDir Path directory) throws Exception {
+        Path file = directory.resolve("business.sqlite");
+        SqliteDbServiceOptions options = new SqliteDbServiceOptions(Map.of(DB_MODE, PERSISTED, DB_PATH, file.toString(),
+                KURA_SERVICE_PID, "file-provider", DB_KEY, TEST_ENCRYPTION_KEY, "delete.db.files.on.failure", true));
+        DatabaseLoader loader = new DatabaseLoader(options, Optional.empty(), this.cryptoService) {
+            @Override
+            Set<String> supportedPragmas() {
+                return Set.of("key");
+            }
+        };
+        assertThrows(SQLException.class, loader::openDataSource);
+        assertFalse(java.nio.file.Files.exists(file));
+        thenCryptoServiceUpdateCountIs(0);
+    }
+
+    @Test
     public void preserveBusinessRowWhenCredentialStoreIsUnavailable(@TempDir Path directory) throws Exception {
         String file = directory.resolve("business.sqlite").toString();
         SqliteDbServiceOptions options = new SqliteDbServiceOptions(Map.of(DB_MODE, PERSISTED, DB_PATH, file,
@@ -642,6 +659,11 @@ public class DatabaseLoaderTest {
 
         this.loader = new DatabaseLoader(new SqliteDbServiceOptions(currentProperties),
                 oldProperties.map(SqliteDbServiceOptions::new), cryptoService) {
+
+            @Override
+            Set<String> supportedPragmas() {
+                return Set.of("key", "hexkey", "rekey", "hexrekey");
+            }
 
             @Override
             protected void changeEncryptionKey(SQLiteDataSource dataSource, Optional<EncryptionKeySpec> encryptionKey,
