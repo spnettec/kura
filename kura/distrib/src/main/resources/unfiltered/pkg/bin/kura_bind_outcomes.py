@@ -6,7 +6,7 @@ import re
 import secrets
 import stat
 
-from kura_clock_journal import Refused, create, decode, digest, read, require
+from kura_clock_journal import Refused, create, decode, digest, encode, identity, read, require, sync
 
 PROOF = re.compile('[0-9a-f]{64}')
 PROTOCOL = 1
@@ -114,13 +114,41 @@ def result_at(state, operation, intent):
     return receipt
 
 
+def finish_delivery(path, record):
+    """The caller holds the ledger lock and has checked the original delivery token."""
+    before = identity(path.lstat())
+    raw = read(path, 0)
+    expected = encode(record)
+    if expected.startswith(raw):
+        # Keep the existing inode and all bytes written before the interruption.
+        rest = memoryview(expected)[len(raw):]
+    else:
+        require(decode(raw) == record, 'UNPAIRED_BIND_DELIVERY')
+        rest = b''
+    fd = os.open(path, os.O_RDWR | os.O_APPEND | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        require(before == identity(os.fstat(fd)) == identity(path.lstat()), 'UNPAIRED_BIND_DELIVERY')
+        while rest:
+            count = os.write(fd, rest)
+            require(count > 0, 'IO_ERROR')
+            rest = rest[count:]
+        os.fsync(fd)
+        require(identity(os.fstat(fd)) == identity(path.lstat()), 'UNPAIRED_BIND_DELIVERY')
+        sync(path.parent)
+    finally:
+        os.close(fd)
+
+
 def delivered_at(state, operation, intent, result, *, acknowledge=False):
     if 'deliveryProtocol' not in intent:
         return True
     path = state / (operation + '.delivered')
     record = dict(schema=1, root=intent['root'], operationId=operation, resultSha256=digest(result))
     if os.path.lexists(path):
-        require(decode(read(path, 0)) == record, 'UNPAIRED_BIND_DELIVERY')
+        if acknowledge:
+            finish_delivery(path, record)
+        else:
+            require(decode(read(path, 0)) == record, 'UNPAIRED_BIND_DELIVERY')
         return True
     if acknowledge:
         create(path, record)

@@ -80,6 +80,49 @@ class BindJournalTest(unittest.TestCase):
         with self.assertRaisesRegex(bind.Refused, 'BIND_OPERATION_ID_CONFLICT'):
             bind.operate(dict(expected, action='stop'), lambda: True)
 
+    def test_interrupted_delivery_resumes_only_with_the_original_acknowledgement(self):
+        import resource
+        import signal
+
+        expected = self.scoped('restart')
+        self.job.side_effect = lambda _: setattr(self, 'runtime', ('a' * 64, 'active', 'b' * 32))
+        _, token = bind.operate(expected, lambda: True)
+        ack = self.acknowledge(expected, token)
+        marker = self.state / (expected['operationId'] + '.delivered')
+        limit = resource.getrlimit(resource.RLIMIT_FSIZE)
+        handler = signal.signal(signal.SIGXFSZ, signal.SIG_IGN)
+        try:
+            resource.setrlimit(resource.RLIMIT_FSIZE, (32, limit[1]))
+            with self.assertRaises(OSError):
+                bind.operate(ack, lambda: True)
+        finally:
+            resource.setrlimit(resource.RLIMIT_FSIZE, limit)
+            signal.signal(signal.SIGXFSZ, handler)
+        partial = marker.read_bytes()
+        inode = marker.stat().st_ino
+        self.assertEqual(len(partial), 32)
+        self.assertEqual(bind.operate(self.lookup(expected), lambda: True), ('APPLIED', token))
+        with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_DELIVERY'):
+            bind.operate(self.acknowledge(expected, '0' * 64), lambda: True)
+        self.assertEqual(marker.read_bytes(), partial)
+        self.assertEqual(bind.operate(ack, lambda: True), ('APPLIED', None))
+        self.assertEqual(marker.stat().st_ino, inode)
+        self.assertTrue(marker.read_bytes().startswith(partial))
+        self.assertEqual(bind.operate(ack, lambda: True), ('APPLIED', None))
+        self.job.assert_called_once_with('restart')
+
+    def test_unrelated_delivery_bytes_are_preserved(self):
+        expected = self.scoped('restart')
+        self.job.side_effect = lambda _: setattr(self, 'runtime', ('a' * 64, 'active', 'b' * 32))
+        _, token = bind.operate(expected, lambda: True)
+        marker = self.state / (expected['operationId'] + '.delivered')
+        marker.touch(mode=0o600)
+        marker.write_bytes(b'{"unexpected":')
+        with self.assertRaises(bind.Refused):
+            bind.operate(self.acknowledge(expected, token), lambda: True)
+        self.assertEqual(marker.read_bytes(), b'{"unexpected":')
+        self.job.assert_called_once()
+
     def test_unknown_fences_new_mutations_but_allows_read_only_status(self):
         expected = self.scoped('restart')
         self.job.side_effect = subprocess.TimeoutExpired('systemctl', 28)
