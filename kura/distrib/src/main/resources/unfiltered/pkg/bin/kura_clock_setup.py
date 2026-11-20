@@ -428,6 +428,28 @@ def reassert_quiescence():
     require(maintenance(record) == original, 'UNPAIRED_MAINTENANCE')
 
 
+def archived_actor(record):
+    return ACTOR_HOME.parent / ('.kura-clock-broker-previous-' + record['cohortSha256'] + '-' + record['purposeId'])
+
+
+def previous_actor(record, candidate):
+    if record is None:
+        return None
+    actor = Policy(actor=True)
+    if os.path.lexists(ACTOR_HOME):
+        descriptor = actor.check(installed=False, allow_legacy=True)
+        if actor.cohort == record['cohortSha256']:
+            return descriptor
+        require(actor.cohort == candidate, 'UNPAIRED_CODE')
+    # After the first rename the previous release lives at the exact archive
+    # selected by the still-active maintenance purpose, including on a retry.
+    actor.home = archived_actor(record)
+    require(os.path.lexists(actor.home), 'UNRESOLVED_CODE_PUBLICATION')
+    descriptor = actor.check(installed=False, allow_legacy=True)
+    require(actor.cohort == record['cohortSha256'], 'UNPAIRED_CODE')
+    return descriptor
+
+
 def install():
     policy = Policy(); descriptor = policy.check(installed=False)
     inactive('kura.service')
@@ -442,12 +464,8 @@ def install():
     private_state(record)
     current = maintenance(record) if os.path.lexists(STATE) else None
     # Check every installed fragment and the rule before publishing replacement code.
-    previous_paired = False
-    previous = None
-    if current is not None and os.path.lexists(ACTOR_HOME):
-        original_actor = Policy(actor=True)
-        previous = original_actor.check(installed=False, allow_legacy=True)
-        previous_paired = original_actor.cohort == current['cohortSha256']
+    previous = previous_actor(current, policy.cohort)
+    previous_paired = previous is not None
     chrony_policy('check', previous_paired)
     desired_units = {}
     for name in UNITS:
@@ -511,7 +529,7 @@ def install_actor_code(policy, descriptor, record, maintenance_record):
     if os.path.lexists(ACTOR_HOME):
         old = Policy(actor=True); old.check(installed=False, allow_legacy=True)
         require(maintenance_record is not None and old.cohort == maintenance_record['cohortSha256'], 'UNPAIRED_CODE')
-        archive = parent / ('.kura-clock-broker-previous-' + old.cohort + '-' + maintenance_record['purposeId'])
+        archive = archived_actor(maintenance_record)
         require(not os.path.lexists(archive), 'UNRESOLVED_CODE_PUBLICATION')
         os.rename(ACTOR_HOME, archive); sync(parent)
     os.rename(staged, ACTOR_HOME); sync(parent)

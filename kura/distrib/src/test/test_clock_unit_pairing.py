@@ -109,6 +109,36 @@ class ClockUnitPairingTest(unittest.TestCase):
 
 
 class ClockMaintenancePairingTest(unittest.TestCase):
+    def test_interrupted_publication_requires_the_original_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / 'actor'
+            record = {'cohortSha256': 'original', 'purposeId': 'same-purpose'}
+            with mock.patch.object(setup, 'ACTOR_HOME', home):
+                archive = setup.archived_actor(record)
+                class Policy:
+                    def __init__(self, actor):
+                        self.home = home
+                    def check(self, installed, allow_legacy):
+                        self.cohort = self.home.read_text()
+                        return {'cohort': self.cohort}
+                with mock.patch.object(setup, 'Policy', Policy):
+                    home.write_text('original')
+                    self.assertEqual(setup.previous_actor(record, 'candidate'), {'cohort': 'original'})
+                    home.rename(archive)
+                    self.assertEqual(setup.previous_actor(record, 'candidate'), {'cohort': 'original'})
+                    home.write_text('candidate')
+                    self.assertEqual(setup.previous_actor(record, 'candidate'), {'cohort': 'original'})
+                    archive.write_text('other')
+                    with self.assertRaisesRegex(broker.Refused, 'UNPAIRED_CODE'):
+                        setup.previous_actor(record, 'candidate')
+                    archive.unlink()
+                    with self.assertRaisesRegex(broker.Refused, 'UNRESOLVED_CODE_PUBLICATION'):
+                        setup.previous_actor(record, 'candidate')
+                    home.unlink()
+                    with self.assertRaisesRegex(broker.Refused, 'UNRESOLVED_CODE_PUBLICATION'):
+                        setup.previous_actor(record, 'candidate')
+                    self.assertIsNone(setup.previous_actor(None, 'candidate'))
+
     def test_legacy_device_retirement_requires_the_original_paired_unit_set(self):
         unit = broker.RTC_UNIT
         previous = {'files': {'libexec/clock-broker/' + unit: 'a' * 64}}
