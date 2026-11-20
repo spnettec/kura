@@ -18,6 +18,8 @@ import javax.crypto.KeyGenerator;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 class KeystoreFileTest {
     @TempDir
@@ -41,6 +43,23 @@ class KeystoreFileTest {
             throw new IOException("interrupted while streaming");
         }).when(store).store(any(OutputStream.class), any(char[].class));
         return store;
+    }
+
+    @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void writerOwnershipUsesTheOperatingSystemIdentity() throws Exception {
+        String previous = System.setProperty("user.name", "kura-nonexistent-keystore-test-account");
+        try {
+            Path file = this.directory.resolve("application.p12");
+            KeystoreFile.create(file, populated(), this.password);
+            assertTrue(KeystoreFile.existing(file).load(this.password).isKeyEntry("original"));
+        } finally {
+            if (previous == null) {
+                System.clearProperty("user.name");
+            } else {
+                System.setProperty("user.name", previous);
+            }
+        }
     }
 
     @Test

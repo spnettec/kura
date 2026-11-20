@@ -74,8 +74,25 @@ final class KeystoreFile {
         }
     }
 
+    private static String currentUser() throws IOException {
+        var user = ProcessHandle.current().info().user();
+        if (user.isPresent()) {
+            return user.get();
+        }
+        // Linux containers may run with no passwd entry. Column four is the filesystem UID.
+        for (String line : Files.readAllLines(Path.of("/proc/thread-self/status"), StandardCharsets.US_ASCII)) {
+            if (line.startsWith("Uid:")) {
+                String[] ids = line.substring(4).trim().split("\\s+");
+                if (ids.length == 4 && ids[3].matches("[0-9]+")) {
+                    return ids[3];
+                }
+            }
+        }
+        throw new IOException("Unable to determine keystore writer identity");
+    }
+
     private Path workspace() throws IOException, NoSuchAlgorithmException {
-        String user = System.getProperty("user.name");
+        String user = currentUser();
         byte[] name = (user + "\0" + this.target.getFileName()).getBytes(StandardCharsets.UTF_8);
         String id = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(name));
         Path dir = this.target.resolveSibling(".kura-keystore-" + id);
