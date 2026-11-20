@@ -156,10 +156,11 @@ class ConfigureTest(unittest.TestCase):
         self.configure.apply('begin')
         self.install_steps()
         self.configure.apply('prepared')
-        stage = installed / ('.kura-restore-' + self.fence['id'])
+        stage = self.fixture.physical / ('.kura-restore-' + self.fence['id'])
         stale = stage / 'copy-abandoned' / 'retained/6s/bundle.jar'
         self.fixture.write(stale, b'orig')
         installed_bundle = installed / 'retained/6s/bundle.jar'
+        self.pairing.side_effect = lambda: self.assertEqual([incoming], list(installed.rglob('*.jar')))
 
         def fail_copy(args, **kwargs):
             self.assertFalse(stale.exists())
@@ -176,6 +177,7 @@ class ConfigureTest(unittest.TestCase):
         with patch.object(configure.os, 'sync'):
             self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('restore-siblings'))
             installed_inode = installed_bundle.stat().st_ino
+            self.pairing.side_effect = None
             self.controller().apply('restore-siblings')
         self.assertEqual(b'original bundle', installed_bundle.read_bytes())
         self.assertEqual(installed_inode, installed_bundle.stat().st_ino)

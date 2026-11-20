@@ -205,7 +205,11 @@ class Configure:
         self.api.require(stat.S_ISDIR(source.lstat().st_mode), 'Invalid preserved sibling bundle directory')
         destination = self.physical / 'siblings'
         self.policy.directory(destination)
-        stage = destination / f'.kura-restore-{original}'
+        # The generation reader scans every JAR recursively in siblings/, including
+        # hidden directories. Keep incomplete JARs outside its catalogue.
+        stage = self.physical / f'.kura-restore-{original}'
+        self.api.require(self.physical.stat().st_dev == destination.stat().st_dev,
+                         'Sibling bundle publication requires the runtime filesystem')
         if os.path.lexists(stage):
             # Only the authenticated fence's private unpublished work is disposable.
             self.policy.directory(stage, private=True)
@@ -230,6 +234,7 @@ class Configure:
                         publish_sibling(staged, target)
         finally:
             stage.rmdir()
+            self.policy.sync(self.physical)
             self.policy.sync(destination)
 
     def apply(self, action):
