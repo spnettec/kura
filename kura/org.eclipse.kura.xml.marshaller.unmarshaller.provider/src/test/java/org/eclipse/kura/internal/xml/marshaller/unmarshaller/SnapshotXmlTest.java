@@ -49,6 +49,31 @@ class SnapshotXmlTest {
     }
 
     @Test
+    void readsDirectSnapshotElementsByNamespaceOnTheServiceEntryPoint() throws Exception {
+        String xml = """
+                <esf:configurations xmlns:esf="http://eurotech.com/esf/2.0" xmlns:foreign="urn:other">
+                  <alt:configuration xmlns:alt="http://eurotech.com/esf/2.0" pid="network">
+                    <properties xmlns="http://eurotech.com/esf/2.0">
+                      <property name="lan" type="String"><value>dnsproof0</value><foreign:value>other</foreign:value></property>
+                      <foreign:property name="wrong" type="String"><value>other</value></foreign:property>
+                    </properties>
+                  </alt:configuration>
+                  <esf:configuration pid="legacy"><properties>
+                    <property name="port" type="Integer"><value>123</value></property>
+                  </properties></esf:configuration>
+                  <foreign:configuration pid="foreign"/>
+                  <foreign:wrapper><esf:configuration pid="nested"/></foreign:wrapper>
+                </esf:configurations>
+                """;
+        var decoded = new XmlMarshallUnmarshallImpl().unmarshal(xml, XmlComponentConfigurations.class);
+        assertEquals(2, decoded.getConfigurations().size());
+        assertEquals(Map.of("port", 123), decoded.getConfigurations().get(1).getConfigurationProperties());
+        var network = decoded.getConfigurations().getFirst();
+        assertEquals("network", network.getPid());
+        assertEquals(Map.of("lan", "dnsproof0"), network.getConfigurationProperties());
+    }
+
+    @Test
     void roundTripsScalarAndArrayTypes() throws Exception {
         var mapper = new XmlJavaComponentConfigurationsMapper();
         var document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
