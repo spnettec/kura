@@ -30,8 +30,8 @@ SuccessExitStatus=143
 KillMode=control-group
 TimeoutStopSec=45s
 # Host operations are dispatched through their dedicated actors.
-AmbientCapabilities=cap_net_admin cap_dac_override cap_dac_read_search cap_net_bind_service
-CapabilityBoundingSet=cap_net_admin cap_dac_override cap_dac_read_search cap_net_bind_service
+AmbientCapabilities=cap_net_admin cap_dac_override cap_net_bind_service
+CapabilityBoundingSet=cap_net_admin cap_dac_override cap_net_bind_service
 NoNewPrivileges=yes
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
