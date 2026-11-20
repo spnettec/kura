@@ -106,6 +106,37 @@ class ConfigureTest(unittest.TestCase):
         self.assertEqual(self.fence, self.policy.fence())
         self.pairing.assert_not_called()
 
+    def test_broker_quiescence_precedes_the_original_upgrade_dispatch(self):
+        self.configure.copies['upgrade'].mkdir(mode=0o700)
+        self.configure.apply('begin')
+        self.configure.run_step('layout', lambda: None)
+        self.configure.apply('resume')
+        brokers_intent = self.stage / 'setup-brokers-intent.json'
+
+        def reject_active_unpaired_broker():
+            self.assertFalse(brokers_intent.exists())
+            raise lifecycle.Refused('Unpaired active broker')
+
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired active broker'):
+            self.controller().run_step(
+                'brokers', lambda: self.fail('Dispatched before quiescence'),
+                reassert_quiescence=reject_active_unpaired_broker,
+            )
+        self.assertFalse(brokers_intent.exists())
+        self.assertEqual(('INSTALLER', 'upgrade'), self.controller().apply('resume'))
+
+        def interrupted_dispatch():
+            self.assertTrue(brokers_intent.is_file())
+            raise InterruptedError()
+
+        with self.assertRaises(InterruptedError):
+            self.controller().run_step('brokers', interrupted_dispatch, reassert_quiescence=lambda: None)
+        with self.assertRaisesRegex(lifecycle.Refused, 'brokers is unresolved'):
+            self.controller().run_step(
+                'brokers', lambda: self.fail('Redispatched unresolved broker setup'),
+                reassert_quiescence=lambda: self.fail('Prepared an already issued step'),
+            )
+
     def test_configuration_rejects_other_package_versions_and_incomplete_receipts(self):
         self.configure.apply('begin')
         self.install_steps()

@@ -262,7 +262,9 @@ def embed_configure_phases(control, assembly):
     for name, relative in (
             ('CORE_CONFIGURE_LIFECYCLE_SHA', 'bin/kura_key_service_lifecycle.py'),
             ('CORE_CONFIGURE_MANIFEST_SHA', 'libexec/key-backup/manifest.json'),
-            ('CORE_CONFIGURE_INSTALLER_SHA', 'install/kura_install.sh')):
+            ('CORE_CONFIGURE_INSTALLER_SHA', 'install/kura_install.sh'),
+            ('CORE_CONFIGURE_CLOCK_SETUP_SHA', 'bin/kura_clock_setup.py'),
+            ('CORE_CONFIGURE_REBOOT_SETUP_SHA', 'bin/kura_reboot_setup.py')):
         names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()
     source = Path(__file__).with_name('postinst-configure.py').read_text()
     source = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source

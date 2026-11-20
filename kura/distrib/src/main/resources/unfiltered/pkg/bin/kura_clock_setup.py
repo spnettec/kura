@@ -17,7 +17,7 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, PREVIOUS_CHRONY_RULE, COHORT, CONFIG_SOCKET_UNIT, HOME,
                                LEGACY_UNITS, PREVIOUS_UNITS, STATE, STEP_SOCKET_UNIT, STEP_UNITS, UNITS,
-                               Policy, public_file, publish_path,
+                               Policy, effective_units, public_file, publish_path,
                                remove_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 command, identifier, identity, pairs, read, require, sync, terminal_receipt,
@@ -99,10 +99,13 @@ def properties(unit):
     return values
 
 
+def unit_inactive(value):
+    return (value.get('ActiveState') in ('inactive', 'failed')
+            and value.get('MainPID', '0') == '0' and value.get('ControlPID', '0') == '0')
+
+
 def inactive(unit):
-    value = properties(unit)
-    require(value.get('ActiveState') in ('inactive', 'failed')
-            and value.get('MainPID', '0') == '0' and value.get('ControlPID', '0') == '0', 'UNIT_RUNNING')
+    require(unit_inactive(properties(unit)), 'UNIT_RUNNING')
 
 
 def account(create_missing=False):
@@ -369,18 +372,23 @@ def restore_sender(live, inventory, uid):
         sync(live.parent)
 
 
+def terminal_operations(journal):
+    namespace = namespace_or_empty(journal)
+    if namespace is not None:
+        for entry in (STATE / 'operations').iterdir():
+            identifier(entry.name)
+            intent = decode(read(entry / 'intent.json', journal.owner))
+            require(journal.status(namespace, entry.name, digest(intent))['state'] in ('APPLIED', 'FAILED'),
+                    'UNRESOLVED_CLOCK_OPERATION')
+    return namespace
+
+
 def quiesce():
     policy = Policy(); policy.check()
     record = account(); private_state(record)
     journal = Journal(STATE, record['uid'])
     with journal.lock():
-        namespace = namespace_or_empty(journal)
-        if namespace is not None:
-            for entry in (STATE / 'operations').iterdir():
-                identifier(entry.name)
-                intent = decode(read(entry / 'intent.json', record['uid']))
-                require(journal.status(namespace, entry.name, digest(intent))['state'] in ('APPLIED', 'FAILED'),
-                        'UNRESOLVED_CLOCK_OPERATION')
+        namespace = terminal_operations(journal)
         current = maintenance(record)
         units = {name: hashlib.sha256(public_file(Path('/lib/systemd/system') / name)).hexdigest() for name in UNITS}
         if current is None:
@@ -390,6 +398,32 @@ def quiesce():
             require(current['cohortSha256'] == policy.cohort and current['units'] == units, 'UNPAIRED_MAINTENANCE')
     for name in UNITS:
         run('/usr/bin/systemctl', 'stop', name); inactive(name)
+
+
+def reassert_quiescence():
+    inactive('kura.service')
+    running = {name for name in UNITS if not unit_inactive(properties(name))}
+    if not running:
+        return
+    unit_sources()
+    record = account()
+    original = maintenance(record)
+    require(original is not None and running <= original['units'].keys(), 'UNPAIRED_MAINTENANCE')
+    actor = Policy(actor=True)
+    descriptor = actor.check(installed=False, effective=False, allow_legacy=True)
+    require(actor.cohort == original['cohortSha256'], 'UNPAIRED_MAINTENANCE')
+    for name, expected in original['units'].items():
+        actual = hashlib.sha256(public_file(Path('/lib/systemd/system') / name)).hexdigest()
+        require(actual == expected == descriptor['files']['libexec/clock-broker/' + name], 'UNPAIRED_CODE')
+    effective_units(original['units'])
+    journal = Journal(STATE, record['uid'])
+    with journal.lock():
+        require(maintenance(record) == original and terminal_operations(journal) == original['namespace'],
+                'UNPAIRED_MAINTENANCE')
+    run('/usr/bin/systemctl', 'stop', *sorted(original['units']))
+    for name in UNITS:
+        inactive(name)
+    require(maintenance(record) == original, 'UNPAIRED_MAINTENANCE')
 
 
 def install():
@@ -535,7 +569,7 @@ def remove():
 if __name__ == '__main__':
     try:
         require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[0] == str(HOME / 'bin/kura_clock_setup.py'), 'INVALID_ENTRYPOINT')
-        require(sys.argv[1] in ('install', 'quiesce', 'resume', 'remove', 'restore_retained_sender'))
+        require(sys.argv[1] in ('install', 'quiesce', 'reassert_quiescence', 'resume', 'remove', 'restore_retained_sender'))
         globals()[sys.argv[1]]()
     except (Refused, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(error.reason if isinstance(error, Refused) else 'UNRESOLVED_OR_UNAVAILABLE', file=sys.stderr)

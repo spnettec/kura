@@ -151,7 +151,7 @@ def validate_pending(binding):
         require(raw == encode(value) and value['namespace'] == binding['namespace'], 'UNPAIRED_SENDER')
 
 
-def quiesce():
+def quiesce(*, require_original=False):
     manifest = Policy().packaged()
     verify_unit_sources((ACTOR, SOCKET))
     if not exists(AUTHORITY):
@@ -165,12 +165,22 @@ def quiesce():
     with RebootJournal(STATE, binding['namespace'], digest(manifest)).locked():
         current = maintenance(binding)
         if current is None:
+            require(not require_original, 'UNPAIRED_MAINTENANCE')
             Policy().check(actor=True, include_main=False)
             current = fence_value(binding, manifest)
             durable_publish(STATE / FENCE, current, 0o600)
         verify_known_units(manifest, current)
     if any(activity(unit).get('ActiveState') not in ('inactive', 'failed') for unit in (ACTOR, SOCKET)):
         run('stop', SOCKET, ACTOR)
+    inactive(SOCKET)
+    inactive(ACTOR)
+
+
+def reassert_quiescence():
+    inactive(MAIN_UNIT)
+    if any(activity(unit).get('ActiveState') not in ('inactive', 'failed')
+           for unit in (SOCKET, ACTOR)):
+        quiesce(require_original=True)
     inactive(SOCKET)
     inactive(ACTOR)
 
@@ -246,7 +256,8 @@ def remove():
 
 if __name__ == '__main__':
     try:
-        commands = {'quiesce': quiesce, 'resume': resume, 'remove': remove}
+        commands = {'quiesce': quiesce, 'reassert_quiescence': reassert_quiescence,
+                    'resume': resume, 'remove': remove}
         require(os.geteuid() == 0 and len(sys.argv) == 2 and sys.argv[0] == str(HOME / 'bin/kura_reboot_setup.py')
                 and sys.argv[1] in commands, 'INVALID_ENTRYPOINT')
         require(unit_directory_present(INSTALLATION.parent), 'UNPAIRED_INSTALLATION')

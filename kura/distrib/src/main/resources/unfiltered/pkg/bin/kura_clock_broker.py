@@ -254,10 +254,10 @@ def unit_sources():
         raise Refused('UNPAIRED_CODE') from error
 
 
-def effective_units():
+def effective_units(units=UNITS):
     properties = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                   'NeedDaemonReload', 'Transient')
-    for name in UNITS:
+    for name in units:
         value = systemd_properties(properties, name)
         require(value['Id'] == name and value['Names'].split() == [name] and value['LoadState'] == 'loaded'
                 and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}

@@ -164,7 +164,7 @@ class Configure:
             completed.append(step)
         return completed, issued, returned
 
-    def run_step(self, step, invoke):
+    def run_step(self, step, invoke, *, reassert_quiescence=None):
         policy, require = self.policy, self.api.require
         require(step in INSTALLER_STEPS)
         with policy.locked():
@@ -185,6 +185,8 @@ class Configure:
             policy.no_overrides()
             if step != 'layout':
                 self.paired_home()
+            if step == 'brokers' and recovery['mode'] == 'upgrade' and reassert_quiescence is not None:
+                reassert_quiescence()
             self.publish(directory, original, f'setup-{step}-intent', recovery, secret)
 
         invoke()
@@ -347,7 +349,21 @@ def main():
             subprocess.run(['/bin/sh', str(installer), f'--configure-{step}'], check=True)
             os.sync()
 
-        configure.run_step(step, invoke)
+        def reassert_quiescence():
+            # PID 1 may have reopened persistently enabled listeners after
+            # unpack. Restore the original fences before issuing this step.
+            helpers = (
+                ('kura_clock_setup.py', CORE_CONFIGURE_CLOCK_SETUP_SHA),
+                ('kura_reboot_setup.py', CORE_CONFIGURE_REBOOT_SETUP_SHA),
+            )
+            for helper, expected in helpers:
+                source = policy.read(physical / 'bin' / helper, private=False)
+                lifecycle.require(hashlib.sha256(source).hexdigest() == expected, 'Unpaired Core broker setup')
+            for helper, _ in helpers:
+                subprocess.run(['/usr/bin/python3', '-I', '-B', '/opt/eclipse/kura/bin/' + helper,
+                                'reassert_quiescence'], check=True, timeout=45)
+
+        configure.run_step(step, invoke, reassert_quiescence=reassert_quiescence)
         return
     phase, mode = configure.apply(action)
     print(phase, mode, physical)
