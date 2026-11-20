@@ -144,6 +144,66 @@ class BindJournalTest(unittest.TestCase):
             bind.operate(read_only, lambda: True)
         lookup.assert_not_called()
 
+    def test_partial_intent_or_receipt_cannot_clear_the_original_operation(self):
+        root = ['machine', self.state.stat().st_dev, self.state.stat().st_ino]
+        self.root.return_value = root
+        bind.create(self.state / 'root.json', dict(schema=1, root=root))
+        expected = self.scoped('restart')
+        path = self.state / (expected['operationId'] + '.intent')
+        with (patch.object(bind, 'verify_actor', return_value='unit'),
+              patch.object(bind, 'socket_peer'), patch.object(bind, 'active_provider', return_value='kura-networking'),
+              patch.object(bind, 'main_peer', return_value=expected), patch.object(bind, 'receive', return_value=expected),
+              patch.object(bind, 'send') as send):
+            path.touch(mode=0o600)
+            path.write_bytes(b'{"request":')
+            bind.serve(None, 'unit')
+        self.assertEqual(send.call_args.args[1], dict(schema=1, operationId=expected['operationId'], state='UNKNOWN'))
+        self.assertEqual(bind.operate(self.lookup(expected), lambda: True), ('UNKNOWN', None))
+        self.assertEqual(path.read_bytes(), b'{"request":')
+        self.job.assert_not_called()
+
+        # A separate request has a valid intent but a truncated terminal record.
+        other = self.scoped('stop')
+        bind.create(self.state / (other['operationId'] + '.intent'),
+                    dict(root=root, request=other, deliveryProtocol=1))
+        receipt = self.state / (other['operationId'] + '.result')
+        receipt.touch(mode=0o600)
+        receipt.write_bytes(b'{"deliveryToken":')
+        self.assertEqual(bind.operate(self.lookup(other), lambda: True), ('UNKNOWN', None))
+        self.assertEqual(receipt.read_bytes(), b'{"deliveryToken":')
+        self.assertFalse(list(self.state.glob('*.delivered')))
+
+    def test_write_failure_requires_absence_in_the_original_paired_directory(self):
+        root = ['machine', self.state.stat().st_dev, self.state.stat().st_ino]
+        self.root.return_value = root
+        expected = self.scoped('start')
+        self.assertEqual(bind.outcomes.failed_write_state(self.state, expected, self.root), 'REFUSED')
+        bind.create(self.state / 'root.json', dict(schema=1, root=root))
+        self.assertEqual(bind.outcomes.failed_write_state(self.state, expected, self.root), 'REFUSED')
+
+        self.root.return_value = ['other-machine', *root[1:]]
+        with patch.object(bind.outcomes.os, 'open') as opened:
+            self.assertEqual(bind.outcomes.failed_write_state(self.state, expected, self.root), 'UNKNOWN')
+            opened.assert_not_called()
+        self.root.return_value = root
+        (self.state / 'root.json').write_bytes(b'{')
+        self.assertEqual(bind.outcomes.failed_write_state(self.state, expected, self.root), 'UNKNOWN')
+        with self.assertRaises(bind.Refused):
+            bind.operate(self.lookup(expected), lambda: True)
+
+    def test_outcome_on_unpaired_intent_is_still_refused(self):
+        expected = self.scoped('stop')
+        root = self.root.return_value
+        bind.create(self.state / 'root.json', dict(schema=1, root=root))
+        path = self.state / (expected['operationId'] + '.intent')
+        bind.create(path, dict(root=['other-machine', *root[1:]], request=expected))
+        with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_STATE'):
+            bind.operate(self.lookup(expected), lambda: True)
+        path.chmod(0o640)
+        with self.assertRaisesRegex(bind.Refused, 'UNSAFE_STATE'):
+            bind.operate(self.lookup(expected), lambda: True)
+        self.job.assert_not_called()
+
     def test_previous_terminal_receipts_are_compatible_on_the_original_root(self):
         operation = str(uuid.uuid4())
         root = self.root.return_value

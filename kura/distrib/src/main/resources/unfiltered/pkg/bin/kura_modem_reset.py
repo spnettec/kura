@@ -313,15 +313,7 @@ def serve(stream, unit):
                 dbus.DBusException) as error:
             state = 'REFUSED'
             if expected['action'] == 'reset' or expected['action'] in GPS_MODES:
-                # If checking the original intent fails, preserve UNKNOWN.
-                state = 'UNKNOWN'
-                try:
-                    root = state_binding()
-                    if (outcomes.binding(STATE, root) == expected['rootScope']
-                            and outcomes.intent_at(STATE, root, expected['operationId']) is None):
-                        state = 'REFUSED'
-                except (Refused, OSError, ValueError, KeyError, TypeError):
-                    pass
+                state = outcomes.failed_write_state(STATE, expected, state_binding)
             print(error.reason if isinstance(error, Refused) else 'MODEM_RESET_JOB_FAILED', file=sys.stderr)
         reply = dict(schema=1, operationId=expected['operationId'], state=state)
         if proof is not None:

@@ -326,13 +326,7 @@ def serve(stream, unit):
         except (Refused, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
             result = 'REFUSED'
             if expected['action'] == 'apply':
-                try:
-                    root = state_binding()
-                    if (outcomes.binding(STATE, root, required=True) == expected['rootScope']
-                            and outcomes.intent_at(STATE, root, expected['operationId']) is not None):
-                        result = 'UNKNOWN'
-                except (Refused, OSError, TypeError, KeyError, ValueError):
-                    pass
+                result = outcomes.failed_write_state(STATE, expected, state_binding)
             print(error.reason if isinstance(error, Refused) else 'DHCP_JOB_FAILED', file=sys.stderr)
         reply = dict(schema=1, operationId=expected['operationId'], state=result)
         if proof is not None:

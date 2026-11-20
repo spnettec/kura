@@ -4,8 +4,9 @@ from hmac import compare_digest
 import os
 import re
 import secrets
+import stat
 
-from kura_clock_journal import create, decode, digest, read, require
+from kura_clock_journal import Refused, create, decode, digest, read, require
 
 PROOF = re.compile('[0-9a-f]{64}')
 PROTOCOL = 1
@@ -32,11 +33,52 @@ def binding(state, root, *, required=False):
     return digest(root)
 
 
+class UnreadableRecord(Refused):
+    """A safely opened journal entry did not contain a complete JSON record."""
+
+
+def existing_record(path):
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return None
+    raw = read(path, 0)
+    try:
+        return decode(raw)
+    except Refused as error:
+        raise UnreadableRecord('UNREADABLE_OUTCOME_RECORD') from error
+
+
+def failed_write_state(state, expected, state_binding):
+    """Only confirmed absence on the original Root can release the caller's ID."""
+    try:
+        root = state_binding()
+        if digest(root) != expected['rootScope']:
+            return 'UNKNOWN'
+        fd = os.open(state, os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDONLY)
+        try:
+            directory = os.fstat(fd)
+            if ([directory.st_dev, directory.st_ino] != root[1:] or directory.st_uid != 0
+                    or directory.st_gid != 0 or stat.S_IMODE(directory.st_mode) != 0o700):
+                return 'UNKNOWN'
+            binding(state, root)
+            # Pin the directory for the lookup. Even a zero-byte intent retains the ID.
+            try:
+                os.stat(expected['operationId'] + '.intent', dir_fd=fd, follow_symlinks=False)
+            except FileNotFoundError:
+                return 'REFUSED'
+        finally:
+            os.close(fd)
+    except (Refused, OSError, ValueError, KeyError, TypeError):
+        pass
+    return 'UNKNOWN'
+
+
 def intent_at(state, root, operation):
     path = state / (operation + '.intent')
-    if not os.path.lexists(path):
+    intent = existing_record(path)
+    if intent is None:
         return None
-    intent = decode(read(path, 0))
     require(intent['root'] == root and intent['request']['operationId'] == operation, 'UNPAIRED_BIND_STATE')
     if 'deliveryProtocol' in intent:
         require(type(intent['deliveryProtocol']) is int and intent['deliveryProtocol'] == PROTOCOL
@@ -56,9 +98,9 @@ def commit(path, intent, *, recovered=False):
 
 def result_at(state, operation, intent):
     path = state / (operation + '.result')
-    if not os.path.lexists(path):
+    receipt = existing_record(path)
+    if receipt is None:
         return None
-    receipt = decode(read(path, 0))
     original = dict(intentSha256=digest(intent), state='APPLIED')
     if 'deliveryProtocol' in intent:
         token = receipt.get('deliveryToken')
@@ -93,10 +135,13 @@ def query(state, root, expected):
     require(compare_digest(scope, expected['proof']), 'UNPAIRED_BIND_QUERY')
     binding(state, root, required=True)
     operation = expected['operationId']
-    intent = intent_at(state, root, operation)
-    if intent is None:
-        return ('NOT_FOUND', None)
-    result = result_at(state, operation, intent)
+    try:
+        intent = intent_at(state, root, operation)
+        if intent is None:
+            return ('NOT_FOUND', None)
+        result = result_at(state, operation, intent)
+    except UnreadableRecord:
+        return ('UNKNOWN', None)
     return ('APPLIED', result.get('deliveryToken')) if result is not None else ('UNKNOWN', None)
 
 
