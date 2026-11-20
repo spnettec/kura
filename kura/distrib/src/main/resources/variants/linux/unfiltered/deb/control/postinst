@@ -532,6 +532,7 @@ function postInstall {
 
         # The retained data and root code are final before new key operations are admitted.
         python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" restore >> "${LOG}" 2>&1 || return 1
         packageConfigure ready >> "${LOG}" 2>&1 || return 1
     elif [ "${CONFIGURE_PHASE}" != READY ]; then
         return 1

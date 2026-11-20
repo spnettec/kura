@@ -102,6 +102,7 @@ function preserveUserData {
             return 1
         fi
     fi
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" archive "${retained_tmp}" || return 1
     if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
         echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
         rm -rf "${retained_tmp}"
