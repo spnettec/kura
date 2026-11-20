@@ -213,6 +213,8 @@ if [ -f "/var/run/kura.pid" ] ; then
 fi
 fi
 
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-stopped-writers || exit 1
+
 # In-place upgrade: just stop the running instance. The host integration
 # (systemd unit, logrotate cron, tmpfiles) is rebuilt by the new package's
 # kura_install.sh, and the user's data (snapshots, deployment packages, keys)

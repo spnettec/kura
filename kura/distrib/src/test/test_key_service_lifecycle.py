@@ -128,6 +128,39 @@ class LifecycleTest(unittest.TestCase):
             self.policy.leave()
         self.assertTrue((self.policy.state / "maintenance.json").exists())
 
+    def test_direct_writer_refuses_maintenance_before_fencing_or_stopping_units(self):
+        self.opened()
+        path = self.root / 'run/kura-key-service/writers/lease.lock'
+        self.write(path, b'')
+        path.parent.chmod(0o700)
+        with path.open('rb') as writer:
+            fcntl.flock(writer, fcntl.LOCK_SH | fcntl.LOCK_NB)
+            with self.assertRaises(lifecycle.Refused):
+                self.policy.enter('upgrade')
+            self.assertIsNone(self.policy.fence())
+            self.assertFalse(any(call[1] == 'stop' for call in self.calls))
+        self.assertEqual('upgrade', self.policy.enter('upgrade')['firstAction'])
+
+    def test_managed_main_may_drain_but_no_writer_can_survive_the_stop(self):
+        lease = self.root / 'run/kura-key-service/writers/lease.lock'
+        self.write(lease, b'')
+        lease.parent.chmod(0o700)
+        descriptor = self.root / 'proc/432/fd/9'
+        descriptor.parent.mkdir(parents=True)
+        descriptor.symlink_to(lease)
+        self.policy.runner = lambda *args, **kwargs: types.SimpleNamespace(returncode=0, stdout='MainPID=432\n')
+        with lease.open('rb') as main, lease.open('rb') as direct:
+            fcntl.flock(main, fcntl.LOCK_SH)
+            fcntl.flock(direct, fcntl.LOCK_SH)
+            self.policy.check_package_writers(allow_main=True)
+            fcntl.flock(main, fcntl.LOCK_UN)
+            descriptor.unlink()
+            with self.assertRaises(lifecycle.ActiveWriter):
+                self.policy.check_package_writers()
+            with self.assertRaises(lifecycle.ActiveWriter):
+                self.policy.check_package_writers(allow_main=True)
+        self.policy.check_package_writers()
+
     def test_active_operation_refuses_before_fencing_or_stopping(self):
         self.opened()
         with (self.policy.state / "admission.lock").open("rb") as stream:

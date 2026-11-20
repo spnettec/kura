@@ -41,6 +41,10 @@ ASSETS = JOURNAL_V1_ASSETS | frozenset(('share/key-recovery/archive.js',))
 class Refused(RuntimeError):
     pass
 
+class ActiveWriter(Refused):
+    pass
+
+
 class Unresolved(Refused):
     pass
 
@@ -1852,6 +1856,41 @@ class Lifecycle:
                     and properties.get("MainPID", "0") == "0" and properties.get("ControlPID", "0") == "0",
                     "Key-service processes are still active; package change refused")
 
+    def check_package_writers(self, *, allow_main=False):
+        runtime = self.path('/run/kura-key-service')
+        writers = runtime / 'writers'
+        if not os.path.lexists(runtime):
+            return
+        self.directory(runtime)
+        if not os.path.lexists(writers):
+            return
+        self.directory(writers, private=True)
+        lease = writers / 'lease.lock'
+        if not os.path.lexists(lease):
+            require(not any(writers.iterdir()), 'Missing registered writer lease')
+            return
+        fd = os.open(lease, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
+        try:
+            info = os.fstat(fd)
+            require(stat.S_ISREG(info.st_mode) and info.st_uid == self.owner and info.st_nlink == 1
+                    and stat.S_IMODE(info.st_mode) == 0o600 and info.st_size == 0
+                    and os.path.samestat(info, lease.lstat()), 'Unsafe registered writer lease')
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                if allow_main:
+                    status = self.command(['show', 'kura.service', '--property=MainPID'])
+                    pid = next((line[8:] for line in status.splitlines() if line.startswith('MainPID=')), '')
+                    if re.fullmatch(r'[1-9][0-9]*', pid) and pid != '1':
+                        try:
+                            if os.path.samestat(self.path('/proc/' + pid + '/fd/9').stat(), info):
+                                return  # The maintainer script drains Main and checks again.
+                        except FileNotFoundError:
+                            pass
+                raise ActiveWriter('A Kura writer is still active; package change refused') from None
+        finally:
+            os.close(fd)
+
     def enter(self, action):
         require(action in ("install", "upgrade", "remove"))
         self.no_overrides()
@@ -1875,6 +1914,7 @@ class Lifecycle:
             self.check_main_package_layout(manifest)
         self.initialize()
         with self.sender_locked(), self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
+            self.check_package_writers(allow_main=True)
             self.check_sender_admissions()
             if gwt is not None: gwt.check()
             paths = self.check_records()
@@ -1976,6 +2016,8 @@ if __name__ == "__main__":
         lifecycle = Lifecycle()
         if len(sys.argv) == 3 and sys.argv[1] == "--enter":
             lifecycle.enter(sys.argv[2])
+        elif sys.argv[1:] == ['--check-stopped-writers']:
+            lifecycle.check_package_writers()
         elif sys.argv[1:] == ["--leave"]:
             lifecycle.leave()
         elif sys.argv[1:] == ["--remove-units"]:
@@ -2005,6 +2047,9 @@ if __name__ == "__main__":
             namespace['migrate_linked_main'](lifecycle)
         else:
             raise Refused("Unsupported key-service package admission action")
+    except ActiveWriter as error:
+        sys.stderr.write(str(error) + '\n')
+        sys.exit(1)
     except Exception:
         sys.stderr.write("Key-service package admission refused; retain keys, receipts, backups and installation\n")
         sys.exit(1)

@@ -582,6 +582,8 @@ elif [ -f "/var/run/kura.pid" ] ; then
   done
 fi
 
+keyServicePackageAdmission --check-stopped-writers || exit 1
+
 runPreInstall || exit 1
 ##############################################
 # END PRE-INSTALL SCRIPT
