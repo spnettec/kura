@@ -33,6 +33,7 @@ class UpgradeCopy:
         self.incoming = self.base / payload['home']
         self.payload_files = payload['files']
         self.payload_directories = frozenset(payload['directories'])
+        self.payload_controls = payload['controls']
         for version in (old_version, new_version):
             api.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version), 'Invalid upgrade version')
         self.versions = dict(oldVersion=old_version, newVersion=new_version)
@@ -124,9 +125,19 @@ class UpgradeCopy:
         raw = policy.read(self.destination / '.capture.json', limit=4096)
         saved = self.api.decode(raw)
         source, alias = saved['source'], saved['logical']
+        # dpkg can durably advance the version to the incoming one before
+        # clearing reinstreq. Its next unpack uses the new version twice.
+        captured_old = saved['oldVersion']
+        reinstall = binding['oldVersion'] == binding['newVersion'] and captured_old != binding['oldVersion']
+        if reinstall:
+            require(isinstance(captured_old, str) and re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', captured_old),
+                    'Invalid original Core predecessor')
+            binding['oldVersion'] = captured_old
         expected = dict(binding, source=source, logical=alias)
         require(hmac.compare_digest(raw, self.receipt(self.destination, expected, secret)),
                 'Published upgrade copy belongs to another source, package, boot or Root')
+        if reinstall:
+            self.check_installed_incoming_control(binding['preinstSha256'])
         for credential, limit in (('kura_encryption_key', 32), ('provisioned.json', 4096)):
             saved_credential = policy.read(self.destination / 'encryption' / credential, limit=limit)
             installed = policy.read(policy.path('/etc/kura/credentials') / credential, limit=limit)
@@ -155,7 +166,18 @@ class UpgradeCopy:
                                      '--property=MainPID', '--property=ControlPID'])
             require(set(output.splitlines()) == {'ActiveState=inactive', 'MainPID=0', 'ControlPID=0'},
                     'Main must be stopped under the original maintenance fence')
-        return live, parked, originals[0], hashlib.sha256(raw).hexdigest(), secret
+        return live, parked, originals[0], hashlib.sha256(raw).hexdigest(), secret, reinstall
+
+    def check_installed_incoming_control(self, preinst_sha):
+        self.dpkg_payload_state(reinstall_required=True)
+        controls = dict(self.payload_controls, preinst=preinst_sha)
+        self.api.require(set(controls) == {'preinst', 'postinst', 'prerm', 'postrm'},
+                         'Missing incoming maintainer script fingerprints')
+        for hook, expected in controls.items():
+            path = self.policy.path('/var/lib/dpkg/info/kura-core.' + hook)
+            raw = self.policy.read(path, limit=1024 * 1024, private=False)
+            self.api.require(hashlib.sha256(raw).hexdigest() == expected,
+                             'Installed maintainer scripts do not match the original incoming package')
 
     def payload_record(self, phase, capture, secret, **fields):
         record = dict(schema=1, phase=phase, captureSha256=capture, home=self.incoming.name, **fields)
@@ -201,11 +223,13 @@ class UpgradeCopy:
             found_file = True
         require(found_file, 'Interrupted dpkg payload has no incoming file evidence')
 
-    def dpkg_payload_state(self):
-        state = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version} ${db:Status-Status}', 'kura-core'],
-                                        text=True, timeout=5).split()
-        self.api.require(state == [self.versions['oldVersion'], 'half-installed'],
+    def dpkg_payload_state(self, *, reinstall_required=False):
+        state = subprocess.check_output(['/usr/bin/dpkg-query', '-W',
+            '-f=${Version} ${db:Status-Status} ${db:Status-Eflag}', 'kura-core'], text=True, timeout=5).split()
+        self.api.require(len(state) == 3 and state[:2] == [self.versions['oldVersion'], 'half-installed'],
                          'Expected an interrupted unpack of the original Core upgrade')
+        if reinstall_required:
+            self.api.require(state[2] == 'reinstreq', 'Core does not require reinstalling the incoming package')
 
     def pending_payload(self, original, capture, secret, *, restore):
         require = self.api.require
@@ -236,8 +260,9 @@ class UpgradeCopy:
 
     def arrange_source(self, *, restore):
         with self.policy.locked():
-            live, parked, original, capture, secret = self.published_source()
+            live, parked, original, capture, secret, reinstall = self.published_source()
             held = self.pending_payload(original, capture, secret, restore=restore)
+            self.api.require(not reinstall or held is not None, 'Missing paired incoming payload for reinstreq')
             target = live if restore else parked
             if original != target:
                 # Move the whole original tree. A retry can use the same files

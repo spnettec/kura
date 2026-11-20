@@ -179,7 +179,11 @@ def embed_upgrade_copy(preinst, assembly):
             require(path.is_file())
             with path.open('rb') as stream:
                 files[name] = (path.stat().st_size, hashlib.file_digest(stream, 'sha256').hexdigest())
-    data = dict(home=assembly.name, directories=directories, files=files)
+    controls = {}
+    for hook in ('postinst', 'prerm', 'postrm'):
+        with preinst.with_name(hook).open('rb') as stream:
+            controls[hook] = hashlib.file_digest(stream, 'sha256').hexdigest()
+    data = dict(home=assembly.name, directories=directories, files=files, controls=controls)
     inputs = '_KURA_EMBEDDED_UPGRADE_PAYLOAD = ' + repr(data)
     helper = '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)
     preinst.write_text(content.replace(token, inputs + '\n' + helper))
@@ -281,7 +285,6 @@ if __name__ == "__main__":
     modem_reset.package_cohort(Path(sys.argv[1]))
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
-    embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst', Path(sys.argv[1]))
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
                          Path(sys.argv[1])/'bin/kura_modem_cohort.py', 'modem cohort')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
@@ -298,3 +301,5 @@ if __name__ == "__main__":
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
+    # Bind the finalized installed control files. The preinst itself is bound at runtime.
+    embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst', Path(sys.argv[1]))

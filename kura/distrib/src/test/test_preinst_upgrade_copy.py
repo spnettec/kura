@@ -24,17 +24,20 @@ class UpgradeCopyTest(unittest.TestCase):
         self.fence = self.policy.enter('upgrade')
         self.control = self.policy.path('/var/lib/dpkg/tmp.ci/preinst')
         self.fixture.write(self.control, b'incoming preinst', 0o750)
+        self.release_hooks = {hook: ('incoming ' + hook).encode() for hook in ('postinst', 'prerm', 'postrm')}
         self.boot = self.policy.path('/proc/sys/kernel/random/boot_id')
         self.fixture.write(self.boot, b'196840f8-e95f-41ce-8507-312ffe0400b9\n')
         self.copy = self.controller()
         self.original = self.fixture.physical / 'user/snapshots/snapshot_1.xml'
         self.fixture.write(self.original, b'original retained data')
 
-    def controller(self, successor='6.0.0-2'):
+    def controller(self, successor='6.0.0-2', predecessor='6.0.0-1'):
         payload = b'incoming package body'
-        return upgrade.UpgradeCopy(fixtures.lifecycle, self.policy, self.control, '6.0.0-1', successor,
+        controls = {name: hashlib.sha256(raw).hexdigest() for name, raw in self.release_hooks.items()}
+        return upgrade.UpgradeCopy(fixtures.lifecycle, self.policy, self.control, predecessor, successor,
                                    dict(home=self.fixture.physical.name, directories=['install'],
-                                        files={'install/payload': (len(payload), hashlib.sha256(payload).hexdigest())}))
+                                        files={'install/payload': (len(payload), hashlib.sha256(payload).hexdigest())},
+                                        controls=controls))
 
     def test_retries_only_the_authenticated_unpublished_copy_from_the_intact_source(self):
         partial = self.copy.prepare()
@@ -127,6 +130,44 @@ class UpgradeCopyTest(unittest.TestCase):
             self.assertEqual(b'incoming pack', incoming.read_bytes())
             self.assertFalse(held.exists())
             self.assertFalse(self.original.exists())
+            self.assertEqual(self.fence, self.policy.fence())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
+    def test_reinstreq_of_incoming_version_requires_original_control_and_keeps_the_capture(self):
+        stage = self.copy.prepare()
+        for name in ('kura_encryption_key', 'provisioned.json'):
+            credential = self.policy.path('/etc/kura/credentials') / name
+            self.fixture.write(stage / 'encryption' / name, credential.read_bytes())
+        with patch.object(upgrade.os, 'sync'):
+            self.copy.publish(stage)
+        old_ino = self.original.lstat().st_ino
+        original_record = (self.copy.destination / '.capture.json').read_bytes()
+        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'):
+            self.copy.arrange_source(restore=False)
+            incoming = self.fixture.physical / 'install/payload'
+            self.fixture.write(incoming, b'incoming package body')
+            incoming_inode = incoming.lstat().st_ino
+            info = self.policy.path('/var/lib/dpkg/info')
+            self.fixture.write(info / 'kura-core.preinst', self.control.read_bytes(), 0o750)
+            for hook, raw in self.release_hooks.items():
+                self.fixture.write(info / ('kura-core.' + hook), raw, 0o750)
+
+            resumed = self.controller(predecessor='6.0.0-2')
+            with (patch.object(upgrade.subprocess, 'check_output', return_value='6.0.0-2 half-installed ok'),
+                  self.assertRaisesRegex(fixtures.lifecycle.Refused, 'does not require reinstalling')):
+                resumed.arrange_source(restore=True)
+            postinst = info / 'kura-core.postinst'
+            self.fixture.write(postinst, b'replaced postinst', 0o750)
+            with patch.object(upgrade.subprocess, 'check_output', return_value='6.0.0-2 half-installed reinstreq'):
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'do not match'):
+                    resumed.arrange_source(restore=True)
+                self.assertEqual(incoming_inode, incoming.lstat().st_ino)
+                self.fixture.write(postinst, self.release_hooks['postinst'], 0o750)
+                resumed.arrange_source(restore=True)
+                self.assertEqual(old_ino, self.original.lstat().st_ino)
+                self.controller(predecessor='6.0.0-2').arrange_source(restore=False)
+            self.assertEqual(incoming_inode, incoming.lstat().st_ino)
+            self.assertEqual(original_record, (self.copy.destination / '.capture.json').read_bytes())
             self.assertEqual(self.fence, self.policy.fence())
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux package uses atomic no-replace rename')
