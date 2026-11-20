@@ -34,6 +34,7 @@
         <target.device>linux</target.device>
         <dist.build.name>linux</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
+        <core.deb.path>${project.build.directory}/kura_${package.version}-${package.revision}_${deb.arch}.deb</core.deb.path>
     </properties>
     <dependencies>
         <!-- Private worker ordering only; never copied into the OSGi plugin levels. -->
@@ -160,7 +161,7 @@
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_${deb.arch}.deb</deb>
+                            <deb>${core.deb.path}</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                             <controlDir>${project.build.directory}/filtered-control</controlDir>
@@ -443,6 +444,25 @@
                                 </data>
                                 <!-- 99-kura-nm.conf moved to kura-networking sibling deb. -->
                             </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-installer-script</id>
+                        <phase>package</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <executable>${project.basedir}/../src/main/sh/create_installer.sh</executable>
+                            <arguments>
+                                <argument>${core.deb.path}</argument>
+                                <argument>${project.build.directory}/${dist.assembly.name}_installer.sh</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

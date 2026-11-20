@@ -3197,24 +3197,6 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
-                        <id>create-installer-script</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <executable>${project.basedir}/../src/main/sh/create_installer.sh</executable>
-                            <arguments>
-                                <argument>${project.build.directory}</argument>
-                                <argument>${dist.assembly.name}.zip</argument>
-                                <argument>${dist.assembly.name}_installer.sh</argument>
-                                <argument>${dist.build.name}</argument>
-                                <argument>${kura.install.dir}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>create-build-catalog</id>
                         <phase>package</phase>
                         <goals>
