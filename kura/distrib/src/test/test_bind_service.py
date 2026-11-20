@@ -57,6 +57,36 @@ class BindJournalTest(unittest.TestCase):
         action = 'acknowledge:' + expected['rootScope'] + ':' + token
         return bind.request(action, expected['operationId'])
 
+    def test_compare_empty_state_is_read_only_and_requires_original_scope(self):
+        scope = bind.digest(self.root.return_value)
+        request = bind.request('compare-config:' + scope + ':configure:disable::', str(uuid.uuid4()))
+        self.assertEqual(bind.operate(request, lambda: True), ('DIFFERENT', None))
+        self.assertEqual(list(self.state.iterdir()), [])
+        with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_REQUEST'):
+            bind.operate(dict(request, rootScope='0' * 64), lambda: True)
+        self.assertEqual(list(self.state.iterdir()), [])
+
+    def test_compare_committed_model_requires_original_file_and_current_target(self):
+        root = self.root.return_value
+        typed = bind.configuration.decode_fields('configure:disable::')
+        expected = dict(configuration=typed)
+        identity = (1, 2, 0, 0, 0o640, 10, 123, 124)
+        proof = bind.configuration.publication_identity(identity)
+        pub = dict(revision=1, before='a' * 64, published=bind.configuration.sha(b'stock'))
+        prior = dict(root=root, target=self.runtime[0], invocation='', configurationFile=proof,
+                     request=dict(configuration=typed), publication=pub, stagedPublication=dict(boot='boot', file=[]))
+        with (patch.object(bind, 'boot_identity', return_value='boot'),
+              patch.object(bind.configuration, 'prepare', return_value=(identity, b'stock', {})),
+              patch.object(bind.configuration, 'read_current', return_value=(identity, b'stock'))):
+            self.assertEqual(bind.compare_configuration(expected, [prior], self.runtime, lambda: True), ('APPLIED', None))
+            with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_CONFIGURATION'):
+                bind.compare_configuration(expected, [dict(prior, configurationFile=[])], self.runtime, lambda: True)
+            with self.assertRaisesRegex(bind.Refused, 'BIND_CONFIGURATION_CHANGED'):
+                bind.compare_configuration(expected, [prior], self.runtime, lambda: False)
+            self.runtime = (self.runtime[0], 'active', 'b' * 32)
+            self.assertEqual(bind.compare_configuration(expected, [prior], self.runtime, lambda: True), ('DIFFERENT', None))
+        self.job.assert_not_called()
+
     def test_restart_receipt_answers_exact_request_without_another_service_job(self):
         expected = self.scoped('restart')
 

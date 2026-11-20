@@ -41,7 +41,7 @@ LAN_CAPABILITIES = ('lan-listener-v1', 'lan-dual-stack-v1', 'lan-scoped-forwarde
 FILES = {Path(name).name for name in SOURCES} | set(LAN_CAPABILITIES)
 WRITES = ('start', 'stop', 'restart', 'configure')
 ACTIONS = ('status', 'scope')
-RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'INACTIVE', 'NOT_FOUND')
+RESULTS = ('APPLIED', 'REFUSED', 'UNKNOWN', 'INACTIVE', 'NOT_FOUND', 'DIFFERENT')
 
 
 def package_cohort(home):
@@ -81,6 +81,10 @@ def verify_actor(unit):
 def request(action, operation):
     identifier(operation)
     fields = dict(schema=1, operationId=operation)
+    if action.startswith('compare-config:'):
+        _, scope, model = action.split(':', 2)
+        require(outcomes.PROOF.fullmatch(scope) and model.startswith('configure:'), 'INVALID_BIND_REQUEST')
+        return dict(**fields, action='compare-config', rootScope=scope, configuration=configuration.decode_fields(model))
     if action.startswith('paired-outcome:'):
         scoped = action.removeprefix('paired-outcome:')
         require(scoped.startswith('scoped:'), 'INVALID_BIND_REQUEST')
@@ -215,6 +219,9 @@ def configure_operation(expected, intent_path, receipt, intent, history, target_
                 'BIND_CONFIGURATION_CHANGED')
         intent['publication'] = publication
         intent['stagedPublication'] = dict(boot=boot_identity(), file=prepared)
+        # A byte-identical publication keeps the original live inode.
+        intent['configurationFile'] = (configuration.publication_identity(identity)
+                                       if publication['before'] == publication['published'] else prepared)
         configuration.check_scopes(typed)
         admit_intent(intent_path, intent, target_before, authorize)
         configuration.check_scopes(typed)
@@ -252,6 +259,34 @@ def settle_publication(expected, root, authorize):
     return ('APPLIED', outcomes.commit(record, original, recovered=True))
 
 
+def compare_configuration(expected, history, before, authorize):
+    typed = expected['configuration']
+    last = max((entry for entry in history if 'publication' in entry),
+               key=lambda entry: entry['publication']['revision'], default=None)
+    if last is None or last['request']['configuration'] != typed or last['target'] != before[0]:
+        return ('DIFFERENT', None)
+    mode = typed['mode']
+    if mode == 'disable':
+        ready = before[1] == 'inactive'
+    else:
+        ready = mode in configuration.ENABLE_MODES and before[1] == 'active' and before[2] != last['invocation']
+    if not ready:
+        return ('DIFFERENT', None)
+    configuration.check_scopes(typed)
+    identity, payload, _ = configuration.prepare(typed, history, ENVIRONMENT)
+    file_proof = last.get('configurationFile')
+    if file_proof is None and last['publication']['before'] != last['publication']['published']:
+        file_proof = last.get('stagedPublication', {}).get('file')
+    if file_proof is None or last.get('stagedPublication', {}).get('boot') != boot_identity():
+        return ('DIFFERENT', None)
+    require(file_proof == configuration.publication_identity(identity)
+            and configuration.sha(payload) == last['publication']['published'], 'UNPAIRED_BIND_CONFIGURATION')
+    require(authorize() and state_binding() == last['root'] and target() == before
+            and configuration.read_current() == (identity, payload), 'BIND_CONFIGURATION_CHANGED')
+    configuration.check_scopes(typed)
+    return ('APPLIED', None)
+
+
 def locked_operation(expected, authorize):
     root = state_binding()
     if expected['action'] == 'settle-publication':
@@ -263,7 +298,7 @@ def locked_operation(expected, authorize):
     operation = expected['operationId']
     intent_path = STATE / (operation + '.intent')
     receipt = STATE / (operation + '.result')
-    if os.path.lexists(intent_path):
+    if expected['action'] != 'compare-config' and os.path.lexists(intent_path):
         outcomes.binding(STATE, root, required=True)
         intent = outcomes.intent_at(STATE, root, operation)
         require(intent['request'] == expected, 'BIND_OPERATION_ID_CONFLICT')
@@ -272,7 +307,8 @@ def locked_operation(expected, authorize):
         return ('UNKNOWN', None)
 
     intents = list(STATE.glob('*.intent'))
-    require(len(intents) < MAX_OPERATIONS, 'BIND_HISTORY_FULL')
+    limit = MAX_OPERATIONS if expected['action'] == 'compare-config' else MAX_OPERATIONS - 1
+    require(len(intents) <= limit, 'BIND_HISTORY_FULL')
     history = []
     if intents:
         outcomes.binding(STATE, root, required=True)
@@ -285,6 +321,8 @@ def locked_operation(expected, authorize):
             return ('UNKNOWN', None)
         history.append(intent)
     target_before = target()
+    if expected['action'] == 'compare-config':
+        return compare_configuration(expected, history, target_before, authorize)
     fingerprint, state, invocation = target_before
     action = expected['action']
     intent = dict(root=root, request=expected, target=fingerprint, state=state, invocation=invocation,
@@ -320,7 +358,17 @@ def operate(expected, authorize):
     if action == 'settle-publication':
         require(outcomes.binding(STATE, state_binding(), required=True) == expected['proof'],
                 'UNPAIRED_BIND_QUERY')
-    fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)
+    flags = os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR
+    if action == 'compare-config':
+        require(authorize() and outcomes.binding(STATE, state_binding()) == expected['rootScope'], 'UNPAIRED_BIND_REQUEST')
+    else:
+        flags |= os.O_CREAT
+    try:
+        fd = os.open(STATE / 'lock', flags, 0o600)
+    except FileNotFoundError:
+        if action == 'compare-config' and not any(STATE.iterdir()):
+            return ('DIFFERENT', None)
+        raise
     try:
         value = os.fstat(fd)
         require(stat.S_ISREG(value.st_mode) and value.st_uid == value.st_gid == 0
