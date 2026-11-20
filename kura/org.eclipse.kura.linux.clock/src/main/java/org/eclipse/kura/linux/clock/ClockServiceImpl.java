@@ -40,6 +40,7 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
     private org.eclipse.kura.system.SystemService systemService;
     private ClockPrivilegeClient clockPrivilegeClient;
     private ClockSyncProvider provider;
+    private ClockSyncProvider callbackSource;
 
     private ClockServiceConfig clockServiceConfig;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -126,6 +127,8 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             return;
         }
         logger.info("New configuration for Clock Service");
+        // Drain any sample already being applied before publishing the new RTC selection.
+        setCallbackSource(null);
         this.clockServiceConfig = newClockServiceConfig;
 
         if (this.clockServiceConfig.isEnabled()) {
@@ -185,11 +188,30 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID);
         }
 
-        this.provider.init(this.clockServiceConfig, this.scheduler, this);
-        this.provider.start();
+        ClockSyncProvider source = this.provider;
+        source.init(this.clockServiceConfig, this.scheduler,
+                (offset, changeSystemClock) -> onProviderUpdate(source, offset, changeSystemClock));
+        setCallbackSource(source);
+        try {
+            source.start();
+        } catch (KuraException | RuntimeException e) {
+            setCallbackSource(null);
+            throw e;
+        }
+    }
+
+    private synchronized void setCallbackSource(ClockSyncProvider source) {
+        this.callbackSource = source;
+    }
+
+    private synchronized void onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock) {
+        if (source == this.callbackSource) {
+            onClockUpdate(offset, changeSystemClock);
+        }
     }
 
     private void stopClockSyncProvider() throws KuraException {
+        setCallbackSource(null);
         if (this.provider != null) {
             this.provider.stop();
             this.provider = null;

@@ -24,13 +24,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.core.testutil.TestUtil;
@@ -211,6 +217,57 @@ public class ClockServiceImplTest {
         ScheduledExecutorService scheduler = (ScheduledExecutorService) TestUtil.getFieldValue(provider, "scheduler");
         List<Runnable> list = scheduler.shutdownNow();
         assertTrue(list.isEmpty()); // task has not been re-scheduled
+    }
+
+    @Test
+    void retiredNtpSamplesCannotUpdateTheReplacementRtc() throws Throwable {
+        ClockServiceImpl service = new ClockServiceImpl();
+        this.activatedService = service;
+        ClockPrivilegeClient client = mock(ClockPrivilegeClient.class);
+        when(client.adjustRealtime(anyLong())).thenReturn(true);
+        EventAdmin events = mock(EventAdmin.class);
+        service.setEventAdmin(events);
+        TestUtil.setFieldValue(service, "clockPrivilegeClient", client);
+        Map<String, Object> config = new HashMap<>(Map.of("clock.ntp.refresh-interval", -1,
+                "rtc.filename", "/dev/rtc1", "clock.set.hwclock", true));
+        JavaNtpClockSyncProvider replacement;
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        try (DatagramSocket server = new DatagramSocket(0, loopback);
+                var worker = Executors.newVirtualThreadPerTaskExecutor()) {
+            server.setSoTimeout(5000);
+            config.put("clock.ntp.host", loopback.getHostAddress());
+            config.put("clock.ntp.port", server.getLocalPort());
+            config.put("clock.ntp.timeout", 5000);
+            service.activate(config);
+            JavaNtpClockSyncProvider original = (JavaNtpClockSyncProvider) TestUtil.getFieldValue(service, "provider");
+            var sample = worker.submit(original::syncClock);
+            DatagramPacket request = new DatagramPacket(new byte[48], 48);
+            server.receive(request);
+
+            config.put("rtc.filename", "/dev/rtc2");
+            service.updated(config);
+            replacement = (JavaNtpClockSyncProvider) TestUtil.getFieldValue(service, "provider");
+
+            // Return a valid server reply for the request issued before reconfiguration.
+            byte[] reply = new byte[48];
+            reply[0] = 0x24; // NTP version 4, server mode
+            reply[1] = 1; // stratum 1
+            for (int position : new int[] {24, 32, 40}) {
+                System.arraycopy(request.getData(), 40, reply, position, 8);
+            }
+            server.send(new DatagramPacket(reply, reply.length, request.getSocketAddress()));
+            assertTrue(sample.get(5, TimeUnit.SECONDS));
+        }
+        verifyNoInteractions(client, events);
+        replacement.listener.onClockUpdate(0, true);
+        verify(client).syncRtc("/dev/rtc2");
+        verify(events).postEvent(isA(ClockEvent.class));
+
+        config.put("enabled", false);
+        service.updated(config);
+        replacement.listener.onClockUpdate(0, true);
+        verify(client, times(1)).syncRtc("/dev/rtc2");
+        verify(events, times(1)).postEvent(isA(ClockEvent.class));
     }
 
     @Test
