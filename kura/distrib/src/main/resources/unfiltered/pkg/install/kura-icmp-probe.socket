@@ -1,0 +1,12 @@
+[Unit]
+Description=Kura ICMP reachability probe socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-icmp-probe.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+Accept=yes
+RemoveOnStop=yes
+MaxConnections=4

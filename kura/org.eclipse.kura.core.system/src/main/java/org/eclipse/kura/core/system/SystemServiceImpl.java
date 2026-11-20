@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.IDN;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -1621,14 +1622,37 @@ public class SystemServiceImpl extends SuperSystemService implements SystemServi
         }
 
         try {
+            if ("1".equals(System.getenv("KURA_MANAGED_ICMP_PROBE"))) {
+                return probeManagedIcmp(version, address);
+            }
             // -c 5: send 5 ping requests,
             // -W 5: wait for 1 seconds max for each reply
             CommandStatus status = this.executorService
                     .execute(new Command(new String[] { "ping", version, address, "-c", "5", "-W", "1" }));
             return status.getExitStatus().isSuccessful();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         } catch (Exception e) {
             logger.trace("Error while executing ping command", e);
             return false;
+        }
+    }
+
+    private static boolean probeManagedIcmp(String version, String address) throws IOException, InterruptedException {
+        String target = address.indexOf(':') >= 0 ? address : IDN.toASCII(address);
+        var command = new ProcessBuilder("/usr/bin/python3", "-I", "-B",
+                "/usr/libexec/kura-command-executor/kura_command_executor.py", "icmp-client", version, target);
+        command.environment().clear();
+        command.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+        command.redirectError(ProcessBuilder.Redirect.DISCARD);
+        Process client = command.start();
+        try {
+            return client.waitFor(20, TimeUnit.SECONDS) && client.exitValue() == 0;
+        } finally {
+            if (client.isAlive()) {
+                client.destroyForcibly();
+            }
         }
     }
 
