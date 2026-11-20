@@ -120,7 +120,7 @@ elif os.path.lexists(state):
         require(flag.get('namespace') is None and not os.path.lexists(state / 'operations'))
     for name in ('kura-clock-broker.socket', 'kura-clock-broker.service', 'kura-clock-rtc-devices.service',
                  'kura-clock-chrony-step.socket', 'kura-clock-chrony-step.service',
-                 'kura-clock-chrony-config.socket', 'kura-clock-chrony-config.service'):
+                 'kura-clock-chrony-config.socket', 'kura-clock-chrony-config.service', 'kura-clock-rtc-devices.socket'):
         result = subprocess.run(['/usr/bin/systemctl', 'show', name, '--property=MainPID,ControlPID,ActiveState'],
                                 capture_output=True, text=True, timeout=5)
         values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)

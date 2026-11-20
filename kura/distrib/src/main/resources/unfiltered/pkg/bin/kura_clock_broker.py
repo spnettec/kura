@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Dedicated non-Root CAP_SYS_TIME actor for typed clock operations."""
+from array import array
 import contextlib
 import ctypes
 import errno
@@ -31,7 +32,6 @@ HOME = Path('/opt/eclipse/kura')
 ACTOR_HOME = Path('/usr/libexec/kura-clock-broker')
 STATE = Path('/var/lib/kura-clock-broker')
 SOCKET = Path('/run/kura-clock-broker/control.sock')
-RTC_PROJECTION = Path('/dev/kura-clock-rtc')
 RTC_SOURCE = Path('/dev/.kura-clock-rtc')
 RTC_CLASS = Path('/sys/class/rtc')
 RTC_MANIFEST = 'devices.json'
@@ -44,7 +44,11 @@ STEP_SERVICE_UNIT = 'kura-clock-chrony-step.service'
 STEP_UNITS = (*PREVIOUS_UNITS, STEP_SOCKET_UNIT, STEP_SERVICE_UNIT)
 CONFIG_SOCKET_UNIT = 'kura-clock-chrony-config.socket'
 CONFIG_SERVICE_UNIT = 'kura-clock-chrony-config.service'
-UNITS = (*STEP_UNITS, CONFIG_SOCKET_UNIT, CONFIG_SERVICE_UNIT)
+CONFIG_UNITS = (*STEP_UNITS, CONFIG_SOCKET_UNIT, CONFIG_SERVICE_UNIT)
+RTC_SOCKET_UNIT = 'kura-clock-rtc-devices.socket'
+RTC_SOCKET = Path('/run/kura-clock-broker/rtc.sock')
+RTC_TIMEOUT = 3
+UNITS = (*CONFIG_UNITS, RTC_SOCKET_UNIT)
 CONFIG_SOCKET = Path('/run/kura-clock-broker/chrony-config.sock')
 CONFIG_TIMEOUT = 15
 STEP_SOCKET = Path('/run/kura-clock-broker/chrony-step.sock')
@@ -88,7 +92,6 @@ TEARDOWN_REQUESTS = (STOP_CONTEXT, 'prepare-chrony-stop', 'commit-chrony-stop')
 LEGACY_HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_clock_client.py', 'bin/kura_clock_setup.py')
 HELPERS = (*LEGACY_HELPERS, 'bin/kura_chrony_config.py')
 SYS_TIME = 1 << 25
-RTC_PROJECTOR_CAPS = (1 << 0) | (1 << 27)  # CHOWN and MKNOD
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
 WRITE_ACTIONS = {phase + '-' + suffix: (phase, name)
                  for name, (suffix, _, _) in OPERATIONS.items() for phase in ('prepare', 'commit')}
@@ -594,7 +597,10 @@ class Policy:
         bundle = value['clockBundle']
         require(isinstance(bundle, str) and re.fullmatch(r'plugins/(?:[A-Za-z0-9_.-]+/)?org\.eclipse\.kura\.linux\.clock[A-Za-z0-9_.-]*\.jar', bundle) is not None,
                 'UNPAIRED_CODE')
-        units = LEGACY_UNITS if legacy else PREVIOUS_UNITS if prior else STEP_UNITS if step else UNITS
+        old_rtc = (allow_legacy and self.actor_copy and not installed and type(value['files']) is dict
+                   and 'libexec/clock-broker/' + RTC_SOCKET_UNIT not in value['files'])
+        units = (LEGACY_UNITS if legacy else PREVIOUS_UNITS if prior else STEP_UNITS if step
+                 else CONFIG_UNITS if old_rtc else UNITS)
         helpers = LEGACY_HELPERS if legacy or prior or step else HELPERS
         expected = {*helpers, *['libexec/clock-broker/' + name for name in units], bundle}
         require(set(value['files']) == expected, 'UNPAIRED_CODE')
@@ -739,33 +745,16 @@ class Manager:
             return self.journal.commit(value, actuate)
 
 
-def rtc_candidate(device):
-    if sys.platform != 'linux' or os.uname().machine not in ('aarch64', 'x86_64'):
-        raise OSError(errno.ENOSYS, 'Unsupported RTC ioctl ABI')
-    path, hardware = projected_rtc(device)
-    before = path.lstat()
-    check_rtc_node(before, hardware)
-    return path, hardware, before
-
-
-def rtc_identity(path, hardware, metadata):
-    return digest(dict(node=path.name, kernel=hardware, projection=identity(metadata)))
-
-
 def rtc_binding(device):
-    return rtc_identity(*rtc_candidate(device))
+    binding, _ = rtc_relay_exchange(device, None)
+    return binding
 
 
 def rtc_set_time(device, expected_binding):
-    path, hardware, before = rtc_candidate(device)
-    if rtc_identity(path, hardware, before) != expected_binding:
-        raise OSError(errno.ESTALE, 'RTC device does not match the prepared binding')
-    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+    if sys.platform != 'linux' or os.uname().machine not in ('aarch64', 'x86_64'):
+        raise OSError(errno.ENOSYS, 'Unsupported RTC ioctl ABI')
+    _, fd = rtc_relay_exchange(device, expected_binding)
     try:
-        opened = os.fstat(fd)
-        if (identity(opened) != identity(before) or opened.st_rdev != before.st_rdev
-                or identity(path.lstat()) != identity(before) or rtc_hardware(path.name) != hardware):
-            raise OSError(errno.ENODEV, 'RTC device changed during admission')
         utc = time.gmtime()
         fields = (ctypes.c_int * 9)(utc.tm_sec, utc.tm_min, utc.tm_hour, utc.tm_mday, utc.tm_mon - 1,
                                      utc.tm_year - 1900, (utc.tm_wday + 1) % 7, utc.tm_yday - 1, 0)
@@ -783,19 +772,147 @@ def rtc_set_time(device, expected_binding):
 
 
 def rtc_hardware(name):
-    kernel = (RTC_CLASS / name).resolve(strict=True)
+    entry = RTC_CLASS / name
+    kernel = entry.resolve(strict=True)
     if kernel.name != name or not kernel.is_relative_to('/sys/devices'):
         raise OSError(errno.ENODEV, 'RTC entry is outside the kernel device tree')
+    before = kernel.stat()
     with (kernel / 'dev').open(encoding='ascii') as source:
         device_number = source.read(64).strip()
     if re.fullmatch(r'[0-9]{1,4}:[0-9]{1,7}', device_number) is None:
         raise OSError(errno.ENODEV, 'Unrecognized kernel RTC device number')
     major, minor = map(int, device_number.split(':'))
-    metadata = kernel.stat()
-    return dict(major=major, minor=minor, inode=metadata.st_ino, path=str(kernel))
+    if identity(kernel.stat()) != identity(before) or entry.resolve(strict=True) != kernel:
+        raise OSError(errno.ESTALE, 'Kernel RTC changed during inspection')
+    return dict(major=major, minor=minor, inode=before.st_ino, path=str(kernel))
 
 
-def check_rtc_node(value, hardware):
+def rtc_snapshot(device):
+    path = Path(device)
+    alias = None
+    if device in RTC_ALIASES:
+        require(unit_directory_present(path.parent), 'UNPAIRED_RTC_NODE')
+        alias = path.lstat()
+        if not stat.S_ISLNK(alias.st_mode) or alias.st_uid != 0:
+            raise OSError(errno.ENODEV, 'RTC alias must be a Root-owned link')
+        # Match the fixed kernel node name, including the historical misc alias.
+        link = os.readlink(path)
+        target = Path(link)
+        if not target.is_absolute():
+            if path == Path('/dev/misc/rtc') and link.startswith('../'):
+                target = Path('/dev') / link[3:]
+            else:
+                target = path.parent / link
+        if not RTC_NODE.fullmatch(str(target)):
+            raise OSError(errno.ENODEV, 'RTC alias does not point directly to an RTC node')
+        if identity(path.lstat()) != identity(alias):
+            raise OSError(errno.ESTALE, 'RTC alias changed during inspection')
+        path = Path(target)
+    if not RTC_NODE.fullmatch(str(path)):
+        raise OSError(errno.ENODEV, 'RTC target is outside the supported kernel nodes')
+    require(unit_directory_present(path.parent), 'UNPAIRED_RTC_NODE')
+    hardware = rtc_hardware(path.name)
+    node = path.lstat()
+    if (not stat.S_ISCHR(node.st_mode) or node.st_uid != 0 or node.st_nlink != 1
+            or (os.major(node.st_rdev), os.minor(node.st_rdev)) != (hardware['major'], hardware['minor'])):
+        raise OSError(errno.ENODEV, 'RTC node does not match the kernel device')
+    binding = digest(dict(node=path.name, kernel=hardware, hostNode=identity(node),
+                          alias=None if alias is None else identity(alias)))
+    return path, node, binding
+
+
+def rtc_relay_exchange(device, binding):
+    # This relay can only inspect nodes and open read-only descriptions. Any
+    # relay failure occurs before the caller can enter the RTC write ioctl.
+    descriptors = array('i')
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET) as stream:
+            stream.settimeout(RTC_TIMEOUT)
+            require(unit_directory_present(RTC_SOCKET.parent), 'UNSAFE_LISTENER')
+            metadata = RTC_SOCKET.lstat()
+            require(stat.S_ISSOCK(metadata.st_mode) and metadata.st_uid == 0
+                    and metadata.st_gid == pwd.getpwnam('kura-clock').pw_gid
+                    and stat.S_IMODE(metadata.st_mode) == 0o660, 'UNSAFE_LISTENER')
+            stream.connect(str(RTC_SOCKET))
+            require(socket_peer(stream) == (1, 0, 0), 'UNSAFE_LISTENER')
+            stream.sendall(encode(dict(schema=1, device=device, binding=binding)))
+            raw, control, flags, _ = stream.recvmsg(MAX_BYTES, socket.CMSG_SPACE(descriptors.itemsize),
+                                                   socket.MSG_CMSG_CLOEXEC)
+        for level, kind, data in control:
+            if (level, kind) == (socket.SOL_SOCKET, socket.SCM_RIGHTS):
+                descriptors.frombytes(data[:len(data) - len(data) % descriptors.itemsize])
+        require(not flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC), 'INVALID_RTC_REPLY')
+        reply = decode(raw)
+        if set(reply) == {'errno'} and type(reply['errno']) is int and 0 < reply['errno'] <= 4095:
+            require(not control, 'INVALID_RTC_REPLY')
+            raise OSError(reply['errno'], 'RTC device admission failed')
+        value = reply.get('binding')
+        require(set(reply) == {'binding'} and isinstance(value, str) and re.fullmatch('[a-f0-9]{64}', value)
+                and (not control if binding is None else
+                     value == binding and len(control) == len(descriptors) == 1), 'INVALID_RTC_REPLY')
+        return value, descriptors.pop() if binding is not None else None
+    except OSError as error:
+        if error.errno is None:
+            raise OSError(errno.ETIMEDOUT, 'RTC device admission timed out') from error
+        raise
+    except (Refused, ValueError) as error:
+        raise OSError(errno.EPROTO, 'RTC device relay could not be verified') from error
+    finally:
+        for fd in descriptors:
+            with contextlib.suppress(OSError):
+                os.close(fd)
+
+
+def serve_rtc_request(stream):
+    raw, _, flags, _ = stream.recvmsg(MAX_BYTES)
+    require(not flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC), 'INVALID_FRAME')
+    request = decode(raw)
+    require(set(request) == {'schema', 'device', 'binding'} and type(request['schema']) is int
+            and request['schema'] == 1 and isinstance(request['device'], str)
+            and (request['device'] in RTC_ALIASES or RTC_NODE.fullmatch(request['device'])), 'INVALID_RTC_REQUEST')
+    device, expected = request['device'], request['binding']
+    require(expected is None or isinstance(expected, str) and re.fullmatch('[a-f0-9]{64}', expected),
+            'INVALID_RTC_REQUEST')
+    fd = None
+    try:
+        path, before, binding = rtc_snapshot(device)
+        if expected is not None:
+            if binding != expected:
+                raise OSError(errno.ESTALE, 'RTC device changed since prepare')
+            fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+            opened = os.fstat(fd)
+            if (identity(opened) != identity(before) or opened.st_rdev != before.st_rdev
+                    or rtc_snapshot(device)[2] != binding):
+                raise OSError(errno.ESTALE, 'RTC device changed during open')
+        response = encode(dict(binding=binding))
+        if fd is not None:
+            stream.sendmsg([response], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array('i', [fd]))])
+            return
+    except OSError as error:
+        response = encode(dict(errno=error.errno or errno.EIO))
+    finally:
+        if fd is not None:
+            os.close(fd)
+    stream.sendall(response)
+
+
+def serve_rtc():
+    status = process_status('thread-self')
+    require(status['Uid'].split() == status['Gid'].split() == ['0'] * 4
+            and status['NoNewPrivs'].strip() == '1'
+            and all(int(status[name].strip(), 16) == 0 for name in ('CapInh', 'CapPrm', 'CapEff', 'CapBnd', 'CapAmb')),
+            'UNSAFE_RTC_RELAY')
+    policy = Policy(actor=True)
+    policy.check()
+    with activated_listener(RTC_SOCKET, 'rtc', socket.SOCK_SEQPACKET) as listener:
+        stream, _ = listener.accept()
+        with stream:
+            stream.settimeout(RTC_TIMEOUT)
+            clock_actor_peer(socket_peer(stream))
+            serve_rtc_request(stream)
+
+
+def check_rtc_projection_node(value, hardware):
     if (not stat.S_ISCHR(value.st_mode) or value.st_uid != 0 or value.st_nlink != 1
             or value.st_gid != pwd.getpwnam('kura-clock').pw_gid or stat.S_IMODE(value.st_mode) != 0o640
             or (os.major(value.st_rdev), os.minor(value.st_rdev)) != (hardware['major'], hardware['minor'])):
@@ -819,20 +936,8 @@ def rtc_catalog(path):
                 and all(type(hardware[field]) is int and hardware[field] >= 0 for field in ('major', 'minor', 'inode'))
                 and isinstance(hardware['path'], str) and hardware['path'].startswith('/sys/devices/'),
                 'UNPAIRED_RTC_PROJECTION')
-        check_rtc_node((path / name).lstat(), hardware)
+        check_rtc_projection_node((path / name).lstat(), hardware)
     return catalog
-
-
-def projected_rtc(device):
-    catalog = rtc_catalog(RTC_PROJECTION)
-    if RTC_NODE.fullmatch(device) is not None:
-        name = Path(device).name
-    else:
-        name = catalog['aliases'].get(device)
-    hardware = catalog['nodes'].get(name)
-    if hardware is None or rtc_hardware(name) != hardware:
-        raise OSError(errno.ENODEV, 'Requested RTC has no current paired projection')
-    return RTC_PROJECTION / name, hardware
 
 
 def publish_path(staged, target, replace):
@@ -843,58 +948,6 @@ def publish_path(staged, target, replace):
     if rename(-100, os.fsencode(staged), -100, os.fsencode(target), 2 if replace else 1) != 0:
         error = ctypes.get_errno()
         raise OSError(error, os.strerror(error))
-
-
-def project_rtc():
-    require(os.getuid() == os.geteuid() == 0 and os.getgid() == os.getegid() == 0, 'UNSAFE_RTC_PROJECTOR')
-    values = dict(line.split(':', 1) for line in Path('/proc/thread-self/status').read_text().splitlines() if ':' in line)
-    require(values['NoNewPrivs'].strip() == '1' and all(
-        int(values[name].strip(), 16) == RTC_PROJECTOR_CAPS for name in ('CapPrm', 'CapEff', 'CapBnd')),
-        'UNSAFE_RTC_PROJECTOR')
-    policy = Policy(actor=True)
-    policy.check()
-    require(unit_directory_present(RTC_SOURCE.parent), 'UNPAIRED_RTC_PROJECTION')
-    group = pwd.getpwnam('kura-clock').pw_gid
-    with_projection = os.path.lexists(RTC_SOURCE)
-    previous = rtc_catalog(RTC_SOURCE) if with_projection else None
-    try:
-        entries = sorted(RTC_CLASS.iterdir())
-    except FileNotFoundError:
-        entries = []
-    nodes = {entry.name: rtc_hardware(entry.name) for entry in entries
-             if RTC_NODE.fullmatch('/dev/' + entry.name) is not None}
-    aliases = {}
-    for alias in RTC_ALIASES:
-        try:
-            origin = Path(alias).resolve(strict=True)
-        except FileNotFoundError:
-            continue
-        if RTC_NODE.fullmatch(str(origin)) is not None and origin.name in nodes:
-            aliases[alias] = origin.name
-    catalog = dict(schema=1, nodes=nodes, aliases=aliases)
-    if catalog == previous:
-        return
-    require(len(encode(catalog)) <= MAX_BYTES, 'UNPAIRED_RTC_PROJECTION')
-    staged = Path(tempfile.mkdtemp(prefix='.kura-clock-rtc-staged-', dir=RTC_SOURCE.parent))
-    try:
-        for name, hardware in nodes.items():
-            path = staged / name
-            os.mknod(path, stat.S_IFCHR | 0o600, os.makedev(hardware['major'], hardware['minor']))
-            os.chown(path, 0, group, follow_symlinks=False)
-            path.chmod(0o640)
-        create(staged / RTC_MANIFEST, catalog, 0o644)
-        os.chown(staged, 0, group, follow_symlinks=False)
-        staged.chmod(0o750)
-        require(rtc_catalog(staged) == catalog, 'UNPAIRED_RTC_PROJECTION')
-        policy.check()
-        if with_projection:
-            require(rtc_catalog(RTC_SOURCE) == previous, 'UNPAIRED_RTC_PROJECTION')
-        publish_path(staged, RTC_SOURCE, with_projection)
-    finally:
-        if staged.exists():
-            for entry in staged.iterdir():
-                entry.unlink()
-            staged.rmdir()
 
 
 def remove_rtc_projection():
@@ -936,17 +989,17 @@ def socket_peer(stream):
                                                          struct.calcsize(format_string)))
 
 
-def activated_listener(path, descriptor):
+def activated_listener(path, descriptor, kind=socket.SOCK_STREAM):
     require(os.environ.get('LISTEN_PID') == str(os.getpid()) and os.environ.get('LISTEN_FDS') == '1'
             and os.environ.get('LISTEN_FDNAMES') == descriptor, 'INVALID_LISTENER')
     listener = socket.socket(fileno=3)
-    require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
+    require(listener.family == socket.AF_UNIX and listener.type == kind
             and listener.getsockname() == str(path) and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) == 1,
             'INVALID_LISTENER')
     return listener
 
 
-def chrony_actor_peer(peer):
+def clock_actor_peer(peer):
     pid, uid, gid = peer
     account = pwd.getpwnam('kura-clock')
     require(pid > 1 and uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
@@ -977,7 +1030,7 @@ def serve_chrony_step():
                 stream.settimeout(2)
                 try:
                     policy.check()
-                    chrony_actor_peer(socket_peer(stream))
+                    clock_actor_peer(socket_peer(stream))
                     request = receive(stream)
                     require(set(request) == {'schema', 'unit', 'binding'} and type(request['schema']) is int
                             and request['schema'] == 1 and isinstance(request['unit'], str)
@@ -1035,7 +1088,7 @@ def serve_chrony_config():
                 stream.settimeout(3)
                 try:
                     policy.check()
-                    chrony_actor_peer(socket_peer(stream))
+                    clock_actor_peer(socket_peer(stream))
                     request = receive(stream)
                     require(type(request.get('schema')) is int and request['schema'] == 1)
                     try:
@@ -1100,8 +1153,8 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'serve-chrony-config':
             serve_chrony_config()
         else:
-            require(sys.argv[1] == 'project-rtc', 'INVALID_ENTRYPOINT')
-            project_rtc()
+            require(sys.argv[1] == 'serve-rtc', 'INVALID_ENTRYPOINT')
+            serve_rtc()
     except (Refused, OSError, ValueError, KeyError, subprocess.SubprocessError, zipfile.BadZipFile) as error:
         reason = error.reason if isinstance(error, Refused) else 'UNRESOLVED_OR_UNAVAILABLE'
         print(reason, file=sys.stderr)

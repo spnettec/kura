@@ -1,22 +1,29 @@
 [Unit]
-Description=YOFC Kura private RTC device projection
-Requires=kura-clock-broker.socket
-After=kura-clock-broker.socket
+# Each device lookup starts a fresh device-policy context, including after hotplug.
+StartLimitIntervalSec=0
+Description=YOFC Kura read-only RTC device admission
+Requires=kura-clock-rtc-devices.socket
+After=kura-clock-rtc-devices.socket
 
 [Service]
-Type=oneshot
+Type=simple
 User=root
 Group=root
 UMask=0077
-ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py project-rtc
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py serve-rtc
 NoNewPrivileges=true
-CapabilityBoundingSet=CAP_MKNOD CAP_CHOWN
+CapabilityBoundingSet=
+AmbientCapabilities=
 DevicePolicy=closed
-DeviceAllow=char-rtc m
+DeviceAllow=char-rtc r
+ReadOnlyPaths=/dev
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
 ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
 RestrictAddressFamilies=AF_UNIX
 RestrictSUIDSGID=true
 LockPersonality=true

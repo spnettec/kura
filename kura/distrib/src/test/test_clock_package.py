@@ -44,7 +44,7 @@ class ClockPackageTest(unittest.TestCase):
 
     def test_manifest_binds_all_helpers_units_and_clock_consumer(self):
         home = self.assembly(); value = broker.package_cohort(home)
-        self.assertEqual(13, len(value['files']))
+        self.assertEqual(14, len(value['files']))
         self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
         self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony', 'step-chrony', 'configure-chrony'],
                          value['actions'])
@@ -84,14 +84,15 @@ class ClockPackageTest(unittest.TestCase):
         self.assertIn('\nAmbientCapabilities=CAP_SYS_TIME\n', raw)
         self.assertIn('\nNoNewPrivileges=true\n', raw)
         self.assertIn('\nPrivateDevices=true\n', raw)
-        self.assertIn('\nDeviceAllow=char-rtc r\n', raw)
-        self.assertIn('\nBindReadOnlyPaths=-/dev/.kura-clock-rtc:/dev/kura-clock-rtc\n', raw)
-        self.assertIn('\nWants=' + broker.RTC_UNIT + '\n', raw)
+        self.assertNotIn('DeviceAllow=', raw)
+        self.assertNotIn('BindReadOnlyPaths=', raw)
         self.assertIn('-/opt/eclipse/kura', raw)
-        projection = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_UNIT).read_text()
-        self.assertIn('\nCapabilityBoundingSet=CAP_MKNOD CAP_CHOWN\n', projection)
-        self.assertIn('\nDevicePolicy=closed\n', projection)
-        self.assertIn('\nDeviceAllow=char-rtc m\n', projection)
+        relay = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_UNIT).read_text()
+        self.assertIn(' serve-rtc\n', relay)
+        self.assertIn('\nCapabilityBoundingSet=\nAmbientCapabilities=\n', relay)
+        self.assertIn('\nDevicePolicy=closed\nDeviceAllow=char-rtc r\n', relay)
+        listener = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_SOCKET_UNIT).read_text()
+        self.assertIn('\nListenSequentialPacket=' + str(broker.RTC_SOCKET) + '\n', listener)
 
     def test_step_relay_is_optional_and_capability_free(self):
         relay = (SOURCE / 'unfiltered/pkg/install' / broker.STEP_SERVICE_UNIT).read_text()

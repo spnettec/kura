@@ -656,21 +656,40 @@ class RtcDeviceTest(unittest.TestCase):
                                     st_nlink=1, st_size=0, st_mtime_ns=5, st_ctime_ns=6, st_rdev=os.makedev(254, 4))
         self.hardware = dict(major=254, minor=4, inode=924, path='/sys/devices/platform/example/rtc/rtc4')
         self.kernel = self.enterContext(mock.patch.object(broker, 'rtc_hardware', return_value=self.hardware))
-        self.catalog = self.enterContext(mock.patch.object(broker, 'rtc_catalog', return_value=dict(
-            schema=1, nodes={'rtc4': self.hardware}, aliases={'/dev/rtc': 'rtc4'})))
-        self.enterContext(mock.patch.object(broker.pwd, 'getpwnam', return_value=SimpleNamespace(pw_gid=125)))
-        self.admitted = self.enterContext(mock.patch.object(Path, 'lstat', return_value=self.node))
+        self.alias = SimpleNamespace(**dict(vars(self.node), st_mode=stat.S_IFLNK | 0o777))
+        self.target = 'rtc4'
+        self.enterContext(mock.patch.object(broker, 'unit_directory_present', return_value=True))
+        self.enterContext(mock.patch.object(broker.os, 'readlink', side_effect=lambda path: self.target))
+        self.enterContext(mock.patch.object(Path, 'lstat', autospec=True,
+                                            side_effect=lambda path: self.alias if str(path) == '/dev/rtc' else self.node))
         self.opened = self.enterContext(mock.patch.object(broker.os, 'open', return_value=7))
         self.fd = self.enterContext(mock.patch.object(broker.os, 'fstat', return_value=self.node))
         self.closed = self.enterContext(mock.patch.object(broker.os, 'close'))
         self.ioctl = self.enterContext(mock.patch.object(broker.ctypes, 'CDLL')).return_value.ioctl
         self.enterContext(mock.patch.object(broker.sys, 'platform', 'linux'))
         self.enterContext(mock.patch.object(broker.os, 'uname', return_value=SimpleNamespace(machine='aarch64')))
+
+        def exchange(device, binding):
+            # Exercise the actual request handler, substituting only the transport.
+            stream = mock.Mock()
+            request = journal.encode(dict(schema=1, device=device, binding=binding))
+            stream.recvmsg.return_value = request, [], 0, None
+            broker.serve_rtc_request(stream)
+            if stream.sendmsg.called:
+                parts, control = stream.sendmsg.call_args.args
+                self.assertEqual([7], list(control[0][2]))
+                return journal.decode(parts[0])['binding'], 8  # caller's duplicate
+            reply = journal.decode(stream.sendall.call_args.args[0])
+            if 'errno' in reply:
+                raise OSError(reply['errno'], 'device admission')
+            return reply['binding'], None
+
+        self.enterContext(mock.patch.object(broker, 'rtc_relay_exchange', side_effect=exchange))
         self.binding = broker.rtc_binding('/dev/rtc')
 
     def test_rtc_write_uses_utc_and_one_read_only_kernel_descriptor(self):
         def write(fd, request, fields):
-            self.assertEqual((7, 0x4024700a), (fd.value, request.value))
+            self.assertEqual((8, 0x4024700a), (fd.value, request.value))
             self.assertEqual([6, 5, 4, 3, 1, 126, 2, 33, 0], list(fields._obj))
             return 0
 
@@ -678,22 +697,22 @@ class RtcDeviceTest(unittest.TestCase):
         utc = broker.time.struct_time((2026, 2, 3, 4, 5, 6, 1, 34, 0))
         with mock.patch.object(broker.time, 'gmtime', return_value=utc):
             broker.rtc_set_time('/dev/rtc', self.binding)
-        self.opened.assert_called_once_with(broker.RTC_PROJECTION / 'rtc4',
+        self.opened.assert_called_once_with(Path('/dev/rtc4'),
                                             os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
         self.ioctl.assert_called_once()
-        self.closed.assert_called_once_with(7)
+        self.assertEqual([mock.call(7), mock.call(8)], self.closed.call_args_list)
 
     def test_invalid_device_mapping_and_replaced_device_never_invoke_ioctl(self):
         self.kernel.return_value = dict(self.hardware, inode=925)
         with self.assertRaises(OSError) as failure:
-            broker.rtc_set_time('/dev/rtc4', self.binding)
-        self.assertEqual(errno.ENODEV, failure.exception.errno)
+            broker.rtc_set_time('/dev/rtc', self.binding)
+        self.assertEqual(errno.ESTALE, failure.exception.errno)
         self.opened.assert_not_called()
         self.kernel.return_value = self.hardware
         self.fd.return_value = SimpleNamespace(**vars(self.node))
         self.fd.return_value.st_ino = 30
         with self.assertRaises(OSError):
-            broker.rtc_set_time('/dev/rtc4', self.binding)
+            broker.rtc_set_time('/dev/rtc', self.binding)
         self.closed.assert_called_once_with(7)
         self.ioctl.assert_not_called()
 
@@ -701,20 +720,20 @@ class RtcDeviceTest(unittest.TestCase):
         self.kernel.side_effect = [self.hardware, dict(self.hardware, inode=925)]
         with self.assertRaises(OSError) as failure:
             broker.rtc_set_time('/dev/rtc', self.binding)
-        self.assertEqual(errno.ENODEV, failure.exception.errno)
+        self.assertEqual(errno.ESTALE, failure.exception.errno)
         self.closed.assert_called_once_with(7)
         self.ioctl.assert_not_called()
 
     def test_ioctl_failure_remains_ambiguous_with_no_retry(self):
         self.ioctl.return_value = -1
-        self.closed.side_effect = OSError(errno.EINTR, 'Close interrupted')
+        self.closed.side_effect = [None, OSError(errno.EINTR, 'Close interrupted')]
         with self.assertRaisesRegex(journal.Refused, 'UNCERTAIN_RTC_RESULT'):
-            broker.rtc_set_time('/dev/rtc4', self.binding)
+            broker.rtc_set_time('/dev/rtc', self.binding)
         self.ioctl.assert_called_once()
-        self.closed.assert_called_once_with(7)
+        self.assertEqual([mock.call(7), mock.call(8)], self.closed.call_args_list)
 
-    def test_republished_projection_does_not_substitute_device_even_with_same_number(self):
-        self.admitted.return_value = SimpleNamespace(**dict(vars(self.node), st_ino=self.node.st_ino + 1))
+    def test_replaced_node_does_not_substitute_device_even_with_same_number(self):
+        self.node.st_ino += 1
         with self.assertRaises(OSError) as failure:
             broker.rtc_set_time('/dev/rtc', self.binding)
         self.assertEqual(errno.ESTALE, failure.exception.errno)
@@ -723,9 +742,9 @@ class RtcDeviceTest(unittest.TestCase):
 
     def test_retargeted_legacy_alias_does_not_open_the_replacement(self):
         alternate = dict(self.hardware, inode=925, minor=6, path='/sys/devices/platform/example/rtc/rtc6')
-        self.catalog.return_value = dict(schema=1, nodes={'rtc6': alternate}, aliases={'/dev/rtc': 'rtc6'})
+        self.target = 'rtc6'
         self.kernel.return_value = alternate
-        self.admitted.return_value = SimpleNamespace(**dict(vars(self.node), st_rdev=os.makedev(254, 6)))
+        self.node.st_rdev = os.makedev(254, 6)
         with self.assertRaises(OSError) as failure:
             broker.rtc_set_time('/dev/rtc', self.binding)
         self.assertEqual(errno.ESTALE, failure.exception.errno)
