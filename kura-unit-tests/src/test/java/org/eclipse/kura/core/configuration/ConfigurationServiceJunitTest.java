@@ -39,6 +39,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -1110,90 +1111,53 @@ public class ConfigurationServiceJunitTest {
         }
     }
 
-    @Test
-    public void testGetSnapshotPasswordDecryptionException() throws KuraException {
-        // test password decryption failure - log only
-        final boolean[] calls = { false, false };
-
-        ConfigurationServiceImpl cs = new TestConfigurationService() {
-
+    private ConfigurationServiceImpl legacySnapshotWithPassword(CryptoService crypto) {
+        ConfigurationServiceImpl service = new TestConfigurationService() {
             @Override
-            XmlComponentConfigurations loadEncryptedSnapshotFileContent(long snapshotID) throws KuraException {
-                XmlComponentConfigurations cfgs = new XmlComponentConfigurations();
-                List<ComponentConfiguration> configurations = new ArrayList<>();
-                cfgs.setConfigurations(configurations);
-
-                configurations.add(null);
-                ComponentConfigurationImpl cfg = new ComponentConfigurationImpl();
-                configurations.add(cfg);
-
-                calls[0] = true;
-
-                return cfgs;
-            }
-
-            @Override
-            void decryptConfigurationProperties(Map<String, Object> configProps) {
-                calls[1] = true;
-
-                throw new RuntimeException("test");
+            XmlComponentConfigurations loadEncryptedSnapshotFileContent(long snapshotID) {
+                XmlComponentConfigurations snapshot = new XmlComponentConfigurations();
+                List<ComponentConfiguration> configs = new ArrayList<>();
+                configs.add(null);
+                configs.add(new ComponentConfigurationImpl());
+                Map<String, Object> properties = new HashMap<>();
+                properties.put("password", new Password("stored"));
+                configs.add(new ComponentConfigurationImpl("example", null, properties));
+                snapshot.setConfigurations(configs);
+                return snapshot;
             }
         };
+        service.setCryptoService(crypto);
+        return service;
+    }
 
-        long sid = 0;
-        List<ComponentConfiguration> configs = null;
-        try {
-            configs = cs.getSnapshot(sid);
-        } catch (Exception e) {
-            fail("Exception not expected.");
-        }
+    @Test
+    public void testGetSnapshotPasswordDecryptionException() throws KuraException {
+        CryptoService crypto = mock(CryptoService.class);
+        when(crypto.decryptAes("stored".toCharArray())).thenThrow(new KuraException(KuraErrorCode.DECODER_ERROR));
 
-        assertTrue(calls[0], "config loaded");
-        assertTrue(calls[1], "passwords decrypted");
-        assertNotNull(configs, "configurations list exists");
-        assertEquals(2, configs.size(), "configurations list filled");
+        List<ComponentConfiguration> configs = legacySnapshotWithPassword(crypto).getSnapshot(0);
+
+        verify(crypto).decryptAes("stored".toCharArray());
+        assertEquals(3, configs.size());
         assertNull(configs.get(0));
-        assertNotNull(configs.get(1));
+        assertNull(configs.get(1).getConfigurationProperties());
+        Password value = (Password) configs.get(2).getConfigurationProperties().get("password");
+        assertArrayEquals("stored".toCharArray(), value.getPassword());
     }
 
     @Test
     public void testGetSnapshot() throws KuraException {
-        // test successful run
+        CryptoService crypto = mock(CryptoService.class);
+        when(crypto.decryptAes("stored".toCharArray())).thenReturn("decoded".toCharArray());
 
-        final boolean[] calls = { false, false };
+        List<ComponentConfiguration> configs = legacySnapshotWithPassword(crypto).getSnapshot(0);
 
-        ConfigurationServiceImpl cs = new TestConfigurationService() {
-
-            @Override
-            XmlComponentConfigurations loadEncryptedSnapshotFileContent(long snapshotID) throws KuraException {
-                XmlComponentConfigurations cfgs = new XmlComponentConfigurations();
-                List<ComponentConfiguration> configurations = new ArrayList<>();
-                cfgs.setConfigurations(configurations);
-
-                configurations.add(null);
-                ComponentConfigurationImpl cfg = new ComponentConfigurationImpl();
-                configurations.add(cfg);
-
-                calls[0] = true;
-
-                return cfgs;
-            }
-
-            @Override
-            void decryptConfigurationProperties(Map<String, Object> configProps) {
-                calls[1] = true;
-            }
-        };
-
-        long sid = 0;
-        List<ComponentConfiguration> configs = cs.getSnapshot(sid);
-
-        assertTrue(calls[0], "config loaded");
-        assertTrue(calls[1], "passwords decrypted");
-        assertNotNull(configs, "configurations list exists");
-        assertEquals(2, configs.size(), "configurations list filled");
+        verify(crypto).decryptAes("stored".toCharArray());
+        assertEquals(3, configs.size());
         assertNull(configs.get(0));
-        assertNotNull(configs.get(1));
+        assertNull(configs.get(1).getConfigurationProperties());
+        Password value = (Password) configs.get(2).getConfigurationProperties().get("password");
+        assertArrayEquals("decoded".toCharArray(), value.getPassword());
     }
 
     @Test
@@ -2010,7 +1974,7 @@ public class ConfigurationServiceJunitTest {
         XmlComponentConfigurations snapshot = prepareSnapshot();
         List<ComponentConfiguration> configs = snapshot.getConfigurations();
 
-        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", configs);
+        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
         verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
@@ -2021,7 +1985,7 @@ public class ConfigurationServiceJunitTest {
         assertTrue(f1.exists(), "snapshot file created");
 
         String expectedXml = IOUtils.toString(
-                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_snapshot_without_description.xml"),
+                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_logical_snapshot.xml"),
                 StandardCharsets.UTF_8.name());
         String actualXml = FileUtils.readFileToString(f1, StandardCharsets.UTF_8);
 
@@ -2090,7 +2054,7 @@ public class ConfigurationServiceJunitTest {
         BundleContext bundleContext = mock(BundleContext.class);
         TestUtil.setFieldValue(cs, "bundleContext", bundleContext);
 
-        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", configs);
+        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
         verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
@@ -2102,7 +2066,7 @@ public class ConfigurationServiceJunitTest {
         assertTrue(f1.exists(), "snapshot file created");
 
         String expectedXml = IOUtils.toString(
-                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_snapshot_without_description.xml"),
+                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_logical_snapshot.xml"),
                 StandardCharsets.UTF_8.name());
         String actualXml = FileUtils.readFileToString(f1, StandardCharsets.UTF_8);
 
@@ -2168,7 +2132,7 @@ public class ConfigurationServiceJunitTest {
         XmlComponentConfigurations snapshot = prepareSnapshot();
         List<ComponentConfiguration> configs = snapshot.getConfigurations();
 
-        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", configs);
+        Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
         verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
@@ -2181,7 +2145,7 @@ public class ConfigurationServiceJunitTest {
         assertTrue(f1.exists(), "Expected snapshot file to be created");
 
         String expectedXml = IOUtils.toString(
-                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_snapshot_without_description.xml"),
+                ConfigurationServiceJunitTest.class.getResourceAsStream("/expected_logical_snapshot.xml"),
                 StandardCharsets.UTF_8.name());
         String actualXml = FileUtils.readFileToString(f1, StandardCharsets.UTF_8);
 
@@ -2379,7 +2343,7 @@ public class ConfigurationServiceJunitTest {
 
         assertTrue(calls[0], "method called");
 
-        verify(cfgMock, times(1)).update((Dictionary<String, ?>) any());
+        verify(cfgMock).updateIfDifferent(props);
     }
 
     @Test
@@ -2411,23 +2375,13 @@ public class ConfigurationServiceJunitTest {
 
         when(cfgMock.getProperties()).thenReturn(null);
 
-        Mockito.doAnswer(invocation -> {
-            Dictionary<String, Object> dict = (Dictionary<String, Object>) invocation.getArguments()[0];
-
-            assertNotNull(dict);
-
-            assertEquals(1, dict.size(), "one element in properties list - pid");
-
-            assertEquals(pid, dict.elements().nextElement(), "expected configuration update PID");
-
-            return null;
-        }).when(cfgMock).update((Dictionary<String, ?>) any());
-
         TestUtil.invokePrivate(cs, "updateWithDefaultConfigurationForNonFactoryInstance", pid, ocd);
 
         assertTrue(calls[0], "method called");
 
-        verify(cfgMock, times(1)).update((Dictionary<String, ?>) any());
+        Dictionary<String, Object> expected = new Hashtable<>();
+        expected.put(ConfigurationService.KURA_SERVICE_PID, pid);
+        verify(cfgMock).updateIfDifferent(expected);
     }
 
     @Test
