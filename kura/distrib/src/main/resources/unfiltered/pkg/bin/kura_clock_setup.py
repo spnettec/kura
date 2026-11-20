@@ -518,7 +518,10 @@ def stage_actor_file(path, group, source):
         require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1, 'UNPAIRED_CODE')
         fd = os.open(path, flags)
     with os.fdopen(fd, 'r+b') as output:
-        fcntl.flock(fd, fcntl.LOCK_EX)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise Refused('BUSY') from None
         info = os.fstat(fd)
         require(stat.S_ISREG(info.st_mode) and info.st_uid == 0 and info.st_nlink == 1, 'UNPAIRED_CODE')
         if (info.st_gid, stat.S_IMODE(info.st_mode)) != (group, 0o640):

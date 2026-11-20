@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """PID1 pairing and maintenance-failure contracts; never change a clock."""
+import fcntl
 import os
 from pathlib import Path
 import stat
@@ -123,6 +124,18 @@ class ClockActorStagingTest(unittest.TestCase):
             modified = path.stat().st_ctime_ns
             setup.stage_actor_file(path, 65534, b'paired-actor')
             self.assertEqual(path.stat().st_ctime_ns, modified)
+
+    def test_busy_stage_preserves_the_partial_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'actor'
+            setup.stage_actor_file(path, 65534, b'prefix')
+            with path.open('rb') as reader:
+                fcntl.flock(reader, fcntl.LOCK_SH)
+                with self.assertRaisesRegex(broker.Refused, 'BUSY'):
+                    setup.stage_actor_file(path, 65534, b'prefix-complete')
+                self.assertEqual(path.read_bytes(), b'prefix')
+            setup.stage_actor_file(path, 65534, b'prefix-complete')
+            self.assertEqual(path.read_bytes(), b'prefix-complete')
 
     def test_different_prefix_and_linked_file_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
