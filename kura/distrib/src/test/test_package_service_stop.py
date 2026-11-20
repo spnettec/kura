@@ -19,6 +19,9 @@ class PackageServiceStop(unittest.TestCase):
                 (home / child).mkdir(parents=True, exist_ok=True)
             marker = home / "user/existing-state"
             marker.write_bytes(b"existing key-associated state")
+            provider = home.parent / "kura-filemove-state"
+            provider.mkdir()
+            (provider / "retained.receipt").write_bytes(b"retained provider state")
             unit = root / "lib/systemd/system/kura.service"
             unit.parent.mkdir(parents=True)
             unit.write_text("[Service]\nRestart=on-failure\n")
@@ -100,6 +103,11 @@ sleep() { return 0; }
                 result, events = self.run_script(name, key_status=42)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse(any(event.startswith(("systemctl:", "copy:", "wipe:", "raw-kill:")) for event in events))
+
+    def test_install_leaves_retained_provider_roots_to_their_own_package(self):
+        result, events = self.run_script("preinst", "install")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(event.startswith("wipe:") and "/opt/eclipse/" in event for event in events))
 
     def assert_stop_failure_preserves_files(self, **settings):
         for name, action in (("preinst", "upgrade"), ("preinst", "install"),

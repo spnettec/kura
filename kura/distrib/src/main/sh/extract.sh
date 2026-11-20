@@ -28,7 +28,8 @@ status=$(LC_ALL=C dpkg-query -W -f='${db:Status-Status}' kura-core 2>&1) || {
 case "$status" in
     installed) ;;
     not-installed|config-files)
-        for path in /opt/eclipse/kura* /opt/eclipse/esf* /opt/eclipse/data; do
+        # Only the historical Core link/tree names belong to this admission check.
+        for path in /opt/eclipse/kura /opt/eclipse/kura_* /opt/eclipse/esf* /opt/eclipse/data; do
             if [ -e "$path" ] || [ -L "$path" ]; then
                 fail 'Existing unmanaged Kura files require an explicit migration before installation.'
             fi

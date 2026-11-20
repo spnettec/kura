@@ -524,12 +524,10 @@ function preInstall {
         keyServicePackageAdmission --publish-upgrade-copy "$0" "${OLD_VERSION}" "${NEW_VERSION}" "${staging}" >> "${LOG}" 2>&1 || return 1
     fi
 
-    if [ "${ACTION}" = "upgrade" ]; then
-        if [ -d "${PRESERVE_DIR}" ]; then
-            keyServicePackageAdmission --detach-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" >> "${LOG}" 2>&1 || return 1
-        fi
-    else
-        rm -fr "${INSTALL_DIR}"/kura* >> "${LOG}" 2>&1 || return 1
+    # A fresh dpkg install may follow a purge that retained independent provider
+    # journals alongside Core. Leave those paths to their owning packages.
+    if [ "${ACTION}" = "upgrade" ] && [ -d "${PRESERVE_DIR}" ]; then
+        keyServicePackageAdmission --detach-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" >> "${LOG}" 2>&1 || return 1
     fi
     rm -fr /tmp/.kura/ >> "${LOG}" 2>&1
     rm -f /etc/init.d/firewall >> "${LOG}" 2>&1
