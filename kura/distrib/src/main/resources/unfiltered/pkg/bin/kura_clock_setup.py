@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import (ACTOR_HOME, CHRONY_POLICY, CHRONY_RULE, PREVIOUS_CHRONY_RULE, COHORT, CONFIG_SOCKET_UNIT, CONFIG_UNITS, HOME,
                                LEGACY_UNITS, PREVIOUS_UNITS, RTC_SOCKET_UNIT, STATE, STEP_SOCKET_UNIT, STEP_UNITS, UNITS,
                                Policy, effective_units, public_file, publish_path,
-                               remove_rtc_projection, unit_sources, unit_directory_present)
+                               retire_rtc_projection, unit_sources, unit_directory_present)
 from kura_clock_journal import (Journal, Refused, create, decode, digest, directory, encode,
                                 command, identifier, identity, pairs, read, require, sync, terminal_receipt,
                                 MAX_OPERATIONS)
@@ -441,9 +441,10 @@ def install():
     current = maintenance(record) if os.path.lexists(STATE) else None
     # Check every installed fragment and the rule before publishing replacement code.
     previous_paired = False
+    previous = None
     if current is not None and os.path.lexists(ACTOR_HOME):
         original_actor = Policy(actor=True)
-        original_actor.check(installed=False, allow_legacy=True)
+        previous = original_actor.check(installed=False, allow_legacy=True)
         previous_paired = original_actor.cohort == current['cohortSha256']
     chrony_policy('check', previous_paired)
     desired_units = {}
@@ -455,6 +456,7 @@ def install():
             require(old == desired or (current is not None and hashlib.sha256(old).hexdigest() == current['units'].get(name)),
                     'UNPAIRED_CODE')
         desired_units[path] = desired
+    retire_rtc_projection(previous, current)
     install_actor_code(policy, descriptor, record, current)
     for path, desired in desired_units.items():
         temporary = path.with_name(path.name + '.kura-clock-staged')
@@ -557,7 +559,6 @@ def remove():
     with journal.lock():
         retained_sender(record, journal, maintenance(record))
     chrony_policy('remove')
-    remove_rtc_projection()
     for name in UNITS:
         run('/usr/bin/systemctl', 'disable', name)
         (Path('/lib/systemd/system') / name).unlink()

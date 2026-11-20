@@ -109,6 +109,49 @@ class ClockUnitPairingTest(unittest.TestCase):
 
 
 class ClockMaintenancePairingTest(unittest.TestCase):
+    def test_legacy_device_retirement_requires_the_original_paired_unit_set(self):
+        unit = broker.RTC_UNIT
+        previous = {'files': {'libexec/clock-broker/' + unit: 'a' * 64}}
+        original = {'units': {unit: 'a' * 64}, 'cohortSha256': broker.digest(previous)}
+        current = dict(previous['files'])
+        current['libexec/clock-broker/' + broker.RTC_SOCKET_UNIT] = 'b' * 64
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / 'projection'
+            source.mkdir()
+            with mock.patch.object(broker, 'RTC_SOURCE', source), mock.patch.object(broker, 'rtc_catalog') as checked:
+                for old, flag in [(None, None), (None, original),
+                                  (previous, dict(original, cohortSha256='c' * 64)),
+                                  (previous, dict(original, units={unit: 'c' * 64})),
+                                  (previous, dict(original, units={unit: 'a' * 64, broker.RTC_SOCKET_UNIT: 'b' * 64})),
+                                  ({'files': current}, dict(original, cohortSha256=broker.digest({'files': current})))]:
+                    with self.subTest(old=old, flag=flag), self.assertRaisesRegex(broker.Refused, 'UNPAIRED_RTC_PROJECTION'):
+                        broker.retire_rtc_projection(old, flag)
+                checked.assert_not_called()
+                self.assertEqual([source], list(Path(temp).iterdir()))
+
+    def test_paired_retirement_preserves_the_projection_under_a_private_parent(self):
+        unit = broker.RTC_UNIT
+        previous = {'files': {'libexec/clock-broker/' + unit: 'a' * 64}}
+        original = {'units': {unit: 'a' * 64}, 'cohortSha256': broker.digest(previous)}
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / 'projection'
+            source.mkdir()
+            manifest = source / broker.RTC_MANIFEST
+            manifest.write_bytes(b'original')
+            inode = manifest.stat().st_ino
+            def move(src, dest, replace):
+                self.assertFalse(replace)
+                self.assertEqual(0o700, stat.S_IMODE(dest.parent.stat().st_mode))
+                os.rename(src, dest)
+            with mock.patch.object(broker, 'RTC_SOURCE', source), mock.patch.object(broker, 'unit_directory_present', return_value=True), \
+                    mock.patch.object(broker, 'rtc_catalog') as checked, mock.patch.object(broker, 'publish_path', side_effect=move):
+                broker.retire_rtc_projection(previous, original)
+                broker.retire_rtc_projection(None, None)
+                checked.assert_called_once_with(source)
+                archived, = Path(temp).glob('.kura-clock-rtc-retired-*/projection/devices.json')
+                self.assertEqual((inode, b'original'), (archived.stat().st_ino, archived.read_bytes()))
+                self.assertFalse(source.exists())
+
     def test_only_main_mask_is_an_inactive_install_state(self):
         response=SimpleNamespace(returncode=0,stdout='LoadState=masked\nActiveState=inactive\nMainPID=0\nControlPID=0\n')
         with mock.patch.object(setup.subprocess,'run',return_value=response), mock.patch.object(setup,'main_masked') as masks:

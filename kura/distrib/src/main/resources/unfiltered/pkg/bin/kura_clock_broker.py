@@ -19,12 +19,11 @@ import subprocess
 import sys
 import tempfile
 import time
-import uuid
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_journal import (Journal, Refused, command, create, decode, digest, directory, encode,
-                                chrony_configuration, identifier, identity, read, require, sync,
+from kura_clock_journal import (Journal, Refused, command, decode, digest, directory, encode,
+                                chrony_configuration, identifier, identity, read, require,
                                 CHRONY_ACTIONS, CHRONY_UNITS,
                                 MAX_BYTES, OPERATIONS, RTC_ALIASES, RTC_NODE)
 
@@ -950,15 +949,25 @@ def publish_path(staged, target, replace):
         raise OSError(error, os.strerror(error))
 
 
-def remove_rtc_projection():
-    if os.path.lexists(RTC_SOURCE):
-        require(unit_directory_present(RTC_SOURCE.parent), 'UNPAIRED_RTC_PROJECTION')
-        catalog = rtc_catalog(RTC_SOURCE)
-        retired = RTC_SOURCE.with_name('.kura-clock-rtc-retired-' + uuid.uuid4().hex)
-        publish_path(RTC_SOURCE, retired, False)
-        for name in (*catalog['nodes'], RTC_MANIFEST):
-            (retired / name).unlink()
-        retired.rmdir()
+def retire_rtc_projection(previous, maintenance):
+    if not os.path.lexists(RTC_SOURCE):
+        return
+    require(previous is not None and maintenance is not None
+            and digest(previous) == maintenance['cohortSha256']
+            and RTC_UNIT in maintenance['units'] and RTC_SOCKET_UNIT not in maintenance['units']
+            and previous['files'].get('libexec/clock-broker/' + RTC_UNIT) == maintenance['units'][RTC_UNIT]
+            and 'libexec/clock-broker/' + RTC_SOCKET_UNIT not in previous['files'],
+            'UNPAIRED_RTC_PROJECTION')
+    require(unit_directory_present(RTC_SOURCE.parent), 'UNPAIRED_RTC_PROJECTION')
+    rtc_catalog(RTC_SOURCE)
+    # Preserve the checked projection, including old device identities. After
+    # this single rename only Root can walk to it, even if dpkg is interrupted.
+    archive = Path(tempfile.mkdtemp(prefix='.kura-clock-rtc-retired-', dir=RTC_SOURCE.parent))
+    try:
+        publish_path(RTC_SOURCE, archive / 'projection', False)
+    except OSError:
+        archive.rmdir()
+        raise
 
 
 def exact(stream, count):
