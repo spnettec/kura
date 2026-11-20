@@ -12,23 +12,18 @@ package org.eclipse.kura.core.keystore;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.security.AuthProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import javax.security.auth.login.LoginException;
 
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.keystore.crl.CRLManagerOptions;
+import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.system.SystemService;
 import org.junit.jupiter.api.Test;
 import org.osgi.service.event.EventAdmin;
@@ -65,46 +60,75 @@ class PKCS11KeystoreServiceImplTest {
     }
 
     @Test
-    void retiresTheOldTokenLoginOnlyWhenAuthenticationChanges() throws Exception {
-        RecordingService service = new RecordingService();
-        service.setEventAdmin(mock(EventAdmin.class));
-        service.activate(null, properties("original", "/user-config/old.crl"));
-        AuthProvider original = mock(AuthProvider.class);
-        when(original.getName()).thenReturn("original-test-provider");
-        service.provider = Optional.of(original);
+    void blocksARejectedPinUntilAuthenticationChanges() throws Exception {
+        RecordingService service = mockProvider(PKCS11PinCheck.Result.REJECTED);
 
+        assertCode(KuraErrorCode.SECURITY_EXCEPTION, service);
         service.updated(properties("original", "/user-config/new.crl"));
-        verify(original, never()).logout();
+        assertCode(KuraErrorCode.SECURITY_EXCEPTION, service);
+        assertEquals(1, service.pinChecks);
 
-        service.provider = Optional.of(original);
         service.updated(properties("replacement", "/user-config/new.crl"));
-        verify(original).logout();
+        assertCode(KuraErrorCode.SECURITY_EXCEPTION, service);
+        assertEquals(2, service.pinChecks);
     }
 
     @Test
-    void blocksReadsAfterFailedLogoutWithoutRetryingItOnEveryRead() throws Exception {
-        RecordingService service = new RecordingService();
-        service.setEventAdmin(mock(EventAdmin.class));
-        service.activate(null, properties("original", "/user-config/test.crl"));
-        AuthProvider original = mock(AuthProvider.class);
-        when(original.getName()).thenReturn("original-test-provider");
-        doThrow(new LoginException()).when(original).logout();
-        service.provider = Optional.of(original);
+    void blocksAnInterruptedPinCheckWithoutSendingAnotherOne() throws Exception {
+        RecordingService service = mockProvider(PKCS11PinCheck.Result.UNCERTAIN);
 
-        service.updated(properties("replacement", "/user-config/test.crl"));
-        assertEquals(KuraErrorCode.SECURITY_EXCEPTION, assertThrows(KuraException.class, service::getKeyStore).getCode());
-        assertEquals(KuraErrorCode.SECURITY_EXCEPTION, assertThrows(KuraException.class, service::getKeyStore).getCode());
-        verify(original).logout();
+        assertCode(KuraErrorCode.SECURITY_EXCEPTION, service);
+        assertCode(KuraErrorCode.SECURITY_EXCEPTION, service);
+        assertEquals(1, service.pinChecks);
+    }
+
+    @Test
+    void canTryAgainAfterAnUnavailableVerifierBeforeLogin() throws Exception {
+        RecordingService service = mockProvider(PKCS11PinCheck.Result.UNAVAILABLE);
+
+        assertCode(KuraErrorCode.SERVICE_UNAVAILABLE, service);
+        assertCode(KuraErrorCode.SERVICE_UNAVAILABLE, service);
+        assertEquals(2, service.pinChecks);
+    }
+
+    @Test
+    void classifiesFailureBeforeAnyLoginInTheActualWorker() {
+        assertEquals(PKCS11PinCheck.Result.UNAVAILABLE,
+                PKCS11PinCheck.verify("name = TestWorker\nlibrary = /nonexistent/pkcs11-module.so\n",
+                        new char[] {'1', '2', '3', '4'}));
+    }
+
+    private static void assertCode(KuraErrorCode code, RecordingService service) {
+        assertEquals(code, assertThrows(KuraException.class, service::getKeyStore).getCode());
+    }
+
+    private static RecordingService mockProvider(PKCS11PinCheck.Result outcome) throws KuraException {
+        RecordingService service = new RecordingService();
+        CryptoService crypto = mock(CryptoService.class);
+        when(crypto.decryptAes(any(char[].class))).thenAnswer(invocation -> invocation.getArgument(0));
+        service.setCryptoService(crypto);
+        service.setEventAdmin(mock(EventAdmin.class));
+        service.pinCheckResult = outcome;
+        service.activate(null, properties("original", "/user-config/test.crl"));
+        return service;
     }
 
     private static Map<String, Object> properties(String pin, String crlPath) {
-        return Map.of("kura.service.pid", "TestToken", "slot", 1, "pin", pin,
+        return Map.of("kura.service.pid", "TestToken", "slot", 1, "pin", pin, "library.path", "/test/pkcs11.so",
                 "crl.management.enabled", true, "crl.store.path", crlPath);
     }
 
     private static class RecordingService extends PKCS11KeystoreServiceImpl {
 
         private final List<String> crlPaths = new ArrayList<>();
+        private int pinChecks;
+        private PKCS11PinCheck.Result pinCheckResult;
+
+        @Override
+        PKCS11PinCheck.Result checkPin(String config, char[] pin) {
+            this.pinChecks++;
+            return this.pinCheckResult;
+        }
 
         @Override
         protected void updateCRLManager(CRLManagerOptions options) {
