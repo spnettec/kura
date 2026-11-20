@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import sys
 import unittest
@@ -182,6 +183,24 @@ class UpgradeCopyTest(unittest.TestCase):
                 self.assertEqual(old_ino, self.original.lstat().st_ino)
                 self.controller(predecessor='6.0.0-2').arrange_source(restore=False)
                 self.assertEqual(backup_inode, backup.lstat().st_ino)
+                backup.unlink()
+                os.link(incoming, backup)
+                third = self.copy.destination / 'outside-payload'
+                os.link(incoming, third)
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Unsafe entry'):
+                    resumed.arrange_source(restore=True)
+                self.assertEqual(3, incoming.lstat().st_nlink)
+                third.unlink()
+                backup.rename(third)
+                self.fixture.write(backup, incoming.read_bytes())
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'Unexpected dpkg rollback hardlink'):
+                    resumed.arrange_source(restore=True)
+                backup.unlink()
+                third.rename(backup)
+                resumed.arrange_source(restore=True)
+                resumed.arrange_source(restore=False)
+                self.assertEqual(incoming_inode, backup.lstat().st_ino)
+                self.assertEqual(2, backup.lstat().st_nlink)
             self.assertEqual(incoming_inode, incoming.lstat().st_ino)
             self.assertEqual(original_record, (self.copy.destination / '.capture.json').read_bytes())
             self.assertEqual(self.fence, self.policy.fence())

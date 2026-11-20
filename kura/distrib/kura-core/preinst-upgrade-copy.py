@@ -208,7 +208,7 @@ class UpgradeCopy:
             if stat.S_ISDIR(info.st_mode):
                 require(name in self.payload_directories, 'Unexpected directory in interrupted dpkg payload')
                 continue
-            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'Unsafe entry in interrupted dpkg payload')
+            require(stat.S_ISREG(info.st_mode), 'Unsafe entry in interrupted dpkg payload')
             writing = name.endswith('.dpkg-new')
             # A second unpack can leave dpkg's backup of the already returned
             # incoming file. Require the existing relocation record and verify
@@ -217,6 +217,15 @@ class UpgradeCopy:
             if relocated and not writing:
                 base = base.removesuffix('.dpkg-tmp')
             require(base in self.payload_files, 'Unexpected file in interrupted dpkg payload')
+            linked_backup = None
+            if info.st_nlink != 1:
+                require(relocated and not writing and info.st_nlink == 2,
+                        'Unsafe entry in interrupted dpkg payload')
+                # Between linkat and rename, the canonical file and dpkg's
+                # rollback backup are the only two names for the old inode.
+                peer = base + '.dpkg-tmp' if name == base else base
+                linked_backup = path / peer
+                require(stamp(linked_backup.lstat()) == stamp(info), 'Unexpected dpkg rollback hardlink')
             maximum, expected = self.payload_files[base]
             require(info.st_size <= maximum, 'Interrupted dpkg file exceeds its incoming size')
             if not writing:
@@ -226,6 +235,8 @@ class UpgradeCopy:
                     actual = hashlib.file_digest(stream, 'sha256').hexdigest()
                     require(actual == expected and stamp(os.fstat(stream.fileno())) == stamp(info) == stamp(entry.lstat()),
                             'Published dpkg file differs from the incoming payload')
+                    if linked_backup is not None:
+                        require(stamp(linked_backup.lstat()) == stamp(info), 'Dpkg rollback hardlink changed')
             found_file = True
         require(found_file, 'Interrupted dpkg payload has no incoming file evidence')
 
