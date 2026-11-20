@@ -237,7 +237,8 @@ def serve_icmp(stream, unit):
         args = main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request)
         family, address = args
         protected(ICMP_BINARY)
-        result = subprocess.run([str(ICMP_BINARY), family, '-c', '5', '-W', '1', '--', address],
+        # Keep hostname resolution for the destination and skip reverse lookups when rendering replies.
+        result = subprocess.run([str(ICMP_BINARY), family, '-n', '-c', '5', '-W', '1', '--', address],
                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 env=ENVIRONMENT, timeout=12)
         require(main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request) == args, 'UNAUTHORIZED')

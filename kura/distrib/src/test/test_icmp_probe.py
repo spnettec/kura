@@ -52,7 +52,7 @@ class IcmpProbeTest(unittest.TestCase):
                     main.assert_called_with(identity, 'main-unit-hash', executor.ICMP_CLIENT,
                                             2, executor.icmp_request)
                     protected.assert_called_with(executor.ICMP_BINARY)
-                    run.assert_called_with(['/usr/bin/ping', '-6', '-c', '5', '-W', '1', '--', '::1'],
+                    run.assert_called_with(['/usr/bin/ping', '-6', '-n', '-c', '5', '-W', '1', '--', '::1'],
                                            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                            stderr=subprocess.DEVNULL, env=executor.ENVIRONMENT, timeout=12)
                     stream.sendall.assert_called_with(wire)
