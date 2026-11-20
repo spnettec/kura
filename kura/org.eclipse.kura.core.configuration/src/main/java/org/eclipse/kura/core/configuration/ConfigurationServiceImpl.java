@@ -1210,13 +1210,17 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         requireOrdinaryWrite(); // don't call this method internally
         this.externalConfigurations.validate(configsToUpdate, ChangeSource.CONFIGURATION_UPDATE);
         withProviderValidation(configsToUpdate, 0, () -> {
+            List<ComponentConfiguration> encryptedUpdates = new ArrayList<>(configsToUpdate.size());
             for (ComponentConfiguration config : configsToUpdate) {
-                if (config != null) {
-                    ComponentUtil.encryptConfigurationProperties(config.getConfigurationProperties(), this.cryptoService);
+                if (config == null || config.getConfigurationProperties() == null) {
+                    encryptedUpdates.add(config);
+                    continue;
                 }
+                Map<String, Object> properties = new HashMap<>(config.getConfigurationProperties());
+                ComponentUtil.encryptConfigurationProperties(properties, this.cryptoService);
+                encryptedUpdates.add(new ConfigurationUpdate(config, properties));
             }
-            // only encrypted properties are passed to internal methods
-            updateConfigurationsInternal(configsToUpdate, takeSnapshot);
+            updateConfigurationsInternal(encryptedUpdates, takeSnapshot);
             // An explicit legacy update may supersede a submitted conditional update.
             for (ComponentConfiguration config : configsToUpdate) {
                 if (config != null) {
@@ -1224,6 +1228,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 }
             }
         });
+    }
+
+    private record ConfigurationUpdate(ComponentConfiguration source, Map<String, Object> properties)
+            implements ComponentConfiguration {
+        @Override
+        public String getPid() {
+            return source.getPid();
+        }
+
+        @Override
+        public OCD getDefinition() {
+            return source.getDefinition();
+        }
+
+        @Override
+        public OCD getLocalizedDefinition(String locale) {
+            return source.getLocalizedDefinition(locale);
+        }
+
+        @Override
+        public Map<String, Object> getConfigurationProperties() {
+            return properties;
+        }
     }
 
     private void withProviderValidation(List<ComponentConfiguration> configurations, int index,

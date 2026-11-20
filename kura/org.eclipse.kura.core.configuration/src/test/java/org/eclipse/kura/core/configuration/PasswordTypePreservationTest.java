@@ -101,6 +101,24 @@ public class PasswordTypePreservationTest {
         assertTrue(this.configurationService.readRevision(PID).revision().matches("[0-9a-f]{64}"));
     }
 
+    @Test
+    public void immutablePasswordUpdateReachesConfigurationAdmin(
+            @org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Throwable {
+        givenConfigurationService(snapshotFixture(new java.util.concurrent.atomic.AtomicReference<>()));
+        givenFactoryConfigurationWithPassword();
+        givenRegisteredMetatype(PASSWORD_PROPERTY, Tscalar.PASSWORD);
+        configureSnapshotDirectory(directory);
+
+        Password value = new Password(NEW_SECRET);
+        Map<String, Object> update = Map.of(PASSWORD_PROPERTY, value);
+        this.configurationService.updateConfiguration(PID, update, true);
+
+        whenConfigurationIsReadBack();
+        thenReadBackPropertyIsAPassword(NEW_SECRET);
+        assertEquals(NEW_SECRET, update.get(PASSWORD_PROPERTY).toString());
+        assertEquals(1, this.configurationService.getSnapshots().size());
+    }
+
     private ConfigurationServiceImpl snapshotFixture(
             java.util.concurrent.atomic.AtomicReference<XmlComponentConfigurations> captured) {
         return new ConfigurationServiceImpl() {
