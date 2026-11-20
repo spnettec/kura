@@ -3315,6 +3315,10 @@
     </build>
     <profiles>
         <profile>
+            <id>sqlcipher-dp</id>
+            <modules><module>kura-sqlite-dp</module></modules>
+        </profile>
+        <profile>
             <id>netplan-package</id>
             <modules><module>kura-netplan-core</module></modules>
         </profile>

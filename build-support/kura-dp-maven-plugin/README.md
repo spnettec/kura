@@ -5,7 +5,7 @@ Kura siblings and YOFC. It has no Tycho, PDE, target-platform or Eclipse depende
 
 * `build`: attach the current project's packaged bundle as a `.dp`.
 * `package`: attach the explicitly declared compile/runtime dependency bundles.
-  Private and transitive dependencies are not installed as separate bundles.
+  Locally assembled bundles may be listed in `additionalBundles`. Private and transitive dependencies are not installed as separate bundles.
 
 Both goals bind to `package`, attach type `dp`, and preserve the existing filename
 `${artifactId}_${version}.dp` and entries `${Bundle-SymbolicName}_${Bundle-Version}.jar`.
