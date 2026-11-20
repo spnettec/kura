@@ -584,6 +584,7 @@ function postInstall {
 # A failed remove or upgrade has not completed the installation workflow.
 # In particular, do not overwrite a recovery copy after prerm aborts.
 if [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-remove" ]; then
+    packageConfigure check-abort || exit 1
     echo "postinst called with $1: preserving the existing installation."
     exit 0
 fi

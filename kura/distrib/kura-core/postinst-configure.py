@@ -3,6 +3,7 @@
 import ctypes
 import hashlib
 import hmac
+import json
 import os
 from pathlib import Path
 import re
@@ -321,13 +322,44 @@ class Configure:
             return 'READY', mode
 
 
+def check_aborted_change(marker, phases):
+    # An abort callback can also run while the old release is only half configured.
+    # An active fence with its own configure directory has not finished teardown.
+    # This check must still work after preinst has detached the old payload.
+    try:
+        fd = os.open(marker, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    except FileNotFoundError:
+        return
+    with os.fdopen(fd, 'rb') as stream:
+        meta = os.fstat(fd)
+        if (not stat.S_ISREG(meta.st_mode) or meta.st_uid != 0 or meta.st_nlink != 1
+                or stat.S_IMODE(meta.st_mode) != 0o600 or not 0 < meta.st_size <= 4096):
+            raise ValueError('Invalid Core maintenance fence during package abort')
+        raw = stream.read(4097)
+        if len(raw) != meta.st_size:
+            raise ValueError('Incomplete Core maintenance fence during package abort')
+    fence = json.loads(raw)
+    original = fence['id']
+    if (fence.get('state') != 'MAINTENANCE' or not isinstance(original, str)
+            or not re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', original)):
+        raise ValueError('Unknown Core maintenance fence during package abort')
+    try:
+        (phases / original).lstat()
+    except FileNotFoundError:
+        return
+    raise ValueError('Original Core configure is still fenced; keep the package unconfigured')
+
+
 def main():
-    actions = {'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy'} | {
+    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy'} | {
         f'setup-{step}' for step in INSTALLER_STEPS
     }
     if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in actions:
         raise ValueError('Invalid Core configure action')
     action = sys.argv[1]
+    if action == 'check-abort':
+        check_aborted_change(Path('/var/lib/kura-key-service/maintenance.json'), Path('/var/lib/kura-package-configure'))
+        return
     physical = Path('/opt/eclipse') / CORE_CONFIGURE_HOME
     lifecycle = load_lifecycle(physical, CORE_CONFIGURE_LIFECYCLE_SHA)
     policy = lifecycle.Lifecycle()

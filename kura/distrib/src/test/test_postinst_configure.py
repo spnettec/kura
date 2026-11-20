@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -38,6 +39,24 @@ class ConfigureTest(unittest.TestCase):
         for name in configure.INSTALLER_STEPS:
             self.configure.run_step(name, lambda: None)
             self.configure.apply('resume')
+
+    @unittest.skipUnless(os.geteuid() == 0, 'checks a root-owned package fence')
+    def test_abort_preserves_an_incomplete_original_configure(self):
+        marker = self.policy.state / 'maintenance.json'
+        configure.check_aborted_change(marker, self.configure.state)
+        self.configure.apply('begin')
+        self.install_steps()
+        self.configure.apply('prepared')
+        before = marker.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'still fenced'):
+            configure.check_aborted_change(marker, self.configure.state)
+        self.assertEqual(before, marker.read_bytes())
+        self.assertFalse((self.stage / 'ready.json').exists())
+        self.configure.apply('ready')
+        with self.assertRaisesRegex(ValueError, 'still fenced'):
+            configure.check_aborted_change(marker, self.configure.state)
+        self.policy.leave()
+        configure.check_aborted_change(marker, self.configure.state)
 
     def test_prepared_resumes_configuration_and_original_history_after_leave(self):
         self.assertEqual(('NEW', 'install'), self.configure.apply('status'))
