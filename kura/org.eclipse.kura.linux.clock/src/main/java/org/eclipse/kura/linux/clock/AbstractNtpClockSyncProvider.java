@@ -40,6 +40,7 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
     protected int syncCount;
 
     private ScheduledFuture<?> future;
+    private long scheduleGeneration;
 
     @Override
     public void init(ClockServiceConfig clockServiceConfig, ScheduledExecutorService scheduler,
@@ -55,20 +56,18 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
     }
 
     @Override
-    public void start() throws KuraException {
+    public synchronized void start() throws KuraException {
+        stop();
         this.isSynced = false;
         this.numRetry = 0;
         if (this.refreshInterval < 0) {
             // Never do any update. So Nothing to do.
             logger.info("No clock update required");
-            stop();
         } else if (this.refreshInterval == 0) {
             // Perform one clock update - but in a thread.
             logger.info("Perform clock update just once");
-            stop();
 
-            // call recursive retry method for setting the clock
-            scheduleOnce();
+            scheduleOnce(this.scheduleGeneration);
         } else {
             final int retryInt;
             if (this.retryInterval <= 0) {
@@ -78,7 +77,6 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
             }
             // Perform periodic clock updates.
             logger.info("Perform periodic clock updates every {} sec", this.refreshInterval);
-            stop();
 
             this.future = this.scheduler.scheduleAtFixedRate(() -> {
                 Thread.currentThread().setName("AbstractNtpClockSyncProvider:schedule");
@@ -119,22 +117,29 @@ public abstract class AbstractNtpClockSyncProvider implements ClockSyncProvider 
         }
     }
 
-    private void scheduleOnce() {
+    private synchronized void scheduleOnce(long generation) {
+        // A stopped attempt can still finish after another start on the same provider.
+        if (generation != this.scheduleGeneration) {
+            return;
+        }
+
         this.future = this.scheduler.schedule(() -> {
             Thread.currentThread().setName("AbstractNtpClockSyncProvider:scheduleOnce");
             try {
                 syncClock();
             } catch (KuraException e) {
-                logger.error("Error Synchronizing Clock - retrying", e);
-                scheduleOnce();
+                logger.error("Error synchronizing clock", e);
+                scheduleOnce(generation);
             }
         }, 1, TimeUnit.SECONDS);
     }
 
     @Override
-    public void stop() throws KuraException {
+    public synchronized void stop() throws KuraException {
+        this.scheduleGeneration++;
         if (this.future != null) {
             this.future.cancel(true);
+            this.future = null;
         }
     }
 

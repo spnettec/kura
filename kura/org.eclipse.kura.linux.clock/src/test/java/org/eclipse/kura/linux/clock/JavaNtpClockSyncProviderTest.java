@@ -18,10 +18,15 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.KuraErrorCode;
@@ -51,6 +56,75 @@ class JavaNtpClockSyncProviderTest {
         provider.init(new ClockServiceConfig(properties), this.scheduler, null);
         provider.start();
         assertNotNull(this.tick.get());
+    }
+
+    private List<Runnable> startSingleSync(JavaNtpClockSyncProvider provider) throws KuraException {
+        List<Runnable> submissions = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> {
+            submissions.add(invocation.getArgument(0));
+            return this.future;
+        }).when(this.scheduler).schedule(any(Runnable.class), eq(1L), eq(TimeUnit.SECONDS));
+        provider.init(new ClockServiceConfig(Map.of("clock.ntp.refresh-interval", 0)), this.scheduler, null);
+        provider.start();
+        return submissions;
+    }
+
+    @Test
+    void lateSingleSyncFailureCannotRestartAStoppedProvider() throws Exception {
+        assertNoLateRetry(false);
+    }
+
+    @Test
+    void lateSingleSyncFailureCannotJoinANewStart() throws Exception {
+        assertNoLateRetry(true);
+    }
+
+    private void assertNoLateRetry(boolean restart) throws Exception {
+        var started = new CompletableFuture<Void>();
+        var release = new CompletableFuture<Void>();
+        JavaNtpClockSyncProvider provider = new JavaNtpClockSyncProvider() {
+            @Override
+            protected boolean syncClock() throws KuraException {
+                started.complete(null);
+                release.join();
+                throw new KuraException(KuraErrorCode.CONNECTION_FAILED);
+            }
+        };
+        List<Runnable> submissions = startSingleSync(provider);
+        try (var worker = Executors.newVirtualThreadPerTaskExecutor()) {
+            var running = worker.submit(submissions.getFirst());
+            try {
+                started.get(5, TimeUnit.SECONDS);
+                provider.stop();
+                if (restart) {
+                    provider.start();
+                }
+            } finally {
+                release.complete(null);
+            }
+            running.get(5, TimeUnit.SECONDS);
+            assertEquals(restart ? 2 : 1, submissions.size());
+        }
+    }
+
+    @Test
+    void currentSingleSyncRetriesAnExceptionAndFinishesOnSuccess() throws KuraException {
+        var attempts = new AtomicInteger();
+        JavaNtpClockSyncProvider provider = new JavaNtpClockSyncProvider() {
+            @Override
+            protected boolean syncClock() throws KuraException {
+                if (attempts.incrementAndGet() == 1) {
+                    throw new KuraException(KuraErrorCode.CONNECTION_FAILED);
+                }
+                return true;
+            }
+        };
+        List<Runnable> submissions = startSingleSync(provider);
+        submissions.getFirst().run();
+        assertEquals(2, submissions.size());
+        submissions.get(1).run();
+        assertEquals(2, attempts.get());
+        assertEquals(2, submissions.size());
     }
 
     @Test
