@@ -86,12 +86,14 @@ def request(action, operation):
         return dict(**fields, action=action)
     if action.startswith(('outcome:', 'acknowledge:')):
         return dict(**fields, **outcomes.request_fields(action))
-    verb, _, params = action.partition(':')
+    paired = action.startswith('paired-outcome:')
+    verb, _, params = action.removeprefix('paired-outcome:').partition(':')
     scope, _, target = params.partition(':')
     device, _, device_id = target.partition(':')
     require((verb == 'reset' or verb in GPS_MODES) and outcomes.PROOF.fullmatch(scope) and NM_PATH.fullmatch(device)
             and re.fullmatch(r'[a-zA-Z0-9_.:@-]{1,96}', device_id), 'INVALID_MODEM_RESET_REQUEST')
-    return dict(**fields, action=verb, rootScope=scope, device=device, deviceId=device_id)
+    mutation = dict(**fields, action=verb, rootScope=scope, device=device, deviceId=device_id)
+    return dict(**fields, action='paired-outcome', request=mutation) if paired else mutation
 
 
 def provision():
@@ -271,6 +273,10 @@ def operate(expected, authorize):
     if expected['action'] in ('ready', 'ready-gps'):
         require_ready(root)
         return 'APPLIED', outcomes.binding(STATE, root)
+    if expected['action'] == 'paired-outcome':
+        original = expected['request']
+        return outcomes.query(STATE, root, dict(action='outcome', proof=original['rootScope'],
+                              operationId=expected['operationId']), original_request=original)
     if expected['action'] in outcomes.READ_ONLY:
         return outcomes.query(STATE, root, expected)
     fd = os.open(STATE / 'lock', os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_RDWR, 0o600)

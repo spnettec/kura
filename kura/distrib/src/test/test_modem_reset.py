@@ -68,6 +68,18 @@ class ModemResetOutcomeTest(unittest.TestCase):
         self.assertEqual(self.reset(), ('APPLIED', proof))
         self.bus.call_blocking.assert_called_once()
 
+    def test_restored_sender_must_match_the_entire_original_request(self):
+        status, proof = self.reset()
+        self.assertEqual(status, 'APPLIED')
+        original = f'paired-outcome:reset:{self.scope}:{DEVICE}:{DEVICE_ID}'
+        self.assertEqual(self.operate(original), ('APPLIED', proof))
+        for changed in (original.replace('reset:', 'gps-disabled:'),
+                        original.replace(DEVICE + ':', DEVICE + '1:'), original + '-other'):
+            with self.subTest(changed=changed), self.assertRaisesRegex(Refused, 'UNPAIRED_OUTCOME_REQUEST'):
+                self.operate(changed)
+        self.assertFalse((self.state / (self.operation + '.delivered')).exists())
+        self.bus.call_blocking.assert_called_once()
+
     def test_lost_dbus_reply_leaves_an_intent_and_never_dispatches_again(self):
         self.bus.call_blocking.side_effect = OSError('lost reply')
         with self.assertRaises(OSError):

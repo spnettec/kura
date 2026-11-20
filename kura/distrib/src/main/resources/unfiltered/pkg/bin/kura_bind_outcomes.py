@@ -156,7 +156,7 @@ def delivered_at(state, operation, intent, result, *, acknowledge=False):
     return False
 
 
-def query(state, root, expected):
+def query(state, root, expected, *, original_request=None):
     scope = binding(state, root)
     if expected['action'] == 'scope':
         return ('APPLIED', scope)
@@ -167,6 +167,8 @@ def query(state, root, expected):
         intent = intent_at(state, root, operation)
         if intent is None:
             return ('NOT_FOUND', None)
+        if original_request is not None:
+            require(intent['request'] == original_request, 'UNPAIRED_OUTCOME_REQUEST')
         result = result_at(state, operation, intent)
     except UnreadableRecord:
         return ('UNKNOWN', None)
