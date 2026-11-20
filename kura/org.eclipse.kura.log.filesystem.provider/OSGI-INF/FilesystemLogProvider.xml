@@ -26,5 +26,6 @@
     <property name="service.pid" type="String" value="org.eclipse.kura.log.filesystem.provider.FilesystemLogProvider"/>
     <service>
         <provide interface="org.eclipse.kura.log.LogProvider"/>
+        <provide interface="org.eclipse.kura.configuration.ConfigurableComponent"/>
     </service>
 </scr:component>
