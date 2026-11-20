@@ -50,6 +50,8 @@ class SystemServicesRuntimeIT {
             }
         }
         runtime.resolve(bundles);
+        assertEquals("com.google.gson", runtime.packageProvider(PROVIDER, "com.google.gson"));
+        assertEquals("com.google.gson", runtime.packageProvider(PROVIDER, "com.google.gson.stream"));
         Class<?> api = runtime.bundle(API).loadClass(SYSTEM);
         Properties original = System.getProperties();
         Properties isolated = new Properties();
