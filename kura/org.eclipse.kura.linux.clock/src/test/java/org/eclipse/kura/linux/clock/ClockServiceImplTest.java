@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.core.testutil.TestUtil;
@@ -228,6 +230,11 @@ public class ClockServiceImplTest {
         ClockPrivilegeClient client = mock(ClockPrivilegeClient.class);
         when(client.adjustRealtime(anyLong())).thenReturn(false, true, false);
         EventAdmin events = mock(EventAdmin.class);
+        AtomicReference<Date> timeVisibleAtNotification = new AtomicReference<>();
+        doAnswer(invocation -> {
+            timeVisibleAtNotification.set(service.getLastSync());
+            return null;
+        }).when(events).postEvent(isA(ClockEvent.class));
         service.setEventAdmin(events);
         TestUtil.setFieldValue(service, "clockPrivilegeClient", client);
         InetAddress loopback = InetAddress.getLoopbackAddress();
@@ -256,6 +263,7 @@ public class ClockServiceImplTest {
                 if (i == 1) {
                     confirmed = service.getLastSync();
                     assertNotNull(confirmed);
+                    assertEquals(confirmed, timeVisibleAtNotification.get());
                 } else {
                     assertEquals(confirmed, service.getLastSync());
                 }

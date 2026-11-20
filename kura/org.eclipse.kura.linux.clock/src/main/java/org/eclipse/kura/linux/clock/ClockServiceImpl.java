@@ -193,12 +193,12 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
 
             @Override
             public void onClockUpdate(long offset, boolean changeSystemClock) {
-                onProviderUpdate(source, offset, changeSystemClock);
+                onProviderUpdate(source, offset, changeSystemClock, null);
             }
 
             @Override
-            public boolean applyNtpSample(long offset) {
-                return onProviderUpdate(source, offset, true);
+            public void applyNtpSample(long offset, Runnable recordSynchronization) {
+                onProviderUpdate(source, offset, true, recordSynchronization);
             }
         });
         setCallbackSource(source);
@@ -214,8 +214,11 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         this.callbackSource = source;
     }
 
-    private synchronized boolean onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock) {
-        return source == this.callbackSource && applyClockUpdate(offset, changeSystemClock);
+    private synchronized void onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock,
+            Runnable recordSynchronization) {
+        if (source == this.callbackSource) {
+            applyClockUpdate(offset, changeSystemClock, recordSynchronization);
+        }
     }
 
     private void stopClockSyncProvider() throws KuraException {
@@ -231,10 +234,10 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
      */
     @Override
     public void onClockUpdate(long offset, boolean changeSystemClock) {
-        applyClockUpdate(offset, changeSystemClock);
+        applyClockUpdate(offset, changeSystemClock, null);
     }
 
-    private boolean applyClockUpdate(long offset, boolean changeSystemClock) {
+    private void applyClockUpdate(long offset, boolean changeSystemClock, Runnable recordSynchronization) {
 
         logger.info("Clock update. Offset: {}", offset);
 
@@ -275,9 +278,11 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
 
         // Raise the event
         if (bClockUpToDate) {
+            if (recordSynchronization != null) {
+                recordSynchronization.run();
+            }
             this.eventAdmin.postEvent(EMPTY_EVENT);
         }
-        return bClockUpToDate;
     }
 
 }

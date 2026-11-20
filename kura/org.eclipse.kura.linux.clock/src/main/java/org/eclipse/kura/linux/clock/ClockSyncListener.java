@@ -16,9 +16,9 @@ public interface ClockSyncListener {
 
     void onClockUpdate(long offset, boolean changeSystemClock);
 
-    /** Whether the system clock was confirmed after this Java NTP sample. */
-    default boolean applyNtpSample(long offset) {
+    /** Publish the sample time when the system clock is confirmed. */
+    default void applyNtpSample(long offset, Runnable recordSynchronization) {
         onClockUpdate(offset, true);
-        return true;
+        recordSynchronization.run();
     }
 }

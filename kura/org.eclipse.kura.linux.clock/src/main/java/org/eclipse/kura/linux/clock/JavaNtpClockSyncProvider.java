@@ -52,9 +52,7 @@ public class JavaNtpClockSyncProvider extends AbstractNtpClockSyncProvider {
                     .collect(Collectors.toList());
             Long delayValue = info.getDelay();
             if (delayValue != null && delayValue.longValue() < 1000 && computeErrors.isEmpty()) {
-                if (this.listener.applyNtpSample(info.getOffset())) {
-                    this.lastSync = new Date();
-                }
+                this.listener.applyNtpSample(info.getOffset(), () -> this.lastSync = new Date());
                 // A valid reply completes sampling even when the broker cannot confirm the adjustment.
                 ret = true;
             } else {
