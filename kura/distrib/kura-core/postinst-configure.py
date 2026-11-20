@@ -9,6 +9,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import types
 
 
@@ -178,12 +179,17 @@ class Configure:
                 recovery = self.source()
                 if action == 'begin':
                     policy.directory(self.state, private=True, create=True)
-                    policy.directory(directory, private=True, create=True)
-                    policy.sync(self.state)
                     policy.sync(self.state.parent)
                     secret = policy.read(policy.state / 'journal.key', limit=32)
                     require(len(secret) == 32)
-                    policy.create(directory / 'intent.json', self.body(original, 'intent', recovery, secret))
+                    # Publish the original fence directory only after its intent
+                    # is durable. An interruption during staging cannot look
+                    # like an incomplete intent for the original fence.
+                    with tempfile.TemporaryDirectory(prefix=f'.{original}-', dir=self.state) as pending:
+                        pending = Path(pending)
+                        policy.create(pending / 'intent.json', self.body(original, 'intent', recovery, secret))
+                        os.rename(pending, directory)
+                        policy.sync(self.state)
                 return 'NEW', recovery['mode']
             recovery, secret = self.read_intent(directory, original)
             mode = recovery['mode']

@@ -53,6 +53,36 @@ class ConfigureTest(unittest.TestCase):
         self.assertEqual([self.fence['id'] + '.json'], [p.name for p in (self.policy.state/'package-history').iterdir()])
         self.assertFalse((self.policy.state/'maintenance.json').exists())
 
+    def test_interrupted_intent_staging_keeps_the_original_fence_available(self):
+        def interrupt(pending, published):
+            self.assertEqual(published, self.stage)
+            self.assertFalse(published.exists())
+            self.assertTrue((pending / 'intent.json').is_file())
+            raise InterruptedError('before configure intent publication')
+
+        with patch.object(configure.os, 'rename', side_effect=interrupt), self.assertRaises(InterruptedError):
+            self.configure.apply('begin')
+        self.assertFalse(self.stage.exists())
+        self.assertEqual(self.fence, self.policy.fence())
+        abandoned = self.stage.with_name(f'.{self.stage.name}-unfinished')
+        abandoned.mkdir(mode=0o700)
+        self.fixture.write(abandoned / 'intent.json', b'incomplete')
+
+        self.assertEqual(('NEW', 'install'), self.controller().apply('status'))
+        self.assertEqual(('NEW', 'install'), self.controller().apply('begin'))
+        self.assertEqual(('INSTALLER', 'install'), self.controller().apply('status'))
+        self.assertEqual(self.fence, self.policy.fence())
+        self.assertEqual(list(self.stage.iterdir()), [self.stage / 'intent.json'])
+        self.assertEqual((abandoned / 'intent.json').read_bytes(), b'incomplete')
+
+    def test_existing_original_directory_without_intent_is_still_refused(self):
+        self.configure.state.mkdir(mode=0o700)
+        self.stage.mkdir(mode=0o700)
+        with self.assertRaises(FileNotFoundError):
+            self.controller().apply('begin')
+        self.assertEqual(list(self.stage.iterdir()), [])
+        self.assertEqual(self.fence, self.policy.fence())
+
     def test_an_unresolved_installer_is_never_dispatched_again(self):
         self.configure.apply('begin')
         before = (self.stage/'intent.json').read_bytes()
