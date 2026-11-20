@@ -39,6 +39,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -374,11 +375,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public Set<String> getConfigurableComponentPids() {
-        Set<String> result = new HashSet<>();
-        result.addAll(this.allActivatedPids);
-        result.addAll(this.waittingForActivatedPids);
+        return Collections.unmodifiableSet(snapshotConfigurablePids());
+    }
 
-        return Collections.unmodifiableSet(result);
+    private synchronized Set<String> snapshotConfigurablePids() {
+        Set<String> pids = new LinkedHashSet<>(this.allActivatedPids);
+        pids.addAll(this.waittingForActivatedPids);
+        return pids;
     }
 
     // Don't perform internal calls to this method
@@ -1941,19 +1944,14 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     // returns configurations with encrypted passwords
     private List<ComponentConfiguration> getComponentConfigurationsInternal() throws KuraException {
-        List<ComponentConfiguration> configs = getComponentConfigurationsInternal(this.allActivatedPids);
-        configs.addAll(getComponentConfigurationsInternal(this.waittingForActivatedPids));
-        return configs;
+        return getComponentConfigurationsInternal(snapshotConfigurablePids());
     }
 
     private List<ComponentConfiguration> getComponentConfigurationsInternal(Set<String> pids) throws KuraException {
         try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
             List<ComponentConfiguration> configs = new ArrayList<>();
 
-            // assemble all the configurations we have
-            // clone the list to avoid concurrent modifications
-            List<String> allPids = new ArrayList<>(pids);
-            for (String pid : allPids) {
+            for (String pid : pids) {
                 try {
                     ComponentConfiguration cc = getComponentConfigurationInternal(pid);
                     if (cc != null) {
@@ -2563,10 +2561,12 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                                 restoredProperties.put(KURA_SERVICE_PID, pid);
                                 trackPasswordProperties(pid, restoredProperties);
                                 persisted.updateIfDifferent(CollectionsUtil.mapToDictionary(restoredProperties));
-                                if (!this.allActivatedPids.contains(pid)) {
-                                    this.servicePidByPid.put(pid, persisted.getPid());
-                                    this.factoryPidByPid.put(pid, factoryPid);
-                                    this.waittingForActivatedPids.add(pid);
+                                synchronized (this) {
+                                    if (!this.allActivatedPids.contains(pid)) {
+                                        this.servicePidByPid.put(pid, persisted.getPid());
+                                        this.factoryPidByPid.put(pid, factoryPid);
+                                        this.waittingForActivatedPids.add(pid);
+                                    }
                                 }
                             }
                         } catch (KuraException | IOException e) {
@@ -3016,8 +3016,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         } else {
             // Bootstrap cannot depend on an external owner whose transport may
             // itself require ConfigurationService. Never read/replay these PIDs.
-            Set<String> localPids = new HashSet<>(this.allActivatedPids);
-            localPids.addAll(this.waittingForActivatedPids);
+            Set<String> localPids = snapshotConfigurablePids();
             localPids.removeIf(this.externalConfigurations::owns);
             currentConfigs = getComponentConfigurationsInternal(localPids);
         }

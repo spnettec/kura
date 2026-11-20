@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import org.eclipse.kura.configuration.*;
 import org.eclipse.kura.core.configuration.metatype.*;
@@ -16,6 +17,29 @@ import org.osgi.framework.*;
 import org.osgi.service.component.ComponentContext;
 
 class ProviderReadBoundsTest {
+    @Test
+    void pidSnapshotWaitsForRegistrationAndRemainsUnchangedAfterRemoval() throws Exception {
+        var core = new ConfigurationServiceImpl();
+        var started = new CountDownLatch(1);
+        String pid = "registering.provider";
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            Future<Set<String>> read;
+            synchronized (core) {
+                read = executor.submit(() -> {
+                    started.countDown();
+                    return core.getConfigurableComponentPids();
+                });
+                assertTrue(started.await(2, TimeUnit.SECONDS));
+                assertThrows(TimeoutException.class, () -> read.get(150, TimeUnit.MILLISECONDS));
+                core.registerSelfConfiguringComponent(pid, pid);
+            }
+            Set<String> pids = read.get(2, TimeUnit.SECONDS);
+            core.unregisterComponentConfiguration(pid);
+            assertEquals(Set.of(pid), pids);
+            assertTrue(core.getConfigurableComponentPids().isEmpty());
+        }
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void anUncooperativeProviderCannotKeepTheCoreMonitorAndItsLeaseIsNotReleasedEarly() throws Exception {
