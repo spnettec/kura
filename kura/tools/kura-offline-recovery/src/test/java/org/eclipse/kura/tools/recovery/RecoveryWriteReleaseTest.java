@@ -3,14 +3,19 @@ package org.eclipse.kura.tools.recovery;
 import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 class RecoveryWriteReleaseTest {
     @TempDir Path directory;
     @Test void durableReleaseAndItsFailureBoundariesUseFreshJvms() throws Exception {
-        for (String mode : new String[]{"success","publish-failure","business-failure","wrong-bounds","expired","journal-handoff","journal-publish-failure"}) {
-            Path root=Files.createDirectory(this.directory.resolve(mode));
+        for (String mode : new String[]{"success","publish-failure","business-failure","wrong-bounds","expired","journal-handoff","journal-publish-failure","unsafe-parent"}) {
+            Path root = Files.createDirectory(this.directory.resolve(mode),
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+            if (mode.equals("unsafe-parent")) {
+                Files.setPosixFilePermissions(root, PosixFilePermissions.fromString("rwxrwx---"));
+            }
             var process=new ProcessBuilder(Path.of(System.getProperty("java.home"),"bin","java").toString(),
                     "-cp",System.getProperty("java.class.path"),RecoveryWriteReleaseProbe.class.getName(),root.toString(),mode)
                     .redirectErrorStream(true).start();
