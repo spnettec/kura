@@ -311,9 +311,6 @@
             <esf:property array="false" encrypted="false" name="keystore.path" type="String">
                 <esf:value>/opt/eclipse/kura/user/security/httpskeystore.ks</esf:value>
             </esf:property>
-            <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
-            </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
             </esf:property>
@@ -332,9 +329,6 @@
         <esf:properties>
             <esf:property array="false" encrypted="false" name="keystore.path" type="String">
                 <esf:value>/opt/eclipse/kura/user/security/cacerts.ks</esf:value>
-            </esf:property>
-            <esf:property array="false" encrypted="true" name="keystore.password" type="Password">
-                <esf:value>Y2hhbmdlaXQ=</esf:value>
             </esf:property>
             <esf:property array="false" encrypted="false" name="randomize.password" type="Boolean">
                 <esf:value>true</esf:value>
