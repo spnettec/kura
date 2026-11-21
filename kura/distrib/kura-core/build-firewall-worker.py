@@ -12,10 +12,10 @@ import sys
 import tarfile
 import tempfile
 
-NAME = 'kura-firewall-policy-0.1.3'
+NAME = 'kura-firewall-policy-0.1.4'
 SOURCE = Path(__file__).resolve().parent / 'src/firewall-policy' / (NAME + '.crate')
-SHA = '63ef5a8bd959af857f38bd0b1e8bb513ba41026321bddf5275a8d7d36a78b0da'
-REVISION = 'd656ef737c1c3cb0be09040d0c2fe65ba9005414'
+SHA = '5a8150de503d0c17e4afe03c00d2c1dcf4ca5a0de3654916460dfbc78ba1ff92'
+REVISION = 'c9c4c89ee41bcd0fabbd45cdfe361fcfa35022e2'
 BINARY = 'kura-firewall-publish'
 PLATFORMS = {'arm64': ('aarch64', 183), 'amd64': ('x86_64', 62)}
 
@@ -31,9 +31,9 @@ def build(arch, target, offline):
     target.mkdir(parents=True, exist_ok=True)
     worker = target / ('worker-' + arch)
     record = target / (worker.name + '.json')
-    source = dict(source=SHA, revision=REVISION, architecture=arch)
+    source = dict(source=SHA, revision=REVISION, architecture=arch, sourceVerifiedByExecutable=True)
     cache = Path(os.environ.get('KURA_NATIVE_BUILD_CACHE', Path.home() / '.cache/kura-native-build')).resolve()
-    outputs = Path(os.environ.get('KURA_LINUX_CARGO_TARGET', cache / arch)).resolve()
+    outputs = Path(os.environ.get('KURA_LINUX_CARGO_TARGET', cache)).resolve() / ('firewall-worker-' + arch)
     outputs.mkdir(parents=True, exist_ok=True)
     flags = ['build', '--release', '--locked', '--bin', BINARY]
     if offline:
@@ -53,24 +53,29 @@ def build(arch, target, offline):
             return
         native = platform.system() == 'Linux' and platform.machine() == machine and shutil.which('cargo')
         if native:
-            subprocess.run(['cargo', *flags, '--target-dir', str(outputs)], cwd=crate, check=True)
+            subprocess.run(['cargo', *flags, '--target-dir', str(outputs)], cwd=crate, check=True,
+                           env=dict(os.environ, KURA_FIREWALL_SOURCE_ARCHIVE_SHA256=SHA))
+            identity = subprocess.check_output([outputs / 'release' / BINARY, '--build-source'], text=True)
         else:
             registry = Path(os.environ.get('KURA_LINUX_CARGO_HOME', cache / 'cargo')).resolve()
             registry.mkdir(parents=True, exist_ok=True)
             command = ['docker', 'run', '--rm', '--platform', 'linux/' + arch, '--read-only',
                        '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--tmpfs', '/tmp:exec',
-                       '-v', f'{crate}:/src:ro', '-v', f'{registry}:/cache', '-v', f'{outputs}:/target',
-                       '-w', '/src', '-e', 'CARGO_HOME=/cache', '-e', 'CARGO_TARGET_DIR=/target']
+                       '-v', f'{crate}:/src/{SHA}:ro', '-v', f'{registry}:/cache', '-v', f'{outputs}:/target',
+                       '-w', '/src/' + SHA, '-e', 'KURA_FIREWALL_SOURCE_ARCHIVE_SHA256=' + SHA, '-e', 'CARGO_HOME=/cache', '-e', 'CARGO_TARGET_DIR=/target']
             if offline:
                 command.extend(['--pull=never', '--network', 'none'])
             # Use the toolchain directly so changing CARGO_HOME does not run the rustup proxy.
             toolchain = '/usr/local/rustup/toolchains/1.95.0-' + machine + '-unknown-linux-gnu/bin'
-            command.extend(['-e', 'PATH=' + toolchain + ':/usr/local/bin:/usr/bin:/bin',
-                            'rust:1.95-bookworm', toolchain + '/cargo', *flags])
-            subprocess.run(command, check=True)
+            command.extend(['-e', 'PATH=' + toolchain + ':/usr/local/bin:/usr/bin:/bin', 'rust:1.95-bookworm'])
+            subprocess.run([*command, toolchain + '/cargo', *flags], check=True)
+            identity = subprocess.check_output([*command, '/target/release/' + BINARY, '--build-source'], text=True)
+        if identity.strip() != SHA:
+            raise RuntimeError('Cargo output does not match the firewall worker source archive')
         built = outputs / 'release' / BINARY
         staging = base / 'worker'
         shutil.copyfile(built, staging)
+        staging.chmod(0o755)
         with staging.open('rb') as f:
             header = f.read(64)
         if header[:7] != b'\x7fELF\x02\x01\x01' or int.from_bytes(header[18:20], 'little') != elf:
