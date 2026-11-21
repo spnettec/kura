@@ -329,6 +329,9 @@ def embed_configure_phases(control, assembly):
             with path.open('rb') as stream:
                 factory[path.name] = hashlib.file_digest(stream, 'sha256').hexdigest()
     names['CORE_CONFIGURE_FACTORY_PACKAGES'] = factory
+    for name, filename in (('CORE_REMOVAL_HOME_SOURCE', 'removal-home.py'),
+                           ('CORE_RETAINED_PREFLIGHT_SOURCE', 'retained-generation-preflight.py')):
+        names[name] = Path(__file__).with_name(filename).read_bytes()
     for name, relative in (
             ('CORE_CONFIGURE_LIFECYCLE_SHA', 'bin/kura_key_service_lifecycle.py'),
             ('CORE_CONFIGURE_MANIFEST_SHA', 'libexec/key-backup/manifest.json'),

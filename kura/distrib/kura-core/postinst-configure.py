@@ -198,6 +198,8 @@ class Configure:
             policy.no_overrides()
             if step == 'layout' and recovery['mode'] == 'upgrade':
                 self.restore_published_launchers(original, secret)
+            if step == 'layout' and recovery['mode'] == 'reinstall' and os.path.lexists(policy.state / 'generation-current.json'):
+                self.restore_removed_generation(original)
             if step != 'layout':
                 self.paired_home()
             if step == 'brokers' and prepare_brokers is not None:
@@ -257,6 +259,105 @@ class Configure:
                 and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
                 'Deployment history requires the original upgrade capture')
         return capture, tag
+
+    def restore_removed_generation(self, original):
+        """Reconstruct the genuine vendor layout from the paired unpacked release."""
+        policy, require = self.policy, self.api.require
+        digest = lambda raw: hashlib.sha256(raw).hexdigest()
+        retained = self.copies['reinstall']
+        removal = {'__name__': 'packaged_removal'}
+        exec(compile(CORE_REMOVAL_HOME_SOURCE, '<removal-home>', 'exec'), removal)
+        saved = removal['retained_generation'](retained, original)
+        require(saved and saved['manifestSha256'] == self.binding['manifestSha256'],
+                'Retained generation requires the original reader release')
+        manifest_raw = policy.read(self.physical / 'libexec/key-backup/manifest.json', private=False)
+        require(digest(manifest_raw) == saved['manifestSha256'])
+        manifest = self.api.decode(manifest_raw)
+        generation = manifest['generation']
+        def incoming(name, limit=65536):
+            return policy.read(self.physical / name, limit=limit, private=False)
+        for group in (manifest['files'], generation['files']):
+            for name, expected in group.items():
+                require(not Path(name).is_absolute() and '..' not in Path(name).parts)
+                require(digest(incoming(name, 16 * 1024 * 1024)) == expected,
+                        'Unpacked file differs from the retained reader release')
+        def reader(name):
+            path = 'bin/' + name + '.py'
+            source = incoming(path, 256 * 1024)
+            require(digest(source) == manifest['files'][path])
+            return source
+        key_policy = dict(__name__='retained_package_policy', _KURA_REMOVAL_HOME_SOURCE=CORE_REMOVAL_HOME_SOURCE,
+                          _KURA_EMBEDDED_LIFECYCLE_SOURCE=reader('kura_key_service_lifecycle'),
+                          _KURA_EMBEDDED_JOURNAL_SOURCE=reader('kura_key_journal'),
+                          _KURA_INCOMING_KEY_MANIFEST_SHA256=saved['manifestSha256'])
+        exec(compile(reader('kura_key_store'), '<incoming-key-store>', 'exec'), key_policy)
+        exec(compile(CORE_RETAINED_PREFLIGHT_SOURCE, '<retained-preflight>', 'exec'), key_policy)
+        require(key_policy['prepare_retained_generation'](unpacked_layout=True) == 0,
+                'Original retained generation credentials changed after unpack')
+
+        require(set(manifest['units']) == set(self.api.UNITS))
+        units = {name: incoming('install/' + name) for name in manifest['units']}
+        require(all(digest(raw) == manifest['units'][name] for name, raw in units.items()))
+        main = incoming('install/kura.service').replace(b'INSTALL_DIR', b'/opt/eclipse')
+        require(digest(main) == generation['unitSha256'])
+        units['kura.service'] = main
+        cohort = {'__name__': 'incoming_cohort'}
+        helper = 'bin/kura_key_cohort.py'
+        code = incoming(helper)
+        require(digest(code) == generation['files'][helper])
+        exec(compile(code, helper, 'exec'), cohort)
+        cohort['validate'](self.physical, generation, lambda p: policy.read(p, private=False), policy.owner, unit=main)
+        source = retained / 'published-generation'
+        launchers = {}
+        for name in removal['GENERATION_LAUNCHERS']:
+            target = self.physical / 'bin' / name
+            raw = policy.read(source / name)
+            template = incoming('libexec/key-backup/launchers/' + name)
+            actual = policy.read(target, private=False)
+            require(actual in (template, raw), 'Unpaired launcher at retained reinstall')
+            if actual != raw:
+                launchers[target] = raw
+        logical = policy.path('/opt/eclipse/kura')
+        if os.path.lexists(logical):
+            self.paired_home()
+        vendor = policy.path('/lib/systemd/system').resolve(strict=True)
+        policy.directory(vendor)
+        for name, raw in units.items():
+            for prefix in ('/usr/lib', '/lib'):
+                path = policy.path(prefix + '/systemd/system/' + name)
+                if os.path.lexists(path):
+                    require(path.parent.resolve(strict=True) == vendor and
+                            policy.read(vendor / name, private=False) == raw,
+                            'Unexpected vendor unit during retained reinstall')
+
+        # Write only into the genuine package destinations. Interrupted copies
+        # are accepted above only if byte-identical to the paired package.
+        for target, raw in launchers.items():
+            with tempfile.TemporaryDirectory(dir=target.parent) as stage:
+                staged = Path(stage) / target.name
+                staged.write_bytes(raw)
+                staged.chmod(stat.S_IMODE(target.lstat().st_mode))
+                with staged.open('rb') as stream:
+                    os.fsync(stream.fileno())
+                os.replace(staged, target)
+        policy.sync(self.physical / 'bin')
+        for name, raw in units.items():
+            target = vendor / name
+            if not os.path.lexists(target):
+                with tempfile.TemporaryDirectory(dir=vendor) as stage:
+                    staged = Path(stage) / name
+                    staged.write_bytes(raw)
+                    staged.chmod(0o644)
+                    with staged.open('rb') as stream:
+                        os.fsync(stream.fileno())
+                    publish_sibling(staged, target)
+        policy.sync(vendor)
+        if not os.path.lexists(logical):
+            logical.symlink_to(self.physical)
+            policy.sync(logical.parent)
+        self.paired_home()
+        require(policy.generation_assets()['cohortSha256'] == saved['cohortSha256'],
+                'Restored vendor layout differs from the original published cohort')
 
     def restore_published_launchers(self, original, secret):
         policy, require = self.policy, self.api.require

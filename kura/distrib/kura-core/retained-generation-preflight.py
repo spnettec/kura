@@ -6,7 +6,7 @@ startup entry points do not acquire an admission path for removed installations.
 """
 
 
-def prepare_retained_generation():
+def prepare_retained_generation(*, unpacked_layout=False):
     removal = {'__name__': 'packaged_removal'}
     exec(compile(_KURA_REMOVAL_HOME_SOURCE, '<packaged-removal>', 'exec'), removal)
 
@@ -52,9 +52,10 @@ def prepare_retained_generation():
             require(self.key(archive / CREDENTIAL) == self.key(self.path(KEY_PATH)) and
                     self.read(archive / 'provisioned.json', private=True) == self.read(self.path(RECEIPT_PATH), private=True),
                     'Retained encryption archive differs from the original credentials')
-            require(not any(os.path.lexists(self.path(p)) for p in
-                            ('/opt/eclipse/kura', '/usr/lib/systemd/system/kura.service', '/lib/systemd/system/kura.service')),
-                    'Retained pre-unpack requires the removed installation')
+            if not unpacked_layout:
+                require(not any(os.path.lexists(self.path(p)) for p in
+                                ('/opt/eclipse/kura', '/usr/lib/systemd/system/kura.service', '/lib/systemd/system/kura.service')),
+                        'Retained pre-unpack requires the removed installation')
             require(removal['retained_generation'](retained, fence['id']) == saved and lifecycle.fence() == fence,
                     'Original retained generation changed during admission')
             self.verified = True
