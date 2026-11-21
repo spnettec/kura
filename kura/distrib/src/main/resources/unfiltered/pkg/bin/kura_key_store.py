@@ -29,6 +29,8 @@ RING_CREDENTIAL = "kura_encryption_keyring"
 RING_PATH = "/etc/kura/credentials/" + RING_CREDENTIAL
 GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
+GENERATION_DROPIN = "/etc/systemd/system/kura.service.d/40-kura-key-generations.conf"
+GENERATION_TEMPLATE = "share/key-management/key-generations.conf"
 RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 LIFECYCLE_SOURCE_LIMIT = 160 * 1024
 JOURNAL_SOURCE_LIMIT = 128 * 1024
@@ -301,7 +303,7 @@ class Store:
         require(len(value) in (16,24,32), "Invalid persisted encryption-key length")
         return value
 
-    def dropins_safe(self):
+    def dropins_safe(self, published=False):
         dangerous = ("EnvironmentFile","LoadCredential","LoadCredentialEncrypted",
                      "SetCredential","SetCredentialEncrypted","ImportCredential","ExecStart","ExecStartPre")
         sensitive = ("KURA_CRYPTO_SECRET_KEY","CREDENTIALS_DIRECTORY","KURA_JVM_ARGS_FILE",
@@ -313,6 +315,10 @@ class Store:
                     continue
                 require(not directory.is_symlink(), "Symlinked systemd drop-in directory")
                 for source in sorted(directory.glob("*.conf")):
+                    if published:
+                        require(source == self.path(GENERATION_DROPIN),
+                                "Unexpected Main drop-in alongside published generation credentials")
+                        continue  # The publication validator checks this file under the provisioning lock.
                     text = self.read(source).decode("utf-8")
                     for line in text.splitlines():
                         line = line.strip()
@@ -322,6 +328,36 @@ class Store:
                         relevant = name.strip() in dangerous or (
                             name.strip() == "Environment" and any(x in value for x in sensitive))
                         require(not relevant, "Custom key/startup drop-in requires a reviewed migration")
+
+    def check_published_maintenance(self, api, lifecycle, metadata, receipt):
+        require(lifecycle.fence() is not None, "Published credentials require the original maintenance fence")
+        lifecycle.check_extended_journal()
+        current = lifecycle.state / "generation-current.json"
+        publication = api.validate_publication(api.decode(lifecycle.read(current, 8192)))
+        slot = lifecycle.state / "generations" / publication["preparationId"]
+        require(publication["generation"] == metadata and
+                api.decode(lifecycle.read(slot / "history.json", 8192))["provisioned"] == receipt,
+                "Active credentials differ from the published generation")
+        recovery = api.decode(lifecycle.read(slot / "publication-recovery.json", 16384))
+        require(recovery["publication"] == publication, "Original publication recovery receipt differs")
+        secret = lifecycle.read(lifecycle.state / "journal.key", 32)
+        require(len(secret) == 32, "Invalid original journal key")
+        for operation in ("operationId", "verificationId"):
+            api.archive_entry(lifecycle, dict(directory="operations", operationId=publication[operation]), secret)
+
+        home = self.path("/opt/eclipse/kura").resolve(strict=True)
+        if "_KURA_EMBEDDED_LIFECYCLE_SOURCE" in globals():
+            manifest = lifecycle.read(home / "libexec/key-backup/manifest.json", private=False)
+            require(hashlib.sha256(manifest).hexdigest() == globals().get("_KURA_INCOMING_KEY_MANIFEST_SHA256"),
+                    "Incoming release needs a reviewed generation cohort migration")
+        binding = lifecycle.generation_assets()
+        require(binding["cohortSha256"] == publication["cohortSha256"],
+                "Installed readers or launchers differ from the published cohort")
+        dropin = self.path(GENERATION_DROPIN)
+        lifecycle.directory(dropin.parent, private=True)
+        require(stat.S_IMODE(dropin.lstat().st_mode) == 0o400 and
+                self.read(dropin, private=True) == lifecycle.read(home / GENERATION_TEMPLATE, private=False),
+                "Published credential drop-in differs from its paired template")
 
     def unit_key(self, source):
         environment = {}
@@ -437,7 +473,14 @@ class Store:
         self.observed.clear()
         self.main_mask_snapshot = None
         with self.locked():
-            self.dropins_safe()
+            has_dropin = os.path.lexists(self.path(GENERATION_DROPIN))
+            published = os.path.lexists(self.path("/var/lib/kura-key-service/generation-current.json"))
+            require(has_dropin == published, "Incomplete published generation configuration")
+            if published:
+                require(action in ("install", "upgrade", "package") and
+                        os.path.lexists(self.path(RING_PATH)) and os.path.lexists(self.path(GENERATION_RECEIPT_PATH)),
+                        "Published credentials require complete package maintenance inputs")
+            self.dropins_safe(published)
             self.main_mask_snapshot = self.main_masks()
             canonical = self.path(KEY_PATH)
             current = self.key(canonical) if os.path.lexists(canonical) else None
@@ -484,6 +527,11 @@ class Store:
                 api=paired_lifecycle();lifecycle = api.Lifecycle(self.root, self.owner)
                 try:
                     lifecycle.check_records()
+                    if published:
+                        try:
+                            self.check_published_maintenance(api, lifecycle, metadata, receipt)
+                        except (KeyError, TypeError):
+                            raise Refused("Invalid original generation maintenance records") from None
                     require(action != "auto" or lifecycle.fence() is None, "Generation maintenance is not complete")
                 except api.Refused:
                     raise Refused("Unresolved or unsafe generation operation; preserve original UUID and credentials") from None

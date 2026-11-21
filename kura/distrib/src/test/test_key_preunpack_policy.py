@@ -86,13 +86,16 @@ print('PAIRED_PREUNPACK_POLICY_OK')
         path=Path(__file__).resolve().parents[2]/'kura-core/prepare-key-service.py'
         spec=importlib.util.spec_from_file_location('policy_pair_builder',path);builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
         preinst=self.root/'preinst';token='raise RuntimeError("Kura key-policy readers were not embedded")'
-        preinst.write_text(token+'\n');builder.embed_policy_readers(preinst,self.inputs/'kura_key_service_lifecycle.py',self.inputs/'kura_key_journal.py')
+        manifest=self.root/'manifest.json'
+        manifest.write_bytes(b'fixture package manifest')
+        preinst.write_text(token+'\n');builder.embed_policy_readers(preinst,self.inputs/'kura_key_service_lifecycle.py',self.inputs/'kura_key_journal.py',manifest)
         values={n.targets[0].id:ast.literal_eval(n.value) for n in ast.parse(preinst.read_text()).body}
         self.assertEqual((self.inputs/'kura_key_service_lifecycle.py').read_bytes(),values['_KURA_EMBEDDED_LIFECYCLE_SOURCE'])
         self.assertEqual((self.inputs/'kura_key_journal.py').read_bytes(),values['_KURA_EMBEDDED_JOURNAL_SOURCE'])
+        self.assertEqual(hashlib.sha256(manifest.read_bytes()).hexdigest(),values['_KURA_INCOMING_KEY_MANIFEST_SHA256'])
         for text in ('',token+'\n'+token):
             preinst.write_text(text)
-            with self.assertRaises(RuntimeError):builder.embed_policy_readers(preinst,self.inputs/'kura_key_service_lifecycle.py',self.inputs/'kura_key_journal.py')
+            with self.assertRaises(RuntimeError):builder.embed_policy_readers(preinst,self.inputs/'kura_key_service_lifecycle.py',self.inputs/'kura_key_journal.py',manifest)
 
     @unittest.skipUnless(sys.platform=='linux','Immutable Root archive publication uses Linux renameat2')
     def test_incoming_policy_keeps_all_257_originals_and_accepts_only_positive_archived_capacity(self):

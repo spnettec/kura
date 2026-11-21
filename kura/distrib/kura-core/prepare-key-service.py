@@ -192,10 +192,11 @@ def embed_upgrade_copy(preinst, assembly):
     preinst.write_text(content.replace(token, inputs + '\n' + helper))
 
 
-def embed_policy_readers(preinst,lifecycle,journal):
+def embed_policy_readers(preinst,lifecycle,journal,manifest):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
     require(preinst.is_file() and not preinst.is_symlink())
-    assignments=[]
+    require(manifest.is_file() and not manifest.is_symlink())
+    assignments = ['_KURA_INCOMING_KEY_MANIFEST_SHA256 = ' + repr(hashlib.sha256(manifest.read_bytes()).hexdigest())]
     readers = (('_KURA_EMBEDDED_LIFECYCLE_SOURCE', lifecycle, 160 * 1024),
                ('_KURA_EMBEDDED_JOURNAL_SOURCE', journal, 128 * 1024))
     for name, path, limit in readers:
@@ -356,7 +357,7 @@ if __name__ == "__main__":
     embed_managed_nm_preflight(Path(sys.argv[1]).parent/'filtered-control/preinst',
                                Path(sys.argv[1])/'install/manage_kura_users.sh')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
-        Path(sys.argv[1])/'bin/kura_key_journal.py')
+        Path(sys.argv[1])/'bin/kura_key_journal.py', Path(sys.argv[1])/'libexec/key-backup/manifest.json')
     for hook in ('prerm', 'postrm'):
         control = Path(sys.argv[1]).parent / 'filtered-control' / hook
         embed_package_helper(control, Path(__file__).with_name('removal-home.py'), 'removal home')

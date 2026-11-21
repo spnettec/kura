@@ -154,6 +154,35 @@ class GenerationPublicationTest(unittest.TestCase):
         self.assertEqual(commands, self.commands)
         self.refused('START_ALREADY_AUTHORIZED', lambda: self.component.request(self.start_request(), start=True))
 
+    def test_package_admits_only_original_published_credentials_and_paired_incoming_manifest(self):
+        self.publish()
+        fence = dict(schema=1, id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='upgrade')
+        self.put(self.state / 'maintenance.json', service.encode(fence))
+        before = writer.WriterLeaseTest.snapshot(self)
+        policy = writer.policy
+        store = policy.Store(self.root)
+        for action in ('upgrade', 'package'):
+            self.assertTrue(store.prepare(action)['keyReady'])
+        source = package.SOURCE / 'unfiltered/pkg/bin'
+        readers = dict(_KURA_EMBEDDED_LIFECYCLE_SOURCE=(source / 'kura_key_service_lifecycle.py').read_bytes(),
+                       _KURA_EMBEDDED_JOURNAL_SOURCE=(source / 'kura_key_journal.py').read_bytes(),
+                       _KURA_INCOMING_KEY_MANIFEST_SHA256=self.cohort['manifestSha256'])
+        with patch.dict(vars(policy), readers):
+            self.assertTrue(store.prepare('upgrade')['keyReady'])
+            with patch.object(policy, '_KURA_INCOMING_KEY_MANIFEST_SHA256', '0' * 64):
+                with self.assertRaisesRegex(policy.Refused, 'cohort migration'):
+                    store.prepare('upgrade')
+        self.assertEqual(before, writer.WriterLeaseTest.snapshot(self))
+        dropin = store.path(policy.GENERATION_DROPIN)
+        dropin.chmod(0o600)
+        with self.assertRaisesRegex(policy.Refused, 'paired template'):
+            store.prepare('upgrade')
+        dropin.chmod(0o400)
+        current = self.state / 'generation-current.json'
+        current.rename(current.with_suffix('.held'))
+        with self.assertRaisesRegex(policy.Refused, 'Incomplete published'):
+            store.prepare('upgrade')
+
     def test_preparation_history_published_round_allows_new_staging_without_discarding_original_material(self):
         result = self.publish()
         directory = self.state / 'generations' / self.preparation
