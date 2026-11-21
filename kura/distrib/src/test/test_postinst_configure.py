@@ -132,14 +132,15 @@ class ConfigureTest(unittest.TestCase):
         self.configure.apply('resume')
         brokers_intent = self.stage / 'setup-brokers-intent.json'
 
-        def reject_active_unpaired_broker():
+        def reject_active_unpaired_broker(mode):
+            self.assertEqual(mode, 'upgrade')
             self.assertFalse(brokers_intent.exists())
             raise lifecycle.Refused('Unpaired active broker')
 
         with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired active broker'):
             self.controller().run_step(
                 'brokers', lambda: self.fail('Dispatched before quiescence'),
-                reassert_quiescence=reject_active_unpaired_broker,
+                prepare_brokers=reject_active_unpaired_broker,
             )
         self.assertFalse(brokers_intent.exists())
         self.assertEqual(('INSTALLER', 'upgrade'), self.controller().apply('resume'))
@@ -149,12 +150,32 @@ class ConfigureTest(unittest.TestCase):
             raise InterruptedError()
 
         with self.assertRaises(InterruptedError):
-            self.controller().run_step('brokers', interrupted_dispatch, reassert_quiescence=lambda: None)
+            self.controller().run_step('brokers', interrupted_dispatch, prepare_brokers=lambda mode: None)
         with self.assertRaisesRegex(lifecycle.Refused, 'brokers is unresolved'):
             self.controller().run_step(
                 'brokers', lambda: self.fail('Redispatched unresolved broker setup'),
-                reassert_quiescence=lambda: self.fail('Prepared an already issued step'),
+                prepare_brokers=lambda mode: self.fail('Prepared an already issued step'),
             )
+
+    def test_new_install_can_resume_when_system_bus_was_unavailable_before_dispatch(self):
+        self.configure.apply('begin')
+        self.configure.run_step('layout', lambda: None)
+        self.configure.apply('resume')
+        original = (self.stage / 'intent.json').read_bytes()
+        calls = []
+
+        def unavailable(mode):
+            self.assertEqual('install', mode)
+            raise subprocess.CalledProcessError(1, 'busctl')
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.configure.run_step('brokers', lambda: calls.append('dispatched'), prepare_brokers=unavailable)
+        self.assertFalse((self.stage / 'setup-brokers-intent.json').exists())
+        self.assertEqual(('INSTALLER', 'install'), self.controller().apply('resume'))
+        self.controller().run_step('brokers', lambda: calls.append('dispatched'), prepare_brokers=calls.append)
+        self.controller().apply('resume')
+        self.assertEqual(['install', 'dispatched'], calls)
+        self.assertEqual(original, (self.stage / 'intent.json').read_bytes())
 
     def test_configuration_rejects_other_package_versions_and_incomplete_receipts(self):
         self.configure.apply('begin')

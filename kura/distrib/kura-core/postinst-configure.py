@@ -165,7 +165,7 @@ class Configure:
             completed.append(step)
         return completed, issued, returned
 
-    def run_step(self, step, invoke, *, reassert_quiescence=None):
+    def run_step(self, step, invoke, *, prepare_brokers=None):
         policy, require = self.policy, self.api.require
         require(step in INSTALLER_STEPS)
         with policy.locked():
@@ -186,8 +186,8 @@ class Configure:
             policy.no_overrides()
             if step != 'layout':
                 self.paired_home()
-            if step == 'brokers' and recovery['mode'] == 'upgrade' and reassert_quiescence is not None:
-                reassert_quiescence()
+            if step == 'brokers' and prepare_brokers is not None:
+                prepare_brokers(recovery['mode'])
             self.publish(directory, original, f'setup-{step}-intent', recovery, secret)
 
         invoke()
@@ -381,7 +381,15 @@ def main():
             subprocess.run(['/bin/sh', str(installer), f'--configure-{step}'], check=True)
             os.sync()
 
-        def reassert_quiescence():
+        def prepare_brokers(mode):
+            # ReloadConfig later requires a live system bus, including on first install.
+            # Check before account or policy changes acquire an irreversible step intent.
+            if Path('/run/systemd/system').is_dir():
+                subprocess.run(['/usr/bin/busctl', '--system', '--timeout=5s', '--auto-start=no', 'call',
+                                'org.freedesktop.DBus', '/org/freedesktop/DBus',
+                                'org.freedesktop.DBus', 'GetId'], stdout=subprocess.DEVNULL, check=True, timeout=7)
+            if mode != 'upgrade':
+                return
             # PID 1 may have reopened persistently enabled listeners after
             # unpack. Restore the original fences before issuing this step.
             helpers = (
@@ -395,7 +403,7 @@ def main():
                 subprocess.run(['/usr/bin/python3', '-I', '-B', '/opt/eclipse/kura/bin/' + helper,
                                 'reassert_quiescence'], check=True, timeout=45)
 
-        configure.run_step(step, invoke, reassert_quiescence=reassert_quiescence)
+        configure.run_step(step, invoke, prepare_brokers=prepare_brokers)
         return
     phase, mode = configure.apply(action)
     print(phase, mode, physical)
