@@ -227,6 +227,11 @@ def main(arguments):
     transfer(action, source, destination)
     transfer_launcher(action, source.parents[1] / 'bin/firewall', destination.parents[1] / 'bin/firewall',
                       registered_launcher_digest())
+    # preinst already stages sibling bundles during upgrades. prerm also needs
+    # them for a retained reinstall, even if the site ships no maintenance hooks.
+    staging = destination.parents[1]
+    if action == 'preserve' and staging.name.startswith('.kura-retained.tmp.'):
+        transfer(action, source.parents[1] / 'siblings', staging / 'siblings')
 
 
 if __name__ == '__main__':

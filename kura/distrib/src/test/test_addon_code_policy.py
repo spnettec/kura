@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -53,6 +54,25 @@ class AddonCodePolicyTests(unittest.TestCase):
         policy.transfer('restore', self.backup, self.destination)
         self.assertEqual(before, policy.fingerprint(self.destination))
         self.assertEqual(before, policy.fingerprint(self.source))
+
+    def test_removal_capture_keeps_a_site_provider_without_an_addon_hook(self):
+        parent = Path('/opt/eclipse')
+        parent.mkdir()
+        self.addCleanup(shutil.rmtree, parent)
+        home = parent / 'kura_test'
+        jar = home / 'siblings/site-storage/4/site-provider.jar'
+        jar.parent.mkdir(parents=True)
+        jar.write_bytes(b'original site provider')
+        jar.chmod(0o640)
+        os.chown(jar, 0, 1234)
+        public = parent / 'kura'
+        public.symlink_to(home)
+        saved = Path(subprocess.check_output(
+            ['mktemp', '-d', '/var/lib/.kura-retained.tmp.XXXXXXXX'], text=True).strip())
+        self.addCleanup(shutil.rmtree, saved)
+        policy.main(['preserve', str(public / 'libexec/addons'), str(saved / 'libexec/addons')])
+        self.assertEqual(policy.fingerprint(home / 'siblings'), policy.fingerprint(saved / 'siblings'))
+        self.assertFalse((saved / 'libexec/addons').exists())
 
     def test_newly_unpacked_addon_wins_without_resurrecting_deleted_callbacks(self):
         policy.transfer('preserve', self.source, self.backup)
