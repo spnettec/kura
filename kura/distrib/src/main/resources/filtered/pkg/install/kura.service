@@ -1,4 +1,6 @@
 [Unit]
+# Reject the start job before Restart=on-failure can compete with dpkg recovery.
+AssertPathExists=!/var/lib/kura-key-service/maintenance.json
 OnFailure=kura-key-recovery.service
 Description=Kura
 Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-ownership-markers.socket kura-firewall-tables.socket kura-firewall-publish.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
