@@ -128,6 +128,39 @@ class LifecycleTest(unittest.TestCase):
             self.policy.leave()
         self.assertTrue((self.policy.state / "maintenance.json").exists())
 
+    def test_pending_deployment_publication_refuses_upgrade_and_remove_before_stop(self):
+        self.opened()
+        registry = self.physical / 'packages/dpa.properties'
+        target = self.physical / 'data/site-registry'
+        self.write(target, b'previous entry')
+        registry.parent.mkdir()
+        registry.symlink_to(target)
+        receipt = target.with_name('.site-registry.publication')
+        self.write(receipt, b'original deployment receipt')
+        inode = receipt.stat().st_ino
+
+        for action in ('upgrade', 'remove'):
+            with self.subTest(action=action), self.assertRaisesRegex(lifecycle.ActiveWriter, 'original deployment'):
+                self.policy.enter(action)
+        self.assertFalse(any(call[1] == 'stop' for call in self.calls))
+        self.assertIsNone(self.policy.fence())
+        self.assertEqual(inode, receipt.stat().st_ino)
+        self.assertEqual(b'original deployment receipt', receipt.read_bytes())
+
+    def test_deployment_receipt_appearing_during_main_stop_preserves_original_fence(self):
+        fence = self.policy.enter('upgrade')
+        receipt = self.physical / 'packages/.dpa.properties.publication'
+        receipt.parent.mkdir()
+        # An interrupted first install may have no published registry yet.
+        receipt.symlink_to('missing')
+        with self.assertRaisesRegex(lifecycle.ActiveWriter, 'original deployment'):
+            self.policy.check_package_writers()
+        self.assertTrue(receipt.is_symlink())
+        self.assertEqual(fence, self.policy.fence())
+        receipt.unlink()
+        self.policy.check_package_writers()
+        self.assertEqual(fence, self.policy.enter('upgrade'))
+
     def test_direct_writer_refuses_maintenance_before_fencing_or_stopping_units(self):
         self.opened()
         path = self.root / 'run/kura-key-service/writers/lease.lock'

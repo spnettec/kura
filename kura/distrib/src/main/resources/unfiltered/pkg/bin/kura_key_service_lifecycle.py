@@ -1857,6 +1857,17 @@ class Lifecycle:
                     "Key-service processes are still active; package change refused")
 
     def check_package_writers(self, *, allow_main=False):
+        # All three packaged Main launchers use this registry. Its outstanding
+        # archive publication binds the original directories and files by inode.
+        registry = self.path('/opt/eclipse/kura/packages/dpa.properties').resolve()
+        receipt = registry.with_name('.' + registry.name + '.publication')
+        try:
+            receipt.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise ActiveWriter('Finish the original deployment package publication before Core maintenance')
+
         runtime = self.path('/run/kura-key-service')
         writers = runtime / 'writers'
         if not os.path.lexists(runtime):
