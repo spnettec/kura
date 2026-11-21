@@ -38,6 +38,22 @@ class ConfigureTest(unittest.TestCase):
     def controller(self, version='6.0.0-1'):
         return configure.Configure(lifecycle, self.policy, self.fixture.physical.resolve(), version, self.manifest_sha, '1' * 64)
 
+    def test_unpacked_main_placeholder_requires_empty_core_owned_directory(self):
+        logical = self.policy.path('/opt/eclipse/kura')
+        logical.unlink()
+        logical.mkdir()
+        logical.chmod(0o755)
+        with patch.object(subprocess, 'check_output', return_value='kura-core: /opt/eclipse/kura\n'):
+            self.assertTrue(os.path.samestat(logical.lstat(), self.configure.unpacked_main_directory(logical)))
+            (logical / 'site-data').touch()
+            with self.assertRaisesRegex(lifecycle.Refused, 'occupied Main directory'):
+                self.configure.unpacked_main_directory(logical)
+        (logical / 'site-data').unlink()
+        with patch.object(subprocess, 'check_output', return_value='kura-core, addon: /opt/eclipse/kura\n'):
+            with self.assertRaisesRegex(lifecycle.Refused, 'Core-owned'):
+                self.configure.unpacked_main_directory(logical)
+        self.assertTrue(logical.is_dir())
+
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
             self.configure.run_step(name, lambda: None)

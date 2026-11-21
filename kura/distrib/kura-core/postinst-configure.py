@@ -260,6 +260,22 @@ class Configure:
                 'Deployment history requires the original upgrade capture')
         return capture, tag
 
+    def unpacked_main_directory(self, logical):
+        if not os.path.lexists(logical):
+            return None
+        if logical.is_symlink():
+            self.paired_home()
+            return None
+        self.policy.directory(logical)
+        info = logical.lstat()
+        self.api.require(info.st_gid == 0 and stat.S_IMODE(info.st_mode) == 0o755
+                         and not any(logical.iterdir()), 'Retained reinstall found an occupied Main directory')
+        label = '/opt/eclipse/kura'
+        owners = subprocess.check_output(['/usr/bin/dpkg-query', '-S', label], text=True)
+        self.api.require(owners.splitlines() == ['kura-core: ' + label],
+                         'Retained reinstall requires a Core-owned unpack directory')
+        return info
+
     def restore_removed_generation(self, original):
         """Reconstruct the genuine vendor layout from the paired unpacked release."""
         policy, require = self.policy, self.api.require
@@ -318,8 +334,7 @@ class Configure:
             if actual != raw:
                 launchers[target] = raw
         logical = policy.path('/opt/eclipse/kura')
-        if os.path.lexists(logical):
-            self.paired_home()
+        placeholder = self.unpacked_main_directory(logical)
         vendor = policy.path('/lib/systemd/system').resolve(strict=True)
         policy.directory(vendor)
         for name, raw in units.items():
@@ -352,6 +367,9 @@ class Configure:
                         os.fsync(stream.fileno())
                     publish_sibling(staged, target)
         policy.sync(vendor)
+        if placeholder is not None:
+            require(os.path.samestat(placeholder, logical.lstat()), 'Main unpack directory changed')
+            logical.rmdir()  # The kernel also rejects nonempty directories and mount points.
         if not os.path.lexists(logical):
             logical.symlink_to(self.physical)
             policy.sync(logical.parent)
