@@ -21,6 +21,15 @@ CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json'} | {
 }
 
 
+def sync_staged_filesystem(directory_fd):
+    syncfs = ctypes.CDLL(None, use_errno=True).syncfs
+    syncfs.argtypes = (ctypes.c_int,)
+    syncfs.restype = ctypes.c_int
+    if syncfs(directory_fd) != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error))
+
+
 def publish_sibling(staged, target):
     libc = ctypes.CDLL(None, use_errno=True)
     rename = libc.renameat2
@@ -220,6 +229,8 @@ class Configure:
             self.policy.directory(stage, private=True)
             shutil.rmtree(stage)
         stage.mkdir(mode=0o700)
+        # Open before cp so syncfs observes writeback errors from this batch.
+        stage_fd = os.open(stage, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
             with tempfile.TemporaryDirectory(prefix='copy-', dir=stage) as directory:
                 pending = []
@@ -234,10 +245,11 @@ class Configure:
                     subprocess.run(['/bin/cp', '-a', '--', str(sibling), str(staged)], check=True)
                     pending.append((staged, target))
                 if pending:
-                    os.sync()
+                    sync_staged_filesystem(stage_fd)
                     for staged, target in pending:
                         publish_sibling(staged, target)
         finally:
+            os.close(stage_fd)
             stage.rmdir()
             self.policy.sync(self.physical)
             self.policy.sync(destination)

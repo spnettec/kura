@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: EPL-2.0
+import errno
 import hashlib
 import importlib.util
 import os
@@ -246,11 +247,26 @@ class ConfigureTest(unittest.TestCase):
         self.assertFalse((self.stage / 'ready.json').exists())
         self.assertTrue(source.is_dir())
 
-        with patch.object(configure.os, 'sync'):
-            self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('restore-siblings'))
-            installed_inode = installed_bundle.stat().st_ino
-            self.pairing.side_effect = None
-            self.controller().apply('restore-siblings')
+        def fail_writeback(fd):
+            self.assertEqual(stage.stat().st_ino, os.fstat(fd).st_ino)
+            staged, = stage.glob('copy-*/retained/6s/bundle.jar')
+            self.assertEqual(b'original bundle', staged.read_bytes())
+            raise OSError(errno.EIO, 'staged filesystem writeback failed')
+
+        with patch.object(configure, 'sync_staged_filesystem', side_effect=fail_writeback):
+            with self.assertRaises(OSError) as failure:
+                self.controller().apply('restore-siblings')
+        self.assertEqual(errno.EIO, failure.exception.errno)
+        self.assertFalse(installed_bundle.exists())
+        self.assertFalse(stage.exists())
+        self.assertFalse((self.stage / 'ready.json').exists())
+        self.assertEqual(self.fence, self.policy.fence())
+        self.assertEqual(b'original bundle', (source / 'siblings/retained/6s/bundle.jar').read_bytes())
+
+        self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('restore-siblings'))
+        installed_inode = installed_bundle.stat().st_ino
+        self.pairing.side_effect = None
+        self.controller().apply('restore-siblings')
         self.assertEqual(b'original bundle', installed_bundle.read_bytes())
         self.assertEqual(installed_inode, installed_bundle.stat().st_ino)
         self.assertEqual(b'incoming package bundle', incoming.read_bytes())
