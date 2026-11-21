@@ -63,13 +63,23 @@ raise RuntimeError("Kura removal home was not embedded")
 KURA_REMOVAL_HOME
 }
 
+function publishRetainedData {
+    local staged="$1" status
+    mv -nT -- "${staged}" "${RETAINED_DIR}" || return 1
+    status=$(removalHome locate "${RETAINED_DIR}") || return 1
+    [ "${status}" = PUBLISHED ]
+}
+
 function preserveUserData {
     [ -d "${INSTALL_DIR}/kura" ] || return 0
-    if [ -e "${RETAINED_DIR}" ]; then
-        removalHome check-resume "${RETAINED_DIR}"
-        return $?
-    fi
     local retained_tmp
+    retained_tmp=$(removalHome locate "${RETAINED_DIR}") || return 1
+    case "${retained_tmp}" in
+        PUBLISHED) return 0 ;;
+        NEW) ;;
+        /var/lib/.kura-retained.tmp.????????) publishRetainedData "${retained_tmp}"; return $? ;;
+        *) return 1 ;;
+    esac
     retained_tmp=$(mktemp -d "/var/lib/.kura-retained.tmp.XXXXXXXX") || return 1
     for retained_tree in user data packages log; do
         if [ -d "${INSTALL_DIR}/kura/${retained_tree}" ]; then
@@ -110,11 +120,7 @@ function preserveUserData {
     fi
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" archive "${retained_tmp}" || return 1
     removalHome capture "${retained_tmp}" || return 1
-    if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
-        echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
-        rm -rf "${retained_tmp}"
-        return 1
-    fi
+    publishRetainedData "${retained_tmp}"
 }
 
 ##############################################

@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import sys
 import tempfile
@@ -40,6 +41,36 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.registry.chmod(0o640)
         os.chown(self.registry, 0, 1234)
         (framework / 'sibling-install-order.lock').touch(mode=0o600)
+
+    def test_witness_resumes_only_original_unpublished_directory(self):
+        base = self.retained.parent
+        stage = self.retained.rename(base / '.kura-retained.tmp.A1234567')
+        destination = base / 'kura-retained'
+        self.home.JOURNAL_KEY = base / 'journal.key'
+        self.home.JOURNAL_KEY.write_bytes(os.urandom(32))
+        self.home.JOURNAL_KEY.chmod(0o600)
+        fence = base / 'maintenance.json'
+        def select(operation):
+            fence.write_text(json.dumps(dict(id=operation, state='MAINTENANCE', firstAction='remove')))
+        select(self.op)
+        self.assertEqual('NEW', self.home.locate_retention(destination))
+        self.home.capture(stage)
+        self.assertEqual(str(stage), self.home.locate_retention(destination))
+        select(str(uuid.uuid4()))
+        with self.assertRaisesRegex(ValueError, 'no paired installation witness'):
+            self.home.locate_retention(destination)
+        select(self.op)
+        original = stage.rename(base / 'original')
+        shutil.copytree(original, stage)
+        with self.assertRaisesRegex(ValueError, 'staging directory changed'):
+            self.home.locate_retention(destination)
+        shutil.rmtree(stage)
+        original.rename(stage)
+        stage.rename(destination)
+        self.assertEqual('PUBLISHED', self.home.locate_retention(destination))
+        select(str(uuid.uuid4()))
+        with self.assertRaisesRegex(ValueError, 'no paired installation witness'):
+            self.home.locate_retention(destination)
 
     def test_removal_keeps_site_precedence_and_metadata_without_copying_lock(self):
         os.setxattr(self.registry, 'user.site-label', b'order')

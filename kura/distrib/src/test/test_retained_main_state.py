@@ -274,7 +274,12 @@ class RemoveCallbackTest(unittest.TestCase):
                 function = raw[start:end].replace('/var/lib/', str(root / 'var/lib') + '/')
                 function = function.replace('/lib/systemd/system/', str(root / 'lib/systemd/system') + '/')
                 function = function.replace('/etc/kura/', str(root / 'etc/kura') + '/')
-                prelude = '''python3() { return 0; }
+                prelude = '''python3() {
+    if [ "$4" = locate ]; then
+        if [ -d "$5" ]; then echo PUBLISHED; else echo NEW; fi
+    fi
+    return 0
+}
 manageAddonCode() { return 0; }
 cp() {
     case "$2" in */.data) [ "$FAIL_COPY" = 0 ] || return 47;; esac

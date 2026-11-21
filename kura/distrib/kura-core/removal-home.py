@@ -118,6 +118,60 @@ def paired_removal(retained):
     return record, physical, holder
 
 
+def locate_retention(destination):
+    """Find the fully captured directory for the active removal before copying again."""
+    protected(destination.parent, True)
+    fence_path = JOURNAL_KEY.parent / 'maintenance.json'
+    protected(fence_path, False)
+    fence = json.loads(fence_path.read_bytes())
+    operation = str(uuid.UUID(fence['id']))
+    require(fence['state'] == 'MAINTENANCE' and fence['firstAction'] == 'remove' and fence['id'] == operation,
+            'Retention publication requires the active removal')
+    physical = HOME.resolve(strict=True)
+    require(physical.parent == PARENT, 'Different Core installation parent')
+    protected(physical, True)
+    witness = physical / ('.kura-remove-' + operation)
+    published = os.path.lexists(destination)
+    if not os.path.lexists(witness):
+        require(not published and not any(physical.glob('.kura-remove-*')),
+                'Existing removal has no paired installation witness for the active fence')
+        return 'NEW'
+    protected(witness, False)
+    raw = witness.read_bytes()
+    record = json.loads(raw)
+    require(record['operation'] == operation and record['root'] == identity(ROOT)
+            and record['parent'] == identity(PARENT) and record['name'] == physical.name
+            and record['target'] == identity(physical) and record['alias'] == identity(HOME),
+            'Original Core installation differs from its removal witness')
+    if published:
+        stage = destination
+    elif 'stagingName' in record:
+        require(re.fullmatch(r'\.kura-retained\.tmp\.[A-Za-z0-9]{8}', record['stagingName']),
+                'Invalid original retention staging name')
+        stage = destination.parent / record['stagingName']
+    else:
+        # Older package-history witnesses recorded the directory identity only.
+        matches = [p for p in destination.parent.glob('.kura-retained.tmp.????????')
+                   if identity(p) == record.get('retained')]
+        require(len(matches) == 1, 'Cannot identify the original retention staging directory')
+        stage = matches[0]
+    protected(stage, True)
+    require(stage.lstat().st_mode & 0o077 == 0 and identity(stage) == record.get('retained'),
+            'Original retention staging directory changed')
+    saved = stage / 'removal-home.json'
+    protected(saved, False)
+    require(saved.read_bytes() == raw, 'Staged removal record differs from its installation witness')
+    main = stage / 'systemd/main-state.json'
+    protected(main, False)
+    require(json.loads(main.read_bytes())['maintenanceId'] == operation, 'Different retained Main maintenance')
+    if 'packageTag' in record:
+        paired_removal(stage)
+    if published:
+        sync_dir(destination.parent)
+        return 'PUBLISHED'
+    return str(stage)
+
+
 def park(retained):
     record, physical, holder = paired_removal(retained)
     source, saved = physical / 'packages', holder / 'packages'
@@ -158,7 +212,8 @@ def capture(retained):
     no_mounts_below(physical)
     operation = str(uuid.UUID(json.loads((retained / 'systemd/main-state.json').read_bytes())['maintenanceId']))
     record = dict(root=identity(ROOT), parent=identity(PARENT), name=physical.name,
-                  target=identity(physical), alias=identity(HOME), operation=operation)
+                  target=identity(physical), alias=identity(HOME), operation=operation,
+                  retained=identity(retained), stagingName=retained.name)
     # postinst restores this file from the same relative path for upgrades and
     # retained reinstalls. The lock belongs to the current framework directory.
     framework = physical / 'framework'
@@ -247,5 +302,7 @@ if __name__ == '__main__':
         protected(path, False)
         if 'packageTag' in json.loads(path.read_bytes()):
             (park if action == 'park-if-recorded' else purge_packages)(retained)
+    elif action == 'locate':
+        print(locate_retention(retained))
     else:
-        {'capture': capture, 'remove': remove, 'check-resume': paired_removal}[action](retained)
+        {'capture': capture, 'remove': remove}[action](retained)
