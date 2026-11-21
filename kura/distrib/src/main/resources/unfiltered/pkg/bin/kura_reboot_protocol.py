@@ -77,14 +77,14 @@ class RebootSender:
         completed = self.root / 'completed'
         if not os.path.lexists(completed):
             completed.mkdir(mode=0o700)
-            sync(self.root)
         directory(completed, self.owner)
+        sync(self.root)
         record = dict(schema=1, request=pending, result=result)
         target = completed / (pending['requestId'] + '.json')
         if not os.path.lexists(target):
             create(target, record)
         else:
-            old = decode(read(target, self.owner))
+            old = decode(read(target, self.owner, durable=True))
             require(set(old) == set(record) and type(old['schema']) is int and old['schema'] == 1
                     and old['request'] == pending and type(old['result']) is dict, 'UNRESOLVED_LOCAL_RECEIPT')
             recorded_boot = identifier(old['result'].get('observedBootId'))
@@ -93,6 +93,7 @@ class RebootSender:
             require(all(old['result'].get(key) == value for key, value in result.items() if key != 'observedBootId')
                     and (result['state'] == 'FAILED' or recorded_boot != pending['bootId']),
                     'UNRESOLVED_LOCAL_RECEIPT')
+            sync(completed)
         require(read(path, self.owner) == encode(pending), 'UNRESOLVED_LOCAL_INTENT')
         path.unlink()
         sync(self.root)

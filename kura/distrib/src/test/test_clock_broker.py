@@ -108,6 +108,30 @@ class ClockBrokerTest(unittest.TestCase):
     def sender(self, exchange=None):
         return client.Client(self.data, exchange=exchange or self.exchange, policy=self.policy)
 
+    def test_completed_directory_sync_failure_keeps_same_clock_operation(self):
+        completed = self.data / 'clock-broker' / 'completed'
+        pending = completed.parent / 'pending.json'
+        fsync = os.fsync
+
+        def fail_completed_sync(fd):
+            if completed.exists() and os.path.samestat(os.fstat(fd), completed.stat()):
+                raise OSError('completed directory fsync interrupted')
+            fsync(fd)
+
+        with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()):
+            with mock.patch('os.fsync', side_effect=fail_completed_sync):
+                with self.assertRaisesRegex(OSError, 'completed directory fsync interrupted'):
+                    self.sender().submit('adjust-realtime', 500)
+                original = pending.read_bytes()
+                with self.assertRaisesRegex(OSError, 'completed directory fsync interrupted'):
+                    self.sender().submit('adjust-realtime', 500)
+                self.assertEqual(original, pending.read_bytes())
+            result = self.sender().submit('adjust-realtime', 500)
+        self.assertEqual(json.loads(original)['requestId'], result['requestId'])
+        self.assertEqual('APPLIED', result['state'])
+        self.assertFalse(pending.exists())
+        self.assertEqual(1, len(self.writes))
+
     def test_purge_restores_original_sender_receipt_without_actuation(self):
         with mock.patch.object(client, 'caller_uid', return_value=os.geteuid()):
             original = self.sender().submit('adjust-realtime', 500)

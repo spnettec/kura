@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: EPL-2.0
 import hashlib
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 BIN = Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'
 sys.path.insert(0, str(BIN))
@@ -328,6 +329,30 @@ RebootSender(sys.argv[3], intent['namespace'], intent['cohortSha256'], exchange,
             self.new_sender(other).submit()
         other.assert_called_once_with(dict(schema=1, action='context'))
         self.assertEqual(before, self.pending_hash())
+        self.dispatch.assert_called_once_with()
+
+    def test_failed_receipt_fsync_keeps_original_reboot_pending_on_retry(self):
+        original = self.new_sender().submit()
+        self.boot = NEXT_BOOT
+        target = self.local / 'completed' / (original['requestId'] + '.json')
+        pending = self.pending_hash()
+        fsync = os.fsync
+
+        def fail_receipt_sync(fd):
+            if target.exists() and os.path.samestat(os.fstat(fd), target.stat()):
+                raise OSError('receipt fsync interrupted')
+            fsync(fd)
+
+        with patch('os.fsync', side_effect=fail_receipt_sync):
+            for _ in range(2):
+                with self.assertRaisesRegex(OSError, 'receipt fsync interrupted'):
+                    self.new_sender().submit()
+                self.assertEqual(pending, self.pending_hash())
+        receipt = target.read_bytes()
+        inode = target.stat().st_ino
+        self.assertEqual(original['requestId'], self.new_sender().submit()['requestId'])
+        self.assertEqual((receipt, inode), (target.read_bytes(), target.stat().st_ino))
+        self.assertFalse((self.local / 'pending.json').exists())
         self.dispatch.assert_called_once_with()
 
     def test_sender_retains_first_completed_observation_if_unlink_is_interrupted(self):

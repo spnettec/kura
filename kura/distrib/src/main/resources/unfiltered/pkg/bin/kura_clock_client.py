@@ -84,12 +84,14 @@ class Client:
     def finish(self, pending, result):
         completed = self.root / 'completed'
         if not os.path.lexists(completed):
-            completed.mkdir(mode=0o700); sync(self.root)
+            completed.mkdir(mode=0o700)
         directory(completed, self.owner)
+        sync(self.root)
         value = dict(schema=1, command=pending, result=result)
         path = completed / (pending['requestId'] + '.json')
         if os.path.lexists(path):
-            require(read(path, self.owner) == encode(value), 'UNRESOLVED_LOCAL_RECEIPT')
+            require(read(path, self.owner, durable=True) == encode(value), 'UNRESOLVED_LOCAL_RECEIPT')
+            sync(completed)
         else:
             create(path, value)
         require(read(self.root / 'pending.json', self.owner) == encode(pending), 'UNRESOLVED_LOCAL_INTENT')

@@ -151,7 +151,7 @@ def directory(path, owner, mode=0o700):
             and stat.S_IMODE(metadata.st_mode) == mode, 'UNSAFE_STATE')
 
 
-def read(path, owner, mode=0o600, maximum=MAX_BYTES):
+def read(path, owner, mode=0o600, maximum=MAX_BYTES, *, durable=False):
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
     try:
         before = os.fstat(fd)
@@ -159,6 +159,8 @@ def read(path, owner, mode=0o600, maximum=MAX_BYTES):
                 and stat.S_IMODE(before.st_mode) == mode and before.st_size <= maximum, 'UNSAFE_STATE')
         with os.fdopen(os.dup(fd), 'rb') as source:
             value = source.read(maximum + 1)
+        if durable:
+            os.fsync(fd)
         require(len(value) == before.st_size and identity(before) == identity(os.fstat(fd))
                 == identity(path.lstat()), 'UNSAFE_STATE')
         return value
