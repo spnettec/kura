@@ -18,6 +18,9 @@ PARENT = Path('/opt/eclipse')
 HOME = PARENT / 'kura'
 ROOT = Path('/')
 JOURNAL_KEY = Path('/var/lib/kura-key-service/journal.key')
+GENERATION_DROPIN = Path('/etc/systemd/system/kura.service.d/40-kura-key-generations.conf')
+GENERATION_LAUNCHERS = ('start_kura.sh', 'start_kura_background.sh', 'start_kura_debug.sh')
+GENERATION_TAG = b'kura-core-retained-generation-v1\0'
 
 
 def require(ok, message):
@@ -64,13 +67,84 @@ def no_mounts_below(path):
         require(mount != path and path not in mount.parents, f'Installation still contains a mount: {mount}')
 
 
-def removal_tag(record):
+def removal_tag(record, context=b'kura-core-removal-packages-v1\0'):
     protected(JOURNAL_KEY, False)
     require(JOURNAL_KEY.stat().st_mode & 0o077 == 0, 'Unsafe removal journal key')
     key = JOURNAL_KEY.read_bytes()
     require(len(key) == 32, 'Invalid removal journal key')
     payload = json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')
-    return hmac.new(key, b'kura-core-removal-packages-v1\0' + payload, hashlib.sha256).hexdigest()
+    return hmac.new(key, context + payload, hashlib.sha256).hexdigest()
+
+
+def generation_input(path, limit=65536):
+    protected(path, False)
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        require(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_uid == 0
+                and not before.st_mode & 0o7022 and 0 < before.st_size <= limit,
+                'Unsafe published-generation file')
+        raw = stream.read(limit + 1)
+        after = path.lstat()
+        require(len(raw) == before.st_size and (before.st_dev, before.st_ino, before.st_ctime_ns)
+                == (after.st_dev, after.st_ino, after.st_ctime_ns), 'Published-generation file changed')
+        return raw
+
+
+def retained_generation(retained, operation):
+    current = JOURNAL_KEY.parent / 'generation-current.json'
+    saved = retained / 'published-generation'
+    if not os.path.lexists(current):
+        require(not os.path.lexists(saved) and not os.path.lexists(GENERATION_DROPIN),
+                'Retained generation requires its original publication')
+        return
+    protected(saved, True)
+    require(stat.S_IMODE(saved.lstat().st_mode) == 0o700 and {p.name for p in saved.iterdir()} ==
+            {*GENERATION_LAUNCHERS, 'receipt.json'}, 'Incomplete retained generation')
+    require(all(stat.S_IMODE(p.lstat().st_mode) == 0o600 for p in saved.iterdir())
+            and stat.S_IMODE(GENERATION_DROPIN.lstat().st_mode) == 0o400,
+            'Unsafe retained generation permissions')
+    receipt = json.loads(generation_input(saved / 'receipt.json', 4096))
+    tag = receipt.pop('tag')
+    require(hmac.compare_digest(tag, removal_tag(receipt, GENERATION_TAG))
+            and receipt['operation'] == operation and receipt['root'] == identity(ROOT)
+            and receipt['retained'] == identity(retained), 'Retained generation belongs to another removal')
+    raw = generation_input(current, 8192)
+    publication = json.loads(raw)
+    digest = lambda data: hashlib.sha256(data).hexdigest()
+    hashes = {name: digest(generation_input(saved / name)) for name in GENERATION_LAUNCHERS}
+    binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                   manifestSha256=receipt['manifestSha256'], launcherSha256s=hashes)
+    require(receipt['publicationSha256'] == digest(raw) and receipt['publicationId'] == publication['operationId']
+            and receipt['dropinSha256'] == digest(generation_input(GENERATION_DROPIN))
+            and receipt['cohortSha256'] == publication['cohortSha256']
+            and receipt['cohortSha256'] == digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')),
+            'Retained launchers or credentials differ from the original publication')
+    return receipt
+
+
+def capture_generation(physical, retained, operation):
+    current = JOURNAL_KEY.parent / 'generation-current.json'
+    if not os.path.lexists(current):
+        retained_generation(retained, operation)
+        return
+    # prerm has verified the complete installed reader cohort and original keys
+    # under this removal fence. Persist only the three site-adjusted launchers.
+    raw = generation_input(current, 8192)
+    publication = json.loads(raw)
+    saved = retained / 'published-generation'
+    saved.mkdir(mode=0o700)
+    for name in GENERATION_LAUNCHERS:
+        write_new(saved / name, generation_input(physical / 'bin' / name))
+    digest = lambda data: hashlib.sha256(data).hexdigest()
+    receipt = dict(schema=1, operation=operation, root=identity(ROOT), retained=identity(retained),
+                   publicationId=publication['operationId'], publicationSha256=digest(raw),
+                   cohortSha256=publication['cohortSha256'],
+                   manifestSha256=digest(generation_input(physical / 'libexec/key-backup/manifest.json')),
+                   dropinSha256=digest(generation_input(GENERATION_DROPIN)))
+    receipt['tag'] = removal_tag(receipt, GENERATION_TAG)
+    write_new(saved / 'receipt.json', json.dumps(receipt, sort_keys=True, separators=(',', ':')).encode('ascii'))
+    retained_generation(retained, operation)
+    sync_dir(retained)
 
 
 def capture_history(physical, retained, record):
@@ -164,6 +238,7 @@ def locate_retention(destination):
     main = stage / 'systemd/main-state.json'
     protected(main, False)
     require(json.loads(main.read_bytes())['maintenanceId'] == operation, 'Different retained Main maintenance')
+    retained_generation(stage, operation)
     if 'packageTag' in record:
         paired_removal(stage)
     if published:
@@ -231,6 +306,7 @@ def capture(retained):
             with destination.open('rb') as stream:
                 os.fsync(stream.fileno())
             sync_dir(saved)
+    capture_generation(physical, retained, operation)
     capture_history(physical, retained, record)
     raw = json.dumps(record, sort_keys=True).encode()
     write_new(retained / 'removal-home.json', raw)

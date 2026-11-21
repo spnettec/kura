@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: EPL-2.0
 """Run against a private directory on Linux. No live installation is used."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -141,6 +142,42 @@ class CoreRemovalHomeTest(unittest.TestCase):
         config.retire_removed_packages(self.op, self.retained, secret)
         config.retire_removed_packages(self.op, self.retained, secret)
         self.assertFalse(holder.exists())
+
+    def test_published_launchers_survive_staging_rename_and_require_original_receipt(self):
+        digest = lambda raw: hashlib.sha256(raw).hexdigest()
+        journal = self.retained.parent / 'journal'
+        journal.mkdir(mode=0o700)
+        self.home.JOURNAL_KEY = journal / 'journal.key'
+        self.home.write_new(self.home.JOURNAL_KEY, os.urandom(32))
+        self.home.GENERATION_DROPIN = journal / 'dropin'
+        self.home.write_new(self.home.GENERATION_DROPIN, b'fixture drop-in')
+        self.home.GENERATION_DROPIN.chmod(0o400)
+        manifest = self.target / 'libexec/key-backup/manifest.json'
+        manifest.parent.mkdir(parents=True)
+        self.home.write_new(manifest, b'fixture manifest')
+        scripts = self.target / 'bin'
+        scripts.mkdir()
+        for name in self.home.GENERATION_LAUNCHERS:
+            self.home.write_new(scripts / name, name.encode())
+        binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                       manifestSha256=digest(manifest.read_bytes()),
+                       launcherSha256s={p.name:digest(p.read_bytes()) for p in scripts.iterdir()})
+        pub = dict(operationId=str(uuid.uuid4()), cohortSha256=digest(json.dumps(
+            binding, sort_keys=True, separators=(',', ':')).encode()))
+        self.home.write_new(journal / 'generation-current.json', json.dumps(pub).encode())
+        self.home.capture_generation(self.target, self.retained, self.op)
+        published = self.retained.with_name('published')
+        self.retained.rename(published)
+        saved = self.home.retained_generation(published, self.op)
+        self.assertEqual(pub['cohortSha256'], saved['cohortSha256'])
+        with self.assertRaisesRegex(ValueError, 'another removal'):
+            self.home.retained_generation(published, str(uuid.uuid4()))
+        shutil.copytree(published, self.retained)
+        with self.assertRaisesRegex(ValueError, 'another removal'):
+            self.home.retained_generation(self.retained, self.op)
+        (published / 'published-generation/start_kura.sh').write_bytes(b'different')
+        with self.assertRaisesRegex(ValueError, 'original publication'):
+            self.home.retained_generation(published, self.op)
 
     def test_purge_checks_parked_identity_before_deleting(self):
         site = self.target / 'packages'

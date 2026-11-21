@@ -80,6 +80,9 @@ function preserveUserData {
         /var/lib/.kura-retained.tmp.????????) publishRetainedData "${retained_tmp}"; return $? ;;
         *) return 1 ;;
     esac
+    if [ -e /var/lib/kura-key-service/generation-current.json ] || [ -L /var/lib/kura-key-service/generation-current.json ]; then
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare package || return 1
+    fi
     retained_tmp=$(mktemp -d "/var/lib/.kura-retained.tmp.XXXXXXXX") || return 1
     for retained_tree in user data packages log; do
         if [ -d "${INSTALL_DIR}/kura/${retained_tree}" ]; then
