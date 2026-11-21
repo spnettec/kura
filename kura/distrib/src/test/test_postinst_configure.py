@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 import errno
 import hashlib
+import hmac
 import importlib.util
 import os
 import signal
@@ -151,6 +152,55 @@ class ConfigureTest(unittest.TestCase):
         self.assertEqual(before, (self.stage/'intent.json').read_bytes())
         self.assertEqual(self.fence, self.policy.fence())
         self.pairing.assert_not_called()
+
+    def test_published_launcher_restore_resumes_before_layout_intent(self):
+        controller = self.configure
+        physical = controller.physical
+        capture_dir = controller.copies['upgrade']
+        old = capture_dir / '.old-home'
+        (old / 'bin').mkdir(mode=0o700, parents=True)
+        capture_dir.chmod(0o700)
+        secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
+        original = self.fence['id']
+        capture = dict(root=controller.package_identity(self.policy.root), stage=controller.package_identity(capture_dir),
+                       source=dict(name=physical.name, **controller.package_identity(old)), maintenanceId=original)
+        capture['tag'] = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + lifecycle.encoded(capture), hashlib.sha256).hexdigest()
+        self.policy.create(capture_dir / '.capture.json', lifecycle.encoded(capture))
+        current = self.policy.state / 'generation-current.json'
+        names = ('start_kura.sh', 'start_kura_background.sh', 'start_kura_debug.sh')
+        templates = physical / 'libexec/key-backup/launchers'
+        templates.mkdir(parents=True, exist_ok=True)
+        for name in names:
+            (templates / name).write_bytes(b'example -Xms1024m -Xmx1024m')
+            (physical / 'bin' / name).write_bytes((templates / name).read_bytes())
+            (old / 'bin' / name).write_bytes(b'example -Xms256m -Xmx1024m')
+        def binding(home):
+            hashes = {n: hashlib.sha256((home / 'bin' / n).read_bytes()).hexdigest() for n in names}
+            value = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                         manifestSha256=self.manifest_sha, launcherSha256s=hashes)
+            return dict(value, cohortSha256=hashlib.sha256(lifecycle.encoded(value)).hexdigest())
+        self.policy.create(current, lifecycle.encoded(dict(operationId=original, cohortSha256=binding(old)['cohortSha256'])))
+        self.pairing.side_effect = lambda: binding(physical)
+        controller.apply('begin')
+        replace = os.replace
+        def interrupt(source, dest):
+            if dest.name == names[1]:
+                raise InterruptedError()
+            replace(source, dest)
+        with patch.object(self.policy, 'check_extended_journal'), patch.object(lifecycle, 'validate_publication', side_effect=lambda v:v), patch.object(lifecycle, 'archive_entry'):
+            last = old / 'bin' / names[-1]
+            last.write_bytes(last.read_bytes() + b'changed')
+            with self.assertRaisesRegex(lifecycle.Refused, 'Retained launchers differ'):
+                controller.run_step('layout', lambda: self.fail('Unexpected dispatch'))
+            self.assertEqual((templates / names[0]).read_bytes(), (physical / 'bin' / names[0]).read_bytes())
+            last.write_bytes((old / 'bin' / names[0]).read_bytes())
+            with patch.object(configure.os, 'replace', side_effect=interrupt), self.assertRaises(InterruptedError):
+                controller.run_step('layout', lambda: self.fail('Unexpected dispatch'))
+            self.assertFalse((self.stage / 'setup-layout-intent.json').exists())
+            self.assertEqual((old / 'bin' / names[0]).read_bytes(), (physical / 'bin' / names[0]).read_bytes())
+            self.assertEqual((templates / names[1]).read_bytes(), (physical / 'bin' / names[1]).read_bytes())
+            controller.run_step('layout', lambda: self.assertEqual(binding(old), binding(physical)))
+            self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
 
     def test_broker_quiescence_precedes_the_original_upgrade_dispatch(self):
         self.configure.copies['upgrade'].mkdir(mode=0o700)

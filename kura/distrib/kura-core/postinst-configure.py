@@ -196,6 +196,8 @@ class Configure:
                 return
             require(step == INSTALLER_STEPS[len(completed)], 'Out-of-order installer step')
             policy.no_overrides()
+            if step == 'layout' and recovery['mode'] == 'upgrade':
+                self.restore_published_launchers(original, secret)
             if step != 'layout':
                 self.paired_home()
             if step == 'brokers' and prepare_brokers is not None:
@@ -244,6 +246,71 @@ class Configure:
         recorded = dict(zip(('device', 'inode'), capture['packages'], strict=True))
         return parked, capture['holderIdentity'], recorded, tag
 
+    def upgrade_capture(self, original, copy, secret):
+        require = self.api.require
+        identity = self.package_identity
+        capture = self.api.decode(self.policy.read(copy / '.capture.json', limit=4096))
+        tag = capture.pop('tag')
+        expected = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(capture),
+                            hashlib.sha256).hexdigest()
+        require(hmac.compare_digest(tag, expected) and capture['maintenanceId'] == original
+                and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
+                'Deployment history requires the original upgrade capture')
+        return capture, tag
+
+    def restore_published_launchers(self, original, secret):
+        policy, require = self.policy, self.api.require
+        current = policy.state / 'generation-current.json'
+        if not os.path.lexists(current):
+            return
+        self.paired_home()
+        copy = self.copies['upgrade']
+        capture, _ = self.upgrade_capture(original, copy, secret)
+        parked = copy / '.old-home'
+        require(capture['source'] == dict(name=self.physical.name, **self.package_identity(parked)),
+                'Published launchers require their original upgrade home')
+        policy.check_extended_journal()
+        publication = self.api.validate_publication(self.api.decode(policy.read(current, 8192)))
+        self.api.archive_entry(policy, dict(directory='operations', operationId=publication['operationId']), secret)
+        binding = policy.generation_assets()
+        require(binding['manifestSha256'] == self.binding['manifestSha256'],
+                'Published launchers require a paired incoming manifest')
+
+        # After a partial write each destination must still be either the exact
+        # packaged template or the exact launcher bound to the publication.
+        replacements = {}
+        original_hashes = {}
+        for name in binding['launcherSha256s']:
+            target = self.physical / 'bin' / name
+            saved = policy.read(parked / 'bin' / name, private=False)
+            actual = policy.read(target, private=False)
+            template = policy.read(self.physical / 'libexec/key-backup/launchers' / name, private=False)
+            require(actual in (saved, template), 'Unexpected incoming published launcher')
+            original_hashes[name] = hashlib.sha256(saved).hexdigest()
+            if saved != actual:
+                replacements[target] = saved
+        original_binding = dict(binding, launcherSha256s=original_hashes)
+        del original_binding['cohortSha256']
+        require(hashlib.sha256(self.api.encoded(original_binding)).hexdigest() == publication['cohortSha256'],
+                'Retained launchers differ from the published generation')
+
+        # Stage inside the authenticated recovery copy on the runtime filesystem.
+        # Keep the originals intact until the normal postinst retires that copy.
+        with tempfile.TemporaryDirectory(prefix='.launcher-', dir=copy) as stage:
+            for target, saved in replacements.items():
+                info = target.lstat()
+                pending = Path(stage) / target.name
+                with pending.open('xb') as stream:
+                    stream.write(saved)
+                    stream.flush()
+                    os.fchown(stream.fileno(), info.st_uid, info.st_gid)
+                    os.fchmod(stream.fileno(), stat.S_IMODE(info.st_mode))
+                    os.fsync(stream.fileno())
+                os.replace(pending, target)
+        policy.sync(self.physical / 'bin')
+        require(policy.generation_assets()['cohortSha256'] == publication['cohortSha256'],
+                'Restored launchers differ from the published generation')
+
     def restore_package_history(self, original, mode, secret):
         if mode not in self.copies:
             return 'COPY'
@@ -261,13 +328,7 @@ class Configure:
             # Older upgrade installers may have only a staged copy.
             if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
                 return 'COPY'
-            capture = self.api.decode(self.policy.read(copy / '.capture.json', limit=4096))
-            tag = capture.pop('tag')
-            expected = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(capture),
-                                hashlib.sha256).hexdigest()
-            require(hmac.compare_digest(tag, expected) and capture['maintenanceId'] == original
-                    and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
-                    'Deployment history requires the original upgrade capture')
+            capture, tag = self.upgrade_capture(original, copy, secret)
             if 'packageHistoryDirectory' not in capture:
                 return 'COPY'
             parked = copy / '.old-home'
