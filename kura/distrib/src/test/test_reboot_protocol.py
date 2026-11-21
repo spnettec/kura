@@ -331,6 +331,29 @@ RebootSender(sys.argv[3], intent['namespace'], intent['cohortSha256'], exchange,
         self.assertEqual(before, self.pending_hash())
         self.dispatch.assert_called_once_with()
 
+    def test_successor_sender_only_queries_original_unknown_after_boot_change(self):
+        self.dispatch.return_value = ('UNKNOWN', 'DISPATCH_UNCONFIRMED')
+        first = self.new_sender().submit()
+        pending = self.pending_hash()
+        operation = self.root / 'operations' / first['requestId']
+        receipt = (operation / 'result.json').read_bytes()
+
+        self.boot = NEXT_BOOT
+        self.protocol = self.new_protocol(self.new_journal(cohort=NEW_COHORT))
+        self.sent.clear()
+        observed = self.new_sender(cohort=NEW_COHORT).submit()
+
+        self.assertEqual(dict(first, currentRequest=False, observedBootId=NEXT_BOOT), observed)
+        self.assertEqual(('UNKNOWN', 'DISPATCH_UNCONFIRMED'), (observed['state'], observed['reason']))
+        self.assertEqual([dict(schema=1, action='context'),
+                          dict(schema=1, action='status', namespace=NAMESPACE,
+                               requestId=first['requestId'], requestSha256=pending)], self.sent)
+        self.assertEqual(pending, self.pending_hash())
+        self.assertEqual(receipt, (operation / 'result.json').read_bytes())
+        self.assertEqual([operation], list(operation.parent.iterdir()))
+        self.assertFalse((self.local / 'completed').exists())
+        self.dispatch.assert_called_once_with()
+
     def test_failed_receipt_fsync_keeps_original_reboot_pending_on_retry(self):
         original = self.new_sender().submit()
         self.boot = NEXT_BOOT
