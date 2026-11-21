@@ -1,0 +1,13 @@
+[Unit]
+Description=Kura firewall publication socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-firewall-publish.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+Accept=yes
+MaxConnections=4
+Backlog=4
+RemoveOnStop=yes

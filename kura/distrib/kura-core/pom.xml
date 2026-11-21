@@ -138,10 +138,18 @@
                                          failOnNoReplacements="true"/>
                                 <exec executable="python3" failonerror="true">
                                     <arg value="-B"/>
+                                    <arg value="${project.basedir}/build-firewall-worker.py"/>
+                                    <arg value="${deb.arch}"/>
+                                    <arg value="${project.build.directory}/native"/>
+                                    <arg value="${settings.offline}"/>
+                                </exec>
+                                <exec executable="python3" failonerror="true">
+                                    <arg value="-B"/>
                                     <arg value="${project.basedir}/prepare-key-service.py"/>
                                     <arg value="${project.build.directory}/${dist.assembly.name}"/>
                                     <arg value="${project.basedir}/../kura-key-crypto/target"/>
                                     <arg value="${project.basedir}/../../tools/kura-offline-recovery/target"/>
+                                    <arg value="${deb.arch}"/>
                                 </exec>
                             </target>
                         </configuration>
@@ -351,6 +359,51 @@
                                         <prefix>/usr/libexec/kura-firewall-tables</prefix>
                                         <filemode>644</filemode>
                                         <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-publish.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-publish@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/firewall-publish</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-firewall-publish</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/native/worker-${deb.arch}</src>
+                                    <type>file</type>
+                                    <dst>/usr/libexec/kura-firewall-publish/worker</dst>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <filemode>755</filemode>
                                         <user>root</user>
                                         <group>root</group>
                                     </mapper>

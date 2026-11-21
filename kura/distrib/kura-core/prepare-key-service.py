@@ -18,6 +18,7 @@ import kura_reboot_broker as reboot_broker
 import kura_journal_export as journal_export
 import kura_ownership_markers as ownership_markers
 import kura_firewall_tables as firewall_tables
+import kura_firewall_publish as firewall_publish
 import kura_modem_driver as modem_driver
 import kura_bind_service as bind_service
 import kura_dhcp_service as dhcp_service
@@ -241,7 +242,7 @@ def prepare_clock_service(assembly):
     return clock_broker.package_cohort(assembly)
 
 
-def prepare_broker_packages(assembly):
+def prepare_broker_packages(assembly, architecture):
     # These flat directories are generated exclusively by this build.
     # Each builder writes its manifest into a fresh directory.
     libexec = assembly / 'libexec'
@@ -253,6 +254,8 @@ def prepare_broker_packages(assembly):
         'journal-export': journal_export.package_cohort,
         'ownership-markers': ownership_markers.package_cohort,
         'firewall-tables': firewall_tables.package_cohort,
+        'firewall-publish': lambda home: firewall_publish.package_cohort(
+            home, home.parent / 'native' / ('worker-' + architecture), architecture),
         'command-executor': command_executor.package_cohort,
         'modem-driver': modem_driver.package_cohort,
         'bind-service': bind_service.package_cohort,
@@ -272,6 +275,29 @@ def prepare_broker_packages(assembly):
                 entry.unlink()
             destination.rmdir()
         build(assembly)
+
+
+def embed_firewall_guard(directory, source):
+    guard = source.read_text().rstrip()
+    compile(guard, str(source), 'exec')
+    for hook in ('preinst', 'prerm', 'postinst', 'postrm'):
+        control = directory / hook
+        first, _, body = control.read_text().partition('\n')
+        require(first == '#!/bin/bash' and 'KURA_FIREWALL_MAINTENANCE' not in body)
+        gate = f'''if kura_firewall_result=$(/usr/bin/python3 -I -B - {hook} "${{1:-}}" <<'KURA_FIREWALL_MAINTENANCE'
+{guard}
+KURA_FIREWALL_MAINTENANCE
+); then
+    case "$kura_firewall_result" in
+        preserve) exit 0 ;;
+        '') ;;
+        *) exit 1 ;;
+    esac
+else
+    exit "$?"
+fi
+'''
+        control.write_text(f'{first}\n{gate}\n{body}')
 
 
 def embed_clock_guard(control):
@@ -310,9 +336,9 @@ def embed_configure_phases(control, assembly):
 
 
 if __name__ == "__main__":
-    require(len(sys.argv) == 4)
+    require(len(sys.argv) == 5)
     prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
-    prepare_broker_packages(Path(sys.argv[1]))
+    prepare_broker_packages(Path(sys.argv[1]), sys.argv[4])
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
     embed_package_helper(Path(sys.argv[1]).parent/'filtered-control/preinst',
@@ -331,5 +357,7 @@ if __name__ == "__main__":
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
+    target = Path(sys.argv[1]).parent
+    embed_firewall_guard(target / 'filtered-control', target / 'native/package-maintenance.py')
     # Bind the finalized installed control files. The preinst itself is bound at runtime.
     embed_upgrade_copy(Path(sys.argv[1]).parent/'filtered-control/preinst', Path(sys.argv[1]))

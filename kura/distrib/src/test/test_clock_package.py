@@ -59,11 +59,17 @@ class ClockPackageTest(unittest.TestCase):
         for name in ('bin', 'install'):
             shutil.copytree(SOURCE / 'unfiltered/pkg' / name, home / name, dirs_exist_ok=True)
         shutil.copyfile(SOURCE / 'filtered/pkg/install/kura.service', home / 'install/kura.service')
-        builder.prepare_broker_packages(home)
+        native = home.parent / 'native'
+        native.mkdir()
+        header = bytearray(64)
+        header[:7] = b'\x7fELF\x02\x01\x01'
+        header[18:20] = (183).to_bytes(2, 'little')
+        (native / 'worker-arm64').write_bytes(header)
+        builder.prepare_broker_packages(home, 'arm64')
         libexec = home / 'libexec'
         manifests = sorted(libexec.glob('*/cohort.json'))
         self.assertEqual({'clock-broker', 'reboot-broker', 'journal-export', 'ownership-markers',
-                          'firewall-tables', 'command-executor', 'modem-driver', 'bind-service',
+                          'firewall-tables', 'firewall-publish', 'command-executor', 'modem-driver', 'bind-service',
                           'dhcp-service', 'modem-reset'}, {manifest.parent.name for manifest in manifests})
         original = (home / broker.COHORT).read_bytes()
         for manifest in manifests:
@@ -73,7 +79,7 @@ class ClockPackageTest(unittest.TestCase):
         (other / 'manifest.json').write_bytes(b'original')
         with (home / broker.HELPERS[0]).open('ab') as stream:
             stream.write(b'\n# Updated build input\n')
-        builder.prepare_broker_packages(home)
+        builder.prepare_broker_packages(home, 'arm64')
         self.assertEqual(manifests, sorted(libexec.glob('*/cohort.json')))
         self.assertFalse(list(libexec.glob('*/retired-unit.service')))
         self.assertNotEqual(original, (home / broker.COHORT).read_bytes())
@@ -84,7 +90,7 @@ class ClockPackageTest(unittest.TestCase):
         marker.touch()
         (manifests[-1].parent / 'foreign-output').symlink_to(other)
         with self.assertRaises(RuntimeError):
-            builder.prepare_broker_packages(home)
+            builder.prepare_broker_packages(home, 'arm64')
         self.assertTrue(marker.is_file())
         self.assertEqual(b'original', (other / 'manifest.json').read_bytes())
 
