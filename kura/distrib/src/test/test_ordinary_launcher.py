@@ -112,6 +112,34 @@ Path(os.environ['YOFC_LAUNCH_ARGUMENTS']).write_text(json.dumps([os.getpid(), fd
                 self.assertEqual(pidfile.read_text(), str(pid) + '\n')
                 self.assertTrue(closed)
 
+    def test_background_console_captures_both_streams_and_closes_extra_descriptor(self):
+        recorder = self.fake / 'java'
+        recorder.write_text('#!' + shutil.which('python3') + '\n' + """import os
+from pathlib import Path
+try:
+    os.fstat(4)
+except OSError:
+    os.write(1, b'console output\\n')
+    os.write(2, b'console error\\n')
+    Path(os.environ['YOFC_LAUNCH_ARGUMENTS']).write_text('true')
+""")
+        result = self.launch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(self.args())
+        log = (self.root / 'kura-console.log').read_text()
+        self.assertIn('console output\n', log)
+        self.assertIn('console error\n', log)
+
+    def test_console_open_failure_preserves_previous_pid(self):
+        pidfile = self.root / 'kura.pid'
+        pidfile.write_text('previous pid record\n')
+        (self.root / 'kura-console.log').mkdir()
+        result = self.launch()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(pidfile.read_text(), 'previous pid record\n')
+        self.assertFalse((self.root / 'lease-entry-called').exists())
+        self.assertFalse(self.record.exists())
+
     def test_pid_open_failure_does_not_start_detached_process(self):
         # A directory makes the PID destination unwritable even when tests run as root.
         (self.root / 'kura.pid').mkdir()

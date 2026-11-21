@@ -169,6 +169,14 @@ configure_runtime() {
         timedatectl set-ntp false
     fi
 
+    # Main writes these files as kurad. Keep site-owned files and aliases on upgrades.
+    for log_file in /var/log/kura.log /var/log/kura-audit.log /var/log/kura-console.log; do
+        if [ -e "${log_file}" ] || [ -L "${log_file}" ]; then
+            continue
+        fi
+        printf 'f %s :0600 :kurad :kurad -\n' "${log_file}" | systemd-tmpfiles --create - || exit 1
+    done
+
     # set up logrotate - no need to restart as it is a cronjob
     cp "${INSTALL_DIR}/kura/install/kura.logrotate" /etc/logrotate-kura.conf || exit 1
 

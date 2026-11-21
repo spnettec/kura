@@ -34,6 +34,8 @@ python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configur
 KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
 
 if [ -z "$KURA_RUNNING" ] ; then
+    # A failed console redirection in the child would publish the PID of a dead process.
+    exec 4>>/var/log/kura-console.log || exit 1
     # Open the PID file before starting a process that maintenance must be able to find.
     exec 3>/var/run/kura.pid || exit 1
   nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
@@ -57,9 +59,9 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Djdk.tls.trustNameService=true \
         -Dtruffle.UseFallbackRuntime=true \
         -Dosgi.console=5002 \
-        -Declipse.consoleLog=true >> /var/log/kura-console.log 2>> /var/log/kura-console.log \
+        -Declipse.consoleLog=true \
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
-        -configuration /tmp/.kura/configuration 3>&- &
+        -configuration /tmp/.kura/configuration >&4 2>&1 4>&- 3>&- &
 
     KURA_PID=$!
     if ! printf '%s\n' "$KURA_PID" >&3; then
@@ -68,7 +70,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         exit 1
     fi
     exec 3>&-
-    echo "Kura Started (pid=$KURA_PID) ..." >> /var/log/kura-console.log
+    echo "Kura Started (pid=$KURA_PID) ..." >&4
 else
     echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
 fi
