@@ -105,10 +105,8 @@ public class ConfigurationServiceJunitTest {
     private static CryptoService streamCryptoService() {
         CryptoService crypto = mock(CryptoService.class);
         try {
-            doAnswer(invocation -> {
-                invocation.getArgument(0, InputStream.class).transferTo(invocation.getArgument(1, OutputStream.class));
-                return null;
-            }).when(crypto).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+            when(crypto.aesEncryptingStream(ArgumentMatchers.any(OutputStream.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0, OutputStream.class));
             doAnswer(invocation -> {
                 invocation.getArgument(0, InputStream.class).transferTo(invocation.getArgument(1, OutputStream.class));
                 return null;
@@ -1527,7 +1525,7 @@ public class ConfigurationServiceJunitTest {
 
         TestUtil.invokePrivate(cs, "encryptPlainSnapshots");
 
-        verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(1)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
 
         assertTrue(f1.exists(), "snapshot file was created");
 
@@ -1625,7 +1623,7 @@ public class ConfigurationServiceJunitTest {
             assertEquals(KuraErrorCode.IO_ERROR, e.getCode(), "Error code.");
         }
 
-        verify(cryptoServiceMock, times(0)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(0)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
 
         d1.delete();
         d2.delete();
@@ -1680,7 +1678,7 @@ public class ConfigurationServiceJunitTest {
 
         TestUtil.invokePrivate(cs, "writeSnapshot", sid, cfg);
 
-        verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(1)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
 
         File f1 = new File(d1, "snapshot_" + sid + ".xml");
         f1.deleteOnExit();
@@ -1976,7 +1974,7 @@ public class ConfigurationServiceJunitTest {
 
         Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
-        verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(1)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
 
         assertNotNull(sid);
@@ -2056,7 +2054,7 @@ public class ConfigurationServiceJunitTest {
 
         Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
-        verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(1)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
 
         assertNotNull(sid);
@@ -2134,7 +2132,7 @@ public class ConfigurationServiceJunitTest {
 
         Long sid = (Long) TestUtil.invokePrivate(cs, "saveSnapshot", new Class<?>[] { Collection.class }, configs);
 
-        verify(cryptoServiceMock, times(1)).encryptAes(ArgumentMatchers.any(InputStream.class), ArgumentMatchers.any(OutputStream.class));
+        verify(cryptoServiceMock, times(1)).aesEncryptingStream(ArgumentMatchers.any(OutputStream.class));
         verify(systemServiceMock, times(1)).getKuraSnapshotsCount();
 
         assertNotNull(sid);
