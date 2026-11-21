@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: EPL-2.0
+import fcntl
 import hashlib
 import importlib.util
 import os
+import shutil
 from pathlib import Path
 import sys
 import unittest
@@ -39,6 +41,46 @@ class UpgradeCopyTest(unittest.TestCase):
                                    dict(home=self.fixture.physical.name, directories=['install'],
                                         files={'install/payload': (len(payload), hashlib.sha256(payload).hexdigest())},
                                         controls=controls))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux upgrade publication')
+    def test_registered_writer_blocks_capture_and_detach_and_stale_order_is_never_published(self):
+        framework = self.fixture.physical / 'framework'
+        registry = framework / 'sibling-install-order'
+        self.fixture.write(registry, b'deployment\nwires\n')
+        lock = framework / 'sibling-install-order.lock'
+        self.fixture.write(lock, b'')
+        with lock.open('rb') as holder:
+            fcntl.flock(holder, fcntl.LOCK_EX)
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'registry is in use'):
+                self.copy.prepare()
+            self.assertFalse(list(self.copy.base.glob('.kura-preserve.tmp.*')))
+            fcntl.flock(holder, fcntl.LOCK_UN)
+            stage = self.copy.prepare()
+            (stage / 'framework').mkdir()
+            saved = stage / 'framework' / registry.name
+            shutil.copy2(registry, saved)
+            for name in ('kura_encryption_key', 'provisioned.json'):
+                item = self.policy.path('/etc/kura/credentials') / name
+                self.fixture.write(stage / 'encryption' / name, item.read_bytes())
+            registry.write_bytes(b'wires\ndeployment\n')
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'differs from the staged'):
+                self.copy.publish(stage)
+            self.assertFalse(self.copy.destination.exists())
+            shutil.copy2(registry, saved)
+            with patch.object(upgrade.os, 'sync'):
+                self.copy.publish(stage)
+            with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'):
+                fcntl.flock(holder, fcntl.LOCK_EX)
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'registry is in use'):
+                    self.copy.arrange_source(restore=False)
+                fcntl.flock(holder, fcntl.LOCK_UN)
+                registry.write_bytes(b'wires\n')
+                with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'differs from the staged'):
+                    self.copy.arrange_source(restore=False)
+            self.assertTrue(self.original.exists())
+            self.assertFalse((self.copy.destination / '.old-home').exists())
+            self.assertFalse((self.copy.destination / '.payload-issued.json').exists())
+            self.assertEqual(self.fence, self.policy.fence())
 
     def test_retries_only_the_authenticated_unpublished_copy_from_the_intact_source(self):
         partial = self.copy.prepare()

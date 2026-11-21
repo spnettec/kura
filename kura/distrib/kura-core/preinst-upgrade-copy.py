@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: EPL-2.0
 """Publish a complete upgrade source copy under the original maintenance fence."""
+from contextlib import contextmanager
 import ctypes
+import fcntl
 import hashlib
 import hmac
 import os
@@ -94,29 +96,77 @@ class UpgradeCopy:
         self.api.require(self.policy.read(stage / '.capture.json', limit=4096) == self.receipt(stage, binding, secret),
                          'Upgrade staging belongs to another source, package or Root')
 
+    @contextmanager
+    def registry_lock(self, home):
+        framework = home / 'framework'
+        if not os.path.lexists(framework):
+            yield
+            return
+        self.policy.directory(framework)
+        path = framework / 'sibling-install-order.lock'
+        flags = os.O_RDONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        fd = os.open(path, flags, 0o600)
+        try:
+            value = os.fstat(fd)
+            self.api.require(stat.S_ISREG(value.st_mode) and value.st_uid == self.policy.owner
+                             and value.st_nlink == 1 and not value.st_mode & 0o022, 'Unsafe sibling registry lock')
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise self.api.Refused('Sibling registry is in use; preserve the original Core home') from error
+            self.api.require(os.path.samestat(value, path.lstat()), 'Sibling registry lock changed')
+            yield
+        finally:
+            os.close(fd)
+
+    def registry_entry(self, home):
+        framework = home / 'framework'
+        if not os.path.lexists(framework):
+            return None
+        self.policy.directory(framework)
+        path = framework / 'sibling-install-order'
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+        except FileNotFoundError:
+            return None
+        with os.fdopen(fd, 'rb') as stream:
+            value = os.fstat(fd)
+            if not stat.S_ISREG(value.st_mode) or value.st_nlink != 1:
+                raise ValueError('Invalid sibling install-order registry')
+            return (value.st_mode, value.st_uid, value.st_gid, value.st_mtime_ns, hashlib.file_digest(stream, 'sha256').digest())
+
+    def check_registry_copy(self, home, copy):
+        self.api.require(self.registry_entry(home) == self.registry_entry(copy),
+                         'Sibling registry differs from the staged upgrade copy')
+
     def prepare(self):
         with self.policy.locked():
             binding, secret = self.unpublished_binding()
-            for prior in self.base.glob(self.prefix(binding) + '*'):
-                self.policy.directory(prior, private=True)
-                if os.path.lexists(prior / '.capture.json'):
-                    self.attest(prior, binding, secret)
-                    shutil.rmtree(prior)
-            stage = Path(tempfile.mkdtemp(prefix=self.prefix(binding), dir=self.base))
-            pending = stage / '.capture.pending'
-            self.policy.create(pending, self.receipt(stage, binding, secret))
-            pending.rename(stage / '.capture.json')
-            self.policy.sync(stage)
-            self.policy.sync(self.base)
-            return stage
+            # Refuse a busy registry before allocating another recovery copy.
+            with self.registry_lock(self.base / binding['source']['name']):
+                for prior in self.base.glob(self.prefix(binding) + '*'):
+                    self.policy.directory(prior, private=True)
+                    if os.path.lexists(prior / '.capture.json'):
+                        self.attest(prior, binding, secret)
+                        shutil.rmtree(prior)
+                stage = Path(tempfile.mkdtemp(prefix=self.prefix(binding), dir=self.base))
+                pending = stage / '.capture.pending'
+                self.policy.create(pending, self.receipt(stage, binding, secret))
+                pending.rename(stage / '.capture.json')
+                self.policy.sync(stage)
+                self.policy.sync(self.base)
+                return stage
 
     def publish(self, stage):
         with self.policy.locked():
             binding, secret = self.unpublished_binding()
             self.attest(stage, binding, secret)
-            os.sync()
-            rename_upgrade_copy(stage, self.destination)
-            self.policy.sync(self.base)
+            home = self.base / binding['source']['name']
+            with self.registry_lock(home):
+                self.check_registry_copy(home, stage)
+                os.sync()
+                rename_upgrade_copy(stage, self.destination)
+                self.policy.sync(self.base)
 
     def published_source(self):
         policy, require = self.policy, self.api.require
@@ -279,25 +329,28 @@ class UpgradeCopy:
     def arrange_source(self, *, restore):
         with self.policy.locked():
             live, parked, original, capture, secret, reinstall = self.published_source()
-            held = self.pending_payload(original, capture, secret, restore=restore)
-            self.api.require(not reinstall or held is not None, 'Missing paired incoming payload for reinstreq')
-            target = live if restore else parked
-            if original != target:
-                # Move the whole original tree. A retry can use the same files
-                # for the ordinary package checks even if unpack never began.
-                rename_upgrade_copy(original, target)
-            if not restore:
-                issued = self.destination / '.payload-issued.json'
-                record = self.payload_record('issued', capture, secret)
-                if os.path.lexists(issued):
-                    self.api.require(self.policy.read(issued, limit=4096) == record, 'Invalid original dpkg handoff')
-                else:
-                    self.api.require(not os.path.lexists(self.incoming), 'Incoming Core path is already in use')
-                    self.publish_payload_record(issued, record)
-                if held is not None:
-                    rename_upgrade_copy(held, self.incoming)
-            self.policy.sync(self.destination)
-            self.policy.sync(self.base)
+            with self.registry_lock(original):
+                if not restore:
+                    self.check_registry_copy(original, self.destination)
+                held = self.pending_payload(original, capture, secret, restore=restore)
+                self.api.require(not reinstall or held is not None, 'Missing paired incoming payload for reinstreq')
+                target = live if restore else parked
+                if original != target:
+                    # Move the whole original tree. A retry can use the same files
+                    # for the ordinary package checks even if unpack never began.
+                    rename_upgrade_copy(original, target)
+                if not restore:
+                    issued = self.destination / '.payload-issued.json'
+                    record = self.payload_record('issued', capture, secret)
+                    if os.path.lexists(issued):
+                        self.api.require(self.policy.read(issued, limit=4096) == record, 'Invalid original dpkg handoff')
+                    else:
+                        self.api.require(not os.path.lexists(self.incoming), 'Incoming Core path is already in use')
+                        self.publish_payload_record(issued, record)
+                    if held is not None:
+                        rename_upgrade_copy(held, self.incoming)
+                self.policy.sync(self.destination)
+                self.policy.sync(self.base)
 
 
 def run_upgrade_copy(api, policy, arguments, payload):
