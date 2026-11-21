@@ -404,12 +404,24 @@ fi
 keyServicePackageAdmission --enter "${ACTION}" || exit 1
 
 provisionCryptoKey() {
-    python3 -I - "$@" <<'PYKURAKEY'
+    python3 -IB -c '
+import sys
+policy = {"__name__": "incoming_package_policy"}
+exec(compile(sys.stdin.buffer.read(), "<packaged-key-policy>", "exec"), policy)
+if sys.argv[1:] == ["prepare-retained-generation"]:
+    sys.exit(policy["prepare_retained_generation"]())
+sys.exit(policy["main"](sys.argv[1:]))
+' "$@" <<'PYKURAKEY'
+raise RuntimeError("Kura retained generation preflight was not embedded")
 raise RuntimeError("Kura key-policy readers were not embedded")
 raise RuntimeError("Kura key provisioner was not embedded")
 PYKURAKEY
 }
-provisionCryptoKey prepare "${ACTION}" || exit 1
+if [ "${ACTION}" = install ] && { [ -e "${RETAINED_DIR}/published-generation" ] || [ -L "${RETAINED_DIR}/published-generation" ]; }; then
+    provisionCryptoKey prepare-retained-generation || exit 1
+else
+    provisionCryptoKey prepare "${ACTION}" || exit 1
+fi
 
 ##############################################
 # UTILITY FUNCTIONS
