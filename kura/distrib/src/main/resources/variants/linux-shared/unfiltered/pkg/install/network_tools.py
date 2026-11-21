@@ -22,10 +22,10 @@ def get_interface_names():
 
     return os.listdir("/sys/class/net")
 
-def get_eth_wlan_interfaces_names():
+def get_eth_wlan_interfaces_names(*, require_ethernet=True):
     """Reads the network interface names present on the device.
 
-    It is assumed that at least one ethernet interface is present.
+    By default at least one ethernet interface is required.
 
     Requirements:
         "/sys/class/net" directory must exist
@@ -49,7 +49,7 @@ def get_eth_wlan_interfaces_names():
     ethernet_interface_names.sort()
     wireless_interface_names.sort()
 
-    if len(ethernet_interface_names) < 1:
+    if require_ethernet and not ethernet_interface_names:
         logging.error("No ethernet interfaces found, exiting.")
         sys.exit(1)
 

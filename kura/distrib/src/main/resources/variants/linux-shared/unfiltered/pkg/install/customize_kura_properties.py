@@ -11,9 +11,7 @@
 # Contributors:
 #  Eurotech
 #
-import sys
 import logging
-import os
 import argparse
 from network_tools import get_eth_wlan_interfaces_names
 
@@ -33,18 +31,15 @@ def main():
        
     KURA_PROPERTIES_FILENAME = "/opt/eclipse/kura/framework/kura.properties"
     
-    (eth_names, wlan_names) = get_eth_wlan_interfaces_names()
-    
-    if len(eth_names) == 0:
-        logging.info("ERROR: no ethernet interface found")
-        exit(1)
-    
+    eth_names, _ = get_eth_wlan_interfaces_names(require_ethernet=False)
+
     logging.info("%s : starting editing", KURA_PROPERTIES_FILENAME)
     with open(KURA_PROPERTIES_FILENAME, 'r', encoding='utf-8') as kura_properties:
         kura_properties_content = kura_properties.read()
         
     kura_properties_content = kura_properties_content.replace('device_name', args.device_name)
-    kura_properties_content = kura_properties_content.replace('eth0', eth_names[0])
+    if eth_names:
+        kura_properties_content = kura_properties_content.replace('eth0', eth_names[0])
     
     with open(KURA_PROPERTIES_FILENAME, 'w', encoding='utf-8') as kura_properties:
         kura_properties.write(kura_properties_content)
