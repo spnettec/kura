@@ -21,7 +21,7 @@ Depends: systemd, kmod, python3-dbus, openjdk-21-jre-headless | temurin-21-jdk |
  chrony, chronyc | chrony, cron | cronie,
  network-manager | networkmanager, bind9 | bind, dnsmasq | isc-dhcp-server, isc-dhcp-client | dhcpcd, iw, iptables, modemmanager,
  logrotate, gpsd
-Provides: kura-core-networking-unit-v2
+Provides: kura-core-networking-unit-v2, kura-core-firewall-readback-v1
 Suggests: kura-artemis, kura-camel, kura-deployment, kura-management-ui, kura-networking, kura-opcua, kura-position, kura-triton, kura-wires
 Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>
