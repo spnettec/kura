@@ -177,6 +177,13 @@ configure_runtime() {
         printf 'f %s :0600 :kurad :kurad -\n' "${log_file}" | systemd-tmpfiles --create - || exit 1
     done
 
+    # The active logs keep their original paths. Log4j publishes its compressed
+    # files in a directory writable by Main even when /var/log is root-owned.
+    systemd-tmpfiles --create - <<'KURA_LOG_DIRECTORIES' || exit 1
+d /var/log/kura :0700 :kurad :kurad -
+d /var/log/kura/archives :0700 :kurad :kurad -
+KURA_LOG_DIRECTORIES
+
     # set up logrotate - no need to restart as it is a cronjob
     cp "${INSTALL_DIR}/kura/install/kura.logrotate" /etc/logrotate-kura.conf || exit 1
 

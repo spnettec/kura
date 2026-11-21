@@ -6,8 +6,8 @@ export MALLOC_ARENA_MAX=1
 # Keep PID, logs and generated runtime files private regardless of caller mask.
 umask 077
 
-DIR=$(cd $(dirname $0)/..; pwd)
-cd $DIR
+DIR=$(cd "$(dirname "$0")/.." && pwd) || exit 1
+cd "$DIR" || exit 1
 
 # YOFC-KURA-ORDINARY-JVM-ARGS-V1
 # Optional administrator-owned argument file. With no setting the historical
@@ -40,8 +40,8 @@ if [ -z "$KURA_RUNNING" ] ; then
     exec 3>/var/run/kura.pid || exit 1
   nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
         -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
-        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
-        -XX:ErrorFile=/var/log/kura-error.log \
+        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=log/kura-heapdump.hprof \
+        -XX:ErrorFile=log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED \
         --add-modules=ALL-SYSTEM \

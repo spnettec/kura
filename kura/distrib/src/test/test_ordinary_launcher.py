@@ -130,6 +130,24 @@ except OSError:
         self.assertIn('console output\n', log)
         self.assertIn('console error\n', log)
 
+    def test_jvm_diagnostics_use_the_private_runtime_log_directory(self):
+        for name, options, gc_size in [
+                ('start_kura_background.sh', (), None),
+                ('start_kura_debug.sh', (), '100m'),
+                ('start_kura.sh', ('--debug',), '10m')]:
+            with self.subTest(script=name):
+                self.record.unlink(missing_ok=True)
+                result = self.launch(script=name, arguments=options)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                args = self.args()
+                self.assertIn('-XX:HeapDumpPath=log/kura-heapdump.hprof', args)
+                self.assertIn('-XX:ErrorFile=log/kura-error.log', args)
+                if gc_size:
+                    entries = [a for a in args if a.startswith('-Xlog:gc')]
+                    self.assertEqual(len(entries), 1)
+                    self.assertIn('file=log/kura-gc.log:', entries[0])
+                    self.assertIn('filecount=10,filesize=' + gc_size, entries[0])
+
     def test_console_open_failure_preserves_previous_pid(self):
         pidfile = self.root / 'kura.pid'
         pidfile.write_text('previous pid record\n')

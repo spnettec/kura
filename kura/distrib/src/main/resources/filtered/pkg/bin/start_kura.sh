@@ -24,7 +24,7 @@ if [ -n "$KURA_RUNNING" ] ; then
     exit 1
 fi
 
-DIR=$(cd $(dirname $0)/..; pwd)
+DIR=$(cd "$(dirname "$0")/.." && pwd) || exit 1
 cd "$DIR" || exit 1
 
 IS_DEBUG_MODE="false"
@@ -70,10 +70,10 @@ EQUINOX_DEBUG_OPTS=""
 if [[ $IS_DEBUG_MODE == "true" ]]; then
     DEBUG_OPTS="-Xdebug \
         -Xrunjdwp:server=y,transport=dt_socket,address=*:8000,suspend=n \
-        -Xlog:gc=info:file=/var/log/kura-gc.log:time:filecount=10,filesize=10m \
+        -Xlog:gc=info:file=log/kura-gc.log:time:filecount=10,filesize=10m \
         -XX:+HeapDumpOnOutOfMemoryError \
-        -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
-        -XX:ErrorFile=/var/log/kura-error.log"
+        -XX:HeapDumpPath=log/kura-heapdump.hprof \
+        -XX:ErrorFile=log/kura-error.log"
 
     EQUINOX_DEBUG_OPTS="-console 5002 \
     -consoleLog"
