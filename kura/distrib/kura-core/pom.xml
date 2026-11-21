@@ -175,17 +175,6 @@
                             <controlDir>${project.build.directory}/filtered-control</controlDir>
                             <skipPOMs>false</skipPOMs>
                             <dataSet>
-                                <!-- Keep the public installation entry owned when the last sibling is removed. -->
-                                <data>
-                                    <type>template</type>
-                                    <paths><path>/opt/eclipse/kura</path></paths>
-                                    <mapper>
-                                        <type>perm</type>
-                                        <user>root</user>
-                                        <group>root</group>
-                                        <dirmode>755</dirmode>
-                                    </mapper>
-                                </data>
                                 <data>
                                     <src>${project.basedir}/src/main/resources/deb-config/preserved-state.conf</src>
                                     <type>file</type>
@@ -572,6 +561,17 @@
                                     <mapper>
                                         <type>perm</type>
                                         <prefix>/opt/eclipse/kura_${project.version}_linux</prefix>
+                                    </mapper>
+                                </data>
+                                <!-- Unpack the physical home first. A sibling may already own the public symlink. -->
+                                <data>
+                                    <type>template</type>
+                                    <paths><path>/opt/eclipse/kura</path></paths>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <user>root</user>
+                                        <group>root</group>
+                                        <dirmode>755</dirmode>
                                     </mapper>
                                 </data>
                                 <!-- 99-kura-nm.conf moved to kura-networking sibling deb. -->
