@@ -33,9 +33,45 @@ class CoreRemovalHomeTest(unittest.TestCase):
         (self.retained / 'systemd').mkdir()
         self.op = str(uuid.uuid4())
         (self.retained / 'systemd/main-state.json').write_text(json.dumps({'maintenanceId': self.op}))
+        framework = self.target / 'framework'
+        framework.mkdir()
+        self.registry = framework / 'sibling-install-order'
+        self.registry.write_bytes(b'site-first\nsite-last')
+        self.registry.chmod(0o640)
+        os.chown(self.registry, 0, 1234)
+        (framework / 'sibling-install-order.lock').touch(mode=0o600)
+
+    def test_removal_keeps_site_precedence_and_metadata_without_copying_lock(self):
+        os.setxattr(self.registry, 'user.site-label', b'order')
         self.home.capture(self.retained)
+        original = self.registry.stat()
+        expected = self.registry.read_bytes()
+        self.home.remove(self.retained)
+        framework = self.retained / 'framework'
+        self.assertEqual(['sibling-install-order'], os.listdir(framework))
+        saved = framework / 'sibling-install-order'
+        self.assertEqual(expected, saved.read_bytes())
+        self.assertEqual(b'order', os.getxattr(saved, 'user.site-label'))
+        actual = saved.stat()
+        for field in ('st_uid', 'st_gid', 'st_mode', 'st_mtime_ns'):
+            self.assertEqual(getattr(original, field), getattr(actual, field), field)
+
+    def test_missing_legacy_registry_leaves_no_restore_input(self):
+        self.registry.unlink()
+        self.home.capture(self.retained)
+        self.home.remove(self.retained)
+        self.assertFalse((self.retained / 'framework').exists())
+
+    def test_refuses_linked_registry_before_publishing_removal_record(self):
+        self.registry.unlink()
+        self.registry.symlink_to(self.target / 'missing')
+        with self.assertRaisesRegex(ValueError, 'Unsafe removal record'):
+            self.home.capture(self.retained)
+        self.assertFalse((self.retained / 'removal-home.json').exists())
+        self.assertEqual(self.target, self.home.HOME.resolve(strict=True))
 
     def test_replaced_public_link_preserves_both_directories(self):
+        self.home.capture(self.retained)
         other = self.home.PARENT / 'kura_other'
         other.mkdir()
         self.home.HOME.unlink()
@@ -46,6 +82,7 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.assertEqual(other, self.home.HOME.resolve(strict=True))
 
     def test_missing_public_link_does_not_admit_replacement_physical_directory(self):
+        self.home.capture(self.retained)
         self.home.HOME.unlink()
         moved = self.target.rename(self.home.PARENT / 'previous')
         self.target.mkdir()
@@ -55,12 +92,14 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.assertTrue(moved.is_dir())
 
     def test_refuses_changed_removal_witness(self):
+        self.home.capture(self.retained)
         (self.target / ('.kura-remove-' + self.op)).write_text('changed')
         with self.assertRaisesRegex(ValueError, 'witness changed'):
             self.home.remove(self.retained)
         self.assertEqual(self.target, self.home.HOME.resolve(strict=True))
 
     def test_interrupted_cleanup_continues_only_at_the_original_private_name(self):
+        self.home.capture(self.retained)
         self.home.HOME.unlink()
         (self.target / 'sample').write_text('fixture')
         with patch.object(self.home.shutil, 'rmtree', side_effect=OSError('interrupted')):

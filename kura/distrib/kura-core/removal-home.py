@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import uuid
 
@@ -70,6 +71,23 @@ def capture(retained):
     operation = str(uuid.UUID(json.loads((retained / 'systemd/main-state.json').read_bytes())['maintenanceId']))
     record = dict(root=identity(Path('/')), parent=identity(PARENT), name=physical.name,
                   target=identity(physical), alias=identity(HOME), operation=operation)
+    # postinst restores this file from the same relative path for upgrades and
+    # retained reinstalls. The lock belongs to the current framework directory.
+    framework = physical / 'framework'
+    registry = framework / 'sibling-install-order'
+    if os.path.lexists(framework):
+        protected(framework, True)
+        if os.path.lexists(registry):
+            protected(registry, False)
+            require(not registry.lstat().st_mode & 0o7000, 'Invalid sibling registry mode')
+            saved = retained / 'framework'
+            saved.mkdir(mode=0o700)
+            destination = saved / registry.name
+            subprocess.run(['/bin/cp', '--preserve=mode,ownership,timestamps,xattr',
+                            '--no-dereference', '--', registry, destination], check=True)
+            with destination.open('rb') as stream:
+                os.fsync(stream.fileno())
+            sync_dir(saved)
     raw = json.dumps(record, sort_keys=True).encode()
     write_new(retained / 'removal-home.json', raw)
     # An inode number can be reused after a directory is removed.
