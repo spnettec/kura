@@ -121,6 +121,18 @@ class PackagePairingTest(unittest.TestCase):
                             verify_unit_sources=Mock(), manager_properties=Mock(side_effect=loaded),
                             account_binding=Mock(return_value=marker)):
             self.assertEqual((broker.digest(manifest), marker), broker.Policy().check(actor=True))
+            broker.account_binding.assert_called_once_with()
+            view = f'BindReadOnlyPaths=-{broker.AUTHORITY}:{broker.MAIN_AUTHORITY}'
+            self.assertIn(view, (vendor / broker.MAIN_UNIT).read_text().splitlines())
+            with patch.object(broker.os, 'statvfs', return_value=SimpleNamespace(f_flag=os.ST_RDONLY)) as flags:
+                self.assertEqual((broker.digest(manifest), marker), broker.Policy().check(actor=False))
+                flags.assert_called_once_with(broker.MAIN_AUTHORITY)
+                broker.account_binding.assert_called_with(broker.MAIN_AUTHORITY)
+                flags.return_value.f_flag = 0
+                broker.account_binding.reset_mock()
+                with self.assertRaisesRegex(Refused, '^UNPAIRED_INSTALLATION$'):
+                    broker.Policy().check(actor=False)
+                broker.account_binding.assert_not_called()
             (vendor / broker.MAIN_UNIT).write_bytes(b'unpaired main')
             with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
                 broker.Policy().check(actor=True)

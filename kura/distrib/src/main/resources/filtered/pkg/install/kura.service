@@ -42,6 +42,8 @@ NoNewPrivileges=yes
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.
 ReadOnlyPaths=/opt/eclipse /etc/kura /etc/polkit-1 /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named -/etc/bind -/etc/default/dnsmasq -/etc/dnsmasq.d -/etc/dnsmasq.conf
+# Expose only the public reboot pairing to Main when /etc/kura is private.
+BindReadOnlyPaths=-/etc/kura/reboot-broker-authority.json:/run/kura-reboot-main-authority.json
 # PID 1 supplies the credentials below. Hide the canonical directory and broker state from Main.
 InaccessiblePaths=/etc/kura/credentials /var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls /var/lib/kura-clock-broker /usr/libexec/kura-clock-broker -/var/lib/kura-reboot-broker /var/lib/kura-bind-service /var/lib/kura-dhcp-service /var/lib/kura-modem-reset
 ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data

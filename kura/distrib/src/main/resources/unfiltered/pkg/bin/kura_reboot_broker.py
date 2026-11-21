@@ -25,6 +25,7 @@ from kura_reboot_protocol import RebootProtocol, RebootSender
 STATE = Path('/var/lib/kura-reboot-broker')
 SENDER = Path('/var/lib/kura-reboot-sender')
 AUTHORITY = Path('/etc/kura/reboot-broker-authority.json')
+MAIN_AUTHORITY = Path('/run/kura-reboot-main-authority.json')
 INSTALLATION = Path('/etc/kura/reboot-broker-installation.json')
 SOCKET = Path('/run/kura-reboot-broker/control.sock')
 HELPER = HOME / 'bin/kura_reboot_broker.py'
@@ -153,7 +154,10 @@ class Policy:
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
                     'UNPAIRED_UNIT')
-        return digest(manifest), account_binding()
+        if actor:
+            return digest(manifest), account_binding()
+        require(os.statvfs(MAIN_AUTHORITY).f_flag & os.ST_RDONLY, 'UNPAIRED_INSTALLATION')
+        return digest(manifest), account_binding(MAIN_AUTHORITY)
 
 
 def proc_file(pid, name):
