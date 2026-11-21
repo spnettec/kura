@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
@@ -257,6 +258,49 @@ class ConfigureTest(unittest.TestCase):
         self.assertFalse(stage.exists())
         self.assertTrue(source.is_dir())
         self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('status'))
+        self.assertEqual(self.fence, self.policy.fence())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'uses Linux atomic directory publication')
+    def test_resume_after_process_dies_between_sibling_publications(self):
+        source = self.configure.copies['upgrade'] / 'siblings'
+        installed = self.fixture.physical / 'siblings'
+        installed.mkdir()
+        first = Path('first/3/provider.jar')
+        second = Path('second/4/provider.jar')
+        self.fixture.write(source / first, b'first provider')
+        self.fixture.write(source / second, b'second provider')
+        self.configure.apply('begin')
+        self.install_steps()
+        self.configure.apply('prepared')
+
+        publish = configure.publish_sibling
+
+        def publish_then_stop(staged, target):
+            publish(staged, target)
+            os.kill(os.getpid(), signal.SIGKILL)
+
+        child = os.fork()
+        if child == 0:
+            try:
+                with patch.object(configure, 'publish_sibling', side_effect=publish_then_stop):
+                    self.controller().apply('restore-siblings')
+            finally:
+                os._exit(1)
+        _, status = os.waitpid(child, 0)
+        self.assertEqual(-signal.SIGKILL, os.waitstatus_to_exitcode(status))
+        self.assertEqual(b'first provider', (installed / first).read_bytes())
+        first_inode = (installed / first).stat().st_ino
+        self.assertFalse((installed / second).exists())
+        stage = self.fixture.physical / ('.kura-restore-' + self.fence['id'])
+        self.assertEqual(1, len(list(stage.glob('copy-*/' + str(second)))))
+        self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('status'))
+
+        self.assertEqual(('PREPARED', 'upgrade'), self.controller().apply('restore-siblings'))
+        self.assertEqual(first_inode, (installed / first).stat().st_ino)
+        for entry in (first, second):
+            self.assertEqual((source / entry).read_bytes(), (installed / entry).read_bytes())
+        self.assertFalse(stage.exists())
+        self.assertFalse((self.stage / 'ready.json').exists())
         self.assertEqual(self.fence, self.policy.fence())
 
     def test_resume_dispatches_only_remaining_steps_in_order(self):
