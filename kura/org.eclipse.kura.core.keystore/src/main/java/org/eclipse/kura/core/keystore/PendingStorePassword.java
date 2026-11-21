@@ -78,19 +78,73 @@ record PendingStorePassword(String previous, String replacement, String scope, S
             // Both names must survive before replacing the store. Use independent inodes so the
             // container can validate private state before restarting the provider after an interruption.
             for (String fingerprint : new String[] { this.previous, this.replacement }) {
-                Files.createFile(tmp, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
-                try (var output = FileChannel.open(tmp, WRITE, NOFOLLOW_LINKS)) {
-                    var buffer = ByteBuffer.wrap(bytes);
-                    while (buffer.hasRemaining()) {
-                        output.write(buffer);
-                    }
-                    output.force(true);
-                }
-                Files.move(tmp, dir.resolve(NAME + "-" + fingerprint), ATOMIC_MOVE, REPLACE_EXISTING);
+                publishName(tmp, dir.resolve(NAME + "-" + fingerprint), bytes);
             }
             directory.force(true);
         } finally {
             Files.deleteIfExists(tmp);
+        }
+    }
+
+    private static void publishName(Path tmp, Path name, byte[] bytes) throws IOException {
+        Files.createFile(tmp, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+        try (var output = FileChannel.open(tmp, WRITE, NOFOLLOW_LINKS)) {
+            var buffer = ByteBuffer.wrap(bytes);
+            while (buffer.hasRemaining()) {
+                output.write(buffer);
+            }
+            output.force(true);
+        }
+        Files.move(tmp, name, ATOMIC_MOVE, REPLACE_EXISTING);
+    }
+
+    void separateLinks(Path dir, String expectedDigest) throws IOException, NoSuchAlgorithmException {
+        Path previousName = dir.resolve(NAME + "-" + this.previous);
+        Path replacementName = dir.resolve(NAME + "-" + this.replacement);
+        var owner = Files.getOwner(dir, NOFOLLOW_LINKS);
+        var permissions = PosixFilePermissions.fromString("rw-------");
+        boolean linked = Files.isSameFile(previousName, replacementName);
+        for (Path path : new Path[] { previousName, replacementName }) {
+            if (!Files.isRegularFile(path, NOFOLLOW_LINKS) || !Files.getOwner(path, NOFOLLOW_LINKS).equals(owner)
+                    || !Files.getPosixFilePermissions(path, NOFOLLOW_LINKS).equals(permissions)
+                    || !Integer.valueOf(linked ? 2 : 1).equals(Files.getAttribute(path, "unix:nlink", NOFOLLOW_LINKS))) {
+                throw new IOException("Unexpected password change record identity");
+            }
+        }
+        byte[] bytes;
+        try (var input = Files.newInputStream(previousName, NOFOLLOW_LINKS)) {
+            bytes = input.readNBytes(4097);
+        }
+        if (bytes.length > 4096 || !HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+                .equals(expectedDigest) || Files.mismatch(previousName, replacementName) != -1) {
+            throw new IOException("Password change records differ from maintenance input");
+        }
+        try (var directory = FileChannel.open(dir, READ)) {
+            if (linked) {
+                // Only reclaim a partial copy of these same bytes from an interrupted repair.
+                Path tmp = dir.resolve(".separate-record.tmp");
+                if (Files.exists(tmp, NOFOLLOW_LINKS)) {
+                    if (!Files.isRegularFile(tmp, NOFOLLOW_LINKS) || !Files.getOwner(tmp, NOFOLLOW_LINKS).equals(owner)
+                            || !Files.getPosixFilePermissions(tmp, NOFOLLOW_LINKS).equals(permissions)
+                            || !Integer.valueOf(1).equals(Files.getAttribute(tmp, "unix:nlink", NOFOLLOW_LINKS))) {
+                        throw new IOException("Unexpected maintenance staging file");
+                    }
+                    try (var input = Files.newInputStream(tmp, NOFOLLOW_LINKS)) {
+                        byte[] partial = input.readNBytes(bytes.length + 1);
+                        if (partial.length > bytes.length || !java.util.Arrays.equals(bytes, 0, partial.length,
+                                partial, 0, partial.length)) {
+                            throw new IOException("Unpaired maintenance staging data");
+                        }
+                    }
+                    Files.delete(tmp);
+                }
+                try {
+                    publishName(tmp, replacementName, bytes);
+                } finally {
+                    Files.deleteIfExists(tmp);
+                }
+            }
+            directory.force(true);
         }
     }
 

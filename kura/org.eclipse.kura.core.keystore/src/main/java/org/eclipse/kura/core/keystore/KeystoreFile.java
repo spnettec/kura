@@ -201,6 +201,10 @@ final class KeystoreFile {
     }
 
     PendingStorePassword pendingPassword(String pid) throws IOException, NoSuchAlgorithmException {
+        return pendingPassword(pid, this.path);
+    }
+
+    private PendingStorePassword pendingPassword(String pid, Path configured) throws IOException, NoSuchAlgorithmException {
         Path dir = workspace(false);
         if (dir != null) {
             try (var records = Files.newDirectoryStream(dir, "password-change-*")) {
@@ -208,7 +212,7 @@ final class KeystoreFile {
                     return null;
                 }
             }
-            String current = PendingStorePassword.fingerprint(this.target, this.path, this.target);
+            String current = PendingStorePassword.fingerprint(this.target, configured, this.target);
             var pending = PendingStorePassword.read(dir, current);
             checkOriginal();
             if (pending != null && pending.scope().equals(PendingStorePassword.scope(pid))) {
@@ -216,6 +220,36 @@ final class KeystoreFile {
             }
         }
         return null;
+    }
+
+    // Offline container maintenance. The launcher owns the instance lock and runs this as kurad.
+    void separateRecoveryLinks(Path root, Path configured, String pid, String digest) throws IOException, NoSuchAlgorithmException {
+        if (!this.target.startsWith(root.resolve("data")) && !this.target.startsWith(root.resolve("user"))
+                && !this.target.startsWith(root.resolve("packages"))) {
+            throw new IOException("Keystore is outside persistent state");
+        }
+        Path dir = workspace(false);
+        if (dir == null || !Integer.valueOf(1).equals(this.original.get("nlink"))) {
+            throw new IOException("Missing original keystore workspace or ambiguous store");
+        }
+        Path lockFile = dir.resolve("lock");
+        if (!Files.isRegularFile(lockFile, NOFOLLOW_LINKS)
+                || !Files.getOwner(lockFile, NOFOLLOW_LINKS).equals(Files.getOwner(dir, NOFOLLOW_LINKS))
+                || !Files.getPosixFilePermissions(lockFile, NOFOLLOW_LINKS).equals(PosixFilePermissions.fromString("rw-------"))
+                || !Integer.valueOf(1).equals(Files.getAttribute(lockFile, "unix:nlink", NOFOLLOW_LINKS))) {
+            throw new IOException("Unexpected keystore workspace lock");
+        }
+        try (var guard = FileChannel.open(lockFile, WRITE, NOFOLLOW_LINKS);
+                var lock = guard.tryLock()) {
+            if (lock == null) {
+                throw new IOException("Keystore is busy");
+            }
+            var record = pendingPassword(pid, configured);
+            if (record == null || record.previous().equals(record.replacement())) {
+                throw new IOException("No paired password change for this store and PID");
+            }
+            record.separateLinks(dir, digest);
+        }
     }
 
     void retirePassword(PendingStorePassword pending) throws IOException, NoSuchAlgorithmException {

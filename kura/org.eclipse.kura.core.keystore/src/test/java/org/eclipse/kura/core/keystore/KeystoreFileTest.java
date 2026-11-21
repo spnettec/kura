@@ -82,6 +82,57 @@ class KeystoreFileTest {
         assertNull(KeystoreFile.existing(file).pendingPassword("first"));
     }
 
+    @Test
+    void stoppedInstanceSeparatesOnlyTheOriginalPairAndCanRetryAfterPublication() throws Exception {
+        Path data = Files.createDirectory(this.directory.resolve("data"));
+        Path file = data.resolve("application.p12");
+        var store = populated();
+        KeystoreFile.create(file, store, this.password);
+        KeystoreFile.existing(file).write(store, this.password, "encrypted-fixture", "original");
+        var published = KeystoreFile.existing(file);
+        var pending = published.pendingPassword("original");
+        Path dir;
+        try (var children = Files.list(data)) {
+            dir = children.filter(Files::isDirectory).findFirst().orElseThrow();
+        }
+        Path first = dir.resolve("password-change-" + pending.previous());
+        Path second = dir.resolve("password-change-" + pending.replacement());
+        Files.delete(second);
+        Files.createLink(second, first);
+        byte[] bytes = Files.readAllBytes(first);
+        String digest = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+        Object inode = Files.getAttribute(first, "unix:ino");
+        Path root = this.directory.toRealPath();
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(data, file, "original", digest));
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(root, file, "other", digest));
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(root, data.resolve("other"), "original", digest));
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(root, file, "original", "0".repeat(64)));
+        Path extra = Files.createLink(dir.resolve("third"), first);
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(root, file, "original", digest));
+        Files.delete(extra);
+        Path tmp = dir.resolve(".separate-record.tmp");
+        Files.createFile(tmp, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+        Files.writeString(tmp, "unrelated");
+        assertThrows(IOException.class, () -> published.separateRecoveryLinks(root, file, "original", digest));
+        assertEquals("unrelated", Files.readString(tmp));
+        assertTrue(Files.isSameFile(first, second));
+
+        Files.write(tmp, java.util.Arrays.copyOf(bytes, 9));
+        published.separateRecoveryLinks(root, file, "original", digest);
+        Object newInode = Files.getAttribute(second, "unix:ino");
+        assertNotEquals(inode, newInode);
+        published.separateRecoveryLinks(root, file, "original", digest);
+        assertEquals(inode, Files.getAttribute(first, "unix:ino"));
+        assertEquals(newInode, Files.getAttribute(second, "unix:ino"));
+        assertEquals(1, Files.getAttribute(first, "unix:nlink"));
+        assertEquals(1, Files.getAttribute(second, "unix:nlink"));
+        assertArrayEquals(bytes, Files.readAllBytes(first));
+        assertArrayEquals(bytes, Files.readAllBytes(second));
+        assertFalse(Files.exists(tmp));
+        assertEquals(pending, published.pendingPassword("original"));
+        assertTrue(published.load(this.password).isKeyEntry("original"));
+    }
+
     private KeyStore interrupted() throws Exception {
         KeyStore store = mock(KeyStore.class);
         doAnswer(call -> {
