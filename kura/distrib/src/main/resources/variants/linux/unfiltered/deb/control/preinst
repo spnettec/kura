@@ -414,16 +414,6 @@ provisionCryptoKey prepare "${ACTION}" || exit 1
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
-# Print the space-separated list of currently-installed Kura sibling packages
-# (every kura-* package except kura-core itself), according to dpkg. Empty when
-# no sibling is installed. Uses dpkg state, so it is accurate even though the
-# upgrade wipe is about to remove the sibling files on disk.
-function installedSiblings {
-    dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
-        | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
-        | tr '\n' ' '
-}
-
 # A plain JVM signal leaves Restart=on-failure armed while files are replaced.
 # A synchronous manager stop cancels both the process and any queued restart.
 function stopKuraForPackage {
@@ -547,20 +537,8 @@ PIDS=`pgrep java`
 
 echo ""
 if [ "${ACTION}" = "upgrade" ]; then
-    SIBLINGS=$(installedSiblings)
     echo "Upgrade install of kura-core (in place). Snapshots, deployment packages (.dp) and security keys are preserved."
     echo "UPGRADE INSTALL of kura-core (in place); preserving snapshots/dp/keys" > "${LOG}" 2>&1
-    if [ -n "${SIBLINGS}" ]; then
-        echo "###################################################################################"
-        echo "#  WARNING: only kura-core is being upgraded. These already-installed sibling      #"
-        echo "#  packages stay at their current versions and may be INCOMPATIBLE with the new    #"
-        echo "#  core (changed API packages, OSGi versions, snapshot format):                    #"
-        echo "#      ${SIBLINGS}"
-        echo "#  If the gateway misbehaves after the upgrade, reinstall the matching sibling     #"
-        echo "#  .deb versions.                                                                  #"
-        echo "###################################################################################"
-        echo "Installed siblings not upgraded (possible incompatibility): ${SIBLINGS}" >> "${LOG}" 2>&1
-    fi
 fi
 echo "Installing Kura..."
 echo "Installing Kura..." >> "${LOG}" 2>&1

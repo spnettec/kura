@@ -318,13 +318,13 @@ TIMEOUT_TIME=300
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
-# Print the space-separated list of currently-installed Kura sibling packages
-# (every kura-* package except kura-core itself), according to dpkg. Empty when
-# no sibling is installed.
-function installedSiblings {
-    dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
-        | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
-        | tr '\n' ' '
+# dpkg can configure Core before other packages from the same transaction.
+function reportRelatedPackages {
+    dpkg-query -W -f='${Package} ${Version} ${db:Status-Status}\n' 'kura-*' 2>/dev/null \
+        | awk '$1 != "kura-core" && $3 != "not-installed" && $3 != "config-files" {
+            if (!reported++) print "Other Kura package versions and dpkg states during Core configuration"
+            print "    " $1, $2, $3
+        }'
 }
 
 # Keep the snapshot master-key setting across upgrades while still installing
@@ -553,18 +553,7 @@ function postInstall {
     if [ "${WAS_UPGRADE}" = "1" ]; then
         echo "Finished. KURA has been UPGRADED in place at ${INSTALL_DIR}/kura; existing service enablement is preserved."
         echo "Snapshots, deployment packages and security keys were preserved."
-        SIBLINGS=$(installedSiblings)
-        if [ -n "${SIBLINGS}" ]; then
-            echo ""
-            echo "****************************************************************"
-            echo "UPGRADE WARNING: only kura-core was upgraded. These installed"
-            echo "sibling packages were NOT upgraded and may be incompatible with"
-            echo "the new core:"
-            echo "    ${SIBLINGS}"
-            echo "Reinstall the matching sibling .deb versions if the gateway"
-            echo "misbehaves."
-            echo "****************************************************************"
-        fi
+        reportRelatedPackages
     elif [ "${WAS_REINSTALL}" = "1" ]; then
         echo "Finished. KURA has been reinstalled at ${INSTALL_DIR}/kura; previous user data was restored."
     else
