@@ -1,0 +1,31 @@
+[Unit]
+Description=Read system network ownership markers for Kura
+Requires=kura-ownership-markers.socket
+After=kura-ownership-markers.socket
+PartOf=kura.service
+
+[Service]
+Type=exec
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-ownership-markers/kura_ownership_markers.py
+Sockets=kura-ownership-markers.socket
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura/credentials -/etc/kura/recovery-tls -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+TasksMax=8
+MemoryMax=64M
+TimeoutStopSec=5s

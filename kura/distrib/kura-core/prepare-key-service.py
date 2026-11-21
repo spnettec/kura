@@ -16,6 +16,7 @@ import kura_clock_broker as clock_broker
 import kura_command_executor as command_executor
 import kura_reboot_broker as reboot_broker
 import kura_journal_export as journal_export
+import kura_ownership_markers as ownership_markers
 import kura_modem_driver as modem_driver
 import kura_bind_service as bind_service
 import kura_dhcp_service as dhcp_service
@@ -240,7 +241,7 @@ def prepare_clock_service(assembly):
 
 
 def prepare_broker_packages(assembly):
-    # These eight flat directories are generated exclusively by this build.
+    # These flat directories are generated exclusively by this build.
     # Each builder writes its manifest into a fresh directory.
     libexec = assembly / 'libexec'
     require(assembly.is_dir() and not assembly.is_symlink()
@@ -249,6 +250,7 @@ def prepare_broker_packages(assembly):
         'clock-broker': prepare_clock_service,
         'reboot-broker': reboot_broker.package_cohort,
         'journal-export': journal_export.package_cohort,
+        'ownership-markers': ownership_markers.package_cohort,
         'command-executor': command_executor.package_cohort,
         'modem-driver': modem_driver.package_cohort,
         'bind-service': bind_service.package_cohort,

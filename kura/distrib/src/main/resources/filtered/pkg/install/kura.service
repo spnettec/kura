@@ -1,14 +1,14 @@
 [Unit]
 OnFailure=kura-key-recovery.service
 Description=Kura
-Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
+Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-ownership-markers.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
 Requires=kura-key-service.socket
 Requires=kura-clock-broker.socket
 Requires=kura-command-executor.socket
 After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
 After=kura-clock-broker.socket kura-clock-broker.service
 After=kura-command-executor.socket
-After=kura-journal-export.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
+After=kura-journal-export.socket kura-ownership-markers.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
 
 [Service]
 User=kurad

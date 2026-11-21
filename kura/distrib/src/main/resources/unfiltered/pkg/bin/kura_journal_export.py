@@ -46,13 +46,13 @@ MAX_DATA = 32 * 1024 * 1024
 READ_TIME = 25
 
 
-def package_cohort(home):
-    destination = home / PAIR_DIRECTORY
+def package_cohort(home, *, pair_directory=PAIR_DIRECTORY, sources=SOURCES):
+    destination = home / pair_directory
     destination.mkdir()
     main = home / 'install' / MAIN_UNIT
     require(main.is_file() and not main.is_symlink(), 'UNPAIRED_EXPORT')
     files = {}
-    for name in SOURCES:
+    for name in sources:
         path = home / name
         require(path.is_file() and not path.is_symlink(), 'UNPAIRED_EXPORT')
         shutil.copyfile(path, destination / path.name)
