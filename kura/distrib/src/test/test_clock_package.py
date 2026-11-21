@@ -62,7 +62,9 @@ class ClockPackageTest(unittest.TestCase):
         builder.prepare_broker_packages(home)
         libexec = home / 'libexec'
         manifests = sorted(libexec.glob('*/cohort.json'))
-        self.assertEqual(8, len(manifests))
+        self.assertEqual({'clock-broker', 'reboot-broker', 'journal-export', 'ownership-markers',
+                          'firewall-tables', 'command-executor', 'modem-driver', 'bind-service',
+                          'dhcp-service', 'modem-reset'}, {manifest.parent.name for manifest in manifests})
         original = (home / broker.COHORT).read_bytes()
         for manifest in manifests:
             (manifest.parent / 'retired-unit.service').touch()
