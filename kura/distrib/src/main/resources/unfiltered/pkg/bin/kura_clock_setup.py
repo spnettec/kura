@@ -68,30 +68,72 @@ def chrony_policy(action, previous_paired=False):
         raise Refused('UNPAIRED_CHRONY_POLICY')
 
 
-def main_masked():
-    """A fixed Root Main mask is an off state, never clock-unit authority."""
-    found = False
-    for prefix in ('/etc', '/run'):
-        path = Path(prefix + '/systemd/system/kura.service')
-        if not os.path.lexists(path):
+DEPLOYMENT_MASK = Path('/run/systemd/generator.early/kura.service')
+
+
+def check_deployment_generator():
+    # Deployment's schema 2 receipt binds the generator and its private anchor
+    # to this installation. Recognize its off state without changing either gate.
+    store = Path('/opt/eclipse/kura-deployment-main-gate')
+    generators = Path('/etc/systemd/system-generators')
+    require(unit_directory_present(store) and unit_directory_present(generators), 'UNSAFE_UNIT')
+    directory(store, 0)
+    receipt = store / 'transition.json'
+    original = read(receipt, 0, maximum=2048)
+    row = decode(original)
+    require(row.keys() == {'schema', 'action', 'root', 'anchor', 'device', 'inode', 'sha256'}
+            and type(row['schema']) is int and row['schema'] == 2 and row['action'] == 'replace'
+            and type(row['device']) is int and type(row['inode']) is int
+            and isinstance(row['anchor'], str) and re.fullmatch(r'\.kura-deployment-[0-9a-f]{32}', row['anchor']),
+            'UNSAFE_UNIT')
+    root = Path('/').stat()
+    machine = public_file(Path('/etc/machine-id'), 128)
+    require(re.fullmatch(rb'[0-9a-f]{32}\n?', machine)
+            and row['root'] == f'{root.st_dev}:{root.st_ino}:{hashlib.sha256(machine).hexdigest()}', 'UNSAFE_UNIT')
+    anchor = generators / row['anchor']
+    generator = generators / 'kura-deployment-main-transition'
+    # The generator contains only the fixed early mask and the original anchor.
+    expected = (f'#!/bin/sh\n# Deployment Main transition {anchor.name}\n'
+                '[ "$#" -eq 3 ] || exit 1\n'
+                'exec /usr/bin/ln -s -- /dev/null "$2/kura.service"\n').encode('ascii')
+    require(row['sha256'] == hashlib.sha256(expected).hexdigest(), 'UNSAFE_UNIT')
+    fd = os.open(generator, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    with os.fdopen(fd, 'rb') as stream:
+        info = os.fstat(stream.fileno())
+        require(stat.S_ISREG(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o755
+                and info.st_uid == info.st_gid == 0 and info.st_nlink == 2
+                and (info.st_dev, info.st_ino) == (row['device'], row['inode'])
+                and stream.read(len(expected) + 1) == expected
+                and identity(info) == identity(os.fstat(stream.fileno()))
+                == identity(anchor.lstat()) == identity(generator.lstat()), 'UNSAFE_UNIT')
+    require(read(receipt, 0, maximum=2048) == original, 'UNSAFE_UNIT')
+
+
+def main_masked(fragment):
+    """Only the effective Root Main mask can establish an off state."""
+    admin_masks = (Path('/etc/systemd/system/kura.service'), Path('/run/systemd/system/kura.service'))
+    effective = Path(fragment)
+    require(effective in (*admin_masks, DEPLOYMENT_MASK), 'UNSAFE_UNIT')
+    if effective == DEPLOYMENT_MASK:
+        check_deployment_generator()
+    for path in (*admin_masks, DEPLOYMENT_MASK):
+        if path != effective and (path == DEPLOYMENT_MASK or not os.path.lexists(path)):
             continue
         require(unit_directory_present(path.parent), 'UNSAFE_UNIT')
         before = path.lstat()
-        require(stat.S_ISLNK(before.st_mode) and before.st_uid == 0 and before.st_nlink == 1, 'UNSAFE_UNIT')
-        target = os.readlink(path)
-        identity = lambda m: (m.st_dev, m.st_ino, m.st_uid, m.st_gid, m.st_mode,
-                              m.st_nlink, m.st_size, m.st_mtime_ns, m.st_ctime_ns)
-        require(target == '/dev/null' and identity(before) == identity(path.lstat()), 'UNSAFE_UNIT')
-        found = True
-    require(found, 'UNSAFE_UNIT')
+        require(stat.S_ISLNK(before.st_mode) and before.st_uid == 0 and before.st_nlink == 1
+                and os.readlink(path) == '/dev/null' and identity(before) == identity(path.lstat()), 'UNSAFE_UNIT')
 
 
 def properties(unit):
-    result = subprocess.run(['/usr/bin/systemctl', 'show', unit, '--property=LoadState,ActiveState,MainPID,ControlPID'],
+    fields = 'LoadState,ActiveState,MainPID,ControlPID,FragmentPath,Job'
+    result = subprocess.run(['/usr/bin/systemctl', 'show', '--all', unit, '--property=' + fields],
                             env={'PATH': '/usr/bin:/bin', 'LANG': 'C'}, capture_output=True, text=True, timeout=5)
     values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
     if unit == 'kura.service' and values.get('LoadState') == 'masked':
-        main_masked()
+        main_masked(values.get('FragmentPath', ''))
+        if values.get('FragmentPath') == str(DEPLOYMENT_MASK):
+            require(values.get('Job') == '', 'UNIT_RUNNING')
         require(values.get('MainPID') == '0' and values.get('ControlPID') == '0'
                 and values.get('ActiveState') == 'inactive', 'UNIT_RUNNING')
     else:
