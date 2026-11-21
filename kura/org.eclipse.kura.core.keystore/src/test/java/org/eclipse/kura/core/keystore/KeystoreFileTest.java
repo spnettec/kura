@@ -35,6 +35,30 @@ class KeystoreFileTest {
         return store;
     }
 
+    @Test
+    void randomPasswordRecoveryRequiresTheSamePidAndPublishedFile() throws Exception {
+        Path file = this.directory.resolve("application.p12");
+        KeyStore store = populated();
+        KeystoreFile.create(file, store, this.password);
+        var original = KeystoreFile.existing(file);
+        original.write(store, this.password, "encrypted-fixture", "first");
+        var published = KeystoreFile.existing(file);
+        var pending = published.pendingPassword("first");
+        assertEquals("encrypted-fixture", pending.encrypted());
+        assertNull(published.pendingPassword("second"));
+        assertThrows(IOException.class, () -> published.write(store, this.password, "other-ciphertext", "second"));
+        assertEquals(pending, published.pendingPassword("first"));
+        assertEquals(pending, published.pendingPassword("first"));
+
+        Path retained = Files.move(file, this.directory.resolve("retained.p12"));
+        Files.copy(retained, file);
+        assertNull(KeystoreFile.existing(file).pendingPassword("first"));
+        Files.move(retained, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        assertEquals(pending, KeystoreFile.existing(file).pendingPassword("first"));
+        published.retirePassword(pending);
+        assertNull(KeystoreFile.existing(file).pendingPassword("first"));
+    }
+
     private KeyStore interrupted() throws Exception {
         KeyStore store = mock(KeyStore.class);
         doAnswer(call -> {

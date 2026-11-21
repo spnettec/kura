@@ -91,16 +91,21 @@ final class KeystoreFile {
         throw new IOException("Unable to determine keystore writer identity");
     }
 
-    private Path workspace() throws IOException, NoSuchAlgorithmException {
+    private Path workspace(boolean create) throws IOException, NoSuchAlgorithmException {
         String user = currentUser();
         byte[] name = (user + "\0" + this.target.getFileName()).getBytes(StandardCharsets.UTF_8);
         String id = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(name));
         Path dir = this.target.resolveSibling(".kura-keystore-" + id);
         var permissions = PosixFilePermissions.fromString("rwx------");
-        try {
-            Files.createDirectory(dir, PosixFilePermissions.asFileAttribute(permissions));
-        } catch (FileAlreadyExistsException alreadyPresent) {
-            // One reusable, private staging file per store. Its lock is released on process exit.
+        if (!create && Files.notExists(dir, NOFOLLOW_LINKS)) {
+            return null;
+        }
+        if (create) {
+            try {
+                Files.createDirectory(dir, PosixFilePermissions.asFileAttribute(permissions));
+            } catch (FileAlreadyExistsException alreadyPresent) {
+                // A completed or interrupted write may already have created the private workspace.
+            }
         }
         var owner = dir.getFileSystem().getUserPrincipalLookupService().lookupPrincipalByName(user);
         if (!Files.isDirectory(dir, NOFOLLOW_LINKS) || !Files.getOwner(dir, NOFOLLOW_LINKS).equals(owner)
@@ -151,7 +156,7 @@ final class KeystoreFile {
         }
     }
 
-    private void writeStaged(Path staged, KeyStore store, char[] password)
+    private void writeStaged(Path staged, KeyStore store, char[] password, String encrypted, String pid)
             throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
         if (this.original == null) {
             Files.createFile(staged, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
@@ -172,13 +177,65 @@ final class KeystoreFile {
         if (this.original == null) {
             Files.createLink(this.target, staged);
         } else {
+            if (encrypted != null) {
+                String previous = PendingStorePassword.fingerprint(this.target, this.path, this.target);
+                var existing = PendingStorePassword.read(staged.getParent(), previous);
+                String scope = PendingStorePassword.scope(pid);
+                if (existing != null) {
+                    if (!existing.previous().equals(previous) || !existing.scope().equals(scope)
+                            || !existing.encrypted().equals(encrypted)) {
+                        throw new IOException("Unresolved keystore password change");
+                    }
+                    existing.removeName(staged.getParent(), existing.replacement());
+                }
+                new PendingStorePassword(previous, PendingStorePassword.fingerprint(staged, this.path, this.target),
+                        scope, encrypted).publish(staged.getParent());
+            }
             replace(staged);
         }
     }
 
     void write(KeyStore store, char[] password)
             throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-        Path dir = workspace();
+        write(store, password, null, null);
+    }
+
+    PendingStorePassword pendingPassword(String pid) throws IOException, NoSuchAlgorithmException {
+        Path dir = workspace(false);
+        if (dir != null) {
+            try (var records = Files.newDirectoryStream(dir, "password-change-*")) {
+                if (!records.iterator().hasNext()) {
+                    return null;
+                }
+            }
+            String current = PendingStorePassword.fingerprint(this.target, this.path, this.target);
+            var pending = PendingStorePassword.read(dir, current);
+            checkOriginal();
+            if (pending != null && pending.scope().equals(PendingStorePassword.scope(pid))) {
+                return pending;
+            }
+        }
+        return null;
+    }
+
+    void retirePassword(PendingStorePassword pending) throws IOException, NoSuchAlgorithmException {
+        Path dir = workspace(false);
+        if (dir != null) {
+            try (var guard = FileChannel.open(dir.resolve("lock"), WRITE, NOFOLLOW_LINKS);
+                    var lock = guard.tryLock()) {
+                if (lock == null) {
+                    throw new IOException("Keystore is busy");
+                }
+                pending.retire(dir);
+            } catch (OverlappingFileLockException e) {
+                throw new IOException("Keystore is busy", e);
+            }
+        }
+    }
+
+    void write(KeyStore store, char[] password, String encrypted, String pid)
+            throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+        Path dir = workspace(true);
         Path staged = dir.resolve("store");
         try (FileChannel directory = FileChannel.open(this.target.getParent(), READ);
                 FileChannel guard = FileChannel.open(dir.resolve("lock"), Set.of(CREATE, WRITE, NOFOLLOW_LINKS),
@@ -190,7 +247,7 @@ final class KeystoreFile {
             directory.force(true);
             KeystoreFile current = prepare(staged);
             try {
-                current.writeStaged(staged, store, password);
+                current.writeStaged(staged, store, password, encrypted, pid);
                 directory.force(true);
             } finally {
                 Files.deleteIfExists(staged);
