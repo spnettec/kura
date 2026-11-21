@@ -1450,7 +1450,7 @@ class Lifecycle:
             require(len(secret) == 32)
             value['receiptTag'] = hmac.new(secret, b'yofc-kura-retained-main-v1\0' + encoded(value), hashlib.sha256).hexdigest()
             self.create(directory / 'systemd/main-state.json', encoded(value))
-            if manifest.get('schema') == 2 and self.without_main_sys_boot(saved) != saved:
+            if manifest.get('schema') == 2 and self.without_retired_main_caps(saved) != saved:
                 installed_manifest = self.path('/opt/eclipse/kura').resolve(strict=True) / 'libexec/key-backup/manifest.json'
                 raw = self.read(installed_manifest, private=False)
                 require(decode(raw) == manifest)
@@ -1535,10 +1535,10 @@ class Lifecycle:
             return value
 
     @staticmethod
-    def without_main_sys_boot(unit):
+    def without_retired_main_caps(unit):
         def directive(match):
             caps = match[2].split()
-            kept = [cap for cap in caps if cap.lower() != b'cap_sys_boot']
+            kept = [cap for cap in caps if cap.lower() not in (b'cap_sys_boot', b'cap_dac_override')]
             return match[0] if caps == kept else match[1] + b' '.join(kept)
 
         return re.sub(rb'(?im)^([ \t]*(?:AmbientCapabilities|CapabilityBoundingSet)[ \t]*=[ \t]*)([^\r\n]*)',
@@ -1548,9 +1548,9 @@ class Lifecycle:
         logical = self.path('/lib/systemd/system/kura.service')
         if os.path.lexists(logical):
             raw = self.read(self.main_vendor_path(), private=False)
-            if self.without_main_sys_boot(raw) != raw:
+            if self.without_retired_main_caps(raw) != raw:
                 require(hashlib.sha256(raw).hexdigest() == self.main_unit_digest(self.assets()),
-                        'Unpaired Main reboot grant requires reviewed migration')
+                        'Unpaired Main capability grant requires reviewed migration')
 
     def package_main_restore_decision(self, directory):
         directory = Path(directory)
@@ -1564,12 +1564,12 @@ class Lifecycle:
         # The supported historical static receipts already establish their
         # source unit's package pairing.
         state = self.retained_main_state() if retained else None
-        migrated = self.without_main_sys_boot(old)
+        migrated = self.without_retired_main_caps(old)
         if migrated == old:
             return 'restore'
         incoming = self.assets()
         require(hashlib.sha256(new).hexdigest() == self.main_unit_digest(incoming)
-                and self.without_main_sys_boot(new) == new,
+                and self.without_retired_main_caps(new) == new,
                 'Incoming Main unit must be the paired vendor unit without the old grant')
         with self.locked():
             fence = self.fence()
@@ -1588,7 +1588,7 @@ class Lifecycle:
                                                'AmbientCapabilities', 'CapabilityBoundingSet')
         require(properties['MainPID'] == properties['ControlPID'] == '0'
                 and properties['ActiveState'] in ('inactive', 'failed'),
-                'Main must be inactive for reboot privilege cutover')
+                'Main must be inactive for privilege cutover')
         if properties['UnitFileState'] in ('masked', 'masked-runtime'):
             require(properties['LoadState'] == 'masked')
             return
@@ -1596,8 +1596,8 @@ class Lifecycle:
                 'Verify loaded Main before releasing package maintenance')
         for field in ('AmbientCapabilities', 'CapabilityBoundingSet'):
             caps = properties[field].split()
-            require(all(re.fullmatch(r'cap_[a-z0-9_]+', cap) for cap in caps) and 'cap_sys_boot' not in caps,
-                    'Effective Main still has CAP_SYS_BOOT; preserve package maintenance')
+            require(all(re.fullmatch(r'cap_[a-z0-9_]+', cap) for cap in caps) and not {'cap_sys_boot', 'cap_dac_override'}.intersection(caps),
+                    'Effective Main capabilities are invalid or include CAP_SYS_BOOT or CAP_DAC_OVERRIDE; preserve package maintenance')
 
     def assets(self, *, generation_binding=False, _linked_main_unit=None):
         logical = self.path("/opt/eclipse/kura")

@@ -19,6 +19,8 @@ Type=forking
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py
+# PID 1 removes PIDFile after each stop. Prepare the regular file before forking.
+ExecStartPre=+/usr/bin/setpriv --bounding-set=-all,+chown,+fowner --inh-caps=-all --ambient-caps=-all --no-new-privs /bin/sh -ec 'echo "f /run/kura.pid :0600 :kurad :kurad -" | /usr/bin/systemd-tmpfiles --create --prefix=/run/kura.pid -'
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
 ExecStop=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_stop.py ${MAINPID}
 ExecStopPost=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_watchdog_maintenance.py pulse
@@ -30,8 +32,8 @@ SuccessExitStatus=143
 KillMode=control-group
 TimeoutStopSec=45s
 # Host operations are dispatched through their dedicated actors.
-AmbientCapabilities=cap_net_admin cap_dac_override cap_net_bind_service
-CapabilityBoundingSet=cap_net_admin cap_dac_override cap_net_bind_service
+AmbientCapabilities=cap_net_admin cap_net_bind_service
+CapabilityBoundingSet=cap_net_admin cap_net_bind_service
 NoNewPrivileges=yes
 # DAC capabilities must not make installed code or canonical credentials writable.
 # Keep ownership markers readable and let their external writers update them.

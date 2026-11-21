@@ -185,6 +185,14 @@ class MainLayoutAdmissionTest(unittest.TestCase):
             self.policy.check_main_reboot_source()
         self.assertFalse(self.policy.state.exists())
 
+    def test_source_dac_grant_requires_original_vendor_pairing(self):
+        raw = b'[Service]\nAmbientCapabilities=cap_net_admin CAP_DAC_OVERRIDE\n'
+        self.pair_main(raw)
+        self.policy.check_main_reboot_source()
+        self.fixture.write(self.unit, raw + b'# locally modified\n', 0o644)
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'reviewed migration'):
+            self.policy.check_main_reboot_source()
+
     def test_effective_directives_and_overrides_cannot_restore_the_capability(self):
         unit = self.effective_main()
         def effective(bounding, ambient):
@@ -193,7 +201,7 @@ class MainLayoutAdmissionTest(unittest.TestCase):
         self.effective_main = lambda: effective('cap_net_admin', '')
         self.policy.check_main_reboot_permissions()
         for bounding, ambient in [('cap_net_admin cap_sys_boot', ''), ('cap_net_admin', 'cap_sys_boot'),
-                                  ('0x400000', '')]:
+                                  ('cap_dac_override', ''), ('cap_net_admin', 'cap_dac_override'), ('0x400000', '')]:
             with self.subTest(bounding=bounding, ambient=ambient):
                 self.effective_main = lambda: effective(bounding, ambient)
                 with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'CAP_SYS_BOOT'):
