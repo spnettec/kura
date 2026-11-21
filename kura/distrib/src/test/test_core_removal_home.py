@@ -56,6 +56,83 @@ class CoreRemovalHomeTest(unittest.TestCase):
         for field in ('st_uid', 'st_gid', 'st_mode', 'st_mtime_ns'):
             self.assertEqual(getattr(original, field), getattr(actual, field), field)
 
+    def test_completed_job_across_removal_and_reinstall(self):
+        import hashlib
+        import test_postinst_configure as configure_tests
+
+        site = self.target / 'packages'
+        site.mkdir()
+        receipt = site / ('.dpa.properties.install-' + 'a' * 64 + '.done')
+        receipt.write_bytes(b'completed')
+        (site / 'dpa.properties').write_bytes(b'site registry')
+        actual = (site.stat().st_ino, receipt.stat().st_ino)
+        root = self.home.PARENT.parent
+        key = root / 'journal.key'
+        key.write_bytes(os.urandom(32))
+        key.chmod(0o600)
+        self.home.ROOT = root
+        self.home.JOURNAL_KEY = key
+        self.home.capture(self.retained)
+        with self.assertRaises(FileNotFoundError):
+            self.home.remove(self.retained)
+        self.home.park(self.retained)
+        self.home.park(self.retained)
+        record = self.home.package_record(self.retained)
+        holder = self.home.PARENT / record['holder']
+        self.home.remove(self.retained)
+        self.target.mkdir()
+        self.home.HOME.symlink_to(self.target)
+        site.mkdir()
+        (site / 'dpa.properties').write_bytes(b'factory registry')
+        (site / 'new.dp').write_bytes(b'factory DP')
+        manifest = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in site.iterdir()}
+        api = configure_tests.lifecycle
+        policy = api.Lifecycle(root, os.geteuid())
+        config = configure_tests.configure.Configure(api, policy, self.target, '1', 'a'*64, 'b'*64)
+        config.copies['reinstall'] = self.retained
+        config.paired_home = lambda: self.assertEqual(self.target, self.home.HOME.resolve(strict=True))
+        secret = key.read_bytes()
+        module = configure_tests.configure
+        rename = module.rename_package_entry
+        def interrupt(src, dst, flags):
+            rename(src, dst, flags)
+            if flags == 2:
+                raise InterruptedError('after exchange')
+        with patch.object(module, 'CORE_CONFIGURE_FACTORY_PACKAGES', manifest, create=True):
+            with self.assertRaisesRegex(api.Refused, 'original removal Root'):
+                config.restore_package_history(str(uuid.uuid4()), 'reinstall', secret)
+            with patch.object(module, 'rename_package_entry', side_effect=interrupt), self.assertRaises(InterruptedError):
+                config.restore_package_history(self.op, 'reinstall', secret)
+            self.assertEqual('PRESERVED', config.restore_package_history(self.op, 'reinstall', secret))
+        self.assertEqual(actual, (site.stat().st_ino, receipt.stat().st_ino))
+        self.assertEqual(b'site registry', (site / 'dpa.properties').read_bytes())
+        self.assertEqual(b'factory DP', (site / 'new.dp').read_bytes())
+        config.retire_removed_packages(self.op, self.retained, secret)
+        config.retire_removed_packages(self.op, self.retained, secret)
+        self.assertFalse(holder.exists())
+
+    def test_purge_checks_parked_identity_before_deleting(self):
+        site = self.target / 'packages'
+        site.mkdir()
+        (site / ('.dpa.properties.uninstall-' + 'b' * 64 + '.done')).touch()
+        self.home.JOURNAL_KEY = self.home.PARENT.parent / 'journal.key'
+        self.home.JOURNAL_KEY.write_bytes(os.urandom(32))
+        self.home.JOURNAL_KEY.chmod(0o600)
+        self.home.capture(self.retained)
+        self.home.park(self.retained)
+        self.home.remove(self.retained)
+        holder = self.home.PARENT / self.home.package_record(self.retained)['holder']
+        saved = holder / 'packages'
+        moved = saved.rename(holder / 'different-name')
+        saved.mkdir()
+        with self.assertRaisesRegex(ValueError, 'Different deployment directory'):
+            self.home.purge_packages(self.retained)
+        saved.rmdir()
+        moved.rename(saved)
+        self.home.purge_packages(self.retained)
+        self.home.purge_packages(self.retained)
+        self.assertFalse(holder.exists())
+
     def test_missing_legacy_registry_leaves_no_restore_input(self):
         self.registry.unlink()
         self.home.capture(self.retained)

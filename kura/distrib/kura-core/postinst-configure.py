@@ -215,38 +215,71 @@ class Configure:
             # can publish this witness. Resume never invokes an issued step.
             self.publish(directory, original, f'setup-{step}-returned', recovery, secret)
 
+    @staticmethod
+    def package_identity(path):
+        info = path.lstat()
+        return dict(device=info.st_dev, inode=info.st_ino)
+
+    def removal_history(self, original, copy, secret):
+        require = self.api.require
+        path = copy / 'removal-home.json'
+        capture = self.api.decode(self.policy.read(path, limit=4096)) if os.path.lexists(path) else {}
+        if 'packageTag' not in capture:
+            registry = copy / 'packages/dpa.properties'
+            pattern = re.compile(r'\.dpa\.properties\.(install|uninstall)-[0-9a-f]{64}\.done')
+            require(not registry.parent.is_dir() or not any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()),
+                    'Completed deployment history requires its original removed directory')
+            return None
+        tag = capture.pop('packageTag')
+        expected = hmac.new(secret, b'kura-core-removal-packages-v1\0' + self.api.encoded(capture),
+                            hashlib.sha256).hexdigest()
+        def pair(path):
+            info = path.lstat()
+            return [info.st_dev, info.st_ino]
+        require(hmac.compare_digest(tag, expected) and capture['operation'] == original
+                and capture['root'] == pair(self.policy.root) and capture['parent'] == pair(self.physical.parent)
+                and capture['retained'] == pair(copy) and capture['name'] == self.physical.name,
+                'Deployment history requires its original removal Root and home')
+        parked = self.physical.parent / capture['holder']
+        recorded = dict(zip(('device', 'inode'), capture['packages'], strict=True))
+        return parked, capture['holderIdentity'], recorded, tag
+
     def restore_package_history(self, original, mode, secret):
-        if mode != 'upgrade':
+        if mode not in self.copies:
             return 'COPY'
         copy = self.copies[mode]
         require = self.api.require
-        # Earlier installers may leave only a copy, without a parked original home.
-        if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
-            return 'COPY'
-        capture = self.api.decode(self.policy.read(copy / '.capture.json', limit=4096))
-        tag = capture.pop('tag')
-        expected = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(capture),
-                            hashlib.sha256).hexdigest()
-
-        def identity(path):
-            info = path.lstat()
-            return dict(device=info.st_dev, inode=info.st_ino)
-
-        require(hmac.compare_digest(tag, expected) and capture['maintenanceId'] == original
-                and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
-                'Deployment history requires the original upgrade capture')
-        if 'packageHistoryDirectory' not in capture:
-            return 'COPY'
+        identity = self.package_identity
+        if mode == 'reinstall':
+            history = self.removal_history(original, copy, secret)
+            if history is None:
+                return 'COPY'
+            parked, holder_identity, recorded, tag = history
+            self.policy.directory(parked, private=True)
+            require(list(identity(parked).values()) == holder_identity, 'Original deployment holding directory changed')
+        else:
+            # Older upgrade installers may have only a staged copy.
+            if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
+                return 'COPY'
+            capture = self.api.decode(self.policy.read(copy / '.capture.json', limit=4096))
+            tag = capture.pop('tag')
+            expected = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(capture),
+                                hashlib.sha256).hexdigest()
+            require(hmac.compare_digest(tag, expected) and capture['maintenanceId'] == original
+                    and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
+                    'Deployment history requires the original upgrade capture')
+            if 'packageHistoryDirectory' not in capture:
+                return 'COPY'
+            parked = copy / '.old-home'
+            self.policy.directory(parked)
+            require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
+                    'Original deployment home differs from its upgrade capture')
+            recorded = capture['packageHistoryDirectory']
         self.paired_home()
-        parked = copy / '.old-home'
-        self.policy.directory(parked)
-        require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
-                'Original deployment home differs from its upgrade capture')
         source = parked / 'packages'
         destination = self.physical / 'packages'
         require(all(stat.S_ISDIR(path.lstat().st_mode) for path in (source, destination)),
                 'Deployment package directory changed during upgrade')
-        recorded = capture['packageHistoryDirectory']
         handoff = copy / '.package-history-handoff.json'
         at_destination = identity(destination) == recorded
         factory = source if at_destination else destination
@@ -281,6 +314,27 @@ class Configure:
         self.policy.sync(self.physical)
         require(identity(destination) == recorded, 'Original package history was not restored')
         return 'PRESERVED'
+
+    def retire_removed_packages(self, original, copy, secret):
+        history = self.removal_history(original, copy, secret)
+        if history is None:
+            return
+        parked, holder_identity, recorded, tag = history
+        destination = self.physical / 'packages'
+        require = self.api.require
+        require(self.package_identity(destination) == recorded, 'Different installed deployment directory at retirement')
+        if os.path.lexists(parked):
+            self.policy.directory(parked, private=True)
+            require(list(self.package_identity(parked).values()) == holder_identity, 'Different deployment holding directory')
+            factory = parked / 'packages'
+            if os.path.lexists(factory):
+                binding = dict(originalDirectory=recorded, factoryDirectory=self.package_identity(factory), captureTag=tag)
+                require(self.policy.read(copy / '.package-history-handoff.json', limit=4096)
+                        == self.body(original, 'package-history-handoff', binding, secret),
+                        'Different factory directory at retirement')
+                shutil.rmtree(factory)
+            parked.rmdir()
+        self.policy.sync(parked.parent)
 
     def restore_siblings(self, original, mode):
         source = self.copies[mode] / 'siblings'
@@ -415,6 +469,8 @@ class Configure:
             require(existing == recovery or existing['mode'] == 'install', 'Refusing a different configure recovery copy')
             if action == 'retire-copy' and existing['mode'] != 'install':
                 path = self.copies[mode]
+                if mode == 'reinstall':
+                    self.retire_removed_packages(original, path, secret)
                 shutil.rmtree(path)
                 policy.sync(path.parent)
             return 'READY', mode

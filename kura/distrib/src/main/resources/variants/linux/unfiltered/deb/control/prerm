@@ -57,11 +57,17 @@ raise RuntimeError("Kura addon-code policy was not embedded")
 KURA_ADDON_CODE_POLICY
 }
 
+function removalHome {
+    python3 -I -B - "$@" <<'KURA_REMOVAL_HOME'
+raise RuntimeError("Kura removal home was not embedded")
+KURA_REMOVAL_HOME
+}
+
 function preserveUserData {
     [ -d "${INSTALL_DIR}/kura" ] || return 0
     if [ -e "${RETAINED_DIR}" ]; then
-        echo "Cannot remove Kura: ${RETAINED_DIR} already exists; preserve it for recovery." >&2
-        return 1
+        removalHome check-resume "${RETAINED_DIR}"
+        return $?
     fi
     local retained_tmp
     retained_tmp=$(mktemp -d "/var/lib/.kura-retained.tmp.XXXXXXXX") || return 1
@@ -103,9 +109,7 @@ function preserveUserData {
         fi
     fi
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" archive "${retained_tmp}" || return 1
-    python3 -I -B - capture "${retained_tmp}" <<'KURA_REMOVAL_HOME' || return 1
-raise RuntimeError("Kura removal home was not embedded")
-KURA_REMOVAL_HOME
+    removalHome capture "${retained_tmp}" || return 1
     if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
         echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
         rm -rf "${retained_tmp}"
@@ -248,6 +252,9 @@ echo ""
 echo "Uninstalling KURA..."
 
 runPreRemove >> "$LOG" 2>&1 || exit 1
+if [ "$1" = "remove" ] && [ -f "${RETAINED_DIR}/removal-home.json" ]; then
+    removalHome park-if-recorded "${RETAINED_DIR}" || exit 1
+fi
 
 echo ""
 echo "Uninstalling KURA... Done!"

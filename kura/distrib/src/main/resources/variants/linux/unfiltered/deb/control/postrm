@@ -40,7 +40,7 @@ case "$1" in
 
         # Remove kura installation tree (plugins/ + siblings/)
         if [ -e "${RETAINED_DIR}/removal-home.json" ] || [ -L "${RETAINED_DIR}/removal-home.json" ]; then
-            python3 -I -B - remove "${RETAINED_DIR}" <<'KURA_REMOVAL_HOME' || exit 1
+            python3 -I -B - "$1" "${RETAINED_DIR}" <<'KURA_REMOVAL_HOME' || exit 1
 raise RuntimeError("Kura removal home was not embedded")
 KURA_REMOVAL_HOME
         elif [ -d "${INSTALL_DIR}/kura" ]; then

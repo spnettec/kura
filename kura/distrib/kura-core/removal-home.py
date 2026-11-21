@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Carry the original Core directory across dpkg's removal of the public link."""
+import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -8,11 +10,14 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import uuid
 
 
 PARENT = Path('/opt/eclipse')
 HOME = PARENT / 'kura'
+ROOT = Path('/')
+JOURNAL_KEY = Path('/var/lib/kura-key-service/journal.key')
 
 
 def require(ok, message):
@@ -59,6 +64,89 @@ def no_mounts_below(path):
         require(mount != path and path not in mount.parents, f'Installation still contains a mount: {mount}')
 
 
+def removal_tag(record):
+    protected(JOURNAL_KEY, False)
+    require(JOURNAL_KEY.stat().st_mode & 0o077 == 0, 'Unsafe removal journal key')
+    key = JOURNAL_KEY.read_bytes()
+    require(len(key) == 32, 'Invalid removal journal key')
+    payload = json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')
+    return hmac.new(key, b'kura-core-removal-packages-v1\0' + payload, hashlib.sha256).hexdigest()
+
+
+def capture_history(physical, retained, record):
+    packages = physical / 'packages'
+    if not packages.is_dir() or packages.is_symlink():
+        return
+    registry = (packages / 'dpa.properties').resolve()
+    pattern = re.compile(re.escape('.' + registry.name) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
+    if not registry.parent.is_dir() or not any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()):
+        return
+    # Park on the installation filesystem, even when /var/lib is a different mount.
+    holder = Path(tempfile.mkdtemp(prefix='.kura-removed-packages-', dir=PARENT))
+    sync_dir(PARENT)
+    record.update(packages=identity(packages), holder=holder.name, holderIdentity=identity(holder),
+                  retained=identity(retained))
+    record['packageTag'] = removal_tag(record)
+
+
+def package_record(retained):
+    path = retained / 'removal-home.json'
+    protected(path, False)
+    record = json.loads(path.read_bytes())
+    tag = record.pop('packageTag', None)
+    require(tag is not None and hmac.compare_digest(tag, removal_tag(record))
+            and record['root'] == identity(ROOT) and record['parent'] == identity(PARENT)
+            and record['retained'] == identity(retained)
+            and record['operation'] == json.loads((retained / 'systemd/main-state.json').read_bytes())['maintenanceId'],
+            'Different retained deployment history or removal Root')
+    return record
+
+
+def paired_removal(retained):
+    record = package_record(retained)
+    physical = PARENT / record['name']
+    protected(physical, True)
+    witness = physical / ('.kura-remove-' + record['operation'])
+    protected(witness, False)
+    require(identity(physical) == record['target'] and identity(HOME) == record['alias']
+            and HOME.resolve(strict=True) == physical
+            and witness.read_bytes() == (retained / 'removal-home.json').read_bytes(),
+            'Original deployment removal home changed')
+    holder = PARENT / record['holder']
+    protected(holder, True)
+    require(identity(holder) == record['holderIdentity'], 'Original deployment holding directory changed')
+    return record, physical, holder
+
+
+def park(retained):
+    record, physical, holder = paired_removal(retained)
+    source, saved = physical / 'packages', holder / 'packages'
+    if os.path.lexists(source):
+        require(identity(source) == record['packages'] and not os.path.lexists(saved),
+                'Original deployment directory changed before removal')
+        no_mounts_below(source)
+        source.rename(saved)
+    require(identity(saved) == record['packages'], 'Retained deployment directory changed')
+    sync_dir(holder)
+    sync_dir(physical)
+
+
+def purge_packages(retained):
+    record = package_record(retained)
+    holder = PARENT / record['holder']
+    if not os.path.lexists(holder):
+        return
+    protected(holder, True)
+    require(identity(holder) == record['holderIdentity'], 'Original purge holding directory changed')
+    saved = holder / 'packages'
+    if os.path.lexists(saved):
+        require(identity(saved) == record['packages'], 'Different deployment directory at purge')
+        no_mounts_below(saved)
+        shutil.rmtree(saved)
+    holder.rmdir()
+    sync_dir(PARENT)
+
+
 def capture(retained):
     protected(retained, True)
     protected(PARENT, True)
@@ -69,7 +157,7 @@ def capture(retained):
     protected(physical, True)
     no_mounts_below(physical)
     operation = str(uuid.UUID(json.loads((retained / 'systemd/main-state.json').read_bytes())['maintenanceId']))
-    record = dict(root=identity(Path('/')), parent=identity(PARENT), name=physical.name,
+    record = dict(root=identity(ROOT), parent=identity(PARENT), name=physical.name,
                   target=identity(physical), alias=identity(HOME), operation=operation)
     # postinst restores this file from the same relative path for upgrades and
     # retained reinstalls. The lock belongs to the current framework directory.
@@ -88,6 +176,7 @@ def capture(retained):
             with destination.open('rb') as stream:
                 os.fsync(stream.fileno())
             sync_dir(saved)
+    capture_history(physical, retained, record)
     raw = json.dumps(record, sort_keys=True).encode()
     write_new(retained / 'removal-home.json', raw)
     # An inode number can be reused after a directory is removed.
@@ -107,8 +196,15 @@ def remove(retained):
     rec = json.loads(raw)
     operation = str(uuid.UUID(rec['operation']))
     require(operation == json.loads((retained / 'systemd/main-state.json').read_bytes())['maintenanceId']
-            and rec['root'] == identity(Path('/')) and rec['parent'] == identity(PARENT),
+            and rec['root'] == identity(ROOT) and rec['parent'] == identity(PARENT),
             'Different original Core removal or installation Root')
+    if 'packageTag' in rec:
+        bound = package_record(retained)
+        holder = PARENT / bound['holder']
+        if os.path.lexists(PARENT / rec['name']) or os.path.lexists(PARENT / ('.kura-removing-' + operation)):
+            protected(holder, True)
+            require(identity(holder) == bound['holderIdentity'] and identity(holder / 'packages') == bound['packages'],
+                    'Original deployment directory was not parked before removal')
     name = rec['name']
     require(Path(name).name == name and (name == 'kura' or name.startswith('kura_')),
             'Invalid original installation name')
@@ -143,4 +239,13 @@ def remove(retained):
 
 if __name__ == '__main__':
     action, directory = sys.argv[1:]
-    {'capture': capture, 'remove': remove}[action](Path(directory))
+    retained = Path(directory)
+    if action == 'purge':
+        remove(retained)
+    if action in ('park-if-recorded', 'purge'):
+        path = retained / 'removal-home.json'
+        protected(path, False)
+        if 'packageTag' in json.loads(path.read_bytes()):
+            (park if action == 'park-if-recorded' else purge_packages)(retained)
+    else:
+        {'capture': capture, 'remove': remove, 'check-resume': paired_removal}[action](retained)

@@ -257,7 +257,7 @@ class RemoveCallbackTest(unittest.TestCase):
             self.assertEqual(0, result.returncode)
 
     def test_preserve_data_copies_history_with_numeric_owners_and_never_executes_it(self):
-        raw = CONTROL.read_text(); start = raw.index('function preserveUserData {')
+        raw = CONTROL.read_text(); start = raw.index('function removalHome {')
         end = raw.index('##############################################\n# UTILITY FUNCTIONS', start)
         for fail in (False, True):
             with self.subTest(copy_failure=fail), fixtures.tempfile.TemporaryDirectory() as tmp:
