@@ -8,6 +8,7 @@ reader. No gateway credential, journal, configuration or network write is used.
 """
 import ctypes
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -213,6 +214,138 @@ def transfer_launcher(action, source, destination, digest):
             temporary.unlink(missing_ok=True)
 
 
+SKIN = Path('/opt/eclipse/kura/console/skin')
+
+
+def gwt_skin_registration():
+    packages = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Package}\n'], text=True)
+    if 'kura-management-ui' not in packages.splitlines():
+        return dict(files={}, version=None, state=None, generation=None)
+    raw = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version}\n${db:Status-Status}\n${Conffiles}',
+                                   'kura-management-ui'], text=True)
+    version, state, conffiles = raw.split('\n', 2)
+    files = {}
+    for line in conffiles.splitlines():
+        path, digest = line.strip().removesuffix(' obsolete').rsplit(' ', 1)
+        if Path(path).is_relative_to(SKIN):
+            name = Path(path).relative_to(SKIN)
+            if '..' in name.parts or str(name) in files:
+                raise RuntimeError('Invalid GWT conffile registration')
+            files[str(name)] = digest
+    listing = Path('/var/lib/dpkg/info/kura-management-ui.list')
+    generation = None
+    if os.path.lexists(listing):
+        value = listing.lstat()
+        protected(value)
+        generation = [value.st_dev, value.st_ino, value.st_ctime_ns]
+    return dict(files=files, version=version, state=state, generation=generation)
+
+
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def merge_skin(staged, destination):
+    # Both complete trees have been checked. Publish only missing nodes; a retry
+    # compares already published files before continuing with the remainder.
+    if not os.path.lexists(destination):
+        rename_new(staged, destination)
+        sync_directory(destination.parent)
+        return
+    for child in sorted(staged.iterdir()):
+        target = destination / child.name
+        if not os.path.lexists(target) or child.is_dir():
+            merge_skin(child, target)
+
+
+def transfer_skin(action, source, destination):
+    ancestors(source.parent)
+    if not os.path.lexists(source):
+        return  # Includes retained directories made before skin capture existed.
+    saved = fingerprint(source)
+    if any(entry[3] & 0o7000 for entry in saved.values()):
+        raise RuntimeError('Unexpected special permission in the console skin')
+    registration = gwt_skin_registration()
+    ancestors(destination.parent)
+    destination.parent.mkdir(parents=True, mode=0o750, exist_ok=True)
+    ancestors(destination.parent)
+    record_name = 'gwt-conffiles.json'
+    if action == 'preserve':
+        publish(source, destination)
+        with (destination.parent / record_name).open('x', encoding='utf-8') as record:
+            os.fchmod(record.fileno(), 0o600)
+            json.dump(registration, record, sort_keys=True)
+            record.flush()
+            os.fsync(record.fileno())
+        sync_directory(destination.parent)
+        return
+
+    record = source.parent / record_name
+    protected(record.lstat())
+    captured = json.loads(record.read_bytes())
+    incoming = fingerprint(destination) if os.path.lexists(destination) else {}
+    changed = (captured['generation'], captured['version']) != (registration['generation'], registration['version'])
+    omit = []
+    for name, entry in saved.items():
+        current = incoming.get(name)
+        if current is not None and current[0] != entry[0]:
+            raise RuntimeError('Console skin file type conflicts with the incoming installation')
+        if entry[0]:
+            continue
+        old_digest = captured['files'].get(name)
+        if old_digest is not None and name not in registration['files']:
+            if registration['state'] in (None, 'not-installed'):
+                omit.append(name)  # A purge explicitly removed GWT's conffiles.
+                continue
+            with (source / name).open('rb') as stream:
+                retired_default = hashlib.file_digest(stream, lambda: hashlib.md5(usedforsecurity=False)).hexdigest()
+            if retired_default == old_digest:
+                omit.append(name)
+                continue
+            old_digest = None  # A retired, locally edited conffile is site data.
+        if current is not None and current[-1] == entry[-1]:
+            continue
+        if old_digest is not None and changed:
+            # dpkg retains conffiles on remove. During joint unpack its pending
+            # .dpkg-new still needs the local bytes for the configure decision.
+            pending = name + '.dpkg-new' in incoming and registration['state'] in ('unpacked', 'half-configured')
+            if current is None and (pending or registration['state'] == 'config-files'):
+                continue
+            with (source / name).open('rb') as stream:
+                vendor = hashlib.file_digest(stream, lambda: hashlib.md5(usedforsecurity=False)).hexdigest()
+            native_backup = incoming.get(name + '.dpkg-old')
+            if vendor == old_digest or (native_backup and native_backup[-1] == entry[-1]):
+                omit.append(name)  # Honor dpkg's new bytes or deliberate absence.
+                continue
+            raise RuntimeError('GWT conffile changed during Core maintenance; retain both generations: ' + name)
+        if current is not None:
+            raise RuntimeError('Site skin conflicts with incoming content; retain the recovery copy: ' + name)
+
+    if not incoming and len(omit) == len(saved) - 1 and (omit or (captured['files'] and not registration['files'])):
+        return
+    # Stage outside the public runtime so an interrupted copy cannot be served
+    # as a skin file. The private recovery source remains until Core is ready.
+    with tempfile.TemporaryDirectory(dir=destination.parents[2], prefix='.kura-skin-') as directory:
+        staged = Path(directory) / 'skin'
+        publish(source, staged)
+        if fingerprint(staged) != saved or (fingerprint(destination) if os.path.lexists(destination) else {}) != incoming:
+            raise RuntimeError('Console skin changed during restore')
+        for name in omit:
+            file = staged / name
+            file.unlink()
+            sync_directory(file.parent)
+        merge_skin(staged, destination)
+        restored = fingerprint(destination)
+        for name, entry in saved.items():
+            if name not in omit and (name not in restored or restored[name][-1] != entry[-1]):
+                raise RuntimeError('Console skin restoration incomplete: ' + name)
+        sync_directory(destination.parent)
+
+
 def main(arguments):
     if len(arguments) != 3:
         raise RuntimeError('Invalid sibling code arguments')
@@ -225,6 +358,7 @@ def main(arguments):
             or (action == 'restore' and destination == installed and recovery.fullmatch(left))):
         raise RuntimeError('Sibling code paths are outside package lifecycle scope')
     transfer(action, source, destination)
+    transfer_skin(action, source.parents[1] / 'console/skin', destination.parents[1] / 'console/skin')
     transfer_launcher(action, source.parents[1] / 'bin/firewall', destination.parents[1] / 'bin/firewall',
                       registered_launcher_digest())
     # preinst already stages sibling bundles during upgrades. prerm also needs

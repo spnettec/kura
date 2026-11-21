@@ -171,6 +171,83 @@ class AddonCodePolicyTests(unittest.TestCase):
             policy.transfer('restore', self.backup, self.destination)
         self.assertEqual(['unchanged'], [path.name for path in personal.iterdir()])
 
+    def skin_fixture(self):
+        source = self.root / 'installed/console/skin'
+        source.mkdir(parents=True)
+        (source / 'favicon.ico').write_bytes(b'vendor')
+        (source / 'site.txt').write_bytes(b'owner text')
+        (source / 'theme').mkdir()
+        (source / 'theme/logo').write_bytes(b'owner binary')
+        digest = hashlib.md5(b'vendor', usedforsecurity=False).hexdigest()
+        before = dict(state='installed', generation=[1, 2, 3], version='1', files={'favicon.ico': digest})
+        saved = self.root / 'retained/console/skin'
+        dest = self.root / 'current/console/skin'
+        dest.parents[1].mkdir()
+        return source, saved, dest, before
+
+    def test_skin_roundtrip_and_retry_after_publishing_some_files(self):
+        source, saved, dest, before = self.skin_fixture()
+        with patch.object(policy, 'gwt_skin_registration', return_value=before):
+            policy.transfer_skin('preserve', source, saved)
+            dest.mkdir(parents=True)
+            rename = policy.rename_new
+            def interrupt(src, target):
+                if target == dest / 'theme':
+                    raise InterruptedError()
+                rename(src, target)
+            with patch.object(policy, 'rename_new', interrupt), self.assertRaises(InterruptedError):
+                policy.transfer_skin('restore', saved, dest)
+            original = (dest / 'favicon.ico').stat()
+            policy.transfer_skin('restore', saved, dest)
+            self.assertEqual(original.st_ino, (dest / 'favicon.ico').stat().st_ino)
+            self.assertEqual(policy.fingerprint(source), policy.fingerprint(dest))
+            self.assertFalse((dest / 'favicon-32x32.png').exists())
+
+    def test_skin_joint_upgrade_and_purge_keep_site_files(self):
+        source, saved, dest, before = self.skin_fixture()
+        after = dict(before, version='2', generation=[1, 3, 5])
+        with patch.object(policy, 'gwt_skin_registration', return_value=before):
+            policy.transfer_skin('preserve', source, saved)
+        dest.mkdir(parents=True)
+        (dest / 'favicon.ico').write_bytes(b'new package')
+        with patch.object(policy, 'gwt_skin_registration', return_value=after):
+            policy.transfer_skin('restore', saved, dest)
+        self.assertEqual(b'new package', (dest / 'favicon.ico').read_bytes())
+        self.assertEqual(b'owner text', (dest / 'site.txt').read_bytes())
+        shutil.rmtree(dest)
+        with patch.object(policy, 'gwt_skin_registration', return_value=dict(after, state=None, files={})):
+            policy.transfer_skin('restore', saved, dest)
+        self.assertFalse((dest / 'favicon.ico').exists())
+        self.assertEqual(b'owner binary', (dest / 'theme/logo').read_bytes())
+
+    def test_retired_modified_conffile_remains_site_data(self):
+        source, saved, dest, before = self.skin_fixture()
+        (source / 'favicon.ico').write_bytes(b'local replacement')
+        with patch.object(policy, 'gwt_skin_registration', return_value=before):
+            policy.transfer_skin('preserve', source, saved)
+        with patch.object(policy, 'gwt_skin_registration', return_value=dict(before, version='2', files={})):
+            policy.transfer_skin('restore', saved, dest)
+        self.assertEqual(b'local replacement', (dest / 'favicon.ico').read_bytes())
+
+    def test_skin_local_edit_survives_joint_unpack_and_ambiguous_collision(self):
+        source, saved, dest, before = self.skin_fixture()
+        (source / 'favicon.ico').write_bytes(b'original operator')
+        with patch.object(policy, 'gwt_skin_registration', return_value=before):
+            policy.transfer_skin('preserve', source, saved)
+        dest.mkdir(parents=True)
+        (dest / 'favicon.ico.dpkg-new').write_bytes(b'new package')
+        after = dict(before, version='2', generation=[1, 3, 5], state='unpacked')
+        with patch.object(policy, 'gwt_skin_registration', return_value=after):
+            policy.transfer_skin('restore', saved, dest)
+        self.assertEqual(b'original operator', (dest / 'favicon.ico').read_bytes())
+        self.assertEqual(b'new package', (dest / 'favicon.ico.dpkg-new').read_bytes())
+        (dest / 'favicon.ico').write_bytes(b'different operator')
+        with patch.object(policy, 'gwt_skin_registration', return_value=dict(after, state='installed')):
+            with self.assertRaisesRegex(RuntimeError, 'retain both generations'):
+                policy.transfer_skin('restore', saved, dest)
+            self.assertEqual(b'original operator', (saved / 'favicon.ico').read_bytes())
+            self.assertEqual(b'different operator', (dest / 'favicon.ico').read_bytes())
+
     def test_cli_refuses_non_lifecycle_paths_and_embedded_source_is_exact(self):
         with self.assertRaises(RuntimeError):
             policy.main(['preserve', str(self.source), str(self.backup)])
