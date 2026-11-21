@@ -1,13 +1,17 @@
 """Run the shipped shell argument path with recording executables, without Java."""
+import errno
 import fcntl
 import json
 import os
 from pathlib import Path
+import runpy
 import shutil
+import stat
 import subprocess
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'main/resources/filtered/pkg/bin/start_kura_background.sh'
 
@@ -234,6 +238,41 @@ except OSError:
         self.assertEqual(config.read_bytes(), expected)
         self.assertEqual(config.stat().st_ino, complete.st_ino)
         self.assertEqual(set(config.parent.iterdir()), {config})
+
+    def test_configuration_writeback_errors_reach_the_launcher(self):
+        publish = runpy.run_path(str(self.bin / 'kura_framework_config.py'))['publish']
+        directory = self.root / 'configuration'
+        directory.mkdir()
+        config = directory / 'config.ini'
+        previous = b'previous complete configuration'
+        expected = (self.root / 'framework/config.ini').read_bytes() + b'osgi.bundles=\n'
+        real_sync = os.fsync
+        for failure in ('file', 'directory'):
+            with self.subTest(failure=failure):
+                config.write_bytes(previous)
+                original_inode = config.stat().st_ino
+                calls = []
+
+                def sync(fd):
+                    target = 'directory' if stat.S_ISDIR(os.fstat(fd).st_mode) else 'file'
+                    calls.append(target)
+                    if target == failure:
+                        raise OSError(errno.EIO, 'injected writeback error')
+                    real_sync(fd)
+
+                with patch('os.fsync', side_effect=sync), self.assertRaises(OSError) as error:
+                    publish(self.root, directory)
+                self.assertEqual(error.exception.errno, errno.EIO)
+                if failure == 'file':
+                    self.assertEqual(calls, ['file'])
+                    self.assertEqual(config.stat().st_ino, original_inode)
+                    self.assertEqual(config.read_bytes(), previous)
+                else:
+                    self.assertEqual(calls, ['file', 'directory'])
+                    self.assertEqual(config.read_bytes(), expected)
+                self.assertEqual(set(directory.iterdir()), {config})
+                publish(self.root, directory)
+                self.assertEqual(config.read_bytes(), expected)
 
     def test_live_writer_keeps_its_partial_file_and_next_launch_clears_a_stale_one(self):
         directory = self.root / 'configuration'

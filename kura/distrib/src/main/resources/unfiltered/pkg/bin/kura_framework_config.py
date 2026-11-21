@@ -28,7 +28,9 @@ def publish(home, directory):
                 # list. Template read errors above must reach the launcher.
                 subprocess.run([home / 'bin/gen_config_ini.sh', os.devnull,
                                 home / 'plugins', home / 'siblings'], stdout=output, check=True)
+                os.fsync(output.fileno())
             os.replace(pending, directory / 'config.ini')
+            os.fsync(lock)
         finally:
             pending.unlink(missing_ok=True)
     finally:
