@@ -71,6 +71,11 @@ class Ownership:
                 if not mutable and mode & 0o100:
                     mode |= 0o010
             uid, gid = ((self.daemon_uid, self.daemon_gid) if mutable else (self.code_uid, self.code_gid))
+            if relative == Path('bin/firewall'):
+                require(stat.S_ISREG(metadata.st_mode) and metadata.st_mode & stat.S_IXUSR,
+                        'Expected an executable firewall launcher')
+                # Both firewall packages ship their systemd entrypoint exclusively for Root.
+                gid, mode = 0, 0o700
             plan.append((path, self.identity(metadata), uid, gid, mode))
         return plan
 

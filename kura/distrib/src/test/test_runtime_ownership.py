@@ -25,6 +25,14 @@ class RuntimeOwnership(unittest.TestCase):
         for name in ['bin/start.sh','install/manager.sh']:(self.home/name).chmod(0o700)
         self.policy=P.Ownership(self.home,os.geteuid(),os.getegid(),code_uid=os.geteuid(),code_gid=os.getegid())
 
+    def test_firewall_entrypoint_stays_root_only_with_a_separate_code_reader_group(self):
+        launcher = self.home / 'bin/firewall'
+        launcher.write_text('#!/bin/sh\n')
+        launcher.chmod(0o750)
+        policy = P.Ownership(self.home, 997, 997, code_gid=990)
+        entry = next(row for row in policy.plan(code_only=True) if row[0] == launcher)
+        self.assertEqual((0, 0, 0o700), entry[-3:])
+
     def state(self,root=None):
         root=root or self.home
         return {str(p.relative_to(root)):(p.stat().st_ino,hashlib.sha256(p.read_bytes()).hexdigest()) for p in root.rglob('*') if p.is_file() and not p.is_symlink()}
