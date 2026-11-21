@@ -16,6 +16,7 @@ package org.eclipse.kura.core.configuration;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -2066,51 +2067,54 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
     }
 
-    private boolean allSnapshotsUnencrypted() {
-        try {
-            Set<Long> snapshotIDs = getSnapshots();
-            if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-                return false;
+    private void encryptPlainSnapshots() throws KuraException {
+        Set<Long> ids = getSnapshots();
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        // Publish the newest snapshot last. Until then startup will re-enter conversion.
+        SortedSet<Long> ordered = new TreeSet<>(ids);
+        for (long id : ordered) {
+            File file = getSnapshotFile(id);
+            if (file == null || !Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, id);
             }
-            Long[] snapshots = snapshotIDs.toArray(new Long[] {});
 
-            for (Long snapshot : snapshots) {
-
-                try {
-                    // Verify if the current snapshot is encrypted
-                    if (testEncryptedSnapshotFileContent(snapshot)) {
-                        return false;
-                    }
-                } catch (Exception e) {
+            boolean xmlPrefix = startsWithXmlMarkup(file);
+            if (!xmlPrefix && testEncryptedSnapshotFileContent(id)) {
+                continue;
+            }
+            XmlComponentConfigurations snapshot;
+            try {
+                snapshot = unmarshal(file, XmlComponentConfigurations.class);
+            } catch (KuraException e) {
+                if (e.getCode() == KuraErrorCode.DECODER_ERROR && xmlPrefix && id == ordered.last()) {
+                    renameSnapshotToBad(id);
+                    continue;
                 }
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e, "Unreadable snapshot " + id);
             }
-            return true;
-        } catch (Exception e) {
-            return false;
+            if (!snapshot.hasLogicalPasswords()) {
+                ComponentUtil.encryptConfigs(snapshot.getConfigurations(), this.cryptoService);
+            }
+            writeSnapshot(id, snapshot);
         }
     }
 
-    private void encryptPlainSnapshots() throws KuraException {
-        Set<Long> snapshotIDs = getSnapshots();
-        if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-            return;
-        }
-        Long[] snapshots = snapshotIDs.toArray(new Long[] {});
-
-        for (Long snapshot : snapshots) {
-            File fSnapshot = getSnapshotFile(snapshot);
-            if (fSnapshot == null || !fSnapshot.exists()) {
-                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, snapshot);
+    // Only positively identified XML may be quarantined on a parse failure. Other valid
+    // XML encodings still go through the unmarshaller after the ciphertext check.
+    private static boolean startsWithXmlMarkup(File file) throws KuraException {
+        try (var input = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
+            int first = input.read();
+            if (first == 0xef && input.read() == 0xbb && input.read() == 0xbf) {
+                first = input.read();
             }
-
-            final XmlComponentConfigurations xmlConfigs = unmarshal(fSnapshot, XmlComponentConfigurations.class);
-
-            if (!xmlConfigs.hasLogicalPasswords()) {
-                ComponentUtil.encryptConfigs(xmlConfigs.getConfigurations(), this.cryptoService);
+            while (first == ' ' || first == '\t' || first == '\r' || first == '\n') {
+                first = input.read();
             }
-
-            // Writes an encrypted snapshot with encrypted passwords.
-            writeSnapshot(snapshot, xmlConfigs);
+            return first == '<';
+        } catch (IOException e) {
+            throw KuraException.internalError(e);
         }
     }
 
@@ -2622,20 +2626,17 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 throw KuraException.internalError(e);
             }
 
-            logger.info("Unable to decrypt snapshot! Fallback to unencrypted snapshots mode.");
-            try {
-                if (allSnapshotsUnencrypted()) {
-                    encryptPlainSnapshots();
-                    configs = loadEncryptLatestSnapshotConfigurations();
-                }
-            } catch (Exception ex) {
-                if (ex instanceof KuraException && ((KuraException) ex).getCode() == KuraErrorCode.DECODER_ERROR) {
-                    logger.error("error encrypt snapshot config file, id:{}. rename to .bad", lastestID, e);
-                    renameSnapshotToBad(lastestID);
-                    return loadLatestSnapshotConfigurations();
-                }
+            if (!(e instanceof KuraException failure) || failure.getCode() != KuraErrorCode.DECODER_ERROR) {
                 throw KuraException.internalError(e);
             }
+            if (testEncryptedSnapshotFileContent(lastestID)) {
+                // Decryption succeeded, but the decoded XML was invalid.
+                renameSnapshotToBad(lastestID);
+                return loadLatestSnapshotConfigurations();
+            }
+            logger.info("Checking snapshot history for plaintext files to encrypt");
+            encryptPlainSnapshots();
+            configs = loadEncryptLatestSnapshotConfigurations();
         }
 
         return configs;
@@ -2679,14 +2680,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         File snapshot = new File(sbSnapshot.toString());
         File badFile = new File(sbSnapshot.append(".bad").toString());
         try {
-            Files.move(snapshot.toPath(), badFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(snapshot.toPath(), badFile.toPath());
             logger.info("Renamed bad snapshot {} -> {}", snapshot.getAbsolutePath(), badFile.getAbsolutePath());
         } catch (IOException e) {
-            logger.warn("Failed to rename snapshot {}, deleting instead", snapshot.getAbsolutePath());
-            try {
-                Files.deleteIfExists(snapshot.toPath());
-            } catch (IOException ignored) {
-            }
+            throw new KuraIOException(e);
         }
     }
 
@@ -2762,39 +2759,21 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     boolean testEncryptedSnapshotFileContent(long snapshotID) throws KuraException {
-        String configDir = getSnapshotsDirectory();
-
-        if (configDir == null) {
-            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND,
-                    configDir != null ? configDir : "null");
+        File file = getSnapshotFile(snapshotID);
+        if (file == null || !Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND, snapshotID);
         }
-
-        StringBuilder sbSnapshot = new StringBuilder(configDir);
-        sbSnapshot.append(File.separator).append("snapshot_").append(snapshotID).append(".xml");
-
-        String snapshot = sbSnapshot.toString();
-
-        File tempFile;
-        try {
-            tempFile = File.createTempFile("snapshot_test_" + snapshotID + "_", ".temp");
-        } catch (IOException e1) {
-            throw KuraException.internalError(e1);
-        }
-        try (FileInputStream snapInputStream = new FileInputStream(snapshot);
-                FileOutputStream tmpOutputStream = new FileOutputStream(tempFile)) {
-            this.cryptoService.decryptAes(snapInputStream, tmpOutputStream);
+        try (InputStream input = Files.newInputStream(file.toPath())) {
+            this.cryptoService.decryptAes(input, OutputStream.nullOutputStream());
+            return true;
         } catch (KuraException e) {
-            return false;
+            if (e.getCode() == KuraErrorCode.DECODER_ERROR) {
+                return false;
+            }
+            throw e;
         } catch (IOException e) {
             throw KuraException.internalError(e);
-        } finally {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
-            }
         }
-        return true;
     }
 
     private void updateConfigurationInternal(String pid, Map<String, Object> properties, boolean snapshotOnConfirmation)

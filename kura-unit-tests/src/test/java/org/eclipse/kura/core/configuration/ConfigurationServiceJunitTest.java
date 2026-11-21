@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,6 +64,7 @@ import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.configuration.metatype.OCDService;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.core.testutil.TestUtil;
+import org.eclipse.kura.core.crypto.CryptoServiceImpl;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.internal.xml.marshaller.unmarshaller.XmlMarshallUnmarshallImpl;
 import org.eclipse.kura.system.SystemService;
@@ -1431,6 +1433,89 @@ public class ConfigurationServiceJunitTest {
         assertFalse(Files.exists(snapshots.resolve("snapshot_1234.xml")));
         assertEquals("<broken", Files.readString(snapshots.resolve("snapshot_1234.xml.bad")));
         assertTrue(Files.exists(snapshots.resolve("snapshot_123.xml")));
+    }
+
+    private void configureSnapshotConversion(ConfigurationServiceImpl service) {
+        SystemService system = mock(SystemService.class);
+        when(system.getKuraSnapshotsDirectory()).thenReturn(this.temporaryDirectory.toString());
+        service.setSystemService(system);
+        service.setCryptoService(CryptoServiceImpl.forSnapshotRecovery(new byte[32], false));
+    }
+
+    @Test
+    public void resumesAfterOnlyOlderSnapshotWasPublished() throws Throwable {
+        Path older = this.temporaryDirectory.resolve("snapshot_1.xml");
+        Path newest = this.temporaryDirectory.resolve("snapshot_2.xml");
+        Files.writeString(older, prepareSnapshotXml(prepareSnapshot(Map.of("value", "old"))));
+        String plain = prepareSnapshotXml(prepareSnapshot(Map.of("value", "new")));
+        Files.writeString(newest, plain);
+
+        var interrupted = new TestConfigurationService() {
+            private int writes;
+
+            @Override
+            protected void marshal(OutputStream out, Object value) throws KuraException {
+                if (++this.writes == 2) {
+                    throw new KuraException(KuraErrorCode.ENCODE_ERROR);
+                }
+                super.marshal(out, value);
+            }
+        };
+        configureSnapshotConversion(interrupted);
+        assertThrows(KuraException.class, () -> TestUtil.invokePrivate(interrupted, "loadLatestSnapshotConfigurations"));
+        byte[] published = Files.readAllBytes(older);
+        assertEquals(plain, Files.readString(newest));
+        assertTrue(interrupted.testEncryptedSnapshotFileContent(1));
+        var modified = Files.getLastModifiedTime(older);
+
+        var resumed = new TestConfigurationService();
+        configureSnapshotConversion(resumed);
+        List<ComponentConfiguration> loaded = (List<ComponentConfiguration>) TestUtil.invokePrivate(resumed,
+                "loadLatestSnapshotConfigurations");
+        assertEquals("new", loaded.get(0).getConfigurationProperties().get("value"));
+        assertArrayEquals(published, Files.readAllBytes(older));
+        assertEquals(modified, Files.getLastModifiedTime(older));
+        assertTrue(resumed.testEncryptedSnapshotFileContent(2));
+        assertEquals("old", resumed.getSnapshot(1).get(0).getConfigurationProperties().get("value"));
+    }
+
+    @Test
+    public void unreadableOlderSnapshotCannotQuarantineValidNewest() throws Throwable {
+        Path older = this.temporaryDirectory.resolve("snapshot_1.xml");
+        Path newest = this.temporaryDirectory.resolve("snapshot_2.xml");
+        String valid = prepareSnapshotXML();
+        Files.writeString(older, "<broken");
+        Files.writeString(newest, valid);
+        var service = new TestConfigurationService();
+        configureSnapshotConversion(service);
+        assertThrows(KuraException.class, () -> TestUtil.invokePrivate(service, "loadLatestSnapshotConfigurations"));
+        assertEquals("<broken", Files.readString(older));
+        assertEquals(valid, Files.readString(newest));
+        assertFalse(Files.exists(newest.resolveSibling("snapshot_2.xml.bad")));
+    }
+
+    @Test
+    public void wrongKeyIsPreservedAndExistingQuarantineIsNeverReplaced() throws Throwable {
+        var service = new TestConfigurationService();
+        configureSnapshotConversion(service);
+        byte[] otherKey = new byte[32];
+        otherKey[0] = 1;
+        var other = CryptoServiceImpl.forSnapshotRecovery(otherKey, false);
+        Path newest = this.temporaryDirectory.resolve("snapshot_1.xml");
+        Path bad = this.temporaryDirectory.resolve("snapshot_1.xml.bad");
+        try (OutputStream ciphertext = other.aesEncryptingStream(Files.newOutputStream(newest))) {
+            ciphertext.write(prepareSnapshotXML().getBytes(StandardCharsets.UTF_8));
+        }
+        byte[] original = Files.readAllBytes(newest);
+        assertThrows(KuraException.class, () -> TestUtil.invokePrivate(service, "loadLatestSnapshotConfigurations"));
+        assertArrayEquals(original, Files.readAllBytes(newest));
+        assertFalse(Files.exists(bad));
+
+        Files.writeString(bad, "previously quarantined");
+        Files.writeString(newest, "<broken");
+        assertThrows(KuraException.class, () -> TestUtil.invokePrivate(service, "loadLatestSnapshotConfigurations"));
+        assertEquals("previously quarantined", Files.readString(bad));
+        assertEquals("<broken", Files.readString(newest));
     }
 
     @Test
