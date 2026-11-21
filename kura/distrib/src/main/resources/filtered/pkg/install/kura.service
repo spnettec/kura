@@ -20,7 +20,7 @@ ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-lo
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py
 # PID 1 removes PIDFile after each stop. Prepare the regular file before forking.
-ExecStartPre=+/usr/bin/setpriv --bounding-set=-all,+chown,+fowner --inh-caps=-all --ambient-caps=-all --no-new-privs /bin/sh -ec 'echo "f /run/kura.pid :0600 :kurad :kurad -" | /usr/bin/systemd-tmpfiles --create --prefix=/run/kura.pid -'
+ExecStartPre=+/usr/bin/setpriv --bounding-set=-all,+chown --inh-caps=-all --ambient-caps=-all --no-new-privs /usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_pid.py
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
 ExecStop=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_stop.py ${MAINPID}
 ExecStopPost=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_watchdog_maintenance.py pulse

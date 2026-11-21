@@ -105,7 +105,7 @@ class WatchdogMaintenanceTest(unittest.TestCase):
         template = BIN.parents[2] / "filtered/pkg/install/kura.service"
         unit = template.read_bytes().replace(b"INSTALL_DIR", b"/opt/eclipse")
         self.assertEqual(cohort.managed_unit(unit),
-                         {cohort.FRAMEWORK_STOP, cohort.WATCHDOG_MAINTENANCE, "bin/kura_modem_cohort.py"})
+                         {cohort.FRAMEWORK_PID, cohort.FRAMEWORK_STOP, cohort.WATCHDOG_MAINTENANCE, "bin/kura_modem_cohort.py"})
         with self.assertRaises(cohort.Refused):
             cohort.managed_unit(unit.replace(b"kura_watchdog_maintenance.py pulse",
                                             b"kura_watchdog_maintenance.py disarm"))

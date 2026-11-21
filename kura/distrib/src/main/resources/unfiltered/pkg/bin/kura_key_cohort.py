@@ -33,6 +33,7 @@ ROLES = {
 }
 LAUNCHERS = ("start_kura.sh", "start_kura_background.sh", "start_kura_debug.sh")
 OFFLINE = "libexec/key-recovery/kura-offline-recovery.jar"
+FRAMEWORK_PID = "bin/kura_framework_pid.py"
 FRAMEWORK_STOP = "bin/kura_framework_stop.py"
 WATCHDOG_MAINTENANCE = "bin/kura_watchdog_maintenance.py"
 TEMPLATES = "libexec/key-backup/launchers/"
@@ -177,6 +178,14 @@ def managed_unit(raw):
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
     require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
     helpers = set()
+    privileged = [line for line in starts if line.startswith("+")]
+    if privileged:
+        prefix = "+/usr/bin/setpriv --bounding-set=-all,+chown"
+        limits = " --inh-caps=-all --ambient-caps=-all --no-new-privs "
+        legacy = """/bin/sh -ec 'echo "f /run/kura.pid :0600 :kurad :kurad -" | /usr/bin/systemd-tmpfiles --create --prefix=/run/kura.pid -'"""
+        if privileged != [prefix + ",+fowner" + limits + legacy]:
+            require(privileged == [prefix + limits + "/usr/bin/python3 -I -B /opt/eclipse/kura/" + FRAMEWORK_PID])
+            helpers.add(FRAMEWORK_PID)
     modem_cohort = "bin/kura_modem_cohort.py"
     if "/usr/bin/python3 -I -B /opt/eclipse/kura/" + modem_cohort in starts:
         helpers.add(modem_cohort)

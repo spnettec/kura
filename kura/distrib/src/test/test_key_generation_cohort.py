@@ -138,7 +138,7 @@ class GenerationPackageTest(unittest.TestCase):
 
     def test_missing_main_unit_or_generation_helper_does_not_disable_cold_base(self):
         for path in (self.root / 'lib/systemd/system/kura.service', self.home / 'bin/kura_key_cohort.py',
-                     self.home / cohort.FRAMEWORK_STOP):
+                     self.home / cohort.FRAMEWORK_STOP, self.home / cohort.FRAMEWORK_PID):
             raw = path.read_bytes()
             path.unlink()
             self.assertEqual(2, self.policy.assets()['protocol'])
@@ -265,6 +265,7 @@ class GenerationPackageTest(unittest.TestCase):
         path = self.root / "lib/systemd/system/kura.service"
         original = path.read_bytes()
         for raw in (original.replace(b"kura_framework_stop.py", b"kura_other_stop.py"),
+                    original.replace(b"kura_framework_pid.py", b"kura_other_pid.py"),
                     original.replace(b"kura_watchdog_maintenance.py pulse", b"kura_watchdog_maintenance.py disarm"),
                     original.replace(b"KillMode=control-group", b"KillMode=mixed")):
             path.write_bytes(raw)
