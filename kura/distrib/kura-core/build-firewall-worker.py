@@ -12,10 +12,10 @@ import sys
 import tarfile
 import tempfile
 
-NAME = 'kura-firewall-policy-0.1.12'
+NAME = 'kura-firewall-policy-0.1.13'
 SOURCE = Path(__file__).resolve().parent / 'src/firewall-policy' / (NAME + '.crate')
-SHA = '724eb9beb9d129a6739dc99af9db6d4c056107e1be7b75a3190371612c1fbb47'
-REVISION = '6b26fddff369d3ec6a9af1fee2bf6cc65f992d03'
+SHA = 'be9d9a228f8ec4867c4d33edbedb933904622b302a6557cce3c5f97bd1072441'
+REVISION = '3c0bd7acc80858b3ba5b34622be9ca743767077b'
 BINARY = 'kura-firewall-publish'
 PLATFORMS = {'arm64': ('aarch64', 183), 'amd64': ('x86_64', 62)}
 
