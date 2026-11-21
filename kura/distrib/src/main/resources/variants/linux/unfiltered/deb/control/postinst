@@ -320,7 +320,8 @@ TIMEOUT_TIME=300
 ##############################################
 # dpkg can configure Core before other packages from the same transaction.
 function reportRelatedPackages {
-    dpkg-query -W -f='${Package} ${Version} ${db:Status-Status}\n' 'kura-*' 2>/dev/null \
+    # dpkg width 0 prints the full version and keeps the field literal through Maven filtering.
+    dpkg-query -W -f='${Package} ${Version;0} ${db:Status-Status}\n' 'kura-*' 2>/dev/null \
         | awk '$1 != "kura-core" && $3 != "not-installed" && $3 != "config-files" {
             if (!reported++) print "Other Kura package versions and dpkg states during Core configuration"
             print "    " $1, $2, $3
