@@ -37,6 +37,25 @@ class RuntimeOwnership(unittest.TestCase):
         root=root or self.home
         return {str(p.relative_to(root)):(p.stat().st_ino,hashlib.sha256(p.read_bytes()).hexdigest()) for p in root.rglob('*') if p.is_file() and not p.is_symlink()}
 
+    def test_sibling_pass_only_updates_listed_code(self):
+        owned = Path('siblings/example.jar')
+        registry = self.home / 'framework/sibling-install-order'
+        before = self.policy.identity(registry.lstat())
+        (self.home / owned).chmod(0o644)
+        self.assertEqual(1, self.policy.apply_sibling_code([owned, Path('console/moved.png')]))
+        self.assertEqual(0o640, stat.S_IMODE((self.home / owned).stat().st_mode))
+        self.assertEqual(0, self.policy.apply_sibling_code([owned]))
+        self.assertEqual(before, self.policy.identity(registry.lstat()))
+
+    def test_sibling_scope_refuses_untrusted_ancestors_before_writing(self):
+        owned = Path('siblings/example.jar')
+        (self.home / owned).chmod(0o644)
+        (self.home / 'console').symlink_to(self.base)
+        for invalid in (Path('console/file'), Path('siblings/../data/store.save'), Path('framework/sibling-install-order')):
+            with self.subTest(invalid=invalid), self.assertRaises(P.Refused):
+                self.policy.apply_sibling_code([owned, invalid])
+            self.assertEqual(0o644, stat.S_IMODE((self.home / owned).stat().st_mode))
+
     def test_all_file_bytes_and_inodes_survive_ownership_change(self):
         before=self.state();self.policy.apply();self.assertEqual(self.state(),before)
 

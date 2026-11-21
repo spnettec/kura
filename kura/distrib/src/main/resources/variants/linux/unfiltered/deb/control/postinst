@@ -579,7 +579,22 @@ if [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-remove" ]; then
     exit 0
 fi
 
+if [ "$1" = triggered ]; then
+    packageConfigure sibling-code || exit 1
+    exit 0
+fi
+# dpkg retries a failed file trigger as ordinary configure. Only a completed
+# post-install for this package and this Root may bypass its service tail.
+if [ "$1" = configure ] && [ ! -e /var/lib/kura-key-service/maintenance.json ] &&
+        [ -d /var/lib/kura-key-service/package-history ]; then
+    route=$(packageConfigure configure-route) || exit 1
+    if [[ "$route" == "CONFIGURED "* ]]; then
+        packageConfigure sibling-code || exit 1
+        exit 0
+    fi
+fi
 runPostInstall || exit 1
+packageConfigure configured || exit 1
 exit 0
 #############################################
 # END POST INSTALL SCRIPT

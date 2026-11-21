@@ -7,9 +7,38 @@ import os
 from pathlib import Path
 import pwd
 import stat
+import subprocess
 import sys
 
 MUTABLE = frozenset(('user', 'data', 'packages', 'log', '.data'))
+
+
+SIBLING_PACKAGES = frozenset('kura-' + name for name in (
+    'artemis', 'camel', 'cloud', 'container', 'deployment', 'firewall-only', 'management-ui',
+    'networking', 'opcua', 'position', 'triton', 'wires', 'yofc-runtime'))
+SIBLING_TREES = (Path('siblings'), Path('libexec/addons'), Path('console'))
+
+
+def sibling_paths():
+    # Query the owning packages rather than walking site additions or retained data.
+    states = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Package} ${db:Status-Status}\n',
+                                      'kura-*'], text=True)
+    paths = set()
+    prefix = Path('/opt/eclipse/kura')
+    for row in states.splitlines():
+        name, status = row.split()
+        if name not in SIBLING_PACKAGES or status in ('not-installed', 'config-files'):
+            continue
+        files = subprocess.check_output(['/usr/bin/dpkg-query', '-L', name], text=True)
+        for line in files.splitlines():
+            path = Path(line)
+            if not path.is_relative_to(prefix):
+                continue
+            relative = path.relative_to(prefix)
+            require('..' not in relative.parts, 'Invalid sibling package path')
+            if relative == Path('bin/firewall') or any(relative.is_relative_to(tree) for tree in SIBLING_TREES):
+                paths.add(relative)
+    return sorted(paths)
 
 
 class Refused(RuntimeError):
@@ -46,11 +75,13 @@ class Ownership:
                 metadata.st_gid, metadata.st_nlink, metadata.st_size,
                 metadata.st_mtime_ns, metadata.st_ctime_ns)
 
-    def plan(self, code_only=False):
+    def plan(self, code_only=False, paths=None):
         require(self.home.is_absolute() and '..' not in self.home.parts
                 and not self.home.is_symlink() and self.home.is_dir(), 'Unsafe physical runtime directory')
         plan = []
-        for path in [self.home, *sorted(self.home.rglob('*'))]:
+        if paths is None:
+            paths = [self.home, *sorted(self.home.rglob('*'))]
+        for path in paths:
             relative = path.relative_to(self.home)
             mutable = bool(relative.parts and relative.parts[0] in MUTABLE)
             if code_only and mutable and len(relative.parts) > 1:
@@ -100,6 +131,33 @@ class Ownership:
                 path.mkdir(mode=0o700)
                 os.chown(path, self.daemon_uid, self.daemon_gid, follow_symlinks=False)
         plan = self.plan(code_only=True) if code_only else self.plan()
+        return self.apply_plan(plan, code_only)
+
+    def apply_sibling_code(self, relatives):
+        paths = []
+        for relative in relatives:
+            require(not relative.is_absolute() and '..' not in relative.parts and
+                    (relative == Path('bin/firewall') or any(relative.is_relative_to(t) for t in SIBLING_TREES)),
+                    'Unrelated sibling package path')
+            path = self.home / relative
+            try:
+                for parent in reversed(path.parents):
+                    if not parent.is_relative_to(self.home):
+                        continue
+                    info = parent.lstat()
+                    require(stat.S_ISDIR(info.st_mode) and info.st_uid == self.code_uid and not info.st_mode & 0o022,
+                            'Unsafe sibling package directory')
+                info = path.lstat()
+            except FileNotFoundError:
+                # Some postinst scripts move assets out of the package tree.
+                # Removal also activates file triggers for paths that are gone.
+                continue
+            require(info.st_uid == self.code_uid and not info.st_mode & 0o7022,
+                    'Unsafe sibling package object')
+            paths.append(path)
+        return self.apply_plan(self.plan(paths=paths))
+
+    def apply_plan(self, plan, code_only=False):
         changed = 0
         for path, identity, uid, gid, mode in plan:
             relative = path.relative_to(self.home)
@@ -132,7 +190,7 @@ class Ownership:
 
 def main(arguments):
     try:
-        require(os.geteuid() == 0 and arguments in ([], ['--code-only']), 'Require the root package installer')
+        require(os.geteuid() == 0 and arguments in ([], ['--code-only'], ['--sibling-code']), 'Require the root package installer')
         account = pwd.getpwnam('kurad')
         link = Path('/opt/eclipse/kura')
         require(link.is_symlink(), 'Require the installed canonical runtime link')
@@ -153,7 +211,11 @@ def main(arguments):
             code_gid = code_reader_group(account)
             # Both roles can read public root-owned code. Mutable data remains
             # private to kurad; canonical credentials remain outside this tree.
-            Ownership(home, account.pw_uid, account.pw_gid, code_gid=code_gid).apply(code_only=bool(arguments))
+            ownership = Ownership(home, account.pw_uid, account.pw_gid, code_gid=code_gid)
+            if arguments == ['--sibling-code']:
+                ownership.apply_sibling_code(sibling_paths())
+            else:
+                ownership.apply(code_only=bool(arguments))
         finally:
             os.close(lock)
         print('Kura root code and private runtime data ownership accepted.')

@@ -324,6 +324,7 @@ def embed_configure_phases(control, assembly):
             ('CORE_CONFIGURE_LIFECYCLE_SHA', 'bin/kura_key_service_lifecycle.py'),
             ('CORE_CONFIGURE_MANIFEST_SHA', 'libexec/key-backup/manifest.json'),
             ('CORE_CONFIGURE_INSTALLER_SHA', 'install/kura_install.sh'),
+            ('CORE_CONFIGURE_OWNERSHIP_SHA', 'bin/kura_runtime_ownership.py'),
             ('CORE_CONFIGURE_CLOCK_SETUP_SHA', 'bin/kura_clock_setup.py'),
             ('CORE_CONFIGURE_REBOOT_SETUP_SHA', 'bin/kura_reboot_setup.py')):
         names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()

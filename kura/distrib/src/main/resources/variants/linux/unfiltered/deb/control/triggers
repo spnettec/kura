@@ -1,0 +1,4 @@
+interest /opt/eclipse/kura/siblings
+interest /opt/eclipse/kura/libexec/addons
+interest /opt/eclipse/kura/console
+interest /opt/eclipse/kura/bin/firewall

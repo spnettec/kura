@@ -77,6 +77,31 @@ class ConfigureTest(unittest.TestCase):
         self.assertEqual([self.fence['id'] + '.json'], [p.name for p in (self.policy.state/'package-history').iterdir()])
         self.assertFalse((self.policy.state/'maintenance.json').exists())
 
+    def test_sibling_trigger_retries_only_after_completed_postinstall(self):
+        self.configure.apply('begin')
+        self.install_steps()
+        self.configure.apply('prepared')
+        self.configure.apply('ready')
+        calls = []
+        def reconcile():
+            calls.append('ownership')
+            if len(calls) == 1:
+                raise BlockingIOError('busy ownership lock')
+        with self.assertRaises(lifecycle.Refused):
+            self.configure.apply('sibling-code', reconcile)
+        self.policy.leave()
+        self.assertEqual('CONFIGURE', self.configure.apply('configure-route')[0])
+        with self.assertRaises(lifecycle.Refused):
+            self.configure.apply('sibling-code', reconcile)
+        self.configure.apply('configured')
+        with self.assertRaises(BlockingIOError):
+            self.configure.apply('sibling-code', reconcile)
+        self.assertEqual('CONFIGURED', self.configure.apply('configure-route')[0])
+        self.controller().apply('sibling-code', reconcile)
+        self.assertEqual(['ownership', 'ownership'], calls)
+        with self.assertRaises(lifecycle.Refused):
+            self.controller('6.0.1-1').apply('sibling-code', reconcile)
+
     def test_interrupted_intent_staging_keeps_the_original_fence_available(self):
         def interrupt(pending, published):
             self.assertEqual(published, self.stage)

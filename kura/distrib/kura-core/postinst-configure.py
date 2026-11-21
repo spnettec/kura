@@ -16,7 +16,7 @@ import types
 
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
-CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json'} | {
+CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
 }
 
@@ -254,7 +254,7 @@ class Configure:
             self.policy.sync(self.physical)
             self.policy.sync(destination)
 
-    def apply(self, action):
+    def apply(self, action, reconcile=None):
         policy, require = self.policy, self.api.require
         with policy.locked():
             policy.check_records()
@@ -323,6 +323,20 @@ class Configure:
                     self.publish(directory, original, 'ready', recovery, secret)
                     return 'READY', mode
                 return 'PREPARED', mode
+            if action in ('configured', 'sibling-code', 'configure-route'):
+                require(fence is None and policy.read(ready, limit=4096) == ready_body
+                        and self.source()['mode'] == 'install', 'Core configuration is still in progress')
+                receipt = directory / 'configured.json'
+                if not os.path.lexists(receipt):
+                    if action == 'configure-route':
+                        return 'CONFIGURE', mode
+                    require(action == 'configured', 'Core post-install has not finished')
+                    self.publish(directory, original, 'configured', recovery, secret)
+                require(policy.read(receipt, limit=4096) == self.body(original, 'configured', recovery, secret),
+                        'Invalid completed Core post-install receipt')
+                if action == 'sibling-code':
+                    reconcile()
+                return 'CONFIGURED', mode
             require(policy.read(ready, limit=4096) == ready_body and action in ('status', 'retire-copy'),
                     'Invalid configure data receipt')
             existing = self.source()
@@ -363,7 +377,8 @@ def check_aborted_change(marker, phases):
 
 
 def main():
-    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy'} | {
+    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy',
+               'configured', 'configure-route', 'sibling-code'} | {
         f'setup-{step}' for step in INSTALLER_STEPS
     }
     if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in actions:
@@ -417,7 +432,14 @@ def main():
 
         configure.run_step(step, invoke, prepare_brokers=prepare_brokers)
         return
-    phase, mode = configure.apply(action)
+    def reconcile():
+        helper = physical / 'bin/kura_runtime_ownership.py'
+        source = policy.read(helper, private=False)
+        lifecycle.require(hashlib.sha256(source).hexdigest() == CORE_CONFIGURE_OWNERSHIP_SHA,
+                          'Unpaired sibling ownership policy')
+        subprocess.run(['/usr/bin/python3', '-I', '-B', str(helper), '--sibling-code'], check=True)
+
+    phase, mode = configure.apply(action, reconcile)
     print(phase, mode, physical)
 
 
