@@ -31,18 +31,18 @@ def package_cohort(home):
     build_cohort(home, pair_directory=Path('libexec/ownership-markers'), sources=SOURCES)
 
 
-def verify_actor():
+def verify_actor(*, home=HOME, sources=SOURCES, socket_unit=SOCKET_UNIT, service=SERVICE, capability=0):
     status = proc_status(os.getpid())
     verify_identity(status, 0, 0)
-    require(status['NoNewPrivs'].strip() == '1' and all(int(status[name], 16) == 0
+    require(status['NoNewPrivs'].strip() == '1' and all(int(status[name], 16) == capability
             for name in ('CapPrm', 'CapEff', 'CapBnd', 'CapAmb', 'CapInh')), 'UNPAIRED_READER')
-    manifest = decode(public_file(HOME / 'cohort.json'))
+    manifest = decode(public_file(home / 'cohort.json'))
     require(set(manifest) == {'schema', 'mainUnitSha256', 'files'} and type(manifest['schema']) is int
             and manifest['schema'] == 1 and re.fullmatch('[0-9a-f]{64}', manifest['mainUnitSha256'])
-            and set(manifest['files']) == {Path(name).name for name in SOURCES}, 'UNPAIRED_READER')
+            and set(manifest['files']) == {Path(name).name for name in sources}, 'UNPAIRED_READER')
     for name, expected in manifest['files'].items():
-        require(file_hash(public_file(HOME / name)) == expected, 'UNPAIRED_READER')
-    for unit in (SOCKET_UNIT, SERVICE):
+        require(file_hash(public_file(home / name)) == expected, 'UNPAIRED_READER')
+    for unit in (socket_unit, service):
         paired_unit(unit, unit, manifest['files'][unit])
     return manifest['mainUnitSha256']
 
@@ -80,14 +80,14 @@ def observe(kind, directory=DIRECTORY):
         os.close(fd)
 
 
-def serve():
+def serve(socket_path=SOCKET, requests=MARKERS, verify=verify_actor, read=observe):
     require(os.environ.get('LISTEN_PID') == str(os.getpid()) and os.environ.get('LISTEN_FDS') == '1',
             'UNPAIRED_READER')
     with socket.socket(fileno=3) as listener:
         require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
-                and listener.getsockname() == SOCKET and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN),
+                and listener.getsockname() == socket_path and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN),
                 'UNPAIRED_READER')
-        main_sha = verify_actor()
+        main_sha = verify()
         while True:
             stream, _ = listener.accept()
             with stream:
@@ -95,9 +95,9 @@ def serve():
                     stream.settimeout(2)
                     with socket_peer(stream) as peer:
                         kind = stream.recv(1)
-                        require(kind in MARKERS and stream.recv(1) == b'', 'INVALID_REQUEST')
+                        require(kind in requests and stream.recv(1) == b'', 'INVALID_REQUEST')
                         verify_main(peer, main_sha)
-                        result = observe(kind)
+                        result = read(kind)
                         verify_alive(peer[3])
                         stream.sendall(result)
                 except (OSError, KeyError, ValueError, Refused, subprocess.SubprocessError):

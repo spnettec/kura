@@ -1,0 +1,31 @@
+[Unit]
+Description=Check kernel firewall tables for Kura
+Requires=kura-firewall-tables.socket
+After=kura-firewall-tables.socket
+PartOf=kura.service
+
+[Service]
+Type=exec
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-firewall-tables/kura_firewall_tables.py
+Sockets=kura-firewall-tables.socket
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+TasksMax=8
+MemoryMax=64M
+TimeoutStopSec=5s

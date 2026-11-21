@@ -17,6 +17,7 @@ import kura_command_executor as command_executor
 import kura_reboot_broker as reboot_broker
 import kura_journal_export as journal_export
 import kura_ownership_markers as ownership_markers
+import kura_firewall_tables as firewall_tables
 import kura_modem_driver as modem_driver
 import kura_bind_service as bind_service
 import kura_dhcp_service as dhcp_service
@@ -251,6 +252,7 @@ def prepare_broker_packages(assembly):
         'reboot-broker': reboot_broker.package_cohort,
         'journal-export': journal_export.package_cohort,
         'ownership-markers': ownership_markers.package_cohort,
+        'firewall-tables': firewall_tables.package_cohort,
         'command-executor': command_executor.package_cohort,
         'modem-driver': modem_driver.package_cohort,
         'bind-service': bind_service.package_cohort,
