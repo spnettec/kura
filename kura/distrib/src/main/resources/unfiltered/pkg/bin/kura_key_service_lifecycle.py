@@ -1856,7 +1856,27 @@ class Lifecycle:
                     and properties.get("MainPID", "0") == "0" and properties.get("ControlPID", "0") == "0",
                     "Key-service processes are still active; package change refused")
 
+    def check_pending_keystore_passwords(self):
+        home = self.path('/opt/eclipse/kura')
+        if not os.path.lexists(home):
+            return
+        physical = home.resolve(strict=True)
+        require(physical.parent == home.parent and (physical == home or physical.name.startswith('kura_')),
+                'Cannot identify the Core directory for keystore maintenance')
+        self.directory(physical)
+
+        def scan_error(error):
+            raise Refused('Cannot inspect the Core directory for pending PKCS12 password changes') from error
+
+        # Randomization publishes these names before replacing the PKCS12. Copying the
+        # tree changes the inode that its encrypted recovery record authenticates.
+        for directory, dirs, files, _ in os.fwalk(physical, follow_symlinks=False, onerror=scan_error):
+            if re.fullmatch(r'\.kura-keystore-[0-9a-f]{64}', os.path.basename(directory)):
+                if any(re.fullmatch(r'password-change-[0-9a-f]{64}', name) for name in (*files, *dirs)):
+                    raise ActiveWriter('Finish the original PKCS12 password change before Core maintenance')
+
     def check_package_writers(self, *, allow_main=False):
+        self.check_pending_keystore_passwords()
         # All three packaged Main launchers use this registry. Its outstanding
         # archive publication binds the original directories and files by inode.
         registry = self.path('/opt/eclipse/kura/packages/dpa.properties').resolve()

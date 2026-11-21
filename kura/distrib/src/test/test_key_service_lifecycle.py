@@ -161,6 +161,35 @@ class LifecycleTest(unittest.TestCase):
         self.policy.check_package_writers()
         self.assertEqual(fence, self.policy.enter('upgrade'))
 
+    def test_pending_pkcs12_change_blocks_package_entry_and_stopped_copy(self):
+        directory = self.physical / "data" / "site" / (".kura-keystore-" + "a" * 64)
+        directory.mkdir(parents=True)
+        first = directory / ("password-change-" + "b" * 64)
+        second = directory / ("password-change-" + "c" * 64)
+        first.write_bytes(b"private provider record")
+        os.link(first, second)
+        before = first.stat()
+        for action in ("upgrade", "remove"):
+            with self.assertRaisesRegex(lifecycle.ActiveWriter, "PKCS12"):
+                self.policy.enter(action)
+            self.assertFalse((self.policy.state / "maintenance.json").exists())
+        first.unlink()
+        with self.assertRaisesRegex(lifecycle.ActiveWriter, "PKCS12"):
+            self.policy.check_package_writers()
+        self.assertEqual(second.stat().st_ino, before.st_ino)
+        self.assertEqual(second.read_bytes(), b"private provider record")
+        second.unlink()
+        (directory / "password-change.tmp").touch()
+        self.policy.check_package_writers()
+
+    def test_password_scan_does_not_follow_links_or_match_unrelated_names(self):
+        outside = self.root / "elsewhere" / (".kura-keystore-" + "d" * 64)
+        outside.mkdir(parents=True)
+        (outside / ("password-change-" + "e" * 64)).touch()
+        (self.physical / "external").symlink_to(outside.parent, target_is_directory=True)
+        (self.physical / ("password-change-" + "f" * 64)).touch()
+        self.policy.check_package_writers()
+
     def test_direct_writer_refuses_maintenance_before_fencing_or_stopping_units(self):
         self.opened()
         path = self.root / 'run/kura-key-service/writers/lease.lock'
