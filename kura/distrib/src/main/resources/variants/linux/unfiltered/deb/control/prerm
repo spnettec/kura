@@ -103,6 +103,9 @@ function preserveUserData {
         fi
     fi
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" archive "${retained_tmp}" || return 1
+    python3 -I -B - capture "${retained_tmp}" <<'KURA_REMOVAL_HOME' || return 1
+raise RuntimeError("Kura removal home was not embedded")
+KURA_REMOVAL_HOME
     if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
         echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
         rm -rf "${retained_tmp}"

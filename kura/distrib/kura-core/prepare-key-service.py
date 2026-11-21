@@ -349,6 +349,9 @@ if __name__ == "__main__":
                                Path(sys.argv[1])/'install/manage_kura_users.sh')
     embed_policy_readers(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_service_lifecycle.py',
         Path(sys.argv[1])/'bin/kura_key_journal.py')
+    for hook in ('prerm', 'postrm'):
+        control = Path(sys.argv[1]).parent / 'filtered-control' / hook
+        embed_package_helper(control, Path(__file__).with_name('removal-home.py'), 'removal home')
     for hook in ('preinst', 'postinst', 'prerm'):
         control = Path(sys.argv[1]).parent / 'filtered-control' / hook
         embed_package_helper(control, Path(__file__).with_name('addon-code-policy.py'), 'addon-code policy')
