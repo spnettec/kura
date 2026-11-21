@@ -5,5 +5,7 @@ if [ -z "${CREDENTIALS_DIRECTORY:-}" ]; then
     CREDENTIALS_DIRECTORY=/etc/kura/credentials
     export CREDENTIALS_DIRECTORY
 fi
-python3 -I "${DIR}/bin/kura_key_store.py" check-loaded-managed
+# Keep the installation's private data directory open across the shell-to-JVM exec.
+exec 8<"${DIR}/data" || return 1
+python3 -I "${DIR}/bin/kura_key_store.py" check-loaded-managed --lock-instance
 

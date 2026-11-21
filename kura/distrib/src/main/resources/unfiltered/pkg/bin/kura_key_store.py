@@ -785,6 +785,18 @@ def exec_java(arguments):
     finally:
         os.close(descriptor)
 
+def lock_launcher_instance():
+    # FD 8 shares an open file description with the launcher and its future JVM.
+    data = Path(__file__).resolve().parents[1] / 'data'
+    info = data.lstat()
+    require(stat.S_ISDIR(info.st_mode) and os.path.samestat(info, os.fstat(8)),
+            'Invalid Kura instance lock directory')
+    try:
+        fcntl.flock(8, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        raise Refused('Kura is already running or starting for this installation') from None
+
+
 def main(argv):
     try:
         require(bool(argv), "Missing key-policy command")
@@ -793,6 +805,10 @@ def main(argv):
             return 0
         if len(argv)==2 and argv[0]=='loaded-credential-proof':
             loaded_credential_proof(argv[1])
+            return 0
+        if argv == ["check-loaded-managed", "--lock-instance"]:
+            lock_launcher_instance()
+            check_loaded(require_root=True)
             return 0
         if argv in (["check-loaded"], ["check-loaded-generations"], ["check-loaded-managed"]):
             check_loaded(require_generations=argv == ["check-loaded-generations"], require_root=argv == ["check-loaded-managed"])

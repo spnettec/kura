@@ -1,4 +1,5 @@
 """Run the shipped shell argument path with recording executables, without Java."""
+from concurrent.futures import ThreadPoolExecutor
 import errno
 import fcntl
 import json
@@ -21,6 +22,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='kura-ordinary-shell-')
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        (self.root / 'data').mkdir(mode=0o700)
         self.bin = self.root / 'bin'
         self.bin.mkdir()
         self.fake = self.root / 'recording'
@@ -63,6 +65,11 @@ module['main'].__globals__['root_start_admission']=root_admission
 def exec_java(arguments):
     assert Path(os.environ['YOFC_TEST_ADMISSION_RECORD']).is_file()
     Path(os.environ['YOFC_TEST_LEASE_RECORD']).write_text('managed Java entrypoint invoked')
+    if 'YOFC_TEST_WAIT_BEFORE_EXEC' in os.environ:
+        import time
+        gate = Path(os.environ['YOFC_TEST_WAIT_BEFORE_EXEC'])
+        while not gate.exists():
+            time.sleep(.01)
     os.execvp('java',['java',*arguments])
 module['main'].__globals__['exec_java']=exec_java
 sys.exit(module['main'](sys.argv[1:]))
@@ -82,8 +89,9 @@ sys.exit(module['main'](sys.argv[1:]))
         for path in [self.bin / 'gen_config_ini.sh', *self.fake.iterdir()]:
             path.chmod(0o700)
 
-    def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh', arguments=(), pass_fds=()):
+    def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh', arguments=(), pass_fds=(), extra_env=None):
         env = dict(os.environ, YOFC_LAUNCH_ARGUMENTS=str(self.record))
+        env.update(extra_env or {})
         env.pop('KURA_JVM_ARGS_FILE', None)
         env['CREDENTIALS_DIRECTORY'] = str(self.credentials)
         env['YOFC_TEST_ADMISSION_RECORD'] = str(self.admission)
@@ -92,7 +100,47 @@ sys.exit(module['main'](sys.argv[1:]))
         if argument_file is not None:
             env['KURA_JVM_ARGS_FILE'] = str(argument_file)
         interpreter = '/bin/bash' if script == 'start_kura.sh' else '/bin/sh'
-        return subprocess.run([interpreter, str(self.bin / script), *arguments], env=env, capture_output=True, text=True, timeout=5, pass_fds=pass_fds)
+        return subprocess.run([interpreter, str(self.bin / script), *arguments], env=env, capture_output=True, text=True, timeout=20 if extra_env else 5, pass_fds=pass_fds)
+
+    def test_existing_equinox_process_refuses_before_publication(self):
+        (self.fake / 'pgrep').write_text('#!/bin/sh\necho 1234\n')
+        for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
+            with self.subTest(script=name):
+                result = self.launch(script=name)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(self.generator.exists())
+                self.assertFalse(self.admission.exists())
+                self.assertFalse((self.root / 'kura.pid').exists())
+
+    def test_competing_launch_after_publication_preserves_configuration_and_pid(self):
+        # Pause the first launch after publication, before even the recording JVM exists.
+        release = self.root / 'allow-exec'
+        config = self.root / 'configuration/config.ini'
+        pid = self.root / 'kura.pid'
+        pid.write_text('previous PID record')
+        attempts = [('start_kura.sh', ()), ('start_kura.sh', ('--detached',)),
+                    ('start_kura_background.sh', ()), ('start_kura_debug.sh', ())]
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            first = pool.submit(self.launch, script='start_kura.sh', extra_env={'YOFC_TEST_WAIT_BEFORE_EXEC': str(release)})
+            try:
+                for _ in range(500):
+                    if (self.root / 'lease-entry-called').exists():
+                        break
+                    time.sleep(.01)
+                self.assertTrue((self.root / 'lease-entry-called').exists())
+                before = config.stat()
+                for name, options in attempts:
+                    with self.subTest(script=name, options=options):
+                        result = self.launch(script=name, arguments=options)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn('already running or starting', result.stderr)
+                        self.assertEqual(config.stat().st_ino, before.st_ino)
+                        self.assertEqual(pid.read_text(), 'previous PID record')
+                        self.assertFalse(self.record.exists())
+            finally:
+                release.touch()
+            self.assertEqual(first.result().returncode, 0)
+        self.assertEqual(self.launch(script='start_kura.sh').returncode, 0)
 
     def test_detached_java_pid_matches_file_and_cannot_write_through_launcher_fd(self):
         pidfile = self.root / 'kura.pid'

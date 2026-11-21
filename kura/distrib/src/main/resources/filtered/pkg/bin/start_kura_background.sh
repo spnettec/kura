@@ -25,20 +25,23 @@ if [ -n "${KURA_JVM_ARGS_FILE:-}" ]; then
   set -- "@$KURA_JVM_ARGS_FILE"
 fi
 
+# Older installed launchers may have started a JVM without the instance lock.
+if pgrep -f '.*java.*org\.eclipse\.equinox\..*' >/dev/null; then
+    echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
+    exit 1
+fi
+
 # set up the configuration area
 # Use the same credential for the installed service and direct launchers.
 . "${DIR}/bin/kura_credential_env.sh" || exit 1
 
 python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configuration || exit 1
 
-KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
-
-if [ -z "$KURA_RUNNING" ] ; then
-    # A failed console redirection in the child would publish the PID of a dead process.
-    exec 4>>/var/log/kura-console.log || exit 1
-    # Open the PID file before starting a process that maintenance must be able to find.
-    exec 3>/var/run/kura.pid || exit 1
-  nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
+# A failed console redirection in the child would publish the PID of a dead process.
+exec 4>>/var/log/kura-console.log || exit 1
+# Open the PID file before starting a process that maintenance must be able to find.
+exec 3>/var/run/kura.pid || exit 1
+nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
         -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
         -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=log/kura-heapdump.hprof \
         -XX:ErrorFile=log/kura-error.log \
@@ -63,14 +66,11 @@ if [ -z "$KURA_RUNNING" ] ; then
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
         -configuration /tmp/.kura/configuration >&4 2>&1 4>&- 3>&- &
 
-    KURA_PID=$!
-    if ! printf '%s\n' "$KURA_PID" >&3; then
-        kill "$KURA_PID" 2>/dev/null
-        wait "$KURA_PID" 2>/dev/null
-        exit 1
-    fi
-    exec 3>&-
-    echo "Kura Started (pid=$KURA_PID) ..." >&4
-else
-    echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
+KURA_PID=$!
+if ! printf '%s\n' "$KURA_PID" >&3; then
+    kill "$KURA_PID" 2>/dev/null
+    wait "$KURA_PID" 2>/dev/null
+    exit 1
 fi
+exec 3>&-
+echo "Kura Started (pid=$KURA_PID) ..." >&4
