@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Root filesystem regression cases, only in a fresh disposable Linux container."""
+import hashlib
 import importlib.util
 import os
 from pathlib import Path
@@ -71,6 +72,31 @@ class AddonCodePolicyTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             policy.transfer('preserve', self.source, self.backup)
         self.assertEqual(before, policy.fingerprint(self.backup))
+
+    def test_firewall_launcher_restored_only_for_current_registered_bytes(self):
+        original = self.root / 'original/bin/firewall'
+        original.parent.mkdir()
+        original.write_bytes(b'old launcher')
+        original.chmod(0o700)
+        saved = self.root / 'retained/bin/firewall'
+        saved.parent.parent.mkdir()
+        target = self.root / 'incoming/bin/firewall'
+        target.parent.parent.mkdir()
+        digest = hashlib.md5(original.read_bytes(), usedforsecurity=False).hexdigest()
+        policy.transfer_launcher('preserve', original, saved, digest)
+        policy.transfer_launcher('restore', saved, target, None)
+        self.assertFalse(target.exists())
+        policy.transfer_launcher('restore', saved, target, digest)
+        self.assertEqual(original.read_bytes(), target.read_bytes())
+        self.assertEqual(0o700, stat.S_IMODE(target.stat().st_mode))
+        target.write_bytes(b'new jointly unpacked launcher')
+        fresh = hashlib.md5(target.read_bytes(), usedforsecurity=False).hexdigest()
+        policy.transfer_launcher('restore', saved, target, fresh)
+        self.assertEqual(b'new jointly unpacked launcher', target.read_bytes())
+        target.unlink()
+        with self.assertRaises(RuntimeError):
+            policy.transfer_launcher('restore', saved, target, fresh)
+        self.assertFalse(target.exists())
 
     def test_writable_or_non_root_code_refuses_before_publication(self):
         for owner, mode in ((0, 0o664), (65534, 0o644)):

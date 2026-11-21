@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 
@@ -65,6 +66,18 @@ def fingerprint(root):
     return result
 
 
+def rename_new(temporary, destination):
+    libc = ctypes.CDLL(None, use_errno=True)
+    rename = getattr(libc, 'renameat2', None)
+    if rename is None:
+        raise RuntimeError('Atomic no-replace publication is required')
+    rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(temporary), -100, os.fsencode(destination), 1):
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(destination))
+
+
 def publish(source, destination):
     ancestors(source)
     ancestors(destination.parent)
@@ -93,15 +106,7 @@ def publish(source, destination):
                 os.fsync(fd)
             finally:
                 os.close(fd)
-        libc = ctypes.CDLL(None, use_errno=True)
-        rename = getattr(libc, 'renameat2', None)
-        if rename is None:
-            raise RuntimeError('Atomic no-replace directory publication is required')
-        rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
-        rename.restype = ctypes.c_int
-        if rename(-100, os.fsencode(temporary), -100, os.fsencode(destination), 1):
-            error = ctypes.get_errno()
-            raise OSError(error, os.strerror(error), str(destination))
+        rename_new(temporary, destination)
         fd = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
         try:
             os.fsync(fd)
@@ -141,6 +146,73 @@ def transfer(action, source, destination):
         publish(addon, target)
 
 
+FIREWALL = Path('/opt/eclipse/kura/bin/firewall')
+
+
+def registered_launcher_digest():
+    def query(*args):
+        return subprocess.check_output(['/usr/bin/dpkg-query', '--admindir=/var/lib/dpkg', *args],
+                                       text=True, env={'LC_ALL': 'C', 'PATH': '/usr/bin:/bin'})
+
+    packages = query('-W', '-f=${Package} ${db:Status-Status}\n')
+    owners = []
+    for record in packages.splitlines():
+        package, status = record.split()
+        if package not in {'kura-networking', 'kura-firewall-only'} or status in {'config-files', 'not-installed'}:
+            continue
+        if str(FIREWALL) not in query('-L', package).splitlines():
+            continue  # Older layouts may not own this path.
+        checksums = query('--control-show', package, 'md5sums')
+        matches = [line.split()[0] for line in checksums.splitlines()
+                   if line.split(maxsplit=1)[1:] == [str(FIREWALL.relative_to('/'))]]
+        if len(matches) != 1 or not re.fullmatch('[a-f0-9]{32}', matches[0]):
+            raise RuntimeError('Firewall launcher has no unique registered checksum')
+        owners.extend(matches)
+    if len(owners) > 1:
+        raise RuntimeError('Firewall launcher has multiple registered providers')
+    return owners[0] if owners else None
+
+
+def launcher_payload(path, digest):
+    ancestors(path.parent)
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, 'rb') as stream:
+        value = os.fstat(fd)
+        protected(value)
+        raw = stream.read()
+        if not value.st_mode & stat.S_IXUSR or hashlib.md5(raw, usedforsecurity=False).hexdigest() != digest:
+            raise RuntimeError('Firewall launcher differs from the registered package')
+        return raw, value
+
+
+def transfer_launcher(action, source, destination, digest):
+    if digest is None:
+        return  # Do not restore code from a removed provider.
+    if action == 'restore' and os.path.lexists(destination):
+        launcher_payload(destination, digest)  # A jointly unpacked provider takes precedence.
+        return
+    raw, metadata = launcher_payload(source, digest)
+    ancestors(destination.parent)
+    destination.parent.mkdir(exist_ok=True, mode=0o700)
+    ancestors(destination.parent)
+    with tempfile.NamedTemporaryFile(dir=destination.parent, prefix='.firewall-copy-', delete=False) as tmp:
+        temporary = Path(tmp.name)
+        try:
+            tmp.write(raw)
+            tmp.flush()
+            os.fchown(tmp.fileno(), metadata.st_uid, metadata.st_gid)
+            os.fchmod(tmp.fileno(), stat.S_IMODE(metadata.st_mode))
+            os.fsync(tmp.fileno())
+            rename_new(temporary, destination)
+            directory = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
 def main(arguments):
     if len(arguments) != 3:
         raise RuntimeError('Invalid sibling code arguments')
@@ -153,6 +225,8 @@ def main(arguments):
             or (action == 'restore' and destination == installed and recovery.fullmatch(left))):
         raise RuntimeError('Sibling code paths are outside package lifecycle scope')
     transfer(action, source, destination)
+    transfer_launcher(action, source.parents[1] / 'bin/firewall', destination.parents[1] / 'bin/firewall',
+                      registered_launcher_digest())
 
 
 if __name__ == '__main__':
