@@ -74,19 +74,20 @@ record PendingStorePassword(String previous, String replacement, String scope, S
         }
         Path tmp = dir.resolve(NAME + ".tmp");
         Files.deleteIfExists(tmp);
-        Files.createFile(tmp, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
         try (var directory = FileChannel.open(dir, READ)) {
-            try (var output = FileChannel.open(tmp, WRITE, NOFOLLOW_LINKS)) {
-                var buffer = ByteBuffer.wrap(bytes);
-                while (buffer.hasRemaining()) {
-                    output.write(buffer);
+            // Both names must survive before replacing the store. Use independent inodes so the
+            // container can validate private state before restarting the provider after an interruption.
+            for (String fingerprint : new String[] { this.previous, this.replacement }) {
+                Files.createFile(tmp, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+                try (var output = FileChannel.open(tmp, WRITE, NOFOLLOW_LINKS)) {
+                    var buffer = ByteBuffer.wrap(bytes);
+                    while (buffer.hasRemaining()) {
+                        output.write(buffer);
+                    }
+                    output.force(true);
                 }
-                output.force(true);
+                Files.move(tmp, dir.resolve(NAME + "-" + fingerprint), ATOMIC_MOVE, REPLACE_EXISTING);
             }
-            Path source = dir.resolve(NAME + "-" + this.previous);
-            Files.move(tmp, source, ATOMIC_MOVE, REPLACE_EXISTING);
-            Files.createLink(tmp, source);
-            Files.move(tmp, dir.resolve(NAME + "-" + this.replacement), ATOMIC_MOVE, REPLACE_EXISTING);
             directory.force(true);
         } finally {
             Files.deleteIfExists(tmp);

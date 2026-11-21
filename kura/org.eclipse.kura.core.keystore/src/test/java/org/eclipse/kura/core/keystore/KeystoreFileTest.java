@@ -25,6 +25,29 @@ class KeystoreFileTest {
     @TempDir
     Path directory;
 
+    @Test
+    void pendingPasswordKeepsTheOriginalRecordIfSecondNameCannotBePublished() throws Exception {
+        String previous = "1".repeat(64);
+        String replacement = "2".repeat(64);
+        var record = new PendingStorePassword(previous, replacement, PendingStorePassword.scope("fixture"), "ciphertext");
+        Path first = this.directory.resolve("password-change-" + previous);
+        Path second = this.directory.resolve("password-change-" + replacement);
+        Files.createDirectory(second);
+        assertThrows(IOException.class, () -> record.publish(this.directory));
+        assertEquals(record, PendingStorePassword.read(this.directory, previous));
+        assertFalse(Files.exists(this.directory.resolve("password-change.tmp")));
+        Files.delete(second);
+        record.publish(this.directory);
+        assertEquals(record, PendingStorePassword.read(this.directory, replacement));
+        assertEquals(1, Files.getAttribute(first, "unix:nlink"));
+        assertEquals(1, Files.getAttribute(second, "unix:nlink"));
+        assertArrayEquals(Files.readAllBytes(first), Files.readAllBytes(second));
+        assertEquals(PosixFilePermissions.fromString("rw-------"), Files.getPosixFilePermissions(second));
+        record.retire(this.directory);
+        assertFalse(Files.exists(first));
+        assertFalse(Files.exists(second));
+    }
+
     private final char[] password = "fixture-entry".toCharArray();
 
     private KeyStore populated() throws Exception {
