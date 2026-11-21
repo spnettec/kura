@@ -310,10 +310,26 @@ class JournalArchiveTest(unittest.TestCase):
         self.assertFalse((self.manager.state/'maintenance.json').exists())
         (self.manager.root/'run/systemd/system').mkdir(parents=True)
         calls=[]
-        def runner(args,**options):
-            calls.append(args);return SimpleNamespace(returncode=0,
-                stdout='LoadState=loaded\nActiveState=inactive\nMainPID=0\nControlPID=0\n' if args[1]=='show' else '',stderr='')
-        policy.runner=runner;policy.enter('upgrade');self.assertTrue(calls)
+        boot_choice = ['/usr/bin/systemctl', 'show', 'kura.service', '--property=UnitFileState', '--value']
+
+        def runner(args, **options):
+            calls.append(args)
+            if args == boot_choice:
+                return SimpleNamespace(returncode=0, stdout='disabled\n', stderr='')
+            return SimpleNamespace(returncode=0, stdout=(
+                'LoadState=loaded\nActiveState=inactive\nMainPID=0\nControlPID=0\n' if args[1] == 'show' else ''
+            ), stderr='')
+
+        policy.runner = runner
+        with self.assertRaises(lifecycle.ActiveWriter):
+            policy.enter('upgrade')
+        self.assertFalse((self.manager.state / 'maintenance.json').exists())
+
+        self.base.close_lease()
+        self.base.phase = 'stopped'
+        self.base.set_group(False)
+        policy.enter('upgrade')
+        self.assertIn(boot_choice, calls)
         self.assertEqual(snapshot,service.decode(path.read_bytes()))
 
     def test_archive_id_cannot_alias_any_fixed_unattempted_handoff_id(self):
