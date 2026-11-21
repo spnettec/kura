@@ -25,8 +25,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -2191,69 +2194,44 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         XmlComponentConfigurations xmlConfigs = new XmlComponentConfigurations();
         xmlConfigs.setConfigurations(configImpls);
         xmlConfigs.setPasswordEncoding(conf.getPasswordEncoding());
-        Boolean isEncrypt = Boolean
-                .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
-                        : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
-        if (isEncrypt != null && !isEncrypt) {
-            try (FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
-                marshal(outputfile, xmlConfigs);
-            } catch (IOException e) {
-                throw KuraException.internalError(e);
-            }
-            return;
-        }
-        File tempFile;
+        boolean encrypt = this.systemService == null || this.systemService.getProperties() == null
+                || Boolean.parseBoolean(this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
+        Path snapshot = fSnapshot.toPath().toAbsolutePath();
+        Path directory = snapshot.getParent();
+        boolean posix = directory.getFileSystem().supportedFileAttributeViews().contains("posix");
         try {
-            tempFile = File.createTempFile("snapshot_write_" + sid + "_", ".temp");
-        } catch (IOException e1) {
-            throw KuraException.internalError(e1);
-        }
-        // Encrypt the XML
-        try (FileOutputStream tempOutputfile = new FileOutputStream(tempFile)) {
-            marshal(tempOutputfile, xmlConfigs);
-        } catch (IOException e) {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e1) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
+            if (Files.exists(snapshot, LinkOption.NOFOLLOW_LINKS)
+                    && !Files.isRegularFile(snapshot, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("Snapshot path is not a regular file: " + snapshot);
             }
+            Path staging = posix ? Files.createTempFile(directory, ".snapshot-", ".part",
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))
+                    : Files.createTempFile(directory, ".snapshot-", ".part");
+            try {
+                try (OutputStream raw = Files.newOutputStream(staging)) {
+                    if (encrypt) {
+                        try (OutputStream ciphertext = this.cryptoService.aesEncryptingStream(raw)) {
+                            marshal(ciphertext, xmlConfigs);
+                        }
+                    } else {
+                        marshal(raw, xmlConfigs);
+                    }
+                }
+                try (FileChannel file = FileChannel.open(staging, StandardOpenOption.WRITE)) {
+                    file.force(true);
+                }
+                Files.move(staging, snapshot, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                if (posix) {
+                    try (FileChannel parent = FileChannel.open(directory, StandardOpenOption.READ)) {
+                        parent.force(true);
+                    }
+                }
+            } finally {
+                Files.deleteIfExists(staging);
+            }
+        } catch (IOException e) {
             throw new KuraIOException(e);
         }
-
-        try (FileInputStream temInputFile = new FileInputStream(tempFile);
-                FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
-            this.cryptoService.encryptAes(temInputFile, outputfile);
-
-        } catch (IOException e) {
-            throw new KuraIOException(e);
-        } finally {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
-            }
-        }
-    }
-
-    private static FileOutputStream openPrivateSnapshotOutput(File snapshot) throws IOException {
-        Path path = snapshot.toPath();
-        boolean posix = path.getFileSystem().supportedFileAttributeViews().contains("posix");
-        if (!Files.exists(path)) {
-            if (posix) {
-                Files.createFile(path, PosixFilePermissions.asFileAttribute(
-                        PosixFilePermissions.fromString("rw-------")));
-            } else {
-                Files.createFile(path);
-            }
-        }
-        if (!Files.isRegularFile(path)) {
-            throw new IOException("Snapshot path is not a regular file: " + path);
-        }
-        if (posix) {
-            Files.setPosixFilePermissions(path,
-                    PosixFilePermissions.fromString("rw-------"));
-        }
-        return new FileOutputStream(snapshot);
     }
 
     private ComponentConfiguration getConfigurableComponentConfiguration(String pid) {
