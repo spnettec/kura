@@ -60,11 +60,20 @@ def write_new(path, data):
     sync_dir(path.parent)
 
 
-def no_mounts_below(path):
+def no_mounts_below(*paths):
     for line in Path('/proc/self/mountinfo').read_bytes().splitlines():
         name = re.sub(rb'\\([0-7]{3})', lambda m: bytes([int(m[1], 8)]), line.split()[4])
         mount = Path(os.fsdecode(name))
-        require(mount != path and path not in mount.parents, f'Installation still contains a mount: {mount}')
+        require(not any(mount == path or path in mount.parents for path in paths),
+                f'Installation still contains a mount: {mount}')
+
+
+def check_purge_mounts(retained):
+    # Check the entire purge set before retiring any deployment or retention
+    # witness. A busy mount in a later tree must leave the original retry intact.
+    no_mounts_below(retained, PARENT / '.kura-preserve', *retained.parent.glob('.kura-retained.tmp.*'),
+                    ROOT / 'etc/systemd/system/kura.service.d', ROOT / 'var/log/kura',
+                    ROOT / 'tmp/.kura', ROOT / 'tmp/kura')
 
 
 def removal_tag(record, context=b'kura-core-removal-packages-v1\0'):
@@ -371,6 +380,9 @@ def remove(retained):
 if __name__ == '__main__':
     action, directory = sys.argv[1:]
     retained = Path(directory)
+    if action == 'check-purge-mounts':
+        check_purge_mounts(retained)
+        sys.exit(0)
     if action == 'purge':
         remove(retained)
     if action in ('park-if-recorded', 'purge'):
