@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 import test_key_service_lifecycle as fixtures
+import test_postinst_configure as postinst_tests
 
 
 module = Path(__file__).resolve().parents[2] / 'kura-core/preinst-upgrade-copy.py'
@@ -41,6 +42,60 @@ class UpgradeCopyTest(unittest.TestCase):
                                    dict(home=self.fixture.physical.name, directories=['install'],
                                         files={'install/payload': (len(payload), hashlib.sha256(payload).hexdigest())},
                                         controls=controls))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux directory exchange')
+    def test_completed_job_keeps_original_directory_after_interrupted_exchange(self):
+        home = self.fixture.physical
+        packages = home / 'packages'
+        done = packages / ('.dpa.properties.install-' + 'a' * 64 + '.done')
+        self.fixture.write(done, b'completed job')
+        self.fixture.write(packages / 'dpa.properties', b'original registry')
+        original = packages.stat().st_ino
+        receipt_inode = done.stat().st_ino
+        stage = self.copy.prepare()
+        shutil.copytree(packages, stage / 'packages')
+        for name in ('kura_encryption_key', 'provisioned.json'):
+            value = self.policy.path('/etc/kura/credentials') / name
+            self.fixture.write(stage / 'encryption' / name, value.read_bytes())
+        with patch.object(upgrade.os, 'sync'):
+            self.copy.publish(stage)
+        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'):
+            self.copy.arrange_source(restore=False)
+        self.fixture.write(packages / 'dpa.properties', b'factory registry')
+        self.fixture.write(packages / 'new.dp', b'factory package')
+        fresh = packages.stat().st_ino
+        parked = self.copy.destination / '.old-home/packages'
+        logical = self.copy.base / 'kura'
+        if not logical.is_symlink():
+            logical.symlink_to(home.name)
+        module = postinst_tests.configure
+        config = module.Configure(fixtures.lifecycle, self.policy, home, '6.0.0-2', '1' * 64, '2' * 64)
+        secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
+        factory = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in packages.iterdir()}
+        rename = module.rename_package_entry
+
+        def interrupt(source, destination, flags):
+            rename(source, destination, flags)
+            if flags == 2:
+                raise InterruptedError('after exchange')
+
+        with patch.object(module, 'CORE_CONFIGURE_FACTORY_PACKAGES', factory, create=True):
+            with patch.object(module, 'rename_package_entry', side_effect=interrupt):
+                with self.assertRaises(InterruptedError):
+                    config.restore_package_history(self.fence['id'], 'upgrade', secret)
+            self.assertEqual(original, packages.stat().st_ino)
+            self.assertEqual(fresh, parked.stat().st_ino)
+            parked.rename(parked.with_name('independent'))
+            parked.mkdir()
+            with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'directories changed'):
+                config.restore_package_history(self.fence['id'], 'upgrade', secret)
+            parked.rmdir()
+            parked.with_name('independent').rename(parked)
+            self.assertEqual('PRESERVED', config.restore_package_history(self.fence['id'], 'upgrade', secret))
+        self.assertEqual(original, packages.stat().st_ino)
+        self.assertEqual(receipt_inode, done.stat().st_ino)
+        self.assertEqual(b'original registry', (packages / 'dpa.properties').read_bytes())
+        self.assertEqual(b'factory package', (packages / 'new.dp').read_bytes())
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux upgrade publication')
     def test_registered_writer_blocks_capture_and_detach_and_stale_order_is_never_published(self):

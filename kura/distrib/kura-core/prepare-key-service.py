@@ -320,6 +320,13 @@ def embed_reboot_guard(control):
 def embed_configure_phases(control, assembly):
     token = 'raise RuntimeError("Kura Core configure phases were not embedded")'
     names = dict(CORE_CONFIGURE_HOME=assembly.name)
+    packages = assembly / 'packages'
+    factory = {}
+    for path in sorted(packages.iterdir()):
+        if path.is_file() and not path.is_symlink():
+            with path.open('rb') as stream:
+                factory[path.name] = hashlib.file_digest(stream, 'sha256').hexdigest()
+    names['CORE_CONFIGURE_FACTORY_PACKAGES'] = factory
     for name, relative in (
             ('CORE_CONFIGURE_LIFECYCLE_SHA', 'bin/kura_key_service_lifecycle.py'),
             ('CORE_CONFIGURE_MANIFEST_SHA', 'libexec/key-backup/manifest.json'),

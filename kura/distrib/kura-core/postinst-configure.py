@@ -30,16 +30,19 @@ def sync_staged_filesystem(directory_fd):
         raise OSError(error, os.strerror(error))
 
 
-def publish_sibling(staged, target):
+def rename_package_entry(staged, target, flags):
     libc = ctypes.CDLL(None, use_errno=True)
     rename = libc.renameat2
     rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
     rename.restype = ctypes.c_int
     at_fdcwd = -100
-    rename_noreplace = 1
-    if rename(at_fdcwd, os.fsencode(staged), at_fdcwd, os.fsencode(target), rename_noreplace):
+    if rename(at_fdcwd, os.fsencode(staged), at_fdcwd, os.fsencode(target), flags):
         error = ctypes.get_errno()
         raise OSError(error, os.strerror(error), str(target))
+
+
+def publish_sibling(staged, target):
+    rename_package_entry(staged, target, 1)  # RENAME_NOREPLACE
 
 
 def load_lifecycle(physical, expected):
@@ -212,6 +215,73 @@ class Configure:
             # can publish this witness. Resume never invokes an issued step.
             self.publish(directory, original, f'setup-{step}-returned', recovery, secret)
 
+    def restore_package_history(self, original, mode, secret):
+        if mode != 'upgrade':
+            return 'COPY'
+        copy = self.copies[mode]
+        require = self.api.require
+        # Earlier installers may leave only a copy, without a parked original home.
+        if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
+            return 'COPY'
+        capture = self.api.decode(self.policy.read(copy / '.capture.json', limit=4096))
+        tag = capture.pop('tag')
+        expected = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(capture),
+                            hashlib.sha256).hexdigest()
+
+        def identity(path):
+            info = path.lstat()
+            return dict(device=info.st_dev, inode=info.st_ino)
+
+        require(hmac.compare_digest(tag, expected) and capture['maintenanceId'] == original
+                and capture['root'] == identity(self.policy.root) and capture['stage'] == identity(copy),
+                'Deployment history requires the original upgrade capture')
+        if 'packageHistoryDirectory' not in capture:
+            return 'COPY'
+        self.paired_home()
+        parked = copy / '.old-home'
+        self.policy.directory(parked)
+        require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
+                'Original deployment home differs from its upgrade capture')
+        source = parked / 'packages'
+        destination = self.physical / 'packages'
+        require(all(stat.S_ISDIR(path.lstat().st_mode) for path in (source, destination)),
+                'Deployment package directory changed during upgrade')
+        recorded = capture['packageHistoryDirectory']
+        handoff = copy / '.package-history-handoff.json'
+        at_destination = identity(destination) == recorded
+        factory = source if at_destination else destination
+        binding = dict(originalDirectory=recorded, factoryDirectory=identity(factory), captureTag=tag)
+        record = self.body(original, 'package-history-handoff', binding, secret)
+        if os.path.lexists(handoff):
+            require(self.policy.read(handoff, limit=4096) == record, 'Original package handoff directories changed')
+        else:
+            require(not at_destination and identity(source) == recorded, 'Original deployment directory is missing')
+            with tempfile.TemporaryDirectory(dir=copy) as temp:
+                pending = Path(temp) / 'handoff'
+                self.policy.create(pending, record)
+                publish_sibling(pending, handoff)
+            self.policy.sync(copy)
+        if not at_destination:
+            require(identity(source) == recorded, 'Original deployment directory was replaced')
+            # Current Debian profiles ship a flat default registry and optional factory DPs.
+            # A new factory member travels with the retained directory, existing site entries win.
+            for entry in sorted(factory.iterdir()):
+                require(entry.name in CORE_CONFIGURE_FACTORY_PACKAGES and stat.S_ISREG(entry.lstat().st_mode),
+                        'Unexpected entry in incoming deployment packages')
+                target = source / entry.name
+                with os.fdopen(os.open(entry, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as stream:
+                    require(hashlib.file_digest(stream, 'sha256').hexdigest() ==
+                            CORE_CONFIGURE_FACTORY_PACKAGES[entry.name], 'Incoming factory package changed')
+                if not os.path.lexists(target):
+                    publish_sibling(entry, target)
+            self.policy.sync(source)
+            self.policy.sync(factory)
+            rename_package_entry(source, destination, 2)  # RENAME_EXCHANGE
+        self.policy.sync(parked)
+        self.policy.sync(self.physical)
+        require(identity(destination) == recorded, 'Original package history was not restored')
+        return 'PRESERVED'
+
     def restore_siblings(self, original, mode):
         source = self.copies[mode] / 'siblings'
         if not os.path.lexists(source):
@@ -310,9 +380,11 @@ class Configure:
             require(policy.read(prepared, limit=4096) == prepared_body, 'Invalid configure setup receipt')
             self.paired_setup()
             if not os.path.lexists(ready):
-                require(fence is not None and action in ('status', 'restore-siblings', 'ready'),
+                require(fence is not None and action in ('status', 'restore-packages', 'restore-siblings', 'ready'),
                         'Configure data readiness is unresolved')
                 require(self.source() == recovery, 'Original configure recovery copy changed')
+                if action == 'restore-packages':
+                    return self.restore_package_history(original, mode, secret), mode
                 if action == 'restore-siblings':
                     require(mode in self.copies, 'No preserved sibling bundles to restore')
                     self.restore_siblings(original, mode)
@@ -377,7 +449,7 @@ def check_aborted_change(marker, phases):
 
 
 def main():
-    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-siblings', 'ready', 'retire-copy',
+    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-packages', 'restore-siblings', 'ready', 'retire-copy',
                'configured', 'configure-route', 'sibling-code'} | {
         f'setup-{step}' for step in INSTALLER_STEPS
     }

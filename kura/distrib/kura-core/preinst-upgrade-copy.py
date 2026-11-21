@@ -71,7 +71,17 @@ class UpgradeCopy:
                          'Upgrade source does not match the installed Core home')
         self.policy.directory(physical)
         alias = dict(self.identity(logical), target=os.readlink(logical) if logical.is_symlink() else None)
-        return dict(source=dict(name=physical.name, **self.identity(physical)), logical=alias)
+        source = dict(source=dict(name=physical.name, **self.identity(physical)), logical=alias)
+        packages = physical / 'packages'
+        if packages.is_dir() and not packages.is_symlink():
+            registry = (packages / 'dpa.properties').resolve()
+            prefix = '.' + registry.name
+            pattern = re.compile(re.escape(prefix) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
+            if registry.parent.is_dir() and any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()):
+                self.api.require(physical == self.incoming,
+                                 'Completed deployment jobs require their original Core home path')
+                source['packageHistoryDirectory'] = self.identity(packages)
+        return source
 
     def unpublished_binding(self):
         self.api.require(not os.path.lexists(self.destination), 'Existing recovery copy must be preserved')
@@ -184,6 +194,8 @@ class UpgradeCopy:
                     'Invalid original Core predecessor')
             binding['oldVersion'] = captured_old
         expected = dict(binding, source=source, logical=alias)
+        if 'packageHistoryDirectory' in saved:
+            expected['packageHistoryDirectory'] = saved['packageHistoryDirectory']
         require(hmac.compare_digest(raw, self.receipt(self.destination, expected, secret)),
                 'Published upgrade copy belongs to another source, package, boot or Root')
         if reinstall:
