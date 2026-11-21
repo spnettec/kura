@@ -179,6 +179,43 @@ class CoreRemovalHomeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'original publication'):
             self.home.retained_generation(published, self.op)
 
+    def test_partial_retained_purge_resumes_after_both_inner_witnesses_are_gone(self):
+        base = self.retained.parent
+        self.home.JOURNAL_KEY = base / 'journal.key'
+        self.home.write_new(self.home.JOURNAL_KEY, os.urandom(32))
+        fence = base / 'maintenance.json'
+        def select(operation):
+            fence.write_text(json.dumps(dict(id=operation, state='MAINTENANCE', firstAction='remove')))
+        select(self.op)
+        self.home.capture(self.retained)
+        self.home.remove(self.retained)
+        inode = self.retained.stat().st_ino
+        def interrupt(tree):
+            (tree / 'systemd/main-state.json').unlink()
+            (tree / 'removal-home.json').unlink()
+            raise InterruptedError('after removing witnesses')
+        with patch.object(shutil, 'rmtree', side_effect=interrupt), self.assertRaises(InterruptedError):
+            self.home.purge_retained(self.retained)
+        staged, = base.glob('.kura-retained.purging-*')
+        self.assertEqual(inode, staged.stat().st_ino)
+        select(str(uuid.uuid4()))
+        with self.assertRaisesRegex(ValueError, 'Different original'):
+            self.home.purge_retained(self.retained)
+        select(self.op)
+        moved = staged.rename(base / 'original')
+        shutil.copytree(moved, staged)
+        with self.assertRaisesRegex(ValueError, 'Different original'):
+            self.home.purge_retained(self.retained)
+        shutil.rmtree(staged)
+        moved.rename(staged)
+        self.retained.mkdir(mode=0o700)
+        with self.assertRaisesRegex(ValueError, 'Conflicting retained'):
+            self.home.purge_retained(self.retained)
+        self.retained.rmdir()
+        self.home.purge_retained(self.retained)
+        self.assertFalse(staged.exists())
+        self.assertEqual(self.op, json.loads(fence.read_bytes())['id'])
+
     def test_purge_checks_parked_identity_before_deleting(self):
         site = self.target / 'packages'
         site.mkdir()

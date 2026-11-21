@@ -72,6 +72,7 @@ def check_purge_mounts(retained):
     # Check the entire purge set before retiring any deployment or retention
     # witness. A busy mount in a later tree must leave the original retry intact.
     no_mounts_below(retained, PARENT / '.kura-preserve', *retained.parent.glob('.kura-retained.tmp.*'),
+                    *retained.parent.glob('.kura-retained.purging-*'),
                     ROOT / 'etc/systemd/system/kura.service.d', ROOT / 'var/log/kura',
                     ROOT / 'tmp/.kura', ROOT / 'tmp/kura')
 
@@ -285,6 +286,42 @@ def purge_packages(retained):
     sync_dir(PARENT)
 
 
+def purge_retained(retained):
+    """Keep proof of the directory identity until its final rmdir."""
+    protected(retained.parent, True)
+    fence = json.loads(generation_input(JOURNAL_KEY.parent / 'maintenance.json', 4096))
+    operation = str(uuid.UUID(fence['id']))
+    require(fence['id'] == operation and fence['state'] == 'MAINTENANCE' and fence['firstAction'] == 'remove',
+            'Retained purge requires its original removal fence')
+
+    # A same-filesystem rename binds the proof to the directory independently
+    # of deletion order. No file inside the tree must survive for a retry.
+    prefix = '.kura-retained.purging-'
+    staged = list(retained.parent.glob(prefix + '*'))
+    require(len(staged) <= 1 and not (staged and os.path.lexists(retained)),
+            'Conflicting retained directories during purge')
+    source = staged[0] if staged else retained
+    protected(source, True)
+    require(stat.S_IMODE(source.lstat().st_mode) == 0o700, 'Unsafe retained purge directory')
+    binding = dict(operation=operation, root=identity(ROOT), parent=identity(retained.parent), retained=identity(source))
+    target = retained.parent / (prefix + removal_tag(binding, b'kura-core-retained-purge-v1\0'))
+    if staged:
+        require(source == target and not os.path.lexists(HOME), 'Different original retained purge directory')
+    else:
+        record = json.loads(generation_input(retained / 'removal-home.json', 8192))
+        require(record['operation'] == operation and record.get('retained', identity(source)) == identity(source),
+                'Retained directory belongs to another removal')
+        remove(retained)
+        if 'packageTag' in record:
+            purge_packages(retained)
+        no_mounts_below(retained)
+        retained.rename(target)
+    sync_dir(retained.parent)
+    no_mounts_below(target)
+    shutil.rmtree(target)
+    sync_dir(retained.parent)
+
+
 def capture(retained):
     protected(retained, True)
     protected(PARENT, True)
@@ -384,12 +421,12 @@ if __name__ == '__main__':
         check_purge_mounts(retained)
         sys.exit(0)
     if action == 'purge':
-        remove(retained)
-    if action in ('park-if-recorded', 'purge'):
+        purge_retained(retained)
+    elif action == 'park-if-recorded':
         path = retained / 'removal-home.json'
         protected(path, False)
         if 'packageTag' in json.loads(path.read_bytes()):
-            (park if action == 'park-if-recorded' else purge_packages)(retained)
+            park(retained)
     elif action == 'locate':
         print(locate_retention(retained))
     else:

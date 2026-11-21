@@ -346,6 +346,11 @@ PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
 RETAINED_DIR=/var/lib/kura-retained
 PUBLISHED_UPGRADE=0
 
+if compgen -G '/var/lib/.kura-retained.purging-*' >/dev/null; then
+    echo "Core purge is incomplete. Resume the original removal before installing." >&2
+    exit 1
+fi
+
 # Do not erase an interrupted upgrade recovery copy or overwrite a retained
 # removal copy while upgrading an existing installation.
 if [ "${ACTION}" != "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; }; then

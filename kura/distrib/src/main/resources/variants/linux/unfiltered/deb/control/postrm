@@ -49,7 +49,10 @@ case "$1" in
         fi
 
         # Remove kura installation tree (plugins/ + siblings/)
-        if [ -e "${RETAINED_DIR}/removal-home.json" ] || [ -L "${RETAINED_DIR}/removal-home.json" ]; then
+        recorded_removal=false
+        if [ -e "${RETAINED_DIR}/removal-home.json" ] || [ -L "${RETAINED_DIR}/removal-home.json" ] ||
+                { [ "$1" = purge ] && compgen -G '/var/lib/.kura-retained.purging-*' >/dev/null; }; then
+            recorded_removal=true
             removalHome "$1" || exit 1
         elif [ -d "${INSTALL_DIR}/kura" ]; then
             # prerm completed account/policy cleanup using tracked root code.
@@ -74,7 +77,10 @@ case "$1" in
         rm -rf /tmp/.kura /tmp/kura
         rm -f /var/run/kura.pid
         if [ "$1" = "purge" ]; then
-            rm -rf "${RETAINED_DIR}" "${INSTALL_DIR}/.kura-preserve" || exit 1
+            if [ "${recorded_removal}" = false ]; then
+                rm -rf "${RETAINED_DIR}" || exit 1
+            fi
+            rm -rf "${INSTALL_DIR}/.kura-preserve" || exit 1
             rm -rf /etc/systemd/system/kura.service.d || exit 1
             rm -f /etc/systemd/system/kura.service || exit 1
             rm -f /var/log/kura*.log* /var/log/kura*.gz /var/log/kura*.hprof || exit 1
