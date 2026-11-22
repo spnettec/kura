@@ -422,7 +422,7 @@ raise RuntimeError("Kura key-policy readers were not embedded")
 raise RuntimeError("Kura key provisioner was not embedded")
 PYKURAKEY
 }
-if [ "${ACTION}" = install ] && { [ -e "${RETAINED_DIR}/published-generation" ] || [ -L "${RETAINED_DIR}/published-generation" ]; }; then
+if [ "${ACTION}" = install ] && { [ -e /var/lib/kura-key-service/generation-current.json ] || [ -L /var/lib/kura-key-service/generation-current.json ]; }; then
     provisionCryptoKey prepare-retained-generation || exit 1
 else
     provisionCryptoKey prepare "${ACTION}" || exit 1

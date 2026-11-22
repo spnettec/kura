@@ -21,6 +21,8 @@ JOURNAL_KEY = Path('/var/lib/kura-key-service/journal.key')
 GENERATION_DROPIN = Path('/etc/systemd/system/kura.service.d/40-kura-key-generations.conf')
 GENERATION_LAUNCHERS = ('start_kura.sh', 'start_kura_background.sh', 'start_kura_debug.sh')
 GENERATION_TAG = b'kura-core-retained-generation-v1\0'
+PURGED_GENERATIONS = Path('/var/lib/kura-package-generations')
+PURGED_TAG = b'kura-core-purged-generation-v1\0'
 
 
 def require(ok, message):
@@ -130,6 +132,108 @@ def retained_generation(retained, operation):
             and receipt['cohortSha256'] == digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')),
             'Retained launchers or credentials differ from the original publication')
     return receipt
+
+
+def purge_fence(operation):
+    fence = json.loads(generation_input(JOURNAL_KEY.parent / 'maintenance.json', 4096))
+    require(str(uuid.UUID(operation)) == operation and fence['id'] == operation
+            and fence['state'] == 'MAINTENANCE' and fence['firstAction'] == 'remove',
+            'Published-generation purge requires its original removal fence')
+
+
+def purged_generation(operation, *, completed=True):
+    """Read the original signed credential cohort without reviving application data."""
+    purge_fence(operation)
+    saved = PURGED_GENERATIONS / operation
+    protected(saved, True)
+    require(stat.S_IMODE(saved.lstat().st_mode) == 0o700 and {p.name for p in saved.iterdir()} ==
+            {*GENERATION_LAUNCHERS, 'dropin', 'captured.json'} | ({'completed.json'} if completed else set()),
+            'Incomplete original published-generation purge')
+    require(all(stat.S_IMODE(p.lstat().st_mode) == 0o600 for p in saved.iterdir()),
+            'Unsafe published-generation purge permissions')
+    record = json.loads(generation_input(saved / 'captured.json', 8192))
+    tag = record.pop('tag')
+    require(set(record) == {'schema', 'purpose', 'phase', 'operation', 'root', 'publicationId',
+                            'publicationSha256', 'cohortSha256', 'manifestSha256', 'dropinSha256',
+                            'launcherSha256s', 'sourceReceiptSha256'}
+            and type(record['schema']) is int and record['schema'] == 1
+            and record['purpose'] == 'kura-core-purged-generation-v1' and record['phase'] == 'captured'
+            and record['operation'] == operation and record['root'] == identity(ROOT)
+            and hmac.compare_digest(tag, removal_tag(record, PURGED_TAG)),
+            'Published-generation purge belongs to another Root or removal')
+    if completed:
+        done = json.loads(generation_input(saved / 'completed.json', 8192))
+        tag = done.pop('tag')
+        require(done == dict(record, phase='completed') and hmac.compare_digest(tag, removal_tag(done, PURGED_TAG)),
+                'Original published-generation purge is not complete')
+    digest = lambda data: hashlib.sha256(data).hexdigest()
+    raw = generation_input(JOURNAL_KEY.parent / 'generation-current.json', 8192)
+    publication = json.loads(raw)
+    hashes = {name: digest(generation_input(saved / name)) for name in GENERATION_LAUNCHERS}
+    binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                   manifestSha256=record['manifestSha256'], launcherSha256s=hashes)
+    require(record['publicationSha256'] == digest(raw) and record['publicationId'] == publication['operationId']
+            and record['dropinSha256'] == digest(generation_input(saved / 'dropin'))
+            and hashes == record['launcherSha256s'] and record['cohortSha256'] == publication['cohortSha256']
+            and record['cohortSha256'] == digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')),
+            'Purged credential cohort differs from its original publication')
+    return record
+
+
+def capture_purged_generation(retained):
+    if not os.path.lexists(JOURNAL_KEY.parent / 'generation-current.json'):
+        return
+    fence = json.loads(generation_input(JOURNAL_KEY.parent / 'maintenance.json', 4096))
+    operation = fence['id']
+    purge_fence(operation)
+    saved = PURGED_GENERATIONS / operation
+    if os.path.lexists(saved / 'captured.json'):
+        purged_generation(operation, completed=os.path.lexists(saved / 'completed.json'))
+        return
+    original = retained_generation(retained, operation)
+    require(original is not None, 'Original retained publication required before purge')
+    payload = {name: generation_input(retained / 'published-generation' / name) for name in GENERATION_LAUNCHERS}
+    payload['dropin'] = generation_input(GENERATION_DROPIN)
+    digest = lambda data: hashlib.sha256(data).hexdigest()
+    record = dict(schema=1, purpose='kura-core-purged-generation-v1', phase='captured', operation=operation,
+                  root=identity(ROOT), **{key: original[key] for key in
+                    ('publicationId', 'publicationSha256', 'cohortSha256', 'manifestSha256', 'dropinSha256')},
+                  launcherSha256s={name: digest(payload[name]) for name in GENERATION_LAUNCHERS},
+                  sourceReceiptSha256=digest(generation_input(retained / 'published-generation/receipt.json')))
+    record['tag'] = removal_tag(record, PURGED_TAG)
+    payload['captured.json'] = json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')
+    for directory in (PURGED_GENERATIONS, saved):
+        if not os.path.lexists(directory):
+            directory.mkdir(mode=0o700)
+            sync_dir(directory.parent)
+        protected(directory, True)
+        require(stat.S_IMODE(directory.lstat().st_mode) == 0o700, 'Unsafe purge credential-cohort directory')
+    require({p.name for p in saved.iterdir()} <= payload.keys(), 'Unexpected partial purge cohort')
+    for name, raw in payload.items():
+        target = saved / name
+        if os.path.lexists(target):
+            require(stat.S_IMODE(target.lstat().st_mode) == 0o600 and generation_input(target) == raw,
+                    'Original partial purge cohort changed')
+        else:
+            write_new(target, raw)
+    purged_generation(operation, completed=False)
+
+
+def complete_purged_generation(retained):
+    if not os.path.lexists(JOURNAL_KEY.parent / 'generation-current.json'):
+        return
+    operation = json.loads(generation_input(JOURNAL_KEY.parent / 'maintenance.json', 4096))['id']
+    saved = PURGED_GENERATIONS / operation
+    done = saved / 'completed.json'
+    record = purged_generation(operation, completed=os.path.lexists(done))
+    require(not any(os.path.lexists(path) for path in (retained, HOME, GENERATION_DROPIN))
+            and not list(retained.parent.glob('.kura-retained.purging-*')),
+            'Original published-generation purge still has application state')
+    if not os.path.lexists(done):
+        record['phase'] = 'completed'
+        record['tag'] = removal_tag(record, PURGED_TAG)
+        write_new(done, json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii'))
+    purged_generation(operation)
 
 
 def capture_generation(physical, retained, operation):
@@ -419,6 +523,10 @@ if __name__ == '__main__':
     retained = Path(directory)
     if action == 'check-purge-mounts':
         check_purge_mounts(retained)
+        sys.exit(0)
+    if action in ('capture-purged-generation', 'complete-purged-generation'):
+        {'capture-purged-generation': capture_purged_generation,
+         'complete-purged-generation': complete_purged_generation}[action](retained)
         sys.exit(0)
     if action == 'purge':
         purge_retained(retained)

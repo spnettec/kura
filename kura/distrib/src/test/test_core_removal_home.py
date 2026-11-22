@@ -143,7 +143,7 @@ class CoreRemovalHomeTest(unittest.TestCase):
         config.retire_removed_packages(self.op, self.retained, secret)
         self.assertFalse(holder.exists())
 
-    def test_published_launchers_survive_staging_rename_and_require_original_receipt(self):
+    def published_generation(self):
         digest = lambda raw: hashlib.sha256(raw).hexdigest()
         journal = self.retained.parent / 'journal'
         journal.mkdir(mode=0o700)
@@ -165,7 +165,14 @@ class CoreRemovalHomeTest(unittest.TestCase):
         pub = dict(operationId=str(uuid.uuid4()), cohortSha256=digest(json.dumps(
             binding, sort_keys=True, separators=(',', ':')).encode()))
         self.home.write_new(journal / 'generation-current.json', json.dumps(pub).encode())
+        self.home.write_new(journal / 'maintenance.json', json.dumps(
+            dict(id=self.op, state='MAINTENANCE', firstAction='remove')).encode())
+        self.home.PURGED_GENERATIONS = self.retained.parent / 'purged-generations'
         self.home.capture_generation(self.target, self.retained, self.op)
+        return pub
+
+    def test_published_launchers_survive_staging_rename_and_require_original_receipt(self):
+        pub = self.published_generation()
         published = self.retained.with_name('published')
         self.retained.rename(published)
         saved = self.home.retained_generation(published, self.op)
@@ -178,6 +185,81 @@ class CoreRemovalHomeTest(unittest.TestCase):
         (published / 'published-generation/start_kura.sh').write_bytes(b'different')
         with self.assertRaisesRegex(ValueError, 'original publication'):
             self.home.retained_generation(published, self.op)
+
+    def test_purge_keeps_only_signed_original_cohort_and_requires_completion(self):
+        pub = self.published_generation()
+        original = {name: (self.target / 'bin' / name).read_bytes() for name in self.home.GENERATION_LAUNCHERS}
+        self.home.capture_purged_generation(self.retained)
+        self.home.capture_purged_generation(self.retained)
+        with self.assertRaisesRegex(ValueError, 'Incomplete original'):
+            self.home.purged_generation(self.op)
+        with self.assertRaisesRegex(ValueError, 'still has application state'):
+            self.home.complete_purged_generation(self.retained)
+        shutil.rmtree(self.retained)
+        self.home.HOME.unlink()
+        shutil.rmtree(self.target)
+        self.home.GENERATION_DROPIN.unlink()
+        self.home.capture_purged_generation(self.retained)
+        self.home.complete_purged_generation(self.retained)
+        saved = self.home.PURGED_GENERATIONS / self.op
+        before = {p.name: (p.stat().st_ino, p.read_bytes()) for p in saved.iterdir()}
+        self.home.complete_purged_generation(self.retained)
+        self.assertEqual(before, {p.name: (p.stat().st_ino, p.read_bytes()) for p in saved.iterdir()})
+        self.assertEqual(pub['cohortSha256'], self.home.purged_generation(self.op)['cohortSha256'])
+        self.assertEqual(original, {name: (saved / name).read_bytes() for name in original})
+        self.assertEqual({*original, 'captured.json', 'completed.json', 'dropin'}, set(before))
+        (saved / 'start_kura.sh').write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError, 'original publication'):
+            self.home.purged_generation(self.op)
+
+    def test_interrupted_cohort_capture_resumes_only_identical_files(self):
+        self.published_generation()
+        write = self.home.write_new
+        def interrupt(path, raw):
+            write(path, raw)
+            if path.name == 'start_kura_background.sh':
+                raise InterruptedError('between original launchers')
+        with patch.object(self.home, 'write_new', side_effect=interrupt), self.assertRaises(InterruptedError):
+            self.home.capture_purged_generation(self.retained)
+        saved = self.home.PURGED_GENERATIONS / self.op
+        previous = saved / 'start_kura_background.sh'
+        raw = previous.read_bytes()
+        inode = previous.stat().st_ino
+        previous.write_bytes(b'other')
+        with self.assertRaisesRegex(ValueError, 'partial purge cohort changed'):
+            self.home.capture_purged_generation(self.retained)
+        previous.write_bytes(raw)
+        self.home.capture_purged_generation(self.retained)
+        self.assertEqual(inode, previous.stat().st_ino)
+        self.home.purged_generation(self.op, completed=False)
+
+    def test_purge_cohort_rejects_changed_root_fence_signature_and_publication(self):
+        self.published_generation()
+        self.home.capture_purged_generation(self.retained)
+        saved = self.home.PURGED_GENERATIONS / self.op
+        with patch.object(self.home, 'ROOT', self.retained):
+            with self.assertRaisesRegex(ValueError, 'another Root'):
+                self.home.purged_generation(self.op, completed=False)
+        fence = self.home.JOURNAL_KEY.parent / 'maintenance.json'
+        raw = fence.read_bytes()
+        fence.write_text(json.dumps(dict(id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='remove')))
+        with self.assertRaisesRegex(ValueError, 'original removal fence'):
+            self.home.purged_generation(self.op, completed=False)
+        fence.write_bytes(raw)
+        receipt = saved / 'captured.json'
+        raw = receipt.read_bytes()
+        record = json.loads(raw)
+        record['tag'] = '0' * 64
+        receipt.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, 'another Root'):
+            self.home.purged_generation(self.op, completed=False)
+        receipt.write_bytes(raw)
+        current = self.home.JOURNAL_KEY.parent / 'generation-current.json'
+        record = json.loads(current.read_bytes())
+        record['operationId'] = str(uuid.uuid4())
+        current.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, 'original publication'):
+            self.home.purged_generation(self.op, completed=False)
 
     def test_partial_retained_purge_resumes_after_both_inner_witnesses_are_gone(self):
         base = self.retained.parent

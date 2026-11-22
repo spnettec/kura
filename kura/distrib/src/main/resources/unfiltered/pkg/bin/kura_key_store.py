@@ -468,6 +468,9 @@ class Store:
         require(before == after, "Existing JVM identity changed during key capture")
         return value
 
+    def check_publication_layout(self, has_dropin, published):
+        require(has_dropin == published, "Incomplete published generation configuration")
+
     def prepare(self, action):
         require(action in ("install","upgrade","auto","package"), "Unsupported key provisioning action")
         self.observed.clear()
@@ -475,7 +478,7 @@ class Store:
         with self.locked():
             has_dropin = os.path.lexists(self.path(GENERATION_DROPIN))
             published = os.path.lexists(self.path("/var/lib/kura-key-service/generation-current.json"))
-            require(has_dropin == published, "Incomplete published generation configuration")
+            self.check_publication_layout(has_dropin, published)
             if published:
                 require(action in ("install", "upgrade", "package") and
                         os.path.lexists(self.path(RING_PATH)) and os.path.lexists(self.path(GENERATION_RECEIPT_PATH)),

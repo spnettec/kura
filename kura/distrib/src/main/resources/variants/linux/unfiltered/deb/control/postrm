@@ -39,6 +39,7 @@ case "$1" in
 
         if [ "$1" = "purge" ]; then
             removalHome check-purge-mounts || exit 1
+            removalHome capture-purged-generation || exit 1
         fi
 
         # A remove preserves user state in prerm before dpkg removes files.
@@ -89,6 +90,7 @@ case "$1" in
                 [ -e "${retained_tmp}" ] || continue
                 rm -rf "${retained_tmp}" || exit 1
             done
+            removalHome complete-purged-generation || exit 1
         fi
         ;;
     upgrade|failed-upgrade)

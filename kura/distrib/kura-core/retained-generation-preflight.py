@@ -13,6 +13,16 @@ def prepare_retained_generation(*, unpacked_layout=False):
     class RemovedStore(Store):
         verified = False
 
+        def check_publication_layout(self, has_dropin, published):
+            if has_dropin == published:
+                return
+            require(published and not has_dropin, 'Original generation publication required')
+            api = paired_lifecycle()
+            lifecycle = api.Lifecycle(self.root, self.owner)
+            fence = lifecycle.fence()
+            require(fence and fence['firstAction'] == 'remove', 'Original purge fence required')
+            removal['purged_generation'](fence['id'])
+
         @contextlib.contextmanager
         def locked(self):
             # Flock the original credential lock inode. No creation or writable
@@ -33,7 +43,9 @@ def prepare_retained_generation(*, unpacked_layout=False):
             fence = lifecycle.fence()
             require(fence and fence['firstAction'] == 'remove', 'Original removal fence required')
             lifecycle.check_extended_journal()
-            saved = removal['retained_generation'](retained, fence['id'])
+            purged = not os.path.lexists(retained)
+            saved = (removal['purged_generation'](fence['id']) if purged else
+                     removal['retained_generation'](retained, fence['id']))
             require(saved and saved['manifestSha256'] == _KURA_INCOMING_KEY_MANIFEST_SHA256,
                     'Incoming release differs from the retained generation cohort')
 
@@ -47,16 +59,28 @@ def prepare_retained_generation(*, unpacked_layout=False):
             require(len(secret) == 32, 'Invalid original journal key')
             for key in ('operationId', 'verificationId'):
                 api.archive_entry(lifecycle, dict(directory='operations', operationId=publication[key]), secret)
-            archive = retained / 'encryption'
-            removal['protected'](archive, True)
-            require(self.key(archive / CREDENTIAL) == self.key(self.path(KEY_PATH)) and
-                    self.read(archive / 'provisioned.json', private=True) == self.read(self.path(RECEIPT_PATH), private=True),
-                    'Retained encryption archive differs from the original credentials')
+            if not purged:
+                archive = retained / 'encryption'
+                removal['protected'](archive, True)
+                require(self.key(archive / CREDENTIAL) == self.key(self.path(KEY_PATH)) and
+                        self.read(archive / 'provisioned.json', private=True) == self.read(self.path(RECEIPT_PATH), private=True),
+                        'Retained encryption archive differs from the original credentials')
+            else:
+                require(not os.path.lexists(self.path('/opt/eclipse/.kura-preserve')) and
+                        not list(retained.parent.glob('.kura-retained.purging-*')),
+                        'Original purge still has application recovery copies')
+                dropin = self.path(GENERATION_DROPIN)
+                require(not os.path.lexists(dropin) or unpacked_layout and
+                        stat.S_IMODE(dropin.lstat().st_mode) == 0o400 and self.read(dropin, private=True) ==
+                        removal['generation_input'](removal['PURGED_GENERATIONS'] / fence['id'] / 'dropin'),
+                        'Unexpected Main drop-in after original purge')
             if not unpacked_layout:
                 require(not any(os.path.lexists(self.path(p)) for p in
                                 ('/opt/eclipse/kura', '/usr/lib/systemd/system/kura.service', '/lib/systemd/system/kura.service')),
                         'Retained pre-unpack requires the removed installation')
-            require(removal['retained_generation'](retained, fence['id']) == saved and lifecycle.fence() == fence,
+            observed = (removal['purged_generation'](fence['id']) if purged else
+                        removal['retained_generation'](retained, fence['id']))
+            require(observed == saved and lifecycle.fence() == fence,
                     'Original retained generation changed during admission')
             self.verified = True
 

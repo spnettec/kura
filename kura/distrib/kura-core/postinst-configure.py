@@ -198,8 +198,8 @@ class Configure:
             policy.no_overrides()
             if step == 'layout' and recovery['mode'] == 'upgrade':
                 self.restore_published_launchers(original, secret)
-            if step == 'layout' and recovery['mode'] == 'reinstall' and os.path.lexists(policy.state / 'generation-current.json'):
-                self.restore_removed_generation(original)
+            if step == 'layout' and recovery['mode'] in ('reinstall', 'install') and os.path.lexists(policy.state / 'generation-current.json'):
+                self.restore_removed_generation(original, purged=recovery['mode'] == 'install')
             if step != 'layout':
                 self.paired_home()
             if step == 'brokers' and prepare_brokers is not None:
@@ -276,14 +276,15 @@ class Configure:
                          'Retained reinstall requires a Core-owned unpack directory')
         return info
 
-    def restore_removed_generation(self, original):
+    def restore_removed_generation(self, original, *, purged=False):
         """Reconstruct the genuine vendor layout from the paired unpacked release."""
         policy, require = self.policy, self.api.require
         digest = lambda raw: hashlib.sha256(raw).hexdigest()
         retained = self.copies['reinstall']
         removal = {'__name__': 'packaged_removal'}
         exec(compile(CORE_REMOVAL_HOME_SOURCE, '<removal-home>', 'exec'), removal)
-        saved = removal['retained_generation'](retained, original)
+        saved = (removal['purged_generation'](original) if purged else
+                 removal['retained_generation'](retained, original))
         require(saved and saved['manifestSha256'] == self.binding['manifestSha256'],
                 'Retained generation requires the original reader release')
         manifest_raw = policy.read(self.physical / 'libexec/key-backup/manifest.json', private=False)
@@ -328,7 +329,7 @@ class Configure:
         require(digest(code) == generation['files'][helper])
         exec(compile(code, helper, 'exec'), cohort)
         cohort['validate'](self.physical, generation, lambda p: policy.read(p, private=False), policy.owner, unit=main)
-        source = retained / 'published-generation'
+        source = removal['PURGED_GENERATIONS'] / original if purged else retained / 'published-generation'
         launchers = {}
         for name in removal['GENERATION_LAUNCHERS']:
             target = self.physical / 'bin' / name
@@ -349,6 +350,14 @@ class Configure:
                     require(path.parent.resolve(strict=True) == vendor and
                             policy.read(vendor / name, private=False) == raw,
                             'Unexpected vendor unit during retained reinstall')
+        dropin = policy.path('/etc/systemd/system/kura.service.d/40-kura-key-generations.conf')
+        if purged:
+            restored_dropin = policy.read(source / 'dropin')
+            require(restored_dropin == incoming('share/key-management/key-generations.conf'),
+                    'Purged credential drop-in differs from the paired template')
+            policy.directory(dropin.parent, private=True, create=True)
+            require(not os.path.lexists(dropin) or stat.S_IMODE(dropin.lstat().st_mode) == 0o400
+                    and policy.read(dropin) == restored_dropin, 'Unexpected Main drop-in after purge')
 
         # Write only into the genuine package destinations. Interrupted copies
         # are accepted above only if byte-identical to the paired package.
@@ -372,6 +381,15 @@ class Configure:
                         os.fsync(stream.fileno())
                     publish_sibling(staged, target)
         policy.sync(vendor)
+        if purged and not os.path.lexists(dropin):
+            with tempfile.TemporaryDirectory(dir=dropin.parent) as stage:
+                staged = Path(stage) / dropin.name
+                staged.write_bytes(restored_dropin)
+                staged.chmod(0o400)
+                with staged.open('rb') as stream:
+                    os.fsync(stream.fileno())
+                publish_sibling(staged, dropin)
+            policy.sync(dropin.parent)
         if placeholder is not None:
             require(os.path.samestat(placeholder, logical.lstat()), 'Main unpack directory changed')
             logical.rmdir()  # The kernel also rejects nonempty directories and mount points.
