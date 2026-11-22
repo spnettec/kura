@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +28,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -42,7 +42,6 @@ import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -79,6 +78,40 @@ public class CryptoServiceImpl implements CryptoService {
     private final SecureRandom random = new SecureRandom();
     private SystemService systemService;
     private Optional<byte[]> secretKey;
+    private EncryptionKeyRing keyRing;
+    private static final String KEYED_HEADER = "KURA2.";
+    private static final int MAX_HEADER_BYTES = 87;
+
+    /**
+     * Explicit, non-OSGi AES context for the short-lived snapshot recovery tool.
+     * No environment/credential lookup and no fallback from an invalid supplied key.
+     * The default deployment key is available only through an explicit choice.
+     */
+    public static CryptoServiceImpl forSnapshotRecovery(byte[] key, boolean useDefaultKey) {
+        if (useDefaultKey == (key != null)
+                || (!useDefaultKey && key.length != 16 && key.length != 24 && key.length != 32)) {
+            throw new IllegalArgumentException("Explicit valid snapshot key or default-key choice required");
+        }
+        CryptoServiceImpl result = new CryptoServiceImpl();
+        result.secretKey = Optional.of((useDefaultKey ? DEFAULT_SECRET_KEY : key).clone());
+        return result;
+    }
+
+    /** Explicit private recovery material; no default key, environment or trial decryption. */
+    public static CryptoServiceImpl forKeyRingRecovery(byte[] credential) {
+        return forKeyRingRecovery(credential, null);
+    }
+
+    /** Pair the ring with a separately loaded active credential; never select a different writer key. */
+    public static CryptoServiceImpl forKeyRingRecovery(byte[] credential, byte[] expectedActiveKey) {
+        CryptoServiceImpl result = new CryptoServiceImpl();
+        result.keyRing = EncryptionKeyRing.parse(credential);
+        if (expectedActiveKey != null && !MessageDigest.isEqual(expectedActiveKey, result.keyRing.activeBytes())) {
+            throw new IllegalArgumentException("Active recovery credential does not match key ring");
+        }
+        result.secretKey = Optional.of(result.keyRing.activeBytes());
+        return result;
+    }
 
     public void setSystemService(SystemService systemService) {
         this.systemService = systemService;
@@ -90,9 +123,94 @@ public class CryptoServiceImpl implements CryptoService {
 
     protected void activate() {
 
-        this.secretKey = loadCustomEncryptionKey().filter(CryptoServiceImpl::isEncryptionKeyValid);
+        boolean loadedRing = SystemdCredentialLoader.fromEnv().map(this::loadKeyRing).orElse(false);
+        if (!loadedRing) {
+            this.keyRing = null;
+            this.secretKey = loadCustomEncryptionKey().filter(CryptoServiceImpl::isEncryptionKeyValid);
+        }
 
         this.keystorePasswordPath = this.systemService.getKuraDataDirectory() + File.separator + "store.save";
+    }
+
+    // Called only for fixed systemd credential IDs; publish fields after complete validation.
+    boolean loadKeyRing(SystemdCredentialLoader loader) {
+        try {
+            Optional<byte[]> data = loader.loadCredential(EncryptionKeyRing.CREDENTIAL, EncryptionKeyRing.MAX_BYTES);
+            if (!data.isPresent()) { return false; }
+            EncryptionKeyRing ring = EncryptionKeyRing.parse(data.get());
+            byte[] active = loader.loadCredential(SECRET_KEY_CREDENTIAL_ID, 32)
+                    .orElseThrow(() -> new IllegalArgumentException("Active encryption credential required"));
+            if (!MessageDigest.isEqual(active, ring.activeBytes())) {
+                throw new IllegalArgumentException("Encryption credentials do not match");
+            }
+            this.secretKey = Optional.of(active.clone());
+            this.keyRing = ring;
+            return true;
+        } catch (IOException | IllegalArgumentException e) {
+            throw new IllegalStateException("Cannot load encryption key ring credentials");
+        }
+    }
+
+    private String encryptionHeader(byte[] iv) {
+        return (this.keyRing == null ? "" : KEYED_HEADER + this.keyRing.activeId() + ".") + base64Encode(iv);
+    }
+
+    private void authenticateHeader(Cipher cipher, String header) {
+        if (header.startsWith(KEYED_HEADER)) {
+            cipher.updateAAD(header.getBytes(StandardCharsets.US_ASCII));
+        }
+    }
+
+    private Cipher decryptionCipher(String header) throws KuraException {
+        try {
+            String encodedIv = header;
+            Key key;
+            if (header.startsWith(KEYED_HEADER)) {
+                String[] parts = header.split("\\.", -1);
+                if (parts.length != 3 || !parts[1].matches("[0-9a-f]{64}")) {
+                    throw new IllegalArgumentException();
+                }
+                encodedIv = parts[2];
+                if (this.keyRing != null) { key = this.keyRing.key(parts[1]); }
+                else {
+                    key = generateKey();
+                    if (!EncryptionKeyRing.id(key.getEncoded()).equals(parts[1])) {
+                        throw new IllegalArgumentException();
+                    }
+                }
+            } else { key = this.keyRing == null ? generateKey() : this.keyRing.legacyKey(); }
+            byte[] iv = base64Decode(encodedIv);
+            if (encodedIv.length() != 16 || iv.length != IV_SIZE) { throw new IllegalArgumentException(); }
+            Cipher cipher = Cipher.getInstance(CIPHER);
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
+            authenticateHeader(cipher, header);
+            return cipher;
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, DECRYPT_EXCEPTION_CAUSE);
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalArgumentException e) {
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
+        }
+    }
+
+    // A padded Base64 decoder can otherwise stop before trailing encoded bytes.
+    private static final class CompleteDecodedStream extends InputStream {
+        private final InputStream encoded;
+        private final InputStream decoded;
+        CompleteDecodedStream(InputStream encoded) {
+            this.encoded = encoded;
+            this.decoded = Base64.getDecoder().wrap(encoded);
+        }
+        private int complete(int count) throws IOException {
+            if (count == -1 && this.encoded.read() != -1) {
+                throw new IOException("Trailing ciphertext bytes");
+            }
+            return count;
+        }
+        @Override public int read() throws IOException { return complete(this.decoded.read()); }
+        @Override public int read(byte[] bytes, int offset, int length) throws IOException {
+            return complete(this.decoded.read(bytes, offset, length));
+        }
+        @Override public void close() throws IOException { this.decoded.close(); }
     }
 
     private Optional<byte[]> loadCustomEncryptionKey() {
@@ -131,6 +249,11 @@ public class CryptoServiceImpl implements CryptoService {
     }
 
     @Override
+    public boolean hasCustomEncryptionKey() {
+        return this.secretKey != null && this.secretKey.filter(CryptoServiceImpl::isEncryptionKeyValid).isPresent();
+    }
+
+    @Override
     public char[] encryptAes(char[] value) throws KuraException {
 
         try {
@@ -139,11 +262,12 @@ public class CryptoServiceImpl implements CryptoService {
             byte[] iv = new byte[IV_SIZE];
             this.random.nextBytes(iv);
             c.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
+            String header = encryptionHeader(iv);
+            authenticateHeader(c, header);
             byte[] encryptedBytes = c.doFinal(charArrayToByteArray(value));
-            String ivString = base64Encode(iv);
             String encryptedMessage = base64Encode(encryptedBytes);
 
-            return (ivString + ENCRYPTED_STRING_SEPARATOR + encryptedMessage).toCharArray();
+            return (header + ENCRYPTED_STRING_SEPARATOR + encryptedMessage).toCharArray();
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, "encrypt");
         } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | CharacterCodingException e) {
@@ -164,7 +288,9 @@ public class CryptoServiceImpl implements CryptoService {
             this.random.nextBytes(iv);
             c.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
 
-            stream.write(base64Encode(iv).getBytes(StandardCharsets.UTF_8));
+            String header = encryptionHeader(iv);
+            authenticateHeader(c, header);
+            stream.write(header.getBytes(StandardCharsets.US_ASCII));
             stream.write(ENCRYPTED_STRING_SEPARATOR.getBytes(StandardCharsets.UTF_8));
 
             final OutputStream base64Encoder = Base64.getEncoder().wrap(stream);
@@ -229,42 +355,11 @@ public class CryptoServiceImpl implements CryptoService {
     
     @Override
     public void encryptAes(InputStream value, OutputStream out) throws KuraException {
-
-        CipherOutputStream cipherOutputStream = null;
-        try {
-            Key key = generateKey();
-            Cipher cipher = Cipher.getInstance(CIPHER);
-            byte[] iv = new byte[IV_SIZE];
-            this.random.nextBytes(iv);
-            cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
-            String ivString = base64Encode(iv) + ENCRYPTED_STRING_SEPARATOR;
-            out.write(ivString.getBytes());
-
-            OutputStream wrapOut = Base64.getEncoder().wrap(out);
-            cipherOutputStream = new CipherOutputStream(wrapOut, cipher);
-
-            byte[] tmpBytes = new byte[8192];
-            int numberOfBytedRead;
-            while ((numberOfBytedRead = value.read(tmpBytes)) >= 0) {
-                if (numberOfBytedRead > 0) {
-                    cipherOutputStream.write(tmpBytes, 0, numberOfBytedRead);
-                    cipherOutputStream.flush();
-                    out.flush();
-                }
-            }
-
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
-        } catch (InvalidKeyException | IOException | InvalidAlgorithmParameterException e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR);
-        } finally {
-            if (cipherOutputStream != null) {
-                try {
-                    cipherOutputStream.close();
-                } catch (IOException e) {
-
-                }
-            }
+        // Authentication finalization is part of success; never swallow close failures.
+        try (OutputStream encrypted = aesEncryptingStream(out)) {
+            value.transferTo(encrypted);
+        } catch (IOException e) {
+            throw new KuraException(KuraErrorCode.ENCODE_ERROR, VALUE_EXCEPTION_CAUSE);
         }
     }
 
@@ -278,161 +373,52 @@ public class CryptoServiceImpl implements CryptoService {
 
     @Override
     public void decryptAes(InputStream value, OutputStream out) throws KuraException {
-        CipherInputStream cipherInputStream = null;
-        try {
-            Key key = generateKey();
-            Cipher cipher = Cipher.getInstance(CIPHER);
-            char bit;
-            StringBuilder encodedIv = new StringBuilder();
-            while ((bit = (char) value.read()) != '-') {
-                encodedIv.append(bit);
-                if (encodedIv.length() > 20) {
-                    throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
-                }
-            }
-            byte[] iv = base64Decode(encodedIv.toString());
-            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
-            InputStream wrapValue = Base64.getDecoder().wrap(value);
-            cipherInputStream = new CipherInputStream(wrapValue, cipher);
-
-            byte[] tmpBytes = new byte[8192];
-            int numberOfBytedRead;
-            while ((numberOfBytedRead = cipherInputStream.read(tmpBytes)) >= 0) {
-                if (numberOfBytedRead > 0) {
-                    out.write(tmpBytes, 0, numberOfBytedRead);
-                    out.flush();
-                }
-            }
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED);
-        } catch (InvalidKeyException | IOException | InvalidAlgorithmParameterException e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR);
-        } finally {
-            if (cipherInputStream != null) {
-                try {
-                    cipherInputStream.close();
-                } catch (IOException e) {
-
-                }
-            }
+        try (InputStream decrypted = aesDecryptingStream(value)) {
+            decrypted.transferTo(out);
+            out.flush();
+        } catch (IOException e) {
+            throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
         }
     }
 
     @Override
     public char[] decryptAes(char[] encryptedValue) throws KuraException {
-        if (encryptedValue.length == 0) {
-            return new char[0];
-        }
-
+        if (encryptedValue.length == 0) { return new char[0]; }
         try {
-            String internalStringValue = new String(encryptedValue);
-
-            String[] internalStringValueArray = internalStringValue.split(ENCRYPTED_STRING_SEPARATOR);
-            if (internalStringValueArray.length != 2) {
+            String[] parts = new String(encryptedValue).split(ENCRYPTED_STRING_SEPARATOR, -1);
+            if (parts.length != 2 || parts[0].length() > MAX_HEADER_BYTES) {
                 throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
             }
-            String encodedIv = internalStringValueArray[0];
-            String encodedValue = internalStringValueArray[1];
-
-            byte[] iv = base64Decode(encodedIv);
-            byte[] decodedValue = base64Decode(encodedValue);
-            if (encryptedValue.length > 0 && decodedValue.length == 0) {
+            byte[] encrypted = base64Decode(parts[1]);
+            if (encrypted.length < AUTH_TAG_LENGTH_BIT / 8) {
                 throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
             }
-
-            Cipher c = Cipher.getInstance(CIPHER);
-            c.init(Cipher.DECRYPT_MODE, generateKey(), new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
-            byte[] decryptedBytes = c.doFinal(decodedValue);
-
-            return byteArrayToCharArray(decryptedBytes);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, DECRYPT_EXCEPTION_CAUSE);
-        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException | CharacterCodingException e) {
+            return byteArrayToCharArray(decryptionCipher(parts[0]).doFinal(encrypted));
+        } catch (BadPaddingException | IllegalBlockSizeException | CharacterCodingException | IllegalArgumentException e) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR, PARAMETER_EXCEPTION_CAUSE);
         }
     }
 
     @Override
     public InputStream aesDecryptingStream(InputStream encryptedStream) throws KuraException {
         try {
-
-            final BufferedInputStream buffered = new BufferedInputStream(encryptedStream);
-
-            final ByteArrayOutputStream encodedIv = new ByteArrayOutputStream();
-
-            int b;
-
-            for (b = buffered.read(); b != -1 && b != '-'; b = buffered.read()) {
-                encodedIv.write(b);
+            BufferedInputStream buffered = new BufferedInputStream(encryptedStream);
+            ByteArrayOutputStream header = new ByteArrayOutputStream();
+            int value;
+            while ((value = buffered.read()) != '-') {
+                if (value < 0 || value > 127 || header.size() >= MAX_HEADER_BYTES) {
+                    throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
+                }
+                header.write(value);
             }
-
-            if (b == -1) {
-                throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
-            }
-
-            byte[] iv = base64Decode(new String(encodedIv.toByteArray(), StandardCharsets.UTF_8));
-
+            Cipher cipher = decryptionCipher(header.toString(StandardCharsets.US_ASCII));
             buffered.mark(1);
-
-            if (buffered.read() == -1) {
-                throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
-            }
-
+            if (buffered.read() == -1) { throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE); }
             buffered.reset();
-
-            final InputStream decodedStream = Base64.getDecoder().wrap(buffered);
-
-            Cipher c = Cipher.getInstance(CIPHER);
-            c.init(Cipher.DECRYPT_MODE, generateKey(), new GCMParameterSpec(AUTH_TAG_LENGTH_BIT, iv));
-
-            return new CipherInputStream(decodedStream, c);
-
-        } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.DECODER_ERROR, e);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            throw new KuraException(KuraErrorCode.OPERATION_NOT_SUPPORTED, DECRYPT_EXCEPTION_CAUSE);
-        } catch (InvalidKeyException e) {
+            return new AuthenticatedDecryptingStream(new CompleteDecodedStream(buffered), cipher,
+                    decryptionCipher(header.toString(StandardCharsets.US_ASCII)));
+        } catch (IOException | IllegalArgumentException e) {
             throw new KuraException(KuraErrorCode.DECODER_ERROR, VALUE_EXCEPTION_CAUSE);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new KuraException(KuraErrorCode.ENCODE_ERROR, PARAMETER_EXCEPTION_CAUSE);
-        }
-    }
-
-    @Override
-    @Deprecated
-    public String encryptAes(String value) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
-            IllegalBlockSizeException, BadPaddingException {
-        char[] encryptedValue = null;
-        try {
-            encryptedValue = encryptAes(value.toCharArray());
-        } catch (KuraException e) {
-            Throwable t = e.getCause();
-            if (t instanceof NoSuchAlgorithmException) {
-                throw (NoSuchAlgorithmException) t;
-            } else if (t instanceof NoSuchPaddingException) {
-                throw (NoSuchPaddingException) t;
-            } else if (t instanceof InvalidKeyException) {
-                throw (InvalidKeyException) t;
-            } else if (t instanceof IllegalBlockSizeException) {
-                throw (IllegalBlockSizeException) t;
-            } else if (t instanceof BadPaddingException) {
-                throw (BadPaddingException) t;
-            }
-        }
-
-        return new String(encryptedValue);
-    }
-
-    @Override
-    @Deprecated
-    public String decryptAes(String encryptedValue) throws NoSuchAlgorithmException, NoSuchPaddingException,
-            InvalidKeyException, IOException, IllegalBlockSizeException, BadPaddingException {
-        try {
-            return new String(decryptAes(encryptedValue.toCharArray()));
-        } catch (KuraException e) {
-            throw new IOException();
         }
     }
 
@@ -484,30 +470,14 @@ public class CryptoServiceImpl implements CryptoService {
 
     @Override
     public void setKeyStorePassword(String keyStorePath, char[] password) throws KuraException {
-        Properties props = new Properties();
-        try (FileInputStream fis = new FileInputStream(this.keystorePasswordPath)) {
-            props.load(fis);
-        } catch (IOException e) {
-            // Not loading from an existing file
-        }
         char[] encryptedPassword = encryptAes(password);
-        props.put(keyStorePath, new String(encryptedPassword));
-
-        try (FileOutputStream fos = new FileOutputStream(this.keystorePasswordPath);) {
-            props.store(fos, "Do not edit this file. It's automatically generated by Kura");
-            fos.flush();
-        } catch (IOException e) {
-            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
-        }
-    }
-
-    @Override
-    @Deprecated
-    public void setKeyStorePassword(String keyStorePath, String password) throws IOException {
         try {
-            setKeyStorePassword(keyStorePath, password.toCharArray());
-        } catch (KuraException e) {
-            throw new IOException(e);
+            new KeystorePasswordStore().put(Path.of(this.keystorePasswordPath), keyStorePath,
+                    new String(encryptedPassword));
+        } catch (IOException | UnsupportedOperationException e) {
+            throw new KuraException(KuraErrorCode.INTERNAL_ERROR, e);
+        } finally {
+            Arrays.fill(encryptedPassword, '\0');
         }
     }
 

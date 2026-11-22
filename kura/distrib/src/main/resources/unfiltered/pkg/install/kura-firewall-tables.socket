@@ -1,0 +1,10 @@
+[Unit]
+Description=Kura kernel firewall table status socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-firewall-tables.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+RemoveOnStop=yes

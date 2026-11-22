@@ -26,9 +26,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.felix.useradmin.RoleFactory;
 import org.apache.felix.useradmin.RoleRepositoryStore;
+import org.eclipse.kura.KuraErrorCode;
+import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.internal.useradmin.store.RoleSerializer.RoleBuilder;
+import org.eclipse.kura.internal.useradmin.store.persistence.IdentityPersistence;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.osgi.framework.FrameworkUtil;
@@ -46,7 +49,8 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonValue;
 
-public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminListener, ConfigurableComponent {
+public class RoleRepositoryStoreImpl
+        implements RoleRepositoryStore, UserAdminListener, ConfigurableComponent, IdentityPersistence {
 
     private static final String INTERNAL_UPDATE_ID_PROP_NAME = "internal.update.id";
 
@@ -55,13 +59,17 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
     private Map<String, Role> roles = new TreeMap<>();
     private RoleRepositoryStoreOptions options;
 
-    long nextUpdateId = 0;
+    private long nextUpdateId;
     private final Set<Long> updateIds = new HashSet<>();
+    private final Object persistenceLock = new Object();
+    private boolean committing;
+    private boolean persistenceUncertain;
 
     private ConfigurationService configurationService;
 
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private Optional<ScheduledFuture<?>> storeTask = Optional.empty();
+    private long storeGeneration;
 
     public void setConfigurationService(final ConfigurationService configurationService) {
         this.configurationService = configurationService;
@@ -82,7 +90,7 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
             return;
         }
 
-        if (storeTask.isPresent() || !updateIds.isEmpty()) {
+        if (this.committing || this.persistenceUncertain || this.storeTask.isPresent() || !this.updateIds.isEmpty()) {
             logger.info("Ignoring update since there are uncommitted changes");
             return;
         }
@@ -127,7 +135,7 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
         logger.info("updating...done");
     }
 
-    public void deactivate() {
+    public synchronized void deactivate() {
         logger.info("deactivating...");
 
         this.executorService.shutdown();
@@ -196,7 +204,7 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
         return false;
     }
 
-    public long getNextUpdateId() {
+    private long getNextUpdateId() {
         final long updateId = this.nextUpdateId++;
 
         this.updateIds.add(updateId);
@@ -215,60 +223,111 @@ public class RoleRepositoryStoreImpl implements RoleRepositoryStore, UserAdminLi
     }
 
     private synchronized void scheduleStore() {
+        if (this.persistenceUncertain || this.executorService.isShutdown()) {
+            return;
+        }
 
         if (this.storeTask.isPresent()) {
             this.storeTask.get().cancel(false);
-            this.storeTask = Optional.empty();
         }
 
-        this.storeTask = Optional.of(
-                this.executorService.schedule(this::storeNow, this.options.getWriteDelayMs(), TimeUnit.MILLISECONDS));
+        final long generation = ++this.storeGeneration;
+        this.storeTask = Optional.of(this.executorService.schedule(() -> storeScheduled(generation),
+                this.options.getWriteDelayMs(), TimeUnit.MILLISECONDS));
     }
 
-    private void storeNow() {
-
-        Map<String, Object> properties;
+    private void storeScheduled(long generation) {
         try {
-            synchronized (this) {
-
-                final JsonArray rolesArray = new JsonArray();
-                final JsonArray usersArray = new JsonArray();
-                final JsonArray groupsArray = new JsonArray();
-
-                for (final Role role : this.roles.values()) {
-                    final int type = role.getType();
-
-                    if (type == Role.ROLE) {
-                        rolesArray.add(RoleSerializer.serializeRole(role));
-                    } else if (type == Role.USER) {
-                        usersArray.add(RoleSerializer.serializeRole(role));
-                    } else if (type == Role.GROUP) {
-                        groupsArray.add(RoleSerializer.serializeRole(role));
+            synchronized (this.persistenceLock) {
+                synchronized (this) {
+                    if (generation != this.storeGeneration || this.persistenceUncertain) {
+                        return;
                     }
                 }
-
-                final RoleRepositoryStoreOptions newOptions = new RoleRepositoryStoreOptions(rolesArray.toString(), //
-                        usersArray.toString(), //
-                        groupsArray.toString(), //
-                        this.options.getWriteDelayMs() //
-                );
-
-                if (newOptions.equals(this.options)) {
-                    logger.info("update would not change current configuration, skipping");
-                    return;
-                }
-
-                properties = newOptions.toProperties();
-                properties.put(INTERNAL_UPDATE_ID_PROP_NAME, getNextUpdateId());
+                commit(() -> {});
             }
-
-            this.configurationService.updateConfiguration(RoleRepositoryStoreImpl.class.getName(), properties);
         } catch (final Exception e) {
             logger.warn("Failed to store configuration", e);
         } finally {
-            this.storeTask = Optional.empty();
+            synchronized (this) {
+                if (generation == this.storeGeneration) {
+                    this.storeTask = Optional.empty();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void commit(Change change) throws KuraException {
+        synchronized (this.persistenceLock) {
+            synchronized (this) {
+                if (this.persistenceUncertain) {
+                    throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR,
+                            "The previous identity snapshot did not complete. Reload the role repository before writing.");
+                }
+                this.committing = true;
+            }
+            try {
+                change.apply();
+                persistCurrentRoles();
+            } finally {
+                synchronized (this) {
+                    this.committing = false;
+                }
+            }
+        }
+    }
+
+    private void persistCurrentRoles() throws KuraException {
+        final RoleRepositoryStoreOptions newOptions;
+        final Map<String, Object> properties;
+        synchronized (this) {
+            newOptions = serializeRoles();
+            if (newOptions.equals(this.options)) {
+                return;
+            }
+            properties = newOptions.toProperties();
+            properties.put(INTERNAL_UPDATE_ID_PROP_NAME, getNextUpdateId());
         }
 
+        // Configuration Admin can deliver the self-update while the snapshot is being saved.
+        try {
+            this.configurationService.updateConfiguration(RoleRepositoryStoreImpl.class.getName(), properties);
+        } catch (KuraException | RuntimeException e) {
+            synchronized (this) {
+                // A pending UserAdmin event must not resubmit a write with an uncertain outcome.
+                this.persistenceUncertain = true;
+            }
+            throw e;
+        }
+        synchronized (this) {
+            this.options = newOptions;
+        }
+    }
+
+    private RoleRepositoryStoreOptions serializeRoles() {
+        final JsonArray rolesArray = new JsonArray();
+        final JsonArray usersArray = new JsonArray();
+        final JsonArray groupsArray = new JsonArray();
+
+        for (final Role role : this.roles.values()) {
+            switch (role.getType()) {
+            case Role.ROLE:
+                rolesArray.add(RoleSerializer.serializeRole(role));
+                break;
+            case Role.USER:
+                usersArray.add(RoleSerializer.serializeRole(role));
+                break;
+            case Role.GROUP:
+                groupsArray.add(RoleSerializer.serializeRole(role));
+                break;
+            default:
+                break;
+            }
+        }
+
+        return new RoleRepositoryStoreOptions(rolesArray.toString(), usersArray.toString(), groupsArray.toString(),
+                this.options.getWriteDelayMs());
     }
 
     private final Map<String, Role> decode(final RoleRepositoryStoreOptions options, final RoleBuilder roleBuilder)

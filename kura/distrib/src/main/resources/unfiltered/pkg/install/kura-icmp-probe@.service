@@ -1,0 +1,35 @@
+[Unit]
+Description=Kura ICMP reachability probe
+PartOf=kura.service
+Requisite=kura.service
+After=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=kura-icmp-probe
+Group=kura-icmp-probe
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py icmp-serve %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_NET_RAW
+AmbientCapabilities=CAP_NET_RAW
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura -/run/credentials -/run/kura-key-service -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-clock-broker -/var/lib/kura-reboot-broker -/var/lib/kura-bind-service -/var/lib/kura-dhcp-service -/var/lib/kura-modem-reset
+TasksMax=4
+MemoryMax=64M
+RuntimeMaxSec=20s
+TimeoutStopSec=5s

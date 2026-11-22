@@ -64,6 +64,7 @@ abstract class IdentityServiceTestBase {
         this.passwordStrength.activate(Map.of("new.password.min.length", 8));
         this.identityService.setCryptoService(this.cryptoService);
         this.identityService.setUserAdmin(this.userAdmin);
+        this.identityService.setIdentityPersistence(change -> change.apply());
         this.identityService.setPasswordStrengthVerificationService(this.passwordStrength);
         this.identityService.activate();
     }

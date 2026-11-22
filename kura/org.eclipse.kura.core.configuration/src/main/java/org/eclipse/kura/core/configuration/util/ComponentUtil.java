@@ -43,6 +43,7 @@ import org.eclipse.kura.configuration.metatype.Designate;
 import org.eclipse.kura.configuration.metatype.MetaData;
 import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.configuration.metatype.Scalar;
+import org.eclipse.kura.core.configuration.LegacySnapshotPasswords;
 import org.eclipse.kura.core.configuration.metatype.Tmetadata;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.core.util.IOUtil;
@@ -85,20 +86,30 @@ public class ComponentUtil {
         final Map<String, Tmetadata> bundleMetadata = new HashMap<>();
 
         final ServiceReference<MetaTypeService> ref = ctx.getServiceReference(MetaTypeService.class);
-        final MetaTypeService metaTypeService = ctx.getService(ref);
+        if (ref == null) {
+            return bundleMetadata;
+        }
 
         try {
+            final MetaTypeService metaTypeService = ctx.getService(ref);
+            if (metaTypeService == null) {
+                return bundleMetadata;
+            }
             final MetaTypeInformation mti = metaTypeService.getMetaTypeInformation(bnd);
             if (mti != null) {
-
+                final List<Tmetadata> resources = readMetadataResources(bnd);
                 final List<String> pids = new ArrayList<>();
-                pids.addAll(Arrays.asList(mti.getPids()));
-                pids.addAll(Arrays.asList(mti.getFactoryPids()));
+                if (mti.getPids() != null) {
+                    pids.addAll(Arrays.asList(mti.getPids()));
+                }
+                if (mti.getFactoryPids() != null) {
+                    pids.addAll(Arrays.asList(mti.getFactoryPids()));
+                }
                 for (String pid : pids) {
 
                     final Tmetadata metadata;
                     try {
-                        metadata = readMetadata(bnd, pid);
+                        metadata = selectMetadata(resources, pid);
                         if (metadata != null) {
                             bundleMetadata.put(pid, metadata);
                         }
@@ -145,9 +156,20 @@ public class ComponentUtil {
      * Returns the Designate for the given pid
      */
     public static OCD getOCD(Tmetadata metadata, String pid) {
+        if (metadata == null || pid == null) {
+            return null;
+        }
+        Designate designate = getDesignate(metadata, pid);
+        String id = pid;
+        if (designate != null) {
+            if (designate.getObject() == null || designate.getObject().getOcdref() == null) {
+                return null;
+            }
+            id = designate.getObject().getOcdref();
+        }
         if (metadata.getOCD() != null && !metadata.getOCD().isEmpty()) {
             for (OCD ocd : metadata.getOCD()) {
-                if (ocd.getId() != null && ocd.getId().equals(pid)) {
+                if (ocd.getId() != null && ocd.getId().equals(id)) {
                     return ocd;
                 }
             }
@@ -237,15 +259,62 @@ public class ComponentUtil {
      */
     public static Tmetadata readMetadata(Bundle bundle, String pid)
             throws IOException, KuraException, FactoryConfigurationError {
-        Tmetadata metaData = null;
-        StringBuilder sbMetatypeXmlName = new StringBuilder();
-        sbMetatypeXmlName.append(OSGI_INF_METATYPE).append(pid).append(".xml");
+        return selectMetadata(readMetadataResources(bundle), pid);
+    }
 
-        String metatypeXmlName = sbMetatypeXmlName.toString();
-        String metatypeXml = IOUtil.readResource(bundle, metatypeXmlName);
-        if (metatypeXml != null) {
-            metaData = unmarshal(metatypeXml, Tmetadata.class);
+    private static List<Tmetadata> readMetadataResources(Bundle bundle) {
+        List<Tmetadata> resources = new ArrayList<>();
+        Enumeration<URL> entries = bundle.findEntries(OSGI_INF_METATYPE, "*.xml", false);
+        if (entries == null) {
+            return resources;
         }
+        while (entries.hasMoreElements()) {
+            URL url = entries.nextElement();
+            try {
+                Tmetadata metaData = unmarshal(IOUtil.readResource(url), Tmetadata.class);
+                localizeMetadata(bundle, metaData);
+                resources.add(metaData);
+            } catch (Exception e) {
+                logger.warn("Error loading Metadata resource " + url, e);
+            }
+        }
+        return resources;
+    }
+
+    /** XML resources independently of MetaTypeService's asynchronous provider cache. */
+    public static Map<String, Tmetadata> getXmlMetadata(Bundle bundle) {
+        List<Tmetadata> resources = readMetadataResources(bundle);
+        Map<String, Tmetadata> result = new HashMap<>();
+        java.util.Set<String> pids = new java.util.HashSet<>();
+        for (Tmetadata metadata : resources) {
+            for (Designate designate : metadata.getDesignate()) {
+                if (designate.getPid() != null) { pids.add(designate.getPid()); }
+                if (designate.getFactoryPid() != null) { pids.add(designate.getFactoryPid()); }
+            }
+        }
+        for (String pid : pids) {
+            Tmetadata selected = selectMetadata(resources, pid);
+            if (selected != null) { result.put(pid, selected); }
+        }
+        return result;
+    }
+
+    private static Tmetadata selectMetadata(List<Tmetadata> resources, String pid) {
+        Tmetadata result = null;
+        for (Tmetadata metadata : resources) {
+            if (getDesignate(metadata, pid) != null && getOCD(metadata, pid) != null) {
+                if (result != null) {
+                    // Do not let bundle enumeration order choose defaults for an ambiguous PID.
+                    logger.warn("Duplicate Metadata resources for pid {}", pid);
+                    return null;
+                }
+                result = metadata;
+            }
+        }
+        return result;
+    }
+
+    private static void localizeMetadata(Bundle bundle, Tmetadata metaData) {
         if (metaData != null) {
             String localization = metaData.getLocalization();
             URL[] urls = findAllEntries(bundle, localization);
@@ -258,7 +327,6 @@ public class ComponentUtil {
             }
 
         }
-        return metaData;
     }
 
     public static final char LOCALE_SEP = '_';
@@ -492,22 +560,13 @@ public class ComponentUtil {
      */
     public static Tocd readObjectClassDefinition(Bundle bundle, String pid)
             throws IOException, KuraException, FactoryConfigurationError {
-        Tocd ocd = null;
-        StringBuilder sbMetatypeXmlName = new StringBuilder();
-        sbMetatypeXmlName.append(OSGI_INF_METATYPE).append(pid).append(".xml");
-
-        String metatypeXmlName = sbMetatypeXmlName.toString();
-        String metatypeXml = IOUtil.readResource(bundle, metatypeXmlName);
-        if (metatypeXml != null) {
-            Tmetadata metaData = unmarshal(metatypeXml, Tmetadata.class);
-            if (metaData.getOCD() != null && !metaData.getOCD().isEmpty()) {
-                ocd = (Tocd) metaData.getOCD().get(0);
-            }
-        }
-        return ocd;
+        return (Tocd) getOCD(readMetadata(bundle, pid), pid);
     }
 
     public static Map<String, Object> getDefaultProperties(OCD ocd, ComponentContext ctx) {
+        if (ocd instanceof org.eclipse.kura.core.configuration.ProviderDefinition provider) {
+            return provider.defaultProperties(ctx);
+        }
         //
         // reconcile by looping through the ocd properties
         Map<String, Object> defaults = null;
@@ -541,9 +600,7 @@ public class ComponentUtil {
     }
 
     public static boolean isSingleValued(final AD attrDef) {
-        final int cardinality = attrDef.getCardinality();
-
-        return cardinality == 0 || cardinality == 1 || cardinality == -1;
+        return attrDef.isScalarCardinality();
     }
 
     private static Object getDefaultValue(AD attrDef, ComponentContext ctx) {
@@ -707,7 +764,8 @@ public class ComponentUtil {
 
         for (Entry<String, Object> property : original.entrySet()) {
             Object configValue = property.getValue();
-            if (configValue instanceof Password || configValue instanceof Password[]) {
+            if (configValue instanceof Password || configValue instanceof Password[]
+                    || CollectionsUtil.isPasswordCollection(configValue)) {
 
                 final Map<String, Object> resultProperties;
 
@@ -745,11 +803,23 @@ public class ComponentUtil {
                 encryptedPasswords[i] = encryptPassword(passwordArray[i], cryptoService);
             }
             encryptedValue = encryptedPasswords;
+        } else if (CollectionsUtil.isPasswordCollection(configValue)) {
+            java.util.Collection<?> passwords = (java.util.Collection<?>) configValue;
+            java.util.Collection<Password> encryptedPasswords = CollectionsUtil.newCollectionLike(passwords);
+            for (Object password : passwords) {
+                encryptedPasswords.add(encryptPassword((Password) password, cryptoService));
+            }
+            encryptedValue = encryptedPasswords;
         }
         return encryptedValue;
     }
 
     private static boolean isEncrypted(Password configPassword, final CryptoService cryptoService) {
+        // Legacy empty decoding succeeds without authenticating a ciphertext. Encrypt an
+        // actual empty password so strict snapshot validation can authenticate it too.
+        if (LegacySnapshotPasswords.isKnownLogical(configPassword) || configPassword.getPassword().length == 0) {
+            return false;
+        }
         boolean result = false;
         try {
             cryptoService.decryptAes(configPassword.getPassword());

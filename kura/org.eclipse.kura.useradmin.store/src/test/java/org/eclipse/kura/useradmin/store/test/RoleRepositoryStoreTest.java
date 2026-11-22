@@ -23,6 +23,7 @@ import java.util.function.*;
 import org.apache.felix.useradmin.impl.EventDispatcher;
 import org.apache.felix.useradmin.impl.RoleRepository;
 import org.apache.felix.useradmin.impl.UserAdminImpl;
+import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.internal.useradmin.store.RoleRepositoryStoreImpl;
@@ -42,6 +43,7 @@ class RoleRepositoryStoreTest {
     private RoleRepositoryStoreImpl store;
     private UserAdminImpl userAdmin;
     private final ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+    private final ConfigurationService configuration = mock(ConfigurationService.class);
     private Map<String, Object> persisted = Map.of();
     private Runnable pendingWrite;
 
@@ -57,7 +59,6 @@ class RoleRepositoryStoreTest {
             this.pendingWrite = call.getArgument(0);
             return mock(ScheduledFuture.class);
         });
-        ConfigurationService configuration = mock(ConfigurationService.class);
         doAnswer(call -> {
             this.persisted = new HashMap<>(call.getArgument(1));
             this.store.update(this.persisted); // Normal self-update acknowledgement must not recreate roles.
@@ -91,6 +92,36 @@ class RoleRepositoryStoreTest {
         assertEquals("[]", currentOptions.usersConfig);
         assertEquals("[]", currentOptions.groupsConfig);
         assertEquals(5000L, currentOptions.writeDelayMs);
+    }
+
+    @Test
+    void shouldPersistCredentialBeforeReturningAndSkipTheDelayedDuplicate() throws KuraException {
+        this.store.commit(() -> {
+            User user = (User) this.userAdmin.createRole("admin", Role.USER);
+            user.getCredentials().put("kura.password", "synthetic-hash");
+        });
+
+        assertEquals("[{\"name\":\"admin\",\"credentials\":{\"kura.password\":\"synthetic-hash\"}}]",
+                getCurrentRoleRepositoryStoreOptions().usersConfig);
+        assertNotNull(this.pendingWrite);
+        this.pendingWrite.run();
+        verify(this.configuration).updateConfiguration(eq(RoleRepositoryStoreImpl.class.getName()), anyMap());
+    }
+
+    @Test
+    void shouldPropagateSnapshotFailureWithoutASecondWrite() throws KuraException {
+        KuraException failure = new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND);
+        doThrow(failure).when(this.configuration)
+                .updateConfiguration(eq(RoleRepositoryStoreImpl.class.getName()), anyMap());
+
+        assertSame(failure, assertThrows(KuraException.class, () -> this.store.commit(() -> {
+            User user = (User) this.userAdmin.createRole("admin", Role.USER);
+            user.getCredentials().put("kura.password", "synthetic-hash");
+        })));
+        assertNotNull(this.pendingWrite);
+        this.pendingWrite.run();
+        assertThrows(KuraException.class, () -> this.store.commit(() -> fail("A second mutation was admitted")));
+        verify(this.configuration).updateConfiguration(eq(RoleRepositoryStoreImpl.class.getName()), anyMap());
     }
 
     @Test

@@ -34,6 +34,7 @@
             cardinality="0"
             required="true"
             default="10000"
+            min="1"
             max="60000"
             description="%refreshIntervalDesc"/>
 
@@ -53,6 +54,14 @@
             default="/opt/eclipse/kura/data/kura-reboot-cause"
             description="%rebootCauseFilePathDesc"/>
             
+        <AD id="failOnUnavailableDevice"
+            name="%failOnUnavailableDevice"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="%failOnUnavailableDeviceDesc"/>
+
     </OCD>
     <Designate pid="org.eclipse.kura.watchdog.WatchdogService">
         <Object ocdref="org.eclipse.kura.watchdog.WatchdogService"/>

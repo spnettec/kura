@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura read-only snapshot validation for a paired native agent
+Wants=kura-recovery-input.socket
+Before=kura-management-agent-v2.service
+PartOf=kura-management-agent-v2.service
+ConditionPathExists=/usr/share/kura-management-agent/package-v2
+ConditionPathExists=/etc/kura/credentials/provisioned.json
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Socket]
+ListenStream=/run/kura-snapshot-validation/control.sock
+SocketUser=root
+SocketGroup=kura-management-agent
+SocketMode=0660
+DirectoryMode=0755
+RemoveOnStop=yes

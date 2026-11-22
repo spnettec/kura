@@ -1,0 +1,13 @@
+[Unit]
+Description=Kura typed modem reset and GPS policy socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-modem-reset.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+Accept=yes
+MaxConnections=4
+Backlog=4
+RemoveOnStop=yes

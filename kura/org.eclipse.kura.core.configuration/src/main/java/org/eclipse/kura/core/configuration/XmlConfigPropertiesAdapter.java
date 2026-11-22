@@ -12,15 +12,21 @@
  *******************************************************************************/
 package org.eclipse.kura.core.configuration;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Vector;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.core.configuration.XmlConfigPropertyAdapted.ConfigPropertyType;
+import org.eclipse.kura.core.configuration.XmlConfigPropertyAdapted.Container;
 import org.eclipse.kura.crypto.CryptoService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -30,6 +36,42 @@ import org.osgi.framework.ServiceReference;
  * Helper class to serialize a set of properties in XML.
  */
 public class XmlConfigPropertiesAdapter {
+
+    private final CryptoService standaloneCrypto;
+    private final boolean logicalPasswords;
+
+    public XmlConfigPropertiesAdapter() {
+        this(null);
+    }
+
+    /** Explicit dependency for offline tooling; the default OSGi lookup is unchanged. */
+    public XmlConfigPropertiesAdapter(CryptoService crypto) {
+        this(crypto, false);
+    }
+
+    public XmlConfigPropertiesAdapter(CryptoService crypto, boolean logicalPasswords) {
+        this.standaloneCrypto = crypto;
+        this.logicalPasswords = logicalPasswords;
+    }
+
+    private CryptoLease crypto() {
+        if (this.standaloneCrypto != null) {
+            return new CryptoLease(this.standaloneCrypto, null, null);
+        }
+        BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+        ServiceReference<CryptoService> reference = context.getServiceReference(CryptoService.class);
+        return new CryptoLease(context.getService(reference), context, reference);
+    }
+
+    private record CryptoLease(CryptoService service, BundleContext context,
+            ServiceReference<CryptoService> reference) implements AutoCloseable {
+        @Override
+        public void close() {
+            if (this.context != null) {
+                this.context.ungetService(this.reference);
+            }
+        }
+    }
 
     public XmlConfigPropertiesAdapted marshal(Map<String, Object> props) throws Exception {
         List<XmlConfigPropertyAdapted> adaptedValues = new ArrayList<>();
@@ -43,7 +85,20 @@ public class XmlConfigPropertiesAdapter {
                 adaptedValue.setName(key);
 
                 Object value = prop.getValue();
-                if (value instanceof String) {
+                if (value instanceof Collection<?> || value != null && value.getClass().isArray()
+                        && value.getClass().getComponentType().isPrimitive()) {
+                    adaptedValues.add(marshalContainer(key, value));
+                    continue;
+                }
+                if (value != null && value.getClass().isArray()) {
+                    for (int i = 0; i < Array.getLength(value); i++) {
+                        if (Array.get(value, i) == null) { throw unsupported(); }
+                    }
+                }
+                if (value == null) {
+                    adaptedValue.setType(ConfigPropertyType.STRING_TYPE);
+                    adaptedValue.setValues(new String[0]);
+                } else if (value instanceof String) {
                     adaptedValue.setArray(false);
                     adaptedValue.setType(ConfigPropertyType.STRING_TYPE);
                     adaptedValue.setValues(new String[] { value.toString() });
@@ -80,18 +135,12 @@ public class XmlConfigPropertiesAdapter {
                     adaptedValue.setType(ConfigPropertyType.SHORT_TYPE);
                     adaptedValue.setValues(new String[] { value.toString() });
                 } else if (value instanceof Password) {
-                    BundleContext bundleContext = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-                    ServiceReference<CryptoService> cryptoServiceRef = bundleContext
-                            .getServiceReference(CryptoService.class);
-                    try {
-                        CryptoService cryptoService = bundleContext.getService(cryptoServiceRef);
-
+                    try (CryptoLease lease = crypto()) {
+                        CryptoService cryptoService = lease.service();
                         adaptedValue.setArray(false);
                         adaptedValue.setEncrypted(true);
                         adaptedValue.setType(ConfigPropertyType.PASSWORD_TYPE);
                         adaptedValue.setValues(new String[] { cryptoService.encodeBase64(value.toString()) });
-                    } finally {
-                        bundleContext.ungetService(cryptoServiceRef);
                     }
                 } else if (value instanceof String[]) {
                     adaptedValue.setArray(true);
@@ -186,12 +235,8 @@ public class XmlConfigPropertiesAdapter {
                     }
                     adaptedValue.setValues(stringValues);
                 } else if (value instanceof Password[]) {
-                    BundleContext bundleContext = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-                    ServiceReference<CryptoService> cryptoServiceRef = bundleContext
-                            .getServiceReference(CryptoService.class);
-                    try {
-                        CryptoService cryptoService = bundleContext.getService(cryptoServiceRef);
-
+                    try (CryptoLease lease = crypto()) {
+                        CryptoService cryptoService = lease.service();
                         adaptedValue.setArray(true);
                         adaptedValue.setEncrypted(true);
                         adaptedValue.setType(ConfigPropertyType.PASSWORD_TYPE);
@@ -203,20 +248,61 @@ public class XmlConfigPropertiesAdapter {
                             }
                         }
                         adaptedValue.setValues(stringValues);
-                    } finally {
-                        bundleContext.ungetService(cryptoServiceRef);
                     }
                 }
 
-                if (adaptedValue.getValues() == null || adaptedValue.getValues().length > 0) {
-                    adaptedValues.add(adaptedValue);
-                }
+                if (adaptedValue.getType() == null) { throw unsupported(); }
+                adaptedValues.add(adaptedValue);
             }
         }
 
         XmlConfigPropertiesAdapted result = new XmlConfigPropertiesAdapted();
         result.setProperties(adaptedValues.toArray(new XmlConfigPropertyAdapted[] {}));
         return result;
+    }
+
+    private XmlConfigPropertyAdapted marshalContainer(String key, Object value) throws Exception {
+        Container container;
+        Class<?> type;
+        Object[] elements;
+        if (value instanceof Collection<?> collection) {
+            elements = collection.toArray();
+            type = elements.length == 0 ? String.class : elements[0] == null ? null : elements[0].getClass();
+            container = value instanceof Vector<?> ? Container.VECTOR : Container.LIST;
+        } else {
+            elements = new Object[Array.getLength(value)];
+            for (int i = 0; i < elements.length; i++) { elements[i] = Array.get(value, i); }
+            type = boxed(value.getClass().getComponentType());
+            container = Container.PRIMITIVE_ARRAY;
+        }
+        if (type == null || !Set.of(String.class, Long.class, Double.class, Float.class, Integer.class,
+                Byte.class, Character.class, Boolean.class, Short.class, Password.class).contains(type)) {
+            throw unsupported();
+        }
+        Object typed = Array.newInstance(type, elements.length);
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i] == null || elements[i].getClass() != type) { throw unsupported(); }
+            Array.set(typed, i, elements[i]);
+        }
+        XmlConfigPropertyAdapted result = marshal(Map.of(key, typed)).getProperties()[0];
+        result.setContainer(container);
+        return result;
+    }
+
+    private static Class<?> boxed(Class<?> primitive) {
+        if (primitive == boolean.class) { return Boolean.class; }
+        if (primitive == byte.class) { return Byte.class; }
+        if (primitive == short.class) { return Short.class; }
+        if (primitive == int.class) { return Integer.class; }
+        if (primitive == long.class) { return Long.class; }
+        if (primitive == float.class) { return Float.class; }
+        if (primitive == double.class) { return Double.class; }
+        if (primitive == char.class) { return Character.class; }
+        throw unsupported();
+    }
+
+    private static IllegalArgumentException unsupported() {
+        return new IllegalArgumentException("Unsupported snapshot property representation");
     }
 
     public Map<String, Object> unmarshal(XmlConfigPropertiesAdapted adaptedPropsAdapted) throws Exception {
@@ -228,7 +314,8 @@ public class XmlConfigPropertiesAdapter {
         for (XmlConfigPropertyAdapted adaptedProp : adaptedProps) {
             String propName = adaptedProp.getName();
             String[] values = adaptedProp.getValues();
-            if (values == null || values.length == 0) {
+            if (adaptedProp.getContainer() != null && !adaptedProp.getArray()) { throw unsupported(); }
+            if (values == null || values.length == 0 && !adaptedProp.getArray()) {
                 properties.put(propName, null);
                 continue;
             }
@@ -266,31 +353,12 @@ public class XmlConfigPropertiesAdapter {
                         propvalue = Short.parseShort(values[0]);
                         break;
                     case PASSWORD_TYPE:
-                        BundleContext bundleContext = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-                        ServiceReference<CryptoService> cryptoServiceRef = bundleContext
-                                .getServiceReference(CryptoService.class);
-                        try {
-                            CryptoService cryptoService = bundleContext.getService(cryptoServiceRef);
-
-                            propvalue = values[0];
-                            if (adaptedProp.isEncrypted()) {
-                                try {
-                                    propvalue = new Password(
-                                            cryptoService.decryptAes(((String) propvalue).toCharArray()));
-                                } catch (KuraException e) {
-                                    propvalue = new Password(cryptoService.decodeBase64((String) propvalue));
-                                }
-                            } else {
-                                propvalue = new Password((String) propvalue);
-                            }
-                        } finally {
-                            bundleContext.ungetService(cryptoServiceRef);
+                        try (CryptoLease lease = crypto()) {
+                            propvalue = decodePassword(values[0], adaptedProp.isEncrypted(), lease.service());
                         }
                         break;
                     }
                 } else {
-                    // If we are dealing with an empty array, skip this element.
-                    // Starting from 1.2.0 an empty array will never be present in a snapshot.
                     switch (adaptedProp.getType()) {
                     case STRING_TYPE:
                         propvalue = values;
@@ -369,36 +437,66 @@ public class XmlConfigPropertiesAdapter {
                         propvalue = shortValues;
                         break;
                     case PASSWORD_TYPE:
-                        BundleContext bundleContext = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-                        ServiceReference<CryptoService> cryptoServiceRef = bundleContext
-                                .getServiceReference(CryptoService.class);
-                        CryptoService cryptoService = bundleContext.getService(cryptoServiceRef);
-                        try {
+                        try (CryptoLease lease = crypto()) {
+                            CryptoService cryptoService = lease.service();
                             Password[] pwdValues = new Password[values.length];
                             for (int i = 0; i < values.length; i++) {
                                 if (values[i] != null) {
-                                    if (adaptedProp.isEncrypted()) {
-                                        try {
-                                            pwdValues[i] = new Password(
-                                                    cryptoService.decryptAes(values[i].toCharArray()));
-                                        } catch (KuraException e) {
-                                            pwdValues[i] = new Password(cryptoService.decodeBase64(values[i]));
-                                        }
-                                    } else {
-                                        pwdValues[i] = new Password(values[i]);
-                                    }
+                                    pwdValues[i] = decodePassword(values[i], adaptedProp.isEncrypted(), cryptoService);
                                 }
                             }
                             propvalue = pwdValues;
-                        } finally {
-                            bundleContext.ungetService(cryptoServiceRef);
                         }
                         break;
                     }
                 }
-                properties.put(propName, propvalue);
+                properties.put(propName, restoreContainer(adaptedProp, propvalue));
             }
         }
         return properties;
+    }
+
+    private Password decodePassword(String value, boolean encrypted, CryptoService crypto) throws Exception {
+        if (this.logicalPasswords) {
+            return new Password(crypto.decodeBase64(value));
+        }
+        if (!encrypted) {
+            return new LegacyLogicalPassword(value == null ? null : value.toCharArray());
+        }
+        try {
+            return new LegacyLogicalPassword(crypto.decryptAes(value.toCharArray()));
+        } catch (KuraException legacyBase64) {
+            // Historical writers used Base64 for both stored CM ciphertext and logical text.
+            return new Password(crypto.decodeBase64(value));
+        }
+    }
+
+    /** A legacy value that the XML representation has already identified as logical. */
+    static final class LegacyLogicalPassword extends Password {
+        LegacyLogicalPassword(char[] value) {
+            super(value);
+        }
+    }
+
+    private static Object restoreContainer(XmlConfigPropertyAdapted property, Object value) {
+        Container container = property.getContainer();
+        if (container == null) { return value; }
+        if (!(value instanceof Object[] elements)) { throw unsupported(); }
+        if (container == Container.VECTOR) { return new Vector<>(Arrays.asList(elements)); }
+        if (container == Container.LIST) { return new ArrayList<>(Arrays.asList(elements)); }
+        Class<?> boxed = value.getClass().getComponentType();
+        Class<?> primitive;
+        if (boxed == Boolean.class) { primitive = boolean.class; }
+        else if (boxed == Byte.class) { primitive = byte.class; }
+        else if (boxed == Short.class) { primitive = short.class; }
+        else if (boxed == Integer.class) { primitive = int.class; }
+        else if (boxed == Long.class) { primitive = long.class; }
+        else if (boxed == Float.class) { primitive = float.class; }
+        else if (boxed == Double.class) { primitive = double.class; }
+        else if (boxed == Character.class) { primitive = char.class; }
+        else { throw unsupported(); }
+        Object result = Array.newInstance(primitive, elements.length);
+        for (int i = 0; i < elements.length; i++) { Array.set(result, i, elements[i]); }
+        return result;
     }
 }

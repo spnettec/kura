@@ -16,11 +16,12 @@
 <Configuration status="warn" strict="true" name="KuraConfig" monitorInterval="30">
     <Properties>
         <Property name="log_dir">/var/log</Property>
+        <Property name="archive_dir">${log_dir}/kura/archives</Property>
         <Property name="log_name">kura</Property>
     </Properties>
     <Filter type="ThresholdFilter" level="trace"/>
     <Appenders>
-        <RollingFile name="RollingFile" fileName="${log_dir}/${log_name}.log" filePattern="${log_dir}/${log_name}-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
+        <RollingFile name="RollingFile" fileName="${log_dir}/${log_name}.log" filePattern="${archive_dir}/${log_name}-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
             <PatternLayout>
                 <Pattern>%d{ISO8601} [%t] %-5p %c{1.} - %m%n%throwable{full}</Pattern>
             </PatternLayout>
@@ -29,7 +30,7 @@
             </Policies>
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
-        <RollingFile name="audit" fileName="${log_dir}/${log_name}-audit.log" filePattern="${log_dir}/${log_name}-audit-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
+        <RollingFile name="audit" fileName="${log_dir}/${log_name}-audit.log" filePattern="${archive_dir}/${log_name}-audit-%d{MM-dd-yy-HH-mm-ss}-%i.log.gz">
             <RFC5424Layout enterpriseNumber="28392" includeMDC="true" mdcId="RequestContext" appName="EclipseKura" mdcPrefix="" newLine="true">
                 <LoggerFields>
                     <KeyValuePair key="thread" value="%t"/>

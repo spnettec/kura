@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura gateway AES key backup and recovery
+Requires=kura-key-service.socket
+After=kura-key-service.socket
+ConditionPathExists=/etc/kura/credentials/provisioned.json
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I /opt/eclipse/kura/bin/kura_key_service.py --serve
+Sockets=kura-key-service.socket
+StateDirectory=kura-key-service
+StateDirectoryMode=0700
+RuntimeDirectory=kura-key-service
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadOnlyPaths=/opt/eclipse
+ReadWritePaths=/etc/kura/credentials /var/lib/kura-key-service
+ReadWritePaths=-/etc/systemd/system/kura.service.d
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
+LimitCORE=0
+LimitMEMLOCK=0
+MemoryMax=256M
+TasksMax=64
+TimeoutStopSec=30
+KillMode=control-group
+Restart=on-failure
+RestartSec=2

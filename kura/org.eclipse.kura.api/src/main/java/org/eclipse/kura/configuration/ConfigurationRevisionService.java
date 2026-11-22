@@ -20,8 +20,33 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface ConfigurationRevisionService {
 
-    record Read(ComponentConfiguration configuration, String revision) {
+    /**
+     * Private DS descriptor property naming optional dynamic 0..n references that
+     * only observe a service lifecycle and safely unbind when it is removed.
+     * Values must be declared in the component description, never supplied by CM.
+     * This does not exempt persisted PID/target dependencies, explicit runtime
+     * target filters, required/static references, or undeclared business users.
+     */
+    String DELETION_OBSERVER_REFERENCES = ".kura.configuration.deletion.observers";
+
+
+    /** A revision and configuration captured by the same provider read. */
+    interface ReadView {
+        ComponentConfiguration configuration();
+        String revision();
+    }
+
+    record Read(ComponentConfiguration configuration, String revision) implements ReadView {
         @Override public String toString() { return "ConfigurationRevisionService.Read[redacted]"; }
+    }
+
+    /** An actual stored singleton CM entry;absence is distinct from empty values. @since 1.9.0 */
+    interface StoredReadView extends ReadView {
+        boolean present();
+    }
+
+    record StoredRead(ComponentConfiguration configuration, String revision, boolean present) implements StoredReadView {
+        @Override public String toString() { return "ConfigurationRevisionService.StoredRead[redacted]"; }
     }
 
     enum Reason { INVALID_ARGUMENT, NOT_FOUND, CONFLICT, UNSUPPORTED }
@@ -40,6 +65,81 @@ public interface ConfigurationRevisionService {
     }
 
     Read readRevision(String pid) throws KuraException;
+
+    /**
+     * Captures actual stored CM dictionaries for registered fixed singleton PIDs,
+     * with explicit absence and stored-only opaque revisions. No component-owned
+     * getter,default seeding,CM creation or logical Password decoding is performed.
+     * The typed values retain their storage representation. Revisions cannot be
+     * used for generic updates. Startup-reserved external-owner PIDs are forbidden.
+     * Reads are serialized with this provider and rechecked as a cohort;direct CM
+     * writers remain independent and may change values after return. Older
+     * providers reject without falling back to a self-configuring/live view.
+     * @since 1.9.0
+     */
+    default Map<String, StoredReadView> readStoredRevisionViews(java.util.Set<String> pids) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * A detached paired export view whose Password values are explicitly logical
+     * plaintext values, including values which themselves resemble ciphertext.
+     * The returned revision authenticates these exact typed property values.
+     * No storage-prefix guessing, remote-write grant or fallback to an older
+     * provider's unmarked password representation is permitted.
+     * @since 1.9.0
+     */
+    default ReadView readLogicalRevisionView(String pid) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Reads the confirmed state of an actual external owner reserved before this
+     * ConfigurationService instance started. A unique, still-bound handler must
+     * supply the returned configuration. A JVM property changed after startup,
+     * ConfigAdmin mirror or generic component view is never an ownership proof.
+     * This read does not grant writes or produce a generic configuration revision.
+     * Returned property containers are detached. Older providers reject it.
+     * @since 1.9.0
+     */
+    default ComponentConfiguration readExternalConfirmedConfiguration(String pid) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Reads every requested startup-reserved external handler from one stable
+     * registration cohort. Missing,ambiguous,removed or rebound handlers reject
+     * the whole read;there is no generic CM fallback or partial result. Returned
+     * typed property containers are detached. This is not an atomic backend
+     * transaction:callers must also check the providers' confirmed generations
+     * and their original-operation bindings. Older providers reject this method.
+     * @since 1.9.0
+     */
+    default Map<String, ComponentConfiguration> readExternalConfirmedConfigurations(java.util.Set<String> pids)
+            throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Provides the same paired read to callers whose compiler baseline predates
+     * java.lang.Record (including the Java 11 GWT server build).
+     * @since 1.5.0
+     */
+    default ReadView readRevisionView(String pid) throws KuraException {
+        return readRevision(pid);
+    }
+
+    /**
+     * Captures all requested paired views under the same provider update monitor.
+     * No partial result is returned if any view is unavailable. This serializes
+     * provider operations, not direct ConfigurationAdmin or component-owned writers.
+     * Returned property containers are detached from the provider's mutable views.
+     *
+     * @since 1.5.0
+     */
+    default Map<String, ReadView> readRevisionViews(java.util.Set<String> pids) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
 
     /**
      * Classifies the configuration view used by {@link #readRevision(String)}.
@@ -78,4 +178,122 @@ public interface ConfigurationRevisionService {
      * This in-memory guard is not durable business outcome reconciliation.
      */
     void updateRevision(String pid, String expectedRevision, Map<String, Object> properties) throws KuraException;
+
+    /**
+     * Conditionally submits local configuration-editor updates using the ordinary
+     * ConfigurationService validation and snapshot policy. Every displayed revision
+     * is checked under the provider's update monitor before the first submission.
+     * This does not grant remote write authorization or replace the constrained
+     * property contract of {@link #updateRevision(String, String, Map)}.
+     * A batch is not an atomic transaction across component callbacks. Any failure
+     * after submission may have changed one or more components; do not replay it.
+     * Implementations predating this operation reject it without a legacy fallback.
+     *
+     * @since 1.5.0
+     */
+    default void updateConfigurationsIfUnchanged(java.util.List<ComponentConfiguration> configurations,
+            Map<String, String> expectedRevisions) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /** A local factory creation in a conditional configuration plan. */
+    final class Creation {
+        private final String factoryPid;
+        private final String pid;
+        private final Map<String, Object> properties;
+
+        public Creation(String factoryPid, String pid, Map<String, Object> properties) {
+            this.factoryPid = factoryPid;
+            this.pid = pid;
+            this.properties = properties == null ? null : new java.util.HashMap<>(properties);
+        }
+
+        public String factoryPid() { return this.factoryPid; }
+        public String pid() { return this.pid; }
+        public Map<String, Object> properties() {
+            return this.properties == null ? null : new java.util.HashMap<>(this.properties);
+        }
+        @Override public String toString() { return "ConfigurationRevisionService.Creation[redacted]"; }
+    }
+
+    /**
+     * Applies a local editor's complete configuration plan. All supplied revisions
+     * (including read-only guards) and new-PID absence conditions are checked before
+     * any deletion, creation or update. Every existing mutation target must have a
+     * revision; a creation must be absent, or replace a declared factory deletion.
+     * Ordinary validation and snapshot policy apply. This does not authorize remote
+     * lifecycle operations, lock direct ConfigurationAdmin writers, or provide
+     * rollback atomicity. A non-Rejected failure can follow partial execution and
+     * must never be replayed automatically. Implementations without plan support
+     * reject before execution, without falling back to legacy lifecycle methods.
+     *
+     * @since 1.5.0
+     */
+    default void applyConfigurationPlanIfUnchanged(java.util.List<ComponentConfiguration> updates,
+            java.util.List<Creation> creations, java.util.Set<String> deletions,
+            Map<String, String> expectedRevisions) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * One-shot, durably identified plan. The caller creates and retains a
+     * canonical op-UUID before submitting. Every reuse of that ID is rejected,
+     * including a reuse with identical arguments; query
+     * ConfigurationOperationReceiptService instead of replaying a request.
+     * Receipts contain mutation scope/identity but no configuration values,
+     * passwords or property-value fingerprints. A recorded Core commit proves
+     * writer/snapshot completion, not asynchronous provider/business success.
+     * @since 1.8.0
+     */
+    default void applyConfigurationPlanIfUnchanged(String operationId,
+            java.util.List<ComponentConfiguration> updates, java.util.List<Creation> creations,
+            java.util.Set<String> deletions, Map<String,String> expectedRevisions) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Native ownership and dependency closure required before deleting a local stack.
+     * Expected factory PIDs must cover exactly the deletion set. All persisted
+     * *.target filters, the supplied exact-PID property names, and current SCR
+     * bindings are checked under Core's ordinary write monitor. This does not lock
+     * direct ConfigurationAdmin or independently mutating component/service writers.
+     */
+    final class DeletionGuard {
+        private final Map<String, String> factoryPids;
+        private final java.util.Set<String> pidReferenceProperties;
+
+        public DeletionGuard(Map<String, String> factoryPids, java.util.Set<String> pidReferenceProperties) {
+            this.factoryPids = factoryPids == null ? null : new java.util.HashMap<>(factoryPids);
+            this.pidReferenceProperties = pidReferenceProperties == null ? null
+                    : new java.util.HashSet<>(pidReferenceProperties);
+        }
+        public Map<String, String> factoryPids() {
+            return this.factoryPids == null ? null : new java.util.HashMap<>(this.factoryPids);
+        }
+        public java.util.Set<String> pidReferenceProperties() {
+            return this.pidReferenceProperties == null ? null : new java.util.HashSet<>(this.pidReferenceProperties);
+        }
+        @Override public String toString() { return "ConfigurationRevisionService.DeletionGuard[redacted]"; }
+    }
+
+    /**
+     * Applies a plan only if its native deletion ownership/dependency closure also
+     * holds before the first write. Implementations without this stronger contract
+     * reject; delegating to the unguarded overload is forbidden. Any non-Rejected
+     * failure may follow partial dispatch and must not be replayed automatically.
+     */
+    default void applyConfigurationPlanIfUnchanged(java.util.List<ComponentConfiguration> updates,
+            java.util.List<Creation> creations, java.util.Set<String> deletions,
+            Map<String, String> expectedRevisions, DeletionGuard deletionGuard) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
+    /** Identified plan with the same mandatory native deletion closure; no fallback. @since 1.8.0 */
+    default void applyConfigurationPlanIfUnchanged(String operationId,
+            java.util.List<ComponentConfiguration> updates, java.util.List<Creation> creations,
+            java.util.Set<String> deletions, Map<String,String> expectedRevisions,
+            DeletionGuard deletionGuard) throws KuraException {
+        throw new Rejected(Reason.UNSUPPORTED);
+    }
+
 }

@@ -12,15 +12,20 @@
  *******************************************************************************/
 package org.eclipse.kura.log.filesystem.provider;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.LinkedList;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Pattern;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.log.LogEntry;
@@ -34,9 +39,8 @@ public class FilesystemLogProvider implements ConfigurableComponent, LogProvider
     private static final Logger logger = LoggerFactory.getLogger(FilesystemLogProvider.class);
     public static final String LOG_FILEPATH_PROP_KEY = "logFilePath";
 
-    private final List<LogListener> registeredListeners = new LinkedList<>();
+    private final List<LogListener> registeredListeners = new CopyOnWriteArrayList<>();
     private FileLogReader readerThread;
-    private String filePath;
 
     protected void activate(Map<String, Object> properties) {
         logger.info("Activating FilesystemLogProvider...");
@@ -57,8 +61,7 @@ public class FilesystemLogProvider implements ConfigurableComponent, LogProvider
         if (this.readerThread != null) {
             this.readerThread.interrupt();
         }
-        this.filePath = (String) properties.get(LOG_FILEPATH_PROP_KEY);
-        this.readerThread = new FileLogReader(this.filePath);
+        this.readerThread = new FileLogReader((String) properties.get(LOG_FILEPATH_PROP_KEY));
         this.readerThread.start();
         logger.info("Updated FilesystemLogProvider... Done.");
     }
@@ -73,103 +76,125 @@ public class FilesystemLogProvider implements ConfigurableComponent, LogProvider
         this.registeredListeners.remove(listener);
     }
 
-    class FileLogReader extends Thread {
+    private final class FileLogReader extends Thread {
 
         private static final long SAMPLE_INTERVAL = 100;
-        private final File logFile;
-        private boolean follow = true;
+        private static final Pattern YEAR = Pattern.compile("^[0-9]{4}");
+        private final Path path;
+        private final ByteBuffer buffer = ByteBuffer.allocate(8192);
+        private final ByteArrayOutputStream partialLine = new ByteArrayOutputStream();
+        private String message;
+        private final StringBuilder stacktrace = new StringBuilder();
 
-        public FileLogReader(String filePath) {
-            this.logFile = new File(filePath);
-            this.follow = true;
+        FileLogReader(String filePath) {
+            this.path = Path.of(filePath);
         }
 
         @Override
         public void run() {
-            try (RandomAccessFile file = new RandomAccessFile(this.logFile, "r")) {
-                while (this.follow) {
-                    readLinesAndNotifyListeners(file);
-                    sleep(SAMPLE_INTERVAL);
-                }
-            } catch (FileNotFoundException fnf) {
-                logger.error("File '{}' not found.", this.logFile.getPath());
-            } catch (InterruptedException ie) {
-                // nothing to do
-            } catch (Exception e) {
-                logger.error("Unexpected exception in FilesystemLogProvider.", e);
-            } finally {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        private void readLinesAndNotifyListeners(RandomAccessFile file) throws IOException {
-            Optional<String> line = readUntilNewLine(file);
-
-            if (line.isPresent()) {
-                String stacktrace = readStacktrace(file);
-                notifyListeners(line.get(), stacktrace);
-            }
-        }
-
-        private Optional<String> readUntilNewLine(RandomAccessFile file) throws IOException {
-            StringBuilder resultLine = new StringBuilder();
-            long pointerToLastSuccessfulRead = file.getFilePointer();
-
-            if (pointerToLastSuccessfulRead < file.length()) {
-                char newChar = 0;
-
-                do {
+            try {
+                while (!isInterrupted()) {
                     try {
-                        newChar = (char) file.readByte();
-                        resultLine.append(newChar);
-                        pointerToLastSuccessfulRead = file.getFilePointer();
-                    } catch (EOFException eof) {
-                        file.seek(pointerToLastSuccessfulRead);
+                        followFile();
+                    } catch (NoSuchFileException e) {
+                        // The appender may start later or temporarily remove the name during rollover.
                     }
-                } while (newChar != '\n');
+                    Thread.sleep(SAMPLE_INTERVAL);
+                }
+            } catch (InterruptedException e) {
+                interrupt();
+            } catch (Exception e) {
+                logger.error("Could not follow log file '{}'.", this.path, e);
+            }
+        }
 
-                return Optional.of(resultLine.toString());
+        private void followFile() throws IOException, InterruptedException {
+            BasicFileAttributes opened = attributes();
+            if (!opened.isRegularFile()) {
+                throw new IOException("Expected a regular log file at " + this.path);
+            }
+            try (FileChannel channel = FileChannel.open(this.path)) {
+                if (!sameFile(opened, attributes())) {
+                    return;
+                }
+                this.partialLine.reset();
+                while (!isInterrupted()) {
+                    readAvailable(channel);
+                    try {
+                        if (!sameFile(opened, attributes())) {
+                            // Drain any final writes to the old inode before opening its replacement.
+                            readAvailable(channel);
+                            publishMessage();
+                            return;
+                        }
+                    } catch (NoSuchFileException e) {
+                        // Retain the open file until the new one is visible.
+                    }
+                    Thread.sleep(SAMPLE_INTERVAL);
+                }
+            }
+        }
+
+        private BasicFileAttributes attributes() throws IOException {
+            return Files.readAttributes(this.path, BasicFileAttributes.class);
+        }
+
+        private boolean sameFile(BasicFileAttributes first, BasicFileAttributes second) {
+            if (first.fileKey() != null || second.fileKey() != null) {
+                return Objects.equals(first.fileKey(), second.fileKey());
+            }
+            return first.creationTime().equals(second.creationTime());
+        }
+
+        private void readAvailable(FileChannel channel) throws IOException {
+            long end = channel.size();
+            if (channel.position() > end) {
+                publishMessage();
+                channel.position(0);
+                this.partialLine.reset();
+            }
+            while (!isInterrupted() && channel.position() < end) {
+                this.buffer.clear();
+                this.buffer.limit((int) Math.min(this.buffer.capacity(), end - channel.position()));
+                if (channel.read(this.buffer) <= 0) {
+                    break;
+                }
+                this.buffer.flip();
+                while (this.buffer.hasRemaining()) {
+                    byte value = this.buffer.get();
+                    this.partialLine.write(value);
+                    if (value == '\n') {
+                        acceptLine(this.partialLine.toString(StandardCharsets.UTF_8));
+                        this.partialLine.reset();
+                    }
+                }
+            }
+            if (this.partialLine.size() == 0) {
+                publishMessage();
+            }
+        }
+
+        private void acceptLine(String line) {
+            // Audit records start with '<', ordinary records start with a four-digit year.
+            if (this.message != null && line.length() > 4 && !line.startsWith("<")
+                    && !YEAR.matcher(line).find()) {
+                this.stacktrace.append(line).append('\n');
             } else {
-                return Optional.empty();
+                publishMessage();
+                this.message = line;
             }
         }
 
-        private String readStacktrace(RandomAccessFile file) throws IOException {
-            StringBuilder stacktrace = new StringBuilder();
-            long lastReadPosition = file.getFilePointer();
-
-            Optional<String> maybeStacktrace = readUntilNewLine(file);
-
-            while (maybeStacktrace.isPresent() && isStacktrace(maybeStacktrace.get())) {
-                stacktrace.append(maybeStacktrace.get());
-                stacktrace.append("\n");
-                lastReadPosition = file.getFilePointer();
-                maybeStacktrace = readUntilNewLine(file);
-            }
-
-            file.seek(lastReadPosition);
-
-            return stacktrace.toString().trim();
-        }
-
-        private boolean isStacktrace(String line) {
-            /*
-             * stacktrace lines do not start with a timestamp
-             * 
-             * in kura-audit log file the lines start with a '<'
-             */
-            return line.length() > 4 && !line.substring(0, 4).matches("\\d{4}") && !line.startsWith("<");
-        }
-
-        private synchronized void notifyListeners(String message, String stacktrace) {
-            if (message != null) {
+        private void publishMessage() {
+            if (this.message != null && !isInterrupted()) {
                 for (LogListener listener : FilesystemLogProvider.this.registeredListeners) {
-                    LogEntry entry = new KuraLogLineParser(message, FilesystemLogProvider.this.filePath, stacktrace)
-                            .createLogEntry();
+                    LogEntry entry = new KuraLogLineParser(this.message, this.path.toString(),
+                            this.stacktrace.toString().trim()).createLogEntry();
                     listener.newLogEntry(entry);
                 }
             }
+            this.message = null;
+            this.stacktrace.setLength(0);
         }
     }
-
 }

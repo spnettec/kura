@@ -13,23 +13,76 @@
 #
 
 INSTALL_DIR=/opt/eclipse
-WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
 TIMESTAMP=$(date +%Y%m%d%H%M)
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log
 RETAINED_DIR=/var/lib/kura-retained
 
+clockMaintenanceGuard() {
+    python3 -I -B - "$@" <<'KURA_CLOCK_MAINTENANCE_GUARD'
+raise RuntimeError("Kura clock maintenance guard was not embedded")
+KURA_CLOCK_MAINTENANCE_GUARD
+}
+
+# A plain JVM signal leaves Restart=on-failure armed while files are replaced.
+# A synchronous manager stop cancels both the process and any queued restart.
+function stopKuraForPackage {
+    local state main control status property value
+    if ! systemctl stop kura.service; then
+        echo "Cannot change Kura: systemd could not stop the service safely." >&2
+        return 1
+    fi
+    status=$(systemctl show kura.service --property=ActiveState --property=MainPID --property=ControlPID) || return 1
+    state= main= control=
+    while IFS='=' read -r property value; do
+        case "$property" in
+            ActiveState) state="$value" ;;
+            MainPID) main="$value" ;;
+            ControlPID) control="$value" ;;
+        esac
+    done <<< "$status"
+    if [ "$state" != "inactive" ] || [ "$main" != "0" ] || [ "$control" != "0" ]; then
+        echo "Cannot change Kura: the service has not fully stopped." >&2
+        return 1
+    fi
+}
+
 # Save mutable state before dpkg removes any package-owned files.  Stage into
 # a private directory and publish it only after every copy succeeds; never
 # replace an earlier recovery copy from an interrupted operation.
+function manageAddonCode {
+    python3 -I - "$@" <<'KURA_ADDON_CODE_POLICY'
+raise RuntimeError("Kura addon-code policy was not embedded")
+KURA_ADDON_CODE_POLICY
+}
+
+function removalHome {
+    python3 -I -B - "$@" <<'KURA_REMOVAL_HOME'
+raise RuntimeError("Kura removal home was not embedded")
+KURA_REMOVAL_HOME
+}
+
+function publishRetainedData {
+    local staged="$1" status
+    mv -nT -- "${staged}" "${RETAINED_DIR}" || return 1
+    status=$(removalHome locate "${RETAINED_DIR}") || return 1
+    [ "${status}" = PUBLISHED ]
+}
+
 function preserveUserData {
     [ -d "${INSTALL_DIR}/kura" ] || return 0
-    if [ -e "${RETAINED_DIR}" ]; then
-        echo "Cannot remove Kura: ${RETAINED_DIR} already exists; preserve it for recovery." >&2
-        return 1
-    fi
     local retained_tmp
+    retained_tmp=$(removalHome locate "${RETAINED_DIR}") || return 1
+    case "${retained_tmp}" in
+        PUBLISHED) return 0 ;;
+        NEW) ;;
+        /var/lib/.kura-retained.tmp.????????) publishRetainedData "${retained_tmp}"; return $? ;;
+        *) return 1 ;;
+    esac
+    if [ -e /var/lib/kura-key-service/generation-current.json ] || [ -L /var/lib/kura-key-service/generation-current.json ]; then
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare package || return 1
+    fi
     retained_tmp=$(mktemp -d "/var/lib/.kura-retained.tmp.XXXXXXXX") || return 1
     for retained_tree in user data packages log; do
         if [ -d "${INSTALL_DIR}/kura/${retained_tree}" ]; then
@@ -40,20 +93,37 @@ function preserveUserData {
             fi
         fi
     done
+    # Historical script-shaped copies and snapshots are runtime data. Preserve
+    # them separately from the Root-owned addon code; never execute this tree.
+    if [ -d "${INSTALL_DIR}/kura/.data" ]; then
+        if ! cp -a "${INSTALL_DIR}/kura/.data" "${retained_tmp}/addon-data"; then
+            echo 'Cannot remove Kura: failed to preserve historical runtime data.' >&2
+            return 1
+        fi
+    fi
+    if ! manageAddonCode preserve "${INSTALL_DIR}/kura/libexec/addons" "${retained_tmp}/libexec/addons"; then
+        echo 'Cannot remove Kura: protected sibling code could not be retained.' >&2
+        return 1
+    fi
     # The snapshot master key may be configured in the generated service unit.
     # prerm removes that unit, so it must travel with the snapshots and keys.
     if [ -f /lib/systemd/system/kura.service ]; then
-        if ! mkdir -p "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
+        if ! mkdir -m 0700 "${retained_tmp}/systemd" || ! cp -a /lib/systemd/system/kura.service "${retained_tmp}/systemd/kura.service"; then
             echo "Cannot remove Kura: failed to preserve the systemd service configuration." >&2
             rm -rf "${retained_tmp}"
             return 1
         fi
     fi
-    if ! mv "${retained_tmp}" "${RETAINED_DIR}"; then
-        echo "Cannot remove Kura: failed to publish the recovery copy in ${RETAINED_DIR}." >&2
-        rm -rf "${retained_tmp}"
-        return 1
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --retain-main-state "${retained_tmp}" || return 1
+    if [ -f /etc/kura/credentials/kura_encryption_key ]; then
+        if ! python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" archive "${retained_tmp}/encryption"; then
+            echo "Cannot remove Kura: encryption-key recovery copy failed; preserve the installation." >&2
+            return 1
+        fi
     fi
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" archive "${retained_tmp}" || return 1
+    removalHome capture "${retained_tmp}" || return 1
+    publishRetainedData "${retained_tmp}"
 }
 
 ##############################################
@@ -61,68 +131,54 @@ function preserveUserData {
 ##############################################
 # Run preRemove function and start watchdog if needed
 function runPreRemove {
-    if [ -f "${WD_TMP_FILE}" ]; then
-        WATCHDOG_DEVICE=`cat ${WD_TMP_FILE}`
-        preRemove &
-        PID=$!
-        START=$(date +%s)
-        
-        while [ -d "/proc/$PID" ]; do
-            echo w > ${WATCHDOG_DEVICE}
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-        stopWatchdog
-    else
-        preRemove &
-        PID=$!
-        START=$(date +%s)
-        
-        while [ -d "/proc/$PID" ]; do
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-    fi
-}
+    watchdogMaintenance check || return 1
 
-# Deactivate watchdog device if possible
-function stopWatchdog {
-    if [ -n "${WATCHDOG_DEVICE}" ]; then
-        echo V > ${WATCHDOG_DEVICE}
-    fi
+    local pid start elapsed worker_status=0 watchdog_status=0
+    preRemove &
+    pid=$!
+    start=$(date +%s)
+
+    while [ -d "/proc/$pid" ]; do
+        watchdogMaintenance pulse || watchdog_status=1
+        elapsed=$(($(date +%s) - start))
+        if [ "$elapsed" -ge "$TIMEOUT_TIME" ]; then
+            echo "The installation process is not responding. It'll be stopped."
+            kill -9 "$pid" >> /dev/null 2>&1
+            break
+        fi
+        sleep "$REFRESH_TIME"
+    done
+    wait "$pid" || worker_status=$?
+    watchdogMaintenance disarm || watchdog_status=1
+    [ "$worker_status" -eq 0 ] && [ "$watchdog_status" -eq 0 ]
 }
 
 # Pre-remove script
 function preRemove {
     #Remove INIT scripts
     if [ -f /etc/init.d/kura ] ; then
-        rm /etc/init.d/kura
-        update-rc.d kura remove
+        rm /etc/init.d/kura || return 1
+        update-rc.d kura remove || return 1
     fi
     if [ -f /lib/systemd/system/kura.service ] ; then
-        systemctl disable kura
-        rm /lib/systemd/system/kura.service
+        systemctl disable kura.service || return 1
+        # Persistent disable does not remove enabled-runtime links. Keep masks,
+        # but remove both kinds of enablement before deleting the vendor unit.
+        systemctl disable --runtime kura.service || return 1
+        rm /lib/systemd/system/kura.service || return 1
     fi
     # Firewall/iptables/netplan teardown is owned by kura-networking's prerm
     # (it installs them in its postinst too). kura-core no longer touches the
     # host's network configuration.
 
     #Roll-back logrotate setup
-    rm -f  /var/log/logrotate-kura.status
-    rm -f  /etc/logrotate-kura.conf
-    rm -f  /etc/cron.d/logrotate-kura
+    rm -f  /var/log/logrotate-kura.status || return 1
+    rm -f  /etc/logrotate-kura.conf || return 1
+    rm -f  /etc/cron.d/logrotate-kura || return 1
 
     # Runtime and audit logs are user data; leave them until purge.
-    rm -rf /tmp/.kura
-    rm -rf /tmp/kura
+    rm -rf /tmp/.kura || return 1
+    rm -rf /tmp/kura || return 1
 
     # Directory cleanup moved to postrm (after sibling packages are purged)
 }
@@ -134,15 +190,33 @@ function preRemove {
 # PRE-REMOVE SCRIPT
 ##############################################
 
-# Stop a running Kura before either an upgrade or a removal.
-if [ "$1" = "remove" ] && [ -f /lib/systemd/system/kura.service ]; then
-    if ! systemctl stop kura.service; then
-        echo "Cannot remove Kura: the service could not be stopped safely." >&2
-        exit 1
-    fi
+# A failed upgrade does not authorize stopping or tearing down the old runtime.
+if [ "$1" = "failed-upgrade" ]; then
+    exit 0
 fi
+watchdogMaintenance() {
+    python3 -I -B - "$@" <<'KURA_WATCHDOG_MAINTENANCE'
+raise RuntimeError("Kura watchdog maintenance was not embedded")
+KURA_WATCHDOG_MAINTENANCE
+}
+clockMaintenanceGuard check || exit 1
+watchdogMaintenance check || exit 1
+python3 -I -B - <<'KURA_REBOOT_MAINTENANCE_GUARD' || exit 1
+raise RuntimeError("Kura reboot maintenance guard was not embedded")
+KURA_REBOOT_MAINTENANCE_GUARD
+# Exclude active/unknown key operations before stopping Core or copying data.
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --enter "$1" || exit 1
+# Preserve live-only legacy key sources before a managed stop on future upgrades.
+if [ "$1" = "upgrade" ]; then
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" prepare upgrade || exit 1
+fi
+# Stop synchronously on both paths; never fall through to a raw JVM signal when
+# a managed stop failed or the manager still reports live/start/stop processes.
+clockMaintenanceGuard || exit 1
+if [ -f /lib/systemd/system/kura.service ]; then
+    stopKuraForPackage || exit 1
+else
 PIDS=`pgrep java`
-
 if [ -f "/var/run/kura.pid" ] ; then
   KURA_PID=`cat /var/run/kura.pid`
 
@@ -153,6 +227,9 @@ if [ -f "/var/run/kura.pid" ] ; then
     fi
   done
 fi
+fi
+
+python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-stopped-writers || exit 1
 
 # In-place upgrade: just stop the running instance. The host integration
 # (systemd unit, logrotate cron, tmpfiles) is rebuilt by the new package's
@@ -164,19 +241,29 @@ if [ "$1" == "upgrade" ]; then
     exit 0
 fi
 
-# A failed upgrade is recovered by the new package's scripts; nothing to tear down.
-if [ "$1" == "failed-upgrade" ]; then
-    exit 0
-fi
-
 if [ "$1" = "remove" ]; then
+    if [ -f /usr/lib/systemd/system/kura-dhcp.service ]; then
+        systemctl stop kura-dhcp.service || exit 1
+    fi
     preserveUserData || exit 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_reboot_setup.py" remove || exit 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" remove || exit 1
+    # Revoke the paired su grant while package helpers are still available.
+    # Upgrade keeps the installed policy until the new package reconciles it.
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_su_pam.py" remove || exit 1
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --remove-units || exit 1
+    # postinst removes install/. The package also ships this Root-owned bin/
+    # helper; .data is only a historical data copy and is never executable here.
+    bash "${INSTALL_DIR}/kura/bin/manage_kura_users.sh" -u || exit 1
 fi
 
 echo ""
 echo "Uninstalling KURA..."
 
-runPreRemove >> "$LOG" 2>&1
+runPreRemove >> "$LOG" 2>&1 || exit 1
+if [ "$1" = "remove" ] && [ -f "${RETAINED_DIR}/removal-home.json" ]; then
+    removalHome park-if-recorded "${RETAINED_DIR}" || exit 1
+fi
 
 echo ""
 echo "Uninstalling KURA... Done!"

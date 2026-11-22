@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>org.eclipse.kura</groupId><artifactId>kura-build-parent</artifactId><version>6.0.0-SNAPSHOT</version><relativePath>../../../build-support/kura-build-parent/pom.xml</relativePath></parent>
+  <artifactId>kura-offline-recovery</artifactId><version>1.0.0-SNAPSHOT</version><packaging>jar</packaging>
+  <name>Kura standalone offline snapshot tool</name>
+  <dependencies>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.api</artifactId><version>3.0.0-SNAPSHOT</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.crypto</artifactId><version>2.0.0-SNAPSHOT</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.core.configuration</artifactId><version>3.0.0-SNAPSHOT</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.eclipse.kura</groupId><artifactId>org.eclipse.kura.xml.marshaller.unmarshaller.provider</artifactId><version>2.0.0-SNAPSHOT</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.osgi</artifactId><version>3.24.100</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.metatype</artifactId><version>1.4.1</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.18</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-nop</artifactId><version>2.0.13</version><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+    <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><version>2.25.4</version></dependency>
+    <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-to-slf4j</artifactId><version>2.25.4</version></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.cm</artifactId><version>1.6.1</version></dependency>
+    <dependency><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.equinox.cm</artifactId><version>1.6.400</version><scope>test</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.log</artifactId><version>1.5.0</version><scope>test</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.coordinator</artifactId><version>1.0.2</version><scope>test</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.component</artifactId><version>1.5.1</version><scope>test</scope></dependency>
+    <dependency><groupId>org.osgi</groupId><artifactId>org.osgi.service.event</artifactId><version>1.4.1</version><scope>test</scope></dependency>
+    <dependency><groupId>org.mockito</groupId><artifactId>mockito-junit-jupiter</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><configuration><archive><manifest><addClasspath>true</addClasspath><classpathPrefix>lib/</classpathPrefix><mainClass>org.eclipse.kura.tools.recovery.SnapshotTool</mainClass></manifest><manifestEntries><Bundle-ManifestVersion>2</Bundle-ManifestVersion><Bundle-SymbolicName>org.eclipse.kura.recovery.bootstrap</Bundle-SymbolicName><Bundle-Version>1.0.0</Bundle-Version><Bundle-Activator>org.eclipse.kura.tools.recovery.RecoveryBootstrap</Bundle-Activator><Provide-Capability>kura.crypto.systemd.recovery;version:Version=&quot;1.0.0&quot;</Provide-Capability><Require-Capability>kura.configuration.dispatch.release;filter:=&quot;(&amp;(version&gt;=1.0.0)(!(version&gt;=2.0.0)))&quot;,kura.configuration.snapshot.codec;filter:=&quot;(&amp;(version&gt;=1.0.0)(!(version&gt;=2.0.0)))&quot;,kura.crypto.key.generations;filter:=&quot;(&amp;(version&gt;=1.0.0)(!(version&gt;=2.0.0)))&quot;,kura.crypto.key.generations.paired;filter:=&quot;(&amp;(version&gt;=1.0.0)(!(version&gt;=2.0.0)))&quot;</Require-Capability><Import-Package>org.eclipse.kura,org.eclipse.kura.configuration,org.eclipse.kura.configuration.metatype,org.eclipse.kura.crypto,org.eclipse.kura.core.configuration,org.eclipse.kura.core.configuration.util,org.eclipse.kura.core.crypto,org.eclipse.kura.internal.xml.marshaller.unmarshaller,org.osgi.framework,org.osgi.framework.startlevel,org.osgi.service.cm,javax.xml,javax.xml.parsers,javax.xml.stream,org.w3c.dom,org.xml.sax</Import-Package></manifestEntries></archive></configuration></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-dependency-plugin</artifactId><executions><execution><id>standalone-libraries</id><phase>package</phase><goals><goal>copy-dependencies</goal></goals><configuration><includeScope>runtime</includeScope><outputDirectory>${project.build.directory}/lib</outputDirectory></configuration></execution></executions></plugin>
+  </plugins></build>
+</project>

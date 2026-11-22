@@ -70,4 +70,18 @@ public interface WatchdogService {
      */
     public void checkin(CriticalComponent criticalComponent);
 
+    /**
+     * Returns a snapshot of the state of the hardware watchdog. It can be used to verify that the
+     * system is under hardware watchdog supervision.
+     *
+     * Implementations compiled against older API versions may not expose a status snapshot.
+     *
+     * @return the current {@link WatchdogStatus}
+     * @throws UnsupportedOperationException if this provider does not expose status
+     * @since 2.9
+     */
+    public default WatchdogStatus getWatchdogStatus() {
+        throw new UnsupportedOperationException("This watchdog provider does not expose status");
+    }
+
 }

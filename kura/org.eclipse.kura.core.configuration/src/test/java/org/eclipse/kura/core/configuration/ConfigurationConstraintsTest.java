@@ -19,6 +19,17 @@ import org.eclipse.kura.configuration.metatype.Scalar;
 import org.junit.jupiter.api.Test;
 
 class ConfigurationConstraintsTest {
+    @Test void legacyOneCardinalityScalarsRemainValidAlongsideBoundedContainers() {
+        AD ad = org.mockito.Mockito.mock(AD.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        when(ad.getId()).thenReturn("field"); when(ad.getType()).thenReturn(Scalar.STRING);
+        for (int cardinality : new int[] {1, -1}) {
+            when(ad.getCardinality()).thenReturn(cardinality);
+            assertEquals(Status.SATISFIED, ConfigurationConstraints.value(ad, " spaced "));
+            assertEquals(Status.SATISFIED, ConfigurationConstraints.value(ad, cardinality > 0
+                    ? new String[] {"x"} : new java.util.ArrayList<>(List.of("x"))));
+            assertEquals(Status.REJECTED, ConfigurationConstraints.value(ad, new String[] {"x", "y"}));
+        }
+    }
     private AD attribute(Scalar type) {
         AD value = mock(AD.class);
         when(value.getId()).thenReturn("field");
@@ -57,5 +68,29 @@ class ConfigurationConstraintsTest {
         assertEquals(Status.REJECTED, ConfigurationConstraints.value(password, new Password("no")));
         when(password.getOption()).thenReturn(List.of(mock(Option.class)));
         assertEquals(Status.UNSUPPORTED, ConfigurationConstraints.field(password));
+    }
+
+    @Test void stringOptionsMatchExactValuesForScalarsAndContainers() {
+        AD text = attribute(Scalar.STRING);
+        Option option = mock(Option.class);
+        when(option.getValue()).thenReturn("safe");
+        when(text.getOption()).thenReturn(List.of(option));
+        assertEquals(Status.SATISFIED, ConfigurationConstraints.value(text, "safe"));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, "same"));
+        when(option.getValue()).thenReturn("4");
+        assertEquals(Status.SATISFIED, ConfigurationConstraints.value(text, "4"));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, "abcd"));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, 4));
+        when(text.getCardinality()).thenReturn(4);
+        assertEquals(Status.SATISFIED, ConfigurationConstraints.value(text, new String[] {"4", "4"}));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, new String[] {"4", "abcd"}));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, new Integer[] {4}));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, new String[] {"4", "4", "4", "4", "4"}));
+        when(text.getCardinality()).thenReturn(-2);
+        assertEquals(Status.SATISFIED, ConfigurationConstraints.value(text, new java.util.Vector<>(List.of("4", "4"))));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(text, new java.util.Vector<>(List.of("4", "4", "4"))));
+        when(text.getCardinality()).thenReturn(Integer.MIN_VALUE);
+        assertEquals(Status.SATISFIED, ConfigurationConstraints.value(text, new String[] {"4"}));
+        assertEquals(Status.REJECTED, ConfigurationConstraints.value(attribute(Scalar.BYTE), 256));
     }
 }

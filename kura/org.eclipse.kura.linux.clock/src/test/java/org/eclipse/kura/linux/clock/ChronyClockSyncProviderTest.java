@@ -13,74 +13,54 @@
 package org.eclipse.kura.linux.clock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.kura.KuraException;
-import org.eclipse.kura.core.linux.executor.LinuxExitStatus;
-import org.eclipse.kura.core.util.IOUtil;
-import org.eclipse.kura.crypto.CryptoService;
-import org.eclipse.kura.executor.Command;
-import org.eclipse.kura.executor.CommandExecutorService;
-import org.eclipse.kura.executor.CommandStatus;
 import org.junit.jupiter.api.Test;
 
 public class ChronyClockSyncProviderTest {
 
     @Test
-    public void testSynch() throws NoSuchFieldException, IOException, KuraException, NoSuchAlgorithmException {
+    void publishesOnlyNewStepsInMonotonicOrderWithoutClockWrites() throws Exception {
+        ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
+        when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", true));
+        when(broker.stepChrony("chrony.service")).thenReturn(true);
+        var first = new ClockPrivilegeClient.ChronyStep(2000000, 30);
+        var laterAfterWallClockMovedBack = new ClockPrivilegeClient.ChronyStep(1000000, 31);
+        when(broker.latestChronyStep()).thenReturn(first, first, new ClockPrivilegeClient.ChronyStep(0, 0),
+                laterAfterWallClockMovedBack);
+        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(broker);
+        ClockSyncListener listener = mock(ClockSyncListener.class);
+        provider.init(new ClockServiceConfig(Map.of()), null, listener);
 
-        InputStream journalEntry = new ByteArrayInputStream(
-                IOUtil.readResource("journal-entry.json").getBytes(StandardCharsets.UTF_8));
-        OutputStream statusOutputStream = new ByteArrayOutputStream();
-        IOUtils.copy(journalEntry, statusOutputStream);
+        for (int i = 0; i < 4; i++) {
+            assertTrue(provider.syncClock());
+        }
+        assertEquals(new Date(1000), provider.getLastSync());
+        verify(listener, times(2)).onClockUpdate(0, false);
+        verify(broker, times(4)).stepChrony("chrony.service");
+    }
 
-        CommandStatus successFullStatus = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(0));
-        CommandStatus notRunningProgramStatus = new CommandStatus(new Command(new String[] {}), new LinuxExitStatus(3));
-        successFullStatus.setOutputStream(statusOutputStream);
-
-        CommandExecutorService commandExecutorMock = mock(CommandExecutorService.class);
-        when(commandExecutorMock.execute(any())).thenReturn(successFullStatus);
-        when(commandExecutorMock.execute(new Command(new String[] { "systemctl", "status", "chrony" })))
-                .thenReturn(notRunningProgramStatus);
-
-        CryptoService cryptoServiceMock = mock(CryptoService.class);
-        when(cryptoServiceMock.sha256Hash(any())).thenReturn("");
-
-        ChronyClockSyncProvider ntsClockSyncProvider = new ChronyClockSyncProvider(commandExecutorMock,
-                cryptoServiceMock);
-        AtomicBoolean invoked = new AtomicBoolean(false);
-        ClockSyncListener listener = (offset, update) -> {
-            assertEquals(0, offset);
-
-            invoked.set(true);
-        };
-
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("enabled", true);
-        properties.put("clock.provider", "chrony-advanced");
-        properties.put("chrony.advanced.configlocation", "placeholder_path");
-        ClockServiceConfig clockServiceConfig = new ClockServiceConfig(properties);
-
-        ntsClockSyncProvider.init(clockServiceConfig, null, listener);
-
-        boolean synched = ntsClockSyncProvider.syncClock();
-
-        assertTrue(synched);
-        assertTrue(invoked.get());
+    @Test
+    void serviceSwitchBetweenInitAndStartDoesNotDispatchAnyCommand() throws Exception {
+        ClockPrivilegeClient broker = mock(ClockPrivilegeClient.class);
+        when(broker.inspectChrony()).thenReturn(new ClockPrivilegeClient.ChronyStatus("chrony.service", false),
+                new ClockPrivilegeClient.ChronyStatus("chronyd.service", true));
+        ChronyClockSyncProvider provider = new ChronyClockSyncProvider(broker);
+        provider.init(new ClockServiceConfig(Map.of()), null, (offset, update) -> {});
+        assertThrows(KuraException.class, provider::start);
+        verify(broker, never()).stepChrony(anyString());
+        verify(broker, never()).setChronyRunning(anyString(), anyBoolean());
     }
 }

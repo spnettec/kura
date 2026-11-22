@@ -34,7 +34,23 @@
         <target.device>linux</target.device>
         <dist.build.name>linux</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
+        <core.deb.path>${project.build.directory}/kura_${package.version}-${package.revision}_${deb.arch}.deb</core.deb.path>
     </properties>
+    <dependencies>
+        <!-- Private worker ordering only; never copied into the OSGi plugin levels. -->
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>kura-key-crypto</artifactId>
+            <version>6.0.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.kura</groupId>
+            <artifactId>kura-offline-recovery</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
     <build>
         <resources>
             <resource>
@@ -68,6 +84,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/filtered-control</outputDirectory>
+                            <overwrite>true</overwrite>
                             <resources>
                                 <resource>
                                     <directory>${project.basedir}/../src/main/resources/variants/linux/unfiltered/deb/control</directory>
@@ -95,6 +112,51 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>embed-preinstall-encryption-key-policy</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <loadfile property="kura.key.policy.source"
+                                          srcFile="${project.basedir}/../src/main/resources/unfiltered/pkg/bin/kura_key_store.py"
+                                          encoding="UTF-8"/>
+                                <replace file="${project.build.directory}/filtered-control/preinst"
+                                         token="raise RuntimeError(&quot;Kura key provisioner was not embedded&quot;)"
+                                         value="${kura.key.policy.source}"
+                                         failOnNoReplacements="true"/>
+                                <loadfile property="kura.key.lifecycle.source"
+                                          srcFile="${project.basedir}/../src/main/resources/unfiltered/pkg/bin/kura_key_service_lifecycle.py"
+                                          encoding="UTF-8"/>
+                                <replace file="${project.build.directory}/filtered-control/preinst"
+                                         token="raise RuntimeError(&quot;Kura key-service lifecycle was not embedded&quot;)"
+                                         value="${kura.key.lifecycle.source}"
+                                         failOnNoReplacements="true"/>
+                                <exec executable="python3" failonerror="true">
+                                    <arg value="-B"/>
+                                    <arg value="${project.basedir}/build-firewall-worker.py"/>
+                                    <arg value="${deb.arch}"/>
+                                    <arg value="${project.build.directory}/native"/>
+                                    <arg value="${settings.offline}"/>
+                                </exec>
+                                <exec executable="python3" failonerror="true">
+                                    <arg value="-B"/>
+                                    <arg value="${project.basedir}/prepare-key-service.py"/>
+                                    <arg value="${project.build.directory}/${dist.assembly.name}"/>
+                                    <arg value="${project.basedir}/../kura-key-crypto/target"/>
+                                    <arg value="${project.basedir}/../../tools/kura-offline-recovery/target"/>
+                                    <arg value="${deb.arch}"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.vafer</groupId>
                 <artifactId>jdeb</artifactId>
                 <version>${jdeb-version}</version>
@@ -107,7 +169,7 @@
                         </goals>
                         <configuration>
                             <verbose>true</verbose>
-                            <deb>${basedir}/target/kura_${package.version}-${package.revision}_${deb.arch}.deb</deb>
+                            <deb>${core.deb.path}</deb>
                             <snapshotExpand>true</snapshotExpand>
                             <snapshotTemplate>${package.snapshot}</snapshotTemplate>
                             <controlDir>${project.build.directory}/filtered-control</controlDir>
@@ -122,6 +184,378 @@
                                     </mapper>
                                 </data>
                                 <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-journal-export.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-journal-export@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-journal-export.conf</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/sysusers.d</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/journal-export</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-journal-export</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-command-executor.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-command-executor@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-icmp-probe.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-icmp-probe@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-icmp-probe.conf</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/sysusers.d</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/command-executor</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-command-executor</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-ownership-markers.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-ownership-markers.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/ownership-markers</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-ownership-markers</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-tables.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-tables.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/firewall-tables</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-firewall-tables</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-publish.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-firewall-publish@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/firewall-publish</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-firewall-publish</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/native/worker-${deb.arch}</src>
+                                    <type>file</type>
+                                    <dst>/usr/libexec/kura-firewall-publish/worker</dst>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <filemode>755</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-driver.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-driver@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/modem-driver</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-modem-driver</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-bind-service.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-bind-service@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/bind-service</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-bind-service</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-dhcp-service.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-reset.socket</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-dhcp-service@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-modem-reset@.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/install/kura-dhcp.service</src>
+                                    <type>file</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/lib/systemd/system</prefix>
+                                        <filemode>644</filemode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/dhcp-service</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-dhcp-service</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
+                                    <src>${project.build.directory}/${dist.assembly.name}/libexec/modem-reset</src>
+                                    <type>directory</type>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <prefix>/usr/libexec/kura-modem-reset</prefix>
+                                        <filemode>644</filemode>
+                                        <dirmode>755</dirmode>
+                                        <user>root</user>
+                                        <group>root</group>
+                                    </mapper>
+                                </data>
+                                <data>
                                     <src>${basedir}/target/kura_${project.version}_linux</src>
                                     <type>directory</type>
                                     <mapper>
@@ -129,8 +563,38 @@
                                         <prefix>/opt/eclipse/kura_${project.version}_linux</prefix>
                                     </mapper>
                                 </data>
+                                <!-- Unpack the physical home first. A sibling may already own the public symlink. -->
+                                <data>
+                                    <type>template</type>
+                                    <paths><path>/opt/eclipse/kura</path></paths>
+                                    <mapper>
+                                        <type>perm</type>
+                                        <user>root</user>
+                                        <group>root</group>
+                                        <dirmode>755</dirmode>
+                                    </mapper>
+                                </data>
                                 <!-- 99-kura-nm.conf moved to kura-networking sibling deb. -->
                             </dataSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-installer-script</id>
+                        <phase>package</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dist.assembly.skip}</skip>
+                            <executable>${project.basedir}/../src/main/sh/create_installer.sh</executable>
+                            <arguments>
+                                <argument>${core.deb.path}</argument>
+                                <argument>${project.build.directory}/${dist.assembly.name}_installer.sh</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

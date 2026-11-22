@@ -172,4 +172,38 @@ public interface CloudServiceFactory {
      * @since 1.1.0
      */
     Set<String> getManagedCloudServicePids() throws KuraException;
+
+    /**
+     * Returns one detached native stack view with paired revisions. Implementations
+     * without conditional lifecycle support reject instead of offering a token from
+     * a separate read. This is a local editor API, not remote write authorization.
+     */
+    default java.util.Map<String, org.eclipse.kura.configuration.ConfigurationRevisionService.ReadView>
+            readConfigurationForEditing(String pid) throws KuraException {
+        throw new org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Creates the complete native stack in one Core absence-checked plan and one
+     * snapshot. Returns the admitted PIDs for bounded read-only readiness observation.
+     * A non-Rejected failure may follow a partial write; callers must not replay it.
+     */
+    default java.util.Set<String> createConfigurationIfAbsent(String pid, String name, String description)
+            throws KuraException {
+        throw new org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Deletes exactly the displayed native stack with Core factory/dependency closure
+     * and displayed revisions checked before dispatch. No legacy fallback is allowed.
+     * A non-Rejected failure may follow partial dispatch and must not be replayed.
+     */
+    default void deleteConfigurationIfUnchanged(String pid, java.util.Map<String, String> expectedRevisions)
+            throws KuraException {
+        throw new org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED);
+    }
+
 }

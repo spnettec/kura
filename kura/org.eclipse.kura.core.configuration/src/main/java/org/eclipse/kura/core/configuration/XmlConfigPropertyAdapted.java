@@ -30,6 +30,15 @@ public class XmlConfigPropertyAdapted {
         PASSWORD_TYPE
     }
 
+    /** Absent in historical snapshots, whose array flag denotes boxed arrays. */
+    public enum Container { PRIMITIVE_ARRAY, VECTOR, LIST }
+
+    private Container container;
+
+    public Container getContainer() { return this.container; }
+
+    public void setContainer(Container container) { this.container = container; }
+
     private String name;
 
     private boolean array;

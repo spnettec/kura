@@ -25,6 +25,48 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface WireGraphService {
 
+    /** Paired persisted topology and component views for a local graph editor. */
+    final class EditingView {
+        private final WireGraphConfiguration graph;
+        private final java.util.Map<String, org.eclipse.kura.configuration.ConfigurationRevisionService.ReadView> views;
+
+        public EditingView(WireGraphConfiguration graph,
+                java.util.Map<String, org.eclipse.kura.configuration.ConfigurationRevisionService.ReadView> views) {
+            this.graph = graph;
+            this.views = java.util.Collections.unmodifiableMap(new java.util.HashMap<>(views));
+        }
+        public WireGraphConfiguration graph() { return this.graph; }
+        public java.util.Map<String, org.eclipse.kura.configuration.ConfigurationRevisionService.ReadView> views() {
+            return this.views;
+        }
+        @Override public String toString() { return "WireGraphService.EditingView[redacted]"; }
+    }
+
+    /**
+     * Reads persisted topology and paired revisions, including additional local
+     * component dependencies. Unsupported providers reject without issuing a
+     * writable legacy view. This is not a runtime health acknowledgement.
+     * @since 1.5.0
+     */
+    default EditingView getForEditing(java.util.Set<String> additionalPids) throws KuraException {
+        throw new org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED);
+    }
+
+    /**
+     * Submits the complete local graph and additional property changes after
+     * checking all displayed revisions before the first lifecycle mutation.
+     * A non-Rejected failure can follow partial execution and must not be replayed.
+     * This does not provide rollback atomicity or authorize remote lifecycle edits.
+     * @since 1.5.0
+     */
+    default void updateIfUnchanged(WireGraphConfiguration graph,
+            java.util.List<org.eclipse.kura.configuration.ComponentConfiguration> additionalConfigurations,
+            java.util.Map<String, String> expectedRevisions) throws KuraException {
+        throw new org.eclipse.kura.configuration.ConfigurationRevisionService.Rejected(
+                org.eclipse.kura.configuration.ConfigurationRevisionService.Reason.UNSUPPORTED);
+    }
+
     /**
      * This method allows to create and update the graph, by providing a
      * {@link WireGraphConfiguration}.

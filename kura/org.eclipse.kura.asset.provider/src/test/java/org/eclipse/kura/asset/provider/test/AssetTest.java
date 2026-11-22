@@ -507,7 +507,7 @@ public final class AssetTest {
 
         OCD ocd = cfg.getDefinition();
         assertEquals("org.eclipse.kura.asset", ocd.getId());
-        assertTrue("Wire Asset".equals(ocd.getName()) || "AssetMessages.ocdName".equals(ocd.getName()));
+        assertEquals("Asset", ocd.getName());
 
         List<AD> ads = ocd.getAD();
         assertNotNull(ads);

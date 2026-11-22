@@ -13,6 +13,8 @@
 package org.eclipse.kura.internal.db.sqlite.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,12 +34,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 
+import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.internal.db.sqlite.provider.SqliteDbServiceOptions.EncryptionKeyFormat;
 import org.eclipse.kura.internal.db.sqlite.provider.SqliteDbServiceOptions.EncryptionKeySpec;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -397,8 +403,51 @@ public class DatabaseLoaderTest {
     }
 
     @Test
+    public void rejectMissingEncryptionPragmasBeforeOpeningDatabase(@TempDir Path directory) throws Exception {
+        Path file = directory.resolve("business.sqlite");
+        SqliteDbServiceOptions options = new SqliteDbServiceOptions(Map.of(DB_MODE, PERSISTED, DB_PATH, file.toString(),
+                KURA_SERVICE_PID, "file-provider", DB_KEY, TEST_ENCRYPTION_KEY, "delete.db.files.on.failure", true));
+        DatabaseLoader loader = new DatabaseLoader(options, Optional.empty(), this.cryptoService) {
+            @Override
+            Set<String> supportedPragmas() {
+                return Set.of("key");
+            }
+        };
+        assertThrows(SQLException.class, loader::openDataSource);
+        assertFalse(java.nio.file.Files.exists(file));
+        thenCryptoServiceUpdateCountIs(0);
+    }
+
+    @Test
+    public void preserveBusinessRowWhenCredentialStoreIsUnavailable(@TempDir Path directory) throws Exception {
+        String file = directory.resolve("business.sqlite").toString();
+        SqliteDbServiceOptions options = new SqliteDbServiceOptions(Map.of(DB_MODE, PERSISTED, DB_PATH, file,
+                KURA_SERVICE_PID, "file-provider", "delete.db.files.on.failure", true));
+        DatabaseLoader provider = new DatabaseLoader(options, Optional.empty(), this.cryptoService);
+        try (Connection connection = provider.openDataSource().getConnection();
+                Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE business (record_id INTEGER)");
+            statement.executeUpdate("INSERT INTO business VALUES (413)");
+        }
+
+        Mockito.doThrow(new KuraException(KuraErrorCode.INTERNAL_ERROR)).when(this.cryptoService)
+                .setKeyStorePassword(any(), any(char[].class));
+        // Force recording the wrapping information again after the database was successfully opened.
+        this.cryptoServiceEntries.clear();
+        assertThrows(KuraException.class, provider::openDataSource);
+        Mockito.doNothing().when(this.cryptoService).setKeyStorePassword(any(), any(char[].class));
+        try (Connection connection = provider.openDataSource().getConnection();
+                Statement statement = connection.createStatement();
+                var rows = statement.executeQuery("SELECT record_id FROM business")) {
+            assertTrue(rows.next());
+            assertEquals(413, rows.getInt(1));
+        }
+    }
+
+    @Test
     public void shouldFailIfCorrectEncryptionKeyIsUnknown() {
         givenNewOptionsProperty(DB_MODE, PERSISTED);
+        givenNewOptionsProperty("delete.db.files.on.failure", true);
         givenNewOptionsProperty(DB_PATH, "foo");
         givenNewOptionsProperty(KURA_SERVICE_PID, "foo");
         givenNewOptionsProperty(DB_KEY, "first");
@@ -410,6 +459,7 @@ public class DatabaseLoaderTest {
         whenDataSourceIsCreated();
 
         thenExceptionIsThrown(SQLException.class);
+        assertFalse(this.databaseFilesDeleted);
     }
 
     @Test
@@ -592,7 +642,7 @@ public class DatabaseLoaderTest {
         this.cryptoServiceEntries.put(key, value);
     }
 
-    private void givenNewOptionsProperty(final String key, final String value) {
+    private void givenNewOptionsProperty(final String key, final Object value) {
         currentProperties.put(key, value);
     }
 
@@ -609,6 +659,11 @@ public class DatabaseLoaderTest {
 
         this.loader = new DatabaseLoader(new SqliteDbServiceOptions(currentProperties),
                 oldProperties.map(SqliteDbServiceOptions::new), cryptoService) {
+
+            @Override
+            Set<String> supportedPragmas() {
+                return Set.of("key", "hexkey", "rekey", "hexrekey");
+            }
 
             @Override
             protected void changeEncryptionKey(SQLiteDataSource dataSource, Optional<EncryptionKeySpec> encryptionKey,

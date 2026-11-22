@@ -3,20 +3,48 @@
 # Kura should be installed to the @kura.install.dir@ directory.
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/opt/jvm/bin:/usr/java/bin:$PATH
 export MALLOC_ARENA_MAX=1
+# Keep PID, logs and generated runtime files private regardless of caller mask.
+umask 077
 
-DIR=$(cd $(dirname $0)/..; pwd)
-cd $DIR
+DIR=$(cd "$(dirname "$0")/.." && pwd) || exit 1
+cd "$DIR" || exit 1
+
+# YOFC-KURA-ORDINARY-JVM-ARGS-V1
+# Optional administrator-owned argument file. With no setting the historical
+# launcher remains unchanged; this is independent of management-agent presence.
+set --
+if [ -n "${KURA_JVM_ARGS_FILE:-}" ]; then
+  case "$KURA_JVM_ARGS_FILE" in
+    /*) ;;
+    *) echo "KURA_JVM_ARGS_FILE must be absolute" >&2; exit 1 ;;
+  esac
+  if [ ! -f "$KURA_JVM_ARGS_FILE" ] || [ -L "$KURA_JVM_ARGS_FILE" ] || [ ! -r "$KURA_JVM_ARGS_FILE" ]; then
+    echo "KURA_JVM_ARGS_FILE must be a readable regular file" >&2
+    exit 1
+  fi
+  set -- "@$KURA_JVM_ARGS_FILE"
+fi
+
+# Older installed launchers may have started a JVM without the instance lock.
+if pgrep -f '.*java.*org\.eclipse\.equinox\..*' >/dev/null; then
+    echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
+    exit 1
+fi
 
 # set up the configuration area
-mkdir -p /tmp/.kura/configuration
-${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/siblings > /tmp/.kura/configuration/config.ini
+# Use the same credential for the installed service and direct launchers.
+. "${DIR}/bin/kura_credential_env.sh" || exit 1
 
-KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
+python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configuration || exit 1
 
-if [ -z "$KURA_RUNNING" ] ; then
-  nohup java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
-        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
-        -XX:ErrorFile=/var/log/kura-error.log \
+# A failed console redirection in the child would publish the PID of a dead process.
+exec 4>>/var/log/kura-console.log || exit 1
+# Open the PID file before starting a process that maintenance must be able to find.
+exec 3>/var/run/kura.pid || exit 1
+nohup python3 -I "${DIR}/bin/kura_key_store.py" exec-java "$@" \
+        -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
+        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=log/kura-heapdump.hprof \
+        -XX:ErrorFile=log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED \
         --add-modules=ALL-SYSTEM \
@@ -34,14 +62,15 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Djdk.tls.trustNameService=true \
         -Dtruffle.UseFallbackRuntime=true \
         -Dosgi.console=5002 \
-        -Declipse.consoleLog=true >> /var/log/kura-console.log 2>> /var/log/kura-console.log \
+        -Declipse.consoleLog=true \
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
-        -configuration /tmp/.kura/configuration &
+        -configuration /tmp/.kura/configuration >&4 2>&1 4>&- 3>&- &
 
-    #Save the PID
-    KURA_PID=$!
-    echo "Kura Started (pid="$KURA_PID") ..." >> /var/log/kura-console.log
-    echo $KURA_PID > /var/run/kura.pid
-else
-    echo "Failed to start Kura. It is already running ..." >> /var/log/kura-console.log
+KURA_PID=$!
+if ! printf '%s\n' "$KURA_PID" >&3; then
+    kill "$KURA_PID" 2>/dev/null
+    wait "$KURA_PID" 2>/dev/null
+    exit 1
 fi
+exec 3>&-
+echo "Kura Started (pid=$KURA_PID) ..." >&4

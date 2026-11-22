@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.testing.osgi.EquinoxExtension;
 import org.eclipse.kura.testing.osgi.EquinoxRuntime;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,10 +36,13 @@ class ConfigurationServiceRuntimeIT {
     private static final String FIXTURE = "org.eclipse.kura.testing.configuration.fixtures";
     private static final String SCENARIOS = "org.eclipse.kura.testing.configuration.fixture.ConfigurationServiceScenarios";
     private static final String CONFIGURATION = "org.eclipse.kura.configuration.ConfigurationService";
+    private static final String RECEIPTS = "org.eclipse.kura.configuration.ConfigurationOperationReceiptService";
+    private static final String CORE = "org.eclipse.kura.core.configuration";
     private static final String OCD = "org.eclipse.kura.configuration.metatype.OCDService";
     private static final String SYSTEM = "org.eclipse.kura.system.SystemService";
     private static final String COMPONENT = "org.eclipse.kura.core.configuration.CfgSvcTestComponent";
     private static final String SELF_COMPONENT = "org.eclipse.kura.core.configuration.CfgSvcTestSelfComponent";
+    private static final String IDENTIFIED_PLAN = "submitIdentifiedPlan";
     private static final Set<String> RESOLVE_ONLY = Set.of("org.eclipse.kura.core", "org.eclipse.kura.core.inventory",
             "org.apache.felix.deploymentadmin", "org.eclipse.kura.emulator");
 
@@ -95,6 +99,15 @@ class ConfigurationServiceRuntimeIT {
         "testRollbackToIdRestoresThePasswordOfThatSnapshot"
     })
     void upstreamConfigurationScenario(String name, EquinoxRuntime runtime) throws Exception {
+        runScenario(name, runtime);
+    }
+
+    @Test
+    void identifiedPlanSurvivesConfigurationBundleRestart(EquinoxRuntime runtime) throws Exception {
+        runScenario(IDENTIFIED_PLAN, runtime);
+    }
+
+    private void runScenario(String name, EquinoxRuntime runtime) throws Exception {
         assertThrows(ClassNotFoundException.class, () -> Class.forName(CONFIGURATION));
         List<Bundle> bundles = new ArrayList<>();
         for (String directory : List.of("target/it-bundles", "target/config-it-bundles")) {
@@ -124,6 +137,7 @@ class ConfigurationServiceRuntimeIT {
                     default -> null;
                 }, Map.of("service.ranking", Integer.MAX_VALUE))) {
             runtime.start(bundles.stream().filter(bundle -> !RESOLVE_ONLY.contains(bundle.getSymbolicName())).toList());
+            Object result;
             try (var configuration = runtime.service(CONFIGURATION, null, Duration.ofSeconds(10))) {
                 long deadline = System.nanoTime() + Duration.ofSeconds(8).toNanos();
                 while (!((Set<?>) configuration.call("getConfigurableComponentPids")).containsAll(Set.of(COMPONENT, SELF_COMPONENT))
@@ -132,15 +146,39 @@ class ConfigurationServiceRuntimeIT {
                 }
                 assertTrue(((Set<?>) configuration.call("getConfigurableComponentPids"))
                         .containsAll(Set.of(COMPONENT, SELF_COMPONENT)), "SCR fixture components must activate: " + configuration.call("getConfigurableComponentPids"));
-                invokeScenario(runtime.bundle(FIXTURE), name);
+                result = invokeScenario(runtime.bundle(FIXTURE), name);
             } catch (Exception | Error failure) {
                 runtime.diagnose("configuration-scenario-failure");
                 throw failure;
             }
+            if (IDENTIFIED_PLAN.equals(name)) {
+                String operationId = assertInstanceOf(String.class, result);
+                assertCoreCommit(runtime, operationId);
+                Bundle provider = runtime.bundle(CORE);
+                provider.stop();
+                assertFalse(runtime.hasService(RECEIPTS, null));
+                provider.start();
+                assertCoreCommit(runtime, operationId);
+            }
         }
     }
 
-    private static void invokeScenario(Bundle fixture, String name) throws Exception {
+    private static void assertCoreCommit(EquinoxRuntime runtime, String operationId) throws Exception {
+        try (var service = runtime.service(RECEIPTS, null, Duration.ofSeconds(10))) {
+            assertEquals(CORE, service.provider().getSymbolicName());
+            Object result = service.call("getOperationReceipt", operationId);
+            Class<?> receipt = result.getClass();
+            assertEquals(operationId, receipt.getMethod("operationId").invoke(result));
+            assertEquals("CORE_COMMITTED", receipt.getMethod("state").invoke(result).toString());
+            assertEquals(Map.of("recorded_plan_fixture", "org.eclipse.kura.core.configuration.TestFactoryComponent"),
+                    receipt.getMethod("createdFactories").invoke(result));
+            assertEquals(Set.of(COMPONENT), receipt.getMethod("updatedPids").invoke(result));
+            assertEquals(Set.of(), receipt.getMethod("deletedPids").invoke(result));
+            assertEquals(false, receipt.getMethod("businessHealthVerified").invoke(result));
+        }
+    }
+
+    private static Object invokeScenario(Bundle fixture, String name) throws Exception {
         BundleContext context = fixture.getBundleContext();
         List<ServiceReference<?>> references = new ArrayList<>();
         try {
@@ -158,7 +196,7 @@ class ConfigurationServiceRuntimeIT {
             Class<?> scenarios = fixture.loadClass(SCENARIOS);
             Object scenario = scenarios.getConstructor(contracts.toArray(Class<?>[]::new)).newInstance(services.toArray());
             scenarios.getMethod("prepare").invoke(scenario);
-            scenarios.getMethod(name).invoke(scenario);
+            return scenarios.getMethod(name).invoke(scenario);
         } catch (InvocationTargetException e) {
             if (e.getCause() instanceof Error error) { throw error; }
             if (e.getCause() instanceof Exception exception) { throw exception; }

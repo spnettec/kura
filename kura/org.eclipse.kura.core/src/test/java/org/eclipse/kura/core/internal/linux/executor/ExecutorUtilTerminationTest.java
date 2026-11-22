@@ -129,12 +129,14 @@ public class ExecutorUtilTerminationTest {
         String executablePs = "ps";
         String[] argumentsPs1 = { "-p", "1234" };
         String[] argumentsPsAx = { "-ax" };
-        String executableUnprivileged = "su";
-        String[] argumentsKill1 = { "kura", "-c", "timeout -s SIGTERM 60 kill -15 1234" };
+        String executableUnprivileged = "/usr/bin/su";
+        String[] argumentsKill1 = { "--shell=/bin/sh", "--command",
+                "exec '/usr/bin/env' '--' '/usr/bin/timeout' '--signal=15' '--' '60' '/bin/sh' '-c' 'exec \"$@\"' 'kura-command' 'kill' '-15' '1234'",
+                "--", "kura" };
         String[] argumentsKill2 = { "kill", "-9", "1234" };
         try {
             when(deMock.execute(argThat(new CommandLineMatcher(executableUnprivileged, argumentsKill1)))).thenReturn(1);
-            when(deMock.execute(argThat(new CommandLineMatcher(executableUnprivileged, argumentsKill2)))).thenReturn(0);
+            when(deMock.execute(argThat(new CommandLineMatcher("kill", argumentsKill2)))).thenReturn(0);
             doAnswer(invocation -> {
                 out.reset();
                 PrintWriter pw = new PrintWriter(out);

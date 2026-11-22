@@ -134,6 +134,19 @@ public interface AD {
     public int getCardinality();
 
     /**
+     * Whether an absent value uses Kura's historical scalar representation.
+     * Legacy XML definitions use scalars for 0 and +/-1. Native OSGi metadata
+     * adapters override this for nonzero cardinalities, including +/-1.
+     * An existing container still retains its container representation.
+     *
+     * @return the scalar default representation, independently of capacity
+     */
+    default boolean isScalarCardinality() {
+        int cardinality = getCardinality();
+        return cardinality == 0 || cardinality == 1 || cardinality == -1;
+    }
+
+    /**
      * Gets the value of the min property.
      *
      * @return

@@ -113,7 +113,7 @@
             type="Boolean"
             cardinality="0" 
             required="true"
-            default="true"
+            default="false"
             description="%deleteDbFilesOnFailureDesc"/>
 
         <AD id="debug.shell.access.enabled"

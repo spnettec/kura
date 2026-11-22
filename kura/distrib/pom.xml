@@ -33,6 +33,7 @@
     <name>distrib</name>
     <url>https://eclipse.dev/kura/</url>
     <modules>
+        <module>kura-key-crypto</module>
         <module>kura-core</module>
     </modules>
     <properties>
@@ -2525,29 +2526,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Responsible for retrieving the short git commit (defaults to length 7)-->
-            <plugin>
-                <groupId>io.github.git-commit-id</groupId>
-                <artifactId>git-commit-id-maven-plugin</artifactId>
-                <version>9.0.1</version>
-                <executions>
-                    <execution>
-                        <id>get-the-git-infos</id>
-                        <goals>
-                            <goal>revision</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <injectAllReactorProjects>true</injectAllReactorProjects>
-                    <generateGitPropertiesFile>false</generateGitPropertiesFile>
-                    <skipPoms>false</skipPoms>
-                    <includeOnlyProperties>
-                        <includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-                    </includeOnlyProperties>
-                </configuration>
-            </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.6.1</version>
@@ -3088,6 +3066,11 @@
                                 <resource>
                                     <directory>${kura.distrib.basedir}/src/main/resources/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>
@@ -3129,6 +3112,11 @@
                                 <resource>
                                     <directory>${kura.distrib.basedir}/src/main/resources/variants/linux-shared/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>
@@ -3170,6 +3158,11 @@
                                 <resource>
                                     <directory>${variant.resources.dir}/unfiltered/pkg</directory>
                                     <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>**/__pycache__/**</exclude>
+                                        <exclude>**/*.pyc</exclude>
+                                        <exclude>**/*.pyo</exclude>
+                                    </excludes>
                                 </resource>
                             </resources>
                         </configuration>
@@ -3204,24 +3197,6 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
-                        <id>create-installer-script</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${dist.assembly.skip}</skip>
-                            <executable>${project.basedir}/../src/main/sh/create_installer.sh</executable>
-                            <arguments>
-                                <argument>${project.build.directory}</argument>
-                                <argument>${dist.assembly.name}.zip</argument>
-                                <argument>${dist.assembly.name}_installer.sh</argument>
-                                <argument>${dist.build.name}</argument>
-                                <argument>${kura.install.dir}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>create-build-catalog</id>
                         <phase>package</phase>
                         <goals>
@@ -3236,6 +3211,32 @@
                                 <argument>${dist.assembly.name}.catalog</argument>
                                 <argument>${dist.build.name}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Read this checkout’s HEAD. Keep AntRun after resource staging for the gateway package. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>read-package-git-head</id>
+                        <phase>initialize</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <exportAntProperties>true</exportAntProperties>
+                            <target>
+                                <exec executable="git" dir="${project.basedir}" newenvironment="true"
+                                      failonerror="true" outputproperty="git.commit.id.abbrev">
+                                    <env key="PATH" value="${env.PATH}"/>
+                                    <arg value="rev-parse"/>
+                                    <arg value="--short=7"/>
+                                    <arg value="--verify"/>
+                                    <arg value="HEAD"/>
+                                </exec>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
@@ -3314,6 +3315,10 @@
     </build>
     <profiles>
         <profile>
+            <id>sqlcipher-dp</id>
+            <modules><module>kura-sqlite-dp</module></modules>
+        </profile>
+        <profile>
             <id>netplan-package</id>
             <modules><module>kura-netplan-core</module></modules>
         </profile>
@@ -3356,7 +3361,7 @@
                 </property>
             </activation>
             <properties>
-                <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+                <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
                 <package.snapshot>git${maven.build.timestamp}.${git.commit.id.abbrev}</package.snapshot>
                 <package.version>${release.version}~${package.snapshot}</package.version>
                 <package.revision>1</package.revision>

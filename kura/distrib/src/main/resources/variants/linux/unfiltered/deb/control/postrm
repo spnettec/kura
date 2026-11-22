@@ -14,6 +14,15 @@
 
 INSTALL_DIR=/opt/eclipse
 RETAINED_DIR=/var/lib/kura-retained
+# Canonical AES credentials and /var/lib/kura-key-service intentionally survive
+# remove/purge. Never delete the original backup journal or initialize a new key.
+# Recovery TLS identity, private recovery journal and its locked UID/GID also survive.
+
+removalHome() {
+    python3 -I -B - "$1" "${RETAINED_DIR}" <<'KURA_REMOVAL_HOME'
+raise RuntimeError("Kura removal home was not embedded")
+KURA_REMOVAL_HOME
+}
 
 case "$1" in
     purge|remove)
@@ -28,6 +37,11 @@ case "$1" in
             echo "  Install directory: ${INSTALL_DIR}/kura"
         } 2>&1 | tee -a "$LOG" | systemd-cat -t Kura
 
+        if [ "$1" = "purge" ]; then
+            removalHome check-purge-mounts || exit 1
+            removalHome capture-purged-generation || exit 1
+        fi
+
         # A remove preserves user state in prerm before dpkg removes files.
         # If that safeguard was bypassed, retain the tree instead of losing it.
         if [ "$1" = "remove" ] && [ -d "${INSTALL_DIR}/kura" ] && [ ! -d "${RETAINED_DIR}" ]; then
@@ -36,8 +50,14 @@ case "$1" in
         fi
 
         # Remove kura installation tree (plugins/ + siblings/)
-        if [ -d "${INSTALL_DIR}/kura" ] ; then
-            ${INSTALL_DIR}/kura/.data/manage_kura_users.sh -u 2>/dev/null || true
+        recorded_removal=false
+        if [ -e "${RETAINED_DIR}/removal-home.json" ] || [ -L "${RETAINED_DIR}/removal-home.json" ] ||
+                { [ "$1" = purge ] && compgen -G '/var/lib/.kura-retained.purging-*' >/dev/null; }; then
+            recorded_removal=true
+            removalHome "$1" || exit 1
+        elif [ -d "${INSTALL_DIR}/kura" ]; then
+            # prerm completed account/policy cleanup using tracked root code.
+            # The retained mutable .data copy is never a privileged callback.
             TARGET=$(readlink -f "${INSTALL_DIR}/kura" 2>/dev/null || echo "")
             rm -rf "${INSTALL_DIR}/kura"
             case "${TARGET}" in
@@ -58,7 +78,10 @@ case "$1" in
         rm -rf /tmp/.kura /tmp/kura
         rm -f /var/run/kura.pid
         if [ "$1" = "purge" ]; then
-            rm -rf "${RETAINED_DIR}" "${INSTALL_DIR}/.kura-preserve" || exit 1
+            if [ "${recorded_removal}" = false ]; then
+                rm -rf "${RETAINED_DIR}" || exit 1
+            fi
+            rm -rf "${INSTALL_DIR}/.kura-preserve" || exit 1
             rm -rf /etc/systemd/system/kura.service.d || exit 1
             rm -f /etc/systemd/system/kura.service || exit 1
             rm -f /var/log/kura*.log* /var/log/kura*.gz /var/log/kura*.hprof || exit 1
@@ -67,6 +90,7 @@ case "$1" in
                 [ -e "${retained_tmp}" ] || continue
                 rm -rf "${retained_tmp}" || exit 1
             done
+            removalHome complete-purged-generation || exit 1
         fi
         ;;
     upgrade|failed-upgrade)

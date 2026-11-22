@@ -147,6 +147,11 @@ final class UnZipProcess {
     }
 
     private static void shareWithExtractionUser(Path path, boolean traversable) throws IOException {
+        if (path.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+            Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(traversable ? "rwxr-xr-x" : "rw-r--r--"));
+            return;
+        }
+
         File file = path.toFile();
 
         if (!file.setReadable(true, false) || (traversable && !file.setExecutable(true, false))) {

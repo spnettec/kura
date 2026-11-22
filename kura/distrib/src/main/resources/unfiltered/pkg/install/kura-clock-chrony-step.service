@@ -1,0 +1,35 @@
+[Unit]
+Description=YOFC Kura capability-free Chrony command relay
+Requires=kura-clock-chrony-step.socket
+After=kura-clock-chrony-step.socket
+
+[Service]
+Type=simple
+User=_chrony
+SupplementaryGroups=kura-clock
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py serve-chrony-step
+RuntimeDirectory=kura-chrony-step
+RuntimeDirectoryMode=0700
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadOnlyPaths=/usr/libexec/kura-clock-broker
+InaccessiblePaths=-/etc/kura -/var/lib/kura-clock-broker -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-management-agent -/var/lib/kura-management-agent-native -/run/kura-key-service -/opt/eclipse/kura
+MemoryMax=64M
+TasksMax=8
+CPUQuota=10%
+KillMode=control-group
+TimeoutStopSec=10

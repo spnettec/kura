@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -103,23 +104,35 @@ public class SSLSocketFactoryWrapperTest {
         SSLSocketFactoryWrapper wrapper = new SSLSocketFactoryWrapper(factory,
                 "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", true);
 
-        InetAddress address = InetAddress.getByName("google.com");
-        Socket resultSocket = wrapper.createSocket(address, 443);
-        assertTrue(resultSocket instanceof SSLSocket);
+        InetAddress address = InetAddress.getLoopbackAddress();
+        try (ServerSocket listener = new ServerSocket(0, 1, address);
+                Socket resultSocket = wrapper.createSocket(address, listener.getLocalPort())) {
+            assertTrue(resultSocket instanceof SSLSocket);
 
-        SSLParameters resultParameters = ((SSLSocket) resultSocket).getSSLParameters();
+            SSLParameters resultParameters = ((SSLSocket) resultSocket).getSSLParameters();
 
-        String[] expectedCiphers = { "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
-                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256" };
-        List<String> expectedProtocols = Arrays.asList(new String[] { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" });
-        List<String> resultProtocols = Arrays.asList(resultParameters.getProtocols());
-        assertTrue(expectedProtocols.size() >= resultProtocols.size() && expectedProtocols.containsAll(resultProtocols));
-        assertEquals("HTTPS", resultParameters.getEndpointIdentificationAlgorithm());
-        assertArrayEquals(expectedCiphers, resultParameters.getCipherSuites());
+            String[] expectedCiphers = { "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+                    "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256" };
+            List<String> expectedProtocols = Arrays.asList(new String[] { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" });
+            List<String> resultProtocols = Arrays.asList(resultParameters.getProtocols());
+            assertTrue(expectedProtocols.size() >= resultProtocols.size() && expectedProtocols.containsAll(resultProtocols));
+            assertEquals("HTTPS", resultParameters.getEndpointIdentificationAlgorithm());
+            assertArrayEquals(expectedCiphers, resultParameters.getCipherSuites());
 
-        assertTrue(resultSocket.getTcpNoDelay());
+            assertTrue(resultSocket.getTcpNoDelay());
+        }
+    }
 
-        resultSocket.close();
+    @Test
+    public void testExplicitLocalAddressIsPassedToTheSocketFactory() throws IOException {
+        SSLSocketFactory factory = mock(SSLSocketFactory.class);
+        SSLSocketFactoryWrapper wrapper = new SSLSocketFactoryWrapper(factory, null, true);
+        InetAddress remote = InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 });
+        InetAddress local = InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 });
+        try (Socket expected = new Socket()) {
+            when(factory.createSocket(remote, 443, local, 0)).thenReturn(expected);
+            assertEquals(expected, wrapper.createSocket(remote, 443, local, 0));
+        }
     }
 
     @Test

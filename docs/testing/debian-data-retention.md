@@ -25,6 +25,33 @@ local Kura systemd configuration. A Debian
 conffile keeps the package in the `config-files` state after a normal removal so
 that a later purge still invokes the package's cleanup script.
 
+### A pending deployment job can refuse removal
+
+When the resolved deployment registry has a pending publication receipt, Core's
+pre-removal hook refuses both removal and direct purge of an installed Core.
+The existing installation and the original receipt remain available. Once a
+compatible Deployment addon is installed again, query the original cloud job
+on the same gateway with the original connection and job ID. An `UNKNOWN`
+outcome remains attached to that job. Preserve the receipt and its staged files.
+
+After a refusal, check both the requested selection and the actual package state.
+
+```sh
+dpkg-query -W -f='${db:Status-Want} ${db:Status-Status}\n' kura-core
+```
+
+A refused remove can leave `deinstall installed`, and a refused purge can leave
+`purge installed`. If the operator cancels that maintenance request and intends
+to keep Core installed, restore the package selection as root and verify it.
+
+```sh
+printf 'kura-core install\n' | dpkg --set-selections
+dpkg-query -W -f='${db:Status-Want} ${db:Status-Status}\n' kura-core
+```
+
+The expected output is `install installed`. Changing this selection updates
+dpkg's requested action and leaves the cloud job and original receipt intact.
+
 For an end-to-end regression test in a **disposable** Debian or Ubuntu VM with
 no existing Kura installation or recovery data, run as root:
 

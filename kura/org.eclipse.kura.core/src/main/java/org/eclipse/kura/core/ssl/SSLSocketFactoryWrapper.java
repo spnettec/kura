@@ -85,7 +85,7 @@ public class SSLSocketFactoryWrapper extends SSLSocketFactory {
     @Override
     public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort)
             throws IOException {
-        Socket socket = this.sslsf.createSocket(address, port, address, localPort);
+        Socket socket = this.sslsf.createSocket(address, port, localAddress, localPort);
         updateSSLParameters(socket);
         return socket;
     }

@@ -22,7 +22,21 @@ import org.eclipse.kura.configuration.ComponentConfiguration;
  */
 public class XmlComponentConfigurations {
 
+    public static final String LOGICAL_PASSWORD_ENCODING = "BASE64_LOGICAL_V1";
+    private String passwordEncoding;
     private List<ComponentConfiguration> configurations;
+
+    public String getPasswordEncoding() { return this.passwordEncoding; }
+
+    public void setPasswordEncoding(String encoding) {
+        if (encoding != null && !encoding.isEmpty() && !LOGICAL_PASSWORD_ENCODING.equals(encoding)) {
+            throw new IllegalArgumentException("Unsupported snapshot password encoding");
+        }
+        this.passwordEncoding = encoding == null || encoding.isEmpty() ? null : encoding;
+    }
+
+    public boolean hasLogicalPasswords() { return LOGICAL_PASSWORD_ENCODING.equals(this.passwordEncoding); }
+
 
     public XmlComponentConfigurations() {
     }

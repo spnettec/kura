@@ -46,14 +46,14 @@ public class JavaNtpClockSyncProvider extends AbstractNtpClockSyncProvider {
             ntpClient.open();
             InetAddress ntpHostAddr = InetAddress.getByName(this.ntpHost);
             TimeInfo info = ntpClient.getTime(ntpHostAddr, this.ntpPort);
-            this.lastSync = new Date();
             info.computeDetails();
             info.getComments().forEach(comment -> logger.debug("Clock sync compute comment: {}", comment));
             List<String> computeErrors = info.getComments().stream().filter(comment -> comment.contains("Error:"))
                     .collect(Collectors.toList());
             Long delayValue = info.getDelay();
             if (delayValue != null && delayValue.longValue() < 1000 && computeErrors.isEmpty()) {
-                this.listener.onClockUpdate(info.getOffset(), true);
+                this.listener.applyNtpSample(info.getOffset(), () -> this.lastSync = new Date());
+                // A valid reply completes sampling even when the broker cannot confirm the adjustment.
                 ret = true;
             } else {
                 logger.error("Incorrect clock sync. Delay value({}), clock will not be updated", info.getDelay());

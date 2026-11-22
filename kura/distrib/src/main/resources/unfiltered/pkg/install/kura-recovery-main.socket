@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Native Kura recovery Main command admission
+PartOf=kura-recovery-input.socket
+Wants=kura-recovery-main-reader.socket
+ConditionPathExists=/usr/share/kura-management-agent/package-v2
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Socket]
+ListenStream=/run/kura-recovery-main.sock
+SocketUser=root
+SocketGroup=kura-management-agent
+SocketMode=0660
+RemoveOnStop=yes

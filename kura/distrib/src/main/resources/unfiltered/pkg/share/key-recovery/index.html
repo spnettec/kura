@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="kura-recovery-csrf" content="KURA_RECOVERY_CSRF">
+ <title>Kura · 密钥恢复</title>
+ <link rel="stylesheet" href="/recovery.css">
+ <script src="/recovery.js" defer></script>
+ <script src="/archive.js" defer></script>
+</head>
+<body data-view="recovery">
+ <main>
+  <header><span>YOFC Kura</span><label><span data-i18n="language">语言</span> <select id="language" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select></label></header>
+  <nav aria-label="Recovery"><a href="/">原密钥恢复 / Original-key recovery</a> · <a href="/handoff">轮换交接 / Rotation handoff</a></nav>
+  <div id="cold-flow">
+  <h1 data-i18n="title">恢复网关原密钥</h1>
+  <p data-i18n="intro">上传此前下载的加密备份并输入口令。网关将校验保留的原指纹，只补回与本网关匹配的密钥。</p>
+  <section aria-label="Key status">
+   <button id="refresh" type="button" data-i18n="refresh">读取密钥状态</button>
+   <p id="status" role="status" aria-atomic="true"></p>
+   <p><span id="fingerprint-label" data-i18n="fingerprint">网关保留的原指纹（SHA-256）</span><br><code id="fingerprint"></code></p>
+   <p id="generation-status" hidden><span data-i18n="ringFingerprint">原密钥集合指纹（SHA-256）</span><br><code id="ring-fingerprint"></code></p>
+  </section>
+  <section>
+   <form id="inspect-form" method="post" action="/api/inspect" aria-labelledby="inspect">
+    <label for="backup" data-i18n="file">加密备份 JSON 文件</label>
+    <input id="backup" name="backup" type="file" accept="application/json,.json" required disabled>
+    <label for="password" data-i18n="password">备份解密口令</label>
+    <input id="password" name="passphrase" type="password" autocomplete="off" maxlength="512" spellcheck="false" required disabled aria-describedby="backup-privacy">
+    <p id="backup-privacy" class="hint" data-i18n="privacy">口令仅用于本次核验和恢复，不保存在页面或操作记录中。</p>
+    <button id="inspect" type="submit" data-i18n="inspect" disabled>核验备份</button>
+   </form>
+   <p id="review" role="status" aria-atomic="true"></p>
+   <label id="confirm-row" class="check"><input id="confirm" type="checkbox" disabled><span data-i18n="confirm">我已核对指纹，确认补回本网关的原密钥。</span></label>
+   <button id="restore" type="button" data-i18n="restore" disabled>恢复原密钥</button>
+  </section>
+  <dialog id="restore-dialog" aria-labelledby="restore-dialog-title" aria-describedby="restore-dialog-help">
+   <h2 id="restore-dialog-title" data-i18n="restoreTitle">恢复网关原密钥集合？</h2>
+   <p id="restore-dialog-help" data-i18n="restoreHelp">确认两个指纹与原备份一致。网关只补回缺失的凭据。恢复后可单独启动 Kura。</p>
+   <dl>
+    <dt data-i18n="activeFingerprint">原活跃钥指纹（SHA-256）</dt><dd><code id="confirm-key"></code></dd>
+    <dt data-i18n="ringFingerprint">原密钥集合指纹（SHA-256）</dt><dd><code id="confirm-ring"></code></dd>
+   </dl>
+   <form method="dialog">
+    <button value="cancel" autofocus data-i18n="cancelRestore">取消</button>
+    <button value="restore" data-i18n="restoreAccept">确认恢复</button>
+   </form>
+  </dialog>
+  <section aria-label="Core start handoff">
+   <p data-i18n="startIntro">确认原密钥恢复回执后，可在此启动 Kura。系统接收启动请求后，请进入控制台检查是否就绪。</p>
+   <label id="upgrade-confirm-row" class="check" hidden><input id="upgrade-confirm" type="checkbox"><span data-i18n="upgradeConfirm">我确认安装升级已停止 Kura，并为本次维护创建新的启动请求。</span></label>
+   <button id="start-core" type="button" data-i18n="startCore">启动 Kura</button>
+   <p><span data-i18n="startOperation">启动操作编号</span><br><code id="start-operation"></code></p>
+   <p id="start-notice" role="status" aria-atomic="true"></p>
+   <button id="query-start" type="button" data-i18n="queryStart">查询原启动回执</button>
+   <button id="complete" type="button" data-i18n="complete">确认启动回执并结束恢复</button>
+  </section>
+  <section aria-label="Original operation">
+   <p id="notice" role="status" aria-atomic="true"></p>
+   <p><span data-i18n="operation">恢复操作编号</span><br><code id="operation"></code></p>
+   <button id="query-pending" type="button" data-i18n="queryPending">查询待确认的原操作</button>
+   <button id="acknowledge" type="button" data-i18n="acknowledge">确认此结果</button>
+   <label for="original" data-i18n="original">原恢复操作编号</label>
+   <input id="original" type="text" autocomplete="off" spellcheck="false" maxlength="36">
+   <button id="query-original" type="button" data-i18n="queryOriginal">查询此原操作</button>
+   <p><a id="console" data-i18n="console">返回网关控制台</a></p>
+  </section>
+  </div>
+  <div id="handoff-flow" hidden>
+   <h1 data-handoff-i18n="title">网关密钥轮换交接</h1>
+   <p data-handoff-i18n="intro">请先核对浏览器证书与此前保存的证书指纹，再输入从 HTTPS 管理控制台取得的本次交接授权。</p>
+   <form id="handoff-auth" method="post" action="/api/handoff">
+    <label for="handoff-token" data-handoff-i18n="token">本次交接授权</label>
+    <p id="handoff-safety" class="hint" data-handoff-i18n="safety">授权仅保留在本页内存中。刷新或关闭页面前，请保留原授权材料；查询始终使用原申请编号。</p>
+    <input id="handoff-token" type="password" autocomplete="off" maxlength="128" spellcheck="false" required aria-describedby="handoff-safety">
+    <button id="handoff-query" type="submit" data-handoff-i18n="query">核对原交接申请</button>
+    <button id="handoff-forget" type="button" data-handoff-i18n="forget">清除此页授权</button>
+   </form>
+   <progress id="handoff-progress" hidden aria-label="Reading handoff information"></progress>
+   <p id="handoff-notice" role="status" aria-atomic="true"></p>
+   <section id="handoff-details" hidden>
+    <h2 data-handoff-i18n="details">本次申请</h2>
+    <dl>
+     <dt data-handoff-i18n="identity">交接申请编号</dt><dd><code id="handoff-id"></code></dd>
+     <dt data-handoff-i18n="operator">已登录操作人</dt><dd id="handoff-operator"></dd>
+     <dt data-handoff-i18n="ring">准备密钥集合指纹（SHA-256）</dt><dd><code id="handoff-ring"></code></dd>
+     <dt data-handoff-i18n="cohort">安装组件指纹（SHA-256）</dt><dd><code id="handoff-cohort"></code></dd>
+    </dl>
+    <ol>
+     <li><h3 data-handoff-i18n="publishTitle">停止 Kura 并发布准备密钥集合</h3>
+      <p data-handoff-i18n="publishHelp">确认已保存并核验加密备份后，明确停止 Kura，保留原密钥及旧数据，再发布本次准备的密钥集合。</p>
+      <p id="handoff-publication-state"></p><button id="handoff-publish" type="button" disabled data-handoff-i18n="publish">确认停机发布</button>
+      <button id="handoff-continue" type="button" disabled data-handoff-i18n="continue">按原认证回执继续发布</button></li>
+     <li><h3 data-handoff-i18n="startTitle">单独申请启动 Kura</h3>
+      <p data-handoff-i18n="startHelp">原发布回执确认后，可单独申请启动。收到系统启动请求回执后，请回到控制台核对 Kura 是否就绪。</p>
+       <p id="handoff-start-state"></p><button id="handoff-start" type="button" disabled data-handoff-i18n="start">确认申请启动</button>
+       <p id="handoff-renew-help" class="hint" data-handoff-i18n="renewHelp">发布已确认且尚未申请启动时，可单独续期原首次启动授权15分钟。保留原启动编号；续期不会启动Kura，也不允许再次发布。</p>
+       <button id="handoff-start-renew" type="button" disabled aria-describedby="handoff-renew-help" data-handoff-i18n="renew">续期原首次启动授权</button>
+       <ul id="handoff-renewals"></ul></li>
+     <li><h3 data-handoff-i18n="completeTitle">确认原请求回执</h3>
+      <p data-handoff-i18n="completeHelp">核对原发布与启动请求回执后，确认结束本次交接申请。</p>
+      <button id="handoff-complete" type="button" disabled data-handoff-i18n="complete">确认本次请求回执</button></li>
+    </ol>
+    <p id="handoff-revoke-help" class="hint" data-handoff-i18n="revokeHelp">仅在发布和启动均未进入处理时，永久撤销旧授权和固定编号。保留原准备、备份核验和全部记录；返回原控制台后由原管理员手动重新签发。</p>
+    <button id="handoff-revoke" type="button" disabled aria-describedby="handoff-revoke-help" data-handoff-i18n="revoke">撤销未使用的交接授权</button>
+    <p><a id="handoff-console" data-handoff-i18n="console">返回网关控制台</a></p>
+   </section>
+   <dialog id="handoff-confirm" aria-labelledby="handoff-confirm-title">
+    <h2 id="handoff-confirm-title"></h2><p id="handoff-confirm-help"></p>
+    <p><span data-handoff-i18n="identity">交接申请编号</span><br><code id="handoff-confirm-id"></code></p>
+    <p><span data-handoff-i18n="ring">准备密钥集合指纹（SHA-256）</span><br><code id="handoff-confirm-ring"></code></p>
+     <p id="handoff-confirm-renewal" hidden><span data-handoff-i18n="renewalIdentity">原续期申请编号</span><br><code id="handoff-confirm-renewal-id"></code></p>
+    <form method="dialog"><button value="cancel" autofocus data-handoff-i18n="cancel">取消</button><button id="handoff-confirm-accept" value="accept" data-handoff-i18n="accept">确认本次操作</button></form>
+   </dialog>
+  </div>
+  <section id="admission-flow" aria-labelledby="admission-title">
+   <h2 id="admission-title" data-admission-i18n="title">核对原预留</h2>
+   <p data-admission-i18n="help">回复丢失后，只按原编号核对。关闭仅适用于尚未发送密钥操作的预留，原编号会永久保留且不再发送。</p>
+   <form id="admission-read-form" method="post" action="/api/admission" aria-labelledby="admission-title">
+    <fieldset id="admission-cold-kinds"><legend data-admission-i18n="kind">原操作类型</legend>
+     <label class="check"><input type="radio" name="admission-kind" value="restore" checked><span data-admission-i18n="restore">原密钥恢复</span></label>
+     <label class="check"><input type="radio" name="admission-kind" value="start"><span data-admission-i18n="start">Kura 启动</span></label>
+    </fieldset>
+    <fieldset id="admission-handoff-kinds" hidden><legend data-admission-i18n="step">原交接步骤</legend>
+     <label class="check"><input type="radio" name="admission-step" value="publish" checked><span data-admission-i18n="publish">发布</span></label>
+     <label class="check"><input type="radio" name="admission-step" value="start"><span data-admission-i18n="start">Kura 启动</span></label>
+     <label class="check"><input type="radio" name="admission-step" value="continue"><span data-admission-i18n="continue">原认证续接（仅核对）</span></label>
+    </fieldset>
+    <div id="admission-reference-row"><label for="admission-reference" data-admission-i18n="identity">原操作编号</label>
+     <input id="admission-reference" name="operationId" type="text" required maxlength="36" pattern="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <button id="admission-read" type="submit" data-admission-i18n="read">核对原预留</button>
+   </form>
+   <progress id="admission-progress" hidden aria-label="Reading original reservation"></progress>
+   <p><code id="admission-operation"></code></p>
+   <p id="admission-notice" role="status" aria-atomic="true"></p>
+   <form id="admission-close-form" method="post" action="/api/admission" aria-labelledby="admission-close-title" hidden>
+    <h3 id="admission-close-title" data-admission-i18n="authorize">授权关闭此原预留</h3>
+    <div id="admission-backup-material">
+     <label for="admission-backup" data-admission-i18n="file">原加密备份 JSON 文件（必填）</label>
+     <input id="admission-backup" name="backupJson" type="file" accept="application/json,.json" required aria-describedby="admission-privacy">
+     <label for="admission-password" data-admission-i18n="password">原备份解密口令（必填）</label>
+     <input id="admission-password" name="passphrase" type="password" autocomplete="current-password" required minlength="12" maxlength="512" aria-describedby="admission-privacy">
+     <p id="admission-privacy" class="hint" data-admission-i18n="privacy">仅使用原备份和口令核验授权，不恢复或替换密钥，也不保存口令。</p>
+    </div>
+    <p id="admission-handoff-material" hidden data-admission-i18n="handoffMaterial">关闭须使用上方输入的原交接授权。备份口令不能代替交接授权。</p>
+    <button id="admission-close" type="submit" data-admission-i18n="close">确认未发送并关闭</button>
+   </form>
+   <button id="admission-acknowledge" type="button" hidden data-admission-i18n="acknowledge">保留原记录并返回原流程</button>
+   <dialog id="admission-confirm" aria-labelledby="admission-confirm-title">
+    <h2 id="admission-confirm-title" data-admission-i18n="confirmTitle">关闭此原预留？</h2>
+    <p data-admission-i18n="confirmHelp">服务端将核实原请求尚未进入密钥处理，永久阻止此原编号。此操作不会恢复密钥、发布或启动 Kura。</p>
+    <p><code id="admission-confirm-id"></code></p>
+    <form method="dialog"><button value="cancel" autofocus data-admission-i18n="keep">保留预留</button><button value="close" data-admission-i18n="close">确认未发送并关闭</button></form>
+   </dialog>
+  </section>
+  <section id="archive-flow" aria-labelledby="archive-title">
+   <h2 id="archive-title" data-archive-i18n="title">归档已确认的历史</h2>
+   <p data-archive-i18n="help">归档可释放活动记录名额。原文件、原编号和密钥继续保留；结果不明的密钥操作不能归档或重发。</p>
+   <label for="archive-records" data-archive-i18n="records">保留的历史记录</label>
+   <select id="archive-records" name="retainedRecord"></select>
+   <div class="archive-actions"><button id="archive-refresh" type="button" data-archive-i18n="refresh">读取归档历史</button><button id="archive-previous" type="button" data-archive-i18n="previous">上一页历史</button><button id="archive-next" type="button" data-archive-i18n="next">下一页历史</button></div>
+   <form id="archive-read-form" method="post" action="/api/archive" aria-labelledby="archive-title">
+    <fieldset id="archive-cold-kinds"><legend data-archive-i18n="kind">记录类型</legend>
+     <div><input id="archive-type-restore" type="radio" name="archive-selector" value="RESTORE" checked><label for="archive-type-restore" data-archive-i18n="restore">原密钥恢复</label></div>
+     <div><input id="archive-type-start" type="radio" name="archive-selector" value="START"><label for="archive-type-start" data-archive-i18n="start">Kura 启动</label></div>
+     <div><input id="archive-type-admission-restore" type="radio" name="archive-selector" value="ADMISSION:restore"><label for="archive-type-admission-restore" data-archive-i18n="restoreAdmission">恢复发送回执</label></div>
+     <div><input id="archive-type-admission-start" type="radio" name="archive-selector" value="ADMISSION:start"><label for="archive-type-admission-start" data-archive-i18n="startAdmission">启动发送回执</label></div>
+    </fieldset>
+    <fieldset id="archive-handoff-kinds" hidden><legend data-archive-i18n="kind">记录类型</legend>
+     <div><input id="archive-type-handoff" type="radio" name="archive-selector" value="HANDOFF"><label for="archive-type-handoff" data-archive-i18n="handoff">维护交接</label></div>
+     <div><input id="archive-type-admission-publish" type="radio" name="archive-selector" value="ADMISSION:publish"><label for="archive-type-admission-publish" data-archive-i18n="publishAdmission">发布发送回执</label></div>
+     <div><input id="archive-type-admission-continue" type="radio" name="archive-selector" value="ADMISSION:continue"><label for="archive-type-admission-continue" data-archive-i18n="continueAdmission">原发布续接回执</label></div>
+     <div><input id="archive-type-admission-handoff-start" type="radio" name="archive-selector" value="ADMISSION:handoff-start"><label for="archive-type-admission-handoff-start" data-archive-i18n="startAdmission">启动发送回执</label></div>
+     <div><input id="archive-type-admission-handoff-renewal" type="radio" name="archive-selector" value="ADMISSION:handoff-renewal"><label for="archive-type-admission-handoff-renewal" data-archive-i18n="renewalAdmission">首次启动授权续期回执</label></div>
+    </fieldset>
+    <label for="archive-reference" data-archive-i18n="identity">原操作编号（必填）</label>
+    <input id="archive-reference" name="operationId" type="text" required maxlength="36" pattern="[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+    <button id="archive-read" type="submit" data-archive-i18n="read">预览／查询原归档</button>
+   </form>
+   <progress id="archive-progress" hidden aria-label="Reading archive history"></progress>
+   <p id="archive-identities"></p><p id="archive-notice" role="status" aria-atomic="true"></p>
+   <form id="archive-authorize-form" method="post" action="/api/archive" aria-labelledby="archive-authorize-title" hidden>
+    <h3 id="archive-authorize-title" data-archive-i18n="authorize">授权归档此原记录</h3>
+    <div id="archive-backup-material">
+     <label for="archive-backup" data-archive-i18n="file">原加密备份 JSON 文件（必填）</label><input id="archive-backup" name="backupJson" type="file" accept="application/json,.json" required aria-describedby="archive-privacy">
+     <label for="archive-password" data-archive-i18n="password">原备份解密口令（必填）</label><input id="archive-password" name="passphrase" type="password" autocomplete="current-password" required minlength="12" maxlength="512" aria-describedby="archive-privacy">
+     <p id="archive-privacy" class="hint" data-archive-i18n="privacy">仅核验原钥授权，不恢复或替换密钥；口令不会保存。</p>
+    </div>
+    <p id="archive-handoff-material" hidden data-archive-i18n="handoffMaterial">归档须使用上方输入的原交接授权，不能用其他申请代替。</p>
+    <div class="archive-actions"><button id="archive-apply" type="submit" name="command" value="archive" data-archive-i18n="archive">确认归档原记录</button><button id="archive-continue" type="submit" name="command" value="continue" data-archive-i18n="continue">继续原归档元数据</button></div>
+   </form>
+   <dialog id="archive-confirm" aria-labelledby="archive-confirm-title" aria-describedby="archive-confirm-help">
+    <h2 id="archive-confirm-title"></h2><p id="archive-confirm-help" data-archive-i18n="confirmHelp">仅归档所示原记录的元数据，原文件和密钥保留。此操作不会恢复密钥、发布或启动 Kura。</p><p id="archive-confirm-identities"></p>
+    <form method="dialog"><button value="cancel" autofocus data-archive-i18n="cancel">取消</button><button id="archive-confirm-accept" value="confirm" data-archive-i18n="confirm">确认此归档操作</button></form>
+   </dialog>
+  </section>
+ </main>
+</body>
+</html>

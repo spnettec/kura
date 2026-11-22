@@ -133,20 +133,22 @@ public class ExecutorUtilExecutionTest {
     private void configureMock(DefaultExecutor deMock) {
         CommandStatus csSuccess = new CommandStatus(this.command, new LinuxExitStatus(0));
         CommandStatus csFailure = new CommandStatus(this.command, new LinuxExitStatus(1));
-        String executableUnprivileged = "su";
-        String[] argumentsUnprivileged = { "kura", "-c", "ENV1=VALUE1 timeout -s SIGHUP 1000 " + COMMAND_STRING };
+        String executableUnprivileged = "/usr/bin/su";
+        String[] argumentsUnprivileged = { "--shell=/bin/sh", "--command",
+                "exec '/usr/bin/env' '--' 'ENV1=VALUE1' '/usr/bin/timeout' '--signal=1' '--' '1000' '/bin/sh' '-c' 'ls -all'",
+                "--", "kura" };
         String executablePrivileged = "/bin/sh";
         String[] argumentsPrivileged = { "-c", COMMAND_STRING };
         try {
-            when(deMock.execute(argThat(new CommandLineMatcher(executableUnprivileged, argumentsUnprivileged)),
-                    anyMap())).thenReturn(1);
+            when(deMock.execute(argThat(new CommandLineMatcher(executableUnprivileged, argumentsUnprivileged))))
+                    .thenReturn(1);
             when(deMock.execute(argThat(new CommandLineMatcher(executablePrivileged, argumentsPrivileged)), anyMap()))
                     .thenReturn(0);
             doAnswer(invocation -> {
                 this.callback.accept(csFailure);
                 return null;
             }).when(deMock).execute(argThat(new CommandLineMatcher(executableUnprivileged, argumentsUnprivileged)),
-                    anyMap(), any());
+                    any(org.apache.commons.exec.ExecuteResultHandler.class));
             doAnswer(invocation -> {
                 this.callback.accept(csSuccess);
                 return null;

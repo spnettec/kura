@@ -12,262 +12,568 @@
 #  Eurotech
 #
 
+# YOFC ORDINARY BOOT INSTALL GUARD V1
+guardOrdinaryBootPolicy() {
+    python3 - "$0" "$@" <<'PYGUARD'
+import fcntl, hashlib, json, os, stat, subprocess, sys, uuid
+from pathlib import Path
+marker = Path('/etc/kura/ordinary-boot-policy.json')
+def read(path):
+    m = path.parent.lstat()
+    if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o022:
+        raise RuntimeError('Unsafe ordinary boot evidence directory; preserve state')
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        m = os.fstat(fd)
+        if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o077 or m.st_size > 1024 * 1024:
+            raise RuntimeError('Unsafe ordinary boot policy evidence; preserve state')
+        with os.fdopen(fd, 'rb', closefd=False) as source:
+            return source.read(1024 * 1024 + 1)
+    finally:
+        os.close(fd)
+root = Path('/var/lib/kura-management-agent/ordinary-boot')
+if os.path.lexists(marker):
+    route = json.loads(read(marker))
+    state_root = route.get('stateRoot', '')
+    if set(route) != {'schema', 'stateRoot'} or route['schema'] != 1 or not state_root.startswith('/') or any(x in ['', '.', '..'] for x in state_root[1:].split('/')):
+        raise RuntimeError('Invalid Core ordinary boot policy registration')
+    root = Path(state_root) / 'ordinary-boot'
+def record(path):
+    j = json.loads(read(path))
+    expected = {'schema', 'id', 'token', 'state', 'expiresAt', 'request', 'target', 'retired', 'actionIntents', 'receiptSha256', 'previousConfirmedSha256'}
+    optional = {'commandDecisions', 'issuedCommand'}
+    if set(j) - optional != expected or j.get('schema') != 1:
+        raise RuntimeError('Invalid ordinary boot policy journal')
+    commands = j.get('commandDecisions', {})
+    if not isinstance(commands, dict) or len(commands) > 64:
+        raise RuntimeError('Invalid boot command decision map')
+    bindings = {}
+    for command_id, digest in commands.items():
+        if str(uuid.UUID(command_id)) != command_id or not isinstance(digest, str) or len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest):
+            raise RuntimeError('Invalid boot command identity/digest')
+        raw_decision = read(root / 'commands' / (command_id + '.json'))
+        decision = json.loads(raw_decision)
+        binding = decision.get('binding', {})
+        if hashlib.sha256(raw_decision).hexdigest() != digest or decision.get('schema') != 1 or decision.get('transactionId') != j['id'] or set(binding) != {'commandId', 'requestSha256', 'operation'} or binding.get('commandId') != command_id or binding.get('operation') not in (16, 17, 18, 19) or not isinstance(binding.get('requestSha256'), str) or len(binding['requestSha256']) != 64 or any(c not in '0123456789abcdef' for c in binding['requestSha256']):
+            raise RuntimeError('Boot command decision changed; preserve state')
+        bindings[command_id] = binding
+    issued = j.get('issuedCommand')
+    if issued is not None and (not isinstance(issued, dict) or set(issued) != {'commandId', 'requestSha256', 'operation'} or issued.get('operation') != 17 or bindings.get(issued.get('commandId')) != issued):
+        raise RuntimeError('Invalid issued boot command')
+    ident = j['id']
+    if not ident.startswith('boot-') or str(uuid.UUID(ident[5:])) != ident[5:] or str(uuid.UUID(j['token'])) != j['token']:
+        raise RuntimeError('Invalid ordinary boot policy identity')
+    if j['state'] == 'CANCELLED' and j['actionIntents'] == [] and j['receiptSha256'] is None:
+        return j
+    if j['state'] != 'BOOT_POLICY_COMMITTED':
+        raise RuntimeError('Unresolved ordinary boot adoption; settle it before Core package changes')
+    raw = read(root / 'receipts' / (ident + '.json'))
+    receipt = json.loads(raw)
+    if receipt.get('issuedCommand') != j.get('issuedCommand') or hashlib.sha256(raw).hexdigest() != j['receiptSha256'] or any(receipt.get(k) != v for k, v in {
+        'id': ident, 'request': j['request'], 'targetBefore': j['target'],
+        'retiredBefore': j['retired'], 'actionIntents': j['actionIntents'],
+        'status': 'BOOT_POLICY_COMMITTED', 'bootVerified': False,
+        'kuraRecoveryVerified': False,
+    }.items()):
+        raise RuntimeError('Ordinary boot policy receipt changed; preserve state')
+    return j
+def guard_cancelled_handoff(root):
+    """Pure validation of an explicitly cancelled unissued ordinary handoff."""
+    path = root / 'transaction.json'
+    if not os.path.lexists(path):
+        return
+    def read(p):
+        m = p.parent.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077:
+            raise RuntimeError('Unsafe ordinary cancellation evidence directory')
+        fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            m = os.fstat(fd)
+            if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) != 0o600 or m.st_size > 1024 * 1024:
+                raise RuntimeError('Unsafe ordinary cancellation evidence')
+            with os.fdopen(fd, 'rb', closefd=False) as source:
+                return source.read(1024 * 1024 + 1)
+        finally:
+            os.close(fd)
+    def decode(raw):
+        def pairs(values):
+            result = {}
+            for k, v in values:
+                if k in result:
+                    raise RuntimeError('Duplicate cancellation evidence field')
+                result[k] = v
+            return result
+        return json.loads(raw, object_pairs_hook=pairs)
+    # Existing terminal recovery formats retain their established validation.
+    j = json.loads(path.read_text())
+    if j.get('state') != 'ORDINARY_CANCELLED':
+        return
+    j = decode(read(path))
+    def require(ok):
+        if not ok:
+            raise RuntimeError('Unproven ordinary cancellation; preserve state')
+    def digest(raw):
+        return hashlib.sha256(raw).hexdigest()
+    def equal(a, b):
+        return json.dumps(a, sort_keys=True, separators=(',', ':')) == json.dumps(b, sort_keys=True, separators=(',', ':'))
+    def canonical(s, prefix=''):
+        try:
+            return isinstance(s, str) and s.startswith(prefix) and str(uuid.UUID(s[len(prefix):])) == s[len(prefix):]
+        except (ValueError, AttributeError):
+            return False
+    def sha(s):
+        return isinstance(s, str) and len(s) == 64 and all(c in '0123456789abcdef' for c in s)
+    p = j.get('ordinary')
+    require(isinstance(p, dict) and canonical(p.get('id'), 'handoff-') and canonical(j.get('id'), 'rec-'))
+    require(p.get('cancelled') is True and p.get('issued') is False and p.get('verified') is False and p.get('issued_command') is None and p.get('observation') is None)
+    f = lambda suffix: root / 'receipts' / (p['id'] + suffix)
+    raw = read(f('.ordinary-source.json')); require(digest(raw) == p['source_sha256']); original = decode(raw)
+    strip = lambda v: {k: x for k, x in v.items() if k not in ('state', 'error', 'ordinary')}
+    require(original.get('state') == 'COMPLETED_APPROVED_CHECKS' and original.get('ordinary') is None and equal(strip(original), strip(j)))
+    raw = read(f('.ordinary-grant.json')); require(digest(raw) == p['grant_sha256']); grant = decode(raw)
+    require(grant.get('schema') == 1 and grant.get('unit') == p.get('unit') and grant.get('profileId') == p.get('profile_id'))
+    hashes = [digest(raw)] + [v['sha256'] for v in grant['profileFiles']]
+    require(all(sha(s) for s in hashes) and digest('\n'.join(hashes).encode()) == p['profile_digest'])
+    result = dict(id=p['id'], unit=p['unit'], profileId=p['profile_id'], state='ORDINARY_CANCELLED', cancelled=True, issued=False, ordinaryUnitHandedOff=False, scope='administrator-selected-checks', kuraRecoveryVerified=False, normalBootVerified=False)
+    binding = p.get('cancel_command'); commands = p.get('command_decisions', {})
+    require(isinstance(commands, dict) and len(commands) <= 2)
+    if binding is not None:
+        require(binding.get('operation') == 29 and binding.get('commandId') in commands)
+    for command_id, h in commands.items():
+        require(canonical(command_id) and sha(h)); raw = read(root / 'commands' / (command_id + '.json')); require(digest(raw) == h); d = decode(raw); a = d['binding']
+        require(set(d) == {'schema', 'binding', 'recoveryId', 'handoffId', 'result'} and d['schema'] == 1 and d['recoveryId'] == j['id'] and d['handoffId'] == p['id'])
+        require(set(a) == {'commandId', 'operation', 'requestSha256'} and a['commandId'] == command_id and sha(a['requestSha256']) and a['operation'] in (21, 29))
+        if a['operation'] == 21:
+            expected_prepare = dict(transactionId=p['id'], confirmToken=p['confirm_token'], state='ORDINARY_PREPARED', scope='administrator-selected-checks', kuraRecoveryVerified=False, normalBootVerified=False, profileId=p['profile_id'], unit=p['unit'], profileDigest=p['profile_digest'], grantSha256=p['grant_sha256'], sourceJournalSha256=p['source_sha256'], snapshotSha256=p['highest_sha256'], expiresAtUnixMs=p['expires_at'], previousPid=p['old_normal_pid'], componentPids=grant['componentPids'], checkIds=grant['checkIds'])
+            require(equal(d['result'], expected_prepare))
+        if a['operation'] == 29:
+            require(equal(a, binding) and equal(d['result'], result))
+    expected = dict(schema='yofc.agent.ordinary-cancel.v1', result=result, sourceJournalSha256=p['source_sha256'], grantSha256=p['grant_sha256'], profileDigest=p['profile_digest'], cancellationCommand=binding)
+    raw = read(f('.ordinary-cancel.json')); require(sha(p['receipt_sha256']) and digest(raw) == p['receipt_sha256'] and equal(decode(raw), expected))
+
+def guard_system_control(root):
+    def fail(reason):
+        raise RuntimeError('System control evidence: ' + reason + '; preserve state')
+
+    def directory(path):
+        m = path.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077:
+            fail('unsafe private directory')
+
+    def read(path):
+        directory(path.parent)
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            m = os.fstat(fd)
+            if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) != 0o600 or m.st_size > 1024 * 1024:
+                fail('unsafe private record')
+            with os.fdopen(fd, 'rb', closefd=False) as source:
+                data = source.read(1024 * 1024 + 1)
+            if len(data) > 1024 * 1024:
+                fail('record exceeds limit')
+            return data
+        finally:
+            os.close(fd)
+
+    def canonical(value):
+        return isinstance(value, str) and str(uuid.UUID(value)) == value
+
+    def digest(value):
+        return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+    def binding(value):
+        return isinstance(value, dict) and set(value) == {'commandId', 'operation', 'requestSha256'} and canonical(value['commandId']) and value['operation'] in (24, 25, 26, 27, 28) and digest(value['requestSha256'])
+
+    journal = root / 'transaction.json'
+    if not os.path.lexists(journal):
+        for name in ('commands', 'receipts', 'history'):
+            path = root / name
+            if os.path.lexists(path):
+                directory(path)
+                if any(path.iterdir()):
+                    fail('journal missing with retained records')
+        return
+    j = json.loads(read(journal))
+    expected = {'schema', 'id', 'token', 'state', 'action', 'configSha256', 'definitionSha256', 'unit', 'before', 'beforeBootId', 'expiresAt', 'profile', 'snapshots', 'probe', 'issuedCommand', 'issued', 'issuedAt', 'requestAccepted', 'scheduledUnit', 'after', 'afterBootId', 'observation', 'outcome', 'receiptSha256', 'error', 'commandDecisions'}
+    if set(j) != expected or j.get('schema') != 1 or not isinstance(j.get('id'), str) or not j['id'].startswith('system-') or not canonical(j['id'][7:]) or not canonical(j['token']) or not canonical(j['beforeBootId']) or not digest(j['configSha256']) or not digest(j['definitionSha256']) or j['action'] not in ('restart', 'reboot'):
+        fail('invalid journal identity')
+    if j['state'] not in ('COMPLETED', 'CANCELLED'):
+        fail('unresolved transaction')
+    raw = read(root / 'receipts' / (j['id'] + '.config.json'))
+    config = json.loads(raw)
+    if hashlib.sha256(raw).hexdigest() != j['configSha256'] or config.get('schema') != 1 or config.get('unit') != j['unit'] or config.get('unitDefinitionSha256') != j['definitionSha256']:
+        fail('archived grant changed')
+    commands = j['commandDecisions']
+    if not isinstance(commands, dict) or len(commands) > 2:
+        fail('invalid command map')
+    decisions = {}
+    for ident, sha in commands.items():
+        if not canonical(ident) or not digest(sha):
+            fail('invalid command identity')
+        raw = read(root / 'commands' / (ident + '.json'))
+        decision = json.loads(raw)
+        if hashlib.sha256(raw).hexdigest() != sha or set(decision) != {'schema', 'binding', 'planId', 'result'} or decision['schema'] != 1 or decision['planId'] != j['id'] or not binding(decision['binding']) or decision['binding']['commandId'] != ident:
+            fail('original command changed')
+        if decision['binding']['operation'] in (25, 27) and decision['binding'] != j['issuedCommand']:
+            fail('unbound issued command')
+        decisions[ident] = decision
+    issued = j['issuedCommand']
+    if issued is not None and (not binding(issued) or issued['operation'] != (25 if j['action'] == 'restart' else 27) or decisions.get(issued['commandId'], {}).get('binding') != issued):
+        fail('invalid issued command')
+    if j['state'] == 'CANCELLED':
+        if j['issued'] is not False or j['requestAccepted'] is not False or issued is not None or j['issuedAt'] is not None or j['receiptSha256'] is not None or j['after'] is not None or j['afterBootId'] is not None or j['observation'] is not None or j['scheduledUnit'] is not None:
+            fail('cancelled plan contains issued intent')
+        return
+    raw = read(root / 'receipts' / (j['id'] + '.completed.json'))
+    result = json.loads(raw)
+    value = result.get('value', {})
+    if hashlib.sha256(raw).hexdigest() != j['receiptSha256'] or result != j['outcome'] or result.get('state') not in (4, 5) or j['issued'] is not True or j['requestAccepted'] is not True or type(j['issuedAt']) is not int or not canonical(j['afterBootId']) or not isinstance(j['observation'], dict):
+        fail('completion receipt changed')
+    if issued is not None and decisions[issued['commandId']]['result'] != result:
+        fail('original execution outcome changed')
+    for key, expected_value in {'id': j['id'], 'state': 'COMPLETED', 'action': 'service.restart' if j['action'] == 'restart' else 'system.reboot', 'unit': j['unit'], 'before': j['before'], 'beforeBootId': j['beforeBootId'], 'after': j['after'], 'afterBootId': j['afterBootId'], 'issued': True, 'requestAccepted': True, 'application': j['observation'], 'kuraRecoveryVerified': False, 'normalBootVerified': False}.items():
+        if value.get(key) != expected_value:
+            fail('completion stages changed')
+    if j['action'] == 'restart' and (value.get('processRestartVerified') is not True or j['afterBootId'] != j['beforeBootId'] or value.get('hostRebootVerified') is not False):
+        fail('process transition unproven')
+    if j['action'] == 'reboot' and (value.get('hostRebootVerified') is not True or j['afterBootId'] == j['beforeBootId']):
+        fail('host transition unproven')
+
+# The supervisor owns non-inherited locks through the entire maintainer script.
+# The child re-entry marker is private process control, not a privilege boundary;
+# maintainer scripts already require the operator's root privileges.
+locks = []
+if len(sys.argv) > 1 and os.environ.get('_YOFC_CORE_BOOT_GUARD_CHILD') != '1':
+    paths = [Path('/run/lock/kura-ordinary-boot.lock')]
+    if root.parent.exists():
+        m = root.parent.lstat()
+        if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o022:
+            raise RuntimeError('Unsafe registered agent state directory')
+        paths.append(root.parent / 'system-change.lock')
+    for path in paths:
+        fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        m = os.fstat(fd)
+        if not stat.S_ISREG(m.st_mode) or m.st_uid != os.geteuid() or stat.S_IMODE(m.st_mode) & 0o077:
+            raise RuntimeError('Unsafe Core boot maintenance lock')
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        locks.append(fd)
+guard_system_control(root.parent / 'system-control')
+guard_cancelled_handoff(root.parent / 'recovery')
+for subsystem, terminal in [('network', ('COMMITTED', 'ROLLED_BACK')),
+                            ('firewall', ('COMMITTED', 'ROLLED_BACK')),
+                            ('recovery', ('SUCCEEDED', 'FAILED', 'COMPLETED_APPROVED_CHECKS', 'ORDINARY_ACTIVE_APPROVED_CHECKS', 'ORDINARY_CANCELLED'))]:
+    other = root.parent / subsystem / 'transaction.json'
+    if subsystem == 'recovery' and not os.path.lexists(other):
+        commands = other.parent / 'commands'
+        if os.path.lexists(commands):
+            m = commands.lstat()
+            if not stat.S_ISDIR(m.st_mode) or m.st_uid != os.geteuid() or m.st_mode & 0o077 or any(commands.iterdir()):
+                raise RuntimeError('Recovery journal missing with handoff command evidence; preserve state')
+    if os.path.lexists(other) and json.loads(read(other)).get('state') not in terminal:
+        raise RuntimeError('Unresolved managed transaction; settle it before Core package changes')
+for name in ['remote-management-pending.json', 'remote-management-resolution.json', 'identity-enrollment-pending.json']:
+    if os.path.lexists(root.parent / name):
+        raise RuntimeError('Unresolved identity or remote management control; preserve state')
+p = root / 'transaction.json'
+if os.path.lexists(p):
+    j = record(p)
+    confirmed = root / 'confirmed.json'
+    policy = record(confirmed) if os.path.lexists(confirmed) else None
+    if policy is not None and policy['state'] != 'BOOT_POLICY_COMMITTED':
+        raise RuntimeError('Invalid confirmed boot policy')
+    if j['state'] == 'BOOT_POLICY_COMMITTED' and {k: v for k, v in j.items() if k != 'commandDecisions'} != ({k: v for k, v in policy.items() if k != 'commandDecisions'} if policy else None):
+        raise RuntimeError('Confirmed ordinary boot policy changed')
+    if policy is not None and policy['target']['unit'] != 'kura.service':
+        raise RuntimeError('Core installation would re-enable a different Kura startup entry; reconcile the ordinary boot policy first')
+else:
+    if os.path.lexists(root / 'confirmed.json') or any(path.is_dir() and any(path.iterdir()) for path in [root / 'receipts', root / 'history', root / 'commands']):
+        raise RuntimeError('Ordinary boot journal missing with retained evidence; preserve state')
+if locks:
+    env = dict(os.environ, _YOFC_CORE_BOOT_GUARD_CHILD='1')
+    # close_fds is deliberate: background grandchildren cannot extend this lock.
+    result = subprocess.run(['/bin/bash', sys.argv[1], *sys.argv[2:]], env=env, close_fds=True)
+    sys.exit(result.returncode)
+
+PYGUARD
+}
+case "$1" in
+    abort-upgrade|abort-remove|failed-upgrade) ;;
+    *)
+        if [ "${_YOFC_CORE_BOOT_GUARD_CHILD:-}" = "1" ]; then
+            guardOrdinaryBootPolicy "$@" || exit 1
+        else
+            guardOrdinaryBootPolicy "$@"
+            exit "$?"
+        fi
+        ;;
+esac
+# END YOFC ORDINARY BOOT INSTALL GUARD V1
+
 INSTALL_DIR=/opt/eclipse
 TIMESTAMP=`date +%Y%m%d%H%M%S`
 LOG=/var/log/kura_core_install_${TIMESTAMP}.log
-WD_TMP_FILE=/tmp/watchdog
 REFRESH_TIME=5
 TIMEOUT_TIME=300
 
 ##############################################
 # UTILITY FUNCTIONS
 ##############################################
-# Print the space-separated list of currently-installed Kura sibling packages
-# (every kura-* package except kura-core itself), according to dpkg. Empty when
-# no sibling is installed.
-function installedSiblings {
-    dpkg-query -W -f='${Status} ${Package}\n' 'kura-*' 2>/dev/null \
-        | awk '$1 == "install" && $3 == "installed" && $4 != "kura-core" { print $4 }' \
-        | tr '\n' ' '
+# dpkg can configure Core before other packages from the same transaction.
+function reportRelatedPackages {
+    # dpkg width 0 prints the full version and keeps the field literal through Maven filtering.
+    dpkg-query -W -f='${Package} ${Version;0} ${db:Status-Status}\n' 'kura-*' 2>/dev/null \
+        | awk '$1 != "kura-core" && $3 != "not-installed" && $3 != "config-files" {
+            if (!reported++) print "Other Kura package versions and dpkg states during Core configuration"
+            print "    " $1, $2, $3
+        }'
 }
 
 # Keep the snapshot master-key setting across upgrades while still installing
 # the new service template. Never log the key or write it to a public temp file.
 function restoreUpgradeSecret {
-    python3 - "$1" "$2" <<'PY'
-import os
-import re
-import stat
-import sys
-import tempfile
-
-saved, target = sys.argv[1:]
-pattern = re.compile(rb'^\s*Environment\s*=.*\bKURA_CRYPTO_SECRET_KEY=')
-environment_file = re.compile(rb'^\s*EnvironmentFile\s*=')
-with open(saved, 'rb') as f:
-    original = f.read().splitlines(keepends=True)
-with open(target, 'rb') as f:
-    current = f.read().splitlines(keepends=True)
-secret_lines = [line for line in original if pattern.match(line)]
-file_lines = [line for line in original if environment_file.match(line) and line not in current]
-positions = [i for i, line in enumerate(current) if pattern.match(line)]
-if not positions and (secret_lines or file_lines):
-    raise RuntimeError('The new Kura service unit has no place for the preserved key setting')
-if positions:
-    first = positions[0]
-    current = [line for i, line in enumerate(current) if i not in positions]
-    current[first:first] = secret_lines + file_lines
-    st = os.stat(target)
-    fd, path = tempfile.mkstemp(prefix='.kura-service-', dir=os.path.dirname(target))
-    try:
-        os.fchmod(fd, stat.S_IMODE(st.st_mode))
-        os.fchown(fd, st.st_uid, st.st_gid)
-        with os.fdopen(fd, 'wb') as f:
-            f.writelines(current)
-        os.replace(path, target)
-    finally:
-        if os.path.exists(path):
-            os.unlink(path)
-PY
+    # The key was captured before preinst stopped or removed the old runtime.
+    # Keep the new credential-based unit on both upgrade and retained-data reinstall.
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" verify-migration "$1" "$2"
 }
 
 # Run postInstall function and start watchdog if needed
-function runPostInstall {
-    if [ -f "${WD_TMP_FILE}" ]; then
-        WATCHDOG_DEVICE=`cat ${WD_TMP_FILE}`
-        echo "Got watchdog ${WATCHDOG_DEVICE}" >> $LOG 2>&1
-        postInstall &
-        PID=$!
-        START=$(date +%s)
-
-        while [ -d "/proc/$PID" ]; do
-            echo w > ${WATCHDOG_DEVICE}
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-        stopWatchdog
-    else
-        postInstall &
-        PID=$!
-        START=$(date +%s)
-
-        while [ -d "/proc/$PID" ]; do
-            DELTA=$(($(date +%s) - $START))
-            if [ "$DELTA" -ge "$TIMEOUT_TIME" ]; then
-                echo "The installation process is not responding. It'll be stopped."
-                kill -9 $PID >> /dev/null 2>&1
-            fi
-            sleep $REFRESH_TIME
-        done
-    fi
-    wait "$PID" || return 1
+watchdogMaintenance() {
+    python3 -I -B - "$@" <<'KURA_WATCHDOG_MAINTENANCE'
+raise RuntimeError("Kura watchdog maintenance was not embedded")
+KURA_WATCHDOG_MAINTENANCE
 }
 
-# Deactivate watchdog device if possible
-function stopWatchdog {
-    if [ -n "${WATCHDOG_DEVICE}" ]; then
-        echo V > ${WATCHDOG_DEVICE}
-    fi
+function runPostInstall {
+    watchdogMaintenance check || return 1
+
+    local pid start elapsed worker_status=0 watchdog_status=0
+    postInstall &
+    pid=$!
+    start=$(date +%s)
+
+    while [ -d "/proc/$pid" ]; do
+        watchdogMaintenance pulse || watchdog_status=1
+        elapsed=$(($(date +%s) - start))
+        if [ "$elapsed" -ge "$TIMEOUT_TIME" ]; then
+            echo "The installation process is not responding. It'll be stopped."
+            kill -9 "$pid" >> /dev/null 2>&1
+            break
+        fi
+        sleep "$REFRESH_TIME"
+    done
+    wait "$pid" || worker_status=$?
+    watchdogMaintenance disarm || watchdog_status=1
+    [ "$worker_status" -eq 0 ] && [ "$watchdog_status" -eq 0 ]
 }
 
 # Post-install script
+function manageAddonCode {
+    python3 -I - "$@" <<'KURA_ADDON_CODE_POLICY'
+raise RuntimeError("Kura addon-code policy was not embedded")
+KURA_ADDON_CODE_POLICY
+}
+
+function packageConfigure {
+    python3 -I -B - "$1" <<'KURA_CORE_CONFIGURE_PHASES'
+raise RuntimeError("Kura Core configure phases were not embedded")
+KURA_CORE_CONFIGURE_PHASES
+}
+
 function postInstall {
 
-    mkdir -p ${INSTALL_DIR} >> ${LOG} 2>&1
-
-    #install KURA files — deb unpacks directly under ${INSTALL_DIR}/kura (no zip intermediate)
-    if [ -d "${INSTALL_DIR}/kura/install" ]; then
-        sh ${INSTALL_DIR}/kura/install/kura_install.sh >> ${LOG} 2>&1
-    else
-        # Fallback for legacy installations that still use zip-based layout
-        KURA_VERSION_DIR=$(ls -d ${INSTALL_DIR}/kura_*/ 2>/dev/null | head -1)
-        if [ -n "${KURA_VERSION_DIR}" ]; then
-            sh ${KURA_VERSION_DIR}install/kura_install.sh >> ${LOG} 2>&1
-        else
-            echo "ERROR: No KURA installation files found" >> ${LOG} 2>&1
-            exit 1
-        fi
-    fi
-
-    #clean up
-    rm -rf ${INSTALL_DIR}/kura/install >> ${LOG} 2>&1
-
-    # Create siblings/ and the install-order registry. Each sibling .deb's
-    # postinst appends its own directory name to this file; the postrm deletes
-    # its line on remove|purge. gen_config_ini.sh reads this file to iterate
-    # siblings in install order (first-installed wins for duplicate JARs).
-    mkdir -p ${INSTALL_DIR}/kura/siblings
-    mkdir -p ${INSTALL_DIR}/kura/framework
-    if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
-        : > "${INSTALL_DIR}/kura/framework/sibling-install-order"
-    fi
-    chown -R kurad:kurad "${INSTALL_DIR}/kura/framework"
-    chmod 664 "${INSTALL_DIR}/kura/framework/sibling-install-order"
-
-    # Migration: drop the obsolete precedence config left by older kura-core
-    # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
-    rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
-
-    # Ensure the runtime log directory exists. Install logs are kept in /var/log
-    # so they survive package removal.
-    mkdir -p ${INSTALL_DIR}/kura/log
-
-    # Restore the runtime trees preserved by preinst across an in-place upgrade
-    # (user/ snapshots + keys, data/, packages/ deployment packages + registry,
-    # siblings/ sibling bundles, framework/sibling-install-order precedence).
-    # This overwrites the factory defaults just laid down by kura_install.sh with
-    # the user's state. Staging is left in place if the copy-back fails, so
-    # nothing is lost.
-    PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
-    RETAINED_DIR=/var/lib/kura-retained
-    WAS_UPGRADE=0
-    WAS_REINSTALL=0
-    if [ -e "${PRESERVE_DIR}" ] && [ -e "${RETAINED_DIR}" ]; then
-        echo "ERROR: both upgrade and removal recovery copies exist; neither will be overwritten." >> ${LOG} 2>&1
+    # The credential workflow uses umask 077. A newly created code prefix must
+    # still be traversable by the dedicated non-Root runtime identities.
+    # Existing prefixes are validated, never chmod/chowned as a data repair.
+    if [ -L "${INSTALL_DIR}" ]; then
+        echo "ERROR: installation prefix must be a physical directory" >> ${LOG} 2>&1
+        return 1
+    elif [ ! -e "${INSTALL_DIR}" ]; then
+        install -d -m 0755 "${INSTALL_DIR}" >> ${LOG} 2>&1 || return 1
+    elif [ ! -d "${INSTALL_DIR}" ]; then
+        echo "ERROR: installation prefix must be a physical directory" >> ${LOG} 2>&1
         return 1
     fi
-    if [ -d "${RETAINED_DIR}" ]; then
-        PRESERVE_DIR=${RETAINED_DIR}
-        WAS_REINSTALL=1
+
+    CONFIGURE_STATE=$(packageConfigure resume 2>>"${LOG}") || return 1
+    read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
+    if [ "${CONFIGURE_PHASE}" = NEW ]; then
+        CONFIGURE_STATE=$(packageConfigure begin 2>>"${LOG}") || return 1
+        read -r CONFIGURE_PHASE CONFIGURE_MODE CONFIGURE_HOME <<< "${CONFIGURE_STATE}"
+        [ "${CONFIGURE_PHASE}" = NEW ] || return 1
+        CONFIGURE_PHASE=INSTALLER
     fi
-    if [ -d "${PRESERVE_DIR}" ]; then
-        if [ "${WAS_REINSTALL}" = "0" ]; then
-            WAS_UPGRADE=1
-        fi
-        echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
-        RESTORE_OK=1
-        for d in user data packages log; do
-            if [ -d "${PRESERVE_DIR}/${d}" ]; then
-                mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
-                cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
-            fi
+    if [ "${CONFIGURE_PHASE}" = INSTALLER ]; then
+        local step
+        for step in layout brokers runtime https ownership; do
+            packageConfigure "setup-${step}" >> "${LOG}" 2>&1 || return 1
+            packageConfigure resume >> "${LOG}" 2>&1 || return 1
         done
-        # Keep newly unpacked helpers when siblings are upgraded in the same
-        # transaction; restore missing hooks after a core-only upgrade.
-        if [ -d "${PRESERVE_DIR}/addon-data" ]; then
-            mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1
-            cp -a -n "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
+        packageConfigure prepared >> "${LOG}" 2>&1 || return 1
+        CONFIGURE_PHASE=PREPARED
+    fi
+    WAS_UPGRADE=0
+    WAS_REINSTALL=0
+    case "${CONFIGURE_MODE}" in
+        upgrade) WAS_UPGRADE=1 ;;
+        reinstall) WAS_REINSTALL=1 ;;
+        install) ;;
+        *) return 1 ;;
+    esac
+
+    if [ "${CONFIGURE_PHASE}" = PREPARED ]; then
+        # The original packaged installer returned successfully. Its durable
+        # receipt precedes cleanup so configure can resume without running it again.
+        rm -rf "${CONFIGURE_HOME}/install" >> "${LOG}" 2>&1 || return 1
+
+        # Create siblings/ and the install-order registry. Each sibling .deb's
+        # postinst appends its own directory name to this file; the postrm deletes
+        # its line on remove|purge. gen_config_ini.sh reads this file to iterate
+        # siblings in install order (first-installed wins for duplicate JARs).
+        mkdir -p ${INSTALL_DIR}/kura/siblings
+        mkdir -p ${INSTALL_DIR}/kura/framework
+        if [ ! -f "${INSTALL_DIR}/kura/framework/sibling-install-order" ]; then
+            : > "${INSTALL_DIR}/kura/framework/sibling-install-order"
         fi
-        if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
-            if [ "${WAS_REINSTALL}" = "1" ]; then
-                cp -a "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
-            else
-                restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" /lib/systemd/system/kura.service >> ${LOG} 2>&1 || RESTORE_OK=0
-            fi
-            systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
-        fi
-        # dpkg unpacks every package in a transaction before configuring the
-        # core. A sibling directory already present here therefore contains
-        # the newly unpacked package; copying the backup over it would silently
-        # revert its bundles while dpkg records the new version as installed.
-        # Restore only whole sibling directories that were not unpacked again.
-        for sibling in "${PRESERVE_DIR}"/siblings/*; do
-            [ -d "${sibling}" ] || continue
-            sibling_name=${sibling##*/}
-            if [ ! -e "${INSTALL_DIR}/kura/siblings/${sibling_name}" ]; then
-                cp -a "${sibling}" "${INSTALL_DIR}/kura/siblings/${sibling_name}" >> ${LOG} 2>&1 || RESTORE_OK=0
-            fi
-        done
-        # Restore the sibling install-order registry so gen_config_ini.sh
-        # keeps the correct bundle precedence after the upgrade.
-        if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
-            cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> ${LOG} 2>&1 || true
-        fi
-        # Refresh the snapshot_0 recovery copy from the restored snapshots.
-        if [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
-            cp "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || true
-        fi
-        # The retained copy is outside /opt, so its original ownership has not
-        # been changed by the installer. Keep it on reinstall, including
-        # intentionally root-owned keys. Preserve the existing upgrade policy.
-        if [ "${WAS_REINSTALL}" = "0" ]; then
-            chown -R kurad:kurad "${INSTALL_DIR}/kura/user" "${INSTALL_DIR}/kura/data" "${INSTALL_DIR}/kura/packages" "${INSTALL_DIR}/kura/log" >> ${LOG} 2>&1 || true
-        fi
-        if [ "${RESTORE_OK}" = "1" ]; then
-            if ! rm -rf "${PRESERVE_DIR}" >> ${LOG} 2>&1; then
-                echo "ERROR: restored data but could not remove its recovery copy at ${PRESERVE_DIR}." >> ${LOG} 2>&1
-                return 1
-            fi
-            echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
-        else
-            echo "ERROR: could not fully restore preserved data; kept at ${PRESERVE_DIR} for recovery" >> ${LOG} 2>&1
+
+        # Migration: drop the obsolete precedence config left by older kura-core
+        # versions. Policy is now fixed (kura-core inviolable, first-installed wins).
+        rm -f "${INSTALL_DIR}/kura/framework/sibling-precedence.conf"
+
+        # Ensure the runtime log directory exists. Install logs are kept in /var/log
+        # so they survive package removal.
+        mkdir -p ${INSTALL_DIR}/kura/log
+
+        # Restore the runtime trees preserved by preinst across an in-place upgrade
+        # (user/ snapshots + keys, data/, packages/ deployment packages + registry,
+        # siblings/ sibling bundles, framework/sibling-install-order precedence).
+        # This overwrites the factory defaults just laid down by kura_install.sh with
+        # the user's state. Staging is left in place if the copy-back fails, so
+        # nothing is lost.
+        PRESERVE_DIR=${INSTALL_DIR}/.kura-preserve
+        RETAINED_DIR=/var/lib/kura-retained
+        if [ -e "${PRESERVE_DIR}" ] && [ -e "${RETAINED_DIR}" ]; then
+            echo "ERROR: both upgrade and removal recovery copies exist; neither will be overwritten." >> ${LOG} 2>&1
             return 1
         fi
+        if [ -d "${RETAINED_DIR}" ]; then
+            PRESERVE_DIR=${RETAINED_DIR}
+            WAS_REINSTALL=1
+        fi
+        if [ -d "${PRESERVE_DIR}" ]; then
+            if [ "${WAS_REINSTALL}" = "0" ]; then
+                WAS_UPGRADE=1
+            fi
+            echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
+            RESTORE_OK=1
+            local packages_route
+            packages_route=$(packageConfigure restore-packages) || return 1
+            case "${packages_route}" in
+                "COPY ${CONFIGURE_MODE} ${CONFIGURE_HOME}"|"PRESERVED ${CONFIGURE_MODE} ${CONFIGURE_HOME}") ;;
+                *) return 1 ;;
+            esac
+            for d in user data packages log; do
+                if [ "${d}" = packages ] && [[ "${packages_route}" == "PRESERVED "* ]]; then
+                    continue
+                fi
+                if [ -d "${PRESERVE_DIR}/${d}" ]; then
+                    mkdir -p "${INSTALL_DIR}/kura/${d}" >> ${LOG} 2>&1
+                    cp -a "${PRESERVE_DIR}/${d}/." "${INSTALL_DIR}/kura/${d}/" >> ${LOG} 2>&1 || RESTORE_OK=0
+                fi
+            done
+            # .data contains preserved runtime state and historical copies. Trusted
+            # addon code is published separately below; fresh defaults must not win
+            # over the gateway's old data, even when their names look like scripts.
+            if [ -d "${PRESERVE_DIR}/addon-data" ]; then
+                mkdir -p "${INSTALL_DIR}/kura/.data" >> ${LOG} 2>&1 || RESTORE_OK=0
+                cp -a "${PRESERVE_DIR}/addon-data/." "${INSTALL_DIR}/kura/.data/" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            manageAddonCode restore "${PRESERVE_DIR}/libexec/addons" "${INSTALL_DIR}/kura/libexec/addons" >> "${LOG}" 2>&1 || RESTORE_OK=0
+            if [ -f "${PRESERVE_DIR}/systemd/kura.service" ]; then
+                MAIN_RESTORE=$(python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" \
+                    --package-main-restore-decision "${PRESERVE_DIR}" 2>>"${LOG}") || return 1
+                case "${MAIN_RESTORE}" in
+                    vendor) ;;
+                    restore) restoreUpgradeSecret "${PRESERVE_DIR}/systemd/kura.service" \
+                        /lib/systemd/system/kura.service >> "${LOG}" 2>&1 || RESTORE_OK=0 ;;
+                    *) return 1 ;;
+                esac
+                systemctl daemon-reload >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            # dpkg unpacks every package in a transaction before configuring the
+            # core. A sibling directory already present here therefore contains
+            # the newly unpacked package; copying the backup over it would silently
+            # revert its bundles while dpkg records the new version as installed.
+            # Restore only whole sibling directories that were not unpacked again.
+            packageConfigure restore-siblings >> "${LOG}" 2>&1 || return 1
+            # Restore the sibling install-order registry so gen_config_ini.sh
+            # keeps the correct bundle precedence after the upgrade.
+            if [ -f "${PRESERVE_DIR}/framework/sibling-install-order" ]; then
+                cp -a "${PRESERVE_DIR}/framework/sibling-install-order" "${INSTALL_DIR}/kura/framework/sibling-install-order" >> "${LOG}" 2>&1 || RESTORE_OK=0
+            fi
+            # Keep an existing recovery copy, including an intentionally different
+            # historical snapshot. Only fill a missing copy; never follow a data link.
+            if [ ! -e "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ ! -L "${INSTALL_DIR}/kura/.data/snapshot_0.xml" ] && [ -f "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" ]; then
+                cp -a "${INSTALL_DIR}/kura/user/snapshots/snapshot_0.xml" "${INSTALL_DIR}/kura/.data/snapshot_0.xml" >> ${LOG} 2>&1 || RESTORE_OK=0
+            fi
+            # cp -a retains the gateway's numeric data/key owners and modes on both
+            # upgrade and reinstall. The code-only ownership pass below protects
+            # installed executables without changing those restored data owners.
+            if [ "${RESTORE_OK}" = "1" ]; then
+                # Repair installed code before releasing the recovery copy. Leave
+                # intentional restored data/key owners and modes unchanged.
+                python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+                if [ "${WAS_REINSTALL}" = "1" ]; then
+                    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --restore-retained-main-state >> ${LOG} 2>&1 || return 1
+                fi
+                python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
+                echo "Upgrade complete: previous snapshots, deployment packages and keys restored." >> ${LOG} 2>&1
+            else
+                echo "ERROR: could not fully restore preserved data; kept at ${PRESERVE_DIR} for recovery" >> ${LOG} 2>&1
+                return 1
+            fi
+        fi
+
+        # The outer postinst may have restored an old framework registry. Code-only
+        # normalization never rewrites retained key/data ownership or permissions.
+        python3 -I "${INSTALL_DIR}/kura/bin/kura_runtime_ownership.py" --code-only >> ${LOG} 2>&1 || return 1
+        if [ "${WAS_UPGRADE}" = "0" ] && [ "${WAS_REINSTALL}" = "0" ]; then
+            python3 -I -B "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --check-main-reboot-permissions >> "${LOG}" 2>&1 || return 1
+        fi
+
+        # The retained data and root code are final before new key operations are admitted.
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" restore_retained_sender >> ${LOG} 2>&1 || return 1
+        python3 -I -B "${INSTALL_DIR}/kura/bin/kura_network_sender_retention.py" restore >> "${LOG}" 2>&1 || return 1
+        packageConfigure ready >> "${LOG}" 2>&1 || return 1
+    elif [ "${CONFIGURE_PHASE}" != READY ]; then
+        return 1
     fi
+
+    packageConfigure retire-copy >> "${LOG}" 2>&1 || return 1
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_service_lifecycle.py" --leave >> ${LOG} 2>&1 || return 1
+    systemctl daemon-reload >> ${LOG} 2>&1 || return 1
+    systemctl enable --now kura-key-service.socket >> ${LOG} 2>&1 || return 1
+    systemctl enable --now kura-key-recovery.service >> ${LOG} 2>&1 || return 1
+    if systemctl is-active --quiet kura-management-agent-v2.service; then
+        systemctl start kura-snapshot-validation.socket >> "${LOG}" 2>&1 || return 1
+    fi
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" resume >> ${LOG} 2>&1 || return 1
+    python3 -I -B "${INSTALL_DIR}/kura/bin/kura_reboot_setup.py" resume >> ${LOG} 2>&1 || return 1
 
     #flush all cached filesystem to disk
     sync
 
     echo ""
     if [ "${WAS_UPGRADE}" = "1" ]; then
-        echo "Finished. KURA has been UPGRADED in place at ${INSTALL_DIR}/kura and will start automatically after a reboot"
+        echo "Finished. KURA has been UPGRADED in place at ${INSTALL_DIR}/kura; existing service enablement is preserved."
         echo "Snapshots, deployment packages and security keys were preserved."
-        SIBLINGS=$(installedSiblings)
-        if [ -n "${SIBLINGS}" ]; then
-            echo ""
-            echo "****************************************************************"
-            echo "UPGRADE WARNING: only kura-core was upgraded. These installed"
-            echo "sibling packages were NOT upgraded and may be incompatible with"
-            echo "the new core:"
-            echo "    ${SIBLINGS}"
-            echo "Reinstall the matching sibling .deb versions if the gateway"
-            echo "misbehaves."
-            echo "****************************************************************"
-        fi
+        reportRelatedPackages
     elif [ "${WAS_REINSTALL}" = "1" ]; then
         echo "Finished. KURA has been reinstalled at ${INSTALL_DIR}/kura; previous user data was restored."
     else
         echo "Finished. KURA has been installed to ${INSTALL_DIR}/kura and will start automatically after a reboot"
     fi
     echo ""
-    echo "****************************************************************"
-    echo "WARNING: Set the crypto service encryption key as explained in Eclipse Kura"
-    echo "documentation before rebooting to have snapshot encryption enabled."
-    echo "****************************************************************"
+    echo "Kura encryption key is provisioned privately; existing encrypted data was not reencrypted."
 }
 ##############################################
 # END UTILITY FUNCTIONS
@@ -280,11 +586,27 @@ function postInstall {
 # A failed remove or upgrade has not completed the installation workflow.
 # In particular, do not overwrite a recovery copy after prerm aborts.
 if [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-remove" ]; then
+    packageConfigure check-abort || exit 1
     echo "postinst called with $1: preserving the existing installation."
     exit 0
 fi
 
+if [ "$1" = triggered ]; then
+    packageConfigure sibling-code || exit 1
+    exit 0
+fi
+# dpkg retries a failed file trigger as ordinary configure. Only a completed
+# post-install for this package and this Root may bypass its service tail.
+if [ "$1" = configure ] && [ ! -e /var/lib/kura-key-service/maintenance.json ] &&
+        [ -d /var/lib/kura-key-service/package-history ]; then
+    route=$(packageConfigure configure-route) || exit 1
+    if [[ "$route" == "CONFIGURED "* ]]; then
+        packageConfigure sibling-code || exit 1
+        exit 0
+    fi
+fi
 runPostInstall || exit 1
+packageConfigure configured || exit 1
 exit 0
 #############################################
 # END POST INSTALL SCRIPT

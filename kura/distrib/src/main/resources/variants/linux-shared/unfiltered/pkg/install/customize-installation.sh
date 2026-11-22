@@ -116,5 +116,8 @@ fi
 customize_snapshot
 customize_kura_properties "${BOARD}"
 customize_iptables
-customize_ram "${BOARD}"
+# Generation publication binds all three installed launcher hashes, including the heap.
+if [ ! -e /var/lib/kura-key-service/generation-current.json ]; then
+    customize_ram "${BOARD}"
+fi
 

@@ -14,5 +14,11 @@ package org.eclipse.kura.linux.clock;
 
 public interface ClockSyncListener {
 
-    public void onClockUpdate(long offset, boolean changeSystemClock);
+    void onClockUpdate(long offset, boolean changeSystemClock);
+
+    /** Publish the sample time when the system clock is confirmed. */
+    default void applyNtpSample(long offset, Runnable recordSynchronization) {
+        onClockUpdate(offset, true);
+        recordSynchronization.run();
+    }
 }

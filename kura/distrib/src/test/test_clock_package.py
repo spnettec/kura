@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: EPL-2.0
+"""Package contracts; synthetic class headers are not runtime/OSGi proof."""
+import importlib.util
+import os
+from pathlib import Path
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+import unittest
+import zipfile
+
+SOURCE = Path(__file__).resolve().parents[1] / 'main/resources'
+sys.path.insert(0, str(SOURCE / 'unfiltered/pkg/bin'))
+import kura_clock_broker as broker
+
+
+class ClockPackageTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def assembly(self, capability='1.2.1', client=True):
+        home = self.root / 'package'; home.mkdir()
+        for name in broker.HELPERS:
+            target = home / name; target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(SOURCE / 'unfiltered/pkg' / name, target)
+        for name in broker.UNITS:
+            target = home / 'libexec/clock-broker' / name; target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(SOURCE / 'unfiltered/pkg/install' / name, target)
+        jar = home / 'plugins/4/org.eclipse.kura.linux.clock-2.0.0-SNAPSHOT.jar'
+        jar.parent.mkdir(parents=True)
+        manifest = 'Manifest-Version: 1.0\nBundle-SymbolicName: org.eclipse.kura.linux.clock\n'
+        if capability:
+            manifest += f'Provide-Capability: kura.clock.privilege;version:Version={capability}\n'
+        with zipfile.ZipFile(jar, 'w') as archive:
+            archive.writestr('META-INF/MANIFEST.MF', manifest + '\n')
+            if client:
+                archive.writestr('org/eclipse/kura/linux/clock/ClockPrivilegeClient.class', b'\xca\xfe\xba\xbe\0\0\0A')
+        return home
+
+    def test_manifest_binds_all_helpers_units_and_clock_consumer(self):
+        home = self.assembly(); value = broker.package_cohort(home)
+        self.assertEqual(14, len(value['files']))
+        self.assertEqual(set(broker.HELPERS), {name for name in value['files'] if name.startswith('bin/')})
+        self.assertEqual(['adjust-realtime', 'sync-rtc', 'start-chrony', 'stop-chrony', 'step-chrony', 'configure-chrony'],
+                         value['actions'])
+        self.assertEqual(0o644, stat.S_IMODE((home / broker.COHORT).stat().st_mode))
+
+    def test_repeated_assembly_regenerates_brokers_and_preserves_other_outputs(self):
+        spec = importlib.util.spec_from_file_location('prepare_key_service',
+                SOURCE.parents[2] / 'kura-core/prepare-key-service.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        home = self.assembly()
+        for name in ('bin', 'install'):
+            shutil.copytree(SOURCE / 'unfiltered/pkg' / name, home / name, dirs_exist_ok=True)
+        shutil.copyfile(SOURCE / 'filtered/pkg/install/kura.service', home / 'install/kura.service')
+        native = home.parent / 'native'
+        native.mkdir()
+        header = bytearray(64)
+        header[:7] = b'\x7fELF\x02\x01\x01'
+        header[18:20] = (183).to_bytes(2, 'little')
+        (native / 'worker-arm64').write_bytes(header)
+        builder.prepare_broker_packages(home, 'arm64')
+        libexec = home / 'libexec'
+        manifests = sorted(libexec.glob('*/cohort.json'))
+        self.assertEqual({'clock-broker', 'reboot-broker', 'journal-export', 'ownership-markers',
+                          'firewall-tables', 'firewall-publish', 'command-executor', 'modem-driver', 'bind-service',
+                          'dhcp-service', 'modem-reset'}, {manifest.parent.name for manifest in manifests})
+        original = (home / broker.COHORT).read_bytes()
+        for manifest in manifests:
+            (manifest.parent / 'retired-unit.service').touch()
+        other = libexec / 'key-backup'
+        other.mkdir()
+        (other / 'manifest.json').write_bytes(b'original')
+        with (home / broker.HELPERS[0]).open('ab') as stream:
+            stream.write(b'\n# Updated build input\n')
+        builder.prepare_broker_packages(home, 'arm64')
+        self.assertEqual(manifests, sorted(libexec.glob('*/cohort.json')))
+        self.assertFalse(list(libexec.glob('*/retired-unit.service')))
+        self.assertNotEqual(original, (home / broker.COHORT).read_bytes())
+        self.assertEqual(b'original', (other / 'manifest.json').read_bytes())
+
+        # Reject unexpected layouts before erasing any earlier broker output.
+        marker = manifests[0].parent / 'queued'
+        marker.touch()
+        (manifests[-1].parent / 'foreign-output').symlink_to(other)
+        with self.assertRaises(RuntimeError):
+            builder.prepare_broker_packages(home, 'arm64')
+        self.assertTrue(marker.is_file())
+        self.assertEqual(b'original', (other / 'manifest.json').read_bytes())
+
+    def test_main_has_no_system_clock_capability(self):
+        raw = (SOURCE / 'filtered/pkg/install/kura.service').read_text()
+        for key in ('CapabilityBoundingSet', 'AmbientCapabilities'):
+            with self.subTest(key=key):
+                values = [line.partition('=')[2].split() for line in raw.splitlines() if line.startswith(key + '=')]
+                self.assertEqual(1, len(values))
+                self.assertNotIn('cap_sys_time', [cap.lower() for cap in values[0]])
+
+    def test_cached_old_clock_bundle_cannot_be_paired(self):
+        for capability, client in ((False, True), ('1.0.0', True), ('1.1.0', True), ('1.2.0', True), ('1.2.1', False)):
+            home = self.assembly(capability, client)
+            with self.assertRaises((broker.Refused, KeyError)):
+                broker.package_cohort(home)
+            self.assertFalse((home / broker.COHORT).exists())
+            # Only this owned synthetic build input is removed between cases.
+            shutil.rmtree(home)
+
+    def test_missing_or_linked_helper_never_creates_pairing_manifest(self):
+        home = self.assembly(); path = home / broker.HELPERS[0]
+        original = path.read_bytes(); path.unlink(); target = self.root / 'outside-code'; target.write_bytes(original)
+        path.symlink_to(target)
+        with self.assertRaises(broker.Refused):
+            broker.package_cohort(home)
+        self.assertFalse((home / broker.COHORT).exists())
+
+    def test_actor_account_is_separate_from_key_control_and_has_only_clock_capability(self):
+        raw = (SOURCE / 'unfiltered/pkg/install/kura-clock-broker.service').read_text()
+        self.assertIn('\nUser=kura-clock\n', raw)
+        self.assertIn('\nGroup=kura-clock\n', raw)
+        self.assertNotIn('kura-key-control', raw)
+        self.assertIn('\nCapabilityBoundingSet=CAP_SYS_TIME\n', raw)
+        self.assertIn('\nAmbientCapabilities=CAP_SYS_TIME\n', raw)
+        self.assertIn('\nNoNewPrivileges=true\n', raw)
+        self.assertIn('\nPrivateDevices=true\n', raw)
+        self.assertNotIn('DeviceAllow=', raw)
+        self.assertNotIn('BindReadOnlyPaths=', raw)
+        self.assertIn('-/opt/eclipse/kura', raw)
+        relay = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_UNIT).read_text()
+        self.assertIn(' serve-rtc\n', relay)
+        self.assertIn('\nCapabilityBoundingSet=\nAmbientCapabilities=\n', relay)
+        self.assertIn('\nDevicePolicy=closed\nDeviceAllow=char-rtc r\n', relay)
+        listener = (SOURCE / 'unfiltered/pkg/install' / broker.RTC_SOCKET_UNIT).read_text()
+        self.assertIn('\nListenSequentialPacket=' + str(broker.RTC_SOCKET) + '\n', listener)
+
+    def test_step_relay_is_optional_and_capability_free(self):
+        relay = (SOURCE / 'unfiltered/pkg/install' / broker.STEP_SERVICE_UNIT).read_text()
+        self.assertIn('\nUser=_chrony\n', relay)
+        self.assertIn('\nSupplementaryGroups=kura-clock\n', relay)
+        self.assertIn('\nCapabilityBoundingSet=\nAmbientCapabilities=\n', relay)
+        self.assertIn('\nNoNewPrivileges=true\n', relay)
+        self.assertIn('\nRestrictAddressFamilies=AF_UNIX\n', relay)
+        raw = (SOURCE / 'unfiltered/pkg/install/kura-clock-broker.service').read_text()
+        self.assertNotIn(broker.STEP_SERVICE_UNIT, raw)
+
+    def prefix(self, path):
+        raw = (SOURCE / 'variants/linux/unfiltered/deb/control/postinst').read_text()
+        start = raw.index('    # The credential workflow uses umask 077.')
+        end = raw.index('    CONFIGURE_STATE=', start)
+        script = 'umask 077\ncheck_prefix() {\n' + raw[start:end] + '\n}\ncheck_prefix\n'
+        environment = os.environ.copy(); environment['INSTALL_DIR'] = str(path); environment['LOG'] = str(self.root / 'install.log')
+        return subprocess.run(['/bin/bash', '-c', script], env=environment, capture_output=True, text=True)
+
+    def test_new_code_prefix_is_traversable_even_under_private_umask(self):
+        path = self.root / 'new-code-prefix'
+        result = self.prefix(path)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(0o755, stat.S_IMODE(path.stat().st_mode))
+
+    def test_existing_private_prefix_is_not_chmod_or_chowned(self):
+        path = self.root / 'existing-prefix'; path.mkdir(mode=0o700)
+        before = path.stat(); result = self.prefix(path); after = path.stat()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual((before.st_ino, before.st_uid, before.st_gid, before.st_mode, before.st_mtime_ns, before.st_ctime_ns),
+                         (after.st_ino, after.st_uid, after.st_gid, after.st_mode, after.st_mtime_ns, after.st_ctime_ns))
+
+    def test_prefix_links_and_files_are_rejected_without_following_or_replacing(self):
+        for kind in ('broken-link', 'directory-link', 'file'):
+            path = self.root / kind; target = self.root / (kind + '-target')
+            if kind == 'directory-link':
+                target.mkdir(mode=0o700); path.symlink_to(target, target_is_directory=True)
+            elif kind == 'broken-link':
+                path.symlink_to(target)
+            else:
+                path.write_bytes(b'keep-original')
+            before = path.lstat()
+            self.assertNotEqual(0, self.prefix(path).returncode)
+            self.assertEqual(before.st_ino, path.lstat().st_ino)
+            if kind == 'broken-link':
+                self.assertFalse(target.exists())
+            if kind == 'file':
+                self.assertEqual(b'keep-original', path.read_bytes())
+
+
+if __name__ == '__main__':
+    unittest.main()

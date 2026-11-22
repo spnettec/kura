@@ -1,21 +1,54 @@
 [Unit]
+# Reject the start job before Restart=on-failure can compete with dpkg recovery.
+AssertPathExists=!/var/lib/kura-key-service/maintenance.json
+OnFailure=kura-key-recovery.service
 Description=Kura
-Wants=NetworkManager.service ModemManager.service dbus.service
-After=NetworkManager.service ModemManager.service dbus.service
+Wants=NetworkManager.service ModemManager.service dbus.service kura-journal-export.socket kura-ownership-markers.socket kura-firewall-tables.socket kura-firewall-publish.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
+Requires=kura-key-service.socket
+Requires=kura-clock-broker.socket
+Requires=kura-command-executor.socket
+After=NetworkManager.service ModemManager.service dbus.service kura-key-service.socket
+After=kura-clock-broker.socket kura-clock-broker.service
+After=kura-command-executor.socket
+After=kura-journal-export.socket kura-ownership-markers.socket kura-firewall-tables.socket kura-firewall-publish.socket kura-modem-driver.socket kura-bind-service.socket kura-dhcp-service.socket kura-modem-reset.socket kura-icmp-probe.socket
 
 [Service]
 User=kurad
 Group=kurad
+Environment=KURA_MANAGED_ICMP_PROBE=1
+Environment=KURA_MANAGED_FIREWALL_TABLES=1
+Environment=KURA_MANAGED_FIREWALL_PUBLICATION=1
+UMask=0077
 Type=forking
+ExecCondition=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_recovery_launch.py condition
+ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
+ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
+ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py
+# PID 1 removes PIDFile after each stop. Prepare the regular file before forking.
+ExecStartPre=+/usr/bin/setpriv --bounding-set=-all,+chown --inh-caps=-all --ambient-caps=-all --no-new-privs /usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_pid.py
 ExecStart=/bin/sh INSTALL_DIR/kura/bin/start_kura_background.sh
-ExecStopPost=/bin/sh -c 'if [ -f /tmp/watchdog ]; then echo w > `cat /tmp/watchdog`; fi'
+ExecStop=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_framework_stop.py ${MAINPID}
+ExecStopPost=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_watchdog_maintenance.py pulse
 PIDFile=/var/run/kura.pid
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143
-KillMode=process
-AmbientCapabilities=cap_net_admin cap_net_raw cap_dac_override cap_dac_read_search cap_net_bind_service cap_sys_boot cap_kill cap_sys_module cap_sys_time cap_sys_tty_config cap_syslog
-Environment=KURA_CRYPTO_SECRET_KEY=kura-dev-key-005
+# The synchronous ExecStop drains the JVM before the final cgroup cleanup.
+KillMode=control-group
+TimeoutStopSec=45s
+# Host operations are dispatched through their dedicated actors.
+AmbientCapabilities=cap_net_bind_service
+CapabilityBoundingSet=cap_net_bind_service
+NoNewPrivileges=yes
+# DAC capabilities must not make installed code or canonical credentials writable.
+# Keep ownership markers readable and let their external writers update them.
+ReadOnlyPaths=/opt/eclipse /etc/kura /etc/polkit-1 /run/kura-key-service /usr /etc/systemd /run/systemd /var/lib/dpkg -/etc/default/named -/etc/bind -/etc/default/dnsmasq -/etc/dnsmasq.d -/etc/dnsmasq.conf
+# Expose only the public reboot pairing to Main when /etc/kura is private.
+BindReadOnlyPaths=-/etc/kura/reboot-broker-authority.json:/run/kura-reboot-main-authority.json
+# PID 1 supplies the credentials below. Hide the canonical directory and broker state from Main.
+InaccessiblePaths=/etc/kura/credentials /var/lib/kura-key-service /var/lib/kura-key-recovery /etc/kura/recovery-tls /var/lib/kura-clock-broker /usr/libexec/kura-clock-broker -/var/lib/kura-reboot-broker /var/lib/kura-bind-service /var/lib/kura-dhcp-service /var/lib/kura-modem-reset
+ReadWritePaths=/opt/eclipse/kura/user /opt/eclipse/kura/data /opt/eclipse/kura/packages /opt/eclipse/kura/log /opt/eclipse/kura/.data
+LoadCredential=kura_encryption_key:/etc/kura/credentials/kura_encryption_key
 
 [Install]
 WantedBy=multi-user.target

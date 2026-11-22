@@ -2,22 +2,28 @@
 
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/opt/jvm/bin:/usr/java/bin:$PATH
 export MALLOC_ARENA_MAX=1
+# Keep PID, logs and generated runtime files private regardless of caller mask.
+umask 077
 
-DIR=$(cd $(dirname $0)/..; pwd)
-cd $DIR
+DIR=$(cd "$(dirname "$0")/.." && pwd) || exit 1
+cd "$DIR" || exit 1
+
+# Older installed launchers may have started a JVM without the instance lock.
+if pgrep -f '.*java.*org\.eclipse\.equinox\..*' >/dev/null; then
+    echo "Failed to start Kura. It is already running ..."
+    exit 1
+fi
 
 # set up the configuration area
-mkdir -p /tmp/.kura/configuration
-${DIR}/bin/gen_config_ini.sh ${DIR}/framework/config.ini ${DIR}/plugins ${DIR}/siblings > /tmp/.kura/configuration/config.ini
+# Use the same credential for the installed service and direct launchers.
+. "${DIR}/bin/kura_credential_env.sh" || exit 1
 
-KURA_RUNNING=`ps ax | grep java | grep "org.eclipse.equinox"`
+python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configuration || exit 1
 
-if [ -z "$KURA_RUNNING" ] ; then
-        exec java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
-        -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/var/log/kura-gc.log \
-        -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M \
-        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
-        -XX:ErrorFile=/var/log/kura-error.log \
+exec python3 -I "${DIR}/bin/kura_key_store.py" exec-java -Xms@kura.mem.size@ -Xmx@kura.mem.size@ \
+        -Xlog:gc*:file=log/kura-gc.log:time:filecount=10,filesize=100m \
+        -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=log/kura-heapdump.hprof \
+        -XX:ErrorFile=log/kura-error.log \
         -XX:+IgnoreUnrecognizedVMOptions \
         --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED \
         --add-modules=ALL-SYSTEM \
@@ -39,6 +45,3 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Declipse.consoleLog=true \
         -jar ${DIR}/plugins/org.eclipse.equinox.launcher-@org.eclipse.equinox.launcher.version@.jar \
         -configuration  /tmp/.kura/configuration
-else
-        echo "Failed to start Kura. It is already running ..."
-fi

@@ -1,0 +1,36 @@
+[Unit]
+Description=Kura read-only journal export
+PartOf=kura.service
+Requisite=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=kura-journal-export
+Group=kura-journal-export
+SupplementaryGroups=systemd-journal
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-journal-export/kura_journal_export.py serve %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+MemoryMax=64M
+TasksMax=8
+LimitFSIZE=33554432
+RuntimeMaxSec=45s
+TimeoutStopSec=5s

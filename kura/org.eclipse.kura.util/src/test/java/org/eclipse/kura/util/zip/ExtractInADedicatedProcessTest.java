@@ -218,6 +218,7 @@ public class ExtractInADedicatedProcessTest {
                 Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(entry);
 
                 assertTrue(permissions.contains(PosixFilePermission.OTHERS_READ), entry + " is not readable by the command user");
+                assertFalse(permissions.contains(PosixFilePermission.GROUP_WRITE), entry + " is group writable");
                 assertFalse(permissions.contains(PosixFilePermission.OTHERS_WRITE), entry + " is writable by the command user");
 
                 if (Files.isDirectory(entry)) {

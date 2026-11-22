@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -64,11 +63,10 @@ class SnapshotPersistenceTest {
         if (!setting.equals("default")) properties.setProperty("kura.snapshots.encrypt", setting);
         var crypto = mock(CryptoService.class);
         doAnswer(call -> {
-            OutputStream output = call.getArgument(1);
+            OutputStream output = call.getArgument(0);
             output.write("ENCRYPTED:".getBytes(StandardCharsets.UTF_8));
-            ((InputStream) call.getArgument(0)).transferTo(output);
-            return null;
-        }).when(crypto).encryptAes(any(InputStream.class), any(OutputStream.class));
+            return output;
+        }).when(crypto).aesEncryptingStream(any(OutputStream.class));
         var configs = new XmlComponentConfigurations();
         configs.setConfigurations(List.of(new ComponentConfigurationImpl("pid", null, Map.of("value", "x"))));
         invoke(service(properties, crypto), "writeSnapshot", new Class<?>[] {long.class, XmlComponentConfigurations.class},
@@ -84,7 +82,39 @@ class SnapshotPersistenceTest {
         assertEquals(setting.equals("false") ? XML : "ENCRYPTED:" + XML,
                 Files.readString(directory.resolve("snapshot_7.xml")));
         if (setting.equals("false")) verifyNoInteractions(crypto);
-        else verify(crypto, times(2)).encryptAes(any(InputStream.class), any(OutputStream.class));
+        else verify(crypto, times(2)).aesEncryptingStream(any(OutputStream.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void failedWritePreservesPublishedSnapshot(boolean encrypt) throws Exception {
+        var properties = new Properties();
+        properties.setProperty("kura.snapshots.encrypt", Boolean.toString(encrypt));
+        var crypto = mock(CryptoService.class);
+        when(crypto.aesEncryptingStream(any())).thenAnswer(call -> call.getArgument(0));
+        Path snapshot = directory.resolve("snapshot_7.xml");
+        Files.writeString(snapshot, "previous snapshot");
+        var service = new ConfigurationServiceImpl() {
+            @Override protected void marshal(OutputStream output, Object value) throws KuraException {
+                try {
+                    output.write(1);
+                    output.flush();
+                    assertEquals("previous snapshot", Files.readString(snapshot));
+                } catch (IOException e) {
+                    throw KuraException.internalError(e);
+                }
+                throw new KuraException(KuraErrorCode.ENCODE_ERROR);
+            }
+        };
+        configure(service, properties, crypto);
+        var configs = new XmlComponentConfigurations();
+        configs.setConfigurations(List.of());
+        assertThrows(KuraException.class, () -> invoke(service, "writeSnapshot",
+                new Class<?>[] {long.class, XmlComponentConfigurations.class}, 7L, configs));
+        assertEquals("previous snapshot", Files.readString(snapshot));
+        try (var entries = Files.list(directory)) {
+            assertEquals(List.of(snapshot), entries.toList());
+        }
     }
 
     @Test

@@ -27,6 +27,7 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.eclipse.kura.configuration.ComponentConfiguration;
+import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.configuration.metatype.AD;
 import org.eclipse.kura.configuration.metatype.Icon;
 import org.eclipse.kura.configuration.metatype.OCD;
@@ -43,10 +44,10 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
 
+    private static final String ESF_NAMESPACE_URI = "http://eurotech.com/esf/2.0";
     private static final String CONFIGURATIONS = "configurations";
     private static final String PROPERTIES = "properties";
 
@@ -56,9 +57,21 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY = "property";
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_NAME = "name";
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_ARRAY = "array";
+    private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_CONTAINER = "container";
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_ENCRYPTED = "encrypted";
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_TYPE = "type";
     private static final String CONFIGURATIONS_CONFIGURATION_PROPERTY_VALUE = "value";
+
+    private final CryptoService cryptoService;
+
+    public XmlJavaComponentConfigurationsMapper() {
+        this(null);
+    }
+
+    /** Standalone tools supply AES explicitly, without starting an OSGi framework. */
+    public XmlJavaComponentConfigurationsMapper(CryptoService cryptoService) {
+        this.cryptoService = cryptoService;
+    }
 
     private Document marshallDoc = null;
 
@@ -69,7 +82,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
             switch (event) {
             case XMLStreamConstants.START_ELEMENT:
                 if (r.getLocalName().equals(PROPERTIES)) {
-                    XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter();
+                    XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter(this.cryptoService);
                     XmlConfigPropertiesAdapted xmlPropertiesAdapted = paraProperties(r);
                     Map<String, Object> propertiesMap = xmlPropAdapter.unmarshal(xmlPropertiesAdapted);
                     return new ComponentConfigurationImpl(pid, null, propertiesMap);
@@ -130,9 +143,11 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                         encrypted = "false";
                     }
                     ConfigPropertyType cct = getType(type);
+                      String container = r.getAttributeValue("", CONFIGURATIONS_CONFIGURATION_PROPERTY_CONTAINER);
                     String[] values = paraValues(r);
                     XmlConfigPropertyAdapted xmlProperty = new XmlConfigPropertyAdapted(name, cct, values);
                     xmlProperty.setArray(Boolean.parseBoolean(array));
+                      readContainer(xmlProperty, container);
                     xmlProperty.setEncrypted(Boolean.parseBoolean(encrypted));
                     proAdas.add(xmlProperty);
                 }
@@ -155,12 +170,15 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
     public Element marshal(Document doc, Object object) throws Exception {
         this.marshallDoc = doc;
         Element configurations = doc.createElement(ESF_NAMESPACE + ":" + CONFIGURATIONS);
-        configurations.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:esf", "http://eurotech.com/esf/2.0");
+        configurations.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:esf", ESF_NAMESPACE_URI);
         configurations.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:ocd",
                 "http://www.osgi.org/xmlns/metatype/v1.2.0");
         doc.appendChild(configurations);
 
         XmlComponentConfigurations xmlCompConfig = (XmlComponentConfigurations) object;
+        if (xmlCompConfig.getPasswordEncoding() != null) {
+            configurations.setAttribute("passwordEncoding", xmlCompConfig.getPasswordEncoding());
+        }
         List<ComponentConfiguration> configs = xmlCompConfig.getConfigurations();
 
         if (configs != null) {
@@ -178,11 +196,14 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                 factory.createXMLStreamWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)));
         xml.writeStartDocument("UTF-8", "1.0");
         xml.writeStartElement("esf", "configurations", "");
-        xml.setPrefix("esf", "http://eurotech.com/esf/2.0");
-        xml.writeNamespace("esf", "http://eurotech.com/esf/2.0");
+        xml.setPrefix("esf", ESF_NAMESPACE_URI);
+        xml.writeNamespace("esf", ESF_NAMESPACE_URI);
         xml.setPrefix("ocd", "http://www.osgi.org/xmlns/metatype/v1.2.0");
         xml.writeNamespace("ocd", "http://www.osgi.org/xmlns/metatype/v1.2.0");
         XmlComponentConfigurations xmlCompConfig = (XmlComponentConfigurations) object;
+        if (xmlCompConfig.getPasswordEncoding() != null) {
+            xml.writeAttribute("passwordEncoding", xmlCompConfig.getPasswordEncoding());
+        }
         List<ComponentConfiguration> configs = xmlCompConfig.getConfigurations();
         for (ComponentConfiguration config : configs) {
             String configPid = config.getPid();
@@ -238,7 +259,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
             }
             if (configProperty != null) {
                 xml.writeStartElement("esf", "properties", "");
-                XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter();
+                XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter(this.cryptoService);
                 XmlConfigPropertiesAdapted configPropAdapted = xmlPropAdapter.marshal(configProperty);
 
                 XmlConfigPropertyAdapted[] propArray = configPropAdapted.getProperties();
@@ -256,6 +277,9 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
                     }
                     if (array) {
                         xml.writeAttribute("array", array.toString());
+                    }
+                    if (propertyObj.getContainer() != null) {
+                        xml.writeAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_CONTAINER, propertyObj.getContainer().name());
                     }
                     if (encrypted) {
                         xml.writeAttribute("encrypted", encrypted.toString());
@@ -347,15 +371,11 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
     @Override
     public <T> T unmarshal(Document doc) throws Exception {
         XmlComponentConfigurations xcc = new XmlComponentConfigurations();
-
-        // Get all configurations
-        NodeList configurationList = doc.getElementsByTagName(ESF_NAMESPACE + ":" + CONFIGURATIONS_CONFIGURATION);
+        xcc.setPasswordEncoding(doc.getDocumentElement().getAttribute("passwordEncoding"));
 
         List<ComponentConfiguration> compConfList = new ArrayList<>();
-        // Iterate through all the configuration elements inside configurations tag
-        for (int configIndex = 0; configIndex < configurationList.getLength(); configIndex++) {
-            Element configuration = (Element) configurationList.item(configIndex);
-            ComponentConfiguration cci = parseConfiguration(configuration);
+        for (Element configuration : children(doc.getDocumentElement(), CONFIGURATIONS_CONFIGURATION)) {
+            ComponentConfiguration cci = parseConfiguration(configuration, xcc.hasLogicalPasswords());
             compConfList.add(cci);
         }
         xcc.setConfigurations(compConfList);
@@ -395,7 +415,7 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
     }
 
     private void marshallProperties(Map<String, Object> propertyMap, Element properties) throws Exception {
-        XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter();
+        XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter(this.cryptoService);
         XmlConfigPropertiesAdapted configPropAdapted = xmlPropAdapter.marshal(propertyMap);
 
         XmlConfigPropertyAdapted[] propArray = configPropAdapted.getProperties();
@@ -424,6 +444,10 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
             Attr attArray = this.marshallDoc.createAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_ARRAY);
             attArray.setNodeValue(array.toString());
             property.setAttributeNode(attArray);
+
+            if (propertyObj.getContainer() != null) {
+                property.setAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_CONTAINER, propertyObj.getContainer().name());
+            }
 
             Attr attEncrypted = this.marshallDoc.createAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_ENCRYPTED);
             attEncrypted.setNodeValue(encrypted.toString());
@@ -480,44 +504,29 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
     //
     // Unmarshaller's private methods
     //
-    private ComponentConfiguration parseConfiguration(Element configuration) throws Exception {
-        XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter();
-
-        // get configuration's properties
-        NodeList propertiesList = configuration.getChildNodes();
-
-        // get effective elements
-        Element[] propertiesArray = getElementNodes(propertiesList);
+    private ComponentConfiguration parseConfiguration(Element configuration, boolean logicalPasswords) throws Exception {
+        XmlConfigPropertiesAdapter xmlPropAdapter = new XmlConfigPropertiesAdapter(this.cryptoService, logicalPasswords);
 
         XmlConfigPropertiesAdapted xmlPropertiesAdapted = new XmlConfigPropertiesAdapted();
-        for (Element element : propertiesArray) {
-            // parse property elements
-            NodeList propertyList = element.getChildNodes();
-            Element[] propertyArray = getElementNodes(propertyList);
-
-            XmlConfigPropertyAdapted[] xmlConfigProperties = new XmlConfigPropertyAdapted[propertyArray.length];
-            for (int propertyIndex = 0; propertyIndex < propertyArray.length; propertyIndex++) {
-                XmlConfigPropertyAdapted xmlProperty = parseProperty(propertyArray[propertyIndex]);
-                xmlConfigProperties[propertyIndex] = xmlProperty;
+        for (Element properties : children(configuration, PROPERTIES)) {
+            List<XmlConfigPropertyAdapted> adapted = new ArrayList<>();
+            for (Element property : children(properties, CONFIGURATIONS_CONFIGURATION_PROPERTY)) {
+                adapted.add(parseProperty(property));
             }
-            xmlPropertiesAdapted.setProperties(xmlConfigProperties);
+            xmlPropertiesAdapted.setProperties(adapted.toArray(XmlConfigPropertyAdapted[]::new));
         }
 
         Map<String, Object> propertiesMap = xmlPropAdapter.unmarshal(xmlPropertiesAdapted);
 
         String pid = configuration.getAttribute(CONFIGURATION_PID);
-        return new ComponentConfigurationImpl(pid, null, propertiesMap);
+        ComponentConfigurationImpl result = new ComponentConfigurationImpl(pid, null, propertiesMap);
+        result.setLogicalPasswords(logicalPasswords);
+        return result;
     }
 
     private XmlConfigPropertyAdapted parseProperty(Element property) {
-        NodeList valuesList = property.getChildNodes();
-        Element[] valuesArray = getElementNodes(valuesList);
-        String[] values = new String[valuesArray.length];
-
-        // get values
-        for (int valIndex = 0; valIndex < valuesArray.length; valIndex++) {
-            values[valIndex] = valuesArray[valIndex].getTextContent();
-        }
+        String[] values = children(property, CONFIGURATIONS_CONFIGURATION_PROPERTY_VALUE).stream()
+                .map(Element::getTextContent).toArray(String[]::new);
 
         String name = property.getAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_NAME);
         String type = property.getAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_TYPE);
@@ -528,21 +537,34 @@ public class XmlJavaComponentConfigurationsMapper implements XmlJavaDataMapper {
 
         XmlConfigPropertyAdapted xmlProperty = new XmlConfigPropertyAdapted(name, cct, values);
         xmlProperty.setArray(Boolean.parseBoolean(array));
+        readContainer(xmlProperty, property.getAttribute(CONFIGURATIONS_CONFIGURATION_PROPERTY_CONTAINER));
         xmlProperty.setEncrypted(Boolean.parseBoolean(encrypted));
 
         return xmlProperty;
     }
 
-    private Element[] getElementNodes(NodeList propertiesList) {
-        List<Element> elementList = new ArrayList<>();
-        for (int propIndex = 0; propIndex < propertiesList.getLength(); propIndex++) {
-            Node currentNode = propertiesList.item(propIndex);
-            if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element el = (Element) currentNode;
-                elementList.add(el);
+    private static void readContainer(XmlConfigPropertyAdapted property, String container) {
+        if (container != null && !container.isEmpty()) {
+            property.setContainer(XmlConfigPropertyAdapted.Container.valueOf(container));
+        }
+    }
+
+    private static List<Element> children(Element parent, String name) {
+        List<Element> result = new ArrayList<>();
+        for (Node node = parent.getFirstChild(); node != null; node = node.getNextSibling()) {
+            if (node instanceof Element child) {
+                // The DOM writer and callers using a namespace-unaware builder retain qualified tag names.
+                boolean esf = child.getLocalName() == null ? (ESF_NAMESPACE + ":" + name).equals(child.getTagName())
+                        : ESF_NAMESPACE_URI.equals(child.getNamespaceURI()) && name.equals(child.getLocalName());
+                // Older snapshots also stored unqualified properties and values inside an ESF configuration.
+                boolean legacyProperty = !CONFIGURATIONS_CONFIGURATION.equals(name) && child.getNamespaceURI() == null
+                        && name.equals(child.getTagName());
+                if (esf || legacyProperty) {
+                    result.add(child);
+                }
             }
         }
-        return elementList.toArray(new Element[0]);
+        return result;
     }
 
     private ConfigPropertyType getType(String type) {

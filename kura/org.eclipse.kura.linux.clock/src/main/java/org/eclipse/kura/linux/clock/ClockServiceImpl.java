@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.kura.linux.clock;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -25,10 +26,6 @@ import org.eclipse.kura.KuraException;
 import org.eclipse.kura.clock.ClockEvent;
 import org.eclipse.kura.clock.ClockService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
-import org.eclipse.kura.crypto.CryptoService;
-import org.eclipse.kura.executor.Command;
-import org.eclipse.kura.executor.CommandExecutorService;
-import org.eclipse.kura.executor.CommandStatus;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +37,10 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
     private static final Logger logger = LoggerFactory.getLogger(ClockServiceImpl.class);
 
     private EventAdmin eventAdmin;
-    private CommandExecutorService executorService;
-    private CryptoService cryptoService;
+    private org.eclipse.kura.system.SystemService systemService;
+    private ClockPrivilegeClient clockPrivilegeClient;
     private ClockSyncProvider provider;
+    private ClockSyncProvider callbackSource;
 
     private ClockServiceConfig clockServiceConfig;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -61,16 +59,22 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
         this.eventAdmin = null;
     }
 
-    public void setExecutorService(CommandExecutorService executorService) {
-        this.executorService = executorService;
+    public void setSystemService(org.eclipse.kura.system.SystemService systemService) {
+        this.systemService = systemService;
     }
 
-    public void unsetExecutorService(CommandExecutorService executorService) {
-        this.executorService = null;
+    protected ClockPrivilegeClient createClockPrivilegeClient() {
+        if (this.systemService == null) {
+            throw new IllegalArgumentException("SystemService is required for durable clock decisions");
+        }
+        return new ClockPrivilegeClient(this.systemService.getKuraDataDirectory());
     }
 
-    public void setCryptoService(CryptoService cryptoService) {
-        this.cryptoService = cryptoService;
+    private ClockPrivilegeClient clockPrivilegeClient() {
+        if (this.clockPrivilegeClient == null) {
+            this.clockPrivilegeClient = createClockPrivilegeClient();
+        }
+        return this.clockPrivilegeClient;
     }
 
     // ----------------------------------------------------------------
@@ -123,6 +127,8 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             return;
         }
         logger.info("New configuration for Clock Service");
+        // Drain any sample already being applied before publishing the new RTC selection.
+        setCallbackSource(null);
         this.clockServiceConfig = newClockServiceConfig;
 
         if (this.clockServiceConfig.isEnabled()) {
@@ -175,18 +181,48 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
             logger.error("NTPD clock provider is not supported anymore. Use JAVA_NTP or CHRONY_ADVANCED instead.");
             return;
         case CHRONY_ADVANCED:
-            this.provider = new ChronyClockSyncProvider(this.executorService, this.cryptoService);
+            this.provider = new ChronyClockSyncProvider(clockPrivilegeClient());
             break;
 
         default:
             throw new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_INVALID);
         }
 
-        this.provider.init(this.clockServiceConfig, this.scheduler, this);
-        this.provider.start();
+        ClockSyncProvider source = this.provider;
+        source.init(this.clockServiceConfig, this.scheduler, new ClockSyncListener() {
+
+            @Override
+            public void onClockUpdate(long offset, boolean changeSystemClock) {
+                onProviderUpdate(source, offset, changeSystemClock, null);
+            }
+
+            @Override
+            public void applyNtpSample(long offset, Runnable recordSynchronization) {
+                onProviderUpdate(source, offset, true, recordSynchronization);
+            }
+        });
+        setCallbackSource(source);
+        try {
+            source.start();
+        } catch (KuraException | RuntimeException e) {
+            setCallbackSource(null);
+            throw e;
+        }
+    }
+
+    private synchronized void setCallbackSource(ClockSyncProvider source) {
+        this.callbackSource = source;
+    }
+
+    private synchronized void onProviderUpdate(ClockSyncProvider source, long offset, boolean changeSystemClock,
+            Runnable recordSynchronization) {
+        if (source == this.callbackSource) {
+            applyClockUpdate(offset, changeSystemClock, recordSynchronization);
+        }
     }
 
     private void stopClockSyncProvider() throws KuraException {
+        setCallbackSource(null);
         if (this.provider != null) {
             this.provider.stop();
             this.provider = null;
@@ -198,43 +234,53 @@ public class ClockServiceImpl implements ConfigurableComponent, ClockService, Cl
      */
     @Override
     public void onClockUpdate(long offset, boolean changeSystemClock) {
+        applyClockUpdate(offset, changeSystemClock, null);
+    }
+
+    private void applyClockUpdate(long offset, boolean changeSystemClock, Runnable recordSynchronization) {
 
         logger.info("Clock update. Offset: {}", offset);
 
         // set system clock if necessary
         boolean bClockUpToDate = false;
         if (offset != 0 && changeSystemClock) {
-            long time = System.currentTimeMillis() + offset;
-            Command command = new Command(new String[] { "date", "-s", "@" + Long.toString(time / 1000) });
-            command.setTimeout(60);
-            CommandStatus status = this.executorService.execute(command);
-            if (status.getExitStatus().isSuccessful()) {
-                bClockUpToDate = true;
-                logger.info("System Clock Updated to {}", new Date());
-            } else {
-                logger.error(
-                        "Unexpected error while updating System Clock - rc = {}, CommandLine:{}, it should've been {}",
-                        status.getExitStatus().getExitCode(), command.getCommandLine(), new Date());
+            try {
+                bClockUpToDate = clockPrivilegeClient().adjustRealtime(offset);
+                if (bClockUpToDate) {
+                    logger.info("System Clock Updated to {}", new Date());
+                } else {
+                    logger.warn("Clock sample was not applied; preserve the original broker decision");
+                }
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                logger.warn("Clock broker interrupted; preserve the original decision");
+            } catch (IOException | IllegalArgumentException error) {
+                logger.error("Clock broker unavailable; preserve the original decision", error);
             }
         } else {
             bClockUpToDate = true;
         }
 
-        if (this.clockServiceConfig.isHwclockEnabled() && changeSystemClock) {
-            Command command = new Command(
-                    new String[] { "hwclock", "--utc", "--systohc", "-f", this.clockServiceConfig.getRtcFilename() });
-            command.setTimeout(60);
-            CommandStatus status = this.executorService.execute(command);
-            if (status.getExitStatus().isSuccessful()) {
-                logger.info("Hardware Clock Updated");
-            } else {
-                logger.error("Unexpected error while updating Hardware Clock - rc = {}",
-                        status.getExitStatus().getExitCode());
+        if (this.clockServiceConfig.isHwclockEnabled() && changeSystemClock && bClockUpToDate) {
+            try {
+                if (clockPrivilegeClient().syncRtc(this.clockServiceConfig.getRtcFilename())) {
+                    logger.info("Hardware Clock Updated");
+                } else {
+                    logger.warn("RTC synchronization was not applied; preserve the original broker decision");
+                }
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                logger.warn("RTC broker interrupted; preserve the original decision");
+            } catch (IOException | IllegalArgumentException error) {
+                logger.error("RTC broker unavailable; preserve the original decision", error);
             }
         }
 
         // Raise the event
         if (bClockUpToDate) {
+            if (recordSynchronization != null) {
+                recordSynchronization.run();
+            }
             this.eventAdmin.postEvent(EMPTY_EVENT);
         }
     }

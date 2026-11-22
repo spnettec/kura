@@ -110,4 +110,22 @@ public final class TypeUtil {
         return -1;
     }
 
+
+    /**
+     * Converts bytes to a lowercase hexadecimal string in the original byte order.
+     *
+     * @param value the bytes to convert
+     * @return two hexadecimal digits per byte
+     * @throws NullPointerException if value is null
+     * @since 1.3
+     */
+    public static String toHexString(byte[] value) {
+        StringBuilder result = new StringBuilder(value.length * 2);
+        for (byte item : value) {
+            result.append(Character.forDigit((item >> 4) & 0xF, 16));
+            result.append(Character.forDigit(item & 0xF, 16));
+        }
+        return result.toString();
+    }
+
 }

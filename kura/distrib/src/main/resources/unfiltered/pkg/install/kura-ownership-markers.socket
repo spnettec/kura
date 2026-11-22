@@ -1,0 +1,10 @@
+[Unit]
+Description=Kura network ownership marker socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-ownership-markers.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+RemoveOnStop=yes

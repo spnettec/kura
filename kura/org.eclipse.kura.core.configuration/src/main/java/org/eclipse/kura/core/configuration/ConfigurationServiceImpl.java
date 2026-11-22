@@ -16,6 +16,7 @@ package org.eclipse.kura.core.configuration;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -25,8 +26,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -35,9 +39,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -85,6 +92,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
@@ -134,6 +142,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     // maps either service.pid or service.factoryPid to the related OCD
     private final Map<String, Tocd> ocds;
+    private final Map<Bundle, Map<String, MetadataDefinition>> bundleMetadata = new HashMap<>();
+    private boolean stopping;
 
     // contains the service.factoryPid of all Factory Components
     private final Set<TrackedComponentFactory> factoryPids;
@@ -150,13 +160,19 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     // maps the kura.service.pid to the names of the properties known to be passwords, used to restore their type
     // while the metatype of the component has not been tracked yet
     private final Map<String, Set<String>> passwordPropertiesByPid;
+    // SCC read workers can re-enter an ordinary CM read while their caller owns Core.
+    // This cache must not make those reads acquire the caller-owned Core monitor.
+    private final Object passwordPropertiesLock = new Object();
 
     private final ExternalConfigurations externalConfigurations = new ExternalConfigurations(
             System.getProperty(ExternalConfigurations.RESERVED_PIDS_PROPERTY, ""));
     private final ConfigurationRevision configurationRevision = new ConfigurationRevision();
     private final Map<String, Long> revisionAdmissions = new HashMap<>();
     private final Map<String, Map<String, Object>> revisionPending = new HashMap<>();
+    private final Map<String, RollbackConvergence> rollbackConvergence = new HashMap<>();
     private final Set<String> revisionUncertain = new HashSet<>();
+    private ConfigurationIntentJournal intentJournal;
+    private final ProviderConfigurationReads providerReads = new ProviderConfigurationReads();
 
     // ----------------------------------------------------------------
     //
@@ -258,16 +274,20 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     protected void activate(ComponentContext componentContext) throws InvalidSyntaxException {
         logger.info("activate...");
+        this.stopping = false;
 
         // save the bundle context
         this.ctx = componentContext;
         this.bundleContext = componentContext.getBundleContext();
 
-        // Load the latest snapshot and push it to ConfigurationAdmin
+        // A crash after dispatch must never be hidden by replaying an older snapshot into CM.
         try {
+            initializeIntentJournal(java.nio.file.Path.of(this.systemService.getKuraDataDirectory()));
+            this.intentJournal.requireStartup();
             loadLatestSnapshotInConfigAdmin();
         } catch (Exception e) {
-            throw new ComponentException("Error loading latest snapshot", e);
+            closeIntentJournal();
+            throw new ComponentException("Error loading latest snapshot or unresolved configuration dispatch", e);
         }
 
         this.bundleTracker = new ComponentMetaTypeBundleTracker(this.ctx.getBundleContext(), this);
@@ -275,60 +295,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     protected void addConfigurableComponent(final ServiceReference<ConfigurableComponent> reference) {
-
-        Object serviceIds = reference.getProperty(Constants.SERVICE_PID);
-        String servicePid = makeString(serviceIds);
-        if (serviceIds instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<String> servicePids = (List<String>) serviceIds;
-            if (!servicePids.isEmpty()) {
-                logger.error("addConfigurableComponent have multiple servicePids:{}", servicePids);
-                servicePid = servicePids.get(servicePids.size() - 1);
-            } else {
-                logger.error("addConfigurableComponent get null servicePids list");
-            }
-        }
-
+        final String servicePid = getServicePid(reference);
         if (servicePid == null) {
-            logger.error("addConfigurableComponent pid is null. properties:{}", reference.getProperties());
             return;
         }
-
         final String kuraPid = makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID));
         final String factoryPid = makeString(reference.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID));
-
         registerComponentConfiguration(kuraPid, servicePid, factoryPid);
     }
 
     protected void removeConfigurableComponent(final ServiceReference<ConfigurableComponent> reference) {
-
-        Object serviceIds = reference.getProperty(Constants.SERVICE_PID);
-        String servicePid = makeString(serviceIds);
-        if (serviceIds instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<String> servicePids = (List<String>) serviceIds;
-            if (!servicePids.isEmpty()) {
-                logger.error("removeConfigurableComponent have multiple servicePids:{}", servicePids);
-                servicePid = servicePids.get(servicePids.size() - 1);
-            } else {
-                logger.error("removeConfigurableComponent get null servicePids list");
-            }
-        }
-
-        if (servicePid == null) {
-            logger.error("removeConfigurableComponent pid is null. properties:{}", reference.getProperties());
+        // CM may already have removed the configuration;release the registered
+        // logical component without resolving its former multi-value service PID.
+        if (distinctValues(reference.getProperty(Constants.SERVICE_PID)).isEmpty()) {
             return;
         }
-
         final String kuraPid = makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID));
-
         unregisterComponentConfiguration(kuraPid);
     }
 
     protected void addSelfConfiguringComponent(final ServiceReference<SelfConfiguringComponent> reference) {
 
         final String kuraPid = makeString(reference.getProperty(ConfigurationService.KURA_SERVICE_PID));
-        final String servicePid = makeString(reference.getProperty(Constants.SERVICE_PID));
+        final String servicePid = getServicePid(reference);
 
         // A SelfConfiguringComponent may not carry a service.pid at all; register it under its
         // kura.service.pid in that case so it still shows up in the configuration (#6384).
@@ -341,13 +330,45 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     }
 
-    protected void deactivate() {
+    protected synchronized void deactivate() {
         logger.info("deactivate...");
+        this.stopping = true;
+        this.providerReads.close();
+        closeIntentJournal();
 
         if (this.bundleTracker != null) {
             this.bundleTracker.close();
             this.bundleTracker = null;
         }
+    }
+
+    void initializeIntentJournal(java.nio.file.Path dataDirectory) throws KuraException {
+        if (this.intentJournal != null) { throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR); }
+        this.intentJournal = ConfigurationIntentJournal.open(dataDirectory.resolve("configuration-dispatch-journal-v1"));
+        ControlledRecovery.registerIntentJournal(this.intentJournal);
+    }
+
+    private void closeIntentJournal() {
+        if (this.intentJournal != null) {
+            ControlledRecovery.unregisterIntentJournal(this.intentJournal);
+            try { this.intentJournal.close(); }
+            catch (java.io.IOException e) { logger.error("Cannot close configuration dispatch journal", e); }
+            this.intentJournal = null;
+        }
+    }
+
+    private void requireOrdinaryWrite() throws KuraException {
+        ControlledRecovery.requireOrdinaryWrite();
+        if (this.intentJournal != null) { this.intentJournal.requireOrdinaryWrite(); }
+    }
+
+    private ConfigurationIntentJournal.Ticket beginDispatch(String operation, Set<String> scope) throws KuraException {
+        // A published DS service always initialized its journal in activate. Unactivated test subclasses have no store.
+        return this.intentJournal == null ? null : this.intentJournal.begin(operation, scope);
+    }
+
+    private static void completeDispatch(ConfigurationIntentJournal.Ticket ticket) throws KuraException {
+        if (ticket != null) { ticket.complete(); }
     }
 
     // ----------------------------------------------------------------
@@ -358,11 +379,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public Set<String> getConfigurableComponentPids() {
-        Set<String> result = new HashSet<>();
-        result.addAll(this.allActivatedPids);
-        result.addAll(this.waittingForActivatedPids);
+        return Collections.unmodifiableSet(snapshotConfigurablePids());
+    }
 
-        return Collections.unmodifiableSet(result);
+    private synchronized Set<String> snapshotConfigurablePids() {
+        Set<String> pids = new LinkedHashSet<>(this.allActivatedPids);
+        pids.addAll(this.waittingForActivatedPids);
+        return pids;
     }
 
     // Don't perform internal calls to this method
@@ -373,50 +396,71 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public List<ComponentConfiguration> getComponentConfigurations(final Filter filter) throws KuraException {
-
-        if (filter == null) {
-            return getComponentConfigurationsInternal();
-        }
-
-        try {
-            final ServiceReference<?>[] refs = this.bundleContext.getAllServiceReferences(null, null);
-            if (refs == null) {
-                return Collections.emptyList();
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            if (filter == null) {
+                return getComponentConfigurationsInternal();
             }
-            final List<ComponentConfiguration> result = new ArrayList<>(refs.length);
 
-            for (final ServiceReference<?> ref : refs) {
-
-                if (!filter.match(ref)) {
-                    continue;
+            try {
+                final ServiceReference<?>[] refs = this.bundleContext.getAllServiceReferences(null, null);
+                if (refs == null) {
+                    return Collections.emptyList();
                 }
+                final List<ComponentConfiguration> result = new ArrayList<>(refs.length);
+                final Set<String> selectedPids = new HashSet<>();
 
-                final Object kuraServicePid = ref.getProperty(KURA_SERVICE_PID);
+                for (final ServiceReference<?> ref : refs) {
 
-                if (kuraServicePid instanceof String) {
-                    final ComponentConfiguration config = getComponentConfigurationInternal((String) kuraServicePid);
+                    if (!filter.match(ref)) {
+                        continue;
+                    }
 
-                    if (config != null) {
-                        result.add(config);
+                    final Object kuraServicePid = ref.getProperty(KURA_SERVICE_PID);
+
+                    // The filter applies to registrations; the result contains
+                    // one configuration view per matching logical Kura PID.
+                    if (kuraServicePid instanceof String && selectedPids.add((String) kuraServicePid)) {
+                        final ComponentConfiguration config = getComponentConfigurationInternal((String) kuraServicePid);
+
+                        if (config != null) {
+                            result.add(config);
+                        }
                     }
                 }
+
+                return result;
+            } catch (final Exception e) {
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
             }
-
-            return result;
-        } catch (final Exception e) {
-            throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
         }
-
     }
 
     // Don't perform internal calls to this method
     @Override
     public ComponentConfiguration getComponentConfiguration(String pid) throws KuraException {
         ComponentConfiguration tempConfig = getComponentConfigurationInternal(pid);
-        if (tempConfig != null && tempConfig.getConfigurationProperties() != null) {
-            decryptConfigurationProperties(tempConfig.getConfigurationProperties());
+        if (!passwordValuesAreLogical(pid, tempConfig) && tempConfig != null
+                && tempConfig.getConfigurationProperties() != null) {
+            // Provider maps can be immutable or retained by NM/Asset: never decode them in place.
+            if (tempConfig instanceof ComponentConfigurationImpl impl) {
+                ComponentConfigurationImpl detached = new ComponentConfigurationImpl(pid, impl.getDefinition(),
+                        new HashMap<>(impl.getConfigurationProperties()));
+                decryptConfigurationProperties(detached.getConfigurationProperties());
+                detached.setLogicalPasswords(true);
+                tempConfig = detached;
+            } else {
+                decryptConfigurationProperties(tempConfig.getConfigurationProperties());
+            }
         }
         return tempConfig;
+    }
+
+    private boolean passwordValuesAreLogical(String pid, ComponentConfiguration configuration) {
+        if (configuration instanceof ComponentConfigurationImpl impl && impl.hasPasswordRepresentation()) {
+            return impl.hasLogicalPasswords();
+        }
+        // Unmarked SCCs retain their legacy storage-decoding contract. A new logical producer opts in explicitly.
+        return this.externalConfigurations.owns(pid);
     }
 
     @Override
@@ -425,12 +469,18 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 || pid.codePoints().anyMatch(Character::isISOControl)) {
             throw new Rejected(Reason.INVALID_ARGUMENT);
         }
+        if (this.intentJournal != null && this.intentJournal.revisionsBlocked()) { throw new Rejected(Reason.CONFLICT); }
         // A generic property update must never bypass the network owner's transaction protocol.
         if (this.externalConfigurations.owns(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
         // A provider/snapshot failure can follow an actual CM write. Observation
         // alone cannot prove that submission completed; require explicit recovery.
         if (this.revisionUncertain.contains(pid)) { throw new Rejected(Reason.CONFLICT); }
-        ComponentConfiguration current = getComponentConfiguration(pid);
+        ComponentConfiguration current;
+        try { current = getComponentConfiguration(pid); }
+        catch (ProviderConfigurationReads.Unavailable unavailable) {
+            // No writer has been dispatched: an unavailable provider cannot authorize a baseline.
+            throw new Rejected(Reason.CONFLICT);
+        }
         if (current == null || !pid.equals(current.getPid())) { throw new Rejected(Reason.NOT_FOUND); }
         Map<String, Object> pending = this.revisionPending.get(pid);
         if (pending != null) {
@@ -443,6 +493,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
             }
             this.revisionPending.remove(pid);
         }
+        RollbackConvergence convergence = this.rollbackConvergence.get(pid);
+        if (convergence != null) {
+            if (!convergence.matches(current.getConfigurationProperties())) { throw new Rejected(Reason.CONFLICT); }
+            this.rollbackConvergence.remove(pid);
+        }
         long changes = -1;
         String servicePid = this.servicePidByPid.get(pid);
         if (servicePid != null && this.configurationAdmin != null) {
@@ -451,6 +506,151 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
         return new ConfigurationRevisionService.Read(current, this.configurationRevision.token(current, changes,
                 this.revisionAdmissions.getOrDefault(pid, 0L)));
+    }
+
+    @Override
+    public synchronized ComponentConfiguration readExternalConfirmedConfiguration(String pid) throws KuraException {
+        if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                || pid.codePoints().anyMatch(Character::isISOControl)) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        if (!this.externalConfigurations.owns(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+        ComponentConfiguration confirmed = this.externalConfigurations.confirmed(pid);
+        Map<String,Object> properties = ConfigurationRevision.copyEditProperties(confirmed.getConfigurationProperties());
+        return new ComponentConfiguration() {
+            @Override public String getPid() { return pid; }
+            @Override public OCD getDefinition() { return confirmed.getDefinition(); }
+            @Override public OCD getLocalizedDefinition(String locale) { return confirmed.getLocalizedDefinition(locale); }
+            @Override public Map<String,Object> getConfigurationProperties() { return properties; }
+            @Override public String toString() { return "ExternalConfirmedConfiguration[redacted]"; }
+        };
+    }
+
+    @Override
+    public synchronized Map<String, ConfigurationRevisionService.StoredReadView> readStoredRevisionViews(Set<String> pids)
+            throws KuraException {
+        if (pids == null || pids.isEmpty() || pids.size() > 16) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+        Set<String> selected = new TreeSet<>();
+        for (String pid : pids) {
+            if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                    || pid.codePoints().anyMatch(Character::isISOControl)) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            selected.add(pid);
+        }
+        if (this.configurationAdmin == null) { throw new Rejected(Reason.UNSUPPORTED); }
+        if (this.intentJournal != null && this.intentJournal.revisionsBlocked()) { throw new Rejected(Reason.CONFLICT); }
+        for (String pid : selected) {
+            if (this.externalConfigurations.owns(pid) || !this.allActivatedPids.contains(pid)
+                    || !pid.equals(this.servicePidByPid.get(pid)) || this.factoryPidByPid.containsKey(pid)) {
+                throw new Rejected(Reason.UNSUPPORTED);
+            }
+            if (this.revisionUncertain.contains(pid) || this.revisionPending.containsKey(pid)
+                    || this.rollbackConvergence.containsKey(pid)) { throw new Rejected(Reason.CONFLICT); }
+        }
+        Map<String, ConfigurationRevisionService.StoredReadView> result = new LinkedHashMap<>();
+        for (String pid : selected) { result.put(pid, storedRevisionView(pid)); }
+        // No SCC callbacks or CM creations occur in either pass. Independent CM
+        // writers cannot silently substitute a different member of this cohort.
+        for (String pid : selected) {
+            var after = storedRevisionView(pid);
+            if (!result.get(pid).revision().equals(after.revision()) || result.get(pid).present() != after.present()) {
+                throw new Rejected(Reason.CONFLICT);
+            }
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
+    private ConfigurationRevisionService.StoredReadView storedRevisionView(String pid) throws KuraException {
+        StringBuilder escaped = new StringBuilder();
+        for (char ch : pid.toCharArray()) {
+            switch (ch) {
+                case '*' -> escaped.append("\\2a");
+                case '(' -> escaped.append("\\28");
+                case ')' -> escaped.append("\\29");
+                case '\\' -> escaped.append("\\5c");
+                default -> escaped.append(ch);
+            }
+        }
+        try {
+            Configuration[] entries = this.configurationAdmin.listConfigurations("(service.pid=" + escaped + ")");
+            if (entries != null && entries.length > 1) { throw new Rejected(Reason.CONFLICT); }
+            long changes = -1;
+            boolean present = false;
+            Map<String, Object> properties = new HashMap<>();
+            if (entries != null && entries.length == 1) {
+                Configuration entry = entries[0];
+                if (entry == null || !pid.equals(entry.getPid()) || entry.getFactoryPid() != null) {
+                    throw new Rejected(Reason.CONFLICT);
+                }
+                long before = entry.getChangeCount();
+                Dictionary<String, Object> dictionary = entry.getProperties();
+                if (dictionary != null) {
+                    for (Enumeration<String> names = dictionary.keys(); names.hasMoreElements();) {
+                        String name = names.nextElement();
+                        if (name == null) { throw new Rejected(Reason.UNSUPPORTED); }
+                        properties.put(name, dictionary.get(name));
+                    }
+                    properties = ConfigurationRevision.copyEditProperties(properties);
+                    present = true;
+                }
+                changes = entry.getChangeCount();
+                if (before != changes || changes < 0) { throw new Rejected(Reason.CONFLICT); }
+            }
+            ComponentConfiguration detached = new ComponentConfigurationImpl(pid, null,
+                    Collections.unmodifiableMap(properties));
+            // Separate domain:these original-storage observations grant no
+            // generic configuration update admission,even for identical values.
+            String revision = this.configurationRevision.storedToken(pid, present, properties, changes,
+                    this.revisionAdmissions.getOrDefault(pid, 0L));
+            return new ConfigurationRevisionService.StoredRead(detached, revision, present);
+        } catch (IOException | org.osgi.framework.InvalidSyntaxException e) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
+        }
+    }
+
+    @Override
+    public synchronized ConfigurationRevisionService.ReadView readLogicalRevisionView(String pid) throws KuraException {
+        // readRevision uses the existing explicit CM/SCC password-source rules.
+        var original = readRevision(pid);
+        var configuration = original.configuration();
+        Map<String,Object> properties = ConfigurationRevision.copyEditProperties(configuration.getConfigurationProperties());
+        ComponentConfiguration detached = new ComponentConfiguration() {
+            @Override public String getPid() { return pid; }
+            @Override public OCD getDefinition() { return configuration.getDefinition(); }
+            @Override public OCD getLocalizedDefinition(String locale) { return configuration.getLocalizedDefinition(locale); }
+            @Override public Map<String,Object> getConfigurationProperties() { return properties; }
+            @Override public String toString() { return "LogicalRevisionExport[redacted]"; }
+        };
+        long changes = -1;
+        String servicePid = this.servicePidByPid.get(pid);
+        if (servicePid != null && this.configurationAdmin != null) {
+            try { changes = this.configurationAdmin.getConfiguration(servicePid, "?").getChangeCount(); }
+            catch (IOException e) { throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e); }
+        }
+        if (!original.revision().equals(this.configurationRevision.token(detached, changes,
+                this.revisionAdmissions.getOrDefault(pid,0L)))) { throw new Rejected(Reason.CONFLICT); }
+        return new ConfigurationRevisionService.Read(detached, original.revision());
+    }
+
+    @Override
+    public synchronized Map<String, ComponentConfiguration> readExternalConfirmedConfigurations(Set<String> pids)
+            throws KuraException {
+        if (pids == null || pids.isEmpty() || pids.size() > 16) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        Set<String> selected = new TreeSet<>();
+        for (String pid : pids) {
+            if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                    || pid.codePoints().anyMatch(Character::isISOControl)) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+            selected.add(pid);
+        }
+        for (String pid : selected) {
+            if (!this.externalConfigurations.owns(pid)) {
+                throw new Rejected(Reason.UNSUPPORTED);
+            }
+        }
+        return this.externalConfigurations.confirmedBatch(selected);
     }
 
     @Override
@@ -470,8 +670,469 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     @Override
+    public synchronized void updateConfigurationsIfUnchanged(List<ComponentConfiguration> configurations,
+            Map<String, String> expectedRevisions) throws KuraException {
+        requireOrdinaryWrite();
+        if (configurations == null || configurations.isEmpty() || configurations.size() > 512
+                || expectedRevisions == null || expectedRevisions.size() != configurations.size()) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        List<ComponentConfiguration> submissions = new ArrayList<>();
+        Map<String, Map<String, Object>> pending = new HashMap<>();
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            for (ComponentConfiguration candidate : configurations) {
+                if (candidate == null || candidate.getPid() == null || pending.containsKey(candidate.getPid())) {
+                    throw new Rejected(Reason.INVALID_ARGUMENT);
+                }
+                String pid = candidate.getPid();
+                String expected = expectedRevisions.get(pid);
+                if (expected == null || !expected.matches("[0-9a-f]{64}")) {
+                    throw new Rejected(Reason.INVALID_ARGUMENT);
+                }
+                ConfigurationRevisionService.Read before = readRevision(pid);
+                if (!java.security.MessageDigest.isEqual(expected.getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                        before.revision().getBytes(java.nio.charset.StandardCharsets.US_ASCII))) {
+                    throw new Rejected(Reason.CONFLICT);
+                }
+                if (!revisionTargetTracked(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+                Map<String, Object> patch = ConfigurationRevision.copyEditProperties(candidate.getConfigurationProperties());
+                for (String name : Set.of(ConfigurationService.KURA_SERVICE_PID, Constants.SERVICE_PID,
+                        ConfigurationAdmin.SERVICE_FACTORYPID, "service.bundleLocation", "component.id", "component.name")) {
+                    if (patch.containsKey(name) && !ConfigurationRevision.sameValue(patch.get(name),
+                            before.configuration().getConfigurationProperties().get(name))) {
+                        throw new Rejected(Reason.INVALID_ARGUMENT);
+                    }
+                }
+                pending.put(pid, ConfigurationRevision.copyEditProperties(patch));
+                Map<String, Object> submission = this.activatedSelfConfigComponents.contains(pid)
+                        ? ConfigurationRevision.overlay(before.configuration().getConfigurationProperties(), patch) : patch;
+                submissions.add(new ComponentConfigurationImpl(pid, null, submission));
+            }
+        }
+        withProviderValidation(submissions, 0, () -> {
+            for (String pid : pending.keySet()) { this.revisionAdmissions.merge(pid, 1L, Long::sum); }
+            try (var dispatch = beginDispatch("batch", pending.keySet())) {
+                updateConfigurations(submissions, true); completeDispatch(dispatch);
+            } catch (KuraException | RuntimeException e) {
+                this.revisionUncertain.addAll(pending.keySet());
+                // A rejection coming back from a dispatched writer cannot be advertised
+                // as a pre-submission rejection of the entire batch.
+                throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, e);
+            } catch (Error e) {
+                this.revisionUncertain.addAll(pending.keySet());
+                throw e;
+            }
+            this.rollbackConvergence.keySet().removeAll(pending.keySet());
+            this.revisionPending.putAll(pending);
+        });
+    }
+
+    @Override
+    public synchronized Map<String, ConfigurationRevisionService.ReadView> readRevisionViews(Set<String> pids)
+            throws KuraException {
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            if (pids == null || pids.size() > 512) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            Map<String, ConfigurationRevisionService.ReadView> result = new HashMap<>();
+            for (String pid : new HashSet<>(pids)) {
+                ConfigurationRevisionService.Read read = readRevision(pid);
+                ComponentConfiguration config = read.configuration();
+                OCD definition = config.getDefinition();
+                Map<String, Object> properties = ConfigurationRevision.copyEditProperties(config.getConfigurationProperties());
+                ComponentConfiguration detached = new ComponentConfiguration() {
+                    @Override public String getPid() { return pid; }
+                    @Override public OCD getDefinition() { return definition; }
+                    @Override public OCD getLocalizedDefinition(String locale) { return config.getLocalizedDefinition(locale); }
+                    @Override public Map<String, Object> getConfigurationProperties() { return properties; }
+                    @Override public String toString() { return "ConfigurationRevisionService.DetachedConfiguration[redacted]"; }
+                };
+                result.put(pid, new ConfigurationRevisionService.Read(detached, read.revision()));
+            }
+            return Collections.unmodifiableMap(result);
+        }
+    }
+
+    @Override
+    public synchronized void applyConfigurationPlanIfUnchanged(List<ComponentConfiguration> updates,
+            List<ConfigurationRevisionService.Creation> creations, Set<String> deletions,
+            Map<String, String> expectedRevisions) throws KuraException {
+        applyConfigurationPlan(updates, creations, deletions, expectedRevisions, null);
+    }
+
+    @Override
+    public synchronized void applyConfigurationPlanIfUnchanged(List<ComponentConfiguration> updates,
+            List<ConfigurationRevisionService.Creation> creations, Set<String> deletions,
+            Map<String, String> expectedRevisions, ConfigurationRevisionService.DeletionGuard deletionGuard)
+            throws KuraException {
+        if (deletionGuard == null) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+        applyConfigurationPlan(updates, creations, deletions, expectedRevisions, deletionGuard);
+    }
+
+    private void applyConfigurationPlan(List<ComponentConfiguration> updates,
+            List<ConfigurationRevisionService.Creation> creations, Set<String> deletions,
+            Map<String, String> expectedRevisions, ConfigurationRevisionService.DeletionGuard deletionGuard)
+            throws KuraException {
+        requireOrdinaryWrite();
+        if (updates == null || creations == null || deletions == null || expectedRevisions == null
+                || updates.size() + creations.size() + deletions.size() == 0
+                || updates.size() + creations.size() + deletions.size() > 512 || expectedRevisions.size() > 512) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+        // Snapshot caller-owned collections before checking or performing any mutation.
+        Map<String, String> guards = new HashMap<>(expectedRevisions);
+        Set<String> removed = new HashSet<>(deletions);
+        Map<String, ComponentConfiguration> before = new HashMap<>();
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            for (var entry : guards.entrySet()) {
+                requirePlanPid(entry.getKey());
+                String revision = entry.getValue();
+                if (revision == null || !revision.matches("[0-9a-f]{64}")) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+                ConfigurationRevisionService.Read read = readRevision(entry.getKey());
+                if (!java.security.MessageDigest.isEqual(revision.getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                        read.revision().getBytes(java.nio.charset.StandardCharsets.US_ASCII))) {
+                    throw new Rejected(Reason.CONFLICT);
+                }
+                if (!revisionTargetTracked(entry.getKey())) { throw new Rejected(Reason.UNSUPPORTED); }
+                before.put(entry.getKey(), read.configuration());
+            }
+        }
+        for (String pid : removed) {
+            requirePlanPid(pid);
+            if (!before.containsKey(pid)) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            if (!this.factoryPidByPid.containsKey(pid)) { throw new Rejected(Reason.UNSUPPORTED); }
+            this.externalConfigurations.rejectFactoryOperation(pid);
+        }
+        List<ComponentConfiguration> submissions = new ArrayList<>();
+        Map<String, Map<String, Object>> pending = new HashMap<>();
+        for (ComponentConfiguration update : new ArrayList<>(updates)) {
+            if (update == null) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            String pid = update.getPid(); requirePlanPid(pid);
+            if (!before.containsKey(pid) || removed.contains(pid) || pending.containsKey(pid)) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+            Map<String, Object> patch = ConfigurationRevision.copyEditProperties(update.getConfigurationProperties());
+            requireUnchangedIdentity(patch, before.get(pid).getConfigurationProperties());
+            Map<String, Object> submission = this.activatedSelfConfigComponents.contains(pid)
+                    ? ConfigurationRevision.overlay(before.get(pid).getConfigurationProperties(), patch) : patch;
+            submissions.add(new ComponentConfigurationImpl(pid, null, submission));
+            pending.put(pid, ConfigurationRevision.copyEditProperties(patch));
+        }
+        List<ConfigurationRevisionService.Creation> copiedCreations = new ArrayList<>();
+        Set<String> created = new HashSet<>();
+        Set<String> factories = getFactoryComponentPids();
+        for (ConfigurationRevisionService.Creation creation : new ArrayList<>(creations)) {
+            if (creation == null) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            String pid = creation.pid(); requirePlanPid(pid); requirePlanPid(creation.factoryPid());
+            if (!created.add(pid) || pending.containsKey(pid)) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            if (!factories.contains(creation.factoryPid())) { throw new Rejected(Reason.UNSUPPORTED); }
+            this.externalConfigurations.rejectFactoryOperation(pid);
+            if (!removed.contains(pid)) { requirePlanPidAbsent(pid); }
+            Map<String, Object> properties = ConfigurationRevision.copyEditProperties(creation.properties());
+            for (String name : Set.of(Constants.SERVICE_PID, "service.bundleLocation", "component.id", "component.name")) {
+                if (properties.containsKey(name)) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+            }
+            if (properties.containsKey(KURA_SERVICE_PID) && !pid.equals(properties.get(KURA_SERVICE_PID))
+                    || properties.containsKey(ConfigurationAdmin.SERVICE_FACTORYPID)
+                        && !creation.factoryPid().equals(properties.get(ConfigurationAdmin.SERVICE_FACTORYPID))) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+            Map<String, Object> expectedProperties = ConfigurationRevision.copyEditProperties(properties);
+            // Factory identity is owned by ConfigurationService; a self-configuring
+            // component's public view need not repeat the synthesized CM identity.
+            expectedProperties.remove(KURA_SERVICE_PID);
+            expectedProperties.remove(ConfigurationAdmin.SERVICE_FACTORYPID);
+            properties.put(ConfigurationAdmin.SERVICE_FACTORYPID, creation.factoryPid());
+            copiedCreations.add(new ConfigurationRevisionService.Creation(creation.factoryPid(), pid, properties));
+            pending.put(pid, expectedProperties);
+        }
+        List<ComponentConfiguration> validation = new ArrayList<>(submissions);
+        for (ConfigurationRevisionService.Creation creation : copiedCreations) {
+            validation.add(new ComponentConfigurationImpl(creation.pid(), null, creation.properties()));
+        }
+        // Replacement creations must validate against the new factory definition and
+        // defaults, not the metadata or self-configured values of the deleted instance.
+        withProviderValidation(validation, created, 0, () -> {
+            if (deletionGuard != null) {
+                requireDeletionClosure(deletionGuard, removed, before, validation);
+                // Native validation/public-view callbacks can re-enter Core. Check
+                // displayed guards again at the final admission boundary.
+                try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+                    for (var entry : guards.entrySet()) {
+                        String current = readRevision(entry.getKey()).revision();
+                        if (!java.security.MessageDigest.isEqual(entry.getValue().getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                                current.getBytes(java.nio.charset.StandardCharsets.US_ASCII))) { throw new Rejected(Reason.CONFLICT); }
+                    }
+                }
+            }
+            Set<String> admitted = new HashSet<>(guards.keySet()); admitted.addAll(created);
+            for (String pid : admitted) { this.revisionAdmissions.merge(pid, 1L, Long::sum); }
+            try (var dispatch = beginDispatch("plan", admitted)) {
+                for (String pid : removed) { deleteFactoryConfiguration(pid, false); }
+                for (ConfigurationRevisionService.Creation creation : copiedCreations) {
+                    createFactoryConfiguration(creation.factoryPid(), creation.pid(), creation.properties(), false);
+                }
+                if (submissions.isEmpty()) {
+                    // The ordinary batch updater skips snapshots for an empty current
+                    // set. A deletion-only plan must persist that empty state too.
+                    snapshot();
+                } else {
+                    updateConfigurations(submissions, true);
+                }
+                completeDispatch(dispatch);
+            } catch (KuraException | RuntimeException e) {
+                this.revisionUncertain.addAll(admitted);
+                throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, e);
+            } catch (Error e) {
+                this.revisionUncertain.addAll(admitted);
+                throw e;
+            }
+            for (String pid : removed) { this.revisionPending.remove(pid); this.rollbackConvergence.remove(pid); }
+            this.rollbackConvergence.keySet().removeAll(pending.keySet());
+            this.revisionPending.putAll(pending);
+        });
+    }
+
+    @Override
+    public synchronized void applyConfigurationPlanIfUnchanged(String operationId,
+            List<ComponentConfiguration> updates, List<ConfigurationRevisionService.Creation> creations,
+            Set<String> deletions, Map<String,String> expectedRevisions) throws KuraException {
+        applyRecordedConfigurationPlan(operationId, updates, creations, deletions, expectedRevisions, null);
+    }
+
+    @Override
+    public synchronized void applyConfigurationPlanIfUnchanged(String operationId,
+            List<ComponentConfiguration> updates, List<ConfigurationRevisionService.Creation> creations,
+            Set<String> deletions, Map<String,String> expectedRevisions,
+            ConfigurationRevisionService.DeletionGuard deletionGuard) throws KuraException {
+        if (deletionGuard == null) throw new Rejected(Reason.INVALID_ARGUMENT);
+        applyRecordedConfigurationPlan(operationId, updates, creations, deletions, expectedRevisions, deletionGuard);
+    }
+
+    private void applyRecordedConfigurationPlan(String operationId, List<ComponentConfiguration> updates,
+            List<ConfigurationRevisionService.Creation> creations, Set<String> deletions,
+            Map<String,String> expectedRevisions, ConfigurationRevisionService.DeletionGuard deletionGuard)
+            throws KuraException {
+        ConfigurationOperationStore.uuid(operationId);
+        requireOrdinaryWrite();
+        if (this.intentJournal == null) throw new Rejected(Reason.UNSUPPORTED);
+        var plan = new RecordedConfigurationPlan(updates, creations, deletions, expectedRevisions, deletionGuard);
+        try (var operation = this.intentJournal.clientOperation(operationId, plan)) {
+            try {
+                applyConfigurationPlan(plan.updates, plan.creations, plan.deletions, plan.guards, plan.deletionGuard);
+                operation.requireCommitted();
+            } catch (KuraException | RuntimeException | Error failure) {
+                try { operation.rejectIfUndispatched(failure); }
+                catch (KuraException receiptFailure) { failure.addSuppressed(receiptFailure); }
+                throw failure;
+            }
+        }
+    }
+
+    private static void requirePlanPid(String pid) throws Rejected {
+        if (pid == null || pid.isBlank() || pid.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 512
+                || pid.codePoints().anyMatch(Character::isISOControl)) {
+            throw new Rejected(Reason.INVALID_ARGUMENT);
+        }
+    }
+
+    private void requireDeletionClosure(ConfigurationRevisionService.DeletionGuard guard, Set<String> removed,
+            Map<String, ComponentConfiguration> before, List<ComponentConfiguration> proposed) throws KuraException {
+        Map<String, String> factories = guard.factoryPids();
+        Set<String> pidProperties = guard.pidReferenceProperties();
+        if (removed.isEmpty() || factories == null || !factories.keySet().equals(removed)
+                || pidProperties == null || pidProperties.size() > 64) { throw new Rejected(Reason.INVALID_ARGUMENT); }
+        for (String property : pidProperties) {
+            if (property == null || property.isBlank() || property.length() > 256) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+        }
+        for (String pid : removed) {
+            requirePlanPid(factories.get(pid));
+            if (!factories.get(pid).equals(this.factoryPidByPid.get(pid))) { throw new Rejected(Reason.CONFLICT); }
+        }
+        if (this.configurationAdmin == null || this.bundleContext == null || this.scrService == null) {
+            throw new Rejected(Reason.UNSUPPORTED);
+        }
+        Map<String, List<Map<String, Object>>> targetProperties = new HashMap<>();
+        Set<String> registeredTargets = new HashSet<>();
+        Set<Long> targetServiceIds = new HashSet<>();
+        for (String pid : removed) {
+            Map<String, Object> properties = new HashMap<>(before.get(pid).getConfigurationProperties());
+            properties.put(KURA_SERVICE_PID, pid); properties.put(ConfigurationAdmin.SERVICE_FACTORYPID, factories.get(pid));
+            targetProperties.put(pid, new ArrayList<>(List.of(properties)));
+        }
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            ServiceReference<?>[] references = this.bundleContext.getAllServiceReferences(null, null);
+            if (references != null) {
+                if (references.length > 16384) { throw new Rejected(Reason.UNSUPPORTED); }
+                for (ServiceReference<?> reference : references) {
+                    Object pid = reference.getProperty(KURA_SERVICE_PID);
+                    if (!(pid instanceof String) || !removed.contains(pid)) { continue; }
+                    Map<String, Object> properties = new HashMap<>();
+                    for (String key : reference.getPropertyKeys()) {
+                        Object value = reference.getProperty(key);
+                        if (value != null) { properties.put(key, value); }
+                    }
+                    targetProperties.get(pid).add(properties); registeredTargets.add((String) pid);
+                    Object id = reference.getProperty(Constants.SERVICE_ID);
+                    if (id instanceof Number number) { targetServiceIds.add(number.longValue()); }
+                }
+            }
+            Configuration[] configurations = this.configurationAdmin.listConfigurations(null);
+            if (configurations != null) {
+                if (configurations.length > 16384) { throw new Rejected(Reason.UNSUPPORTED); }
+                for (Configuration configuration : configurations) {
+                    Dictionary<String, Object> properties = configuration.getProperties();
+                    if (properties == null || removed.contains(properties.get(KURA_SERVICE_PID))) { continue; }
+                    Map<String, Object> values = new HashMap<>();
+                    for (var keys = properties.keys(); keys.hasMoreElements();) {
+                        String key = keys.nextElement(); values.put(key, properties.get(key));
+                    }
+                    requireNoDeletionReferences(values, pidProperties, targetProperties, registeredTargets);
+                }
+            }
+            // Component-owned public views may contain references not repeated in CM.
+            for (String pid : new HashSet<>(this.allActivatedPids)) {
+                if (removed.contains(pid)) { continue; }
+                ComponentConfiguration configuration = getComponentConfiguration(pid);
+                if (configuration == null || configuration.getConfigurationProperties() == null) {
+                    throw new Rejected(Reason.UNSUPPORTED);
+                }
+                requireNoDeletionReferences(configuration.getConfigurationProperties(), pidProperties,
+                        targetProperties, registeredTargets);
+            }
+            for (ComponentConfiguration configuration : proposed) {
+                if (!removed.contains(configuration.getPid())) {
+                    requireNoDeletionReferences(configuration.getConfigurationProperties(), pidProperties,
+                            targetProperties, registeredTargets);
+                }
+            }
+            for (var description : this.scrService.getComponentDescriptionDTOs()) {
+                for (var component : this.scrService.getComponentConfigurationDTOs(description)) {
+                    Object pid = component.properties == null ? null : component.properties.get(KURA_SERVICE_PID);
+                    if (removed.contains(pid)) { continue; }
+                    if (component.satisfiedReferences != null) {
+                        for (var reference : component.satisfiedReferences) {
+                            if (isOwnConfigurationObserver(component.id, reference.name)
+                                    || isDeclaredDeletionObserver(description, reference.name, reference.target)) { continue; }
+                            if (reference.boundServices != null) {
+                                for (var bound : reference.boundServices) {
+                                    if (targetServiceIds.contains(bound.id)) { throw new Rejected(Reason.CONFLICT); }
+                                }
+                            }
+                            if (reference.target != null) {
+                                requireNoDeletionFilter(reference.target, targetProperties, registeredTargets);
+                            }
+                        }
+                    }
+                    if (component.unsatisfiedReferences != null) {
+                        for (var reference : component.unsatisfiedReferences) {
+                            if (reference.target != null) {
+                                requireNoDeletionFilter(reference.target, targetProperties, registeredTargets);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Rejected e) { throw e; }
+        catch (ProviderConfigurationReads.Unavailable e) { throw new Rejected(Reason.CONFLICT); }
+        catch (Exception e) { throw new Rejected(Reason.UNSUPPORTED); }
+    }
+
+    private static boolean isDeclaredDeletionObserver(
+            org.osgi.service.component.runtime.dto.ComponentDescriptionDTO description,
+            String referenceName, String runtimeTarget) {
+        if (description == null || description.properties == null || description.references == null
+                || referenceName == null || runtimeTarget != null) { return false; }
+        Object declaration = description.properties.get(ConfigurationRevisionService.DELETION_OBSERVER_REFERENCES);
+        String[] names = declaration instanceof String name ? new String[] { name }
+                : declaration instanceof String[] array ? array : new String[0];
+        if (names.length == 0 || names.length > 64 || !java.util.Arrays.asList(names).contains(referenceName)) {
+            return false;
+        }
+        for (var reference : description.references) {
+            if (referenceName.equals(reference.name) && "0..n".equals(reference.cardinality)
+                    && "dynamic".equals(reference.policy) && reference.target == null
+                    && reference.unbind != null && !reference.unbind.isBlank()) { return true; }
+        }
+        return false;
+    }
+
+    private boolean isOwnConfigurationObserver(long componentId, String referenceName) {
+        if (this.ctx == null || this.ctx.getProperties() == null) { return false; }
+        Object id = this.ctx.getProperties().get("component.id");
+        return id instanceof Number number && number.longValue() == componentId
+                && ("ConfigurableComponent".equals(referenceName) || "SelfConfiguringComponent".equals(referenceName));
+    }
+
+    private void requireNoDeletionReferences(Map<String, Object> values, Set<String> pidProperties,
+            Map<String, List<Map<String, Object>>> targets, Set<String> registeredTargets) throws Rejected {
+        if (values.size() > 4096) { throw new Rejected(Reason.UNSUPPORTED); }
+        for (var entry : values.entrySet()) {
+            if (entry.getValue() == null) { continue; }
+            if (pidProperties.contains(entry.getKey())) {
+                if (!(entry.getValue() instanceof String)) { throw new Rejected(Reason.UNSUPPORTED); }
+                if (targets.containsKey(entry.getValue())) { throw new Rejected(Reason.CONFLICT); }
+            }
+            if (entry.getKey().endsWith(".target")) {
+                if (!(entry.getValue() instanceof String filter)) { throw new Rejected(Reason.UNSUPPORTED); }
+                requireNoDeletionFilter(filter, targets, registeredTargets);
+            }
+        }
+    }
+
+    private void requireNoDeletionFilter(String expression, Map<String, List<Map<String, Object>>> targets,
+            Set<String> registeredTargets) throws Rejected {
+        if (expression.length() > 8192) { throw new Rejected(Reason.UNSUPPORTED); }
+        final Filter filter;
+        try { filter = FrameworkUtil.createFilter(expression); }
+        catch (InvalidSyntaxException e) { throw new Rejected(Reason.UNSUPPORTED); }
+        boolean pidOnly = expression.matches("\\(kura\\.service\\.pid=(?:\\\\.|[^()])*\\)");
+        for (var target : targets.entrySet()) {
+            for (Map<String, Object> properties : target.getValue()) {
+                if (filter.matches(properties)) { throw new Rejected(Reason.CONFLICT); }
+            }
+            // Without an actual service dictionary, arbitrary filters can depend on
+            // metadata missing from CM. A literal PID filter is still decidable.
+            if (!pidOnly && !registeredTargets.contains(target.getKey())) { throw new Rejected(Reason.UNSUPPORTED); }
+        }
+    }
+
+    private void requirePlanPidAbsent(String pid) throws KuraException {
+        if (this.revisionUncertain.contains(pid) || this.revisionPending.containsKey(pid) || this.rollbackConvergence.containsKey(pid)
+                || this.allActivatedPids.contains(pid) || this.waittingForActivatedPids.contains(pid)
+                || this.servicePidByPid.containsKey(pid) || this.factoryPidByPid.containsKey(pid)) {
+            throw new Rejected(Reason.CONFLICT);
+        }
+        // listConfigurations is read-only; getConfiguration would create a dormant entry.
+        if (this.configurationAdmin == null) { throw new Rejected(Reason.UNSUPPORTED); }
+        try {
+            Configuration[] configurations = this.configurationAdmin.listConfigurations(null);
+            if (configurations == null) { return; }
+            for (Configuration configuration : configurations) {
+                Dictionary<String, Object> properties = configuration.getProperties();
+                if (pid.equals(configuration.getPid()) || properties != null
+                        && (pid.equals(properties.get(KURA_SERVICE_PID)) || pid.equals(properties.get(Constants.SERVICE_PID)))) {
+                    throw new Rejected(Reason.CONFLICT);
+                }
+            }
+        } catch (IOException | org.osgi.framework.InvalidSyntaxException e) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e);
+        }
+    }
+
+    private static void requireUnchangedIdentity(Map<String, Object> patch, Map<String, Object> before) throws Rejected {
+        for (String name : Set.of(KURA_SERVICE_PID, Constants.SERVICE_PID, ConfigurationAdmin.SERVICE_FACTORYPID,
+                "service.bundleLocation", "component.id", "component.name")) {
+            if (patch.containsKey(name) && !ConfigurationRevision.sameValue(patch.get(name), before.get(name))) {
+                throw new Rejected(Reason.INVALID_ARGUMENT);
+            }
+        }
+    }
+
+    @Override
     public synchronized void updateRevision(String pid, String expectedRevision, Map<String, Object> properties)
             throws KuraException {
+        requireOrdinaryWrite();
         if (expectedRevision == null || !expectedRevision.matches("[0-9a-f]{64}")) {
             throw new Rejected(Reason.INVALID_ARGUMENT);
         }
@@ -486,9 +1147,15 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
             AD attribute = attributes.get(entry.getKey());
             if (Set.of(ConfigurationService.KURA_SERVICE_PID, Constants.SERVICE_PID,
                     ConfigurationAdmin.SERVICE_FACTORYPID, "service.bundleLocation", "component.id", "component.name")
-                    .contains(entry.getKey()) || attribute == null || !ConfigurationRevision.accepts(attribute, entry.getValue())) {
+                        .contains(entry.getKey()) || attribute == null || !ConfigurationRevision.accepts(attribute, entry.getValue())) {
                 throw new Rejected(Reason.INVALID_ARGUMENT);
             }
+                if (Math.abs((long) attribute.getCardinality()) == 1
+                        && ConfigurationConstraints.isScalarValue(attribute,
+                                before.configuration().getConfigurationProperties().get(entry.getKey()))
+                        != ConfigurationConstraints.isScalarValue(attribute, entry.getValue())) {
+                    throw new Rejected(Reason.INVALID_ARGUMENT);
+                }
             var constraint = ConfigurationConstraints.value(attribute, entry.getValue());
             if (constraint == ConfigurationConstraints.Status.UNSUPPORTED) { throw new Rejected(Reason.UNSUPPORTED); }
             if (constraint != ConfigurationConstraints.Status.SATISFIED) { throw new Rejected(Reason.INVALID_ARGUMENT); }
@@ -497,19 +1164,30 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         Map<String, Object> submission = this.activatedSelfConfigComponents.contains(pid)
                 ? ConfigurationRevision.overlay(before.configuration().getConfigurationProperties(), patch)
                 : ConfigurationRevision.copyPatch(patch);
-        // Invalidate admission even if the legacy update later reports a partial failure.
-        this.revisionAdmissions.merge(pid, 1L, Long::sum);
-        try {
-            updateConfiguration(pid, submission, true);
-        } catch (KuraException | RuntimeException e) {
-            this.revisionUncertain.add(pid);
-            throw e;
-        }
-        this.revisionPending.put(pid, patch);
+        withProviderValidation(List.of(new ComponentConfigurationImpl(pid, null, submission)), 0, () -> {
+            // Invalidate admission even if the legacy update later reports a partial failure.
+            this.revisionAdmissions.merge(pid, 1L, Long::sum);
+            try (var dispatch = beginDispatch("single", Set.of(pid))) {
+                updateConfiguration(pid, submission, true); completeDispatch(dispatch);
+            } catch (KuraException | RuntimeException e) {
+                this.revisionUncertain.add(pid);
+                // Entering the writer can already have changed CM. A downstream
+                // Rejected must not masquerade as a pre-admission rejection.
+                throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, e);
+            } catch (Error e) {
+                this.revisionUncertain.add(pid);
+                throw e;
+            }
+            this.rollbackConvergence.remove(pid);
+            this.revisionPending.put(pid, patch);
+        });
     }
 
-    protected boolean revisionTargetTracked(String pid) {
-        return this.allActivatedPids.contains(pid) && getRegisteredOCD(pid) != null;
+    protected boolean revisionTargetTracked(String pid) throws KuraException {
+        try { return this.allActivatedPids.contains(pid) && getRegisteredOCD(pid) != null; }
+        catch (ProviderConfigurationReads.Unavailable unavailable) {
+            throw new Rejected(Reason.CONFLICT);
+        }
     }
 
     @Override
@@ -535,23 +1213,99 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public synchronized void updateConfigurations(List<ComponentConfiguration> configsToUpdate, boolean takeSnapshot)
-            throws KuraException { // don't call this method internally
+            throws KuraException {
+        requireOrdinaryWrite(); // don't call this method internally
         this.externalConfigurations.validate(configsToUpdate, ChangeSource.CONFIGURATION_UPDATE);
-        for (ComponentConfiguration config : configsToUpdate) {
-            if (config != null) {
-                ComponentUtil.encryptConfigurationProperties(config.getConfigurationProperties(), this.cryptoService);
+        withProviderValidation(configsToUpdate, 0, () -> {
+            List<ComponentConfiguration> encryptedUpdates = new ArrayList<>(configsToUpdate.size());
+            for (ComponentConfiguration config : configsToUpdate) {
+                if (config == null || config.getConfigurationProperties() == null) {
+                    encryptedUpdates.add(config);
+                    continue;
+                }
+                Map<String, Object> properties = new HashMap<>(config.getConfigurationProperties());
+                ComponentUtil.encryptConfigurationProperties(properties, this.cryptoService);
+                encryptedUpdates.add(new ConfigurationUpdate(config, properties));
             }
+            updateConfigurationsInternal(encryptedUpdates, takeSnapshot);
+            // An explicit legacy update may supersede a submitted conditional update.
+            for (ComponentConfiguration config : configsToUpdate) {
+                if (config != null) {
+                    this.revisionPending.remove(config.getPid()); this.rollbackConvergence.remove(config.getPid()); this.revisionUncertain.remove(config.getPid());
+                }
+            }
+        });
+    }
+
+    private record ConfigurationUpdate(ComponentConfiguration source, Map<String, Object> properties)
+            implements ComponentConfiguration {
+        @Override
+        public String getPid() {
+            return source.getPid();
         }
 
-        // only encrypted properties are passed to internal methods
-        updateConfigurationsInternal(configsToUpdate, takeSnapshot);
-        // An explicit legacy update may supersede a submitted conditional update.
-        for (ComponentConfiguration config : configsToUpdate) {
-            if (config != null) {
-                this.revisionPending.remove(config.getPid());
-                this.revisionUncertain.remove(config.getPid());
+        @Override
+        public OCD getDefinition() {
+            return source.getDefinition();
+        }
+
+        @Override
+        public OCD getLocalizedDefinition(String locale) {
+            return source.getLocalizedDefinition(locale);
+        }
+
+        @Override
+        public Map<String, Object> getConfigurationProperties() {
+            return properties;
+        }
+    }
+
+    private void withProviderValidation(List<ComponentConfiguration> configurations, int index,
+            ProviderDefinition.Write write) throws KuraException {
+        withProviderValidation(configurations, Collections.emptySet(), index, write);
+    }
+
+    private void withProviderValidation(List<ComponentConfiguration> configurations, Set<String> creatingPids, int index,
+            ProviderDefinition.Write write) throws KuraException {
+        try (ProviderConfigurationReads.Budget budget = this.providerReads.budget()) {
+            validateProviders(configurations, creatingPids, index, () -> {
+                // The writer and its snapshot start their own read phase. Expiry
+                // during validation must never be inherited as a dispatched failure.
+                budget.close();
+                write.run();
+            });
+        }
+    }
+
+    private void validateProviders(List<ComponentConfiguration> configurations, Set<String> creatingPids, int index,
+            ProviderDefinition.Write write) throws KuraException {
+        for (int i = index; i < configurations.size(); i++) {
+            ComponentConfiguration proposed = configurations.get(i);
+            OCD definition = proposed == null || creatingPids.contains(proposed.getPid()) ? null : getOCDForPid(proposed.getPid());
+            if (definition == null && proposed != null && proposed.getConfigurationProperties() != null) {
+                Object factory = proposed.getConfigurationProperties().get(ConfigurationAdmin.SERVICE_FACTORYPID);
+                if (factory instanceof String factoryPid) { definition = this.ocds.get(factoryPid); }
+            }
+            if (definition instanceof ProviderDefinition provider) {
+                int next = i + 1;
+                provider.withSource(() -> {
+                    Map<String, Object> values = provider.defaultProperties(this.ctx);
+                    decryptConfigurationProperties(values);
+                    if (!creatingPids.contains(proposed.getPid()) && this.allActivatedPids.contains(proposed.getPid())) {
+                        ComponentConfiguration current;
+                        try { current = getComponentConfiguration(proposed.getPid()); }
+                        catch (ProviderConfigurationReads.Unavailable unavailable) { throw new Rejected(Reason.CONFLICT); }
+                        if (current != null && current.getConfigurationProperties() != null) {
+                            values.putAll(current.getConfigurationProperties());
+                        }
+                    }
+                    if (proposed.getConfigurationProperties() != null) { values.putAll(proposed.getConfigurationProperties()); }
+                    provider.withValidatedProperties(values, () -> validateProviders(configurations, creatingPids, next, write));
+                });
+                return;
             }
         }
+        write.run();
     }
 
     // ----------------------------------------------------------------
@@ -581,11 +1335,14 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     @Override
-    public void createFactoryConfiguration(String factoryPid, String pid, Map<String, Object> properties,
+    public synchronized void createFactoryConfiguration(String factoryPid, String pid, Map<String, Object> properties,
             boolean takeSnapshot) throws KuraException {
-
-        createFactoryConfigurationInternal(factoryPid, pid,
-                ComponentUtil.encryptConfigurationProperties(properties, this.cryptoService, true), takeSnapshot);
+        requireOrdinaryWrite();
+        Map<String, Object> candidate = properties == null ? new HashMap<>() : new HashMap<>(properties);
+        candidate.put(ConfigurationAdmin.SERVICE_FACTORYPID, factoryPid);
+        withProviderValidation(List.of(new ComponentConfigurationImpl(pid, null, candidate)), 0, () ->
+                createFactoryConfigurationInternal(factoryPid, pid,
+                        ComponentUtil.encryptConfigurationProperties(properties, this.cryptoService, true), takeSnapshot));
     }
 
     private synchronized void createFactoryConfigurationInternal(String factoryPid, String pid,
@@ -637,6 +1394,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public synchronized void deleteFactoryConfiguration(String pid, boolean takeSnapshot) throws KuraException {
+        requireOrdinaryWrite();
         this.externalConfigurations.rejectFactoryOperation(pid);
         if (pid == null) {
             throw new KuraException(KuraErrorCode.INVALID_PARAMETER, "pid cannot be null");
@@ -687,6 +1445,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public synchronized long snapshot() throws KuraException {
+        requireOrdinaryWrite();
         logger.info("Writing snapshot - Getting component configurations...");
 
         List<ComponentConfiguration> configs = buildCurrentConfiguration(null);
@@ -696,6 +1455,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public long rollback() throws KuraException {
+        requireOrdinaryWrite();
         // get the second-last most recent snapshot
         // and rollback to that one.
         Set<Long> ids = getSnapshots();
@@ -713,36 +1473,120 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     @Override
     public synchronized void rollback(long id) throws KuraException {
+        requireOrdinaryWrite();
         logger.info("Rolling back to snapshot {}...", id);
-
-        List<Throwable> causes = new ArrayList<>();
         final Map<String, ComponentConfiguration> snapshotConfigs = getSnapshotConfigs(id);
         final Map<String, Configuration> currentConfigs = getCurrentConfigs();
         this.externalConfigurations.validate(snapshotConfigs.values(), ChangeSource.SNAPSHOT_ROLLBACK);
-        this.externalConfigurations.apply(snapshotConfigs.values(), ChangeSource.SNAPSHOT_ROLLBACK);
-        Iterator<Entry<String, Configuration>> currentConfigsIterator = currentConfigs.entrySet().iterator();
+        final RollbackPreparation prepared = prepareRollback(snapshotConfigs, currentConfigs);
+        withRollbackSources(prepared.sources(), 0, () -> {
+            // Only a completely prepared rollback enters its mutation phase. Keep
+            // the scope closed on every failure, including owner apply and Errors.
+            for (String pid : prepared.affected()) { this.revisionAdmissions.merge(pid, 1L, Long::sum); }
+            this.revisionUncertain.addAll(prepared.affected());
+            try (var dispatch = beginDispatch("rollback", prepared.affected())) {
+                this.externalConfigurations.apply(prepared.snapshots().values(), ChangeSource.SNAPSHOT_ROLLBACK);
+                List<Throwable> causes = new ArrayList<>();
+                Iterator<Entry<String, Configuration>> current = currentConfigs.entrySet().iterator();
+                while (current.hasNext()) {
+                    manageCurrentConfigs(causes, prepared.defaults(), prepared.deletions(), current);
+                }
+                for (ComponentConfiguration configuration : prepared.snapshots().values()) {
+                    manageSnapshotConfigs(causes, currentConfigs, configuration);
+                }
+                if (!causes.isEmpty()) { throw new KuraPartialSuccessException("Rollback", causes); }
+                final SortedSet<Long> snapshotIds = getSnapshotsInternal();
+                if (snapshotIds.isEmpty() || id != snapshotIds.last()) {
+                    List<ComponentConfiguration> logical = prepared.snapshots().values().stream().map(config -> {
+                        RollbackConvergence convergence = prepared.convergence().get(config.getPid());
+                        return (ComponentConfiguration) new ComponentConfigurationImpl(config.getPid(), null,
+                                convergence == null ? config.getConfigurationProperties() : convergence.snapshotProperties());
+                    }).collect(Collectors.toList());
+                    for (ComponentConfiguration configuration : logical) {
+                        ((ComponentConfigurationImpl) configuration).setLogicalPasswords(true);
+                    }
+                    saveSnapshot(logical);
+                }
+                completeDispatch(dispatch);
+                this.pendingDeletePids.removeAll(prepared.affected());
+                this.revisionPending.keySet().removeAll(prepared.affected());
+                this.rollbackConvergence.keySet().removeAll(prepared.affected());
+                this.rollbackConvergence.putAll(prepared.convergence());
+                this.revisionUncertain.removeAll(prepared.affected());
+            } catch (Rejected | RuntimeException failure) {
+                throw new KuraException(KuraErrorCode.CONFIGURATION_UPDATE, failure);
+            }
+        });
+    }
 
-        while (currentConfigsIterator.hasNext()) {
-            manageCurrentConfigs(causes, snapshotConfigs, currentConfigsIterator);
-        }
+    private record RollbackPreparation(Map<String, ComponentConfiguration> snapshots,
+            Map<String, ComponentConfiguration> defaults, Set<String> deletions,
+            List<ProviderDefinition> sources, Set<String> affected, Map<String, RollbackConvergence> convergence) { }
 
-        for (final ComponentConfiguration snapshotConfig : snapshotConfigs.values()) {
-            manageSnapshotConfigs(causes, currentConfigs, snapshotConfig);
-        }
+    private RollbackPreparation prepareRollback(Map<String, ComponentConfiguration> snapshots,
+            Map<String, Configuration> current) throws KuraException {
+        Map<String, ComponentConfiguration> preparedSnapshots = new HashMap<>();
+        Map<String, ComponentConfiguration> defaults = new HashMap<>();
+        Map<String, ProviderDefinition> sources = new LinkedHashMap<>();
+        Map<String, RollbackConvergence> convergence = new HashMap<>();
+        Set<String> deletions = new HashSet<>(), affected = new HashSet<>();
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            for (ComponentConfiguration configuration : snapshots.values()) {
+                String pid = configuration.getPid();
+                if (this.externalConfigurations.owns(pid)) { preparedSnapshots.put(pid, configuration); continue; }
+                preparedSnapshots.put(pid, prepareRollbackConfiguration(configuration,
+                        Optional.ofNullable(current.get(pid)), sources, convergence));
+                affected.add(pid);
+            }
+            for (Entry<String, Configuration> entry : current.entrySet()) {
+                String pid = entry.getKey();
+                if (this.externalConfigurations.owns(pid)) { continue; }
+                ComponentConfiguration snapshot = snapshots.get(pid);
+                if (!isFactoryComponent(entry)) {
+                    if (snapshot == null && this.allActivatedPids.contains(pid)) {
+                        defaults.put(pid, prepareRollbackConfiguration(
+                                new ComponentConfigurationImpl(pid, null, new HashMap<>()),
+                                Optional.of(entry.getValue()), sources, convergence));
+                        affected.add(pid);
+                    }
+                } else if (snapshot == null || !Objects.equals(entry.getValue().getFactoryPid(),
+                        snapshot.getConfigurationProperties().get(ConfigurationAdmin.SERVICE_FACTORYPID))) {
+                    deletions.add(pid); affected.add(pid);
+                }
+            }
+        } catch (ProviderConfigurationReads.Unavailable unavailable) { throw new Rejected(Reason.CONFLICT); }
+        return new RollbackPreparation(preparedSnapshots, defaults, deletions,
+                new ArrayList<>(sources.values()), affected, convergence);
+    }
 
-        this.pendingDeletePids.clear();
+    private ComponentConfiguration prepareRollbackConfiguration(ComponentConfiguration configuration,
+            Optional<Configuration> existing, Map<String, ProviderDefinition> sources,
+            Map<String, RollbackConvergence> convergence) throws KuraException {
+        Map<String, Object> values = new HashMap<>(configuration.getConfigurationProperties());
+        String factory = Optional.ofNullable(values.get(ConfigurationAdmin.SERVICE_FACTORYPID))
+                .filter(String.class::isInstance).map(String.class::cast).orElse(null);
+        OCD definition;
+        // Replacing a factory must not merge defaults from the old instance.
+        if (factory != null && (existing.isEmpty() || existing.get().getFactoryPid() != null
+                && !factory.equals(existing.get().getFactoryPid()))) {
+            definition = this.ocds.get(factory);
+        } else if (factory == null && existing.isPresent() && existing.get().getFactoryPid() != null) {
+            definition = this.ocds.get(configuration.getPid());
+        } else { definition = getRegisteredOCD(configuration.getPid()); }
+        Map<String, Object> defaults = definition == null ? Map.of() : getDefaultProperties(definition);
+        Set<String> passwords = definition == null || definition.getAD() == null ? Set.of()
+                : definition.getAD().stream().filter(ad -> ad.getType() == Scalar.PASSWORD)
+                        .map(AD::getId).collect(Collectors.toSet());
+        RollbackConvergence.Prepared prepared = RollbackConvergence.prepare(values, defaults, passwords, this.cryptoService);
+        convergence.put(configuration.getPid(), prepared.convergence());
+        if (definition instanceof ProviderDefinition provider) { sources.putIfAbsent(provider.generation(), provider); }
+        return new ComponentConfigurationImpl(configuration.getPid(), null, prepared.stored());
+    }
 
-        if (!causes.isEmpty()) {
-            throw new KuraPartialSuccessException("Rollback", causes);
-        }
-
-        final SortedSet<Long> snapshotIds = getSnapshotsInternal();
-
-        if (snapshotIds.isEmpty() || id != snapshotIds.last()) {
-            saveSnapshot(snapshotConfigs.values());
-        }
-        this.revisionPending.clear();
-        this.revisionUncertain.clear();
+    private void withRollbackSources(List<ProviderDefinition> sources, int index,
+            ProviderDefinition.Write write) throws KuraException {
+        if (index == sources.size()) { write.run(); return; }
+        sources.get(index).withSource(() -> withRollbackSources(sources, index + 1, write));
     }
 
     @Override
@@ -756,18 +1600,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(sid);
         if (xmlConfigs != null) {
-            List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
-            for (ComponentConfiguration config : configs) {
-                if (config != null) {
-                    try {
-                        decryptConfigurationProperties(config.getConfigurationProperties());
-                    } catch (Throwable t) {
-                        logger.warn("Error during snapshot password decryption");
-                    }
-                }
-            }
-
-            returnConfigs.addAll(xmlConfigs.getConfigurations());
+            returnConfigs.addAll(logicalSnapshotConfigurations(xmlConfigs));
         }
 
         return returnConfigs;
@@ -784,8 +1617,18 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         // 'pid' matches a service.pid, not a kura.service.pid
         logger.info("Registering metatype pid: {} ...", metatypePid);
 
+        rememberPasswordMetadata(metatypePid, this.ocds.get(metatypePid));
         this.ocds.put(metatypePid, ocd);
+        rememberPasswordMetadata(metatypePid, ocd);
+        this.factoryPids.removeIf(factory -> metatypePid.equals(factory.getFactoryPid()));
 
+        if (ocd instanceof ProviderDefinition dynamic) {
+            dynamic.withSource(() -> seedComponentDefaults(metatypePid, ocd, isFactory, provider));
+        } else { seedComponentDefaults(metatypePid, ocd, isFactory, provider); }
+    }
+
+    private void seedComponentDefaults(String metatypePid, Tocd ocd, boolean isFactory, Bundle provider)
+            throws KuraException {
         if (isFactory) {
             registerFactoryComponentOCD(metatypePid, ocd, provider);
         } else {
@@ -798,11 +1641,49 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     synchronized void onBundleRemoved(final Bundle bundle) {
-        this.factoryPids.removeIf(factory -> {
-            final Bundle provider = factory.getProviderBundle();
-            return provider.getSymbolicName().equals(bundle.getSymbolicName())
-                    && provider.getVersion().equals(bundle.getVersion());
+        Map<String, MetadataDefinition> previous = this.bundleMetadata.remove(bundle);
+        if (previous != null) { reconcileMetadata(previous.keySet()); }
+        this.factoryPids.removeIf(factory -> java.util.Objects.equals(factory.getProviderBundle(), bundle));
+    }
+
+    synchronized void replaceBundleMetadata(Bundle bundle, Map<String, MetadataDefinition> definitions) {
+        if (this.stopping) { return; }
+        Map<String, MetadataDefinition> previous = this.bundleMetadata.put(bundle, Map.copyOf(definitions));
+        Set<String> affected = new HashSet<>(definitions.keySet());
+        if (previous != null) { affected.addAll(previous.keySet()); }
+        reconcileMetadata(affected);
+    }
+
+    private void reconcileMetadata(Set<String> pids) {
+        for (String pid : pids) {
+            rememberPasswordMetadata(pid, this.ocds.get(pid));
+            var candidates = this.bundleMetadata.entrySet().stream().filter(entry -> entry.getValue().containsKey(pid)).toList();
+            this.factoryPids.removeIf(factory -> pid.equals(factory.getFactoryPid()));
+            if (candidates.size() != 1) {
+                this.ocds.remove(pid);
+                if (candidates.size() > 1) { logger.warn("Ambiguous metadata owner for pid {}", pid); }
+                continue;
+            }
+            var owner = candidates.get(0); MetadataDefinition metadata = owner.getValue().get(pid);
+            try { registerComponentOCD(pid, metadata.definition(), metadata.factory(), owner.getKey()); }
+            catch (KuraException | RuntimeException e) { logger.warn("Metadata default refresh unavailable for pid {}", pid); }
+        }
+    }
+
+    private void rememberPasswordMetadata(String metatypePid, Tocd definition) {
+        if (definition == null) { return; }
+        Set<String> names = definition.getAD().stream().filter(attribute -> attribute.getType() == Scalar.PASSWORD)
+                .map(AD::getId).collect(java.util.stream.Collectors.toSet());
+        if (names.isEmpty()) { return; }
+        Set<String> pids = new HashSet<>(); pids.add(metatypePid);
+        this.servicePidByPid.forEach((pid, servicePid) -> {
+            if (metatypePid.equals(servicePid) || metatypePid.equals(this.factoryPidByPid.get(pid))) { pids.add(pid); }
         });
+        synchronized (this.passwordPropertiesLock) {
+            for (String pid : pids) {
+                this.passwordPropertiesByPid.computeIfAbsent(pid, ignored -> new HashSet<>()).addAll(names);
+            }
+        }
     }
 
     synchronized void registerComponentConfiguration(String pid, final String servicePid, final String factoryPid) {
@@ -924,7 +1805,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         this.factoryPidByPid.remove(pid);
         this.activatedSelfConfigComponents.remove(pid);
         this.allActivatedPids.remove(pid);
-        this.passwordPropertiesByPid.remove(pid);
+        synchronized (this.passwordPropertiesLock) { this.passwordPropertiesByPid.remove(pid); }
     }
 
     boolean mergeWithDefaults(OCD ocd, Map<String, Object> properties) {
@@ -958,7 +1839,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         for (Entry<String, Object> property : configProperties.entrySet()) {
             Object configValue = property.getValue();
 
-            if (configValue instanceof Password || configValue instanceof Password[]) {
+            if (configValue instanceof Password || configValue instanceof Password[]
+                    || CollectionsUtil.isPasswordCollection(configValue)) {
                 try {
                     Object decryptedValue = decryptPasswordProperties(configValue);
                     configProperties.put(property.getKey(), decryptedValue);
@@ -979,6 +1861,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
             for (int i = 0; i < encryptedPasswords.length; i++) {
                 decryptedPasswords[i] = decryptPassword(encryptedPasswords[i]);
             }
+            decryptedValue = decryptedPasswords;
+        } else if (CollectionsUtil.isPasswordCollection(encryptedValue)) {
+            Collection<?> passwords = (Collection<?>) encryptedValue;
+            Collection<Password> decryptedPasswords = CollectionsUtil.newCollectionLike(passwords);
+            for (Object password : passwords) { decryptedPasswords.add(decryptPassword((Password) password)); }
             decryptedValue = decryptedPasswords;
         }
         return decryptedValue;
@@ -1042,7 +1929,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
 
         if (takeSnapshot && configs != null && (!configs.isEmpty() || this.externalConfigurations.hasReservations())) {
-            saveSnapshot(configs);
+            saveSnapshot(configs, configsToUpdate);
         }
 
         if (!causes.isEmpty()) {
@@ -1052,32 +1939,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     // returns configurations with encrypted passwords
     private List<ComponentConfiguration> getComponentConfigurationsInternal() throws KuraException {
-        List<ComponentConfiguration> configs = getComponentConfigurationsInternal(this.allActivatedPids);
-        configs.addAll(getComponentConfigurationsInternal(this.waittingForActivatedPids));
-        return configs;
+        return getComponentConfigurationsInternal(snapshotConfigurablePids());
     }
 
     private List<ComponentConfiguration> getComponentConfigurationsInternal(Set<String> pids) throws KuraException {
-        List<ComponentConfiguration> configs = new ArrayList<>();
+        try (ProviderConfigurationReads.Budget ignored = this.providerReads.budget()) {
+            List<ComponentConfiguration> configs = new ArrayList<>();
 
-        // assemble all the configurations we have
-        // clone the list to avoid concurrent modifications
-        List<String> allPids = new ArrayList<>(pids);
-        for (String pid : allPids) {
-            try {
-                ComponentConfiguration cc = getComponentConfigurationInternal(pid);
-                if (cc != null) {
-                    configs.add(cc);
-                } else {
-                    logger.warn("could not find ComponentConfiguration for pid:{}", pid);
+            for (String pid : pids) {
+                try {
+                    ComponentConfiguration cc = getComponentConfigurationInternal(pid);
+                    if (cc != null) {
+                        configs.add(cc);
+                    } else {
+                        logger.warn("could not find ComponentConfiguration for pid:{}", pid);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error getting configuration for component {}", pid, e);
+                    throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e,
+                            "Error getting configuration for component " + pid);
                 }
-            } catch (Exception e) {
-                logger.error("Error getting configuration for component {}", pid, e);
-                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e,
-                        "Error getting configuration for component " + pid);
             }
+            return configs;
         }
-        return configs;
     }
 
     // returns configurations with encrypted passwords
@@ -1095,7 +1979,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     private void updateDefaultConfiguration(String pid, String servicePid, Tocd ocd) throws IOException {
-
+        if (this.stopping) { return; }
+        try { requireOrdinaryWrite(); }
+        catch (KuraException e) { return; }
         Configuration config = this.configurationAdmin.getConfiguration(servicePid, "?");
         if (config != null) {
             // get the properties from ConfigurationAdmin if any are present
@@ -1104,15 +1990,18 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 props.putAll(CollectionsUtil.dictionaryToMap(config.getProperties(), ocd));
             }
 
+            boolean changed = false;
             if (!props.containsKey(ConfigurationService.KURA_SERVICE_PID)) {
                 props.put(ConfigurationService.KURA_SERVICE_PID, pid);
+                changed = true;
             }
 
             // merge the current properties, if any, with the defaults from metatype
-            mergeWithDefaults(ocd, props);
-
-            config.update(CollectionsUtil.mapToDictionary(props));
-            logger.info("Seeding updated configuration for pid: {}", pid);
+            changed |= mergeWithDefaults(ocd, props);
+            if (changed) {
+                config.updateIfDifferent(CollectionsUtil.mapToDictionary(props));
+                logger.info("Seeding updated configuration for pid: {}", pid);
+            }
         }
     }
 
@@ -1169,61 +2058,98 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
     }
 
-    private boolean allSnapshotsUnencrypted() {
-        try {
-            Set<Long> snapshotIDs = getSnapshots();
-            if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-                return false;
+    private void encryptPlainSnapshots() throws KuraException {
+        Set<Long> ids = getSnapshots();
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        // Publish the newest snapshot last. Until then startup will re-enter conversion.
+        SortedSet<Long> ordered = new TreeSet<>(ids);
+        for (long id : ordered) {
+            File file = getSnapshotFile(id);
+            if (file == null || !Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, id);
             }
-            Long[] snapshots = snapshotIDs.toArray(new Long[] {});
 
-            for (Long snapshot : snapshots) {
-
-                try {
-                    // Verify if the current snapshot is encrypted
-                    if (testEncryptedSnapshotFileContent(snapshot)) {
-                        return false;
-                    }
-                } catch (Exception e) {
+            boolean xmlPrefix = startsWithXmlMarkup(file);
+            if (!xmlPrefix && testEncryptedSnapshotFileContent(id)) {
+                continue;
+            }
+            XmlComponentConfigurations snapshot;
+            try {
+                snapshot = unmarshal(file, XmlComponentConfigurations.class);
+            } catch (KuraException e) {
+                if (e.getCode() == KuraErrorCode.DECODER_ERROR && xmlPrefix && id == ordered.last()) {
+                    renameSnapshotToBad(id);
+                    continue;
                 }
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, e, "Unreadable snapshot " + id);
             }
-            return true;
-        } catch (Exception e) {
-            return false;
+            if (!snapshot.hasLogicalPasswords()) {
+                ComponentUtil.encryptConfigs(snapshot.getConfigurations(), this.cryptoService);
+            }
+            writeSnapshot(id, snapshot);
         }
     }
 
-    private void encryptPlainSnapshots() throws KuraException {
-        Set<Long> snapshotIDs = getSnapshots();
-        if (snapshotIDs == null || snapshotIDs.isEmpty()) {
-            return;
-        }
-        Long[] snapshots = snapshotIDs.toArray(new Long[] {});
-
-        for (Long snapshot : snapshots) {
-            File fSnapshot = getSnapshotFile(snapshot);
-            if (fSnapshot == null || !fSnapshot.exists()) {
-                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, snapshot);
+    // Only positively identified XML may be quarantined on a parse failure. Other valid
+    // XML encodings still go through the unmarshaller after the ciphertext check.
+    private static boolean startsWithXmlMarkup(File file) throws KuraException {
+        try (var input = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
+            int first = input.read();
+            if (first == 0xef && input.read() == 0xbb && input.read() == 0xbf) {
+                first = input.read();
             }
-
-            final XmlComponentConfigurations xmlConfigs = unmarshal(fSnapshot, XmlComponentConfigurations.class);
-
-            ComponentUtil.encryptConfigs(xmlConfigs.getConfigurations(), this.cryptoService);
-
-            // Writes an encrypted snapshot with encrypted passwords.
-            writeSnapshot(snapshot, xmlConfigs);
+            while (first == ' ' || first == '\t' || first == '\r' || first == '\n') {
+                first = input.read();
+            }
+            return first == '<';
+        } catch (IOException e) {
+            throw KuraException.internalError(e);
         }
     }
 
     private synchronized long saveSnapshot(Collection<? extends ComponentConfiguration> configs) throws KuraException {
+        return saveSnapshot(configs, List.of());
+    }
 
-        List<ComponentConfiguration> configsToSave = this.externalConfigurations.snapshot(configs).stream()
-                .map(cc -> new ComponentConfigurationImpl(cc.getPid(), null,
-                        cc.getConfigurationProperties() == null ? null : new HashMap<>(cc.getConfigurationProperties())))
-                .collect(Collectors.toList());
-
-        // Build the XML structure
+    private synchronized long saveSnapshot(Collection<? extends ComponentConfiguration> configs,
+            Collection<? extends ComponentConfiguration> encryptedUpdates) throws KuraException {
+        Map<String, Set<String>> encryptedKeys = new HashMap<>();
+        for (ComponentConfiguration update : encryptedUpdates) {
+            if (update != null && update.getConfigurationProperties() != null) {
+                encryptedKeys.computeIfAbsent(update.getPid(), ignored -> new HashSet<>())
+                        .addAll(update.getConfigurationProperties().keySet());
+            }
+        }
+        List<ComponentConfiguration> configsToSave = new ArrayList<>();
+        for (ComponentConfiguration current : this.externalConfigurations.snapshot(configs)) {
+            Map<String, Object> original = current.getConfigurationProperties();
+            Map<String, Object> values = original == null ? null : new HashMap<>(original);
+            boolean logical = passwordValuesAreLogical(current.getPid(), current);
+            if (values != null) {
+                Map<String, Object> stored = new HashMap<>();
+                Map<String, Object> decodedUpdates = new HashMap<>();
+                for (Entry<String, Object> entry : values.entrySet()) {
+                    Object value = entry.getValue();
+                    boolean submitted = encryptedKeys.getOrDefault(current.getPid(), Set.of()).contains(entry.getKey());
+                    if (submitted && (value instanceof Password || value instanceof Password[]
+                            || CollectionsUtil.isPasswordCollection(value))) {
+                        // These values were just encrypted by this operation; decoder failure is not logical text.
+                        decodedUpdates.put(entry.getKey(), decryptPasswordProperties(value));
+                    } else if (!logical) { stored.put(entry.getKey(), value); }
+                }
+                // Preserve the established legacy CM decoding fallback, once, at its known source boundary.
+                decryptConfigurationProperties(stored);
+                values.putAll(stored);
+                values.putAll(decodedUpdates);
+            }
+            ComponentConfigurationImpl copy = new ComponentConfigurationImpl(current.getPid(), null, values);
+            copy.setLogicalPasswords(true);
+            configsToSave.add(copy);
+        }
         XmlComponentConfigurations conf = new XmlComponentConfigurations();
+        conf.setPasswordEncoding(XmlComponentConfigurations.LOGICAL_PASSWORD_ENCODING);
         conf.setConfigurations(configsToSave);
 
         // Write it to disk: marshall
@@ -1262,69 +2188,45 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
         XmlComponentConfigurations xmlConfigs = new XmlComponentConfigurations();
         xmlConfigs.setConfigurations(configImpls);
-        Boolean isEncrypt = Boolean
-                .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
-                        : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
-        if (isEncrypt != null && !isEncrypt) {
-            try (FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
-                marshal(outputfile, xmlConfigs);
-            } catch (IOException e) {
-                throw KuraException.internalError(e);
-            }
-            return;
-        }
-        File tempFile;
+        xmlConfigs.setPasswordEncoding(conf.getPasswordEncoding());
+        boolean encrypt = this.systemService == null || this.systemService.getProperties() == null
+                || Boolean.parseBoolean(this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
+        Path snapshot = fSnapshot.toPath().toAbsolutePath();
+        Path directory = snapshot.getParent();
+        boolean posix = directory.getFileSystem().supportedFileAttributeViews().contains("posix");
         try {
-            tempFile = File.createTempFile("snapshot_write_" + sid + "_", ".temp");
-        } catch (IOException e1) {
-            throw KuraException.internalError(e1);
-        }
-        // Encrypt the XML
-        try (FileOutputStream tempOutputfile = new FileOutputStream(tempFile)) {
-            marshal(tempOutputfile, xmlConfigs);
-        } catch (IOException e) {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e1) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
+            if (Files.exists(snapshot, LinkOption.NOFOLLOW_LINKS)
+                    && !Files.isRegularFile(snapshot, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("Snapshot path is not a regular file: " + snapshot);
             }
+            Path staging = posix ? Files.createTempFile(directory, ".snapshot-", ".part",
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))
+                    : Files.createTempFile(directory, ".snapshot-", ".part");
+            try {
+                try (OutputStream raw = Files.newOutputStream(staging)) {
+                    if (encrypt) {
+                        try (OutputStream ciphertext = this.cryptoService.aesEncryptingStream(raw)) {
+                            marshal(ciphertext, xmlConfigs);
+                        }
+                    } else {
+                        marshal(raw, xmlConfigs);
+                    }
+                }
+                try (FileChannel file = FileChannel.open(staging, StandardOpenOption.WRITE)) {
+                    file.force(true);
+                }
+                Files.move(staging, snapshot, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                if (posix) {
+                    try (FileChannel parent = FileChannel.open(directory, StandardOpenOption.READ)) {
+                        parent.force(true);
+                    }
+                }
+            } finally {
+                Files.deleteIfExists(staging);
+            }
+        } catch (IOException e) {
             throw new KuraIOException(e);
         }
-
-        try (FileInputStream temInputFile = new FileInputStream(tempFile);
-                FileOutputStream outputfile = openPrivateSnapshotOutput(fSnapshot)) {
-            this.cryptoService.encryptAes(temInputFile, outputfile);
-
-        } catch (IOException e) {
-            throw new KuraIOException(e);
-        } finally {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
-            }
-        }
-    }
-
-    private static FileOutputStream openPrivateSnapshotOutput(File snapshot) throws IOException {
-        Path path = snapshot.toPath();
-        boolean posix = path.getFileSystem().supportedFileAttributeViews().contains("posix");
-        if (!Files.exists(path)) {
-            if (posix) {
-                Files.createFile(path, PosixFilePermissions.asFileAttribute(
-                        PosixFilePermissions.fromString("rw-------")));
-            } else {
-                Files.createFile(path);
-            }
-        }
-        if (!Files.isRegularFile(path)) {
-            throw new IOException("Snapshot path is not a regular file: " + path);
-        }
-        if (posix) {
-            Files.setPosixFilePermissions(path,
-                    PosixFilePermissions.fromString("rw-------"));
-        }
-        return new FileOutputStream(snapshot);
     }
 
     private ComponentConfiguration getConfigurableComponentConfiguration(String pid) {
@@ -1339,6 +2241,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 Configuration cfg = this.configurationAdmin.getConfiguration(servicePid, "?");
                 Map<String, Object> props = CollectionsUtil.dictionaryToMap(cfg.getProperties(), ocd,
                         getPasswordPropertiesForPid(pid));
+                trackPasswordProperties(pid, props);
 
                 cc = new ComponentConfigurationImpl(pid, ocd, props);
             }
@@ -1348,54 +2251,61 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         return cc;
     }
 
-    private ComponentConfiguration getSelfConfiguringComponentConfiguration(String pid) {
-        ComponentConfiguration cc = null;
+    private record SelfConfigurationRead(ComponentConfiguration configuration, boolean invalid, boolean fromSelfProvider) { }
+
+    private ComponentConfiguration getSelfConfiguringComponentConfiguration(String pid) throws KuraException {
+        ComponentConfiguration current = null;
+        ComponentConfiguration fallback = null;
         try {
-            String filterExpression = "(" + KURA_SERVICE_PID + "=" + pid + ")";
-            ServiceReference<?>[] refs = this.ctx.getBundleContext().getServiceReferences((String) null,
-                    filterExpression);
+            BundleContext bundles = this.ctx.getBundleContext();
+            ServiceReference<?>[] refs = bundles.getServiceReferences((String) null, "(" + KURA_SERVICE_PID + "=" + pid + ")");
             if (refs != null) {
                 for (ServiceReference<?> ref : refs) {
-                    String ppid = (String) ref.getProperty(KURA_SERVICE_PID);
-                    if (pid.equals(ppid)) {
-                        Object obj = this.ctx.getBundleContext().getService(ref);
-                        try {
-                            if (obj instanceof SelfConfiguringComponent) {
-                                SelfConfiguringComponent selfConfigComp = null;
-                                selfConfigComp = (SelfConfiguringComponent) obj;
-                                try {
-                                    cc = selfConfigComp.getConfiguration();
-                                    if (!isValidSelfConfiguringComponent(pid, cc)) {
-
-                                        return null;
-                                    }
-                                } catch (KuraException e) {
-                                    logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
-                                }
-                            } else {
-                                if (obj == null) {
-                                    cc = getConfigurableComponentConfiguration(pid);
-                                    if (cc == null) {
-                                        logger.error("null ref object. properties:{}", ref.getProperties());
-                                    }
-                                } else {
-                                    logger.error(
-                                            "Component {},  pid: {} is not a SelfConfiguringComponent. Ignoring it.",
-                                            obj, pid);
-                                }
-                            }
-
-                        } finally {
-                            this.ctx.getBundleContext().ungetService(ref);
+                    if (!pid.equals(ref.getProperty(KURA_SERVICE_PID))) { continue; }
+                    try {
+                        SelfConfigurationRead read = this.providerReads.read(ref,
+                                () -> readSelfConfiguration(bundles, ref, pid));
+                        if (read.invalid()) { return null; }
+                        // Several service registrations can share the Kura PID.
+                        // A ManagedService or an unavailable registration must
+                        // not replace a live self-owned view with null/stored CM.
+                        if (read.fromSelfProvider()) {
+                            current = read.configuration();
+                        } else if (read.configuration() != null) {
+                            fallback = read.configuration();
                         }
+                    } catch (ProviderConfigurationReads.Unavailable unavailable) {
+                        throw unavailable;
+                    } catch (KuraException failure) {
+                        logger.error(GETTING_CONFIGURATION_ERROR, pid, failure);
                     }
                 }
             }
-        } catch (InvalidSyntaxException e) {
-            logger.error(GETTING_CONFIGURATION_ERROR, pid, e);
+        } catch (InvalidSyntaxException invalid) {
+            logger.error(GETTING_CONFIGURATION_ERROR, pid, invalid);
         }
+        return current != null ? current : fallback;
+    }
 
-        return cc;
+    private SelfConfigurationRead readSelfConfiguration(BundleContext bundles, ServiceReference<?> reference,
+            String pid) throws KuraException {
+        Object service = bundles.getService(reference);
+        try {
+            if (service instanceof SelfConfiguringComponent provider) {
+                ComponentConfiguration configuration = provider.getConfiguration();
+                return new SelfConfigurationRead(configuration, !isValidSelfConfiguringComponent(pid, configuration), true);
+            }
+            if (service == null) {
+                ComponentConfiguration fallback = getConfigurableComponentConfiguration(pid);
+                if (fallback == null) { logger.error("null ref object. properties:{}", reference.getProperties()); }
+                return new SelfConfigurationRead(fallback, false, false);
+            }
+            logger.error("Component {}, pid: {} is not a SelfConfiguringComponent. Ignoring it.", service, pid);
+            return new SelfConfigurationRead(null, false, false);
+        } finally {
+            // A timed-out caller must not release a service still executing its callback.
+            bundles.ungetService(reference);
+        }
     }
 
     private boolean isValidSelfConfiguringComponent(String pid, ComponentConfiguration cc) {
@@ -1434,36 +2344,49 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     private boolean isMatchingADType(String pid, String adId, String adType, Object value) {
-        boolean result = false;
         try {
-            logger.debug("pid: {}, property name: {}, value: {}", pid, adId, value);
-            Scalar propertyScalar = getScalarFromObject(value);
-            Scalar adScalar = Scalar.fromValue(adType);
-            if (propertyScalar != adScalar) {
-                logger.error(
-                        "Type: {} for property named: {} does not match the AD type: {} for returned Configuration of SelfConfiguringComponent with pid: {}",
-                        propertyScalar.name(), adId, adType, pid);
+            Scalar expected = Scalar.fromValue(adType);
+            if (value instanceof java.util.Collection<?> collection) {
+                // An empty collection has no element type; the declared AD supplies it.
+                for (Object item : collection) {
+                    if (!isMatchingElement(expected, item)) { return false; }
+                }
+                return true;
             }
-            result = true;
+            if (value.getClass().isArray()) {
+                int length = java.lang.reflect.Array.getLength(value);
+                if (length == 0) { return scalarForClass(value.getClass().getComponentType()) == expected; }
+                for (int index = 0; index < length; index++) {
+                    if (!isMatchingElement(expected, java.lang.reflect.Array.get(value, index))) { return false; }
+                }
+                return true;
+            }
+            return isMatchingElement(expected, value);
         } catch (IllegalArgumentException e) {
-            logger.error(
-                    "Invalid class for property named: {} for returned Configuration of SelfConfiguringComponent with pid: {}",
-                    adId, pid);
+            // Never log property values here: Password containers can hold logical secrets.
+            logger.error("Invalid class for property named: {} for SelfConfiguringComponent with pid: {}", adId, pid);
+            return false;
         }
-        return result;
     }
 
-    private Scalar getScalarFromObject(Object p) {
-        Class<?> clazz = p.getClass();
-        if (clazz.isArray()) {
-            Object[] tempArray = (Object[]) p;
-            if (tempArray.length > 0 && tempArray[0] != null) {
-                clazz = tempArray[0].getClass();
-            } else {
-                clazz = clazz.getComponentType();
-            }
-        }
-        return Scalar.fromValue(clazz.getSimpleName());
+    private boolean isMatchingElement(Scalar expected, Object value) {
+        return value != null && !(value instanceof java.util.Collection<?>) && !value.getClass().isArray()
+                && scalarForClass(value.getClass()) == expected;
+    }
+
+    private Scalar scalarForClass(Class<?> type) {
+        String name = switch (type.getName()) {
+            case "boolean" -> "Boolean";
+            case "byte" -> "Byte";
+            case "short" -> "Short";
+            case "int" -> "Integer";
+            case "long" -> "Long";
+            case "float" -> "Float";
+            case "double" -> "Double";
+            case "char" -> "Character";
+            default -> type.getSimpleName();
+        };
+        return Scalar.fromValue(name);
     }
 
     private TreeSet<Long> getSnapshotsInternal() {
@@ -1471,6 +2394,8 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         TreeSet<Long> ids = new TreeSet<>();
         String configDir = getSnapshotsDirectory();
         if (configDir != null) {
+            try { ControlledRecovery.verifySnapshotDirectory(java.nio.file.Path.of(configDir)); }
+            catch (KuraException e) { throw new IllegalStateException("Guarded snapshot directory changed", e); }
             File fConfigDir = new File(configDir);
             File[] files = fConfigDir.listFiles();
             if (files != null) {
@@ -1481,6 +2406,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                         if (file.length() > 0) {
                             ids.add(Long.parseLong(m.group(1)));
                         } else {
+                            if (ControlledRecovery.requested()) {
+                                throw new IllegalStateException("Guarded startup retains empty snapshot evidence");
+                            }
                             logger.warn("error config file length. delete it");
                             try {
                                 Files.delete(file.toPath());
@@ -1545,10 +2473,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     private void loadLatestSnapshotInConfigAdmin() throws KuraException {
         //
         // save away initial configuration
-        List<ComponentConfiguration> configs = buildCurrentConfiguration(null, false);
+        Optional<List<ComponentConfiguration>> controlled = ControlledRecovery.configurations();
+        List<ComponentConfiguration> configs = controlled.isPresent() ? controlled.get() : buildCurrentConfiguration(null, false);
         if (configs == null) {
             return;
         }
+        boolean guardedNormal = ControlledRecovery.evidence().map(ControlledRecovery.Evidence::normalLoad).orElse(false);
+        Map<String,Map<String,Object>> normalCm = guardedNormal
+                ? StartupPasswordConvergence.capture(this.configurationAdmin) : Map.of();
+        List<ComponentConfiguration> storedConfigs = new ArrayList<>();
+        for (ComponentConfiguration configuration : configs) {
+            if (configuration instanceof ComponentConfigurationImpl impl && impl.hasLogicalPasswords()
+                    && configuration.getConfigurationProperties() != null
+                    && !this.externalConfigurations.owns(configuration.getPid())) {
+                // Decode provenance is explicit: encrypt logical snapshot Passwords before any startup CM write.
+                Map<String, Object> stored = guardedNormal
+                        ? StartupPasswordConvergence.preserve(configuration.getConfigurationProperties(),
+                                normalCm.get(configuration.getPid()), this.cryptoService)
+                        : RollbackConvergence.prepare(configuration.getConfigurationProperties(),
+                                Map.of(), Set.of(), this.cryptoService).stored();
+                storedConfigs.add(new ComponentConfigurationImpl(configuration.getPid(), null, stored));
+            } else { storedConfigs.add(configuration); }
+        }
+        configs = storedConfigs;
         final Configuration[] persistedFactoryConfigs;
         try {
             persistedFactoryConfigs = this.configurationAdmin.listConfigurations("(" + KURA_SERVICE_PID + "=*)");
@@ -1587,14 +2534,17 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                                 restoredProperties.put(KURA_SERVICE_PID, pid);
                                 trackPasswordProperties(pid, restoredProperties);
                                 persisted.updateIfDifferent(CollectionsUtil.mapToDictionary(restoredProperties));
-                                if (!this.allActivatedPids.contains(pid)) {
-                                    this.servicePidByPid.put(pid, persisted.getPid());
-                                    this.factoryPidByPid.put(pid, factoryPid);
-                                    this.waittingForActivatedPids.add(pid);
+                                synchronized (this) {
+                                    if (!this.allActivatedPids.contains(pid)) {
+                                        this.servicePidByPid.put(pid, persisted.getPid());
+                                        this.factoryPidByPid.put(pid, factoryPid);
+                                        this.waittingForActivatedPids.add(pid);
+                                    }
                                 }
                             }
                         } catch (KuraException | IOException e) {
-                            logger.warn("Error creating configuration with pid: {} and factory pid: {}", pid,
+                            if (ControlledRecovery.requested()) { throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, "Controlled factory seeding failed"); }
+                              logger.warn("Error creating configuration with pid: {} and factory pid: {}", pid,
                                     factoryPid, e);
                         }
                     } else {
@@ -1612,10 +2562,12 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
                             trackPasswordProperties(config.getPid(), newProperties);
 
-                            cfg.update(CollectionsUtil.mapToDictionary(newProperties));
+                            if (controlled.isPresent() || guardedNormal) { cfg.updateIfDifferent(CollectionsUtil.mapToDictionary(newProperties)); }
+                              else { cfg.update(CollectionsUtil.mapToDictionary(newProperties)); }
 
                         } catch (IOException e) {
-                            logger.warn("Error seeding initial properties to ConfigAdmin for pid: {}", config.getPid(),
+                            if (ControlledRecovery.requested()) { throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, "Controlled singleton seeding failed"); }
+                              logger.warn("Error seeding initial properties to ConfigAdmin for pid: {}", config.getPid(),
                                     e);
                         }
                     }
@@ -1625,6 +2577,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     private List<ComponentConfiguration> loadLatestSnapshotConfigurations() throws KuraException {
+        Optional<List<ComponentConfiguration>> controlled = ControlledRecovery.configurations();
+        if (controlled.isPresent()) { return controlled.get(); }
+
         //
         // Get the latest snapshot file to use as initialization
         Set<Long> snapshotIDs = getSnapshots();
@@ -1643,9 +2598,13 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         try {
             XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(lastestID);
             if (xmlConfigs != null) {
-                configs = xmlConfigs.getConfigurations();
+                configs = logicalSnapshotConfigurations(xmlConfigs);
             }
         } catch (Exception e) {
+            if (ControlledRecovery.requested()) {
+                throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR,
+                        "Guarded normal startup cannot rename, encrypt or fall back from the admitted snapshot");
+            }
             Boolean isEncrypt = Boolean
                     .valueOf(this.systemService == null || this.systemService.getProperties() == null ? "true"
                             : this.systemService.getProperties().getProperty("kura.snapshots.encrypt", "true"));
@@ -1658,20 +2617,17 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                 throw KuraException.internalError(e);
             }
 
-            logger.info("Unable to decrypt snapshot! Fallback to unencrypted snapshots mode.");
-            try {
-                if (allSnapshotsUnencrypted()) {
-                    encryptPlainSnapshots();
-                    configs = loadEncryptLatestSnapshotConfigurations();
-                }
-            } catch (Exception ex) {
-                if (ex instanceof KuraException && ((KuraException) ex).getCode() == KuraErrorCode.DECODER_ERROR) {
-                    logger.error("error encrypt snapshot config file, id:{}. rename to .bad", lastestID, e);
-                    renameSnapshotToBad(lastestID);
-                    return loadLatestSnapshotConfigurations();
-                }
+            if (!(e instanceof KuraException failure) || failure.getCode() != KuraErrorCode.DECODER_ERROR) {
                 throw KuraException.internalError(e);
             }
+            if (testEncryptedSnapshotFileContent(lastestID)) {
+                // Decryption succeeded, but the decoded XML was invalid.
+                renameSnapshotToBad(lastestID);
+                return loadLatestSnapshotConfigurations();
+            }
+            logger.info("Checking snapshot history for plaintext files to encrypt");
+            encryptPlainSnapshots();
+            configs = loadEncryptLatestSnapshotConfigurations();
         }
 
         return configs;
@@ -1695,7 +2651,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         List<ComponentConfiguration> configs = null;
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(lastestID);
         if (xmlConfigs != null) {
-            configs = xmlConfigs.getConfigurations();
+            configs = logicalSnapshotConfigurations(xmlConfigs);
         }
 
         return configs;
@@ -1715,14 +2671,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         File snapshot = new File(sbSnapshot.toString());
         File badFile = new File(sbSnapshot.append(".bad").toString());
         try {
-            Files.move(snapshot.toPath(), badFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(snapshot.toPath(), badFile.toPath());
             logger.info("Renamed bad snapshot {} -> {}", snapshot.getAbsolutePath(), badFile.getAbsolutePath());
         } catch (IOException e) {
-            logger.warn("Failed to rename snapshot {}, deleting instead", snapshot.getAbsolutePath());
-            try {
-                Files.deleteIfExists(snapshot.toPath());
-            } catch (IOException ignored) {
-            }
+            throw new KuraIOException(e);
         }
     }
 
@@ -1798,39 +2750,21 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     boolean testEncryptedSnapshotFileContent(long snapshotID) throws KuraException {
-        String configDir = getSnapshotsDirectory();
-
-        if (configDir == null) {
-            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND,
-                    configDir != null ? configDir : "null");
+        File file = getSnapshotFile(snapshotID);
+        if (file == null || !Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+            throw new KuraException(KuraErrorCode.CONFIGURATION_SNAPSHOT_NOT_FOUND, snapshotID);
         }
-
-        StringBuilder sbSnapshot = new StringBuilder(configDir);
-        sbSnapshot.append(File.separator).append("snapshot_").append(snapshotID).append(".xml");
-
-        String snapshot = sbSnapshot.toString();
-
-        File tempFile;
-        try {
-            tempFile = File.createTempFile("snapshot_test_" + snapshotID + "_", ".temp");
-        } catch (IOException e1) {
-            throw KuraException.internalError(e1);
-        }
-        try (FileInputStream snapInputStream = new FileInputStream(snapshot);
-                FileOutputStream tmpOutputStream = new FileOutputStream(tempFile)) {
-            this.cryptoService.decryptAes(snapInputStream, tmpOutputStream);
+        try (InputStream input = Files.newInputStream(file.toPath())) {
+            this.cryptoService.decryptAes(input, OutputStream.nullOutputStream());
+            return true;
         } catch (KuraException e) {
-            return false;
+            if (e.getCode() == KuraErrorCode.DECODER_ERROR) {
+                return false;
+            }
+            throw e;
         } catch (IOException e) {
             throw KuraException.internalError(e);
-        } finally {
-            try {
-                Files.delete(tempFile.toPath());
-            } catch (IOException e) {
-                logger.warn("delete temporary fiel {} failed", tempFile.getName(), e);
-            }
         }
-        return true;
     }
 
     private void updateConfigurationInternal(String pid, Map<String, Object> properties, boolean snapshotOnConfirmation)
@@ -1887,6 +2821,18 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     private void updateComponentConfiguration(String pid, Map<String, Object> mergedProperties,
             boolean snapshotOnConfirmation) throws KuraException, IOException {
+        OCD registered = getOCDForPid(pid);
+        if (registered instanceof ProviderDefinition provider) {
+            provider.withSource(() -> {
+                Map<String, Object> clear = new HashMap<>(mergedProperties);
+                decryptConfigurationProperties(clear);
+                provider.withValidatedProperties(clear, () -> {
+                    try { writeComponentConfiguration(pid, mergedProperties, snapshotOnConfirmation); }
+                    catch (IOException e) { throw KuraException.internalError(e); }
+                });
+            });
+            return;
+        }
         if (!this.activatedSelfConfigComponents.contains(pid)) {
 
             // load the ocd to do the validation
@@ -1902,6 +2848,11 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
             // components
         }
 
+        writeComponentConfiguration(pid, mergedProperties, snapshotOnConfirmation);
+    }
+
+    private void writeComponentConfiguration(String pid, Map<String, Object> mergedProperties,
+            boolean snapshotOnConfirmation) throws KuraException, IOException {
         // Update the new properties
         // use ConfigurationAdmin to do the update
         trackPasswordProperties(pid, mergedProperties);
@@ -1914,7 +2865,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         }
     }
 
-    private OCD getRegisteredOCD(String pid) {
+    private OCD getRegisteredOCD(String pid) throws KuraException {
         // try to get the OCD from the registered ConfigurableComponents
         OCD registeredOCD = getOCDForPid(pid);
         // otherwise try to get it from the registered SelfConfiguringComponents
@@ -2013,8 +2964,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         } else {
             // Bootstrap cannot depend on an external owner whose transport may
             // itself require ConfigurationService. Never read/replay these PIDs.
-            Set<String> localPids = new HashSet<>(this.allActivatedPids);
-            localPids.addAll(this.waittingForActivatedPids);
+            Set<String> localPids = snapshotConfigurablePids();
             localPids.removeIf(this.externalConfigurations::owns);
             currentConfigs = getComponentConfigurationsInternal(localPids);
         }
@@ -2034,6 +2984,9 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
                                 props.putAll(configToUpdate.getConfigurationProperties());
                             }
                             cc = new ComponentConfigurationImpl(pid, (Tocd) configToUpdate.getDefinition(), props);
+                            if (currentConfig instanceof ComponentConfigurationImpl impl && impl.hasPasswordRepresentation()) {
+                                ((ComponentConfigurationImpl) cc).setLogicalPasswords(impl.hasLogicalPasswords());
+                            }
                             break;
                         }
                     }
@@ -2098,36 +3051,64 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
      * @return the string property value, or {@code null}
      */
     private static String makeString(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof String) {
-            return (String) value;
-        }
-        if (value instanceof Collection) {
-            return makeStringFromCollection((Collection<?>) value);
-        }
-        if (value.getClass().isArray()) {
-            final int length = java.lang.reflect.Array.getLength(value);
-            final List<Object> elements = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                elements.add(java.lang.reflect.Array.get(value, i));
-            }
-            return makeStringFromCollection(elements);
-        }
-        return value.toString();
+        return singleValue(distinctValues(value));
     }
 
-    private static String makeStringFromCollection(Collection<?> values) {
-        final Set<String> distinctValues = values.stream().filter(Objects::nonNull).map(Object::toString)
-                .collect(java.util.stream.Collectors.toSet());
-
-        if (distinctValues.size() == 1) {
-            return distinctValues.iterator().next();
+    private String getServicePid(final ServiceReference<?> reference) {
+        final Set<String> servicePids = distinctValues(reference.getProperty(Constants.SERVICE_PID));
+        if (servicePids.size() > 1) {
+            servicePids.remove(makeString(reference.getProperty(ConfigurationAdmin.SERVICE_FACTORYPID)));
         }
+        if (servicePids.size() > 1) {
+            final Set<String> configurationPids = getConfigurationPids();
+            configurationPids.retainAll(servicePids);
+            if (configurationPids.size() == 1) {
+                return configurationPids.iterator().next();
+            }
+        }
+        return singleValue(servicePids);
+    }
 
-        logger.warn("Expected a single property value, found {}. Ignoring it.", values);
+    private Set<String> getConfigurationPids() {
+        final Set<String> configurationPids = new HashSet<>();
+        if (this.configurationAdmin == null) {
+            return configurationPids;
+        }
+        try {
+            final Configuration[] configurations = this.configurationAdmin.listConfigurations(null);
+            if (configurations != null) {
+                Arrays.stream(configurations).map(Configuration::getPid).forEach(configurationPids::add);
+            }
+        } catch (final IOException | InvalidSyntaxException e) {
+            logger.warn("Failed to list the configurations", e);
+        }
+        return configurationPids;
+    }
 
+    private static Set<String> distinctValues(Object value) {
+        final Set<String> values = new java.util.LinkedHashSet<>();
+        if (value instanceof Collection) {
+            ((Collection<?>) value).stream().filter(Objects::nonNull).map(Object::toString).forEach(values::add);
+        } else if (value != null && value.getClass().isArray()) {
+            for (int i = 0; i < java.lang.reflect.Array.getLength(value); i++) {
+                final Object element = java.lang.reflect.Array.get(value, i);
+                if (element != null) {
+                    values.add(element.toString());
+                }
+            }
+        } else if (value != null) {
+            values.add(value.toString());
+        }
+        return values;
+    }
+
+    private static String singleValue(Set<String> values) {
+        if (values.size() == 1) {
+            return values.iterator().next();
+        }
+        if (!values.isEmpty()) {
+            logger.warn("Expected a single property value, found {}. Ignoring it.", values);
+        }
         return null;
     }
 
@@ -2191,18 +3172,22 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         return getServiceProviderOCDs(classNames);
     }
     
-    private synchronized void trackPasswordProperties(String pid, Map<String, Object> properties) {
+    private void trackPasswordProperties(String pid, Map<String, Object> properties) {
         Set<String> names = CollectionsUtil.passwordPropertyNames(properties);
-        if (names.isEmpty()) {
-            this.passwordPropertiesByPid.remove(pid);
-        } else {
-            this.passwordPropertiesByPid.put(pid, names);
+        synchronized (this.passwordPropertiesLock) {
+            if (names.isEmpty()) {
+                this.passwordPropertiesByPid.remove(pid);
+            } else {
+                this.passwordPropertiesByPid.put(pid, names);
+            }
         }
     }
 
-    private synchronized Set<String> getPasswordPropertiesForPid(String pid) {
-        Set<String> names = this.passwordPropertiesByPid.get(pid);
-        return names == null ? Collections.emptySet() : new HashSet<>(names);
+    private Set<String> getPasswordPropertiesForPid(String pid) {
+        synchronized (this.passwordPropertiesLock) {
+            Set<String> names = this.passwordPropertiesByPid.get(pid);
+            return names == null ? Collections.emptySet() : new HashSet<>(names);
+        }
     }
 
     protected <T> T unmarshal(final InputStream input, final Class<T> clazz) throws KuraException {
@@ -2239,42 +3224,23 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
         try {
             logger.info("Processing configuration rollback for component with pid {}...", snapshotConfig.getPid());
-            rollbackConfigurationInternal(snapshotConfig, optionalCurrentConfig);
-        } catch (IOException e) {
+            rollbackPreparedConfiguration(snapshotConfig, optionalCurrentConfig);
+        } catch (IOException | KuraException e) {
             logger.warn("Failed to rollback configuration for pid {}", snapshotConfig.getPid(), e);
             causes.add(e);
         }
     }
 
-    private void manageCurrentConfigs(List<Throwable> causes, final Map<String, ComponentConfiguration> snapshotConfigs,
+    private void manageCurrentConfigs(List<Throwable> causes,
+            Map<String, ComponentConfiguration> defaults, Set<String> deletions,
             Iterator<Entry<String, Configuration>> currentConfigsIterator) {
-        final Entry<String, Configuration> currentConfigEntry = currentConfigsIterator.next();
-        if (this.externalConfigurations.owns(currentConfigEntry.getKey())) {
-            return;
-        }
-        final Optional<ComponentConfiguration> optionalSnapshotConfig = Optional
-                .ofNullable(snapshotConfigs.get(currentConfigEntry.getKey()));
-
-        if (!isFactoryComponent(currentConfigEntry)) {
-
-            if (!optionalSnapshotConfig.isPresent() && this.allActivatedPids.contains(currentConfigEntry.getKey())) {
-                try {
-                    rollbackToDefaultConfig(currentConfigEntry);
-                } catch (IOException e) {
-                    logger.warn("Failed to revert to factory configuration {}", currentConfigEntry.getKey(), e);
-                    causes.add(e);
-                }
-            }
-
-        } else if (!optionalSnapshotConfig.isPresent() || !Objects.equals(currentConfigEntry.getValue().getFactoryPid(),
-                optionalSnapshotConfig.get().getConfigurationProperties().get(ConfigurationAdmin.SERVICE_FACTORYPID))) {
-
-            try {
-                deleteFactoryComponent(currentConfigsIterator, currentConfigEntry);
-            } catch (IOException e) {
-                logger.warn("Failed to delete configuration {}", currentConfigEntry.getKey(), e);
-                causes.add(e);
-            }
+        Entry<String, Configuration> entry = currentConfigsIterator.next();
+        try {
+            ComponentConfiguration reset = defaults.get(entry.getKey());
+            if (reset != null) { rollbackToDefaultConfig(entry, reset); }
+            else if (deletions.contains(entry.getKey())) { deleteFactoryComponent(currentConfigsIterator, entry); }
+        } catch (IOException | KuraException e) {
+            logger.warn("Failed to rollback current configuration {}", entry.getKey(), e); causes.add(e);
         }
     }
 
@@ -2287,18 +3253,18 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
     }
 
     private void rollbackConfigurationInternal(final ComponentConfiguration snapshotConfig,
-            final Optional<Configuration> existingConfig) throws IOException {
+            final Optional<Configuration> existingConfig) throws IOException, KuraException {
+        rollbackPreparedConfiguration(prepareRollbackConfiguration(snapshotConfig, existingConfig, new LinkedHashMap<>(), new HashMap<>()),
+                existingConfig);
+    }
+
+    private void rollbackPreparedConfiguration(final ComponentConfiguration snapshotConfig,
+            final Optional<Configuration> existingConfig) throws IOException, KuraException {
         final Optional<String> factoryPid = Optional
                 .ofNullable(snapshotConfig.getConfigurationProperties().get(ConfigurationAdmin.SERVICE_FACTORYPID))
                 .filter(String.class::isInstance).map(String.class::cast);
 
         final Map<String, Object> result = snapshotConfig.getConfigurationProperties();
-
-        final Optional<OCD> ocd = Optional.ofNullable(getRegisteredOCD(snapshotConfig.getPid()));
-
-        if (ocd.isPresent()) {
-            mergeWithDefaults(ocd.get(), result);
-        }
 
         trackPasswordProperties(snapshotConfig.getPid(), result);
 
@@ -2348,11 +3314,10 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         unregisterComponentConfiguration(currentConfigEntry.getKey());
     }
 
-    private void rollbackToDefaultConfig(final Entry<String, Configuration> currentConfigEntry) throws IOException {
-        logger.info("Rolling back to default configuration for component pid: '{}'", currentConfigEntry.getKey());
-        rollbackConfigurationInternal(
-                new ComponentConfigurationImpl(currentConfigEntry.getKey(), null, new HashMap<>()),
-                Optional.of(currentConfigEntry.getValue()));
+    private void rollbackToDefaultConfig(Entry<String, Configuration> entry,
+            ComponentConfiguration prepared) throws IOException, KuraException {
+        logger.info("Rolling back to default configuration for component pid: '{}'", entry.getKey());
+        rollbackPreparedConfiguration(prepared, Optional.of(entry.getValue()));
     }
 
     private boolean isFactoryComponent(final Entry<String, Configuration> currentConfigEntry) {
@@ -2388,9 +3353,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     private Map<String, ComponentConfiguration> getSnapshotConfigs(long id) throws KuraException {
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(id);
-        List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
+        return ComponentUtil.toMap(logicalSnapshotConfigurations(xmlConfigs));
+    }
 
-        return ComponentUtil.toMap(configs);
+    private List<ComponentConfiguration> logicalSnapshotConfigurations(XmlComponentConfigurations snapshot) {
+        if (snapshot.hasLogicalPasswords()) {
+            return snapshot.getConfigurations();
+        }
+        List<ComponentConfiguration> result = new ArrayList<>();
+        for (ComponentConfiguration configuration : snapshot.getConfigurations()) {
+            if (configuration instanceof ComponentConfigurationImpl impl) {
+                var properties = impl.getConfigurationProperties();
+                if (properties != null) {
+                    var logical = LegacySnapshotPasswords.logical(properties, this.cryptoService);
+                    if (logical != properties) {
+                        var copy = new ComponentConfigurationImpl(impl.getPid(), impl.definition, logical);
+                        copy.setLogicalPasswords(true);
+                        configuration = copy;
+                    }
+                }
+            }
+            result.add(configuration);
+        }
+        return result;
     }
 
     private static final class TrackedComponentFactory {

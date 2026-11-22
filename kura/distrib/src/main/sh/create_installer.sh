@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
-#  Copyright (c) 2011, 2025 Eurotech and/or its affiliates and others
+#  Copyright (c) 2011, 2026 Eurotech and/or its affiliates and others
 #
 #  This program and the accompanying materials are made
 #  available under the terms of the Eclipse Public License 2.0
@@ -12,29 +12,23 @@
 #   Eurotech
 #
 
+set -eu
 
-TARGET_DIR=$1
-KURA_ZIP_FILE_NAME=$2
-OUTPUT_NAME=$3
-BUILD_NAME=$4
-INSTALL_DIR=$5
+package=$1
+output=$2
+template=$(dirname "$0")/extract.sh
+checksum=$(python3 - "$package" <<'PYTHON'
+import hashlib
+import sys
 
-# Select the no networking extract file if necessary
-if [[ $BUILD_NAME =~ .*-nn$ ]]
-then
-	EXTRACT_NAME="extract_nn.sh"
-else
-	EXTRACT_NAME="extract.sh"
-fi
-
-#tar the zip...
-cd $TARGET_DIR
-tar czvf $KURA_ZIP_FILE_NAME.tar.gz $KURA_ZIP_FILE_NAME
-
-sed "s|^INSTALL_DIR=.*|INSTALL_DIR=${INSTALL_DIR}|" $TARGET_DIR/../../src/main/sh/$EXTRACT_NAME > tmp_file
-cat tmp_file $KURA_ZIP_FILE_NAME.tar.gz > $OUTPUT_NAME
-chmod +x $OUTPUT_NAME
-
-#clean up
-rm $TARGET_DIR/$KURA_ZIP_FILE_NAME.tar.gz
-rm $TARGET_DIR/tmp_file
+with open(sys.argv[1], "rb") as package:
+    print(hashlib.file_digest(package, "sha256").hexdigest())
+PYTHON
+)
+temporary=$(mktemp "${output}.XXXXXXXX")
+trap 'rm -f -- "$temporary"' EXIT
+trap 'exit 1' HUP INT TERM
+sed "s/@CORE_DEB_SHA256@/$checksum/" "$template" > "$temporary"
+cat "$package" >> "$temporary"
+chmod +x "$temporary"
+mv -f -- "$temporary" "$output"

@@ -141,6 +141,11 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseAsset.class);
 
+    // DS registration metadata is not part of an Asset's portable configuration.
+    private static final Set<String> REGISTRATION_PROPERTIES = Set.of("component.id", "component.name",
+            "service.id", "service.bundleid", "service.scope", "service.bundleLocation", "objectClass",
+            "osgi.ds.satisfying.condition.target", "kura.ui.service.hide", "kura.ui.toolsSorted");
+
     /** Container of channel listeners registered by this Asset. */
     protected final Set<ChannelListenerHolder> channelListeners = new HashSet<>();
 
@@ -289,7 +294,8 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
     @Override
     public ComponentConfiguration getConfiguration() throws KuraException {
 
-        final Map<String, Object> properties = this.config.getProperties();
+        final Map<String, Object> properties = new HashMap<>(this.config.getProperties());
+        REGISTRATION_PROPERTIES.forEach(properties::remove);
 
         final String componentName = properties.get(ConfigurationService.KURA_SERVICE_PID).toString();
 
@@ -299,7 +305,23 @@ public class BaseAsset implements Asset, SelfConfiguringComponent {
             ocd = getOCD();
         }
 
-        return new ComponentConfigurationImpl(componentName, ocd, new HashMap<>(properties));
+        // Dynamic driver PASSWORD descriptors describe CM-backed Strings/containers too.
+        java.util.Hashtable<String, Object> encodedPasswords = new java.util.Hashtable<>();
+        if (ocd.getAD() != null) {
+            for (org.eclipse.kura.configuration.metatype.AD ad : ocd.getAD()) {
+                Object value = properties.get(ad.getId());
+                if (ad.getType() == org.eclipse.kura.configuration.metatype.Scalar.PASSWORD && value != null
+                        && !(value instanceof org.eclipse.kura.configuration.Password)
+                        && !(value instanceof org.eclipse.kura.configuration.Password[])
+                        && !org.eclipse.kura.core.configuration.util.CollectionsUtil.isPasswordCollection(value)) {
+                    encodedPasswords.put(ad.getId(), value);
+                }
+            }
+        }
+        properties.putAll(org.eclipse.kura.core.configuration.util.CollectionsUtil.dictionaryToMap(encodedPasswords, ocd));
+        ComponentConfigurationImpl result = new ComponentConfigurationImpl(componentName, ocd, properties);
+        result.setLogicalPasswords(false);
+        return result;
     }
 
     /**

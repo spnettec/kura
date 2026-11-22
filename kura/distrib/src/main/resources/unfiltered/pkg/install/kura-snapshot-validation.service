@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura native agent read-only snapshot validation
+Requires=kura-snapshot-validation.socket
+Wants=kura-snapshot-inventory.socket
+After=kura-snapshot-validation.socket kura-snapshot-inventory.socket
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_native_snapshot_validation.py
+Sockets=kura-snapshot-validation.socket
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+LimitCORE=0
+LimitMEMLOCK=0
+MemoryMax=256M
+TasksMax=32
+TimeoutStopSec=30

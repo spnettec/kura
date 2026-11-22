@@ -1,0 +1,33 @@
+[Unit]
+Description=YOFC Kura typed host reboot actor
+Requires=kura-reboot-broker.socket
+After=kura-reboot-broker.socket
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_reboot_broker.py serve
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallFilter=~@reboot
+ReadWritePaths=/var/lib/kura-reboot-broker
+InaccessiblePaths=-/etc/kura/credentials -/etc/kura/recovery-tls -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-clock-broker -/var/lib/kura-reboot-sender -/var/lib/kura-retained -/var/lib/kura-management-agent -/var/lib/kura-management-agent-native -/run/kura-key-service -/opt/eclipse/kura/.data -/opt/eclipse/kura/user -/opt/eclipse/kura/data -/opt/eclipse/kura/packages -/opt/eclipse/kura/log
+MemoryMax=64M
+TasksMax=8
+CPUQuota=10%
+KillMode=control-group
+TimeoutStopSec=10

@@ -77,7 +77,7 @@ def stage(build, version, arch):
     logs = home / 'log4j'
     logs.mkdir()
     log_config = (source / 'log4j/log4j.xml').read_text().replace('>/var/log<', '>/var/log/kura-netplan<')
-    (logs / 'log4j.xml').write_text(log_config)
+    (logs / 'log4j.xml').write_text(log_config.replace('${log_dir}/kura/archives', '${log_dir}'))
     defaults = root / 'usr/share/kura-netplan/defaults/user'
     shutil.copytree(source / 'user', defaults)
     (defaults / 'kura_custom.properties').write_text('kura.snapshots.encrypt=true\n')

@@ -1,0 +1,11 @@
+[Unit]
+Description=Kura ordinary command executor socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-command-executor.sock
+SocketUser=root
+SocketGroup=kurad
+SocketMode=0660
+Accept=yes
+RemoveOnStop=yes

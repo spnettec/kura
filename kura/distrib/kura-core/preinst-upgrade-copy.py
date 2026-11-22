@@ -1,0 +1,381 @@
+# SPDX-License-Identifier: EPL-2.0
+"""Publish a complete upgrade source copy under the original maintenance fence."""
+from contextlib import contextmanager
+import ctypes
+import fcntl
+import hashlib
+import hmac
+import os
+from pathlib import Path
+import re
+import shutil
+import stat
+import subprocess
+import tempfile
+import uuid
+
+
+def rename_upgrade_copy(stage, destination):
+    rename = ctypes.CDLL(None, use_errno=True).renameat2
+    rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(stage), -100, os.fsencode(destination), 1):  # AT_FDCWD, RENAME_NOREPLACE
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(destination))
+
+
+class UpgradeCopy:
+    def __init__(self, api, policy, control, old_version, new_version, payload):
+        self.api = api
+        self.policy = policy
+        self.base = policy.path('/opt/eclipse')
+        self.destination = self.base / '.kura-preserve'
+        self.control = control
+        api.require(re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+', payload['home']), 'Invalid incoming Core home')
+        self.incoming = self.base / payload['home']
+        self.payload_files = payload['files']
+        self.payload_directories = frozenset(payload['directories'])
+        self.payload_controls = payload['controls']
+        for version in (old_version, new_version):
+            api.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version), 'Invalid upgrade version')
+        self.versions = dict(oldVersion=old_version, newVersion=new_version)
+
+    @staticmethod
+    def identity(path):
+        value = path.lstat()
+        return dict(device=value.st_dev, inode=value.st_ino)
+
+    def binding(self):
+        policy, require = self.policy, self.api.require
+        policy.check_records()
+        policy.no_overrides()
+        fence = policy.fence()
+        require(fence is not None and fence['firstAction'] == 'upgrade',
+                'Upgrade preservation requires its original maintenance fence')
+        require(not os.path.lexists(policy.path('/var/lib/kura-retained')), 'Existing removal copy must be preserved')
+        require(not os.path.lexists(policy.path('/var/lib/kura-package-configure') / fence['id']),
+                'Continue the original configure instead of unpacking again')
+        boot = policy.path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        require(str(uuid.UUID(boot)) == boot, 'Invalid running kernel boot identity')
+        control_sha = hashlib.sha256(policy.read(self.control, limit=1024 * 1024, private=False)).hexdigest()
+        binding = dict(schema=2, maintenanceId=fence['id'], root=self.identity(policy.root), bootId=boot,
+                       preinstSha256=control_sha, **self.versions)
+        secret = policy.read(policy.state / 'journal.key', limit=32)
+        require(len(secret) == 32)
+        return binding, secret
+
+    def installed_source(self):
+        logical = self.base / 'kura'
+        physical = logical.resolve(strict=True)
+        self.api.require(physical.parent == self.base and logical.lstat().st_uid == self.policy.owner,
+                         'Upgrade source does not match the installed Core home')
+        self.policy.directory(physical)
+        alias = dict(self.identity(logical), target=os.readlink(logical) if logical.is_symlink() else None)
+        source = dict(source=dict(name=physical.name, **self.identity(physical)), logical=alias)
+        packages = physical / 'packages'
+        if packages.is_dir() and not packages.is_symlink():
+            registry = (packages / 'dpa.properties').resolve()
+            prefix = '.' + registry.name
+            pattern = re.compile(re.escape(prefix) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
+            if registry.parent.is_dir() and any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()):
+                self.api.require(physical == self.incoming,
+                                 'Completed deployment jobs require their original Core home path')
+                source['packageHistoryDirectory'] = self.identity(packages)
+        return source
+
+    def unpublished_binding(self):
+        self.api.require(not os.path.lexists(self.destination), 'Existing recovery copy must be preserved')
+        binding, secret = self.binding()
+        return dict(binding, **self.installed_source()), secret
+
+    @staticmethod
+    def prefix(binding):
+        return f".kura-preserve.tmp.{binding['maintenanceId']}."
+
+    def receipt(self, stage, binding, secret):
+        data = dict(binding, stage=self.identity(stage))
+        data['tag'] = hmac.new(secret, b'kura-core-preinst-capture-v1\0' + self.api.encoded(data),
+                               hashlib.sha256).hexdigest()
+        return self.api.encoded(data)
+
+    def attest(self, stage, binding, secret):
+        self.api.require(stage.parent == self.base and
+                         re.fullmatch(re.escape(self.prefix(binding)) + r'[a-z0-9_]{8}', stage.name),
+                         'Unexpected upgrade staging path')
+        self.policy.directory(stage, private=True)
+        self.api.require(self.policy.read(stage / '.capture.json', limit=4096) == self.receipt(stage, binding, secret),
+                         'Upgrade staging belongs to another source, package or Root')
+
+    @contextmanager
+    def registry_lock(self, home):
+        framework = home / 'framework'
+        if not os.path.lexists(framework):
+            yield
+            return
+        self.policy.directory(framework)
+        path = framework / 'sibling-install-order.lock'
+        flags = os.O_RDONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        fd = os.open(path, flags, 0o600)
+        try:
+            value = os.fstat(fd)
+            self.api.require(stat.S_ISREG(value.st_mode) and value.st_uid == self.policy.owner
+                             and value.st_nlink == 1 and not value.st_mode & 0o022, 'Unsafe sibling registry lock')
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise self.api.Refused('Sibling registry is in use; preserve the original Core home') from error
+            self.api.require(os.path.samestat(value, path.lstat()), 'Sibling registry lock changed')
+            yield
+        finally:
+            os.close(fd)
+
+    def registry_entry(self, home):
+        framework = home / 'framework'
+        if not os.path.lexists(framework):
+            return None
+        self.policy.directory(framework)
+        path = framework / 'sibling-install-order'
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+        except FileNotFoundError:
+            return None
+        with os.fdopen(fd, 'rb') as stream:
+            value = os.fstat(fd)
+            if not stat.S_ISREG(value.st_mode) or value.st_nlink != 1:
+                raise ValueError('Invalid sibling install-order registry')
+            return (value.st_mode, value.st_uid, value.st_gid, value.st_mtime_ns, hashlib.file_digest(stream, 'sha256').digest())
+
+    def check_registry_copy(self, home, copy):
+        self.api.require(self.registry_entry(home) == self.registry_entry(copy),
+                         'Sibling registry differs from the staged upgrade copy')
+
+    def prepare(self):
+        with self.policy.locked():
+            binding, secret = self.unpublished_binding()
+            # Refuse a busy registry before allocating another recovery copy.
+            with self.registry_lock(self.base / binding['source']['name']):
+                for prior in self.base.glob(self.prefix(binding) + '*'):
+                    self.policy.directory(prior, private=True)
+                    if os.path.lexists(prior / '.capture.json'):
+                        self.attest(prior, binding, secret)
+                        shutil.rmtree(prior)
+                stage = Path(tempfile.mkdtemp(prefix=self.prefix(binding), dir=self.base))
+                pending = stage / '.capture.pending'
+                self.policy.create(pending, self.receipt(stage, binding, secret))
+                pending.rename(stage / '.capture.json')
+                self.policy.sync(stage)
+                self.policy.sync(self.base)
+                return stage
+
+    def publish(self, stage):
+        with self.policy.locked():
+            binding, secret = self.unpublished_binding()
+            self.attest(stage, binding, secret)
+            home = self.base / binding['source']['name']
+            with self.registry_lock(home):
+                self.check_registry_copy(home, stage)
+                os.sync()
+                rename_upgrade_copy(stage, self.destination)
+                self.policy.sync(self.base)
+
+    def published_source(self):
+        policy, require = self.policy, self.api.require
+        binding, secret = self.binding()
+        policy.directory(self.destination, private=True)
+        raw = policy.read(self.destination / '.capture.json', limit=4096)
+        saved = self.api.decode(raw)
+        source, alias = saved['source'], saved['logical']
+        # dpkg can durably advance the version to the incoming one before
+        # clearing reinstreq. Its next unpack uses the new version twice.
+        captured_old = saved['oldVersion']
+        reinstall = binding['oldVersion'] == binding['newVersion'] and captured_old != binding['oldVersion']
+        if reinstall:
+            require(isinstance(captured_old, str) and re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', captured_old),
+                    'Invalid original Core predecessor')
+            binding['oldVersion'] = captured_old
+        expected = dict(binding, source=source, logical=alias)
+        if 'packageHistoryDirectory' in saved:
+            expected['packageHistoryDirectory'] = saved['packageHistoryDirectory']
+        require(hmac.compare_digest(raw, self.receipt(self.destination, expected, secret)),
+                'Published upgrade copy belongs to another source, package, boot or Root')
+        if reinstall:
+            self.check_installed_incoming_control(binding['preinstSha256'])
+        for credential, limit in (('kura_encryption_key', 32), ('provisioned.json', 4096)):
+            saved_credential = policy.read(self.destination / 'encryption' / credential, limit=limit)
+            installed = policy.read(policy.path('/etc/kura/credentials') / credential, limit=limit)
+            require(saved_credential == installed, 'Published copy differs from the installed encryption credential')
+        name = source['name']
+        require(name == 'kura' or re.fullmatch(r'kura_[A-Za-z0-9.+~_-]+', name), 'Invalid original Core home')
+        live = self.base / name
+        parked = self.destination / '.old-home'
+        originals = []
+        for path in (live, parked):
+            if not os.path.lexists(path):
+                continue
+            policy.directory(path)
+            if dict(name=name, **self.identity(path)) == source:
+                originals.append(path)
+            else:
+                require(path == self.incoming and path == live, 'Original Core home was replaced')
+        require(len(originals) == 1, 'Original Core home is missing or ambiguous')
+        if name != 'kura':
+            logical = self.base / 'kura'
+            require(logical.is_symlink() and logical.lstat().st_uid == policy.owner
+                    and alias == dict(self.identity(logical), target=os.readlink(logical)),
+                    'Original Core runtime link changed')
+        if policy.path('/run/systemd/system').is_dir():
+            output = policy.command(['show', 'kura.service', '--property=ActiveState',
+                                     '--property=MainPID', '--property=ControlPID'])
+            require(set(output.splitlines()) == {'ActiveState=inactive', 'MainPID=0', 'ControlPID=0'},
+                    'Main must be stopped under the original maintenance fence')
+        return live, parked, originals[0], hashlib.sha256(raw).hexdigest(), secret, reinstall
+
+    def check_installed_incoming_control(self, preinst_sha):
+        self.dpkg_payload_state(reinstall_required=True)
+        controls = dict(self.payload_controls, preinst=preinst_sha)
+        self.api.require(set(controls) == {'preinst', 'postinst', 'prerm', 'postrm'},
+                         'Missing incoming maintainer script fingerprints')
+        for hook, expected in controls.items():
+            path = self.policy.path('/var/lib/dpkg/info/kura-core.' + hook)
+            raw = self.policy.read(path, limit=1024 * 1024, private=False)
+            self.api.require(hashlib.sha256(raw).hexdigest() == expected,
+                             'Installed maintainer scripts do not match the original incoming package')
+
+    def payload_record(self, phase, capture, secret, **fields):
+        record = dict(schema=1, phase=phase, captureSha256=capture, home=self.incoming.name, **fields)
+        record['tag'] = hmac.new(secret, b'kura-core-dpkg-payload-v1\0' + self.api.encoded(record),
+                                 hashlib.sha256).hexdigest()
+        return self.api.encoded(record)
+
+    def publish_payload_record(self, path, record):
+        with tempfile.TemporaryDirectory(prefix='.payload-record-', dir=self.destination) as temporary:
+            pending = Path(temporary) / path.name
+            self.policy.create(pending, record)
+            rename_upgrade_copy(pending, path)
+        self.policy.sync(self.destination)
+
+    def check_partial_payload(self, path, *, relocated):
+        require = self.api.require
+        self.policy.directory(path)
+        found_file = False
+        def stamp(info):
+            return (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid, info.st_nlink,
+                    info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+        for entry in path.rglob('*'):
+            name = entry.relative_to(path).as_posix()
+            info = entry.lstat()
+            require(info.st_uid == self.policy.owner and not info.st_mode & 0o7022,
+                    'Unprotected entry in interrupted dpkg payload')
+            if stat.S_ISDIR(info.st_mode):
+                require(name in self.payload_directories, 'Unexpected directory in interrupted dpkg payload')
+                continue
+            require(stat.S_ISREG(info.st_mode), 'Unsafe entry in interrupted dpkg payload')
+            writing = name.endswith('.dpkg-new')
+            # A second unpack can leave dpkg's backup of the already returned
+            # incoming file. Require the existing relocation record and verify
+            # the backup as a complete file from the same package.
+            base = name.removesuffix('.dpkg-new')
+            if relocated and not writing:
+                base = base.removesuffix('.dpkg-tmp')
+            require(base in self.payload_files, 'Unexpected file in interrupted dpkg payload')
+            linked_backup = None
+            if info.st_nlink != 1:
+                require(relocated and not writing and info.st_nlink == 2,
+                        'Unsafe entry in interrupted dpkg payload')
+                # Between linkat and rename, the canonical file and dpkg's
+                # rollback backup are the only two names for the old inode.
+                peer = base + '.dpkg-tmp' if name == base else base
+                linked_backup = path / peer
+                require(stamp(linked_backup.lstat()) == stamp(info), 'Unexpected dpkg rollback hardlink')
+            maximum, expected = self.payload_files[base]
+            require(info.st_size <= maximum, 'Interrupted dpkg file exceeds its incoming size')
+            if not writing:
+                require(info.st_size == maximum, 'Published dpkg file has the wrong size')
+                fd = os.open(entry, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+                with os.fdopen(fd, 'rb') as stream:
+                    actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+                    require(actual == expected and stamp(os.fstat(stream.fileno())) == stamp(info) == stamp(entry.lstat()),
+                            'Published dpkg file differs from the incoming payload')
+                    if linked_backup is not None:
+                        require(stamp(linked_backup.lstat()) == stamp(info), 'Dpkg rollback hardlink changed')
+            found_file = True
+        require(found_file, 'Interrupted dpkg payload has no incoming file evidence')
+
+    def dpkg_payload_state(self, *, reinstall_required=False):
+        state = subprocess.check_output(['/usr/bin/dpkg-query', '-W',
+            '-f=${Version} ${db:Status-Status} ${db:Status-Eflag}', 'kura-core'], text=True, timeout=5).split()
+        self.api.require(len(state) == 3 and state[:2] == [self.versions['oldVersion'], 'half-installed'],
+                         'Expected an interrupted unpack of the original Core upgrade')
+        if reinstall_required:
+            self.api.require(state[2] == 'reinstreq', 'Core does not require reinstalling the incoming package')
+
+    def pending_payload(self, original, capture, secret, *, restore):
+        require = self.api.require
+        held = self.destination / '.partial-payload'
+        public = self.incoming != original and os.path.lexists(self.incoming)
+        require(not (public and os.path.lexists(held)), 'Two interrupted dpkg payloads are present')
+        existing = self.incoming if public else held
+        if not os.path.lexists(existing):
+            return None
+        handoff = self.destination / '.payload-issued.json'
+        require(self.policy.read(handoff, limit=4096) == self.payload_record('issued', capture, secret),
+                'Missing original dpkg payload handoff')
+        self.dpkg_payload_state()
+        marker = self.destination / '.partial-payload.json'
+        expected = self.payload_record('preserved', capture, secret, payload=self.identity(existing))
+        relocated = os.path.lexists(marker)
+        if relocated:
+            require(self.policy.read(marker, limit=4096) == expected, 'Interrupted dpkg payload identity changed')
+        self.check_partial_payload(existing, relocated=relocated)
+        if not relocated:
+            require(public and restore, 'Interrupted dpkg payload has no paired relocation record')
+            self.publish_payload_record(marker, expected)
+        if public:
+            require(restore, 'Interrupted dpkg payload must first be checked by the original preinst')
+            rename_upgrade_copy(existing, held)
+            self.policy.sync(self.base)
+            self.policy.sync(self.destination)
+        return held
+
+    def arrange_source(self, *, restore):
+        with self.policy.locked():
+            live, parked, original, capture, secret, reinstall = self.published_source()
+            with self.registry_lock(original):
+                if not restore:
+                    self.check_registry_copy(original, self.destination)
+                held = self.pending_payload(original, capture, secret, restore=restore)
+                self.api.require(not reinstall or held is not None, 'Missing paired incoming payload for reinstreq')
+                target = live if restore else parked
+                if original != target:
+                    # Move the whole original tree. A retry can use the same files
+                    # for the ordinary package checks even if unpack never began.
+                    rename_upgrade_copy(original, target)
+                if not restore:
+                    issued = self.destination / '.payload-issued.json'
+                    record = self.payload_record('issued', capture, secret)
+                    if os.path.lexists(issued):
+                        self.api.require(self.policy.read(issued, limit=4096) == record, 'Invalid original dpkg handoff')
+                    else:
+                        self.api.require(not os.path.lexists(self.incoming), 'Incoming Core path is already in use')
+                        self.publish_payload_record(issued, record)
+                    if held is not None:
+                        rename_upgrade_copy(held, self.incoming)
+                self.policy.sync(self.destination)
+                self.policy.sync(self.base)
+
+
+def run_upgrade_copy(api, policy, arguments, payload):
+    action, control, old_version, new_version, *extra = arguments
+    api.require(os.environ.get('DPKG_MAINTSCRIPT_NAME') == 'preinst'
+                and os.environ.get('DPKG_MAINTSCRIPT_PACKAGE') == 'kura-core',
+                'Upgrade preservation requires the package preinst')
+    capture = UpgradeCopy(api, policy, Path(control), old_version, new_version, payload)
+    if action == '--prepare-upgrade-copy' and not extra:
+        print(capture.prepare())
+    elif action == '--publish-upgrade-copy' and len(extra) == 1:
+        capture.publish(Path(extra[0]))
+    elif action in ('--restore-upgrade-source', '--detach-upgrade-source') and not extra:
+        capture.arrange_source(restore=action == '--restore-upgrade-source')
+    else:
+        raise api.Refused('Unsupported upgrade preservation action')

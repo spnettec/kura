@@ -1,0 +1,32 @@
+[Unit]
+Description=YOFC Kura typed Chrony configuration publisher
+Requires=kura-clock-chrony-config.socket
+After=kura-clock-chrony-config.socket
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-clock-broker/bin/kura_clock_broker.py serve-chrony-config
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=-/etc/chrony
+InaccessiblePaths=-/etc/kura -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/var/lib/kura-management-agent -/var/lib/kura-management-agent-native -/var/lib/kura-clock-broker -/run/kura-key-service -/opt/eclipse/kura
+MemoryMax=64M
+TasksMax=8
+CPUQuota=10%
+KillMode=control-group
+TimeoutStopSec=10

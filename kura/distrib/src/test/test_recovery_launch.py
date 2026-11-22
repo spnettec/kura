@@ -1,0 +1,331 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: EPL-2.0
+
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from contextlib import nullcontext
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
+import kura_recovery_launch as launch
+import kura_recovery_main_command as commands
+import kura_snapshot_publication
+from kura_key_service import Failure, Lifecycle, Manager
+from kura_key_store import KEY_PATH, RING_PATH
+from kura_snapshot_publication import SnapshotPublication
+
+
+@unittest.skipUnless(sys.platform == 'linux' and os.geteuid() == 0, 'Linux Root fixture required')
+class LaunchProjectionTest(unittest.TestCase):
+    identity = 'rec-11111111-1111-4111-8111-111111111111'
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.base = self.root / 'launch'
+        self.base.mkdir(mode=0o750)
+        self.target = self.base / self.identity
+        self.target.mkdir(mode=0o750)
+        self.output = self.target / launch.OUT
+        self.output.mkdir(mode=0o700)
+        self.contents = b'exact staged snapshot'
+        self.plan = dict(schema=1, restoreId=self.identity, root=launch.root_identity(self.root),
+                         bindingSha256='a' * 64, activeKeySha256='b' * 64, ringSha256=None,
+                         cohortSha256='c' * 64, bootstrapSha256='d' * 64, size=len(self.contents),
+                         snapshotSha256=launch.digest(self.contents), mode='aes-gcm', passwordPolicy='authenticated')
+        launch.write(self.target / launch.PLAN, launch.canonical(self.plan), 0o440)
+        launch.write(self.target / launch.SNAPSHOT, self.contents, 0o440)
+        launch.write(self.target / launch.REQUEST, launch.properties(self.target, self.plan), 0o440)
+
+    def read(self, root=None):
+        return launch.projection(self.base, self.identity, 0, 0, root or self.root)
+
+    def test_projection_binds_snapshot_request_and_root(self):
+        self.assertEqual((self.target, self.plan), self.read())
+        with self.assertRaises(ValueError):
+            self.read(self.base)
+        snapshot = self.target / launch.SNAPSHOT
+        snapshot.unlink()
+        snapshot.symlink_to(self.target / launch.PLAN)
+        with self.assertRaises(OSError):
+            self.read()
+
+    def test_request_replacement_and_non_private_result_directory_refused(self):
+        request = self.target / launch.REQUEST
+        request.unlink()
+        changed = launch.properties(self.target, self.plan).replace(b'snapshot_0.xml', b'snapshot_1.xml')
+        launch.write(request, changed, 0o440)
+        with self.assertRaises(ValueError):
+            self.read()
+        request.unlink()
+        launch.write(request, launch.properties(self.target, self.plan), 0o440)
+        self.output.chmod(0o750)
+        with self.assertRaises(ValueError):
+            self.read()
+
+    def test_claim_requires_exact_lease_and_cannot_be_replaced(self):
+        lease = dict(keySha256=self.plan['activeKeySha256'], ringSha256=None,
+                     cohortSha256=self.plan['cohortSha256'], startTicks='5')
+        with patch.dict(os.environ, INVOCATION_ID='a' * 32):
+            with self.assertRaises(ValueError):
+                launch.claim(self.target, self.plan, lease | {'cohortSha256': 'e' * 64})
+            self.assertFalse((self.output / launch.CLAIM).exists())
+            launch.claim(self.target, self.plan, lease)
+            with self.assertRaises(FileExistsError):
+                launch.claim(self.target, self.plan, lease)
+        saved = json.loads((self.output / launch.CLAIM).read_bytes())
+        self.assertEqual(self.identity, saved['restoreId'])
+        self.assertEqual(launch.digest(launch.canonical(self.plan)), saved['planSha256'])
+        self.assertEqual(os.getpid(), saved['pid'])
+
+    def test_fixed_condition_issues_only_one_systemd_invocation(self):
+        fixed = dict(restoreId=self.identity)
+        with patch.dict(os.environ, {}, clear=True), patch.object(launch, 'selection', return_value=fixed), \
+                patch.object(launch, 'unit_invocation', return_value='a' * 32), \
+                patch.object(launch, 'select_projection', return_value=(self.target, self.plan)):
+            launch.condition(self.root)
+            marker = (self.output / launch.CONDITION).read_bytes()
+            with self.assertRaises(ValueError):
+                launch.condition(self.root)
+            self.assertEqual(marker, (self.output / launch.CONDITION).read_bytes())
+
+    def test_guarded_snapshot_must_be_latest_exact_and_regular(self):
+        parent = self.root / launch.NORMAL_SNAPSHOTS.lstrip('/')
+        parent.mkdir(parents=True, mode=0o700)
+        snapshot = parent / 'snapshot_7.xml'
+        launch.write(snapshot, self.contents, 0o600)
+        plan = self.plan | {'guarded': {'snapshotId': '7'}}
+        launch.normal_snapshot(self.root, plan, 0, 0)
+        newer = parent / 'snapshot_8.xml'
+        launch.write(newer, self.contents, 0o600)
+        with self.assertRaises(ValueError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+        newer.unlink()
+        snapshot.unlink()
+        launch.write(snapshot, b'other contents', 0o600)
+        with self.assertRaises(ValueError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+        snapshot.unlink()
+        snapshot.symlink_to(self.target / launch.SNAPSHOT)
+        with self.assertRaises(OSError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+
+    def test_snapshot_publication_observes_original_inode_at_either_name(self):
+        lifecycle = Lifecycle(self.root, 0)
+        publication = SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+        publication.directory.mkdir(parents=True, mode=0o700)
+        intent = dict(snapshotId='7', snapshotSha256=launch.digest(self.contents), size=len(self.contents),
+                      publishedSha256=launch.digest(self.contents), publishedSize=len(self.contents),
+                      directory=publication.directory_identity(), state='ORDINARY_SNAPSHOT_INTENT')
+        pending, target = publication.paths(self.identity, intent['snapshotId'])
+        launch.write(pending, self.contents, 0o600)
+        self.assertEqual('ORDINARY_SNAPSHOT_UNKNOWN', publication.observed(self.identity, intent, None)['state'])
+        ready = intent | {'state': 'ORDINARY_SNAPSHOT_READY', 'file': publication.fingerprint(pending, intent)}
+        self.assertEqual(ready, publication.observed(self.identity, intent, ready))
+        pending.rename(target)
+        published = publication.observed(self.identity, intent, ready)
+        self.assertEqual('ORDINARY_SNAPSHOT_PUBLISHED_UNCONFIRMED', published['state'])
+        self.assertEqual(ready['file'], published['file'])
+        replacement = publication.directory / 'replacement'
+        launch.write(replacement, self.contents, 0o600)
+        replacement.replace(target)
+        self.assertEqual('ORDINARY_SNAPSHOT_UNKNOWN', publication.observed(self.identity, intent, ready)['state'])
+
+    def test_snapshot_publication_fingerprints_the_converted_publish_and_refuses_the_source_digest(self):
+        lifecycle = Lifecycle(self.root, 0)
+        publication = SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+        publication.directory.mkdir(parents=True, mode=0o700)
+        converted = b'converted ordinary bytes'
+        intent = dict(snapshotId='9', snapshotSha256=launch.digest(self.contents), size=len(self.contents),
+                      publishedSha256=launch.digest(converted), publishedSize=len(converted),
+                      directory=publication.directory_identity(), state='ORDINARY_SNAPSHOT_INTENT')
+        pending, target = publication.paths(self.identity, intent['snapshotId'])
+        directory_fd = os.open(publication.directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            publication.write_pending(directory_fd, pending.name, self.target / launch.SNAPSHOT, converted)
+        finally:
+            os.close(directory_fd)
+        self.assertEqual(dict(device=str(publication.directory.stat().st_dev),
+                              inode=str(pending.stat().st_ino)), publication.fingerprint(pending, intent))
+        self.assertEqual(converted, pending.read_bytes())
+        self.assertEqual(0o600, pending.stat().st_mode & 0o777)
+        with self.assertRaises(Failure):
+            publication.fingerprint(pending, intent | {'publishedSha256': intent['snapshotSha256']})
+        with self.assertRaises(Failure):
+            publication.fingerprint(pending, intent | {'publishedSize': len(self.contents)})
+
+    def publication_conversion_fixture(self):
+        lifecycle = Lifecycle(self.root, 0)
+        (self.root / 'opt' / 'eclipse' / 'kura').mkdir(parents=True, exist_ok=True)
+        return SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+
+    def test_snapshot_publication_convert_runs_exact_subcommand_and_refuses_every_failure(self):
+        publication = self.publication_conversion_fixture()
+        source = self.target / launch.SNAPSHOT
+        plan = dict(mode='plain', passwordPolicy='legacy', snapshotSha256='a' * 64, size=3, ringSha256=None)
+        captured = {}
+
+        def succeed(command, **kwargs):
+            captured['command'] = command
+            captured['kwargs'] = kwargs
+            return SimpleNamespace(returncode=0, stdout=b'converted-ordinary', stderr=b'')
+
+        with patch.object(kura_snapshot_publication.subprocess, 'run', succeed):
+            self.assertEqual(b'converted-ordinary',
+                             publication.convert(source, plan, 'aes-gcm'))
+        command = captured['command']
+        self.assertEqual(['convert', '--input', str(source), '--from-mode', 'plain', '--to-mode', 'aes-gcm',
+                          '--password-policy', 'legacy', '--expected-input-sha256', 'a' * 64],
+                         command[command.index('convert'):-2])
+        self.assertEqual(['--key-file', KEY_PATH], command[-2:])
+        self.assertEqual('/', captured['kwargs']['cwd'])
+        self.assertEqual({'PATH': '/usr/bin:/bin', 'LANG': 'C'}, captured['kwargs']['env'])
+        self.assertEqual(90, captured['kwargs']['timeout'])
+
+        ring_plan = plan | {'mode': 'aes-gcm', 'ringSha256': 'b' * 64}
+        ring_runner = Mock(return_value=SimpleNamespace(returncode=0, stdout=b'converted-ordinary', stderr=b''))
+        with patch.object(kura_snapshot_publication.subprocess, 'run', ring_runner):
+            self.assertEqual(b'converted-ordinary', publication.convert(source, ring_plan, 'plain'))
+            self.assertEqual(['--keyring-file', RING_PATH, '--keyring-sha256', 'b' * 64],
+                             ring_runner.call_args[0][0][-4:])
+        failures = [SimpleNamespace(returncode=1, stdout=b'x', stderr=b''),
+                    SimpleNamespace(returncode=0, stdout=b'x', stderr=b'noise'),
+                    SimpleNamespace(returncode=0, stdout=b'y' * (launch.MAX_SNAPSHOT + 1), stderr=b'')]
+        for result in failures:
+            with patch.object(kura_snapshot_publication.subprocess, 'run', lambda *a, **k: result):
+                with self.assertRaises(Failure):
+                    publication.convert(source, plan, 'aes-gcm')
+
+        def explode(command, **kwargs):
+            raise OSError('unavailable')
+
+        with patch.object(kura_snapshot_publication.subprocess, 'run', explode):
+            with self.assertRaises(Failure):
+                publication.convert(source, plan, 'aes-gcm')
+        with patch.object(kura_snapshot_publication.subprocess, 'run',
+                          lambda *a, **k: (_ for _ in ()).throw(AssertionError('no subprocess'))):
+            with self.assertRaises(Failure):
+                publication.convert(source, plan, 'plain')
+
+        with self.assertRaises(Failure):
+            publication.convert(source, plan | {'mode': 'des'}, 'aes-gcm')
+        with self.assertRaises(Failure):
+            publication.convert(source, plan, 'plain')
+
+
+    def test_guarded_marker_keeps_original_selection_and_pins_new_plan(self):
+        fixed = dict(restoreId=self.identity)
+        normal = self.plan | {'guarded': {'snapshotId': '7'}}
+        marker = launch.condition_marker(fixed, normal, 'a' * 32)
+        self.assertEqual(launch.digest(launch.canonical(fixed)), marker['selectionSha256'])
+        self.assertEqual(launch.digest(launch.canonical(normal)), marker['guardedSha256'])
+        self.assertEqual('a' * 32, marker['invocationId'])
+        self.assertNotEqual(marker, launch.condition_marker(fixed, self.plan, 'a' * 32))
+
+    def test_guarded_release_receipt_requires_confirmation_after_commit(self):
+        target = self.target / launch.GUARDED
+        target.mkdir()
+        output = target / launch.OUT
+        output.mkdir()
+        invocation = {'pid': 222, 'invocationId': 'f' * 32}
+        observed = dict(state='NORMAL_BOOT_ADMITTED', restoreId=self.identity, receiptSha256='d' * 64,
+                        invocation=invocation)
+        decision = {'schema': 'yofc.kura.fixed-write-approval.v1', 'restore.id': self.identity,
+                    'completion.id': 'complete-' + self.identity[4:], 'normal.receipt.sha256': 'd' * 64,
+                    'snapshot.sha256': self.plan['snapshotSha256'], 'process.id': '222',
+                    'invocation.id': invocation['invocationId'], 'nonce': 'c' * 64,
+                    'health.receipt.sha256': 'e' * 64, 'components.sha256': 'd' * 64,
+                    'checks.sha256': 'c' * 64, 'additional.grant.sha256': 'b' * 64}
+        raw = launch.property_bytes(decision)
+        launch.write(target / launch.RELEASE_DECISION, raw, 0o440)
+        expected = dict(decisionSha256=launch.digest(raw), completionId=decision['completion.id'])
+        proof = {key: decision[key] for key in ('completion.id', 'snapshot.sha256', 'process.id', 'nonce',
+                                                'health.receipt.sha256', 'components.sha256', 'checks.sha256',
+                                                'additional.grant.sha256')}
+        proof.update({'schema': 'yofc.kura.write-release.v1', 'status': 'ORDINARY_WRITES_RELEASE_COMMITTED',
+                      'scope': 'administrator-selected-checks', 'kuraRecoveryVerified': 'false',
+                      'decision.sha256': expected['decisionSha256'], 'policy.sha256': expected['decisionSha256'],
+                      'recovery.id': self.identity})
+        receipt = launch.property_bytes(proof)
+        launch.write(output / launch.RELEASE_RECEIPT, receipt, 0o600)
+        with patch.object(launch, 'inspect_projection', return_value=observed):
+            self.assertEqual(expected, launch.release_observation(target, self.plan, 0, 0))
+            marker = output / launch.RELEASE_COMMITTED
+            launch.write(marker, b'drift\n', 0o600)
+            self.assertEqual(expected, launch.release_observation(target, self.plan, 0, 0))
+            marker.unlink()
+            sha = launch.digest(receipt)
+            launch.write(marker, (sha + '\n').encode(), 0o600)
+            self.assertEqual(expected | {'releaseReceiptSha256': sha}, launch.release_observation(target, self.plan, 0, 0))
+
+    def test_guarded_status_preserves_uncertain_publication_on_original_number(self):
+        manager = Mock()
+        manager.state = self.root
+        manager.lock.return_value = nullcontext()
+        lifecycle = SimpleNamespace(path=lambda _: self.base, root=self.root)
+        recovery = SimpleNamespace(manager=manager, lifecycle=lifecycle,
+                                   observation=lambda identity, state: dict(schema=1, restoreId=identity, state=state,
+                                                                            root=self.plan['root']))
+        with patch.object(commands.pwd, 'getpwnam', return_value=SimpleNamespace(pw_uid=1001, pw_gid=1001)):
+            controller = commands.Controller(recovery)
+        controller.observation = Mock(return_value={'state': 'MAIN_STOPPED', 'receiptSha256': 'e' * 64})
+        controller.load = Mock(return_value=None)
+        controller.projection = Mock(return_value=(self.target, self.plan))
+        self.assertEqual('GUARDED_MAIN_ABSENT', controller.guarded_status(self.identity)['state'])
+        (self.target / '.guarded-pending').mkdir(mode=0o700)
+        status = controller.guarded_status(self.identity)
+        self.assertEqual('GUARDED_MAIN_START_UNKNOWN', status['state'])
+        self.assertEqual(self.identity, status['restoreId'])
+        controller.load.return_value = controller.observation.return_value
+        controller.guarded_source = Mock(return_value=(self.target, self.plan, {}))
+        with self.assertRaisesRegex(Failure, 'MAIN_COMMAND_EXISTS'):
+            controller.start_guarded(self.identity, 'e' * 64, '7')
+        manager.generation_component.assert_not_called()
+
+    def test_lost_start_reply_keeps_original_intent_and_never_dispatches_again(self):
+        manager = Manager(self.root, 0)
+        policy = Lifecycle(self.root, 0)
+        for name in ('/var/lib/kura-key-service/admission.lock', '/etc/kura/credentials/.provision.lock'):
+            path = policy.path(name)
+            policy.directory(path.parent, private=True, create=True)
+            policy.create(path, b'')
+        manager.maintenance = Mock()
+        manager.settled = Mock()
+        manager.generation_start_authorized = Mock()
+        manager.generation_source = Mock(return_value=(None, None, None, None, None,
+            dict(keySha256=self.plan['activeKeySha256'], ringSha256=None)))
+        component = Mock()
+        component.command.side_effect = Failure('SYSTEMD_UNAVAILABLE')
+        manager.generation_component = Mock(return_value=(component, {'cohortSha256': self.plan['cohortSha256']}))
+        manager.writer_lock = lambda **kwargs: os.open('/dev/null', os.O_RDONLY)
+        manager.exclusive_writers = nullcontext
+        with patch.object(commands.pwd, 'getpwnam', return_value=SimpleNamespace(pw_uid=1001, pw_gid=1001)):
+            controller = commands.Controller(SimpleNamespace(manager=manager, lifecycle=policy,
+                observation=lambda identity, state: dict(schema=1, restoreId=identity, state=state,
+                                                       root=self.plan['root'])))
+        controller.base = self.base
+        controller.projection = Mock(return_value=(self.target, self.plan))
+        os.chown(self.base, 0, 1001)
+        fingerprint = launch.digest(launch.canonical(self.plan))
+        with self.assertRaisesRegex(Failure, 'UNKNOWN'):
+            controller.start(self.identity, fingerprint)
+        original = controller.observation(self.identity)
+        self.assertEqual('MAIN_START_UNKNOWN', original['state'])
+        self.assertEqual(self.identity, original['restoreId'])
+        with self.assertRaisesRegex(Failure, 'MAIN_SELECTION_EXISTS'):
+            controller.start(self.identity, fingerprint)
+        self.assertEqual(original, controller.observation(self.identity))
+        component.command.assert_called_once_with(commands.START, timeout=18)
+
+
+if __name__ == '__main__':
+    unittest.main()

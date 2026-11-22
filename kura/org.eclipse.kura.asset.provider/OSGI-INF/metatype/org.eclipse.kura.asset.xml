@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2026 Contributors to the Eclipse Foundation. SPDX-License-Identifier: EPL-2.0 -->
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="OSGI-INF/l10n/WireAsset">
+    <OCD id="org.eclipse.kura.asset" name="%baseAssetName" description="%baseAssetDescription">
+        <AD id="asset.desc" name="%assetdescname" type="String" cardinality="0" required="false"
+            description="%assetdescdesc"/>
+        <AD id="request.timeout" name="%requestTimeout" type="Integer" cardinality="0" required="true"
+            default="10" description="%requestTimeoutDesc"/>
+        <AD id="driver.pid" name="%driverpidname" type="String" cardinality="0" required="true"
+            description="%driverpiddesc"/>
+    </OCD>
+    <Designate pid="org.eclipse.kura.asset" factoryPid="org.eclipse.kura.asset">
+        <Object ocdref="org.eclipse.kura.asset"/>
+    </Designate>
+</MetaData>

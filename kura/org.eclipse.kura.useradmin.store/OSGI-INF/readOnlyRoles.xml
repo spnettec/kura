@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.4.0"
+    name="org.eclipse.kura.internal.useradmin.store.ReadOnlyRoleRepositoryStore"
+    configuration-pid="org.eclipse.kura.internal.useradmin.store.RoleRepositoryStoreImpl"
+    configuration-policy="require" immediate="true" activate="activate" modified="update" deactivate="deactivate">
+  <implementation class="org.eclipse.kura.internal.useradmin.store.ReadOnlyRoleRepositoryStore"/>
+</scr:component>

@@ -215,8 +215,10 @@ public class CloudConfigurationHandler implements RequestHandler {
             // marshall the response
 
             List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
-            configs.forEach(config -> ((ConfigurationServiceImpl) this.configurationService)
-                    .decryptConfigurationProperties(config.getConfigurationProperties()));
+            if (!xmlConfigs.hasLogicalPasswords()) {
+                configs.forEach(config -> ((ConfigurationServiceImpl) this.configurationService)
+                        .decryptConfigurationProperties(config.getConfigurationProperties()));
+            }
 
             byte[] body = toResponseBody(xmlConfigs);
 

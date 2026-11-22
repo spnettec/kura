@@ -302,7 +302,8 @@ public class SqliteDbServiceImplTest extends SqliteDbServiceTestBase {
         givenSqliteDbService(map( //
                 "db.mode", "PERSISTED", //
                 "db.journal.mode", "ROLLBACK_JOURNAL", //
-                "db.path", temporaryDirectory() + "/test.sqlite" //
+                "db.path", temporaryDirectory() + "/test.sqlite", //
+                "delete.db.files.on.failure", true //
         ));
         whenAConnectionIsRequested();
 
@@ -323,7 +324,8 @@ public class SqliteDbServiceImplTest extends SqliteDbServiceTestBase {
         givenSqliteDbService(map( //
                 "db.mode", "PERSISTED", //
                 "db.journal.mode", "WAL", //
-                "db.path", temporaryDirectory() + "/test.sqlite" //
+                "db.path", temporaryDirectory() + "/test.sqlite", //
+                "delete.db.files.on.failure", true //
         ));
         whenAConnectionIsRequested();
 
@@ -335,7 +337,7 @@ public class SqliteDbServiceImplTest extends SqliteDbServiceTestBase {
     }
 
     @Test
-    public void deleteNotDbFileIfItCannotBeOpenedIFNotEnabledRollbackJournal()
+    public void preserveUnreadableDatabaseByDefault()
             throws InterruptedException, ExecutionException, TimeoutException, IOException {
         givenFileWithContent(temporaryDirectory() + "/test.sqlite", "foobar");
         givenFileWithContent(temporaryDirectory() + "/test.sqlite-journal", "foobar");

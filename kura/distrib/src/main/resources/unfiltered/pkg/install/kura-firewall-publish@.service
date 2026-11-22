@@ -1,0 +1,35 @@
+[Unit]
+Description=Kura firewall publication for the paired Main
+PartOf=kura.service
+Requisite=kura.service
+CollectMode=inactive-or-failed
+
+[Service]
+Type=exec
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-firewall-publish/kura_firewall_publish.py %n
+StandardInput=socket
+StandardOutput=null
+StandardError=journal
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ReadOnlyPaths=/proc/sys
+ReadWritePaths=-/proc/sys/net/ipv4/ip_forward -/proc/sys/net/ipv6/conf/all/forwarding
+ReadWritePaths=-/var/lib/kura-legacy-firewall/publication
+ProtectHome=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+MemoryMax=64M
+TasksMax=8
+RuntimeMaxSec=60s
+TimeoutStopSec=5s

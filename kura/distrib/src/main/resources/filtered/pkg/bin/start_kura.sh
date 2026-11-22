@@ -14,6 +14,8 @@
 # Kura should be installed to the \${kura.install.dir} directory.
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/opt/jvm/bin:/usr/java/bin:$PATH
 export MALLOC_ARENA_MAX=1
+# Keep PID, logs and generated runtime files private regardless of caller mask.
+umask 077
 
 KURA_RUNNING=$(pgrep -f ".*java.*org\.eclipse\.equinox\..*")
 
@@ -22,7 +24,7 @@ if [ -n "$KURA_RUNNING" ] ; then
     exit 1
 fi
 
-DIR=$(cd $(dirname $0)/..; pwd)
+DIR=$(cd "$(dirname "$0")/.." && pwd) || exit 1
 cd "$DIR" || exit 1
 
 IS_DEBUG_MODE="false"
@@ -54,8 +56,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # set up the configuration area
-mkdir -p /tmp/.kura/configuration
-\${DIR}/bin/gen_config_ini.sh \${DIR}/framework/config.ini \${DIR}/plugins > /tmp/.kura/configuration/config.ini
+# Use the same credential for the installed service and direct launchers.
+. "${DIR}/bin/kura_credential_env.sh" || exit 1
+
+python3 -I -B "${DIR}/bin/kura_framework_config.py" "${DIR}" /tmp/.kura/configuration || exit 1
 
 if [[ -n "${KURA_DEBUG_MODE}" && "${KURA_DEBUG_MODE}" == "true" ]]; then
     IS_DEBUG_MODE="true"
@@ -66,19 +70,19 @@ EQUINOX_DEBUG_OPTS=""
 if [[ $IS_DEBUG_MODE == "true" ]]; then
     DEBUG_OPTS="-Xdebug \
         -Xrunjdwp:server=y,transport=dt_socket,address=*:8000,suspend=n \
-        -Xlog:gc=info:file=/var/log/kura-gc.log:time:filecount=10,filesize=10m \
+        -Xlog:gc=info:file=log/kura-gc.log:time:filecount=10,filesize=10m \
         -XX:+HeapDumpOnOutOfMemoryError \
-        -XX:HeapDumpPath=/var/log/kura-heapdump.hprof \
-        -XX:ErrorFile=/var/log/kura-error.log"
+        -XX:HeapDumpPath=log/kura-heapdump.hprof \
+        -XX:ErrorFile=log/kura-error.log"
 
     EQUINOX_DEBUG_OPTS="-console 5002 \
     -consoleLog"
 fi
 
-KURA_LAUNCH_COMMAND="exec java"
+KURA_LAUNCH_COMMAND="exec python3 -I \"${DIR}/bin/kura_key_store.py\" exec-java"
 
 if [[ $IS_DETACHED_MODE == "true" ]]; then
-    KURA_LAUNCH_COMMAND="nohup java"
+    KURA_LAUNCH_COMMAND="nohup python3 -I \"${DIR}/bin/kura_key_store.py\" exec-java"
 fi
 
 KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
@@ -105,12 +109,18 @@ KURA_CMD="${KURA_LAUNCH_COMMAND} -Xms${kura.mem.size} -Xmx${kura.mem.size} \
     $EQUINOX_DEBUG_OPTS"
 
 if [[ $IS_DETACHED_MODE == "true" ]]; then
-    eval "$KURA_CMD &"
+    # Open the PID file before starting a process that maintenance must be able to find.
+    exec 3>/var/run/kura.pid || exit 1
+    eval "$KURA_CMD 3>&- &"
 
-    #Save the PID
     KURA_PID=$!
+    if ! printf '%s\n' "$KURA_PID" >&3; then
+        kill "$KURA_PID" 2>/dev/null
+        wait "$KURA_PID" 2>/dev/null
+        exit 1
+    fi
+    exec 3>&-
     echo "Kura Started (pid=$KURA_PID) ..."
-    echo $KURA_PID > /var/run/kura.pid
 else
     eval "$KURA_CMD"
 fi

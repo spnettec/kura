@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -32,6 +33,7 @@ final class ExternalConfigurations {
 
     private final Set<String> reserved = new TreeSet<>();
     private final Map<String, List<ExternalConfigurationHandler>> handlers = new HashMap<>();
+    private final Map<String, Long> generations = new HashMap<>();
 
     ExternalConfigurations(String configuredPids) {
         for (String pid : configuredPids.split(",")) {
@@ -51,12 +53,18 @@ final class ExternalConfigurations {
         }
         List<ExternalConfigurationHandler> values = this.handlers.computeIfAbsent(pid, key -> new ArrayList<>());
         if (values.stream().noneMatch(value -> value == handler)) {
+            this.generations.put(pid, Math.incrementExact(this.generations.getOrDefault(pid, 0L)));
             values.add(handler);
         }
     }
 
     synchronized void unbind(ExternalConfigurationHandler handler) {
-        this.handlers.values().forEach(values -> values.removeIf(value -> value == handler));
+        this.handlers.forEach((pid, values) -> {
+            if (values.stream().anyMatch(value -> value == handler)) {
+                this.generations.put(pid, Math.incrementExact(this.generations.getOrDefault(pid, 0L)));
+                values.removeIf(value -> value == handler);
+            }
+        });
     }
 
     synchronized boolean owns(String pid) {
@@ -80,11 +88,45 @@ final class ExternalConfigurations {
     }
 
     ComponentConfiguration confirmed(String pid) throws KuraException {
-        ComponentConfiguration result = require(pid).getConfirmedConfiguration();
+        return confirmedBatch(Set.of(pid)).get(pid);
+    }
+
+    private record Binding(ExternalConfigurationHandler owner, long generation) { }
+
+    private synchronized Map<String, Binding> capture(Set<String> pids) throws KuraException {
+        Map<String, Binding> bindings = new LinkedHashMap<>();
+        for (String pid : new TreeSet<>(pids)) {
+            bindings.put(pid, new Binding(require(pid), this.generations.getOrDefault(pid, 0L)));
+        }
+        return bindings;
+    }
+
+    private synchronized void unchanged(Map<String, Binding> bindings) throws KuraException {
+        for (var entry : bindings.entrySet()) {
+            if (require(entry.getKey()) != entry.getValue().owner()
+                    || this.generations.getOrDefault(entry.getKey(), 0L) != entry.getValue().generation()) {
+                throw failure(entry.getKey(), "EXTERNAL_CONFIGURATION_OWNER_CHANGED");
+            }
+        }
+    }
+
+    Map<String, ComponentConfiguration> confirmedBatch(Set<String> pids) throws KuraException {
+        Map<String, Binding> bindings = capture(pids);
+        Map<String, ComponentConfiguration> result = new LinkedHashMap<>();
+        for (var entry : bindings.entrySet()) {
+            unchanged(bindings);
+            result.put(entry.getKey(), detached(entry.getKey(), entry.getValue().owner().getConfirmedConfiguration()));
+            unchanged(bindings);
+        }
+        unchanged(bindings);
+        return java.util.Collections.unmodifiableMap(result);
+    }
+
+    private ComponentConfiguration detached(String pid, ComponentConfiguration result) throws KuraException {
         if (result == null || !pid.equals(result.getPid()) || result.getConfigurationProperties() == null) {
             throw failure(pid, "INVALID_CONFIRMED_CONFIGURATION");
         }
-        Map<String, Object> properties = new HashMap<>(result.getConfigurationProperties());
+        Map<String, Object> properties = ConfigurationRevision.copyEditProperties(result.getConfigurationProperties());
         return new ComponentConfiguration() {
             @Override
             public String getPid() { return pid; }
@@ -135,9 +177,7 @@ final class ExternalConfigurations {
                 result.add(configuration);
             }
         }
-        for (String pid : pids()) {
-            result.add(confirmed(pid));
-        }
+        result.addAll(confirmedBatch(pids()).values());
         return result;
     }
 

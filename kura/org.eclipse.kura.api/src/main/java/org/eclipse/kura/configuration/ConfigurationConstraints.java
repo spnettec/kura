@@ -40,29 +40,42 @@ public final class ConfigurationConstraints {
     public static Status value(AD attribute, Object value) {
         Contract contract = contract(attribute);
         if (contract == null || attribute.getType() == null) { return Status.UNSUPPORTED; }
-        return satisfies(contract, attribute.getType(), value, attribute.getCardinality() != 0)
+        return (isScalarValue(attribute, value) ? scalar(contract, attribute.getType(), value)
+                : satisfies(contract, attribute.getType(), value, attribute.getCardinality()))
                 ? Status.SATISFIED : Status.REJECTED;
+    }
+
+    /** Resolve representation without confusing a one-element capacity with a scalar. */
+    public static boolean isScalarValue(AD attribute, Object current) {
+        int cardinality = attribute.getCardinality();
+        return cardinality == 0 || ((cardinality == 1 || cardinality == -1)
+                && attribute.isScalarCardinality() && !(current instanceof java.util.Collection<?>)
+                && (current == null || !current.getClass().isArray()));
     }
 
     /** True when two definitions impose the same type, cardinality, required flag, bounds and option values. */
     public static boolean sameContract(AD left, AD right) {
         if (left == right) { return true; }
         if (left == null || right == null || left.getType() != right.getType()
-                || left.getCardinality() != right.getCardinality() || left.isRequired() != right.isRequired()
+                || left.getCardinality() != right.getCardinality()
+                || left.isScalarCardinality() != right.isScalarCardinality() || left.isRequired() != right.isRequired()
                 || !Objects.equals(left.getMin(), right.getMin()) || !Objects.equals(left.getMax(), right.getMax())) {
             return false;
         }
-        return optionValues(left).equals(optionValues(right));
+        return Objects.equals(optionValues(left), optionValues(right));
     }
 
-    private static boolean satisfies(Contract contract, Scalar type, Object value, boolean container) {
-        if (!container) { return scalar(contract, type, value); }
-        if (value instanceof java.util.Vector<?> vector) {
-            if (contract.required && vector.isEmpty()) { return false; }
-            return vector.stream().allMatch(item -> scalar(contract, type, item));
+    private static boolean satisfies(Contract contract, Scalar type, Object value, int cardinality) {
+        if (cardinality == 0) { return scalar(contract, type, value); }
+        long maximum = Math.abs((long) cardinality);
+        if (value instanceof java.util.Collection<?> collection) {
+            if (collection.size() > maximum) { return false; }
+            if (contract.required && collection.isEmpty()) { return false; }
+            return collection.stream().allMatch(item -> scalar(contract, type, item));
         }
         if (value != null && value.getClass().isArray()) {
             int length = Array.getLength(value);
+            if (length > maximum) { return false; }
             if (contract.required && length == 0) { return false; }
             for (int i = 0; i < length; i++) { if (!scalar(contract, type, Array.get(value, i))) { return false; } }
             return true;
@@ -77,10 +90,15 @@ public final class ConfigurationConstraints {
         if (contract.required && text.isEmpty()) { return false; }
         if (contract.min != null && compare(type, text, contract.min, false) < 0) { return false; }
         if (contract.max != null && compare(type, text, contract.max, false) > 0) { return false; }
-        if (contract.options != null && contract.options.stream().noneMatch(option -> compare(type, text, option, false) == 0)) {
+        if (contract.options != null && contract.options.stream().noneMatch(option -> optionMatches(type, text, option))) {
             return false;
         }
         return true;
+    }
+
+    private static boolean optionMatches(Scalar type, String text, String option) {
+        // String bounds describe length; option values describe the exact text.
+        return type == Scalar.STRING ? text.equals(option) : compare(type, text, option, false) == 0;
     }
 
     private static Contract contract(AD attribute) {
@@ -148,7 +166,8 @@ public final class ConfigurationConstraints {
         if (type == Scalar.BOOLEAN && value instanceof Boolean bool) { return Boolean.toString(bool); }
         if (type == Scalar.CHAR && value instanceof Character ch && !Character.isSurrogate(ch)) { return ch.toString(); }
         if (type == Scalar.STRING && value instanceof String text) { return text; }
-        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+        if (type == Scalar.BYTE && value instanceof Byte || type == Scalar.SHORT && value instanceof Short
+                || type == Scalar.INTEGER && value instanceof Integer || type == Scalar.LONG && value instanceof Long) {
             return value.toString();
         }
         if (value instanceof Float number && Float.isFinite(number) && (type == Scalar.FLOAT)) { return Float.toString(number); }

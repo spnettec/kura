@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Kura native recovery input publisher
+Requires=kura-recovery-input.socket
+After=kura-recovery-input.socket
+PartOf=kura-recovery-input.socket
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+ConditionPathIsDirectory=/var/lib/kura-recovery-input
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_native_recovery_input.py
+Sockets=kura-recovery-input.socket
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/kura-recovery-input
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+LimitCORE=0
+LimitMEMLOCK=0
+MemoryMax=256M
+TasksMax=32
+TimeoutStopSec=30
