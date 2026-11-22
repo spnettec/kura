@@ -144,6 +144,41 @@ class Controller:
         except (OSError, Failure, Refused, LifecycleRefused, subprocess.SubprocessError, ValueError, KeyError) as error:
             raise Failure('UNKNOWN') from error
 
+    def active_projection(self, identity, prior):
+        manager = self.manager
+        path, plan = self.projection(identity)
+        selected = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+        require(selected is not None and selected['restoreId'] == identity
+                and launch.digest(launch.canonical(selected)) == prior['selectionSha256']
+                and selected['bootId'] == launch.boot_identity(), 'CONFLICT')
+        observed = self.inspect(path, plan)
+        require(observed['state'] == 'CM_APPLIED', 'CONFLICT')
+        component, cohort = manager.generation_component()
+        generation = plan['ringSha256'] is not None
+        unit = component.unit(generation_mode=generation)
+        invocation = observed['invocation']
+        require(unit['ActiveState'] == 'active' and unit['SubState'] == 'running'
+                and unit['ControlGroup'] == '/system.slice/kura.service'
+                and unit['ControlPID'] == '0' and unit['MainPID'] == str(invocation['pid'])
+                and unit['InvocationID'] == invocation['invocationId']
+                and selected['bootId'] == invocation['bootId'], 'CONFLICT')
+        writer = manager.writer_registration(invocation['pid'])
+        require(writer['startTicks'] == invocation['startTicks'] and writer['bootId'] == invocation['bootId']
+                and writer['uid'] == self.core.pw_uid and writer['keySha256'] == plan['activeKeySha256']
+                and writer['ringSha256'] == plan['ringSha256']
+                and writer['cohortSha256'] == plan['cohortSha256'] == cohort['cohortSha256'], 'CONFLICT')
+        return component, generation, path, plan, observed
+
+    def application(self, identity):
+        prior = self.observation(identity)
+        require(prior['state'] == 'MAIN_START_JOB_ACCEPTED', 'CONFLICT')
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            require(not os.path.lexists(self.journal(identity) / 'stop.json'), 'CONFLICT')
+            _, _, _, plan, observed = self.active_projection(identity, prior)
+            return observed | {'snapshotSha256': plan['snapshotSha256']}
+
     def stop(self, identity, receipt_sha):
         digest(receipt_sha)
         prior = self.observation(identity)
@@ -154,26 +189,9 @@ class Controller:
             manager.maintenance()
             manager.settled()
             require(not os.path.lexists(journal / 'stop.json'), 'MAIN_COMMAND_EXISTS')
-            path, plan = self.projection(identity)
-            selected = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
-            require(selected is not None and selected['restoreId'] == identity
-                    and launch.digest(launch.canonical(selected)) == prior['selectionSha256']
-                    and selected['bootId'] == launch.boot_identity(), 'CONFLICT')
-            observed = self.inspect(path, plan)
-            require(observed['state'] == 'CM_APPLIED' and observed['receiptSha256'] == receipt_sha, 'CONFLICT')
-            component, cohort = manager.generation_component()
-            generation = plan['ringSha256'] is not None
-            unit = component.unit(generation_mode=generation)
+            component, generation, path, plan, observed = self.active_projection(identity, prior)
+            require(observed['receiptSha256'] == receipt_sha, 'CONFLICT')
             invocation = observed['invocation']
-            require(unit['ActiveState'] == 'active' and unit['SubState'] == 'running'
-                    and unit['ControlPID'] == '0' and unit['MainPID'] == str(invocation['pid'])
-                    and unit['InvocationID'] == invocation['invocationId']
-                    and selected['bootId'] == invocation['bootId'], 'CONFLICT')
-            writer = manager.writer_registration(invocation['pid'])
-            require(writer['startTicks'] == invocation['startTicks'] and writer['bootId'] == invocation['bootId']
-                    and writer['uid'] == self.core.pw_uid and writer['keySha256'] == plan['activeKeySha256']
-                    and writer['ringSha256'] == plan['ringSha256']
-                    and writer['cohortSha256'] == plan['cohortSha256'] == cohort['cohortSha256'], 'CONFLICT')
             intent = prior | {'state': 'MAIN_STOP_INTENT', 'pid': invocation['pid'],
                               'invocationId': invocation['invocationId'], 'startTicks': invocation['startTicks'],
                               'receiptSha256': receipt_sha}

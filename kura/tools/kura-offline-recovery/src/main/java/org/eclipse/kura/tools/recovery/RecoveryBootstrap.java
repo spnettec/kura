@@ -160,6 +160,7 @@ public final class RecoveryBootstrap implements BundleActivator {
             } else {
                 Path backup=receipt.resolveSibling(receipt.getFileName()+".cm-backup.aes");
                 ConfigurationRestore.Applied result;
+                List<ComponentConfiguration> appliedConfigurations;
                 Path applied=receipt.resolveSibling(receipt.getFileName()+".cm-applied.aes");
                 Path intended=receipt.resolveSibling(receipt.getFileName()+".cm-intended.aes");
                 Path plan=receipt.resolveSibling(receipt.getFileName()+".cm-plan.properties");
@@ -178,7 +179,8 @@ public final class RecoveryBootstrap implements BundleActivator {
                             : ConfigurationRestore.compensate(admin,target,previousIntent,checkpoint);
                     // Persist the exact CM representation, including randomized password ciphertext.
                     // Re-decoding/re-encrypting the source snapshot cannot reconstruct these bytes.
-                    backup(applied,ConfigurationRestore.capture(admin),crypto);
+                    appliedConfigurations = ConfigurationRestore.capture(admin);
+                    backup(applied,appliedConfigurations,crypto);
                 } finally { context.ungetService(reference); }
                 if(previousIntent==null) {
                     ControlledRecovery.admit(request,manifest.get("restore.id"),snapshot,manifest.get("snapshot.sha256"),target);
@@ -191,6 +193,11 @@ public final class RecoveryBootstrap implements BundleActivator {
                         +"\napplied.sha256="+hash(read(applied,64<<20))+"\n";
                 report+=actions("replaced",result.replaced())+actions("created",result.created())+actions("deleted",result.deleted());
                 publish(receipt,report.getBytes(StandardCharsets.UTF_8));
+                if (previousIntent == null && Path.of(request).startsWith(CORE_PROJECTIONS)) {
+                    this.verifier = new RecoveryVerifier(context, appliedConfigurations, false);
+                    this.verificationRegistration = context.registerService(
+                            org.eclipse.kura.configuration.RecoveryVerificationService.class, this.verifier, null);
+                }
             }
             // Only the CM application decision is durable. Agent still must verify bridge/business and finalize.
             // The launcher owns the framework transition to the explicitly declared target.

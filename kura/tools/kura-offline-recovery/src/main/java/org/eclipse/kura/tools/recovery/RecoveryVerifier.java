@@ -26,20 +26,26 @@ import org.osgi.service.cm.ConfigurationAdmin;
 final class RecoveryVerifier implements RecoveryVerificationService, AutoCloseable {
     private final BundleContext context;
     private final List<ComponentConfiguration> expected;
+    private final boolean normalLoad;
     private final ThreadPoolExecutor checks = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS,
             new SynchronousQueue<>(), task -> {
                 Thread thread = new Thread(task, "recovery-business-check"); thread.setDaemon(true); return thread;
             });
 
     RecoveryVerifier(BundleContext context, List<ComponentConfiguration> expected) {
+        this(context, expected, true);
+    }
+
+    RecoveryVerifier(BundleContext context, List<ComponentConfiguration> expected, boolean normalLoad) {
         this.context = context;
         this.expected = ConfigurationRestore.expected(expected);
+        this.normalLoad = normalLoad;
     }
 
     @Override public Report verify(Challenge challenge) throws KuraException {
         try {
             var evidence = ControlledRecovery.evidence().orElseThrow();
-            require(evidence.normalLoad() && evidence.recoveryId().equals(challenge.recoveryId())
+            require(evidence.normalLoad() == this.normalLoad && evidence.recoveryId().equals(challenge.recoveryId())
                     && evidence.snapshotSha256().equals(challenge.snapshotSha256())
                     && challenge.nonce().matches("[0-9a-f]{64}"));
             var pids = names(challenge.componentPids());
@@ -94,7 +100,7 @@ final class RecoveryVerifier implements RecoveryVerificationService, AutoCloseab
             require(ControlledRecovery.evidence().orElseThrow().equals(evidence));
             return new Report(1, evidence.recoveryId(), evidence.snapshotSha256(), challenge.nonce(),
                     ProcessHandle.current().pid(), this.context.getBundle(0).adapt(FrameworkStartLevel.class).getStartLevel(),
-                    true, true, cmMatched, afterCm.count, afterCm.properties, available, components, results,
+                    evidence.normalLoad(), true, cmMatched, afterCm.count, afterCm.properties, available, components, results,
                     this.expected.size(), afterCm.materialized);
         } catch (Exception ignored) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR, "Recovery verification unavailable; preserve the write guard");

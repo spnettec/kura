@@ -24,7 +24,7 @@ public final class RecoveryVerifierProbe {
         String sha=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(snapshot)));
         String id="rec-11111111-1111-1111-1111-111111111111";
         String request=root.resolve("request").toString();System.setProperty(ControlledRecovery.REQUEST_PROPERTY,request);
-        ControlledRecovery.admitNormalLoad(request,id,snapshot,sha);
+        boolean normalLoad = args.length == 1;
         BundleContext context=mock(BundleContext.class);Bundle framework=mock(Bundle.class);
         FrameworkStartLevel level=mock(FrameworkStartLevel.class);when(level.getStartLevel()).thenReturn(5);
         when(context.getBundle(0)).thenReturn(framework);when(framework.adapt(FrameworkStartLevel.class)).thenReturn(level);
@@ -44,8 +44,14 @@ public final class RecoveryVerifierProbe {
         when(check.verify(any())).thenReturn(true);
         var challenge=new RecoveryVerificationService.Challenge(id,sha,"b".repeat(64),List.of("single"),List.of("business.check"),List.of());
         var expected=List.<ComponentConfiguration>of(new ComponentConfigurationImpl("single",null,Map.of("kura.service.pid","single","count",9)));
-        try(var verifier=new RecoveryVerifier(context,expected)) {
+        if (normalLoad) {
+            ControlledRecovery.admitNormalLoad(request,id,snapshot,sha);
+        } else {
+            ControlledRecovery.admit(request,id,snapshot,sha,expected);
+        }
+        try(var verifier=new RecoveryVerifier(context,expected,normalLoad)) {
             var report=verifier.verify(challenge);assertTrue(report.cmMatched());assertTrue(report.configurationServiceAvailable());
+            assertEquals(normalLoad,report.normalLoad());
             assertTrue(report.components().getFirst().registered());assertTrue(report.checks().getFirst().passed());
             assertEquals(ProcessHandle.current().pid(),report.processId());assertEquals(5,report.frameworkStartLevel());
             assertTrue(report.ordinaryWritesBlocked());assertEquals(1,report.managedConfigurationCount());

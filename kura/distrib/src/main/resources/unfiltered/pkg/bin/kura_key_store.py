@@ -790,6 +790,8 @@ def exec_java(arguments):
         if recovery is not None:
             launch.claim(path, plan, response)
             arguments = ['-Dosgi.startLevel=6', '-Dkura.recovery.request=' + str(path / launch.REQUEST), *arguments]
+            if os.path.lexists(Path(launch.ROOT) / launch.SELECTION):
+                arguments.insert(0, '-Dkura.management.recovery.verification.enabled=true')
         # One reserved, inheritable descriptor carries the kernel lease across exec.
         if descriptor != 9:
             os.dup2(descriptor, 9, inheritable=True)

@@ -118,13 +118,18 @@ def read_projection(identity):
 
 def handle(recovery, request, descriptor, authenticate):
     action = request.get('action')
-    require(action in ('main-start', 'main-stop', 'main-original') and descriptor is None, 'FORBIDDEN')
-    fields(request, {'schema', 'restoreId', 'action'} | ({'expectedSha256'} if action != 'main-original' else set()))
+    require(action in ('main-start', 'main-stop', 'main-original', 'main-application-original')
+            and descriptor is None, 'FORBIDDEN')
+    read_only = action in ('main-original', 'main-application-original')
+    fields(request, {'schema', 'restoreId', 'action'} | (set() if read_only else {'expectedSha256'}))
     identity = request['restoreId']
     require(type(request['schema']) is int and request['schema'] == 1 and isinstance(identity, str)
             and launch.IDENTITY.fullmatch(identity), 'INVALID_ARGUMENT')
     original = authenticate()
     fixed = Controller(recovery, reader=read_projection)
+    if action == 'main-application-original':
+        authorization(fixed, identity, 'start', original)
+        return fixed.application(identity)
     if action == 'main-original':
         direction = 'start' if os.path.lexists(grant_path(fixed, identity, 'start')) else 'stop'
         authorization(fixed, identity, direction, original)
@@ -155,7 +160,7 @@ def serve_connection(connection, recovery):
             try:
                 require(authenticate() == original, 'FORBIDDEN')
             except (Failure, OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):
-                raise Failure('UNKNOWN' if request['action'] != 'main-original' else 'FORBIDDEN') from None
+                raise Failure('UNKNOWN' if request['action'] in ('main-start', 'main-stop') else 'FORBIDDEN') from None
     except Failure as error:
         result = dict(schema=1, error=error.reason)
     except (OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):
