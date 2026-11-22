@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Real storage, crypto, JAR pairing and flock; systemd/process boundaries are explicit fakes."""
 import argparse
+import io
 import os
 from pathlib import Path
 import subprocess
@@ -326,6 +327,15 @@ class GenerationPublicationTest(unittest.TestCase):
         self.refused('UNRESOLVED_OPERATION', self.admission)
         self.refused('UNRESOLVED_OPERATION', lambda: self.component.request(self.start_request(), start=True))
         self.assertEqual(1, sum(command[0] == '/usr/bin/busctl' for command in self.commands))
+
+    def test_original_stop_failure_reports_phase_without_exposing_exception_detail(self):
+        self.stop_error = OSError("private worker detail")
+        with patch("sys.stderr", new_callable=io.StringIO) as diagnostics:
+            self.refused('UNKNOWN', self.publish)
+        self.assertIn(f"{self.publish_request['operationId']} stopped at stop (OSError)", diagnostics.getvalue())
+        self.assertNotIn("private worker detail", diagnostics.getvalue())
+        self.assertEqual(1, self.count_stops())
+        self.assertEqual('INTENT', self.manager.record(self.publish_request['operationId'])['state'])
 
     def test_foreign_agent_unit_is_fenced_before_intent(self):
         (self.root / 'lib/systemd/system/kura-management-agent.service').write_text('[Service]\n')

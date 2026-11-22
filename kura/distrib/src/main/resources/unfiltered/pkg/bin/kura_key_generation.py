@@ -10,6 +10,7 @@ import re
 import secrets
 import stat
 import subprocess
+import sys
 import time
 
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
@@ -479,8 +480,10 @@ class Generations:
                 require(request['expectedCohortSha256'] == cohort['cohortSha256'], 'COHORT_CHANGED')
                 require(not os.path.lexists(manager.state / 'generations' / request['preparationId'] / 'publication.json'), 'ALREADY_PUBLISHED')
                 record = dict(schema=1, operationId=identity, action=request['action'], requestTag=tag, state='INTENT', response=None)
+                phase = 'intent'
                 try:
                     manager.atomic(manager.operations / (identity + '.json'), encode(record))
+                    phase = 'preserve-source'
                     directory = manager.state / 'generations' / request['preparationId']
                     # Preserve exact old bytes before any stop or canonical replacement.
                     manager.atomic(directory / 'source-active-key', manager.read(manager.store.path(KEY_PATH), 32), mode=0o400, no_replace=True)
@@ -488,7 +491,9 @@ class Generations:
                     if source['ringSha256'] is not None:
                         manager.atomic(directory / 'source-generation-receipt.json', manager.read(manager.store.path(GENERATION_RECEIPT_PATH), 2048), mode=0o400, no_replace=True)
                     # Synchronous StopUnit completion is mandatory, once for this original UUID.
+                    phase = 'stop'
                     self.command((*SYSTEMCTL, '--job-mode=fail', 'stop', 'kura.service'), timeout=50)
+                    phase = 'drain'
                     self.stopped(generation_mode=source['ringSha256'] is not None, uid=writer['uid'])
                     with manager.exclusive_writers() as locked:
                         require((locked.st_dev, locked.st_ino) == (writer['lockDevice'], writer['lockInode']), 'UNSAFE_WRITER_STATE')
@@ -505,6 +510,7 @@ class Generations:
                         # Only a completed original StopUnit plus the exclusive
                         # kernel writer handoff may authorize local continuation.
                         # A crash before this immutable proof stays UNKNOWN.
+                        phase = 'stop-receipt'
                         source_files = {name: self.file_snapshot(path) for name, path in self.publication_paths().items()}
                         checkpoint = dict(schema=1, purpose=RECOVERY_PURPOSE, publication=value,
                                           sourceFiles=source_files, writerUid=writer['uid'])
@@ -512,8 +518,12 @@ class Generations:
                         manager.atomic(directory / RECOVERY, encode(checkpoint), mode=0o400, no_replace=True)
                         # Canonical state stays boot-fenced by this same original
                         # INTENT until all fixed steps and the final result sync.
+                        phase = 'publish'
                         return self.finish_publication(value, raw, history, cohort, template, record, source_files, writer['uid'])
-                except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError):
+                except (OSError, Failure, Refused, subprocess.TimeoutExpired, ValueError, KeyError) as error:
+                    reason = error.reason if isinstance(error, Failure) else type(error).__name__
+                    print(f'Kura key publication {identity} stopped at {phase} ({reason}); preserve original receipt',
+                          file=sys.stderr, flush=True)
                     raise Failure('UNKNOWN') from None
 
     def start(self, request, identity, tag, *, expected_owner=None):
