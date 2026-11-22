@@ -2188,7 +2188,23 @@ def client():
         sys.stdout.buffer.write(encode(decode(result)) + b"\n")
 
 
+def provider_store_rewrap(args):
+    require(os.geteuid() == 0 and len(args) == 3, 'FORBIDDEN')
+    action, identity, namespace = args
+    manager = Manager()
+    component, _ = manager.generation_module('kura_key_generation')
+    return component['ProviderStoreRewrap'](manager, identity, namespace).run(action)
+
+
 if __name__ == "__main__":
+    if sys.argv[1:2] == ['--provider-store-rewrap']:
+        try:
+            sys.stdout.buffer.write(encode(provider_store_rewrap(sys.argv[2:])) + b'\n')
+        except (Failure, OSError, Refused, LifecycleRefused, ValueError, KeyError, subprocess.SubprocessError) as error:
+            code = error.reason if isinstance(error, Failure) else 'PROVIDER_STORE_REWRAP_REFUSED'
+            print(code, file=sys.stderr)
+            sys.exit(1)
+        sys.exit(0)
     try:
         require(len(sys.argv) == 2 and sys.argv[1] in ("--serve", "--client"))
         serve() if sys.argv[1] == "--serve" else client()

@@ -4,6 +4,7 @@ package org.eclipse.kura.tools.recovery;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.eclipse.kura.configuration.Password;
 import org.eclipse.kura.core.configuration.ComponentConfigurationImpl;
@@ -65,6 +67,45 @@ class KeyGenerationRecoveryTest {
         var xml = new ByteArrayOutputStream();
         new XmlJavaComponentConfigurationsMapper(current).marshal(xml, configurations);
         return xml.toByteArray();
+    }
+
+    @Test void providerStoreRewrapPreservesPropertyKeysAndLogicalSecretsAcrossThreeGenerations() throws Exception {
+        var untagged = CryptoServiceImpl.forSnapshotRecovery(legacy, false);
+        var middle = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, previous));
+        var current = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, previous, active));
+        var onlyActive = CryptoServiceImpl.forSnapshotRecovery(active, false);
+        var source = new Properties();
+        source.setProperty("/data/Key Store=\u94a5.p12", new String(untagged.encryptAes("p\u00e4ssword".toCharArray())));
+        source.setProperty("sqlite:Salt\\key", new String(middle.encryptAes("salt=value".toCharArray())));
+        source.setProperty("already-active", new String(current.encryptAes("keep".toCharArray())));
+        source.setProperty("empty", "");
+        var encoded = new ByteArrayOutputStream();
+        source.store(encoded, "Legacy fixture");
+        byte[] original = encoded.toByteArray();
+        byte[] wrapped = ProviderStoreRewrap.rewrap(original, current, sha(active));
+        var output = new Properties();
+        output.load(new ByteArrayInputStream(wrapped));
+        assertEquals(source.stringPropertyNames(), output.stringPropertyNames());
+        for (String name : source.stringPropertyNames()) {
+            assertArrayEquals(current.decryptAes(source.getProperty(name).toCharArray()),
+                    onlyActive.decryptAes(output.getProperty(name).toCharArray()));
+        }
+        assertEquals(source.getProperty("already-active"), output.getProperty("already-active"));
+        assertArrayEquals(wrapped, ProviderStoreRewrap.rewrap(wrapped, current, sha(active)));
+    }
+
+    @Test void providerStoreRewrapRejectsDuplicateKeysAndUnauthenticatedActiveHeaders() throws Exception {
+        var current = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, previous, active));
+        var ciphertext = new String(current.encryptAes("protected".toCharArray()));
+        var duplicate = "name=" + ciphertext + "\nname=" + ciphertext + "\n";
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderStoreRewrap.rewrap(duplicate.getBytes(StandardCharsets.US_ASCII), current, sha(active)));
+        int separator = ciphertext.indexOf('-');
+        char wrong = ciphertext.charAt(separator + 1) == 'A' ? 'B' : 'A';
+        var corrupt = ciphertext.substring(0, separator + 1) + wrong + ciphertext.substring(separator + 2);
+        assertThrows(org.eclipse.kura.KuraException.class,
+                () -> ProviderStoreRewrap.rewrap(("name=" + corrupt).getBytes(StandardCharsets.US_ASCII),
+                        current, sha(active)));
     }
 
     private byte[] encrypted(CryptoServiceImpl crypto, byte[] xml) throws Exception {

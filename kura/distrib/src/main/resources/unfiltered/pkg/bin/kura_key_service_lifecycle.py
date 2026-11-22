@@ -1183,7 +1183,7 @@ class Lifecycle:
         self.directory(self.state / "operations", private=True, create=True)
         names = list(self.state.iterdir())
         require({p.name for p in names} <= {"operations", "admission.lock", "journal.key", "maintenance.json", "startups", "package-history", "gwt-sender.json", 'sender-admissions', 'sender-admission.lock',
-            'generations','generation-current.json','handoffs','handoff-revocations','archives'})
+            'generations','generation-current.json','handoffs','handoff-revocations','archives','provider-rewrap-pending.json'})
         try:self.check_extended_journal()
         except (OSError,KeyError,TypeError,ValueError):raise Refused('Invalid retained generation/archive layout; preserve keys and original IDs') from None
         lock = self.state / "admission.lock"
@@ -1342,7 +1342,12 @@ class Lifecycle:
         finally:
             os.close(fd)
 
-    def check_records(self, *, recovering_cancel=None, recovering_publication=None, recovering_restore=None):
+    def check_records(self, *, recovering_cancel=None, recovering_publication=None, recovering_restore=None,
+                      provider_rewrap_intent=None):
+        pending = self.state / 'provider-rewrap-pending.json'
+        if os.path.lexists(pending):
+            if provider_rewrap_intent is None or self.read(pending, limit=4096) != provider_rewrap_intent:
+                raise Unresolved('Finish the original provider store rewrap before starting Core or changing packages')
         inventory=archive_inventory(self)
         handoff_revocations(self)
         self.directory(self.state / "operations", private=True)

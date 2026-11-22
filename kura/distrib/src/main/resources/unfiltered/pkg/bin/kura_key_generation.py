@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Fixed-unit generation publication. Original uncertain dispatches are never retried."""
+import contextlib
 import hashlib
 import hmac
 import os
@@ -11,9 +12,10 @@ import secrets
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 
-from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode,
+from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
 from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
@@ -1021,3 +1023,200 @@ def sys_platform_linux():
     # Kept local to this attested module; no environment-selected clock fallback.
     import sys
     return sys.platform == 'linux'
+
+
+class ProviderStoreRewrap:
+    """Local administrator operation for the installed data/store.save provider."""
+    LIMIT = 1024 * 1024
+    CONTEXT = b'yofc-kura-provider-store-rewrap-v1\0'
+
+    def __init__(self, manager, identity, namespace):
+        self.manager = manager
+        self.identity = operation_id(identity)
+        self.namespace = digest(namespace)
+        self.history = manager.store.path('/var/lib/kura-provider-rewrap')
+        self.slot = self.history / self.identity
+        self.pending = manager.state / 'provider-rewrap-pending.json'
+
+    @staticmethod
+    def identity_of(info):
+        return dict(device=info.st_dev, inode=info.st_ino)
+
+    def signed(self, fields, secret, phase):
+        body = dict(fields, phase=phase)
+        return encode(dict(body, tag=hmac.new(secret, self.CONTEXT + encode(body), hashlib.sha256).hexdigest()))
+
+    def record(self, secret, phase):
+        raw = self.manager.read(self.slot / (phase + '.json'), 4096)
+        body = decode(raw)
+        body.pop('phase')
+        body.pop('tag')
+        require(raw == self.signed(body, secret, phase) and body['schema'] == 1
+                and body['operationId'] == self.identity and body['namespaceSha256'] == self.namespace,
+                'UNSAFE_PROVIDER_REWRAP')
+        return body
+
+    @contextlib.contextmanager
+    def data_directory(self, home, account):
+        path = home / 'data'
+        handle = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            meta = os.fstat(handle)
+            require(os.path.samestat(meta, path.lstat()) and stat.S_IMODE(meta.st_mode) == 0o700
+                    and (meta.st_uid, meta.st_gid) == (account.pw_uid, account.pw_gid), 'UNSAFE_PROVIDER_STORE')
+            yield handle
+            require(os.path.samestat(meta, path.lstat()), 'PROVIDER_STORE_CHANGED')
+        finally:
+            os.close(handle)
+
+    def store_file(self, directory, name, account):
+        def fingerprint(info):
+            require(stat.S_ISREG(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o600 and info.st_nlink == 1
+                    and (info.st_uid, info.st_gid) == (account.pw_uid, account.pw_gid)
+                    and 0 < info.st_size <= self.LIMIT, 'UNSAFE_PROVIDER_STORE')
+            return dict(self.identity_of(info), size=info.st_size, mtimeNs=info.st_mtime_ns, ctimeNs=info.st_ctime_ns)
+
+        with os.fdopen(os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory), 'rb') as stream:
+            before = fingerprint(os.fstat(stream.fileno()))
+            require(not os.listxattr(stream.fileno()), 'REVIEW_PROVIDER_STORE_METADATA')
+            raw = stream.read(self.LIMIT + 1)
+            require(len(raw) == before['size'] and before == fingerprint(os.fstat(stream.fileno()))
+                    == fingerprint(os.stat(name, dir_fd=directory, follow_symlinks=False)), 'PROVIDER_STORE_CHANGED')
+        return raw, dict(before, sha256=hashlib.sha256(raw).hexdigest())
+
+    def prepare(self, directory, account, binding, home, source, secret):
+        manager = self.manager
+        original, original_stamp = self.store_file(directory, 'store.save', account)
+        jar = home / 'libexec/key-recovery/kura-offline-recovery.jar'
+        worker = subprocess.run(['/usr/bin/java', '-Xms16m', '-Xmx96m', '-XX:MaxMetaspaceSize=64m',
+            '-XX:ActiveProcessorCount=1', '-XX:+DisableAttachMechanism', '-XX:+PerfDisableSharedMem',
+            '-cp', str(jar), 'org.eclipse.kura.tools.recovery.ProviderStoreRewrap',
+            source['keySha256'], source['ringSha256']], input=original, capture_output=True, timeout=30,
+            check=False, close_fds=True, cwd='/', env={'PATH': '/usr/bin:/bin', 'LANG': 'C'})
+        candidate = worker.stdout
+        require(worker.returncode == 0 and not worker.stderr and 0 < len(candidate) <= self.LIMIT,
+                'PROVIDER_STORE_AUTHENTICATION_FAILED')
+        if not os.path.lexists(self.history):
+            self.history.mkdir(mode=0o700)
+            manager.sync(self.history.parent)
+        manager.directory(self.history, private=True)
+        require(os.fstat(directory).st_dev == self.history.stat().st_dev, 'ATOMIC_PROVIDER_STORE_MOVE_UNAVAILABLE')
+        with tempfile.TemporaryDirectory(prefix='.' + self.identity + '-', dir=self.history) as staging:
+            private = Path(staging)
+            manager.atomic(private / 'original.save', original, mode=0o400, no_replace=True)
+            replacement_stamp = None
+            if original != candidate:
+                staged = private / 'replacement.save'
+                manager.atomic(staged, candidate, no_replace=True)
+                fd = os.open(staged, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+                try:
+                    os.fchown(fd, account.pw_uid, account.pw_gid)
+                    os.utime(fd, ns=(original_stamp['mtimeNs'], original_stamp['mtimeNs']))
+                    os.fsync(fd)
+                finally:
+                    os.close(fd)
+                base = os.open(private, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                try:
+                    _, replacement_stamp = self.store_file(base, staged.name, account)
+                finally:
+                    os.close(base)
+            intent = dict(binding, original=original_stamp, replacement=replacement_stamp)
+            manager.atomic(private / 'intent.json', self.signed(intent, secret, 'intent'), no_replace=True)
+            require(self.store_file(directory, 'store.save', account)[1] == original_stamp, 'PROVIDER_STORE_CHANGED')
+            rename_no_replace(private, self.slot)
+            manager.sync(self.history)
+        return intent
+
+    def finish(self, directory, account, intent, secret):
+        manager = self.manager
+        raw = manager.read(self.slot / 'original.save', self.LIMIT)
+        require(hashlib.sha256(raw).hexdigest() == intent['original']['sha256'], 'ORIGINAL_PROVIDER_STORE_CHANGED')
+        pending = encode(dict(schema=1, operationId=self.identity,
+                              intentSha256=hashlib.sha256(self.signed(intent, secret, 'intent')).hexdigest()))
+        manager.settled(provider_rewrap_intent=pending)
+        result_path = self.slot / 'completed.json'
+        replacement = intent['replacement']
+        if os.path.lexists(result_path):
+            result = self.record(secret, 'completed')
+            require(os.path.lexists(self.pending), 'PROVIDER_REWRAP_ALREADY_COMPLETED')
+            current = self.store_file(directory, 'store.save', account)[1]
+            expected = intent['original'] if replacement is None else dict(replacement, ctimeNs=current['ctimeNs'])
+            require(current == expected and result['intentSha256'] == decode(pending)['intentSha256']
+                    and result['currentSha256'] == current['sha256'], 'UNSAFE_PROVIDER_REWRAP')
+        else:
+            if not os.path.lexists(self.pending):
+                manager.atomic(self.pending, pending, no_replace=True)
+            current = self.store_file(directory, 'store.save', account)[1]
+            if replacement is None:
+                require(current == intent['original'], 'PROVIDER_STORE_CHANGED')
+            else:
+                with contextlib.ExitStack() as stack:
+                    base = os.open(self.slot, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                    stack.callback(os.close, base)
+                    if current == intent['original']:
+                        stage = self.store_file(base, 'replacement.save', account)[1]
+                        require(stage == replacement, 'STAGED_PROVIDER_STORE_CHANGED')
+                        os.replace('replacement.save', 'store.save', src_dir_fd=base, dst_dir_fd=directory)
+                        current = self.store_file(directory, 'store.save', account)[1]
+                    # A crash after rename can only conclude from the original staged inode.
+                    require(not os.path.lexists(self.slot / 'replacement.save')
+                            and current == dict(replacement, ctimeNs=current['ctimeNs']), 'PROVIDER_STORE_CHANGED')
+                    os.fsync(directory)
+                    os.fsync(base)
+            result = dict(schema=1, state='SUCCEEDED', operationId=self.identity, namespaceSha256=self.namespace,
+                          intentSha256=decode(pending)['intentSha256'], publicationId=intent['publicationId'],
+                          originalSha256=intent['original']['sha256'], currentSha256=current['sha256'],
+                          changed=replacement is not None)
+            manager.atomic(result_path, self.signed(result, secret, 'completed'), no_replace=True)
+        require(manager.read(self.pending, 4096) == pending, 'UNSAFE_PROVIDER_REWRAP')
+        self.pending.unlink()
+        manager.sync(manager.state)
+        return result
+
+    def run(self, action):
+        require(action in ('apply', 'continue', 'read'))
+        manager = self.manager
+        policy = Lifecycle(manager.root, manager.owner)
+        with contextlib.ExitStack() as locks:
+            if action != 'read':
+                locks.enter_context(policy.recovery_locked())
+            locks.enter_context(manager.lock(manager.state / 'admission.lock', action != 'read'))
+            manager.require_namespace(dict(expectedNamespaceSha256=self.namespace))
+            secret = manager.read(manager.state / 'journal.key', 32)
+            if action == 'read':
+                if os.path.lexists(self.slot / 'completed.json'):
+                    return self.record(secret, 'completed')
+                if os.path.lexists(self.slot):
+                    self.record(secret, 'intent')
+                    return dict(schema=1, operationId=self.identity, namespaceSha256=self.namespace, state='UNKNOWN')
+                raise Failure('NOT_FOUND')
+            manager.maintenance()
+            require(os.path.lexists(self.slot) == (action == 'continue'), 'PROVIDER_REWRAP_ID_CONFLICT')
+            if action == 'apply':
+                manager.settled()
+            locks.enter_context(manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False))
+            policy.no_overrides()
+            policy.check_pending_keystore_passwords()
+            core, cohort = manager.generation_component()
+            publication = core.current()
+            _, _, _, generation, _, source = manager.generation_source()
+            require(generation == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256'],
+                    'COHORT_CHANGED')
+            core.require_start(source, cohort)
+            account = pwd.getpwnam('kurad')
+            locks.enter_context(manager.exclusive_writers())
+            unit = core.unit(generation_mode=True)
+            require(unit['ActiveState'] == 'inactive' and unit['MainPID'] == unit['ControlPID'] == '0'
+                    and core.cgroup_empty(), 'CORE_NOT_STOPPED')
+            core.no_foreign_processes(account.pw_uid)
+            home = manager.store.path('/opt/eclipse/kura').resolve(strict=True)
+            directory = locks.enter_context(self.data_directory(home, account))
+            binding = dict(schema=1, operationId=self.identity, namespaceSha256=self.namespace,
+                           publicationId=publication['operationId'], cohortSha256=cohort['cohortSha256'],
+                           data=self.identity_of(os.fstat(directory)), **source)
+            if action == 'apply':
+                intent = self.prepare(directory, account, binding, home, source, secret)
+            else:
+                intent = self.record(secret, 'intent')
+                require(all(intent[key] == value for key, value in binding.items()), 'PROVIDER_REWRAP_INPUT_CHANGED')
+            return self.finish(directory, account, intent, secret)
