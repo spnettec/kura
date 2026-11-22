@@ -6,6 +6,8 @@ After=kura-recovery-main-reader.socket
 PartOf=kura-recovery-main-reader.socket
 ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
 ConditionPathIsDirectory=/var/lib/kura-recovery-launch
+# Each bounded Root query activates a fresh reader.
+StartLimitIntervalSec=0
 
 [Service]
 Type=exec
