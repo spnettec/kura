@@ -36,6 +36,7 @@ from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_h
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
 MAX_OPERATIONS = 32
+MAX_STATIC_ASSET = 96 * 1024
 COOKIE = '__Host-kura-recovery'
 
 
@@ -167,7 +168,7 @@ class SenderAdmission:
         return dict(schema=1, action='sender-command', admissionId=current['admissionId'], source='recovery',
             namespaceSha256=current['namespaceSha256'], request=request)
 
-    def submit(self, kind, identity, request, callback):
+    def submit(self, kind, identity, request, callback, *, expectedNamespaceSha256=None):
         protocol.operation_id(identity); protocol.require(kind in self.KINDS)
         protocol.require(getattr(self.context, 'current', None) is None, 'BUSY')
         if not os.path.lexists(self.directory): self.directory.mkdir(mode=0o700); self.journal.sync(self.journal.directory)
@@ -189,7 +190,9 @@ class SenderAdmission:
         namespace = self.client(dict(schema=1, action='gwt-sender-namespace'))
         protocol.fields(namespace, {'schema', 'namespaceSha256', 'rootDevice', 'rootInode'})
         protocol.require(type(namespace['schema']) is int and namespace['schema'] == 1)
-        realm = protocol.digest(namespace['namespaceSha256'])
+        observed = protocol.digest(namespace['namespaceSha256'])
+        realm = observed if expectedNamespaceSha256 is None else expectedNamespaceSha256
+        protocol.require(realm == observed, 'CONFLICT')
         self.journal.write_new(slot/'namespace.json', dict(schema=1, namespaceSha256=realm))
         response = self.client(dict(schema=1, action='sender-reserve', admissionId=admission, source='recovery',
             namespaceSha256=realm, request=request))
@@ -429,6 +432,16 @@ class Controller:
             fail(value['error'])
         return value
 
+    @staticmethod
+    def scope(value):
+        field = 'expectedNamespaceSha256'
+        return {field: protocol.digest(value[field])} if field in value else {}
+
+    def require_scope(self, scope):
+        if scope:
+            realm = self.call('gwt-sender-namespace')
+            protocol.require(realm['namespaceSha256'] == scope['expectedNamespaceSha256'], 'CONFLICT')
+
     def status(self):
         try:
             value = self.call('status')
@@ -437,8 +450,10 @@ class Controller:
             if failure.reason != 'GENERATION_REQUIRED':
                 raise
             pair = self.call('generation-recovery-status')
-            protocol.fields(pair, {'schema', 'activeKeySha256', 'ringSha256', 'activeKeyReady', 'keyringReady'})
+            protocol.fields(pair, {'schema', 'activeKeySha256', 'ringSha256', 'activeKeyReady', 'keyringReady',
+                                   'namespaceSha256'})
             protocol.digest(pair['ringSha256'])
+            protocol.digest(pair['namespaceSha256'])
             protocol.require(all(type(pair[k]) is bool for k in ('activeKeyReady', 'keyringReady')), 'PROTOCOL_MISMATCH')
             value = dict(schema=1, keyReady=pair['activeKeyReady'] and pair['keyringReady'],
                          keySha256=pair['activeKeySha256'], legacyKey=False, agentRequired=False,
@@ -447,6 +462,16 @@ class Controller:
         protocol.require(type(value['keyReady']) is bool and type(value['legacyKey']) is bool
                          and value['agentRequired'] is False, 'PROTOCOL_MISMATCH')
         pending=self.journal.pending()
+        if 'generation' in value:
+            generation = value['generation']
+            generation['startAllowed'] = False
+            if (value['keyReady'] and pending and pending.get('expectedRingSha256') == generation['ringSha256']
+                    and pending['expectedKeySha256'] == value['keySha256']):
+                try:
+                    self.generation_start_check(pending['operationId'], pending['expectedKeySha256'])
+                    generation['startAllowed'] = True
+                except (protocol.Failure, OSError, KeyError, ValueError):
+                    pass
         starts=self.active_start_records()
         linked=[r for r in starts if pending is not None and r['restoreOperationId']==pending['operationId']]
         leaves=self.start_leaves(linked)
@@ -548,9 +573,11 @@ class Controller:
 
     def admission(self, value):
         command=value.get('command');protocol.require(command in ('read','close'))
-        protocol.fields(value,{'command','kind','operationId'} | ({'backupJson','passphrase'} if command=='close' else set()))
+        scope = self.scope(value)
+        protocol.fields(value,{'command','kind','operationId'} | ({'backupJson','passphrase'} if command=='close' else set()) | scope.keys())
         kind=value['kind'];protocol.require(kind in ('restore','start'));identity=protocol.operation_id(value['operationId'])
         with self.journal.lock():
+            self.require_scope(scope)
             current=self.sender.view(kind,identity)
             saved=self.sender.load(kind,identity)
             permitted=None;restore=None;pending=None;marker='RETIRED'
@@ -667,11 +694,11 @@ class Controller:
                 return history.confirm(kind,identity,step,value['reviewSha256'],continue_metadata=command=='continue') if mutate else history.review(kind,identity,step)
         except Refused:fail('UNRESOLVED_OPERATION')
 
-    def original(self, identity, expected=None, *, expected_ring=None):
+    def original(self, identity, expected=None, *, expected_ring=None, **scope):
         protocol.operation_id(identity)
         unknown = dict(schema=1, operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED')
         try:
-            result = self.call('operation-read', operationId=identity)
+            result = self.call('operation-read', operationId=identity, **scope)
             if result.get('state') != 'SUCCEEDED':
                 return unknown
             modern = result.get('action') == 'generation-restore'
@@ -694,7 +721,8 @@ class Controller:
     def restore(self, value):
         modern = 'expectedRingSha256' in value
         extra = {'expectedRingSha256'} if modern else set()
-        protocol.fields(value, {'operationId', 'expectedKeySha256', 'backupJson', 'passphrase'} | extra)
+        scope = self.scope(value)
+        protocol.fields(value, {'operationId', 'expectedKeySha256', 'backupJson', 'passphrase'} | extra | scope.keys())
         identity = protocol.operation_id(value['operationId'])
         expected = protocol.digest(value['expectedKeySha256'])
         backup = self.material(value)
@@ -704,16 +732,17 @@ class Controller:
         intent = dict(schema=2 if modern else 1, operationId=identity, expectedKeySha256=expected,
                       backupSha256=hashlib.sha256(protocol.encode(backup)).hexdigest(), **pair)
         with self.journal.lock():
+            self.require_scope(scope)
             prior = self.journal.record(identity)
             if prior is not None:
                 protocol.require(prior == intent, 'CONFLICT')
-                return self.original(identity, expected, expected_ring=ring)
+                return self.original(identity, expected, expected_ring=ring, **scope)
             protocol.require(not HandoffController(self.client, self.journal).pending(), 'UNRESOLVED_OPERATION')
             # Read the original before admission. A previously accepted Root UUID
             # cannot be sent again even when this UI has no local slot for it.
-            original = self.call('operation-read', operationId=identity)
+            original = self.call('operation-read', operationId=identity, **scope)
             if original.get('state') != 'NOT_FOUND':
-                return self.original(identity, expected, expected_ring=ring)
+                return self.original(identity, expected, expected_ring=ring, **scope)
             protocol.fields(original, {'schema', 'state'})
             records = self.active_restore_records()
             protocol.require(self.journal.active_count('RESTORE',self.journal.records()) < MAX_OPERATIONS, 'CAPACITY')
@@ -738,15 +767,15 @@ class Controller:
                 self.journal.mark(identity,expected,**pair); self.journal.admit(intent)
                 try: self.call(action, **fields)
                 except (protocol.Failure, OSError, KeyError, ValueError): pass
-                return self.original(identity, expected, expected_ring=ring)
-            return self.sender.submit('restore', identity, request, forward)
+                return self.original(identity, expected, expected_ring=ring, **scope)
+            return self.sender.submit('restore', identity, request, forward, **scope)
 
 
-    def start_original(self, identity, restore_id=None, expected=None):
+    def start_original(self, identity, restore_id=None, expected=None, **scope):
         protocol.operation_id(identity)
         unknown=dict(schema=1,operationId=identity,state='UNKNOWN',resultSource='UNCONFIRMED')
         try:
-            result=self.call('core-start-read',operationId=identity)
+            result=self.call('core-start-read',operationId=identity,**scope)
             modern=result.get('action')=='core-start-after-maintenance'
             extra={'predecessorStartOperationId','maintenanceId','manifestSha256'} if modern else set()
             protocol.fields(result,{'schema','operationId','restoreOperationId','keySha256','action','state','scope','jobPath'}|extra)
@@ -763,20 +792,23 @@ class Controller:
 
     def start(self,value,*,maintenance=False):
         extra={'predecessorStartOperationId','maintenanceId','manifestSha256'} if maintenance else set()
-        protocol.fields(value,{'operationId','restoreOperationId','expectedKeySha256'}|extra)
+        scope = self.scope(value)
+        protocol.fields(value,{'operationId','restoreOperationId','expectedKeySha256'}|extra|scope.keys())
+        value = {key: field for key, field in value.items() if key not in scope}
         if maintenance:
             protocol.operation_id(value['predecessorStartOperationId']);protocol.operation_id(value['maintenanceId']);protocol.digest(value['manifestSha256'])
         identity=protocol.operation_id(value['operationId']);restore_id=protocol.operation_id(value['restoreOperationId'])
         expected=protocol.digest(value['expectedKeySha256'])
         intent=dict(schema=2 if maintenance else 1,**value)
         with self.journal.lock():
+            self.require_scope(scope)
             prior=self.journal.start_record(identity)
             if prior is not None:
                 protocol.require(prior==intent,'CONFLICT')
-                return self.start_original(identity,restore_id,expected)
+                return self.start_original(identity,restore_id,expected,**scope)
             protocol.require(not HandoffController(self.client, self.journal).pending(), 'UNRESOLVED_OPERATION')
-            original=self.call('core-start-read',operationId=identity)
-            if original.get('state')!='NOT_FOUND':return self.start_original(identity,restore_id,expected)
+            original=self.call('core-start-read',operationId=identity,**scope)
+            if original.get('state')!='NOT_FOUND':return self.start_original(identity,restore_id,expected,**scope)
             pending=self.journal.pending()
             local=self.journal.record(restore_id)
             protocol.require(local is not None and local['expectedKeySha256']==expected
@@ -792,30 +824,35 @@ class Controller:
                 protocol.require(maintenance or record['restoreOperationId']!=restore_id,'CONFLICT')
                 protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
             if local['schema']==2:
-                readiness = self.call('generation-recovery-start-check', restoreOperationId=restore_id,
-                                      expectedKeySha256=expected)
-                protocol.fields(readiness, {'schema', 'state'})
-                protocol.require(readiness['state']=='GENERATION_RECOVERY_START_READY', 'PROTOCOL_MISMATCH')
+                self.generation_start_check(restore_id, expected)
             action = 'core-start-after-maintenance' if maintenance else 'core-start'
             request = dict(schema=1, action=action, **value)
             def forward():
                 self.journal.write_new(self.journal.starts/(identity+'.json'),intent)
                 try:self.call(action,**value)
                 except (protocol.Failure,OSError,KeyError,ValueError):pass
-                return self.start_original(identity,restore_id,expected)
-            return self.sender.submit('start', identity, request, forward)
+                return self.start_original(identity,restore_id,expected,**scope)
+            return self.sender.submit('start', identity, request, forward, **scope)
+
+    def generation_start_check(self, restore_id, expected):
+        readiness = self.call('generation-recovery-start-check', restoreOperationId=restore_id,
+                              expectedKeySha256=expected)
+        protocol.fields(readiness, {'schema', 'state'})
+        protocol.require(readiness['state']=='GENERATION_RECOVERY_START_READY', 'PROTOCOL_MISMATCH')
 
     def complete(self, value):
-        protocol.fields(value,{'operationId'})
+        scope = self.scope(value)
+        protocol.fields(value,{'operationId'} | scope.keys())
         identity=protocol.operation_id(value['operationId'])
         with self.journal.lock():
+            self.require_scope(scope)
             slot=self.journal.start_record(identity)
             protocol.require(slot is not None,'CONFLICT')
             records=[r for r in self.active_start_records() if r['restoreOperationId']==slot['restoreOperationId']]
             leaves=self.start_leaves(records)
             protocol.require(leaves and leaves[0]['operationId']==identity,'CONFLICT')
             protocol.require(all(self.start_original(r['operationId'])['state']=='SUCCEEDED' for r in records),'UNRESOLVED_OPERATION')
-            result=self.start_original(identity,slot['restoreOperationId'],slot['expectedKeySha256'])
+            result=self.start_original(identity,slot['restoreOperationId'],slot['expectedKeySha256'],**scope)
             protocol.require(result['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
             plan=self.start_plan(dict(operationId=slot['restoreOperationId'],expectedKeySha256=slot['expectedKeySha256']))
             protocol.require(plan['blockingOperationId'] is None,'UNRESOLVED_OPERATION')
@@ -1311,7 +1348,7 @@ class Handler(BaseHTTPRequestHandler):
             protocol.require(self.path in mapping, 'INVALID_ARGUMENT')
             name, kind = mapping[self.path]
             data = (self.server.assets / name).read_bytes()
-            protocol.require(len(data) <= 65536, 'UNAVAILABLE')
+            protocol.require(len(data) <= MAX_STATIC_ASSET, 'UNAVAILABLE')
             if name == 'index.html':
                 protocol.require(data.count(b'KURA_RECOVERY_CSRF') == 1, 'UNAVAILABLE')
                 data = data.replace(b'KURA_RECOVERY_CSRF', self.server.token.encode('ascii'))
@@ -1356,11 +1393,13 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == '/api/archive':
                 result = self.server.controller.archive(value)
             elif self.path == '/api/original':
-                protocol.fields(value, {'operationId'})
-                result = self.server.controller.original(value['operationId'])
+                scope = self.server.controller.scope(value)
+                protocol.fields(value, {'operationId'} | scope.keys())
+                result = self.server.controller.original(value['operationId'], **scope)
             elif self.path == '/api/start-original':
-                protocol.fields(value, {'operationId'})
-                result = self.server.controller.start_original(value['operationId'])
+                scope = self.server.controller.scope(value)
+                protocol.fields(value, {'operationId'} | scope.keys())
+                result = self.server.controller.start_original(value['operationId'], **scope)
             elif self.path == '/api/complete':
                 result = self.server.controller.complete(value)
             elif self.path == '/api/start-after-maintenance':
@@ -1387,7 +1426,8 @@ class Handler(BaseHTTPRequestHandler):
                         read = self.server.controller.journal.start_record if writer == "start" else self.server.controller.journal.record
                         admitted = read(identity) is not None or self.server.controller.sender.has_attempt(writer,identity)
                     if admitted:
-                        self.send(200, protocol.encode((self.server.controller.start_original if writer == "start" else self.server.controller.original)(identity)))
+                        read_original = self.server.controller.start_original if writer == 'start' else self.server.controller.original
+                        self.send(200,protocol.encode(read_original(identity,**self.server.controller.scope(value))))
                         return
                 except (protocol.Failure, OSError, ValueError):
                     self.send(200, protocol.encode(dict(schema=1, operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED')))

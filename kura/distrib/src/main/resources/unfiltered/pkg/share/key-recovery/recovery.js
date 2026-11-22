@@ -34,11 +34,12 @@
   catch(_){el('reference').value='';}
  }
  function validate(value){
-  const names=['schema','state','kind','operationId','phase','closeAllowed','closed','expectedKeySha256','restoreOperationId','startSchema','predecessorStartOperationId','maintenanceId','manifestSha256'];
+  const names=['schema','state','kind','operationId','phase','closeAllowed','closed','expectedKeySha256','expectedRingSha256','restoreOperationId','startSchema','predecessorStartOperationId','maintenanceId','manifestSha256'];
   if(!value||Object.keys(value).some(n=>!names.includes(n))||value.schema!==1||value.state!=='SENDER_ADMISSION'||value.kind!==backendKind()
    ||!uuid(value.operationId)||!['UNKNOWN','NOT_RECORDED','RESERVED','INTAKE','TERMINAL','NOT_ADMITTED'].includes(value.phase)
    ||typeof value.closeAllowed!=='boolean'||typeof value.closed!=='boolean'||(!handoff&&value.operationId!==el('reference').value)
    ||(value.expectedKeySha256!==undefined&&!hash(value.expectedKeySha256))||(value.restoreOperationId!==undefined&&!uuid(value.restoreOperationId))
+   ||(value.expectedRingSha256!==undefined&&(value.kind!=='restore'||!hash(value.expectedRingSha256)))
    ||(value.closed&&value.phase!=='NOT_ADMITTED')||(value.closeAllowed&&!['RESERVED','NOT_ADMITTED'].includes(value.phase)))throw Error();
   if(value.kind==='start'&&value.phase!=='NOT_RECORDED'){
    if(![1,2].includes(value.startSchema))throw Error();
@@ -54,6 +55,10 @@
  }
  async function api(command,material={}){
   const body=handoff?{command:'admission-'+command,step:kind(),token:authorization()}:{command,kind:kind(),operationId:el('reference').value,...material};
+  if(!handoff){
+   const saved=JSON.parse(localStorage.getItem(store[kind()]));
+   if(saved?.operationId===body.operationId&&hash(saved.namespaceSha256))body.expectedNamespaceSha256=saved.namespaceSha256;
+  }
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
   try{
    const response=await fetch(handoff?'/api/handoff':'/api/admission',{method:'POST',credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal,
@@ -106,8 +111,14 @@
   try{
    const name=store[kind()],raw=localStorage.getItem(name),saved=JSON.parse(raw);
    const modern=kind()==='start'&&saved&&saved.schema===2;
-   const names=kind()==='restore'?'expectedKeySha256,operationId,schema':modern?'expectedKeySha256,maintenanceId,manifestSha256,operationId,predecessorStartOperationId,restoreOperationId,schema':'expectedKeySha256,operationId,restoreOperationId,schema';
-   if(!saved||Object.keys(saved).sort().join(',')!==names||(!modern&&saved.schema!==1)
+   const generation=kind()==='restore'&&saved?.schema===2;
+   const names=['schema','operationId','expectedKeySha256'];
+   if(kind()==='start')names.push('restoreOperationId');
+   if(modern)names.push('maintenanceId','manifestSha256','predecessorStartOperationId');
+   if(generation)names.push('expectedRingSha256','namespaceSha256');
+   if(kind()==='start'&&hash(saved?.namespaceSha256))names.push('namespaceSha256');
+   if(!saved||Object.keys(saved).sort().join(',')!==names.sort().join(',')||(!modern&&!generation&&saved.schema!==1)
+    ||(generation&&(!hash(saved.namespaceSha256)||!hash(saved.expectedRingSha256)||saved.expectedRingSha256!==current.expectedRingSha256))
     ||(modern&&(!uuid(saved.maintenanceId)||!uuid(saved.predecessorStartOperationId)||!hash(saved.manifestSha256))))throw Error();
    if(saved.operationId!==current.operationId||saved.expectedKeySha256!==current.expectedKeySha256
     ||(kind()==='start'&&(saved.restoreOperationId!==current.restoreOperationId||saved.schema!==current.startSchema
@@ -153,14 +164,16 @@
    const raw=localStorage.getItem(startStoreKey);if(raw===null)return null;
    const v=JSON.parse(raw);
    const modern=v&&v.schema===2;
-   const names=modern?'expectedKeySha256,maintenanceId,manifestSha256,operationId,predecessorStartOperationId,restoreOperationId,schema':'expectedKeySha256,operationId,restoreOperationId,schema';
-   if(!v||Object.keys(v).sort().join(',')!==names||(!modern&&v.schema!==1)||!uuid(v.operationId)||!uuid(v.restoreOperationId)||!digest(v.expectedKeySha256)
+   const names=['expectedKeySha256','operationId','restoreOperationId','schema'];
+   if(modern)names.push('maintenanceId','manifestSha256','predecessorStartOperationId');
+   if(v&&digest(v.namespaceSha256))names.push('namespaceSha256');
+   if(!v||Object.keys(v).sort().join(',')!==names.sort().join(',')||(!modern&&v.schema!==1)||!uuid(v.operationId)||!uuid(v.restoreOperationId)||!digest(v.expectedKeySha256)
       ||(modern&&(!uuid(v.maintenanceId)||!uuid(v.predecessorStartOperationId)||!digest(v.manifestSha256))))throw Error();
    return v;
   } catch(_){storageFault=true;return null;}
  }
  function startTerminal() {
-  return startIntent&&startResult&&startResult.operationId===startIntent.operationId
+  return startIntent&&sameRoot(startIntent)&&startResult&&startResult.operationId===startIntent.operationId
    &&startResult.restoreOperationId===startIntent.restoreOperationId&&startResult.keySha256===startIntent.expectedKeySha256
    &&startResult.state==='SUCCEEDED'&&startResult.action===(startIntent.schema===2?'core-start-after-maintenance':'core-start')&&startResult.resultSource==='ROOT_ORIGINAL'
    &&(startIntent.schema!==2||['maintenanceId','predecessorStartOperationId','manifestSha256'].every(k=>startIntent[k]===startResult[k]))
@@ -168,55 +181,139 @@
  }
  Object.assign(words.zh,{upgradeConfirm:'我确认安装升级已停止 Kura，并为本次维护创建新的启动请求。',startAfterMaintenance:'升级后启动 Kura'});
  Object.assign(words.en,{upgradeConfirm:'I confirm the package upgrade stopped Kura and authorize a new start request for this maintenance.',startAfterMaintenance:'Start Kura after upgrade'});
+ Object.assign(words.zh,{
+  activeFingerprint:'原活跃钥指纹（SHA-256）',ringFingerprint:'原密钥集合指纹（SHA-256）',
+  generationMissing:'活跃钥和密钥集合都缺失。请核验原多代备份。',
+  activeMissing:'活跃钥缺失，原密钥集合仍在。请核验原多代备份。',
+  ringMissing:'原密钥集合缺失，活跃钥仍在。请核验原多代备份。',
+  generationReady:'活跃钥和原密钥集合均已就绪。',
+  generationReviewed:'多代备份的两个指纹均匹配。密钥数量',
+  unresolved:'仍有原操作待确认。请按原编号查询。',
+  rootMismatch:'当前网关与浏览器保存的原操作不配对。请回到原网关查询。',
+  restoreSet:'恢复原密钥集合',restoreTitle:'恢复网关原密钥集合？',
+  restoreHelp:'确认两个指纹与原备份一致。网关只补回缺失的凭据。恢复后可单独启动 Kura。',
+  cancelRestore:'取消',restoreAccept:'确认恢复',
+  generationRestored:'原密钥集合恢复已完成，原回执已确认。',
+  invalidPassword:'请输入 12–256 个字符的备份解密口令。',startFenced:'启动尚未获准。请核对原启动授权。'
+ });
+ Object.assign(words.en,{
+  activeFingerprint:'Retained active key fingerprint (SHA-256)',ringFingerprint:'Retained key-set fingerprint (SHA-256)',
+  generationMissing:'The active key and key set are both missing. Inspect your original multi-generation backup.',
+  activeMissing:'The active key is missing. The original key set is still present. Inspect your original multi-generation backup.',
+  ringMissing:'The original key set is missing. The active key is still present. Inspect your original multi-generation backup.',
+  generationReady:'The active key and original key set are ready.',
+  generationReviewed:'Both fingerprints match the multi-generation backup. Keys in the backup',
+  unresolved:'An original operation is still unconfirmed. Query its original ID.',
+  rootMismatch:'The saved operation belongs to a different gateway. Return to the original gateway to query it.',
+  restoreSet:'Restore the original key set',restoreTitle:'Restore this gateway’s original key set?',
+  restoreHelp:'Check both fingerprints against the original backup. The gateway only restores missing credentials. You can start Kura separately after recovery.',
+  cancelRestore:'Cancel',restoreAccept:'Confirm restoration',
+  generationRestored:'The original key set was restored and its receipt was confirmed.',
+  invalidPassword:'Enter a backup passphrase of 12–256 characters.',
+  startFenced:'Startup is unavailable. Check the original startup authorization.'
+ });
  function maintenanceReady(){return startTerminal()&&startPlan&&startPlan.startAllowed===true
   &&startPlan.predecessorStartOperationId===startIntent.operationId&&pendingRestore
-  &&pendingRestore.operationId===startIntent.restoreOperationId&&pendingRestore.expectedKeySha256===startIntent.expectedKeySha256;}
+  &&pendingRestore.operationId===startIntent.restoreOperationId&&currentCredentials(pendingRestore)
+  &&pendingRestore.expectedKeySha256===startIntent.expectedKeySha256;}
  let language = 'zh', noticeKey = '', statusKey = '', raw = '', reviewed = null, reviewedRaw = '';
- let available = false, keyReady = false, fingerprint = '', busy = false, storageFault = false;
+ let available = false, keyReady = false, fingerprint = '', generation = null, busy = false, storageFault = false;
  let intent = null, result = null, statusEpoch = 0, fileEpoch = 0;
+ let restoreProposal = null;
  const text = key => words[language][key] || '';
+ const generationFormat = 'yofc-kura-gateway-key-generations-v1';
+ const scopeOf = value => value?.namespaceSha256 ? {expectedNamespaceSha256:value.namespaceSha256} : {};
+ const sameRoot = value => !value?.namespaceSha256 || generation?.namespaceSha256 === value.namespaceSha256;
+ const scoped = value => generation ? {...value,namespaceSha256:generation.namespaceSha256} : value;
+ const rootMismatch = () => available && (!sameRoot(intent) || !sameRoot(startIntent));
+ const currentCredentials = value => value?.expectedKeySha256 === fingerprint
+    && (value.expectedRingSha256 ?? null) === (generation?.ringSha256 ?? null);
+ function announce(id,value) {
+  if(el(id).textContent!==value)el(id).textContent=value;
+ }
+ function intentFields(value, requireNamespace = false) {
+  if (!value || !uuid(value.operationId) || !digest(value.expectedKeySha256)) return false;
+  const names = ['expectedKeySha256','operationId','schema'];
+  if (value.schema === 2) {
+   if (!digest(value.expectedRingSha256)) return false;
+   names.push('expectedRingSha256');
+   if (requireNamespace) {
+    if (!digest(value.namespaceSha256)) return false;
+    names.push('namespaceSha256');
+   }
+  } else if (value.schema !== 1) return false;
+  return Object.keys(value).sort().join(',') === names.sort().join(',');
+ }
  function readIntent() {
   try {
    const value = localStorage.getItem(storeKey);
    if (value === null) return null;
    const parsed = JSON.parse(value);
-   if (!parsed || Object.keys(parsed).sort().join(',') !== 'expectedKeySha256,operationId,schema'
-       || parsed.schema !== 1 || !uuid(parsed.operationId) || !digest(parsed.expectedKeySha256)) throw Error();
+   if (!intentFields(parsed,true)) throw Error();
    return parsed;
   } catch (_) {storageFault = true; return null;}
  }
+ function restoreReceipt(value, binding) {
+  if (!value || value.state !== 'SUCCEEDED' || value.resultSource !== 'ROOT_ORIGINAL'
+      || value.existingReceiptPreserved !== true || !uuid(value.operationId)) return false;
+  if (binding && (!sameRoot(binding) || value.operationId !== binding.operationId)) return false;
+  if (value.action === 'generation-restore') {
+   return digest(value.activeKeySha256) && digest(value.ringSha256)
+    && typeof value.activeKeyRestored === 'boolean' && typeof value.keyringRestored === 'boolean'
+    && (!binding || binding.schema === 2 && value.activeKeySha256 === binding.expectedKeySha256
+        && value.ringSha256 === binding.expectedRingSha256);
+  }
+  return value.action === 'restore' && digest(value.keySha256) && typeof value.keyChanged === 'boolean'
+   && (!binding || binding.schema === 1 && value.keySha256 === binding.expectedKeySha256);
+ }
  function terminal() {
-  return intent && result && result.operationId === intent.operationId
-   && ((result.state === 'SUCCEEDED' && result.action === 'restore' && result.resultSource === 'ROOT_ORIGINAL'
-        && result.keySha256 === intent.expectedKeySha256 && result.existingReceiptPreserved === true)
+  return intent && sameRoot(intent) && result && result.operationId === intent.operationId
+   && (restoreReceipt(result,intent)
     || (result.state === 'REJECTED' && result.resultSource === 'SERVER_PREFLIGHT' && typeof result.error === 'string'));
  }
  function render() {
-  const draft = available && !keyReady && !busy && !intent && !storageFault;
+  const mismatch = rootMismatch();
+  const draft = available && !keyReady && !busy && !intent && !storageFault && !mismatch;
   for (const id of ['backup','password']) el(id).disabled = !draft;
-  el('inspect').disabled = !draft || !raw || !password(el('password').value);
-  el('confirm').disabled = !draft || !reviewed || !reviewed.restoreAllowed || reviewedRaw !== raw;
-  el('restore').disabled = el('confirm').disabled || !el('confirm').checked || !password(el('password').value);
-  el('refresh').disabled = busy; el('query-pending').disabled = busy || !intent;
-  el('acknowledge').disabled = busy || storageFault || !terminal();
-  el('original').disabled = busy; el('query-original').disabled = busy || !uuid(el('original').value);
+  el('inspect').disabled = !draft;
+  el('inspect-form').setAttribute('aria-busy',String(busy));
+  const canRestore = draft && reviewed?.restoreAllowed && reviewedRaw === raw;
+  el('confirm-row').hidden = !!generation;
+  el('confirm').disabled = !canRestore || !!generation;
+  el('restore').textContent = text(generation ? 'restoreSet' : 'restore');
+  el('restore').disabled = !canRestore || (!generation && !el('confirm').checked) || !password(el('password').value);
+  el('refresh').disabled = busy; el('query-pending').disabled = busy || !intent || !sameRoot(intent);
+  el('acknowledge').disabled = busy || storageFault || mismatch || !terminal();
+  el('original').disabled = busy || mismatch; el('query-original').disabled = busy || mismatch || !uuid(el('original').value);
   el('operation').textContent = intent ? intent.operationId : result && uuid(result.operationId) ? result.operationId : '';
   el('fingerprint').textContent = fingerprint;
-  el('status').textContent = text(statusKey);
-  el('notice').textContent = text(storageFault ? 'storage' : intent && !terminal() ? 'pending' : noticeKey);
-  const initial=!startIntent&&pendingRestore&&result&&result.state==='SUCCEEDED'&&result.resultSource==='ROOT_ORIGINAL'
-   &&result.action==='restore'&&result.keyChanged===true&&result.operationId===pendingRestore.operationId&&result.keySha256===pendingRestore.expectedKeySha256;
+  el('fingerprint-label').textContent = text(generation ? 'activeFingerprint' : 'fingerprint');
+  el('generation-status').hidden = !generation;
+  el('ring-fingerprint').textContent = generation?.ringSha256 ?? '';
+  announce('status',text(statusKey));
+  announce('notice',text(mismatch ? 'rootMismatch' : storageFault ? 'storage' : intent && !terminal() ? 'pending' : noticeKey));
+  const initial=!startIntent&&currentCredentials(pendingRestore)&&restoreReceipt(result,pendingRestore)
+   &&(result.keyChanged===true||result.activeKeyRestored===true||result.keyringRestored===true);
   const maintenance=maintenanceReady();
   el('upgrade-confirm-row').hidden=!maintenance;el('upgrade-confirm').disabled=busy||!maintenance;
   el('start-core').textContent=text(maintenance?'startAfterMaintenance':'startCore');
-  el('start-core').disabled=busy||storageFault||!available||!keyReady||!(initial||(maintenance&&el('upgrade-confirm').checked));
-  el('query-start').disabled=busy||!startIntent;
-  el('complete').disabled=busy||storageFault||!startTerminal();
+  el('start-core').disabled=busy||storageFault||mismatch||!available||!keyReady
+   ||(generation&&!generation.startAllowed)||!(initial||(maintenance&&el('upgrade-confirm').checked));
+  el('query-start').disabled=busy||!startIntent||!sameRoot(startIntent);
+  el('complete').disabled=busy||storageFault||mismatch||!startTerminal();
   el('start-operation').textContent=startIntent?startIntent.operationId:'';
-  el('start-notice').textContent=startIntent?text(startTerminal()?'startAccepted':'startPending'):'';
-  el('review').textContent = reviewed ? `${text(reviewed.restoreAllowed ? 'reviewed' : 'mismatch')} ${reviewed.keySha256}` : '';
+  announce('start-notice',startIntent?text(startTerminal()?'startAccepted':'startPending')
+   : initial&&generation&&!generation.startAllowed?text('startFenced'):'');
+  const review = reviewed && (reviewed.restoreAllowed
+   ? generation ? `${text('generationReviewed')} ${reviewed.keyCount}` : `${text('reviewed')} ${reviewed.keySha256}`
+   : text(reviewed.restoreBlockedByUnresolvedOperation ? 'unresolved' : 'mismatch'));
+  announce('review',review || '');
  }
- function invalidate() {reviewed = null; reviewedRaw = ''; el('confirm').checked = false; render();}
+ function invalidate() {
+  reviewed = null; reviewedRaw = ''; restoreProposal = null; el('confirm').checked = false;
+  if(el('restore-dialog').open)el('restore-dialog').close();
+  render();
+ }
  async function request(endpoint, value) {
   const response = await fetch('/api/' + endpoint, {method:'POST',credentials:'same-origin',cache:'no-store',redirect:'error',
    headers:{'Content-Type':'application/json','X-Kura-Recovery-CSRF':csrf},body:JSON.stringify(value)});
@@ -225,80 +322,144 @@
   return data;
  }
  async function status() {
-  const epoch = ++statusEpoch; available = false; keyReady = false; fingerprint = ''; invalidate();
+  const epoch = ++statusEpoch; available = false; keyReady = false; fingerprint = ''; generation = null; invalidate();
   try {
    const value = await request('status', {});
    if (epoch !== statusEpoch) return;
    if (value.state !== 'STATUS' || !digest(value.keySha256) || typeof value.keyReady !== 'boolean') throw Error();
+   if (value.generation !== undefined) {
+    const g = value.generation;
+    if (!g || !digest(g.ringSha256) || !digest(g.namespaceSha256) || g.activeKeySha256 !== value.keySha256
+        || typeof g.activeKeyReady !== 'boolean' || typeof g.keyringReady !== 'boolean' || typeof g.startAllowed !== 'boolean'
+        || value.keyReady !== (g.activeKeyReady && g.keyringReady)) throw Error();
+    generation = g;
+   }
    available = true; keyReady = value.keyReady; fingerprint = value.keySha256; statusKey = keyReady ? 'ready' : 'missing';
-   pendingRestore=value.pendingRestore;
+   if (generation) {
+    statusKey = keyReady ? 'generationReady' : generation.activeKeyReady ? 'ringMissing'
+       : generation.keyringReady ? 'activeMissing' : 'generationMissing';
+   }
+   const pending=value.pendingRestore;
+   if(pending&&!intentFields(pending))throw Error();
+   pendingRestore=pending&&currentCredentials(pending)?scoped(pending):null;
    startPlan=value.startPlan||null;
    if(startPlan&&(startPlan.state!=='START_PLAN'||typeof startPlan.startAllowed!=='boolean'
        ||(startPlan.startAllowed&&(!uuid(startPlan.maintenanceId)||!uuid(startPlan.predecessorStartOperationId)||!digest(startPlan.manifestSha256)))))throw Error();
    const signature=JSON.stringify(startPlan);if(signature!==planSignature)el('upgrade-confirm').checked=false;planSignature=signature;
-   if(pendingRestore&&(!uuid(pendingRestore.operationId)||!digest(pendingRestore.expectedKeySha256)||pendingRestore.schema!==1))throw Error();
    if(!intent&&pendingRestore)intent=pendingRestore;
    if(!startIntent&&value.pendingStart){
     const v=value.pendingStart;
     if(!uuid(v.operationId)||!uuid(v.restoreOperationId)||!digest(v.expectedKeySha256)||![1,2].includes(v.schema))throw Error();
-    startIntent=v;
+    if (!generation || v.restoreOperationId===pendingRestore?.operationId)startIntent=scoped(v);
    }
   } catch (_) {if (epoch !== statusEpoch) return; available=false;statusKey = 'unavailable';}
   render();
-  if(!busy&&intent)await original(intent.operationId);
+  if(!busy&&intent&&!terminal())await original(intent.operationId);
   if(!busy&&startIntent)await readStart();
  }
  async function original(id) {
-  if (busy || !uuid(id)) return;
+  if (busy || rootMismatch() || !uuid(id)) return;
+  const binding = intent?.operationId===id ? intent : pendingRestore?.operationId===id ? pendingRestore : null;
+  if(!sameRoot(binding))return;
   busy = true; render();
   try {
-   const value = await request('original', {operationId:id});
-   result = value.operationId === id && value.state === 'SUCCEEDED' && value.action === 'restore'
-    && value.resultSource === 'ROOT_ORIGINAL' && digest(value.keySha256) && value.existingReceiptPreserved === true
+   const value = await request('original', {operationId:id,...scopeOf(binding || scoped({}))});
+   result = value.operationId === id && restoreReceipt(value,binding)
     ? value : {operationId:id,state:'UNKNOWN'};
-   noticeKey = result.state === 'SUCCEEDED' ? 'succeeded' : 'pending';
+   noticeKey = result.state === 'SUCCEEDED' ? result.action==='generation-restore' ? 'generationRestored' : 'succeeded' : 'pending';
   } catch (_) {result = {operationId:id,state:'UNKNOWN'}; noticeKey = 'pending';}
   busy = false; render();
  }
  el('backup').addEventListener('change', async () => {
-  const epoch = ++fileEpoch; raw = ''; el('password').value = ''; invalidate();
+  const epoch = ++fileEpoch; raw = ''; el('password').value = '';
+  el('backup').setCustomValidity('');el('password').setCustomValidity('');invalidate();
   const file = el('backup').files[0];
   if (!file || file.size <= 0 || file.size > 49152) {noticeKey = 'invalidFile';render();return;}
-  try {const value = await file.text(); if (epoch !== fileEpoch) return; raw = value;noticeKey = '';}
+  try {
+   const value = await file.text();
+   if (epoch !== fileEpoch) return;
+   raw = value;el('backup').setCustomValidity('');noticeKey = '';
+  }
   catch (_) {noticeKey = 'invalidFile';}
   render();
  });
- el('password').addEventListener('input', invalidate);
+ el('password').addEventListener('input',()=>{el('password').setCustomValidity('');invalidate();});
  el('original').addEventListener('input', render);
  el('confirm').addEventListener('change', render);
  el('refresh').addEventListener('click', status);
  el('query-pending').addEventListener('click', () => {if (intent) original(intent.operationId);});
  el('query-original').addEventListener('click', () => original(el('original').value));
- el('inspect').addEventListener('click', async () => {
+ el('inspect-form').addEventListener('submit', async event => {
+  event.preventDefault();
   if (el('inspect').disabled) return;
+  el('backup').setCustomValidity(raw ? '' : text('invalidFile'));
+  el('password').setCustomValidity(password(el('password').value) ? '' : text('invalidPassword'));
+  if(!el('inspect-form').reportValidity())return;
   busy = true; invalidate(); const selected = raw;
   try {
    const value = await request('inspect', {backupJson:selected,passphrase:el('password').value});
    if (value.state !== 'INSPECTED' || !digest(value.keySha256) || !uuid(value.backupOperationId)
        || typeof value.restoreAllowed !== 'boolean' || value.keySha256 !== fingerprint) throw Error();
+   if (generation) {
+    if (value.format !== generationFormat || value.ringSha256 !== generation.ringSha256
+        || typeof value.sameDeviceKey !== 'boolean' || value.activeKeyReady !== generation.activeKeyReady
+        || value.keyringReady !== generation.keyringReady || !Number.isInteger(value.keyCount)
+        || value.keyCount < 2 || value.keyCount > 8
+        || typeof value.restoreBlockedByUnresolvedOperation !== 'boolean'
+        || (value.restoreAllowed && (!value.sameDeviceKey || value.restoreBlockedByUnresolvedOperation))) throw Error();
+   } else if (value.format === generationFormat) throw Error();
    reviewed = value; reviewedRaw = selected; noticeKey = value.restoreAllowed ? '' : 'mismatch';
   } catch (error) {noticeKey = error.message === 'busy' ? 'busy' : 'mismatch';}
   busy = false; render();
  });
- el('restore').addEventListener('click', async () => {
+ async function persist(key,value,predecessor=null) {
+  const save = () => {
+   if (!sameRoot(value)) throw Error();
+   const saved = localStorage.getItem(key);
+   if(saved!==null&&(!predecessor||JSON.parse(saved)?.operationId!==predecessor))throw Error();
+   const serialized=JSON.stringify(value);
+   localStorage.setItem(key,serialized);
+   if (localStorage.getItem(key)!==serialized) throw Error();
+  };
+  if(value.namespaceSha256){
+   if(typeof navigator.locks?.request!=='function')throw Error();
+   await navigator.locks.request(key,{ifAvailable:true},lock=>{if(!lock)throw Error();save();});
+  }else save();
+ }
+ async function submitRestore() {
   if (el('restore').disabled) return;
-  const value = {schema:1,operationId:crypto.randomUUID(),expectedKeySha256:reviewed.keySha256};
+  const pair = generation ? {expectedRingSha256:reviewed.ringSha256} : {};
+  const value = scoped({schema:generation ? 2 : 1,operationId:crypto.randomUUID(),expectedKeySha256:reviewed.keySha256,...pair});
+  const payload = {operationId:value.operationId,expectedKeySha256:value.expectedKeySha256,
+   ...pair,...scopeOf(value),backupJson:raw,passphrase:el('password').value};
   busy = true; render();
-  try {localStorage.setItem(storeKey,JSON.stringify(value)); if (localStorage.getItem(storeKey) !== JSON.stringify(value)) throw Error(); intent = value;}
-  catch (_) {storageFault = true; busy = false; el('password').value = ''; render(); return;}
-  const payload = {operationId:value.operationId,expectedKeySha256:value.expectedKeySha256,backupJson:raw,passphrase:el('password').value};
-  el('password').value = ''; result = null; invalidate();
+  try {await persist(storeKey,value); intent = value;}
+  catch (_) {storageFault = true; busy = false; payload.passphrase='';el('password').value = ''; render(); return;}
+  el('password').value = '';el('backup').value='';raw='';result = null; invalidate();
   try {
    const received = await request('restore', payload);
    result = received.operationId === value.operationId ? received : {operationId:value.operationId,state:'UNKNOWN'};
-   noticeKey = terminal() ? result.state === 'SUCCEEDED' ? 'succeeded' : 'rejected' : 'pending';
+   noticeKey = terminal() ? result.state === 'SUCCEEDED'
+    ? result.action==='generation-restore' ? 'generationRestored' : 'succeeded' : 'rejected' : 'pending';
   } catch (_) {result = {operationId:value.operationId,state:'UNKNOWN'};noticeKey = 'pending';}
   payload.passphrase = ''; busy = false; available = false; render();await status();
+ }
+ el('restore').addEventListener('click', () => {
+  if (el('restore').disabled) return;
+  if (!generation) {submitRestore();return;}
+  const dialog=el('restore-dialog');
+  if(typeof dialog.showModal!=='function'){noticeKey='unavailable';render();return;}
+  restoreProposal=reviewed;
+  el('confirm-key').textContent=reviewed.keySha256;
+  el('confirm-ring').textContent=reviewed.ringSha256;
+  dialog.returnValue='';
+  dialog.showModal();
+ });
+ el('restore-dialog').addEventListener('close',()=>{
+  const dialog=el('restore-dialog');
+  const confirmed=dialog.returnValue==='restore'&&restoreProposal&&restoreProposal===reviewed;
+  dialog.returnValue='';restoreProposal=null;
+  if(confirmed)submitRestore();
  });
  el('acknowledge').addEventListener('click', () => {
   if (el('acknowledge').disabled) return;
@@ -309,9 +470,9 @@
   } catch (_) {storageFault = true;render();}
  });
  async function readStart() {
-  if(busy||!startIntent)return;
+  if(busy||rootMismatch()||!startIntent||!sameRoot(startIntent))return;
   busy=true;render();
-  try{startResult=await request('start-original',{operationId:startIntent.operationId});}
+  try{startResult=await request('start-original',{operationId:startIntent.operationId,...scopeOf(startIntent)});}
   catch(_){startResult=null;}
   busy=false;render();
  }
@@ -320,13 +481,14 @@
  el('start-core').addEventListener('click',async()=>{
   if(el('start-core').disabled)return;
   const maintenance=maintenanceReady();
-  const value={schema:maintenance?2:1,operationId:crypto.randomUUID(),restoreOperationId:pendingRestore.operationId,
-               expectedKeySha256:pendingRestore.expectedKeySha256};
+  const value=scoped({schema:maintenance?2:1,operationId:crypto.randomUUID(),restoreOperationId:pendingRestore.operationId,
+                     expectedKeySha256:pendingRestore.expectedKeySha256});
   if(maintenance)for(const k of ['predecessorStartOperationId','maintenanceId','manifestSha256'])value[k]=startPlan[k];
   busy=true;render();
-  try{localStorage.setItem(startStoreKey,JSON.stringify(value));if(localStorage.getItem(startStoreKey)!==JSON.stringify(value))throw Error();startIntent=value;}
+  try{await persist(startStoreKey,value,maintenance?startIntent.operationId:null);startIntent=value;}
   catch(_){storageFault=true;busy=false;render();return;}
-  const payload={operationId:value.operationId,restoreOperationId:value.restoreOperationId,expectedKeySha256:value.expectedKeySha256};
+  const payload={operationId:value.operationId,restoreOperationId:value.restoreOperationId,
+                 expectedKeySha256:value.expectedKeySha256,...scopeOf(value)};
   if(maintenance)for(const k of ['predecessorStartOperationId','maintenanceId','manifestSha256'])payload[k]=value[k];
   try{startResult=await request(maintenance?'start-after-maintenance':'start',payload);} 
   catch(_){startResult=null;}
@@ -336,7 +498,7 @@
   if(el('complete').disabled)return;
   busy=true;render();
   try{
-   const value=await request('complete',{operationId:startIntent.operationId});
+   const value=await request('complete',{operationId:startIntent.operationId,...scopeOf(startIntent)});
    if(value.state!=='SUCCEEDED'||value.resultSource!=='ROOT_ORIGINAL'||value.operationId!==startIntent.operationId
       ||value.restoreOperationId!==startIntent.restoreOperationId||value.keySha256!==startIntent.expectedKeySha256)throw Error();
    localStorage.removeItem(startStoreKey);localStorage.removeItem(storeKey);
@@ -351,7 +513,7 @@
  });
  window.addEventListener('storage', event => {if(event.key===startStoreKey){startIntent=readStartIntent();startResult=null;render();} if (event.key === storeKey) {intent = readIntent();result = null;el('password').value = '';invalidate();}});
  window.addEventListener('kura-recovery-intent-changed',()=>{intent=readIntent();startIntent=readStartIntent();result=null;startResult=null;raw='';el('backup').value='';el('password').value='';invalidate();status();});
- window.addEventListener('pagehide', () => {el('password').value = '';raw = '';});
+ window.addEventListener('pagehide', () => {el('password').value = '';raw = '';invalidate();});
  el('console').href = `https://${location.hostname.includes(':') ? '[' + location.hostname.replace(/^\[|\]$/g,'') + ']' : location.hostname}/admin/console`;
  intent = readIntent();startIntent=readStartIntent();
  for(const node of document.querySelectorAll('[data-i18n]'))node.textContent=text(node.dataset.i18n);

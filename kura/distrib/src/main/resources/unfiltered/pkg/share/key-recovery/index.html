@@ -18,31 +18,46 @@
   <p data-i18n="intro">上传此前下载的加密备份并输入口令。网关将校验保留的原指纹，只补回与本网关匹配的密钥。</p>
   <section aria-label="Key status">
    <button id="refresh" type="button" data-i18n="refresh">读取密钥状态</button>
-   <p id="status" role="status" aria-live="polite"></p>
-   <p><span data-i18n="fingerprint">网关保留的原指纹（SHA-256）</span><br><code id="fingerprint"></code></p>
+   <p id="status" role="status" aria-atomic="true"></p>
+   <p><span id="fingerprint-label" data-i18n="fingerprint">网关保留的原指纹（SHA-256）</span><br><code id="fingerprint"></code></p>
+   <p id="generation-status" hidden><span data-i18n="ringFingerprint">原密钥集合指纹（SHA-256）</span><br><code id="ring-fingerprint"></code></p>
   </section>
-  <section aria-label="Recovery material">
-   <label for="backup" data-i18n="file">加密备份 JSON 文件</label>
-   <input id="backup" type="file" accept="application/json,.json">
-   <label for="password" data-i18n="password">备份解密口令</label>
-   <input id="password" type="password" autocomplete="off" maxlength="512" spellcheck="false">
-   <p class="hint" data-i18n="privacy">口令仅用于本次核验和恢复，不保存在页面或操作记录中。</p>
-   <button id="inspect" type="button" data-i18n="inspect">核验备份</button>
-   <p id="review" aria-live="polite"></p>
-   <label class="check"><input id="confirm" type="checkbox"><span data-i18n="confirm">我已核对指纹，确认补回本网关的原密钥。</span></label>
-   <button id="restore" type="button" data-i18n="restore">恢复原密钥</button>
+  <section>
+   <form id="inspect-form" method="post" action="/api/inspect" aria-labelledby="inspect">
+    <label for="backup" data-i18n="file">加密备份 JSON 文件</label>
+    <input id="backup" name="backup" type="file" accept="application/json,.json" required disabled>
+    <label for="password" data-i18n="password">备份解密口令</label>
+    <input id="password" name="passphrase" type="password" autocomplete="off" maxlength="512" spellcheck="false" required disabled aria-describedby="backup-privacy">
+    <p id="backup-privacy" class="hint" data-i18n="privacy">口令仅用于本次核验和恢复，不保存在页面或操作记录中。</p>
+    <button id="inspect" type="submit" data-i18n="inspect" disabled>核验备份</button>
+   </form>
+   <p id="review" role="status" aria-atomic="true"></p>
+   <label id="confirm-row" class="check"><input id="confirm" type="checkbox" disabled><span data-i18n="confirm">我已核对指纹，确认补回本网关的原密钥。</span></label>
+   <button id="restore" type="button" data-i18n="restore" disabled>恢复原密钥</button>
   </section>
+  <dialog id="restore-dialog" aria-labelledby="restore-dialog-title" aria-describedby="restore-dialog-help">
+   <h2 id="restore-dialog-title" data-i18n="restoreTitle">恢复网关原密钥集合？</h2>
+   <p id="restore-dialog-help" data-i18n="restoreHelp">确认两个指纹与原备份一致。网关只补回缺失的凭据。恢复后可单独启动 Kura。</p>
+   <dl>
+    <dt data-i18n="activeFingerprint">原活跃钥指纹（SHA-256）</dt><dd><code id="confirm-key"></code></dd>
+    <dt data-i18n="ringFingerprint">原密钥集合指纹（SHA-256）</dt><dd><code id="confirm-ring"></code></dd>
+   </dl>
+   <form method="dialog">
+    <button value="cancel" autofocus data-i18n="cancelRestore">取消</button>
+    <button value="restore" data-i18n="restoreAccept">确认恢复</button>
+   </form>
+  </dialog>
   <section aria-label="Core start handoff">
    <p data-i18n="startIntro">确认原密钥恢复回执后，可在此启动 Kura。系统接收启动请求后，请进入控制台检查是否就绪。</p>
    <label id="upgrade-confirm-row" class="check" hidden><input id="upgrade-confirm" type="checkbox"><span data-i18n="upgradeConfirm">我确认安装升级已停止 Kura，并为本次维护创建新的启动请求。</span></label>
    <button id="start-core" type="button" data-i18n="startCore">启动 Kura</button>
    <p><span data-i18n="startOperation">启动操作编号</span><br><code id="start-operation"></code></p>
-   <p id="start-notice" role="status" aria-live="polite"></p>
+   <p id="start-notice" role="status" aria-atomic="true"></p>
    <button id="query-start" type="button" data-i18n="queryStart">查询原启动回执</button>
    <button id="complete" type="button" data-i18n="complete">确认启动回执并结束恢复</button>
   </section>
   <section aria-label="Original operation">
-   <p id="notice" role="status" aria-live="polite"></p>
+   <p id="notice" role="status" aria-atomic="true"></p>
    <p><span data-i18n="operation">恢复操作编号</span><br><code id="operation"></code></p>
    <button id="query-pending" type="button" data-i18n="queryPending">查询待确认的原操作</button>
    <button id="acknowledge" type="button" data-i18n="acknowledge">确认此结果</button>

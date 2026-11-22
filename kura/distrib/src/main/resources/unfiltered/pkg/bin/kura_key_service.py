@@ -603,6 +603,11 @@ class Manager:
         except LifecycleRefused:
             raise Failure('UNSAFE_JOURNAL') from None
 
+    def require_namespace(self, request):
+        if 'expectedNamespaceSha256' in request:
+            expected = digest(request['expectedNamespaceSha256'])
+            require(hmac.compare_digest(expected, self.gwt_namespace()['namespaceSha256']), 'CONFLICT')
+
     def gwt_sender_owner(self, pid, uid, daemon):
         # The effective SystemService directory is reported by the actual Main JVM.
         # Root never executes a property provider or traverses the Core-private data tree.
@@ -1793,7 +1798,7 @@ class Manager:
                         require(checked == trusted, 'UNSAFE_FILESYSTEM')
                     return dict(schema=1, activeKeySha256=trusted['activeKeySha256'],
                                 ringSha256=trusted['ringSha256'], activeKeyReady=key is not None,
-                                keyringReady=ring is not None)
+                                keyringReady=ring is not None, namespaceSha256=self.gwt_namespace()['namespaceSha256'])
         if action == 'generation-restore-read':
             return self.generation_restore_read(request)
         if action == 'generation-restore-recover':
@@ -1858,10 +1863,12 @@ class Manager:
                     return {"schema": 1, "keyReady": key is not None, "keySha256": proof["keySha256"],
                             "legacyKey": proof["legacyKey"], "agentRequired": False}
         if action == "operation-read":
-            fields(request, {"schema", "action", "operationId"})
+            extra = {'expectedNamespaceSha256'} & request.keys()
+            fields(request, {"schema", "action", "operationId"} | extra)
             identity = operation_id(request["operationId"])
             with self.lock(self.state / "admission.lock", False):
                 self.maintenance()
+                self.require_namespace(request)
                 record = self.record(identity)
                 require(not recovery_only or record is None or record['action'] in ('restore', 'generation-restore'), 'FORBIDDEN')
                 return self.public_record(record)

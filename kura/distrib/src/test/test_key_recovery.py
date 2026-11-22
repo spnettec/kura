@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """New cold-recovery adapter contracts. Never contact an installed gateway."""
 import copy
+from contextlib import closing
 import hashlib
 import http.client
 import json
@@ -27,6 +28,7 @@ SHA = hashlib.sha256(b'isolated cold adapter synthetic key').hexdigest()
 BACKUP = dict(format=protocol.FORMAT, operationId=str(uuid.uuid4()), encrypted='fixture-ciphertext')
 RING = hashlib.sha256(b'isolated cold adapter synthetic ring').hexdigest()
 LEGACY = hashlib.sha256(b'isolated cold adapter synthetic prior generation').hexdigest()
+NAMESPACE = hashlib.sha256(b'isolated cold adapter synthetic root namespace').hexdigest()
 
 
 class FakeRoot:
@@ -62,7 +64,7 @@ class GenerationRoot(FakeRoot):
             return dict(schema=1, error='GENERATION_REQUIRED')
         if action == 'generation-recovery-status':
             return dict(schema=1, activeKeySha256=SHA, ringSha256=RING, activeKeyReady=self.key_ready,
-                        keyringReady=self.ring_ready)
+                        keyringReady=self.ring_ready, namespaceSha256=NAMESPACE)
         if action == 'generation-backup-inspect':
             if request['passphrase'] != PASSWORD:
                 return dict(schema=1, error='BACKUP_REJECTED')
@@ -321,6 +323,16 @@ class HttpTest(Fixture, unittest.TestCase):
         self.assertIn('Secure; HttpOnly; SameSite=Strict; Path=/',response.getheader('Set-Cookie'))
         self.assertIn(self.server.token.encode(),body);self.assertNotIn(b'KURA_RECOVERY_CSRF',body)
         self.assertEqual([],self.root.calls)
+
+    def test_packaged_recovery_script_is_served_with_the_script_content_type(self):
+        stream = http.client.HTTPSConnection('127.0.0.1', self.server.server_port,
+                                             context=ssl._create_unverified_context(), timeout=5)
+        with closing(stream):
+            stream.request('GET', '/recovery.js')
+            response = stream.getresponse()
+            self.assertEqual(200, response.status)
+            self.assertEqual('text/javascript; charset=utf-8', response.getheader('Content-Type'))
+            self.assertEqual((self.server.assets / 'recovery.js').read_bytes(), response.read())
 
 
 if __name__=='__main__':

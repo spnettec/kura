@@ -167,9 +167,11 @@ class Starter:
                 return self.plan(restore_id, expected)
         identity = operation_id(request['operationId'])
         if request['action'] == 'core-start-read':
-            fields(request, {'schema', 'action', 'operationId'})
+            extra = {'expectedNamespaceSha256'} & request.keys()
+            fields(request, {'schema', 'action', 'operationId'} | extra)
             with manager.lock(manager.state / 'admission.lock', False):
                 manager.maintenance()
+                manager.require_namespace(request)
                 return self.public(self.record(identity))
         modern = request['action'] == 'core-start-after-maintenance'
         extra = {'predecessorStartOperationId', 'maintenanceId', 'manifestSha256'} if modern else set()
