@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Private Kura snapshot inventory relay
+PartOf=kura-snapshot-validation.service
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Socket]
+ListenStream=/run/kura-snapshot-inventory.sock
+SocketMode=0600
+RemoveOnStop=yes
+Backlog=4

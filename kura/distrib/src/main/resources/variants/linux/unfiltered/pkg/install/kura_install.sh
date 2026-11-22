@@ -139,7 +139,8 @@ configure_brokers() {
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_recovery_setup.py" --install || exit 1
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" install || exit 1
     for key_unit in kura-key-service.socket kura-key-service.service kura-key-recovery.service \
-            kura-snapshot-validation.socket kura-snapshot-validation.service; do
+            kura-snapshot-validation.socket kura-snapshot-validation.service \
+            kura-snapshot-inventory.socket kura-snapshot-inventory.service; do
         install -o root -g root -m 0644 "${INSTALL_DIR}/kura/install/${key_unit}" "/lib/systemd/system/${key_unit}" || exit 1
     done
 

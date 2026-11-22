@@ -5,11 +5,13 @@ import fcntl
 import hashlib
 import os
 from pathlib import Path
+import socket
 import stat
+import struct
 import subprocess
 import tempfile
 
-from kura_key_service import Failure, require, fields, digest, encode, decode
+from kura_key_service import Failure, require, fields, digest, encode, decode, read_frame
 from kura_key_store import KEY_PATH, RING_PATH
 
 PURPOSE = 'yofc-kura-core-credential-validation-v1'
@@ -42,6 +44,40 @@ class Validation:
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
                 binding, fingerprint = self.binding()
                 return dict(schema=1, state='CORE_CREDENTIALS_READY', binding=binding, bindingSha256=fingerprint)
+
+    def snapshot_inventory(self, request, core_uid, core_gid):
+        from kura_snapshot_inventory import SOCKET, REQUEST
+
+        fields(request, {'schema', 'action', 'expectedBindingSha256'})
+        require(type(request['schema']) is int and request['schema'] == 1
+                and request['action'] == 'core-snapshot-inventory')
+        digest(request['expectedBindingSha256'])
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance(); manager.settled()
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                binding, fingerprint = self.binding()
+                require(fingerprint == request['expectedBindingSha256'], 'CONFLICT')
+                try:
+                    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+                        connection.settimeout(12)
+                        connection.connect(SOCKET)
+                        _, owner, _ = struct.unpack('3i', connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+                        require(owner == 0, 'FORBIDDEN')
+                        connection.sendall(REQUEST)
+                        connection.shutdown(socket.SHUT_WR)
+                        observed = decode(read_frame(connection))
+                        require(not connection.recv(1), 'PROTOCOL_MISMATCH')
+                except OSError:
+                    raise Failure('INVENTORY_UNAVAILABLE') from None
+                fields(observed, {'schema', 'directory', 'retainedDirectoryPresent', 'files'})
+                require(type(observed['schema']) is int and observed['schema'] == 1 and isinstance(observed['files'], list))
+                require(type(observed['retainedDirectoryPresent']) is bool)
+                require(observed['directory']['uid'] == core_uid and observed['directory']['gid'] == core_gid
+                        and core_uid > 0 and core_gid > 0, 'FORBIDDEN')
+                require(self.binding() == (binding, fingerprint), 'CONFLICT')
+                return dict(schema=1, state='CORE_SNAPSHOT_INVENTORIED', binding=binding,
+                            bindingSha256=fingerprint, inventory=observed)
 
     @staticmethod
     def metadata(fd):

@@ -67,21 +67,25 @@ class NativeSnapshotValidationTest(unittest.TestCase):
             with self.assertRaisesRegex(broker.Failure, 'FORBIDDEN'):
                 broker.live_agent(self.lifecycle, self.peer)
 
-    def test_route_only_dispatches_the_two_read_operations_with_expected_fd_shape(self):
+    def test_route_only_dispatches_read_operations_with_expected_fd_shape(self):
         manager = Mock()
         with self.assertRaisesRegex(broker.Failure, 'FORBIDDEN'):
             broker.validation_request(manager, {'action': 'backup-create'}, None, 991)
         manager.validation_component.assert_not_called()
         info = {'schema': 1, 'action': 'core-validation-info'}
         validate = {'schema': 1, 'action': 'core-snapshot-validate'}
-        for request, descriptor in [(info, 8), (validate, None)]:
+        inventory = {'schema': 1, 'action': 'core-snapshot-inventory'}
+        for request, descriptor in [(info, 8), (validate, None), (inventory, 8)]:
             with self.assertRaisesRegex(broker.Failure, 'PROTOCOL_MISMATCH'):
                 broker.validation_request(manager, request, descriptor, 991)
         broker.validation_request(manager, info, None, 991)
         broker.validation_request(manager, validate, 8, 991)
+        broker.validation_request(manager, inventory, None, 991)
         validator = manager.validation_component.return_value
         validator.info.assert_called_once_with(info)
         validator.validate.assert_called_once_with(validate, 8, 991, core_uid=991)
+        core = broker.pwd.getpwnam('kurad')
+        validator.snapshot_inventory.assert_called_once_with(inventory, core.pw_uid, core.pw_gid)
 
     def test_peer_change_after_worker_prevents_release_and_closes_the_fd(self):
         stream = Mock()

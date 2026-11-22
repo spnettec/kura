@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Metadata-only Kura snapshot inventory
+Requires=kura-snapshot-inventory.socket
+After=kura-snapshot-inventory.socket
+PartOf=kura-snapshot-validation.service
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Service]
+Type=exec
+User=kurad
+Group=kurad
+ExecStart=/usr/bin/python3 -I -B /run/kura-snapshot-inventory.py
+Sockets=kura-snapshot-inventory.socket
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+TemporaryFileSystem=/etc:ro /var/lib:ro /opt/eclipse:ro /run:ro
+BindReadOnlyPaths=/opt/eclipse/kura/bin/kura_snapshot_inventory.py:/run/kura-snapshot-inventory.py
+BindReadOnlyPaths=/opt/eclipse/kura/user/snapshots:/run/kura-snapshot-inventory-input
+InaccessiblePaths=/proc
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+TasksMax=4
+MemoryMax=32M
+LimitNOFILE=32
+LimitCORE=0
+RuntimeMaxSec=10

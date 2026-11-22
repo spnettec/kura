@@ -88,11 +88,15 @@ def live_agent(lifecycle, peer):
 
 def validation_request(manager, request, descriptor, uid):
     action = request.get('action')
-    require(action in ('core-validation-info', 'core-snapshot-validate'), 'FORBIDDEN')
+    require(action in ('core-validation-info', 'core-snapshot-validate', 'core-snapshot-inventory'), 'FORBIDDEN')
     validator = manager.validation_component()
     if action == 'core-validation-info':
         require(descriptor is None, 'PROTOCOL_MISMATCH')
         return validator.info(request)
+    if action == 'core-snapshot-inventory':
+        require(descriptor is None, 'PROTOCOL_MISMATCH')
+        core = pwd.getpwnam('kurad')
+        return validator.snapshot_inventory(request, core.pw_uid, core.pw_gid)
     require(descriptor is not None, 'PROTOCOL_MISMATCH')
     return validator.validate(request, descriptor, uid, core_uid=pwd.getpwnam('kurad').pw_uid)
 
