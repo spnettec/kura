@@ -791,7 +791,7 @@ def exec_java(arguments):
             launch.claim(path, plan, response)
             arguments = ['-Dosgi.startLevel=6', '-Dkura.recovery.request=' + str(path / launch.REQUEST), *arguments]
             if 'guarded' in plan:
-                arguments.insert(0, '-Dosgi.clean=false')
+                arguments = ['-Dosgi.clean=false', '-Dkura.management.recovery.completion.enabled=true', *arguments]
             if os.path.lexists(Path(launch.ROOT) / launch.SELECTION):
                 arguments.insert(0, '-Dkura.management.recovery.verification.enabled=true')
         # One reserved, inheritable descriptor carries the kernel lease across exec.

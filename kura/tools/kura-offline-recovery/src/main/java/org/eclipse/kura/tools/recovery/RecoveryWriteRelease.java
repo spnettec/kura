@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.kura.KuraErrorCode;
@@ -16,14 +17,22 @@ import org.eclipse.kura.core.configuration.ControlledRecovery;
 /** A one-attempt release in the admitted JVM. Receipt paths never come from the bridge caller. */
 final class RecoveryWriteRelease implements RecoveryCompletionService {
     private final RecoveryVerifier verifier;
+    private final Path normalReceipt;
     private final Path receipt;
     private final int frameworkTarget;
+    private final boolean fixedGuarded;
     private final AtomicBoolean attempted = new AtomicBoolean();
 
     RecoveryWriteRelease(RecoveryVerifier verifier, Path normalReceipt, int frameworkTarget) {
+        this(verifier, normalReceipt, frameworkTarget, false);
+    }
+
+    RecoveryWriteRelease(RecoveryVerifier verifier, Path normalReceipt, int frameworkTarget, boolean fixedGuarded) {
         this.verifier = verifier;
+        this.normalReceipt = normalReceipt;
         this.receipt = normalReceipt.resolveSibling(normalReceipt.getFileName() + ".write-release.properties");
         this.frameworkTarget = frameworkTarget;
+        this.fixedGuarded = fixedGuarded;
     }
 
     @Override public Report complete(Request request) throws KuraException {
@@ -35,8 +44,11 @@ final class RecoveryWriteRelease implements RecoveryCompletionService {
             }
             long now = System.currentTimeMillis();
             require(request.notAfterUnixMillis() > now && request.notAfterUnixMillis() - now <= 600_000);
-            require(this.attempted.compareAndSet(false, true));
             var admission = ControlledRecovery.evidence().orElseThrow();
+            if (this.fixedGuarded) {
+                verifyFixedApproval(request, admission);
+            }
+            require(this.attempted.compareAndSet(false, true));
             var health = this.verifier.verify(request.challenge());
             var bounds = request.bounds();
             require(health.normalLoad() && health.ordinaryWritesBlocked() && health.cmMatched()
@@ -73,12 +85,47 @@ final class RecoveryWriteRelease implements RecoveryCompletionService {
                 require(System.currentTimeMillis() < request.notAfterUnixMillis());
                 RecoveryBootstrap.publish(this.receipt, bytes);
             });
+            if (this.fixedGuarded) {
+                Path confirmed = this.receipt.resolveSibling(this.receipt.getFileName() + ".committed");
+                RecoveryBootstrap.publish(confirmed, (hash(bytes) + "\n").getBytes(StandardCharsets.US_ASCII));
+            }
             return new Report(1, request.completionId(), health.recoveryId(), health.snapshotSha256(),
                     request.decisionSha256(), hash(bytes), health.processId(), true, false, health);
         } catch (Exception ignored) {
             throw new KuraException(KuraErrorCode.CONFIGURATION_ERROR,
                     "Write release unproven; preserve evidence and never resend");
         }
+    }
+
+    private void verifyFixedApproval(Request request, ControlledRecovery.Evidence admission) throws Exception {
+        Path decision = this.normalReceipt.getParent().getParent().resolve("release-issued.properties");
+        RecoveryBootstrap.projected(decision, false);
+        byte[] raw = RecoveryBootstrap.read(decision, 8192);
+        String sha = hash(raw);
+        require(sha.equals(request.decisionSha256()) && sha.equals(request.policySha256()));
+        byte[] normal = RecoveryBootstrap.read(this.normalReceipt, 8192);
+        Map<String, String> original = RecoveryBootstrap.properties(normal);
+        require(admission.normalLoad() && "NORMAL_BOOT_ADMITTED".equals(original.get("status"))
+                && admission.recoveryId().equals(original.get("restore.id"))
+                && admission.snapshotSha256().equals(original.get("snapshot.sha256")));
+        var challenge = request.challenge();
+        var expected = Map.ofEntries(
+                Map.entry("schema", "yofc.kura.fixed-write-approval.v1"),
+                Map.entry("completion.id", "complete-" + admission.recoveryId().substring(4)),
+                Map.entry("restore.id", admission.recoveryId()),
+                Map.entry("normal.receipt.sha256", hash(normal)),
+                Map.entry("source.receipt.sha256", original.get("source.receipt.sha256")),
+                Map.entry("snapshot.sha256", admission.snapshotSha256()),
+                Map.entry("health.receipt.sha256", request.healthReceiptSha256()),
+                Map.entry("nonce", challenge.nonce()),
+                Map.entry("process.id", Long.toString(ProcessHandle.current().pid())),
+                Map.entry("invocation.id", System.getenv("INVOCATION_ID")),
+                Map.entry("not.after", Long.toString(request.notAfterUnixMillis())),
+                Map.entry("components.sha256", namesHash(challenge.componentPids())),
+                Map.entry("checks.sha256", namesHash(challenge.checkIds())),
+                Map.entry("additional.grant.sha256", namesHash(challenge.additionalSelfPids())));
+        require(request.completionId().equals(expected.get("completion.id"))
+                && RecoveryBootstrap.properties(raw).equals(expected));
     }
     private static String namesHash(List<String> names) throws Exception {
         return hash(String.join("\0", names).getBytes(StandardCharsets.UTF_8));

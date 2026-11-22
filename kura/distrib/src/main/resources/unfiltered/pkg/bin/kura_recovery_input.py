@@ -325,7 +325,8 @@ def command(manager, lifecycle, arguments):
     if arguments[0] == 'delegate-main':
         from kura_native_recovery_main import administrative_grant
         return administrative_grant(recovery, arguments[1:])
-    if arguments[0] in ('start-main', 'stop-main', 'main-command-status', 'start-guarded-main', 'guarded-main-status'):
+    if arguments[0] in ('start-main', 'stop-main', 'main-command-status', 'start-guarded-main', 'guarded-main-status',
+                        'approve-guarded-release', 'guarded-release-status', 'retire-guarded-main'):
         from kura_recovery_main_command import command as main_command
         return main_command(recovery, arguments[0], arguments[1:])
     controls = {'original': recovery.original, 'continue': recovery.continue_ready,

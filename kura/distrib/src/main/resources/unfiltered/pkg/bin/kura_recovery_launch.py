@@ -20,11 +20,15 @@ PLAN = 'plan.json'
 OUT = 'result'
 CLAIM = 'launch.json'
 SELECTION = 'selection.json'
+RETIRED_SELECTION = 'selection-retired.json'
 CONDITION = 'condition.json'
 RECEIPT = 'applied.properties'
 GUARDED = 'guarded'
 GUARDED_DRAFT = 'guarded-draft'
 NORMAL_RECEIPT = 'normal.properties'
+RELEASE_DECISION = 'release-issued.properties'
+RELEASE_RECEIPT = NORMAL_RECEIPT + '.write-release.properties'
+RELEASE_COMMITTED = RELEASE_RECEIPT + '.committed'
 NORMAL_SNAPSHOTS = '/opt/eclipse/kura/user/snapshots'
 SNAPSHOT_ID = re.compile(r'0|[1-9][0-9]{0,18}')
 MAX_SNAPSHOT = 32 << 20
@@ -173,11 +177,60 @@ def inspect_projection(path, plan, uid, gid):
 
 def decision(path, identity, uid, gid):
     raw = read(path, uid, gid, 0o600, 65536)
+    record = property_fields(raw)
+    require(record.get('schema') == '1' and record.get('restore.id') == identity)
+    return raw, record
+
+
+def property_fields(raw):
     lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
     record = dict(lines)
-    require(len(lines) == len(record) and record.get('schema') == '1'
-            and record.get('restore.id') == identity)
-    return raw, record
+    require(len(lines) == len(record))
+    return record
+
+
+def property_bytes(fields):
+    return ''.join(key + '=' + fields[key] + '\n' for key in sorted(fields)).encode('ascii')
+
+
+def release_observation(target, normal, uid, gid):
+    output = target / OUT
+    issued = target / RELEASE_DECISION
+    receipt = output / RELEASE_RECEIPT
+    commit = output / RELEASE_COMMITTED
+    if not os.path.lexists(issued):
+        require(not os.path.lexists(receipt) and not os.path.lexists(commit))
+        return {}
+    raw = read(issued, 0, gid, 0o440, 8192)
+    record = property_fields(raw)
+    require(property_bytes(record) == raw and record.get('schema') == 'yofc.kura.fixed-write-approval.v1')
+    boot = inspect_projection(target, normal, uid, gid)
+    require(boot['state'] == 'NORMAL_BOOT_ADMITTED'
+            and record['restore.id'] == boot['restoreId']
+            and record['normal.receipt.sha256'] == boot['receiptSha256']
+            and record['snapshot.sha256'] == normal['snapshotSha256']
+            and record['process.id'] == str(boot['invocation']['pid'])
+            and record['invocation.id'] == boot['invocation']['invocationId'])
+    original = dict(decisionSha256=digest(raw), completionId=record['completion.id'])
+    if not os.path.lexists(commit):
+        return original
+    try:
+        receipt_raw = read(receipt, uid, gid, 0o600, 8192)
+        sha = digest(receipt_raw)
+        require(read(commit, uid, gid, 0o600, 8192) == (sha + '\n').encode('ascii'))
+    except (OSError, ValueError):
+        return original
+    proof = property_fields(receipt_raw)
+    require(proof.get('schema') == 'yofc.kura.write-release.v1'
+            and proof.get('status') == 'ORDINARY_WRITES_RELEASE_COMMITTED'
+            and proof.get('scope') == 'administrator-selected-checks'
+            and proof.get('kuraRecoveryVerified') == 'false'
+            and proof.get('recovery.id') == record['restore.id']
+            and proof.get('decision.sha256') == proof.get('policy.sha256') == original['decisionSha256']
+            and all(proof.get(key) == record[key] for key in (
+                'completion.id', 'snapshot.sha256', 'process.id', 'nonce', 'health.receipt.sha256',
+                'components.sha256', 'checks.sha256', 'additional.grant.sha256')))
+    return original | {'releaseReceiptSha256': sha}
 
 
 def snapshot_number(value):
@@ -230,11 +283,14 @@ def boot_identity():
     return Path('/proc/sys/kernel/random/boot_id').read_text().strip()
 
 
-def selection(base, gid, root):
+def selection(base, gid, root, *, archived=None):
     if not os.path.lexists(base):
         return None
     directory(base, 0, gid, 0o750)
     path = base / SELECTION
+    if archived is not None and os.path.lexists(base / archived / RETIRED_SELECTION):
+        directory(base / archived, 0, gid, 0o750)
+        path = base / archived / RETIRED_SELECTION
     if not os.path.lexists(path):
         return None
     raw = read(path, 0, gid, 0o440, 4096)
@@ -355,17 +411,17 @@ def read_once():
             raw = input_file.read(128).decode('ascii')
             require(raw.endswith('\n'))
             request = raw[:-1].split(' ')
-            require(len(request) == 1 or len(request) == 2 and request[0] in ('guarded', 'draft', 'draft-admit'))
+            require(len(request) == 1 or len(request) == 2 and request[0] in ('guarded', 'draft', 'draft-admit', 'release'))
             identity = request[-1]
             require(IDENTITY.fullmatch(identity))
             uid, gid = os.geteuid(), os.getegid()
             root, base = Path('/'), Path(ROOT)
             path, plan = projection(base, identity, uid, gid, root)
             if len(request) == 2:
-                fixed = selection(base, gid, root)
+                fixed = selection(base, gid, root, archived=identity)
                 require(fixed is not None and fixed['restoreId'] == identity
                         and fixed['planSha256'] == digest(canonical(plan)))
-                draft = request[0] != 'guarded'
+                draft = request[0] in ('draft', 'draft-admit')
                 path, plan = guarded_projection(path, plan, fixed, uid, gid, draft=draft)
             try:
                 if request[0] == 'draft-admit':
@@ -373,7 +429,10 @@ def read_once():
             except (OSError, ValueError):
                 result = canonical({'schema': 1, 'error': 'CONFLICT'})
             else:
-                result = canonical(inspect_projection(path, plan, uid, gid))
+                observed = inspect_projection(path, plan, uid, gid)
+                if request[0] == 'release':
+                    observed['release'] = release_observation(path, plan, uid, gid)
+                result = canonical(observed)
             require(0 < len(result) <= 8192)
             connection.sendall(struct.pack('!I', len(result)) + result)
 

@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: EPL-2.0
 """One-shot local authority for the existing, paired kura.service."""
 import os
+from pathlib import Path
 import pwd
 import re
 import subprocess
+import time
 
 from kura_key_service import Failure, LifecycleRefused, Refused, decode, digest, encode, fields, rename_no_replace, require
 from kura_key_generation import START, SYSTEMCTL
@@ -12,6 +14,22 @@ import kura_recovery_launch as launch
 
 STOP = (*SYSTEMCTL, 'stop', 'kura.service')
 JOB = re.compile(r'o "(/org/freedesktop/systemd1/job/[0-9]+)"\n?')
+CHECK_GROUPS = {'componentPids': 'components.sha256', 'checkIds': 'checks.sha256',
+                'additionalSelfPids': 'additional.grant.sha256'}
+
+
+def approved_checks(value):
+    fields(value, CHECK_GROUPS)
+    result = {}
+    for key, name in CHECK_GROUPS.items():
+        items = value[key]
+        require(isinstance(items, list) and len(items) <= 32 and (items or key == 'additionalSelfPids'))
+        for item in items:
+            require(isinstance(item, str) and item.strip() and len(item.encode('utf-8')) <= 512
+                    and not any(ord(ch) < 32 or 127 <= ord(ch) <= 159 for ch in item))
+        require(len(items) == len(set(items)))
+        result[name] = launch.digest('\0'.join(items).encode('utf-8'))
+    return result
 
 
 class Controller:
@@ -339,7 +357,7 @@ class Controller:
                 if os.path.lexists(pending):
                     result['state'] = 'GUARDED_MAIN_START_UNKNOWN'
                 return result
-            fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+            fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root, archived=identity)
             require(not os.path.lexists(pending) and fixed is not None
                     and fixed['restoreId'] == identity
                     and launch.digest(launch.canonical(fixed)) == stopped['selectionSha256'], 'CONFLICT')
@@ -377,14 +395,152 @@ class Controller:
             return status['outcome'] | {'snapshotSha256': plan['snapshotSha256'],
                                         'sourceReceiptSha256': status['originalStop']['receiptSha256']}
 
+    def authorize_release(self, identity, receipt_sha, policy_path, authenticate):
+        digest(receipt_sha)
+        require(policy_path.is_absolute())
+        policy = decode(self.manager.read(policy_path, 32768))
+        valid = policy.pop('validForSeconds', None)
+        require(type(valid) is int and 60 <= valid <= 600)
+        checks = approved_checks(policy)
+        proof = self.guarded_application(identity)
+        require(proof['receiptSha256'] == receipt_sha, 'CONFLICT')
+        peer = authenticate()
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance()
+            self.check_live_release(identity, proof)
+            require(self.load(identity, 'release-approved') is None, 'MAIN_COMMAND_EXISTS')
+            require(authenticate() == peer, 'FORBIDDEN')
+            approved = self.recovery.observation(identity, 'GUARDED_RELEASE_APPROVED')
+            approved.update(proof=proof, peer=peer, checks=checks,
+                            notAfterUnixMillis=time.time_ns() // 1_000_000 + valid * 1000)
+            try:
+                manager.atomic(self.journal(identity) / 'release-approved.json', encode(approved), no_replace=True)
+            except (OSError, Refused, LifecycleRefused) as error:
+                raise Failure('UNKNOWN') from error
+            return {key: value for key, value in approved.items() if key != 'peer'}
+
+    def check_live_release(self, identity, proof):
+        path, plan = self.projection(identity)
+        fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+        require(fixed is not None and fixed['restoreId'] == identity
+                and fixed['bootId'] == launch.boot_identity(), 'CONFLICT')
+        target, normal = launch.guarded_plan(path, plan, fixed, self.core.pw_uid, self.core.pw_gid)
+        require(launch.digest(launch.canonical(normal)) == proof['planSha256'], 'CONFLICT')
+        self.active_invocation(plan, fixed, proof)
+        return target
+
+    def issue_release(self, identity, receipt_sha, checks, health_sha, nonce, authenticate):
+        digest(receipt_sha)
+        digest(health_sha)
+        digest(nonce)
+        approved_checks_value = approved_checks(checks)
+        approved = self.load(identity, 'release-approved')
+        require(approved is not None and approved['state'] == 'GUARDED_RELEASE_APPROVED'
+                and approved['checks'] == approved_checks_value and approved['peer'] == authenticate()
+                and approved['proof']['receiptSha256'] == receipt_sha, 'FORBIDDEN')
+        proof = self.guarded_application(identity)
+        require(approved['proof'] == proof, 'CONFLICT')
+        manager = self.manager
+        expires = approved['notAfterUnixMillis']
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance()
+            target = self.check_live_release(identity, proof)
+            pending = target / '.release-issued.pending'
+            require(self.load(identity, 'release-intent') is None and not os.path.lexists(pending)
+                    and not os.path.lexists(target / launch.RELEASE_DECISION), 'MAIN_COMMAND_EXISTS')
+            require(expires > time.time_ns() // 1_000_000 and approved['peer'] == authenticate(), 'FORBIDDEN')
+            completion = 'complete-' + identity[4:]
+            issued = {'schema': 'yofc.kura.fixed-write-approval.v1', 'completion.id': completion, 'restore.id': identity,
+                      'normal.receipt.sha256': receipt_sha, 'source.receipt.sha256': proof['sourceReceiptSha256'],
+                      'snapshot.sha256': proof['snapshotSha256'], 'health.receipt.sha256': health_sha,
+                      'nonce': nonce, 'process.id': str(proof['invocation']['pid']),
+                      'invocation.id': proof['invocation']['invocationId'], 'not.after': str(expires)}
+            raw = launch.property_bytes(issued | approved_checks_value)
+            intent = self.recovery.observation(identity, 'GUARDED_RELEASE_ISSUED')
+            intent.update(decisionSha256=launch.digest(raw), completionId=completion, notAfterUnixMillis=expires,
+                          normalReceiptSha256=receipt_sha, healthReceiptSha256=health_sha, nonce=nonce)
+            try:
+                manager.atomic(self.journal(identity) / 'release-intent.json', encode(intent), no_replace=True)
+                launch.write(pending, raw, 0o440, self.core.pw_gid)
+                rename_no_replace(pending, target / launch.RELEASE_DECISION)
+                self.lifecycle.sync(target)
+            except (OSError, Failure, Refused, LifecycleRefused) as error:
+                raise Failure('UNKNOWN') from error
+            return intent
+
+    def release_status(self, identity):
+        with self.manager.lock(self.manager.state / 'admission.lock', False):
+            approved = self.load(identity, 'release-approved')
+            intent = self.load(identity, 'release-intent')
+            if approved is None:
+                require(intent is None, 'UNSAFE_FILESYSTEM')
+                return self.recovery.observation(identity, 'GUARDED_RELEASE_ABSENT')
+            require(approved['state'] == 'GUARDED_RELEASE_APPROVED', 'UNSAFE_FILESYSTEM')
+            if intent is None:
+                return self.recovery.observation(identity, 'GUARDED_RELEASE_APPROVED')
+            path, plan = self.projection(identity)
+            fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root, archived=identity)
+            require(fixed is not None and fixed['restoreId'] == identity, 'CONFLICT')
+            validate = launch.guarded_projection if self.reader is None else launch.guarded_plan
+            target, normal = validate(path, plan, fixed, self.core.pw_uid, self.core.pw_gid)
+            if self.reader is None:
+                release = launch.release_observation(target, normal, self.core.pw_uid, self.core.pw_gid)
+            else:
+                release = self.inspect(target, normal, 'release')['release']
+            require(intent['state'] == 'GUARDED_RELEASE_ISSUED'
+                    and (not release or all(release.get(key) == intent[key]
+                                            for key in ('completionId', 'decisionSha256'))), 'CONFLICT')
+            if 'releaseReceiptSha256' not in release:
+                return intent | {'state': 'GUARDED_RELEASE_UNKNOWN'}
+            return intent | {'state': 'GUARDED_RELEASE_COMMITTED',
+                             'releaseReceiptSha256': release['releaseReceiptSha256'],
+                             'selectionRetired': os.path.lexists(path / launch.RETIRED_SELECTION)}
+
+    def retire_guarded(self, identity, release_sha):
+        digest(release_sha)
+        status = self.release_status(identity)
+        require(status['state'] == 'GUARDED_RELEASE_COMMITTED' and not status['selectionRetired']
+                and status['releaseReceiptSha256'] == release_sha, 'CONFLICT')
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance()
+            manager.settled()
+            path, plan = self.projection(identity)
+            fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+            require(fixed is not None and fixed['restoreId'] == identity, 'CONFLICT')
+            target, normal = launch.guarded_projection(path, plan, fixed, self.core.pw_uid, self.core.pw_gid)
+            component, cohort = manager.generation_component()
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                self.verify_guarded_credential(plan, cohort)
+                with manager.exclusive_writers():
+                    self.ensure_stopped(component, plan['ringSha256'] is not None)
+                    release = launch.release_observation(target, normal, self.core.pw_uid, self.core.pw_gid)
+                    require(release.get('releaseReceiptSha256') == release_sha, 'CONFLICT')
+                    try:
+                        rename_no_replace(self.base / launch.SELECTION, path / launch.RETIRED_SELECTION)
+                        self.lifecycle.sync(path)
+                        self.lifecycle.sync(self.base)
+                    except (OSError, Failure, Refused, LifecycleRefused) as error:
+                        raise Failure('UNKNOWN') from error
+        return status | {'selectionRetired': True}
+
 
 def command(recovery, action, arguments):
     parameter_count = {'start-main': 2, 'stop-main': 2, 'main-command-status': 1,
-                       'start-guarded-main': 3, 'guarded-main-status': 1}
+                       'start-guarded-main': 3, 'guarded-main-status': 1,
+                       'approve-guarded-release': 3, 'guarded-release-status': 1, 'retire-guarded-main': 2}
     require(len(arguments) == parameter_count[action])
     identity, *expected = arguments
     require(launch.IDENTITY.fullmatch(identity) is not None)
     fixed = Controller(recovery)
+    if action == 'approve-guarded-release':
+        from kura_native_snapshot_validation import administrator_peer
+
+        receipt, policy = expected
+        with administrator_peer(recovery.lifecycle) as authenticate:
+            return fixed.authorize_release(identity, receipt, Path(policy), authenticate)
     route = {'start-main': fixed.start, 'stop-main': fixed.stop, 'main-command-status': fixed.observation,
-             'start-guarded-main': fixed.start_guarded, 'guarded-main-status': fixed.guarded_status}
+             'start-guarded-main': fixed.start_guarded, 'guarded-main-status': fixed.guarded_status,
+             'guarded-release-status': fixed.release_status, 'retire-guarded-main': fixed.retire_guarded}
     return route[action](identity, *expected)

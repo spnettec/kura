@@ -122,6 +122,42 @@ class LaunchProjectionTest(unittest.TestCase):
         self.assertEqual('a' * 32, marker['invocationId'])
         self.assertNotEqual(marker, launch.condition_marker(fixed, self.plan, 'a' * 32))
 
+    def test_guarded_release_receipt_requires_confirmation_after_commit(self):
+        target = self.target / launch.GUARDED
+        target.mkdir()
+        output = target / launch.OUT
+        output.mkdir()
+        invocation = {'pid': 222, 'invocationId': 'f' * 32}
+        observed = dict(state='NORMAL_BOOT_ADMITTED', restoreId=self.identity, receiptSha256='d' * 64,
+                        invocation=invocation)
+        decision = {'schema': 'yofc.kura.fixed-write-approval.v1', 'restore.id': self.identity,
+                    'completion.id': 'complete-' + self.identity[4:], 'normal.receipt.sha256': 'd' * 64,
+                    'snapshot.sha256': self.plan['snapshotSha256'], 'process.id': '222',
+                    'invocation.id': invocation['invocationId'], 'nonce': 'c' * 64,
+                    'health.receipt.sha256': 'e' * 64, 'components.sha256': 'd' * 64,
+                    'checks.sha256': 'c' * 64, 'additional.grant.sha256': 'b' * 64}
+        raw = launch.property_bytes(decision)
+        launch.write(target / launch.RELEASE_DECISION, raw, 0o440)
+        expected = dict(decisionSha256=launch.digest(raw), completionId=decision['completion.id'])
+        proof = {key: decision[key] for key in ('completion.id', 'snapshot.sha256', 'process.id', 'nonce',
+                                                'health.receipt.sha256', 'components.sha256', 'checks.sha256',
+                                                'additional.grant.sha256')}
+        proof.update({'schema': 'yofc.kura.write-release.v1', 'status': 'ORDINARY_WRITES_RELEASE_COMMITTED',
+                      'scope': 'administrator-selected-checks', 'kuraRecoveryVerified': 'false',
+                      'decision.sha256': expected['decisionSha256'], 'policy.sha256': expected['decisionSha256'],
+                      'recovery.id': self.identity})
+        receipt = launch.property_bytes(proof)
+        launch.write(output / launch.RELEASE_RECEIPT, receipt, 0o600)
+        with patch.object(launch, 'inspect_projection', return_value=observed):
+            self.assertEqual(expected, launch.release_observation(target, self.plan, 0, 0))
+            marker = output / launch.RELEASE_COMMITTED
+            launch.write(marker, b'drift\n', 0o600)
+            self.assertEqual(expected, launch.release_observation(target, self.plan, 0, 0))
+            marker.unlink()
+            sha = launch.digest(receipt)
+            launch.write(marker, (sha + '\n').encode(), 0o600)
+            self.assertEqual(expected | {'releaseReceiptSha256': sha}, launch.release_observation(target, self.plan, 0, 0))
+
     def test_guarded_status_preserves_uncertain_publication_on_original_number(self):
         manager = Mock()
         manager.state = self.root

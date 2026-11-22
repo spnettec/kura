@@ -21,6 +21,7 @@ import kura_recovery_launch as launch
 
 SOCKET = '/run/kura-recovery-main.sock'
 COMMANDS = ('start', 'stop', 'guarded-start')
+WRITE_REQUESTS = {'main-' + name for name in COMMANDS} | {'main-release-issue'}
 READER = 'kura-recovery-main-reader.service'
 UNITS = {'kura-recovery-main.socket', 'kura-recovery-main.service', READER, 'kura-recovery-main-reader.socket'}
 
@@ -142,18 +143,26 @@ def read_projection(identity, phase=None):
 
 def handle(recovery, request, descriptor, authenticate):
     action = request.get('action')
-    writes = {'main-' + name for name in COMMANDS}
-    reads = {'main-original', 'main-application-original', 'main-guarded-original', 'main-guarded-application-original'}
-    require(isinstance(action, str) and action in writes | reads and descriptor is None, 'FORBIDDEN')
-    extra = {'expectedSha256'} if action in writes else set()
+    reads = {'main-original', 'main-application-original', 'main-guarded-original', 'main-guarded-application-original',
+             'main-release-original'}
+    require(isinstance(action, str) and action in WRITE_REQUESTS | reads and descriptor is None, 'FORBIDDEN')
+    extra = {'expectedSha256'} if action in WRITE_REQUESTS else set()
     if action == 'main-guarded-start':
         extra.add('snapshotId')
+    if action == 'main-release-issue':
+        extra.update(('checks', 'healthReceiptSha256', 'nonce'))
     fields(request, {'schema', 'restoreId', 'action'} | extra)
     identity = request['restoreId']
     require(type(request['schema']) is int and request['schema'] == 1 and isinstance(identity, str)
             and launch.IDENTITY.fullmatch(identity), 'INVALID_ARGUMENT')
     original = authenticate()
     fixed = Controller(recovery, reader=read_projection)
+    if action == 'main-release-issue':
+        return fixed.issue_release(identity, request['expectedSha256'], request['checks'],
+                                   request['healthReceiptSha256'], request['nonce'], authenticate)
+    if action == 'main-release-original':
+        authorization(fixed, identity, 'guarded-start', original)
+        return fixed.release_status(identity)
     if action == 'main-application-original':
         authorization(fixed, identity, 'start', original)
         return fixed.application(identity)
@@ -204,7 +213,7 @@ def serve_connection(connection, recovery):
             try:
                 require(authenticate() == original, 'FORBIDDEN')
             except (Failure, OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):
-                raise Failure('UNKNOWN' if request['action'].removeprefix('main-') in COMMANDS else 'FORBIDDEN') from None
+                raise Failure('UNKNOWN' if request['action'] in WRITE_REQUESTS else 'FORBIDDEN') from None
     except Failure as error:
         result = dict(schema=1, error=error.reason)
     except (OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):

@@ -158,7 +158,7 @@ public final class RecoveryBootstrap implements BundleActivator {
                     if(completionPolicy.equals("true")) {
                         this.completionRegistration=context.registerService(
                                 org.eclipse.kura.configuration.RecoveryCompletionService.class,
-                                new RecoveryWriteRelease(this.verifier,receipt,frameworkTarget),null);
+                                new RecoveryWriteRelease(this.verifier,receipt,frameworkTarget,fixedGuarded),null);
                     }
                 } finally { context.ungetService(reference); }
             } else {
@@ -331,7 +331,7 @@ public final class RecoveryBootstrap implements BundleActivator {
         try { return SnapshotTool.decode(xml,crypto,"authenticated").configurations(); }
         finally { Arrays.fill(xml,(byte)0); }
     }
-    private static Map<String,String> properties(byte[] bytes) {
+    static Map<String,String> properties(byte[] bytes) {
         Map<String,String> result=new HashMap<>();
         for(String line:new String(bytes,StandardCharsets.UTF_8).split("\\n")) {
             if(line.isEmpty()){continue;}
@@ -433,7 +433,7 @@ public final class RecoveryBootstrap implements BundleActivator {
         return result;
     }
 
-    private static void projected(Path path, boolean directory) throws Exception {
+    static void projected(Path path, boolean directory) throws Exception {
         var attributes = Files.readAttributes(path, PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         require((directory ? attributes.isDirectory() : attributes.isRegularFile())
                 && Files.getAttribute(path, "unix:uid", LinkOption.NOFOLLOW_LINKS).equals(0)
@@ -496,7 +496,7 @@ public final class RecoveryBootstrap implements BundleActivator {
         }
         return value;
     }
-    private static byte[] read(Path path,int limit) throws Exception {
+    static byte[] read(Path path,int limit) throws Exception {
         require(path.isAbsolute()&&Files.isRegularFile(path,LinkOption.NOFOLLOW_LINKS));
         try(InputStream input=Files.newInputStream(path,StandardOpenOption.READ,LinkOption.NOFOLLOW_LINKS)) {
             byte[] result=input.readNBytes(limit+1);require(result.length>0&&result.length<=limit);return result;
