@@ -154,6 +154,9 @@ class Policy:
         return manifest
 
     def check(self, *, actor, include_main=True):
+        # Container runtime adapters (LXC/OrbStack) add a global service.d
+        # drop-in to every unit on the host; exclude that exact adapter path.
+        adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
         manifest = self.packaged()
         units = UNITS if include_main else UNITS[:2]
         if actor:
@@ -162,7 +165,8 @@ class Policy:
             loaded = manager_properties(unit, UNIT_PROPERTIES)
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
-                    and loaded['SourcePath'] == loaded['DropInPaths'] == ''
+                    and loaded['SourcePath'] == ''
+                    and all(p == adapter for p in loaded['DropInPaths'].split())
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
