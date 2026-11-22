@@ -222,10 +222,11 @@ class Setup:
 
     def resume_marker_locked(self,account,manager,history):
         from kura_key_service import decode, encode
-        from kura_key_service_lifecycle import validate_start
+        from kura_key_service_lifecycle import (validate_start, validate_receiver_restore, receiver_restore_matches,
+                                                receiver_restore_marker, restored_key_digest)
         path=self.root/'var/lib/kura-key-recovery';marker=path/'pending.json'
         with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'),False):
-            keys,_,_,_,proof,_=manager.generation_source(allow_missing=True)
+            keys,_,_,_,_,current=manager.generation_source(allow_missing=True)
         if keys==[None]:return  # Cold single-key recovery; never reconstruct missing generation credentials.
         completed=set()
         root_starts=manager.state/'startups'
@@ -249,17 +250,16 @@ class Setup:
                         and st.st_nlink==1 and stat.S_IMODE(st.st_mode)==0o600 and st.st_size<=4096)
                 local=decode(os.read(fd,4097))
             finally:os.close(fd)
-            require(set(local)=={'schema','operationId','expectedKeySha256','backupSha256'}
-                    and type(local['schema']) is int and local['schema']==1 and local['operationId']==entry.name[:-5])
+            validate_receiver_restore(local, entry.name[:-5])
             if local['operationId'] in history['closedRestores']:
                 require(local==history['closedRestores'][local['operationId']]);continue
             original=manager.record(local['operationId'])
-            require(original is not None and original['state']=='SUCCEEDED' and original['action']=='restore')
+            require(original is not None and original['state']=='SUCCEEDED')
             response=original['response']
-            require(response['keySha256']==local['expectedKeySha256'])
-            if (response['keyChanged'] is True and response['existingReceiptPreserved'] is True
-                and response['keySha256']==proof['keySha256'] and local['operationId'] not in completed):
-                candidates.append(dict(schema=1,operationId=local['operationId'],expectedKeySha256=response['keySha256']))
+            require(receiver_restore_matches(local,response))
+            if (restored_key_digest(response)==current['keySha256']
+                and local.get('expectedRingSha256')==current['ringSha256'] and local['operationId'] not in completed):
+                candidates.append(receiver_restore_marker(local))
         require(len(candidates)<=1)
         if candidates:
             fd=os.open(marker,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)

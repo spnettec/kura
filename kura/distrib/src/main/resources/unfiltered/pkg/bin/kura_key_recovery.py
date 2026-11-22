@@ -30,7 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_key_service as protocol
 from kura_key_service_lifecycle import (HANDOFF_BINDING, HANDOFF_IDS, validate_handoff_binding,
     validate_sender_attempt, validate_sender_closed, receiver_start_intent, receiver_restore_intent,
-    receiver_restore_pending, validate_receiver_pending, validate_handoff_retired, validate_start_lease, Lifecycle, Refused)
+    receiver_restore_pending, receiver_restore_marker, receiver_restore_matches, restored_key_digest, validate_receiver_restore,
+    validate_receiver_pending, validate_handoff_retired, validate_start_lease, Lifecycle, Refused)
 
 STATE = Path('/var/lib/kura-key-recovery')
 ASSETS = Path('/opt/eclipse/kura/share/key-recovery')
@@ -120,7 +121,7 @@ class SenderAdmission:
         result=dict(schema=1,state='SENDER_ADMISSION',kind=kind,operationId=identity,phase='UNKNOWN',closeAllowed=False,closed=False)
         if saved is None:return dict(result,phase='NOT_RECORDED')
         attempt,namespace,closed=saved;metadata=attempt['request']
-        for name in ('expectedKeySha256','restoreOperationId'):
+        for name in ('expectedKeySha256','expectedRingSha256','restoreOperationId'):
             if name in metadata:result[name]=metadata[name]
         if kind=='start':
             result['startSchema']=2 if metadata['action']=='core-start-after-maintenance' else 1
@@ -328,12 +329,8 @@ class Journal:
             value = protocol.decode(self.read(self.operations / (identity + '.json')))
         except FileNotFoundError:
             return None
-        protocol.fields(value, {'schema', 'operationId', 'expectedKeySha256', 'backupSha256'})
-        protocol.require(type(value['schema']) is int and value['schema'] == 1
-                         and value['operationId'] == identity, 'UNSAFE_JOURNAL')
-        protocol.digest(value['expectedKeySha256'])
-        protocol.digest(value['backupSha256'])
-        return value
+        try:return validate_receiver_restore(value, identity)
+        except Refused:fail('UNSAFE_JOURNAL')
 
     def records(self):
         names = list(self.operations.iterdir())
@@ -360,13 +357,11 @@ class Journal:
     def pending(self):
         try:value=protocol.decode(self.read(self.directory/'pending.json'))
         except FileNotFoundError:return None
-        protocol.fields(value,{'schema','operationId','expectedKeySha256'})
-        protocol.require(type(value['schema']) is int and value['schema']==1,'UNSAFE_JOURNAL')
-        protocol.operation_id(value['operationId']);protocol.digest(value['expectedKeySha256'])
-        return value
+        try:return validate_receiver_restore(value, value.get('operationId'), marker=True)
+        except Refused:fail('UNSAFE_JOURNAL')
 
-    def mark(self, identity, expected):
-        value=dict(schema=1,operationId=identity,expectedKeySha256=expected)
+    def mark(self, identity, expected, **pair):
+        value=dict(schema=2 if pair else 1,operationId=identity,expectedKeySha256=expected,**pair)
         existing=self.pending()
         if existing is not None:
             protocol.require(existing==value,'UNRESOLVED_OPERATION')
@@ -429,13 +424,25 @@ class Controller:
             # Never reflect an upstream error string or exception into HTML/logs.
             protocol.require(value['error'] in {'BACKUP_REJECTED', 'BUSY', 'MAINTENANCE', 'CONFLICT',
                 'KEY_MISSING', 'CAPACITY', 'UNRESOLVED_OPERATION', 'UNKNOWN', 'UNSAFE_JOURNAL',
-                'UNSAFE_FILESYSTEM', 'UNAVAILABLE', 'CIPHER_UNAVAILABLE', 'INVALID_ARGUMENT', 'FORBIDDEN'}, 'UNAVAILABLE')
+                'UNSAFE_FILESYSTEM', 'UNAVAILABLE', 'CIPHER_UNAVAILABLE', 'INVALID_ARGUMENT', 'FORBIDDEN',
+                'GENERATION_REQUIRED', 'KEY_GENERATIONS_MISSING'}, 'UNAVAILABLE')
             fail(value['error'])
         return value
 
     def status(self):
-        value = self.call('status')
-        protocol.fields(value, {'schema', 'keyReady', 'keySha256', 'legacyKey', 'agentRequired'})
+        try:
+            value = self.call('status')
+            protocol.fields(value, {'schema', 'keyReady', 'keySha256', 'legacyKey', 'agentRequired'})
+        except protocol.Failure as failure:
+            if failure.reason != 'GENERATION_REQUIRED':
+                raise
+            pair = self.call('generation-recovery-status')
+            protocol.fields(pair, {'schema', 'activeKeySha256', 'ringSha256', 'activeKeyReady', 'keyringReady'})
+            protocol.digest(pair['ringSha256'])
+            protocol.require(all(type(pair[k]) is bool for k in ('activeKeyReady', 'keyringReady')), 'PROTOCOL_MISMATCH')
+            value = dict(schema=1, keyReady=pair['activeKeyReady'] and pair['keyringReady'],
+                         keySha256=pair['activeKeySha256'], legacyKey=False, agentRequired=False,
+                         generation={k: v for k, v in pair.items() if k != 'schema'})
         protocol.digest(value['keySha256'])
         protocol.require(type(value['keyReady']) is bool and type(value['legacyKey']) is bool
                          and value['agentRequired'] is False, 'PROTOCOL_MISMATCH')
@@ -477,7 +484,7 @@ class Controller:
         protocol.require(isinstance(raw, str) and len(raw.encode('utf-8')) <= 49152, 'BACKUP_REJECTED')
         backup = protocol.decode(raw.encode('utf-8'))
         protocol.fields(backup, {'format', 'operationId', 'encrypted'})
-        protocol.require(backup['format'] == protocol.FORMAT, 'BACKUP_REJECTED')
+        protocol.require(backup['format'] in (protocol.FORMAT, protocol.GENERATION_FORMAT), 'BACKUP_REJECTED')
         protocol.operation_id(backup['operationId'])
         protocol.require(isinstance(backup['encrypted'], str) and 0 < len(backup['encrypted']) <= 32768,
                          'BACKUP_REJECTED')
@@ -570,7 +577,7 @@ class Controller:
             else:expected_backup=metadata['backupSha256']
             protocol.require(backup_sha==expected_backup,'BACKUP_REJECTED')
             checked=self.inspect(dict(backupJson=value['backupJson'],passphrase=value['passphrase']))
-            protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
+            self.require_matching_inspection(checked, restore if kind=='start' else metadata)
             original=self.call('operation-read' if kind=='restore' else 'core-start-read',operationId=identity)
             protocol.fields(original,{'schema','state'});protocol.require(type(original['schema']) is int and original['schema']==1 and original['state']=='NOT_FOUND','UNRESOLVED_OPERATION')
             result=self.sender.close(kind,identity)
@@ -581,13 +588,17 @@ class Controller:
     def inspect(self, value, *, throttle=True):
         protocol.fields(value, {'backupJson', 'passphrase'})
         backup = self.material(value)
+        modern = backup['format'] == protocol.GENERATION_FORMAT
         protocol.require(self.inspect_lock.acquire(blocking=False), 'BUSY')
         try:
             protocol.require(not throttle or self.last_inspect is None or time.monotonic() - self.last_inspect >= 2, 'BUSY')
             self.last_inspect = time.monotonic()
-            result = self.call('backup-inspect', backup=backup, passphrase=value['passphrase'])
+            action = 'generation-backup-inspect' if modern else 'backup-inspect'
+            result = self.call(action, backup=backup, passphrase=value['passphrase'])
         finally:
             self.inspect_lock.release()
+        if modern:
+            return self.generation_inspection(backup, result)
         protocol.fields(result, {'schema', 'backupOperationId', 'keySha256', 'createdAt',
                                  'sameDeviceKey', 'keyReady', 'restoreAllowed'})
         protocol.require(result['backupOperationId'] == backup['operationId'], 'PROTOCOL_MISMATCH')
@@ -597,6 +608,39 @@ class Controller:
                          'PROTOCOL_MISMATCH')
         result['restoreAllowed'] = result['restoreAllowed'] and result['sameDeviceKey'] and not result['keyReady']
         return dict(result, state='INSPECTED')
+
+    @staticmethod
+    def generation_inspection(backup, result):
+        flags = ('matchesRetainedReceipt', 'activeKeyReady', 'keyringReady', 'restoreSupported',
+                 'restoreAllowed', 'restoreBlockedByUnresolvedOperation')
+        protocol.fields(result, {'schema', 'backupOperationId', 'createdAt', 'ringSha256', 'activeKeySha256',
+                                 'legacyKeySha256', 'keySha256s', *flags})
+        protocol.require(result['backupOperationId'] == backup['operationId']
+                         and isinstance(result['createdAt'], str) and len(result['createdAt']) <= 128
+                         and all(type(result[k]) is bool for k in flags), 'PROTOCOL_MISMATCH')
+        digests = result['keySha256s']
+        protocol.require(isinstance(digests, list) and 2 <= len(digests) <= 8, 'PROTOCOL_MISMATCH')
+        for key in ('ringSha256', 'activeKeySha256', 'legacyKeySha256'):
+            protocol.digest(result[key])
+        for sha in digests:
+            protocol.digest(sha)
+        protocol.require(len(set(digests)) == len(digests) and result['activeKeySha256'] in digests
+                         and result['legacyKeySha256'] in digests
+                         and result['activeKeySha256'] != result['legacyKeySha256'], 'PROTOCOL_MISMATCH')
+        matches = result['matchesRetainedReceipt']
+        ready = result['activeKeyReady'] and result['keyringReady']
+        allowed = result['restoreAllowed'] and matches and not ready
+        allowed = allowed and result['restoreSupported'] and not result['restoreBlockedByUnresolvedOperation']
+        return dict(schema=1, state='INSPECTED', format=backup['format'], backupOperationId=result['backupOperationId'],
+                    createdAt=result['createdAt'], ringSha256=result['ringSha256'], keySha256=result['activeKeySha256'],
+                    sameDeviceKey=matches, keyReady=ready, activeKeyReady=result['activeKeyReady'],
+                    keyringReady=result['keyringReady'], keyCount=len(digests), restoreAllowed=allowed,
+                    restoreBlockedByUnresolvedOperation=result['restoreBlockedByUnresolvedOperation'])
+
+    @staticmethod
+    def require_matching_inspection(checked, intent):
+        protocol.require(checked['sameDeviceKey'] and checked['keySha256'] == intent['expectedKeySha256']
+                         and checked.get('ringSha256') == intent.get('expectedRingSha256'), 'BACKUP_REJECTED')
 
     def archive(self,value):
         if value.get('command')=='list':
@@ -619,64 +663,82 @@ class Controller:
                     protocol.require(restore is not None and restore['expectedKeySha256']==metadata['expectedKeySha256']
                         and hashlib.sha256(protocol.encode(backup)).hexdigest()==restore['backupSha256'],'BACKUP_REJECTED')
                     checked=self.inspect(dict(backupJson=value['backupJson'],passphrase=value['passphrase']))
-                    protocol.require(checked['sameDeviceKey'] and checked['keySha256']==metadata['expectedKeySha256'],'BACKUP_REJECTED')
+                    self.require_matching_inspection(checked, restore)
                 return history.confirm(kind,identity,step,value['reviewSha256'],continue_metadata=command=='continue') if mutate else history.review(kind,identity,step)
         except Refused:fail('UNRESOLVED_OPERATION')
 
-    def original(self, identity, expected=None):
+    def original(self, identity, expected=None, *, expected_ring=None):
         protocol.operation_id(identity)
         unknown = dict(schema=1, operationId=identity, state='UNKNOWN', resultSource='UNCONFIRMED')
         try:
             result = self.call('operation-read', operationId=identity)
             if result.get('state') != 'SUCCEEDED':
                 return unknown
-            protocol.fields(result, {'schema', 'operationId', 'state', 'action', 'keySha256',
-                                     'keyChanged', 'existingReceiptPreserved'})
-            protocol.digest(result['keySha256'])
-            protocol.require(result['operationId'] == identity and result['action'] == 'restore'
-                             and type(result['keyChanged']) is bool and result['existingReceiptPreserved'] is True
-                             and (expected is None or result['keySha256'] == expected), 'PROTOCOL_MISMATCH')
+            modern = result.get('action') == 'generation-restore'
+            digests = ('activeKeySha256', 'ringSha256') if modern else ('keySha256',)
+            flags = ('activeKeyRestored', 'keyringRestored') if modern else ('keyChanged',)
+            protocol.fields(result, {'schema', 'operationId', 'state', 'action', 'existingReceiptPreserved', *digests, *flags})
+            for key in digests:
+                protocol.digest(result[key])
+            protocol.require(result['operationId'] == identity and result['action'] in ('restore', 'generation-restore')
+                             and all(type(result[k]) is bool for k in flags) and result['existingReceiptPreserved'] is True,
+                             'PROTOCOL_MISMATCH')
+            if expected is not None:
+                bound = dict(schema=2 if expected_ring is not None else 1, expectedKeySha256=expected,
+                             expectedRingSha256=expected_ring)
+                protocol.require(receiver_restore_matches(bound, result), 'PROTOCOL_MISMATCH')
             return dict(result, resultSource='ROOT_ORIGINAL')
         except (protocol.Failure, OSError, KeyError, ValueError):
             return unknown
 
     def restore(self, value):
-        protocol.fields(value, {'operationId', 'expectedKeySha256', 'backupJson', 'passphrase'})
+        modern = 'expectedRingSha256' in value
+        extra = {'expectedRingSha256'} if modern else set()
+        protocol.fields(value, {'operationId', 'expectedKeySha256', 'backupJson', 'passphrase'} | extra)
         identity = protocol.operation_id(value['operationId'])
         expected = protocol.digest(value['expectedKeySha256'])
         backup = self.material(value)
-        intent = dict(schema=1, operationId=identity, expectedKeySha256=expected,
-                      backupSha256=hashlib.sha256(protocol.encode(backup)).hexdigest())
+        protocol.require(modern == (backup['format'] == protocol.GENERATION_FORMAT), 'BACKUP_REJECTED')
+        pair = {key: protocol.digest(value[key]) for key in extra}
+        ring = pair.get('expectedRingSha256')
+        intent = dict(schema=2 if modern else 1, operationId=identity, expectedKeySha256=expected,
+                      backupSha256=hashlib.sha256(protocol.encode(backup)).hexdigest(), **pair)
         with self.journal.lock():
             prior = self.journal.record(identity)
             if prior is not None:
                 protocol.require(prior == intent, 'CONFLICT')
-                return self.original(identity, expected)
+                return self.original(identity, expected, expected_ring=ring)
             protocol.require(not HandoffController(self.client, self.journal).pending(), 'UNRESOLVED_OPERATION')
             # Read the original before admission. A previously accepted Root UUID
             # cannot be sent again even when this UI has no local slot for it.
             original = self.call('operation-read', operationId=identity)
             if original.get('state') != 'NOT_FOUND':
-                return self.original(identity, expected)
+                return self.original(identity, expected, expected_ring=ring)
             protocol.fields(original, {'schema', 'state'})
             records = self.active_restore_records()
             protocol.require(self.journal.active_count('RESTORE',self.journal.records()) < MAX_OPERATIONS, 'CAPACITY')
             for record in self.active_start_records():
                 protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
             for record in records:
-                protocol.require(self.original(record['operationId'], record['expectedKeySha256'])['state'] == 'SUCCEEDED',
+                original = self.original(record['operationId'], record['expectedKeySha256'],
+                                         expected_ring=record.get('expectedRingSha256'))
+                protocol.require(original['state'] == 'SUCCEEDED',
                                  'UNRESOLVED_OPERATION')
             state = self.status()
             protocol.require(not state['keyReady'] and state['keySha256'] == expected, 'CONFLICT')
+            protocol.require(state.get('generation', {}).get('ringSha256') == ring, 'CONFLICT')
             checked = self.inspect(dict(backupJson=value['backupJson'], passphrase=value['passphrase']), throttle=False)
-            protocol.require(checked['restoreAllowed'] and checked['keySha256'] == expected, 'BACKUP_REJECTED')
-            request = dict(schema=1, action='restore', operationId=identity, expectedKeySha256=expected,
-                backup=backup, passphrase=value['passphrase'])
+            self.require_matching_inspection(checked, intent)
+            protocol.require(checked['restoreAllowed'], 'BACKUP_REJECTED')
+            action = 'generation-restore' if modern else 'restore'
+            fields = dict(operationId=identity, expectedKeySha256=expected, backup=backup,
+                          passphrase=value['passphrase'], **pair)
+            request = dict(schema=1, action=action, **fields)
             def forward():
-                self.journal.mark(identity,expected); self.journal.admit(intent)
-                try: self.call('restore', operationId=identity, expectedKeySha256=expected, backup=backup, passphrase=value['passphrase'])
+                self.journal.mark(identity,expected,**pair); self.journal.admit(intent)
+                try: self.call(action, **fields)
                 except (protocol.Failure, OSError, KeyError, ValueError): pass
-                return self.original(identity, expected)
+                return self.original(identity, expected, expected_ring=ring)
             return self.sender.submit('restore', identity, request, forward)
 
 
@@ -716,11 +778,11 @@ class Controller:
             original=self.call('core-start-read',operationId=identity)
             if original.get('state')!='NOT_FOUND':return self.start_original(identity,restore_id,expected)
             pending=self.journal.pending()
-            protocol.require(pending==dict(schema=1,operationId=restore_id,expectedKeySha256=expected),'CONFLICT')
             local=self.journal.record(restore_id)
-            protocol.require(local is not None and local['expectedKeySha256']==expected,'CONFLICT')
-            restored=self.original(restore_id,expected)
-            protocol.require(restored['state']=='SUCCEEDED' and restored.get('keyChanged') is True,'UNRESOLVED_OPERATION')
+            protocol.require(local is not None and local['expectedKeySha256']==expected
+                             and pending==receiver_restore_marker(local),'CONFLICT')
+            restored=self.original(restore_id,expected,expected_ring=local.get('expectedRingSha256'))
+            protocol.require(restored_key_digest(restored)==expected,'UNRESOLVED_OPERATION')
             records=self.active_start_records()
             protocol.require(self.journal.active_count('START',self.journal.start_records())<MAX_OPERATIONS,'CAPACITY')
             if maintenance:
@@ -729,6 +791,11 @@ class Controller:
             for record in records:
                 protocol.require(maintenance or record['restoreOperationId']!=restore_id,'CONFLICT')
                 protocol.require(self.start_original(record['operationId'])['state']=='SUCCEEDED','UNRESOLVED_OPERATION')
+            if local['schema']==2:
+                readiness = self.call('generation-recovery-start-check', restoreOperationId=restore_id,
+                                      expectedKeySha256=expected)
+                protocol.fields(readiness, {'schema', 'state'})
+                protocol.require(readiness['state']=='GENERATION_RECOVERY_START_READY', 'PROTOCOL_MISMATCH')
             action = 'core-start-after-maintenance' if maintenance else 'core-start'
             request = dict(schema=1, action=action, **value)
             def forward():
@@ -754,8 +821,9 @@ class Controller:
             protocol.require(plan['blockingOperationId'] is None,'UNRESOLVED_OPERATION')
             pending=self.journal.pending()
             if pending is not None:
-                protocol.require(pending['operationId']==slot['restoreOperationId']
-                    and pending['expectedKeySha256']==slot['expectedKeySha256'],'CONFLICT')
+                local=self.journal.record(slot['restoreOperationId'])
+                protocol.require(local is not None and pending==receiver_restore_marker(local)
+                                 and pending['expectedKeySha256']==slot['expectedKeySha256'],'CONFLICT')
                 (self.journal.directory/'pending.json').unlink();self.journal.sync(self.journal.directory)
             return result
 

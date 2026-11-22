@@ -7,7 +7,8 @@ import re
 import subprocess
 
 from kura_key_service import Failure, digest, encode, operation_id, fields, require, decode
-from kura_key_service_lifecycle import Refused, validate_start, validate_maintenance, Lifecycle, maintenance_includes_startup
+from kura_key_service_lifecycle import (Refused, validate_start, validate_maintenance, Lifecycle,
+                                        maintenance_includes_startup, restored_key_digest)
 
 COMMAND = ('/usr/bin/busctl', '--system', '--timeout=15s', 'call',
            'org.freedesktop.systemd1', '/org/freedesktop/systemd1',
@@ -85,10 +86,22 @@ class Starter:
     def original_restore(self, restore_id, expected):
         record = self.manager.record(restore_id)
         require(record is not None and record['state'] == 'SUCCEEDED'
-                and record['action'] == 'restore', 'UNRESOLVED_OPERATION')
+                and record['action'] in ('restore', 'generation-restore'), 'UNRESOLVED_OPERATION')
         response = record['response']
-        require(response['keyChanged'] is True and response['existingReceiptPreserved'] is True
-                and response['keySha256'] == expected, 'CONFLICT')
+        require(restored_key_digest(response) == expected, 'CONFLICT')
+        return response
+
+    def restored_credentials(self, restore):
+        manager = self.manager
+        if restore['action'] == 'restore':
+            _, proof = manager.canonical()
+            require(proof['keySha256'] == restore['keySha256'], 'CONFLICT')
+            return
+        _, pair, _ = manager.generations()
+        require(all(pair[k] == restore[k] for k in ('ringSha256', 'activeKeySha256')), 'CONFLICT')
+        cohort = manager.require_generation_cohort()
+        source = dict(keySha256=pair['activeKeySha256'], ringSha256=pair['ringSha256'])
+        manager.generation_start_authorized(source, cohort)
 
     def plan(self, restore_id, expected):
         # Caller holds admission.lock. Every decision is from protected receipts.
@@ -133,6 +146,18 @@ class Starter:
 
     def handle(self, request):
         manager = self.manager
+        if request['action'] == 'generation-recovery-start-check':
+            fields(request, {'schema', 'action', 'restoreOperationId', 'expectedKeySha256'})
+            identity = operation_id(request['restoreOperationId'])
+            expected = digest(request['expectedKeySha256'])
+            with manager.lock(manager.state / 'admission.lock', False):
+                manager.maintenance()
+                manager.settled()
+                restore = self.original_restore(identity, expected)
+                require(restore['action'] == 'generation-restore', 'CONFLICT')
+                with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                    self.restored_credentials(restore)
+                return dict(schema=1, state='GENERATION_RECOVERY_START_READY')
         if request['action'] == 'core-start-plan':
             fields(request, {'schema', 'action', 'restoreOperationId', 'expectedKeySha256'})
             restore_id = operation_id(request['restoreOperationId'])
@@ -172,10 +197,9 @@ class Starter:
             else:
                 require(all(r['restoreOperationId'] != restore_id for r in records), 'CONFLICT')
             manager.journal_admission(request, directory='startups')
-            self.original_restore(restore_id, expected)
+            restore = self.original_restore(restore_id, expected)
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
-                _, proof = manager.canonical()
-                require(proof['keySha256'] == expected, 'CONFLICT')
+                self.restored_credentials(restore)
                 record = dict(schema=2 if modern else 1, operationId=identity, restoreOperationId=restore_id,
                               keySha256=expected, requestTag=tag, state='INTENT', response=None)
                 record.update({k: request[k] for k in extra})

@@ -1047,10 +1047,12 @@ class Manager:
                 return self.publish_staged_generation_restore(record, self.generation_restore_paths())
 
     def restore_generations(self, request, *, recovery_only):
-        fields(request, {"schema", "action", "operationId", "passphrase", "backup", "expectedRingSha256"})
+        extra = {'expectedKeySha256'} if 'expectedKeySha256' in request else set()
+        fields(request, {"schema", "action", "operationId", "passphrase", "backup", "expectedRingSha256"} | extra)
         identity = operation_id(request["operationId"])
         password = passphrase(request["passphrase"])
         expected = digest(request["expectedRingSha256"])
+        active_expected = digest(request['expectedKeySha256']) if extra else None
         with self.lock(self.state / "admission.lock", True):
             self.maintenance()
             secret = self.read(self.state / "journal.key", 32)
@@ -1065,6 +1067,7 @@ class Manager:
             with self.lock(self.store.path("/etc/kura/credentials/.provision.lock"), True):
                 raw, metadata, _ = self.unpack_generations(request["backup"], password)
                 require(metadata["ringSha256"] == expected, "CONFLICT")
+                require(active_expected is None or metadata['activeKeySha256'] == active_expected, 'CONFLICT')
                 active, current, ring, proof = self.generation_restore_state(raw, metadata)
                 missing = current is None or ring is None
                 require(not recovery_only or missing, "CONFLICT")
@@ -1719,7 +1722,9 @@ class Manager:
         require(isinstance(request, dict) and type(request.get("schema")) is int and request["schema"] == 1)
         action = request.get("action")
         if recovery_only:
-            require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read', 'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect', 'generation-restore'), 'FORBIDDEN')
+            require(action in ('status', 'backup-inspect', 'operation-read', 'restore', 'core-start', 'core-start-read',
+                'core-start-plan', 'core-start-after-maintenance', 'recovery-info', 'generation-backup-inspect',
+                'generation-restore', 'generation-recovery-status', 'generation-recovery-start-check'), 'FORBIDDEN')
         if action == 'generation-preparation-read':
             return self.read_preparation(request)
         if action == 'generation-history':
@@ -1773,6 +1778,22 @@ class Manager:
                                 activeKeySha256=metadata["activeKeySha256"])
         if action == "generation-restore":
             return self.restore_generations(request, recovery_only=recovery_only)
+        if action == 'generation-recovery-status':
+            fields(request, {'schema', 'action'})
+            with self.lock(self.state / 'admission.lock', False):
+                self.maintenance()
+                with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), False):
+                    trusted = self.generation_receipt()
+                    key, proof = self.canonical(True, allow_generations=True)
+                    require(proof['keySha256'] == trusted['activeKeySha256'], 'UNSAFE_FILESYSTEM')
+                    ring = None
+                    if os.path.lexists(self.store.path(RING_PATH)):
+                        ring = self.read(self.store.path(RING_PATH), 512)
+                        _, checked = key_generations(ring)
+                        require(checked == trusted, 'UNSAFE_FILESYSTEM')
+                    return dict(schema=1, activeKeySha256=trusted['activeKeySha256'],
+                                ringSha256=trusted['ringSha256'], activeKeyReady=key is not None,
+                                keyringReady=ring is not None)
         if action == 'generation-restore-read':
             return self.generation_restore_read(request)
         if action == 'generation-restore-recover':
@@ -1807,7 +1828,8 @@ class Manager:
                                 **metadata, matchesRetainedReceipt=compatible, activeKeyReady=key is not None,
                                 keyringReady=ring_ready, restoreSupported=self.generation_restore_supported(),
                                 restoreAllowed=allowed, restoreBlockedByUnresolvedOperation=blocked)
-        if action in ("core-start", "core-start-read", "core-start-plan", "core-start-after-maintenance"):
+        if action in ("core-start", "core-start-read", "core-start-plan", "core-start-after-maintenance",
+                      "generation-recovery-start-check"):
             from kura_key_recovery_start import Starter
             return Starter(self).handle(request)
         if action == 'recovery-info':

@@ -31,6 +31,7 @@ validate_handoff_retired = _lifecycle_api['validate_handoff_retired']
 validate_sender_closed = _lifecycle_api['validate_sender_closed']
 validate_receiver_pending = _lifecycle_api['validate_receiver_pending']
 receiver_restore_intent = _lifecycle_api['receiver_restore_intent']
+validate_receiver_restore = _lifecycle_api['validate_receiver_restore']
 receiver_start_intent = _lifecycle_api['receiver_start_intent']
 validate_start = _lifecycle_api['validate_start']
 handoff_revocation_view = _lifecycle_api['handoff_revocation_view']
@@ -72,6 +73,8 @@ def archive_correlation(policy, reference, secret):
     if directory=='operations':
         validate_record(value,identity);response=value['response'];action=value['action'];binding={}
         if action=='restore':binding['expectedKeySha256']=response['keySha256']
+        elif action=='generation-restore':
+            binding=dict(expectedKeySha256=response['activeKeySha256'], expectedRingSha256=response['ringSha256'])
         elif action=='generation-prepare':binding['expectedSource']=response['source']
         elif action=='generation-backup-verify':binding=dict(preparationId=response['preparationId'],
             expectedRingSha256=response['ringSha256'],backupSha256=response['backupSha256'])
@@ -206,8 +209,7 @@ class RecoveryPrivateFormat:
             path=self.state/('operations' if kind=='RESTORE' else 'starts')/(identity+'.json');self.directory(path.parent)
             metadata=decode(self.read(path,4096));paths=[path]
             if kind=='RESTORE':
-                require(set(metadata)=={'schema','operationId','expectedKeySha256','backupSha256'} and metadata['schema']==1
-                    and type(metadata['schema']) is int and all(is_digest(metadata[k]) for k in ('expectedKeySha256','backupSha256')))
+                validate_receiver_restore(metadata, identity)
             else:
                 require(type(metadata.get('schema')) is int and metadata['schema'] in (1,2))
                 extra={'predecessorStartOperationId','maintenanceId','manifestSha256'} if metadata['schema']==2 else set()
@@ -272,9 +274,11 @@ class RecoveryPrivateFormat:
                         if name=='restore':self.retired_restore(identity,self.admission(identity,name))
             return
         if kind=='RESTORE':
+            modern = metadata['schema'] == 2
+            binding_fields = {'expectedKeySha256'} | ({'expectedRingSha256'} if modern else set())
             require(set(correlation)=={'kind','action','binding','outcome','responseSha256'} and correlation['kind']=='OPERATION'
-                and correlation['action']=='restore' and correlation['outcome']=='COMPLETED'
-                and correlation['binding']==dict(expectedKeySha256=metadata['expectedKeySha256']) and is_digest(correlation['responseSha256']))
+                and correlation['action']==('generation-restore' if modern else 'restore') and correlation['outcome']=='COMPLETED'
+                and correlation['binding']=={k:metadata[k] for k in binding_fields} and is_digest(correlation['responseSha256']))
         elif kind=='START':require(correlation==dict(kind='STARTUP',intent=metadata,outcome='COMPLETED'))
         else:require(kind=='HANDOFF' and set(correlation)=={'kind','binding','outcome','terminal'} and correlation['kind']=='HANDOFF'
             and correlation['binding']==metadata and correlation['terminal']==snapshot['terminal']

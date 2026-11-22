@@ -226,9 +226,7 @@ def archive_entry(policy, reference, secret, *, inventory=None):
     elif directory == 'startups':
         validate_start(value, identity); require(value['state'] == 'SUCCEEDED')
         restored=validate_record(decode(policy.read(policy.state/'operations'/(value['restoreOperationId']+'.json'))),value['restoreOperationId'])
-        require(restored['action']=='restore' and restored['state']=='SUCCEEDED'
-            and restored['response']['keyChanged'] is True and restored['response']['existingReceiptPreserved'] is True
-            and restored['response']['keySha256']==value['keySha256'])
+        require(restored['state']=='SUCCEEDED' and restored_key_digest(restored['response'])==value['keySha256'])
         modern=value['schema']==2
         native=dict(schema=1,action='core-start-after-maintenance' if modern else 'core-start',operationId=identity,
             restoreOperationId=value['restoreOperationId'],expectedKeySha256=value['keySha256'])
@@ -427,9 +425,10 @@ def validate_sender_attempt(value, source):
         require(source == 'recovery' and value['kind'] in ('restore', 'start', 'publish', 'continue', 'handoff-start', 'handoff-renewal'))
         request = value['request']; action = request.get('action')
         if value['kind'] == 'restore':
-            require(set(request) == {'schema', 'action', 'operationId', 'expectedKeySha256', 'backupSha256'}
-                and action == 'restore' and request['operationId'] == value['nativeOperationId']
-                and all(is_digest(request[k]) for k in ('expectedKeySha256', 'backupSha256')))
+            extra = {'expectedRingSha256'} if action == 'generation-restore' else set()
+            require(set(request) == {'schema', 'action', 'operationId', 'expectedKeySha256', 'backupSha256'} | extra
+                and action in ('restore', 'generation-restore') and request['operationId'] == value['nativeOperationId']
+                and all(is_digest(request[k]) for k in {'expectedKeySha256', 'backupSha256'} | extra))
         elif value['kind'] == 'start':
             extra = {'predecessorStartOperationId', 'maintenanceId', 'manifestSha256'} if action == 'core-start-after-maintenance' else set()
             require(action in ('core-start', 'core-start-after-maintenance') and set(request) ==
@@ -510,13 +509,46 @@ def receiver_start_intent(attempt):
 def receiver_restore_intent(attempt):
     validate_sender_attempt(attempt, 'recovery')
     require(attempt['kind'] == 'restore')
-    return dict(schema=1, **{key: attempt['request'][key]
-        for key in ('operationId', 'expectedKeySha256', 'backupSha256')})
+    request = attempt['request']
+    return dict(schema=2 if request['action'] == 'generation-restore' else 1,
+                **{key: value for key, value in request.items() if key not in ('schema', 'action')})
+
+
+def validate_receiver_restore(value, identity, *, marker=False):
+    require(isinstance(value, dict) and type(value.get('schema')) is int and value['schema'] in (1, 2))
+    digests = {'expectedKeySha256'} | ({'expectedRingSha256'} if value['schema'] == 2 else set())
+    if not marker:
+        digests.add('backupSha256')
+    require(set(value) == {'schema', 'operationId'} | digests and canonical_id(identity)
+            and value['operationId'] == identity and all(is_digest(value[key]) for key in digests))
+    return value
+
+
+def receiver_restore_marker(intent):
+    return {key: value for key, value in intent.items() if key != 'backupSha256'}
+
+
+def receiver_restore_matches(intent, response):
+    if intent['schema'] == 2:
+        return (response.get('action') == 'generation-restore'
+                and response.get('activeKeySha256') == intent['expectedKeySha256']
+                and response.get('ringSha256') == intent['expectedRingSha256'])
+    return response.get('action') == 'restore' and response.get('keySha256') == intent['expectedKeySha256']
+
+
+def restored_key_digest(response):
+    if response.get('state') != 'SUCCEEDED' or response.get('existingReceiptPreserved') is not True:
+        return None
+    if response.get('action') == 'restore' and response.get('keyChanged') is True:
+        return response['keySha256']
+    if response.get('action') == 'generation-restore' and any(
+            response.get(k) is True for k in ('activeKeyRestored', 'keyringRestored')):
+        return response['activeKeySha256']
+    return None
 
 
 def receiver_restore_pending(attempt):
-    intent = receiver_restore_intent(attempt)
-    return {key: intent[key] for key in ('schema', 'operationId', 'expectedKeySha256')}
+    return receiver_restore_marker(receiver_restore_intent(attempt))
 
 
 def validate_receiver_pending(value, attempt):
@@ -544,7 +576,7 @@ def check_sender_attempt(policy, value, namespace, source, uid):
             and root['target']['directory'] == ('handoffs' if value['kind'] == 'HANDOFF' else 'operations'),
             'GWT reservation does not match the original intent type and action')
     if source == 'recovery' and value['kind'] == 'restore':
-        require(root['target']['directory'] == 'operations' and root['target']['action'] == 'restore'
+        require(root['target']['directory'] == 'operations' and root['target']['action'] == value['request']['action']
             and root['target']['continuation'] is False, 'Recovery reservation has a different native target')
     if source == 'recovery' and value['kind'] == 'handoff-renewal':
         request = value['request']
@@ -1778,22 +1810,18 @@ class Lifecycle:
             for path in files:
                 require(path.name.endswith('.json') and canonical_id(path.name[:-5]))
                 value=decode(read(path,4096))
-                require(set(value)=={'schema','operationId','expectedKeySha256','backupSha256'}
-                    and type(value['schema']) is int and value['schema']==1 and value['operationId']==path.name[:-5]
-                    and is_digest(value['expectedKeySha256']) and is_digest(value['backupSha256']))
+                validate_receiver_restore(value, path.name[:-5])
                 if value['operationId'] in closed_restores:
                     require(value == closed_restores[value['operationId']], 'Retired restore intent has changed')
                     continue
                 original=validate_record(decode(self.read(self.state/'operations'/path.name)),value['operationId'])
-                require(original['state']=='SUCCEEDED' and original['action']=='restore'
-                    and original['response']['keySha256']==value['expectedKeySha256'],
+                require(original['state']=='SUCCEEDED' and receiver_restore_matches(value, original['response']),
                     'Unresolved cold recovery; retain original UUID and package state')
             if os.path.lexists(state/'pending.json'):
                 pending=decode(read(state/'pending.json',4096))
-                require(set(pending)=={'schema','operationId','expectedKeySha256'} and type(pending['schema']) is int
-                        and pending['schema']==1 and canonical_id(pending['operationId']) and is_digest(pending['expectedKeySha256']))
+                validate_receiver_restore(pending, pending.get('operationId'), marker=True)
                 local=decode(read(state/'operations'/(pending['operationId']+'.json'),4096))
-                require(local['expectedKeySha256']==pending['expectedKeySha256'])
+                require(receiver_restore_marker(local)==pending)
                 require(pending['operationId'] not in closed_restores, 'Retired recovery marker remains active')
             if os.path.lexists(state/'starts'):
                 directory(state/'starts');starts=list((state/'starts').iterdir())

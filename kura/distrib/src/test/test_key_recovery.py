@@ -25,6 +25,8 @@ protocol = recovery.protocol
 PASSWORD = 'synthetic cold recovery passphrase 52!'
 SHA = hashlib.sha256(b'isolated cold adapter synthetic key').hexdigest()
 BACKUP = dict(format=protocol.FORMAT, operationId=str(uuid.uuid4()), encrypted='fixture-ciphertext')
+RING = hashlib.sha256(b'isolated cold adapter synthetic ring').hexdigest()
+LEGACY = hashlib.sha256(b'isolated cold adapter synthetic prior generation').hexdigest()
 
 
 class FakeRoot:
@@ -45,6 +47,59 @@ class FakeRoot:
             if self.loss:raise OSError('Synthetic reply loss')
             return copy.deepcopy(self.records[identity])
         raise AssertionError('Unexpected Root action')
+
+
+class GenerationRoot(FakeRoot):
+    def __init__(self):
+        super().__init__()
+        self.ring_ready = False
+        self.start_allowed = True
+        self.starts = {}
+
+    def __call__(self, request):
+        action = request['action']
+        if action == 'status':
+            return dict(schema=1, error='GENERATION_REQUIRED')
+        if action == 'generation-recovery-status':
+            return dict(schema=1, activeKeySha256=SHA, ringSha256=RING, activeKeyReady=self.key_ready,
+                        keyringReady=self.ring_ready)
+        if action == 'generation-backup-inspect':
+            if request['passphrase'] != PASSWORD:
+                return dict(schema=1, error='BACKUP_REJECTED')
+            return dict(schema=1, backupOperationId=request['backup']['operationId'], createdAt='2026-11-22T00:00:00Z',
+                        ringSha256=RING, activeKeySha256=SHA, legacyKeySha256=LEGACY, keySha256s=[LEGACY,SHA],
+                        matchesRetainedReceipt=True, activeKeyReady=self.key_ready, keyringReady=self.ring_ready,
+                        restoreSupported=True, restoreAllowed=not (self.key_ready and self.ring_ready),
+                        restoreBlockedByUnresolvedOperation=False)
+        if action == 'generation-restore':
+            assert request['expectedKeySha256'] == SHA and request['expectedRingSha256'] == RING
+            self.writes += 1
+            identity = request['operationId']
+            if self.intent_only:
+                self.records[identity] = dict(schema=1, state='UNKNOWN', operationId=identity)
+                raise OSError('Interrupted original restore')
+            result = dict(schema=1, operationId=identity, action=action, state='SUCCEEDED',
+                          activeKeySha256=SHA, ringSha256=RING, activeKeyRestored=not self.key_ready,
+                          keyringRestored=not self.ring_ready, existingReceiptPreserved=True)
+            self.records[identity] = result
+            self.key_ready = self.ring_ready = True
+            return result
+        if action == 'generation-recovery-start-check':
+            if not self.start_allowed:
+                return dict(schema=1, error='CONFLICT')
+            return dict(schema=1, state='GENERATION_RECOVERY_START_READY')
+        if action == 'core-start-read':
+            return self.starts.get(request['operationId'], dict(schema=1, state='NOT_FOUND'))
+        if action == 'core-start-plan':
+            return dict(schema=1, state='START_PLAN', startAllowed=False, maintenanceId=None,
+                        predecessorStartOperationId=None, manifestSha256=None, blockingOperationId=None)
+        if action == 'core-start':
+            result = dict(schema=1, operationId=request['operationId'], restoreOperationId=request['restoreOperationId'],
+                          action=action, state='SUCCEEDED', keySha256=SHA, scope='SYSTEMD_JOB_ACCEPTED',
+                          jobPath='/org/freedesktop/systemd1/job/13')
+            self.starts[request['operationId']] = result
+            return result
+        return super().__call__(request)
 
 
 class Fixture:
@@ -207,6 +262,56 @@ class HttpTest(Fixture, unittest.TestCase):
         for _ in range(2):
             status,result=self.post('/api/restore',self.request);self.assertEqual(200,status);self.assertEqual('UNKNOWN',result['state'])
         self.assertEqual(1,self.root.writes)
+
+    def generation_request(self):
+        self.root = self.controller.client = GenerationRoot()
+        return dict(self.request, expectedRingSha256=RING,
+                    backupJson=json.dumps(dict(BACKUP, format=protocol.GENERATION_FORMAT)))
+
+    def test_generation_restore_checks_the_pair_and_only_explicit_start_requests_a_job(self):
+        request = self.generation_request()
+        self.root.key_ready = True
+        code, view = self.post('/api/status', {})
+        self.assertEqual(200, code)
+        self.assertTrue(view['generation']['activeKeyReady'])
+        self.assertFalse(view['keyReady'])
+        materials = {key: request[key] for key in ('backupJson', 'passphrase')}
+        code, checked = self.post('/api/inspect', materials)
+        self.assertEqual(200, code)
+        self.assertEqual((SHA, RING, 2, True),
+                         tuple(checked[k] for k in ('keySha256','ringSha256','keyCount','restoreAllowed')))
+        _, wrong = self.post('/api/restore', dict(request, expectedRingSha256='0'*64))
+        self.assertEqual(('REJECTED', 'CONFLICT'), (wrong['state'], wrong['error']))
+        self.assertEqual(0, self.root.writes)
+
+        _, restored = self.post('/api/restore', request)
+        self.assertEqual(('SUCCEEDED', 'ROOT_ORIGINAL'), (restored['state'], restored['resultSource']))
+        self.assertTrue(restored['keyringRestored'])
+        self.assertFalse(restored['activeKeyRestored'])
+        self.assertEqual({}, self.root.starts)
+        journal = self.journal.record(request['operationId'])
+        self.assertEqual((2, SHA, RING), (journal['schema'], journal['expectedKeySha256'], journal['expectedRingSha256']))
+        self.assertEqual({'schema','operationId','expectedKeySha256','expectedRingSha256','backupSha256'}, set(journal))
+        self.assertEqual(restored, self.post('/api/original', {'operationId':request['operationId']})[1])
+        start = dict(operationId=str(uuid.uuid4()), restoreOperationId=request['operationId'], expectedKeySha256=SHA)
+        self.root.start_allowed = False
+        self.assertEqual('REJECTED', self.post('/api/start', start)[1]['state'])
+        self.assertEqual({}, self.root.starts)
+        self.root.start_allowed = True
+        self.assertEqual('SYSTEMD_JOB_ACCEPTED', self.post('/api/start', start)[1]['scope'])
+        self.assertEqual('SUCCEEDED', self.post('/api/complete', {'operationId':start['operationId']})[1]['state'])
+        self.assertIsNone(self.journal.pending())
+
+    def test_generation_restore_lost_reply_leaves_the_original_pending_and_blocks_another_id(self):
+        request = self.generation_request()
+        self.root.intent_only = True
+        self.assertEqual('UNKNOWN', self.post('/api/restore', request)[1]['state'])
+        self.assertEqual('UNKNOWN', self.post('/api/original', {'operationId':request['operationId']})[1]['state'])
+        rejected = self.post('/api/restore', dict(request, operationId=str(uuid.uuid4())))[1]
+        self.assertEqual(('REJECTED','UNRESOLVED_OPERATION'), (rejected['state'], rejected['error']))
+        self.assertEqual(1, self.root.writes)
+        self.assertEqual(request['operationId'], self.journal.pending()['operationId'])
+        self.assertEqual({}, self.root.starts)
 
     def test_static_html_sets_secure_cookie_csp_and_no_store(self):
         stream=http.client.HTTPSConnection('127.0.0.1',self.server.server_port,context=ssl._create_unverified_context(),timeout=5)
