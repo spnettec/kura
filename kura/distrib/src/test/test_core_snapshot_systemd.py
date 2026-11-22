@@ -42,7 +42,7 @@ class SystemdCoreValidationTest(unittest.TestCase):
         destinations=['/opt/eclipse/kura','/etc/kura','/var/lib/kura-key-service',
                       '/etc/kura-management-agent','/fixtures/core-validation','/run/kura-key-service',
                       '/etc/systemd/system/kura-management-agent.service']
-        destinations += ['/lib/systemd/system/'+name for name in (*package.lifecycle.UNITS,'kura.service')]
+        destinations += ['/lib/systemd/system/'+name for name in (*getattr(package.lifecycle, "NATIVE_VALIDATION_UNITS", package.lifecycle.UNITS),'kura.service')]
         self.assertFalse(any(os.path.lexists(name) for name in destinations),'Never adopt an existing runtime or credentials')
         validation.writer.WriterLeaseTest.setUp(self)
         self.seed(); self.policy.leave()
@@ -55,7 +55,7 @@ class SystemdCoreValidationTest(unittest.TestCase):
         self.home=Path('/opt/eclipse/kura');self.directory=Path('/etc/kura/credentials');self.state=Path('/var/lib/kura-key-service')
         self.home.parent.chmod(0o755)
         for path in [self.home,*self.home.rglob('*')]:path.chmod(0o755 if path.is_dir() else 0o644)
-        for name in (*package.lifecycle.UNITS,'kura.service'):
+        for name in (*getattr(package.lifecycle, "NATIVE_VALIDATION_UNITS", package.lifecycle.UNITS),'kura.service'):
             self.copy(self.root/'lib/systemd/system'/name,Path('/lib/systemd/system')/name)
         self.command('/usr/sbin/groupadd','--system','kura-key-control')
         self.command('/usr/sbin/groupadd','--system','kura-management')

@@ -29,6 +29,8 @@ MAIN_LINKS = {'linked': '/etc/systemd/system/kura.service',
 MAIN_LINK_BACKUP = '.kura-main-migration-link'
 LEGACY_UNITS = ("kura-key-service.socket", "kura-key-service.service")
 UNITS = (*LEGACY_UNITS, 'kura-key-recovery.service')
+VALIDATION_UNITS = ('kura-snapshot-validation.socket', 'kura-snapshot-validation.service')
+NATIVE_VALIDATION_UNITS = (*UNITS, *VALIDATION_UNITS)
 LEGACY_ASSETS = frozenset(("bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
                    "libexec/key-backup/kura-key-crypto.jar", "libexec/key-backup/lib/bcprov-jdk18on-1.86.jar"))
 COLD_V1_ASSETS = LEGACY_ASSETS | frozenset(('bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py',
@@ -36,6 +38,8 @@ COLD_V1_ASSETS = LEGACY_ASSETS | frozenset(('bin/kura_key_recovery.py', 'bin/kur
 PRE_JOURNAL_ASSETS = COLD_V1_ASSETS | frozenset(('bin/kura_key_recovery_start.py',))
 JOURNAL_V1_ASSETS = PRE_JOURNAL_ASSETS | frozenset(('bin/kura_key_journal.py',))
 ASSETS = JOURNAL_V1_ASSETS | frozenset(('share/key-recovery/archive.js',))
+NATIVE_VALIDATION_ASSETS = ASSETS | {'bin/kura_native_snapshot_validation.py'}
+JOURNAL_ASSETS = (JOURNAL_V1_ASSETS, ASSETS, NATIVE_VALIDATION_ASSETS)
 
 
 class Refused(RuntimeError):
@@ -1613,8 +1617,11 @@ class Lifecycle:
                 and type(manifest["protocol"]) is int and manifest["protocol"] == (2 if modern else 1)
                 and isinstance(manifest["files"], dict) and isinstance(manifest["units"], dict))
         profile = (frozenset(manifest['files']), frozenset(manifest['units']))
-        require((profile in tuple((files,frozenset(UNITS)) for files in (ASSETS,JOURNAL_V1_ASSETS,PRE_JOURNAL_ASSETS)) and isinstance(manifest['generation'], dict))
-                if modern else profile in ((LEGACY_ASSETS,frozenset(LEGACY_UNITS)),(COLD_V1_ASSETS,frozenset(UNITS)),(PRE_JOURNAL_ASSETS,frozenset(UNITS)),(JOURNAL_V1_ASSETS,frozenset(UNITS)),(ASSETS,frozenset(UNITS))),
+        recovery_units = frozenset(UNITS)
+        recovery_profiles = {(files, recovery_units) for files in (PRE_JOURNAL_ASSETS, JOURNAL_V1_ASSETS, ASSETS)}
+        recognized = (recovery_profiles | {(NATIVE_VALIDATION_ASSETS, frozenset(NATIVE_VALIDATION_UNITS))}) if modern else (
+            recovery_profiles | {(LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, recovery_units)})
+        require(profile in recognized and (not modern or isinstance(manifest['generation'], dict)),
                 'Unrecognized key-service package profile')
         for name, expected in manifest["files"].items():
             require(isinstance(name, str) and name and not Path(name).is_absolute()
@@ -1819,7 +1826,7 @@ class Lifecycle:
     def no_overrides(self):
         for prefix in ("/etc", "/run", "/usr/lib", "/lib"):
             base = self.path(prefix + "/systemd/system")
-            for name in UNITS:
+            for name in NATIVE_VALIDATION_UNITS:
                 if prefix in ("/etc", "/run"):
                     require(not os.path.lexists(base / name), "Custom key-service unit requires reviewed migration")
                 stem, kind = name.rsplit(".", 1)
@@ -1841,10 +1848,10 @@ class Lifecycle:
 
     def stop_units(self):
         if not self.path("/run/systemd/system").is_dir():
-            require(not any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in UNITS),
+            require(not any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in NATIVE_VALIDATION_UNITS),
                     "Installed key service requires its systemd manager")
             return
-        for name in UNITS: # Stop listener first, then the idle worker service.
+        for name in NATIVE_VALIDATION_UNITS: # Stop listener first, then the idle worker service.
             output = self.command(["show", name, "--property=LoadState", "--property=ActiveState",
                                    "--property=MainPID", "--property=ControlPID"])
             properties = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
@@ -1939,9 +1946,9 @@ class Lifecycle:
     def enter(self, action):
         require(action in ("install", "upgrade", "remove"))
         self.no_overrides()
-        registered = any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in UNITS)
+        registered = any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in NATIVE_VALIDATION_UNITS)
         if self.path("/run/systemd/system").is_dir():
-            for name in UNITS:
+            for name in NATIVE_VALIDATION_UNITS:
                 output = self.command(["show", name, "--property=LoadState"])
                 properties = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
                 require(properties.get("LoadState") in ("loaded", "masked", "not-found"))
@@ -1950,7 +1957,7 @@ class Lifecycle:
         manifest = None
         if registered and previous_fence is None:
             manifest=self.assets() # Never execute an unknown installed helper or silently adopt another unit.
-            for name in set(UNITS)-set(manifest['units']):
+            for name in set(NATIVE_VALIDATION_UNITS)-set(manifest['units']):
                 require(not os.path.lexists(self.path('/lib/systemd/system/'+name)), 'Foreign recovery unit requires reviewed migration')
                 if self.path('/run/systemd/system').is_dir():
                     properties=dict(line.split('=',1) for line in self.command(['show',name,'--property=LoadState']).splitlines() if '=' in line)
@@ -1986,7 +1993,7 @@ class Lifecycle:
                     self.directory(directory, private=True, create=True)
                     self.sync(directory.parent)
             # Created only after unpack: old prerm must still recognize the old journal.
-            if frozenset(manifest["files"]) in (JOURNAL_V1_ASSETS,ASSETS):
+            if frozenset(manifest["files"]) in JOURNAL_ASSETS:
                 self.directory(self.state / "startups", private=True, create=True)
                 self.sync(self.state)
             require(len(self.read(self.state / "journal.key", limit=32)) == 32)
@@ -1997,7 +2004,7 @@ class Lifecycle:
             manager = Manager(self.root, self.owner)
             with manager.lock(manager.store.path("/etc/kura/credentials/.provision.lock"), False):
                 _,_,_,_,proof,_=manager.generation_source()
-            if fence is not None and frozenset(manifest['files']) in (JOURNAL_V1_ASSETS,ASSETS):
+            if fence is not None and frozenset(manifest['files']) in JOURNAL_ASSETS:
                 # The existing installer stops Main synchronously. Record its terminal
                 # predecessor set under the package lock, never infer UNKNOWN from Main0.
                 # A reinstall completes the retained remove fence under its original UUID.

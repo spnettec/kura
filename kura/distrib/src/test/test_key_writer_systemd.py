@@ -39,7 +39,7 @@ class SystemdWriterTest(unittest.TestCase):
         destinations = ['/opt/eclipse/kura', '/etc/kura', '/var/lib/kura-key-service',
                         '/etc/systemd/system/kura.service.d', '/etc/systemd/system/kura-lease-probe.service',
                         '/run/kura-key-service']
-        destinations += ['/lib/systemd/system/' + n for n in (*package.lifecycle.UNITS, 'kura.service')]
+        destinations += ['/lib/systemd/system/' + n for n in (*getattr(package.lifecycle, "NATIVE_VALIDATION_UNITS", package.lifecycle.UNITS), 'kura.service')]
         self.assertFalse(any(os.path.lexists(p) for p in destinations), 'Existing Kura files or state must never be adopted or changed')
         writer.WriterLeaseTest.setUp(self)
         self.policy.leave()
@@ -53,7 +53,7 @@ class SystemdWriterTest(unittest.TestCase):
         self.home.parent.chmod(0o755)
         for path in [self.home, *self.home.rglob('*')]:
             path.chmod(0o755 if path.is_dir() else 0o644)
-        for name in (*package.lifecycle.UNITS, 'kura.service'):
+        for name in (*getattr(package.lifecycle, "NATIVE_VALIDATION_UNITS", package.lifecycle.UNITS), 'kura.service'):
             self.copy(self.root / 'lib/systemd/system' / name, Path('/lib/systemd/system') / name)
         self.command('/usr/sbin/groupadd', '--system', 'kura-key-control')
         self.command('/usr/sbin/useradd', '--system', '--user-group', '--no-create-home',

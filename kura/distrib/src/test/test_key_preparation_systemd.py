@@ -101,7 +101,7 @@ class PreparationSystemdTest(unittest.TestCase):
         import kura_key_service as service
         import kura_key_service_lifecycle as lifecycle
         self.service = service
-        for unit in lifecycle.UNITS:
+        for unit in getattr(lifecycle, "NATIVE_VALIDATION_UNITS", lifecycle.UNITS):
             target = Path('/lib/systemd/system') / unit
             self.assertFalse(os.path.lexists(target))
             shutil.copyfile(self.home / 'install' / unit, target)

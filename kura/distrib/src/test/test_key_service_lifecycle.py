@@ -56,7 +56,8 @@ class LifecycleTest(unittest.TestCase):
         code = 0
         if command == "show":
             name = args[2]
-            result = "LoadState=loaded\nActiveState=" + self.states[name] + "\nMainPID=0\nControlPID=0\n"
+            loaded = "loaded" if name in self.states else "not-found"
+            result = "LoadState=" + loaded + "\nActiveState=" + self.states.get(name, "inactive") + "\nMainPID=0\nControlPID=0\n"
         elif command == "stop":
             if self.fail_stop:
                 code = 1
@@ -112,6 +113,28 @@ class LifecycleTest(unittest.TestCase):
         self.assertEqual(before, self.data_identity())
         stops = [args[2] for args in self.calls if args[1] == "stop"]
         self.assertEqual(list(lifecycle.UNITS), stops)
+
+    def test_native_validation_manifest_pairs_the_two_units_and_maintainer_stops_listener_first(self):
+        self.assertEqual(set(lifecycle.UNITS), set(self.policy.assets()['units']))
+        path = self.physical / 'libexec/key-backup/manifest.json'
+        updated = json.loads(path.read_bytes())
+        asset = 'bin/kura_native_snapshot_validation.py'
+        self.write(self.physical / asset, b'native validation asset', 0o644)
+        updated['files'][asset] = hashlib.sha256(b'native validation asset').hexdigest()
+        updated.update(schema=2, protocol=2, generation={})
+        self.write(path, lifecycle.encoded(updated), 0o640)
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unrecognized key-service package profile'):
+            self.policy.assets()
+        for unit in lifecycle.VALIDATION_UNITS:
+            raw = unit.encode()
+            self.write(self.root / 'lib/systemd/system' / unit, raw, 0o644)
+            updated['units'][unit] = hashlib.sha256(raw).hexdigest()
+            self.states[unit] = 'active'
+        self.write(path, lifecycle.encoded(updated), 0o640)
+        self.assertEqual(updated, self.policy.assets())
+        self.policy.stop_units()
+        stopped = [args[2] for args in self.calls if args[1] == 'stop']
+        self.assertEqual(list(lifecycle.NATIVE_VALIDATION_UNITS), stopped)
 
     def test_reentrant_install_preserves_fence_id_and_journal_key(self):
         original = self.policy.enter("upgrade")

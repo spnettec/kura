@@ -553,6 +553,9 @@ function postInstall {
     systemctl daemon-reload >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-service.socket >> ${LOG} 2>&1 || return 1
     systemctl enable --now kura-key-recovery.service >> ${LOG} 2>&1 || return 1
+    if systemctl is-active --quiet kura-management-agent-v2.service; then
+        systemctl start kura-snapshot-validation.socket >> "${LOG}" 2>&1 || return 1
+    fi
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" resume >> ${LOG} 2>&1 || return 1
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_reboot_setup.py" resume >> ${LOG} 2>&1 || return 1
 
