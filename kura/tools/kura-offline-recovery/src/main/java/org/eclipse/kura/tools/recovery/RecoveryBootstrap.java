@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +43,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 
 /** Optional in-framework gate. Standalone validate never starts this or any OSGi framework. */
 public final class RecoveryBootstrap implements BundleActivator {
+    private static final Path CORE_PROJECTIONS = Path.of("/var/lib/kura-recovery-launch");
     private RecoveryVerifier verifier;
     private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryVerificationService> verificationRegistration;
     private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryCompletionService> completionRegistration;
@@ -324,8 +326,18 @@ public final class RecoveryBootstrap implements BundleActivator {
         return result;
     }
     static Map<String,String> manifest(Path path) throws Exception {
-        byte[] bytes=read(path,16*1024);require(Files.getPosixFilePermissions(path,LinkOption.NOFOLLOW_LINKS)
-                .stream().noneMatch(p->p.name().startsWith("GROUP")||p.name().startsWith("OTHERS")));
+        boolean projection = path.startsWith(CORE_PROJECTIONS);
+        if (projection) {
+            require(path.equals(path.normalize()) && path.getNameCount() == CORE_PROJECTIONS.getNameCount() + 2
+                    && path.getFileName().toString().equals("request.properties"));
+            projected(CORE_PROJECTIONS, true);
+            projected(path.getParent(), true);
+            projected(path, false);
+        } else {
+            require(Files.getPosixFilePermissions(path,LinkOption.NOFOLLOW_LINKS)
+                    .stream().noneMatch(p->p.name().startsWith("GROUP")||p.name().startsWith("OTHERS")));
+        }
+        byte[] bytes=read(path,16*1024);
         privateParent(path);
         Map<String,String> result=new HashMap<>();
         for(String line:new String(bytes,StandardCharsets.UTF_8).split("\\n")) {
@@ -378,7 +390,27 @@ public final class RecoveryBootstrap implements BundleActivator {
                     && result.get("verification.source.receipt.sha256").matches("[0-9a-f]{64}")
                     && result.get("verification.source.applied.sha256").matches("[0-9a-f]{64}"));
         }
+        if (projection) {
+            Path directory = path.getParent();
+            Path snapshot = directory.resolve("snapshot_0.xml");
+            require(managed && result.get("restore.id").equals(directory.getFileName().toString())
+                    && result.get("snapshot.path").equals(snapshot.toString())
+                    && result.get("receipt.path").equals(directory.resolve("result/applied.properties").toString())
+                    && compensation.stream().noneMatch(result::containsKey) && normal.stream().noneMatch(result::containsKey));
+            projected(snapshot, false);
+        }
         return result;
+    }
+
+    private static void projected(Path path, boolean directory) throws Exception {
+        var attributes = Files.readAttributes(path, PosixFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        require((directory ? attributes.isDirectory() : attributes.isRegularFile())
+                && Files.getAttribute(path, "unix:uid", LinkOption.NOFOLLOW_LINKS).equals(0)
+                && attributes.group().getName().equals("kurad")
+                && attributes.permissions().equals(PosixFilePermissions.fromString(directory ? "rwxr-x---" : "r--r-----")));
+        if (!directory) {
+            require(Files.getAttribute(path, "unix:nlink", LinkOption.NOFOLLOW_LINKS).equals(1));
+        }
     }
     static CryptoServiceImpl recoveryCrypto(Map<String,String> manifest) throws Exception {
         if("true".equals(manifest.get("crypto.systemd.credentials"))) {
