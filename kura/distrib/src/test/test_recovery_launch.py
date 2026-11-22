@@ -14,7 +14,9 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_recovery_launch as launch
 import kura_recovery_main_command as commands
+import kura_snapshot_publication
 from kura_key_service import Failure, Lifecycle, Manager
+from kura_key_store import KEY_PATH, RING_PATH
 from kura_snapshot_publication import SnapshotPublication
 
 
@@ -120,6 +122,7 @@ class LaunchProjectionTest(unittest.TestCase):
             manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
         publication.directory.mkdir(parents=True, mode=0o700)
         intent = dict(snapshotId='7', snapshotSha256=launch.digest(self.contents), size=len(self.contents),
+                      publishedSha256=launch.digest(self.contents), publishedSize=len(self.contents),
                       directory=publication.directory_identity(), state='ORDINARY_SNAPSHOT_INTENT')
         pending, target = publication.paths(self.identity, intent['snapshotId'])
         launch.write(pending, self.contents, 0o600)
@@ -134,6 +137,90 @@ class LaunchProjectionTest(unittest.TestCase):
         launch.write(replacement, self.contents, 0o600)
         replacement.replace(target)
         self.assertEqual('ORDINARY_SNAPSHOT_UNKNOWN', publication.observed(self.identity, intent, ready)['state'])
+
+    def test_snapshot_publication_fingerprints_the_converted_publish_and_refuses_the_source_digest(self):
+        lifecycle = Lifecycle(self.root, 0)
+        publication = SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+        publication.directory.mkdir(parents=True, mode=0o700)
+        converted = b'converted ordinary bytes'
+        intent = dict(snapshotId='9', snapshotSha256=launch.digest(self.contents), size=len(self.contents),
+                      publishedSha256=launch.digest(converted), publishedSize=len(converted),
+                      directory=publication.directory_identity(), state='ORDINARY_SNAPSHOT_INTENT')
+        pending, target = publication.paths(self.identity, intent['snapshotId'])
+        directory_fd = os.open(publication.directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            publication.write_pending(directory_fd, pending.name, self.target / launch.SNAPSHOT, converted)
+        finally:
+            os.close(directory_fd)
+        self.assertEqual(dict(device=str(publication.directory.stat().st_dev),
+                              inode=str(pending.stat().st_ino)), publication.fingerprint(pending, intent))
+        self.assertEqual(converted, pending.read_bytes())
+        self.assertEqual(0o600, pending.stat().st_mode & 0o777)
+        with self.assertRaises(Failure):
+            publication.fingerprint(pending, intent | {'publishedSha256': intent['snapshotSha256']})
+        with self.assertRaises(Failure):
+            publication.fingerprint(pending, intent | {'publishedSize': len(self.contents)})
+
+    def publication_conversion_fixture(self):
+        lifecycle = Lifecycle(self.root, 0)
+        (self.root / 'opt' / 'eclipse' / 'kura').mkdir(parents=True, exist_ok=True)
+        return SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+
+    def test_snapshot_publication_convert_runs_exact_subcommand_and_refuses_every_failure(self):
+        publication = self.publication_conversion_fixture()
+        source = self.target / launch.SNAPSHOT
+        plan = dict(mode='plain', passwordPolicy='legacy', snapshotSha256='a' * 64, size=3, ringSha256=None)
+        captured = {}
+
+        def succeed(command, **kwargs):
+            captured['command'] = command
+            captured['kwargs'] = kwargs
+            return SimpleNamespace(returncode=0, stdout=b'converted-ordinary', stderr=b'')
+
+        with patch.object(kura_snapshot_publication.subprocess, 'run', succeed):
+            self.assertEqual(b'converted-ordinary',
+                             publication.convert(source, plan, 'aes-gcm'))
+        command = captured['command']
+        self.assertEqual(['convert', '--input', str(source), '--from-mode', 'plain', '--to-mode', 'aes-gcm',
+                          '--password-policy', 'legacy', '--expected-input-sha256', 'a' * 64],
+                         command[command.index('convert'):-2])
+        self.assertEqual(['--key-file', KEY_PATH], command[-2:])
+        self.assertEqual('/', captured['kwargs']['cwd'])
+        self.assertEqual({'PATH': '/usr/bin:/bin', 'LANG': 'C'}, captured['kwargs']['env'])
+        self.assertEqual(90, captured['kwargs']['timeout'])
+
+        ring_plan = plan | {'mode': 'aes-gcm', 'ringSha256': 'b' * 64}
+        ring_runner = Mock(return_value=SimpleNamespace(returncode=0, stdout=b'converted-ordinary', stderr=b''))
+        with patch.object(kura_snapshot_publication.subprocess, 'run', ring_runner):
+            self.assertEqual(b'converted-ordinary', publication.convert(source, ring_plan, 'plain'))
+            self.assertEqual(['--keyring-file', RING_PATH, '--keyring-sha256', 'b' * 64],
+                             ring_runner.call_args[0][0][-4:])
+        failures = [SimpleNamespace(returncode=1, stdout=b'x', stderr=b''),
+                    SimpleNamespace(returncode=0, stdout=b'x', stderr=b'noise'),
+                    SimpleNamespace(returncode=0, stdout=b'y' * (launch.MAX_SNAPSHOT + 1), stderr=b'')]
+        for result in failures:
+            with patch.object(kura_snapshot_publication.subprocess, 'run', lambda *a, **k: result):
+                with self.assertRaises(Failure):
+                    publication.convert(source, plan, 'aes-gcm')
+
+        def explode(command, **kwargs):
+            raise OSError('unavailable')
+
+        with patch.object(kura_snapshot_publication.subprocess, 'run', explode):
+            with self.assertRaises(Failure):
+                publication.convert(source, plan, 'aes-gcm')
+        with patch.object(kura_snapshot_publication.subprocess, 'run',
+                          lambda *a, **k: (_ for _ in ()).throw(AssertionError('no subprocess'))):
+            with self.assertRaises(Failure):
+                publication.convert(source, plan, 'plain')
+
+        with self.assertRaises(Failure):
+            publication.convert(source, plan | {'mode': 'des'}, 'aes-gcm')
+        with self.assertRaises(Failure):
+            publication.convert(source, plan, 'plain')
+
 
     def test_guarded_marker_keeps_original_selection_and_pins_new_plan(self):
         fixed = dict(restoreId=self.identity)

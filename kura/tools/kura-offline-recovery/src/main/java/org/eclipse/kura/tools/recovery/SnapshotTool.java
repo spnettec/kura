@@ -2,7 +2,9 @@
 package org.eclipse.kura.tools.recovery;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
@@ -44,7 +46,8 @@ public final class SnapshotTool {
     private SnapshotTool() { }
 
     public static void main(String[] args) {
-        System.exit(run(args, System.out, System.err));
+        System.exit(args.length > 0 && args[0].equals("convert") ? convert(args, System.out, System.err)
+                : run(args, System.out, System.err));
     }
 
     static int run(String[] args, PrintStream out, PrintStream err) {
@@ -85,6 +88,83 @@ public final class SnapshotTool {
             err.println("{\"error\":\"SNAPSHOT_VALIDATION_FAILED\"}");
             return 2;
         }
+    }
+
+    /**
+     * One deterministic whole-file mode conversion for the ordinary snapshot import:
+     * the staged artifact is decoded with the plan's password policy, then re-emitted
+     * in exactly the ordinary directory's current format. Nothing is written or logged.
+     */
+    static int convert(String[] args, PrintStream out, PrintStream err) {
+        try {
+            Map<String, String> options = convertOptions(args);
+            CryptoServiceImpl crypto = RecoveryCrypto.load(
+                    options.containsKey("--key-file") ? Path.of(options.get("--key-file")) : null,
+                    options.containsKey("--keyring-file") ? Path.of(options.get("--keyring-file")) : null,
+                    options.get("--keyring-sha256"), options.containsKey("--default-key"));
+            byte[] artifact = read(Path.of(options.get("--input")), LIMIT);
+            require(!options.containsKey("--expected-input-sha256")
+                    || HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(artifact))
+                            .equals(options.get("--expected-input-sha256")));
+            byte[] xml = artifact;
+            if (options.get("--from-mode").equals("aes-gcm")) {
+                try (InputStream in = crypto.aesDecryptingStream(new ByteArrayInputStream(artifact))) {
+                    xml = bounded(in, LIMIT);
+                }
+            }
+            try {
+                decode(xml, crypto, options.getOrDefault("--password-policy", "authenticated"));
+                byte[] payload = options.get("--to-mode").equals("aes-gcm") ? encryptBounded(crypto, xml) : xml;
+                out.write(payload);
+                out.flush();
+            } finally {
+                Arrays.fill(xml, (byte) 0);
+                if (xml != artifact) {
+                    Arrays.fill(artifact, (byte) 0);
+                }
+            }
+            return 0;
+        } catch (Exception failure) {
+            // Exception messages may contain XML values, passwords or host paths. Never print them.
+            err.println("{\"error\":\"SNAPSHOT_CONVERSION_FAILED\"}");
+            return 2;
+        }
+    }
+
+    private static byte[] encryptBounded(CryptoServiceImpl crypto, byte[] xml) throws Exception {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        crypto.encryptAes(new ByteArrayInputStream(xml), buffer);
+        require(buffer.size() > 0 && buffer.size() <= LIMIT);
+        return buffer.toByteArray();
+    }
+
+    private static Map<String, String> convertOptions(String[] args) {
+        require(args.length > 0 && args[0].equals("convert"));
+        Map<String, String> result = new HashMap<>();
+        for (int i = 1; i < args.length; i++) {
+            String name = args[i];
+            require(Set.of("--input", "--from-mode", "--to-mode", "--key-file", "--keyring-file", "--keyring-sha256",
+                    "--default-key", "--password-policy", "--expected-input-sha256").contains(name));
+            require(!result.containsKey(name));
+            if (name.equals("--default-key")) {
+                result.put(name, "true");
+            } else {
+                require(++i < args.length && !args[i].startsWith("--"));
+                result.put(name, args[i]);
+            }
+        }
+        require(result.containsKey("--input"));
+        require(Set.of("plain", "aes-gcm").contains(result.getOrDefault("--from-mode", ""))
+                && Set.of("plain", "aes-gcm").contains(result.getOrDefault("--to-mode", ""))
+                && !result.get("--from-mode").equals(result.get("--to-mode")));
+        require((result.containsKey("--key-file") ? 1 : 0) + (result.containsKey("--keyring-file") ? 1 : 0)
+                + (result.containsKey("--default-key") ? 1 : 0) == 1);
+        require(result.containsKey("--keyring-file") == result.containsKey("--keyring-sha256"));
+        require(Set.of("authenticated", "legacy", "logical-v1")
+                .contains(result.getOrDefault("--password-policy", "authenticated")));
+        require(!result.containsKey("--expected-input-sha256")
+                || result.get("--expected-input-sha256").matches("[0-9a-f]{64}"));
+        return result;
     }
 
     private static Map<String, String> options(String[] args) {

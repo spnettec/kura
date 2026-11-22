@@ -3,14 +3,19 @@ package org.eclipse.kura.tools.recovery;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -108,6 +113,80 @@ class SnapshotToolTest {
         assertEquals(0, SnapshotTool.run(new String[] {"validate", "--input", source.toString(), "--mode", "plain",
                 "--default-key"}, new PrintStream(out), System.err));
         assertTrue(out.toString().contains("\"keyAuthenticated\":false"));
+    }
+
+    private static String hex(byte[] value) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
+    }
+
+    private Path importKey(String name, byte[] value) throws Exception {        Path path = directory.resolve(name);
+        Files.write(path, value);
+        Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"));
+        return path;
+    }
+
+    private static int convert(String[] args, ByteArrayOutputStream out, ByteArrayOutputStream err) {
+        return SnapshotTool.convert(args, new PrintStream(out), new PrintStream(err));
+    }
+
+    private static String[] convertArguments(Path input, String from, String to, Path key, String... extra) {
+        List<String> arguments = new ArrayList<>(List.of("convert", "--input", input.toString(), "--from-mode", from,
+                "--to-mode", to, "--key-file", key.toString()));
+        arguments.addAll(List.of(extra));
+        return arguments.toArray(String[]::new);
+    }
+
+    @Test void convertPublishesTheOrdinaryEncryptedFormAndDecryptsBackToTheExactXml() throws Exception {
+        byte[] xml = snapshot(Map.of("p", new Password(crypto.encryptAes("secret".toCharArray()))));
+        Path staged = directory.resolve("staged.xml"); Files.write(staged, xml);
+        Path keyPath = importKey("kura_encryption_key", key);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(), err = new ByteArrayOutputStream();
+        assertEquals(0, convert(convertArguments(staged, "plain", "aes-gcm", keyPath,
+                "--password-policy", "authenticated", "--expected-input-sha256", SnapshotToolTest.hex(xml)), out, err));
+        byte[] encrypted = out.toByteArray();
+        assertFalse(Arrays.equals(xml, encrypted));
+        try (InputStream decrypted = crypto.aesDecryptingStream(new ByteArrayInputStream(encrypted))) {
+            assertArrayEquals(xml, decrypted.readAllBytes());
+        }
+        Path ordinary = directory.resolve("ordinary.xml"); Files.write(ordinary, encrypted);
+        out.reset();
+        assertEquals(0, convert(convertArguments(ordinary, "aes-gcm", "plain", keyPath,
+                "--password-policy", "authenticated"), out, err));
+        assertArrayEquals(xml, out.toByteArray());
+        assertEquals("", err.toString());
+        // The staged artifact is never modified and no extra file appears.
+        assertArrayEquals(xml, Files.readAllBytes(staged));
+        assertEquals(3, Files.list(directory).count());
+    }
+
+    @Test void convertRefusesWrongDigestModesPoliciesAndKeysWithoutOutput() throws Exception {
+        byte[] xml = snapshot(Map.of("a", "value"));
+        Path staged = directory.resolve("staged.xml"); Files.write(staged, xml);
+        Path keyPath = importKey("kura_encryption_key", key);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(), err = new ByteArrayOutputStream();
+        assertEquals(2, convert(convertArguments(staged, "plain", "aes-gcm", keyPath,
+                "--expected-input-sha256", "0".repeat(64)), out, err));
+        assertEquals("", out.toString());
+        assertEquals(2, convert(convertArguments(staged, "plain", "plain", keyPath), out, err));
+        assertEquals(2, convert(new String[] {"convert", "--input", staged.toString(), "--from-mode", "plain",
+                "--to-mode", "aes-gcm"}, out, err));
+        byte[] legacy = snapshot(Map.of("p", new Password("legacy-clear".toCharArray())));
+        Path legacyStaged = directory.resolve("legacy.xml"); Files.write(legacyStaged, legacy);
+        assertEquals(2, convert(convertArguments(legacyStaged, "plain", "aes-gcm", keyPath,
+                "--password-policy", "authenticated"), out, err));
+        assertEquals("", out.toString());
+        assertTrue(err.toString().startsWith("{\"error\":\"SNAPSHOT_CONVERSION_FAILED\"}"));
+        out.reset(); err.reset();
+        assertEquals(0, convert(convertArguments(legacyStaged, "plain", "aes-gcm", keyPath,
+                "--password-policy", "legacy"), out, err));
+        try (InputStream decrypted = crypto.aesDecryptingStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertArrayEquals(legacy, decrypted.readAllBytes());
+        }
+        Path wrong = importKey("wrong-key", "fedcba9876543210".getBytes(StandardCharsets.UTF_8));
+        out.reset();
+        assertEquals(2, convert(convertArguments(legacyStaged, "plain", "aes-gcm", wrong), out, err));
+        assertEquals("", out.toString());
+        assertFalse(err.toString().contains(directory.toString()));
     }
 
     @ParameterizedTest @ValueSource(strings = {
