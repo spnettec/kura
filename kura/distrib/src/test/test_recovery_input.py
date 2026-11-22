@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_recovery_input as stage
+import kura_native_recovery_input as native
 from kura_key_service import Failure, Lifecycle, Manager
 
 
@@ -104,6 +105,46 @@ class RecoveryInputTest(unittest.TestCase):
             self.stage.continue_ready(self.identity)
         self.assertTrue(pending.is_dir())
         self.validator.validate.assert_not_called()
+
+    def delegation(self):
+        options = dict(restoreId=self.identity, snapshotSha256=self.sha, size=len(self.contents),
+                       mode='aes-gcm', passwordPolicy='authenticated', bindingSha256=self.binding)
+        peer = dict(schema=1, purpose='test-peer', invocationId='a' * 32, bootId='test-boot',
+                    rootDevice=1, rootInode=1, identitySha256='b' * 64)
+        result = native.grant(self.stage, options, lambda: peer)
+        self.assertEqual('RECOVERY_INPUT_GRANTED', result['state'])
+        return dict(schema=1, action='recovery-input-stage', **options), peer
+
+    def test_delegation_must_match_every_field_and_the_granted_invocation(self):
+        request, peer = self.delegation()
+        original = dict(schema=1, action='recovery-input-original', restoreId=self.identity)
+        with self.input.open('rb') as artifact:
+            for changed, authenticate in ((request | {'size': request['size'] + 1}, lambda: peer),
+                                          (request, lambda: peer | {'invocationId': 'c' * 32})):
+                with self.assertRaisesRegex(Failure, 'FORBIDDEN'):
+                    native.handle(self.stage, changed, artifact.fileno(), self.manager.owner, authenticate)
+            self.assertEqual('RECOVERY_INPUT_GRANTED',
+                native.handle(self.stage, original, None, self.manager.owner, lambda: peer)['state'])
+            with self.assertRaisesRegex(Failure, 'RECOVERY_INPUT_EXISTS'):
+                self.submit()
+            receipt = native.handle(self.stage, request, artifact.fileno(), self.manager.owner, lambda: peer)
+        self.assertEqual('RECOVERY_INPUT_STAGED', receipt['state'])
+        self.assertEqual(receipt, native.handle(self.stage, original, None, self.manager.owner,
+                                                lambda: peer | {'invocationId': 'c' * 32}))
+        with self.assertRaisesRegex(Failure, 'FORBIDDEN'):
+            native.handle(self.stage, original, None, self.manager.owner, lambda: peer | {'rootInode': 2})
+        self.validator.validate.assert_called_once()
+
+    def test_failed_submission_leaves_attempt_and_never_admits_a_second_descriptor(self):
+        request, peer = self.delegation()
+        self.validator.validate.side_effect = Failure('VALIDATION_REJECTED')
+        with self.input.open('rb') as artifact:
+            with self.assertRaisesRegex(Failure, 'VALIDATION_REJECTED'):
+                native.handle(self.stage, request, artifact.fileno(), self.manager.owner, lambda: peer)
+            self.assertEqual('RECOVERY_INPUT_ATTEMPTED', self.stage.original(self.identity)['state'])
+            with self.assertRaisesRegex(Failure, 'RECOVERY_INPUT_EXISTS'):
+                native.handle(self.stage, request, artifact.fileno(), self.manager.owner, lambda: peer)
+        self.validator.validate.assert_called_once()
 
 
 if __name__ == '__main__':

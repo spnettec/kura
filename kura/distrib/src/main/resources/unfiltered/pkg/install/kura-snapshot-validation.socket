@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 [Unit]
 Description=Kura read-only snapshot validation for a paired native agent
+Wants=kura-recovery-input.socket
 Before=kura-management-agent-v2.service
 PartOf=kura-management-agent-v2.service
 ConditionPathExists=/usr/share/kura-management-agent/package-v2

@@ -17,6 +17,7 @@ from kura_key_service import Failure, decode, digest, encode, fields, rename_no_
 SPOOL = '/var/lib/kura-recovery-input'
 ARTIFACT = 'snapshot'
 RECEIPT = 'receipt.json'
+NATIVE_ADMISSIONS = '.native-admissions'
 MAX_SNAPSHOT = 32 << 20
 MAX_INPUTS = 16
 MAX_TOTAL = 64 << 20
@@ -40,17 +41,31 @@ class RecoveryInput:
             if not os.path.lexists(self.spool):
                 return self.observation(identity, 'RECOVERY_INPUT_ABSENT')
             with self.spool_lock(False):
-                target = self.spool / identity
-                pending = self.spool / ('.pending-' + identity)
-                if os.path.lexists(target):
-                    require(not os.path.lexists(pending), 'UNSAFE_FILESYSTEM')
-                    return self.receipt(target, identity)
-                if os.path.lexists(pending):
-                    manager.directory(pending, private=True)
-                    if os.path.lexists(pending / RECEIPT):
-                        return self.receipt(pending, identity) | {'state': 'RECOVERY_INPUT_READY'}
-                    return self.observation(identity, 'RECOVERY_INPUT_PENDING')
-                return self.observation(identity, 'RECOVERY_INPUT_ABSENT')
+                return self.original_locked(identity)
+
+    def original_locked(self, identity):
+        target = self.spool / identity
+        pending = self.spool / ('.pending-' + identity)
+        if os.path.lexists(target):
+            require(not os.path.lexists(pending), 'UNSAFE_FILESYSTEM')
+            return self.receipt(target, identity)
+        if os.path.lexists(pending):
+            self.manager.directory(pending, private=True)
+            if os.path.lexists(pending / RECEIPT):
+                return self.receipt(pending, identity) | {'state': 'RECOVERY_INPUT_READY'}
+            return self.observation(identity, 'RECOVERY_INPUT_PENDING')
+        attempt = self.spool / NATIVE_ADMISSIONS / identity / 'attempt.json'
+        if os.path.lexists(attempt):
+            self.manager.read(attempt, 4096)
+            return self.observation(identity, 'RECOVERY_INPUT_ATTEMPTED')
+        return self.observation(identity, 'RECOVERY_INPUT_ABSENT')
+
+    def ensure_spool(self):
+        try:
+            self.lifecycle.directory(self.spool, private=True, create=True)
+        except FileExistsError:
+            self.lifecycle.directory(self.spool, private=True)
+        self.lifecycle.sync(self.spool.parent)
 
     @contextmanager
     def spool_lock(self, exclusive):
@@ -91,7 +106,7 @@ class RecoveryInput:
         require(mode in ('plain', 'aes-gcm') and policy in ('authenticated', 'legacy', 'logical-v1'))
 
     @staticmethod
-    def copy_input(descriptor, directory, owner, expected, remaining):
+    def copy_input(descriptor, directory, owner, expected, remaining, expected_size=None):
         metadata = lambda value: (value.st_dev, value.st_ino, value.st_uid, value.st_gid, value.st_mode, value.st_nlink,
                                   value.st_size, value.st_mtime_ns, value.st_ctime_ns)
         before = os.fstat(descriptor)
@@ -100,6 +115,7 @@ class RecoveryInput:
                 and fcntl.fcntl(descriptor, fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY
                 and 0 < before.st_size <= MAX_SNAPSHOT,
                 'UNSAFE_RECOVERY_INPUT')
+        require(expected_size is None or before.st_size == expected_size, 'RECOVERY_INPUT_CHANGED')
         require(before.st_size <= remaining, 'RESOURCE_EXHAUSTED')
         fingerprint = hashlib.sha256()
         count = 0
@@ -125,21 +141,24 @@ class RecoveryInput:
         with manager.lock(manager.state / 'admission.lock', False):
             manager.maintenance()
             manager.settled()
-            try:
-                self.lifecycle.directory(self.spool, private=True, create=True)
-            except FileExistsError:
-                self.lifecycle.directory(self.spool, private=True)
-            self.lifecycle.sync(self.spool.parent)
+            self.ensure_spool()
             with self.spool_lock(True):
+                require(not os.path.lexists(self.spool / NATIVE_ADMISSIONS / identity), 'RECOVERY_INPUT_EXISTS')
                 return self.stage_locked(identity, descriptor, expected, mode, policy, binding_sha)
 
-    def stage_locked(self, identity, descriptor, expected, mode, policy, binding_sha):
+    def stage_locked(self, identity, descriptor, expected, mode, policy, binding_sha, *,
+                     source_uid=None, expected_size=None, recheck=None):
         manager = self.manager
         pending = self.spool / ('.pending-' + identity)
         target = self.spool / identity
         require(not os.path.lexists(pending) and not os.path.lexists(target), 'RECOVERY_INPUT_EXISTS')
         size = 0
-        for count, child in enumerate(self.spool.iterdir(), start=1):
+        count = 0
+        for child in self.spool.iterdir():
+            if child.name == NATIVE_ADMISSIONS:
+                manager.directory(child, private=True)
+                continue
+            count += 1
             require(count < MAX_INPUTS, 'RESOURCE_EXHAUSTED')
             name = child.name
             require(RESTORE_ID.fullmatch(name.removeprefix('.pending-')) is not None, 'UNSAFE_FILESYSTEM')
@@ -153,7 +172,8 @@ class RecoveryInput:
         pending.mkdir(mode=0o700)
         try:
             self.lifecycle.sync(self.spool)
-            size = self.copy_input(descriptor, pending, manager.owner, expected, MAX_TOTAL - size)
+            owner = manager.owner if source_uid is None else source_uid
+            size = self.copy_input(descriptor, pending, owner, expected, MAX_TOTAL - size, expected_size)
             validation = manager.validation_component()
             request = dict(schema=1, action='core-snapshot-validate', snapshotSha256=expected,
                            mode=mode, passwordPolicy=policy, expectedBindingSha256=binding_sha)
@@ -162,6 +182,8 @@ class RecoveryInput:
             with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
                 _, current_binding = validation.binding()
                 require(current_binding == binding_sha, 'COHORT_CHANGED')
+                if recheck is not None:
+                    recheck()
                 result = self.observation(identity, 'RECOVERY_INPUT_STAGED')
                 result.update(bindingSha256=binding_sha, snapshotSha256=expected,
                               mode=mode, passwordPolicy=policy, size=size)
@@ -320,6 +342,9 @@ def private_file(path, flags):
 def command(manager, lifecycle, arguments):
     require(os.geteuid() == 0 and arguments, 'FORBIDDEN')
     recovery = RecoveryInput(manager, lifecycle)
+    if arguments[0] == 'delegate':
+        from kura_native_recovery_input import administrative_grant
+        return administrative_grant(recovery, arguments[1:])
     controls = {'original': recovery.original, 'continue': recovery.continue_ready,
                 'prepare-main': recovery.prepare_main, 'inspect-main': recovery.inspect_main}
     if arguments[0] in controls:
