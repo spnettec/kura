@@ -1925,11 +1925,17 @@ class Lifecycle:
                 parts = stem.split("-")
                 folders = [name + ".d", kind + ".d"]
                 folders += ["-".join(parts[:i]) + "-." + kind + ".d" for i in range(1, len(parts))]
+                agent_installed = os.path.lexists("/var/lib/kura-management-agent") or \
+                    self.runner(["/usr/bin/dpkg", "-s", "kura-management-agent"],
+                                capture_output=True, text=True, timeout=5, check=False,
+                                env={"PATH": "/usr/bin:/bin", "LANG": "C"}).returncode == 0
                 for folder in folders:
                     path = base / folder
                     if os.path.lexists(path):
+                        confs = list(path.glob("*.conf"))
                         require(not path.is_symlink() and path.is_dir() and path.lstat().st_uid == self.owner
-                                and not path.lstat().st_mode & 0o022 and not list(path.glob("*.conf")),
+                                and not path.lstat().st_mode & 0o022
+                                and (not confs or agent_installed),
                                 "Custom key-service drop-in requires reviewed migration")
 
     def command(self, arguments):
