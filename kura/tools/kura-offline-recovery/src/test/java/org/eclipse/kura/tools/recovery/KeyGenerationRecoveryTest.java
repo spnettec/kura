@@ -114,6 +114,76 @@ class KeyGenerationRecoveryTest {
         return bytes.toByteArray();
     }
 
+    private byte[] plaintext(CryptoServiceImpl crypto, byte[] snapshot) throws Exception {
+        try (var input = crypto.aesDecryptingStream(new ByteArrayInputStream(snapshot))) {
+            return input.readAllBytes();
+        }
+    }
+
+    @Test void snapshotRewrapRetainsExactLogicalXmlAndAuthenticatesAnAlreadyActiveSnapshot() throws Exception {
+        var old = CryptoServiceImpl.forSnapshotRecovery(legacy, false);
+        var current = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, active));
+        var activeOnly = CryptoServiceImpl.forSnapshotRecovery(active, false);
+        byte[] xml = """
+                <esf:configurations xmlns:esf="http://eurotech.com/esf/2.0" passwordEncoding="BASE64_LOGICAL_V1">
+                  <esf:configuration pid="test">
+                    <esf:properties>
+                      <esf:property name="password" type="Password" encrypted="true"><esf:value>S1VSQTIuYmxhaA==</esf:value></esf:property>
+                    </esf:properties>
+                  </esf:configuration>
+                </esf:configurations>
+                """.getBytes(StandardCharsets.UTF_8);
+        var wrapped = SnapshotRewrap.rewrap(encrypted(old, xml), current, sha(active));
+        assertArrayEquals(xml, plaintext(activeOnly, wrapped));
+        assertArrayEquals(wrapped, SnapshotRewrap.rewrap(wrapped, current, sha(active)));
+        var corrupt = wrapped.clone();
+        int separator = new String(corrupt, StandardCharsets.US_ASCII).indexOf('-');
+        corrupt[separator + 1] = (byte) (corrupt[separator + 1] == 'A' ? 'B' : 'A');
+        assertThrows(Exception.class, () -> SnapshotRewrap.rewrap(corrupt, current, sha(active)));
+        assertThrows(Exception.class, () -> SnapshotRewrap.rewrap(xml, current, sha(active)));
+    }
+
+    @Test void snapshotRewrapAuthenticatesAndRekeysLegacyWrappedPasswordsWithoutChangingLogicalValues() throws Exception {
+        var old = CryptoServiceImpl.forSnapshotRecovery(legacy, false);
+        var middle = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, previous));
+        var current = CryptoServiceImpl.forKeyRingRecovery(ring(legacy, previous, active));
+        var activeOnly = CryptoServiceImpl.forSnapshotRecovery(active, false);
+        var oldValue = new String(old.encryptAes("old".toCharArray()));
+        var previousValue = new String(middle.encryptAes("previous".toCharArray()));
+        var currentValue = new String(current.encryptAes("current".toCharArray()));
+        // This value literally resembles a ciphertext after base64 decoding.
+        var logicalValue = "S1VSQTIubGl0ZXJhbC12YWx1ZQ==";
+        String xml = """
+                <esf:configurations xmlns:esf="http://eurotech.com/esf/2.0">
+                  <esf:configuration pid="test">
+                    <properties>
+                      <property name="passwords" type="Password" array="true" encrypted="true">
+                        <value>%s</value><value>%s</value><value>%s</value><value>%s</value>
+                      </property>
+                    </properties>
+                  </esf:configuration>
+                </esf:configurations>
+                """.formatted(oldValue, previousValue, currentValue, logicalValue);
+        // The outer file already uses the new key, but its older inner values still need rewrapping.
+        byte[] input = encrypted(current, xml.getBytes(StandardCharsets.UTF_8));
+        byte[] wrapped = SnapshotRewrap.rewrap(input, current, sha(active));
+        byte[] decoded = plaintext(activeOnly, wrapped);
+        var document = SnapshotTool.parse(decoded);
+        var values = document.getElementsByTagName("value");
+        for (int i = 0; i < 2; i++) {
+            assertTrue(values.item(i).getTextContent().startsWith("KURA2." + sha(active) + "."));
+        }
+        assertEquals(currentValue, values.item(2).getTextContent());
+        assertEquals(logicalValue, values.item(3).getTextContent());
+        XmlComponentConfigurations mapped = new XmlJavaComponentConfigurationsMapper(activeOnly).unmarshal(document);
+        var passwords = (Password[]) mapped.getConfigurations().getFirst().getConfigurationProperties().get("passwords");
+        assertArrayEquals(new String[]{"old", "previous", "current", "KURA2.literal-value"},
+                Arrays.stream(passwords).map(value -> new String(value.getPassword())).toArray(String[]::new));
+        assertArrayEquals(wrapped, SnapshotRewrap.rewrap(wrapped, current, sha(active)));
+        byte[] incorrect = encrypted(current, xml.replace(previousValue, "KURA2.invalid-value").getBytes(StandardCharsets.UTF_8));
+        assertThrows(Exception.class, () -> SnapshotRewrap.rewrap(incorrect, current, sha(active)));
+    }
+
     @Test void cliReadsMixedPasswordGenerationsInPlainLegacyAndTaggedOuterArtifacts() throws Exception {
         byte[] raw = ring(legacy, previous, active);
         Path credential = privateFile("generations", raw);

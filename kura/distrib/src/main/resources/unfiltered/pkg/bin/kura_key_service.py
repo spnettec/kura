@@ -2196,10 +2196,20 @@ def provider_store_rewrap(args):
     return component['ProviderStoreRewrap'](manager, identity, namespace).run(action)
 
 
+def snapshot_rewrap(args):
+    require(os.geteuid() == 0, 'FORBIDDEN')
+    require(len(args) >= 1 and len(args) == (5 if args[0] == 'apply' else 4))
+    action, identity, namespace, snapshot, *expected = args
+    manager = Manager()
+    component, _ = manager.generation_module('kura_key_generation')
+    return component['SnapshotRewrap'](manager, identity, namespace, snapshot, *expected).run(action)
+
+
 if __name__ == "__main__":
-    if sys.argv[1:2] == ['--provider-store-rewrap']:
+    rewrap = {'--provider-store-rewrap': provider_store_rewrap, '--snapshot-rewrap': snapshot_rewrap}
+    if len(sys.argv) >= 2 and sys.argv[1] in rewrap:
         try:
-            sys.stdout.buffer.write(encode(provider_store_rewrap(sys.argv[2:])) + b'\n')
+            sys.stdout.buffer.write(encode(rewrap[sys.argv[1]](sys.argv[2:])) + b'\n')
         except (Failure, OSError, Refused, LifecycleRefused, ValueError, KeyError, subprocess.SubprocessError) as error:
             code = error.reason if isinstance(error, Failure) else 'PROVIDER_STORE_REWRAP_REFUSED'
             print(code, file=sys.stderr)

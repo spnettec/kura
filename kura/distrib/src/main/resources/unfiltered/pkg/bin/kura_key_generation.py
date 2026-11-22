@@ -1026,17 +1026,31 @@ def sys_platform_linux():
 
 
 class ProviderStoreRewrap:
-    """Local administrator operation for the installed data/store.save provider."""
+    """Stopped-Main rewrap with durable source bytes and an inode-bound successor."""
     LIMIT = 1024 * 1024
     CONTEXT = b'yofc-kura-provider-store-rewrap-v1\0'
+    DIRECTORY = ('data',)
+    TARGET = 'store.save'
+    HISTORY = '/var/lib/kura-provider-rewrap'
+    WORKER = 'ProviderStoreRewrap'
+    HEAP = '96m'
 
     def __init__(self, manager, identity, namespace):
         self.manager = manager
         self.identity = operation_id(identity)
         self.namespace = digest(namespace)
-        self.history = manager.store.path('/var/lib/kura-provider-rewrap')
+        self.history = manager.store.path(self.HISTORY)
         self.slot = self.history / self.identity
         self.pending = manager.state / 'provider-rewrap-pending.json'
+
+    def selection(self):
+        return {}
+
+    def check_profile(self, policy, core):
+        pass
+
+    def check_original(self, original):
+        pass
 
     @staticmethod
     def identity_of(info):
@@ -1052,22 +1066,30 @@ class ProviderStoreRewrap:
         body.pop('phase')
         body.pop('tag')
         require(raw == self.signed(body, secret, phase) and body['schema'] == 1
-                and body['operationId'] == self.identity and body['namespaceSha256'] == self.namespace,
+                and body['operationId'] == self.identity and body['namespaceSha256'] == self.namespace
+                and all(body[key] == value for key, value in self.selection().items()),
                 'UNSAFE_PROVIDER_REWRAP')
         return body
 
     @contextlib.contextmanager
     def data_directory(self, home, account):
-        path = home / 'data'
-        handle = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
-        try:
-            meta = os.fstat(handle)
-            require(os.path.samestat(meta, path.lstat()) and stat.S_IMODE(meta.st_mode) == 0o700
-                    and (meta.st_uid, meta.st_gid) == (account.pw_uid, account.pw_gid), 'UNSAFE_PROVIDER_STORE')
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        with contextlib.ExitStack() as stack:
+            handle = os.open(home, flags)
+            stack.callback(os.close, handle)
+            opened = []
+            for name in self.DIRECTORY:
+                child = os.open(name, flags, dir_fd=handle)
+                stack.callback(os.close, child)
+                meta = os.fstat(child)
+                require(stat.S_IMODE(meta.st_mode) == 0o700
+                        and (meta.st_uid, meta.st_gid) == (account.pw_uid, account.pw_gid), 'UNSAFE_PROVIDER_STORE')
+                opened.append((handle, name, meta))
+                handle = child
             yield handle
-            require(os.path.samestat(meta, path.lstat()), 'PROVIDER_STORE_CHANGED')
-        finally:
-            os.close(handle)
+            for parent, name, original in opened:
+                require(os.path.samestat(original, os.stat(name, dir_fd=parent, follow_symlinks=False)),
+                        'PROVIDER_STORE_CHANGED')
 
     def store_file(self, directory, name, account):
         def fingerprint(info):
@@ -1086,11 +1108,12 @@ class ProviderStoreRewrap:
 
     def prepare(self, directory, account, binding, home, source, secret):
         manager = self.manager
-        original, original_stamp = self.store_file(directory, 'store.save', account)
+        original, original_stamp = self.store_file(directory, self.TARGET, account)
+        self.check_original(original_stamp)
         jar = home / 'libexec/key-recovery/kura-offline-recovery.jar'
-        worker = subprocess.run(['/usr/bin/java', '-Xms16m', '-Xmx96m', '-XX:MaxMetaspaceSize=64m',
+        worker = subprocess.run(['/usr/bin/java', '-Xms16m', '-Xmx' + self.HEAP, '-XX:MaxMetaspaceSize=64m',
             '-XX:ActiveProcessorCount=1', '-XX:+DisableAttachMechanism', '-XX:+PerfDisableSharedMem',
-            '-cp', str(jar), 'org.eclipse.kura.tools.recovery.ProviderStoreRewrap',
+            '-cp', str(jar), 'org.eclipse.kura.tools.recovery.' + self.WORKER,
             source['keySha256'], source['ringSha256']], input=original, capture_output=True, timeout=30,
             check=False, close_fds=True, cwd='/', env={'PATH': '/usr/bin:/bin', 'LANG': 'C'})
         candidate = worker.stdout
@@ -1122,7 +1145,7 @@ class ProviderStoreRewrap:
                     os.close(base)
             intent = dict(binding, original=original_stamp, replacement=replacement_stamp)
             manager.atomic(private / 'intent.json', self.signed(intent, secret, 'intent'), no_replace=True)
-            require(self.store_file(directory, 'store.save', account)[1] == original_stamp, 'PROVIDER_STORE_CHANGED')
+            require(self.store_file(directory, self.TARGET, account)[1] == original_stamp, 'PROVIDER_STORE_CHANGED')
             rename_no_replace(private, self.slot)
             manager.sync(self.history)
         return intent
@@ -1139,14 +1162,14 @@ class ProviderStoreRewrap:
         if os.path.lexists(result_path):
             result = self.record(secret, 'completed')
             require(os.path.lexists(self.pending), 'PROVIDER_REWRAP_ALREADY_COMPLETED')
-            current = self.store_file(directory, 'store.save', account)[1]
+            current = self.store_file(directory, self.TARGET, account)[1]
             expected = intent['original'] if replacement is None else dict(replacement, ctimeNs=current['ctimeNs'])
             require(current == expected and result['intentSha256'] == decode(pending)['intentSha256']
                     and result['currentSha256'] == current['sha256'], 'UNSAFE_PROVIDER_REWRAP')
         else:
             if not os.path.lexists(self.pending):
                 manager.atomic(self.pending, pending, no_replace=True)
-            current = self.store_file(directory, 'store.save', account)[1]
+            current = self.store_file(directory, self.TARGET, account)[1]
             if replacement is None:
                 require(current == intent['original'], 'PROVIDER_STORE_CHANGED')
             else:
@@ -1156,8 +1179,8 @@ class ProviderStoreRewrap:
                     if current == intent['original']:
                         stage = self.store_file(base, 'replacement.save', account)[1]
                         require(stage == replacement, 'STAGED_PROVIDER_STORE_CHANGED')
-                        os.replace('replacement.save', 'store.save', src_dir_fd=base, dst_dir_fd=directory)
-                        current = self.store_file(directory, 'store.save', account)[1]
+                        os.replace('replacement.save', self.TARGET, src_dir_fd=base, dst_dir_fd=directory)
+                        current = self.store_file(directory, self.TARGET, account)[1]
                     # A crash after rename can only conclude from the original staged inode.
                     require(not os.path.lexists(self.slot / 'replacement.save')
                             and current == dict(replacement, ctimeNs=current['ctimeNs']), 'PROVIDER_STORE_CHANGED')
@@ -1166,7 +1189,7 @@ class ProviderStoreRewrap:
             result = dict(schema=1, state='SUCCEEDED', operationId=self.identity, namespaceSha256=self.namespace,
                           intentSha256=decode(pending)['intentSha256'], publicationId=intent['publicationId'],
                           originalSha256=intent['original']['sha256'], currentSha256=current['sha256'],
-                          changed=replacement is not None)
+                          changed=replacement is not None, **self.selection())
             manager.atomic(result_path, self.signed(result, secret, 'completed'), no_replace=True)
         require(manager.read(self.pending, 4096) == pending, 'UNSAFE_PROVIDER_REWRAP')
         self.pending.unlink()
@@ -1198,6 +1221,7 @@ class ProviderStoreRewrap:
             policy.no_overrides()
             policy.check_pending_keystore_passwords()
             core, cohort = manager.generation_component()
+            self.check_profile(policy, core)
             publication = core.current()
             _, _, _, generation, _, source = manager.generation_source()
             require(generation == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256'],
@@ -1213,10 +1237,42 @@ class ProviderStoreRewrap:
             directory = locks.enter_context(self.data_directory(home, account))
             binding = dict(schema=1, operationId=self.identity, namespaceSha256=self.namespace,
                            publicationId=publication['operationId'], cohortSha256=cohort['cohortSha256'],
-                           data=self.identity_of(os.fstat(directory)), **source)
+                           data=self.identity_of(os.fstat(directory)), **source, **self.selection())
             if action == 'apply':
                 intent = self.prepare(directory, account, binding, home, source, secret)
             else:
                 intent = self.record(secret, 'intent')
                 require(all(intent[key] == value for key, value in binding.items()), 'PROVIDER_REWRAP_INPUT_CHANGED')
             return self.finish(directory, account, intent, secret)
+
+
+class SnapshotRewrap(ProviderStoreRewrap):
+    LIMIT = (32 * 1024 * 1024 // 3 + 1) * 4 + 128
+    CONTEXT = b'yofc-kura-snapshot-rewrap-v1\0'
+    DIRECTORY = ('user', 'snapshots')
+    HISTORY = '/var/lib/kura-snapshot-rewrap'
+    WORKER = 'SnapshotRewrap'
+    HEAP = '384m'
+
+    def __init__(self, manager, identity, namespace, snapshot, expected_source=None):
+        super().__init__(manager, identity, namespace)
+        require(re.fullmatch(r'[1-9][0-9]{0,18}', snapshot) is not None and int(snapshot) <= 2**63 - 1)
+        self.snapshot = snapshot
+        self.TARGET = f'snapshot_{snapshot}.xml'
+        self.expected_source = digest(expected_source) if expected_source is not None else None
+
+    def selection(self):
+        return dict(snapshotId=self.snapshot)
+
+    def check_profile(self, policy, core):
+        # An agent or guarded boot can bind an exact snapshot digest to a
+        # restore intent. Rewrap is admitted only for standalone package history.
+        core.no_optional_agent()
+        require(core.command((*SYSTEMCTL, 'show', 'kura-management-agent-v2.service', '--property=LoadState')).strip()
+                == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
+        protected = ('/etc/kura/ordinary-boot-policy.json', '/var/lib/kura-management-agent',
+                     '/etc/kura-management-agent-runtime', '/var/lib/kura-key-recovery/pending.json')
+        require(not any(os.path.lexists(policy.path(path)) for path in protected), 'SNAPSHOT_HISTORY_REFERENCED')
+
+    def check_original(self, original):
+        require(original['sha256'] == self.expected_source, 'SNAPSHOT_SOURCE_CHANGED')

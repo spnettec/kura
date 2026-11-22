@@ -27,6 +27,7 @@ import javax.xml.stream.XMLStreamConstants;
 import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.core.crypto.CryptoServiceImpl;
 import org.eclipse.kura.internal.xml.marshaller.unmarshaller.XmlJavaComponentConfigurationsMapper;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.ErrorHandler;
@@ -150,6 +151,10 @@ public final class SnapshotTool {
     private static Decoded decode(byte[] xml, CryptoServiceImpl crypto, String passwordPolicy, boolean allowEmpty,
             boolean artifactAuthenticated) throws Exception {
         require(Set.of("authenticated", "legacy", "logical-v1").contains(passwordPolicy));
+        return decode(parse(xml), crypto, passwordPolicy, allowEmpty, artifactAuthenticated, null);
+    }
+
+    static Document parse(byte[] xml) throws Exception {
         require(xml.length > 0 && xml.length <= LIMIT);
         preflight(xml);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
@@ -166,7 +171,17 @@ public final class SnapshotTool {
             public void error(SAXParseException e) throws SAXParseException { throw e; }
             public void fatalError(SAXParseException e) throws SAXParseException { throw e; }
         });
-        var document = builder.parse(new ByteArrayInputStream(xml));
+        return builder.parse(new ByteArrayInputStream(xml));
+    }
+
+    static boolean rewrapAuthenticatedSnapshot(Document document, CryptoServiceImpl crypto,
+            String activeSha256) throws Exception {
+        String policy = document.getDocumentElement().hasAttribute("passwordEncoding") ? "authenticated" : "legacy";
+        return decode(document, crypto, policy, true, true, "KURA2." + activeSha256 + ".").report().rewrapped;
+    }
+
+    private static Decoded decode(Document document, CryptoServiceImpl crypto, String passwordPolicy,
+            boolean allowEmpty, boolean artifactAuthenticated, String rewrapPrefix) throws Exception {
         Element root = document.getDocumentElement();
         element(root, "configurations", Set.of("passwordEncoding"));
         Result result = new Result();
@@ -182,10 +197,10 @@ public final class SnapshotTool {
             List<Element> groups = children(configuration);
             require(groups.size() == 1);
             Element properties = groups.getFirst();
-            element(properties, "properties", Set.of());
+            element(properties, "properties", Set.of(), rewrapPrefix != null);
             Set<String> names = new HashSet<>();
             for (Element property : children(properties)) {
-                element(property, "property", Set.of("name", "type", "array", "encrypted", "container"));
+                element(property, "property", Set.of("name", "type", "array", "encrypted", "container"), rewrapPrefix != null);
                 String name = property.getAttribute("name");
                 String type = property.getAttribute("type");
                 require(!name.isBlank() && name.length() <= 1024 && names.add(name) && TYPES.contains(type));
@@ -207,7 +222,7 @@ public final class SnapshotTool {
                 }
                 for (Element value : values) {
                     require(++result.values <= 65536);
-                    element(value, "value", Set.of());
+                    element(value, "value", Set.of(), rewrapPrefix != null);
                     require(children(value).isEmpty());
                     String text = value.getTextContent();
                     require(text.length() <= 1024 * 1024);
@@ -233,7 +248,9 @@ public final class SnapshotTool {
                                           .decode(java.nio.ByteBuffer.wrap(clear));
                               } finally { Arrays.fill(clear, (byte) 0); }
                               result.logical++;
-                          } else if (authenticated(text, encoded, crypto)) {
+                          } else if (rewrapPrefix != null) {
+                            result.rewrapped |= encoded && rewrapLegacyPassword(value, text, crypto, rewrapPrefix);
+                        } else if (authenticated(text, encoded, crypto)) {
                             result.authenticated++;
                         } else {
                             require(passwordPolicy.equals("legacy"));
@@ -248,6 +265,32 @@ public final class SnapshotTool {
         XmlComponentConfigurations mapped = new XmlJavaComponentConfigurationsMapper(crypto).unmarshal(document);
         require(mapped.getConfigurations().size() == result.configurations);
         return new Decoded(result, mapped.getConfigurations());
+    }
+
+    private static boolean rewrapLegacyPassword(Element value, String text, CryptoServiceImpl crypto, String prefix)
+            throws Exception {
+        // The historical mapper treats plain base64 as logical text, including decoded text that looks encrypted.
+        if (!text.contains("-") && !text.contains(".")) {
+            crypto.decodeBase64(text);
+            return false;
+        }
+        char[] plain = crypto.decryptAes(text.toCharArray());
+        try {
+            if (text.startsWith(prefix)) {
+                return false; // The tag has already been authenticated.
+            }
+            char[] wrapped = crypto.encryptAes(plain);
+            try {
+                String replacement = new String(wrapped);
+                require(replacement.startsWith(prefix));
+                value.setTextContent(replacement);
+                return true;
+            } finally {
+                Arrays.fill(wrapped, '\0');
+            }
+        } finally {
+            Arrays.fill(plain, '\0');
+        }
     }
 
     private static boolean authenticated(String value, boolean encoded, CryptoServiceImpl crypto) throws Exception {
@@ -293,7 +336,13 @@ public final class SnapshotTool {
     }
 
     private static void element(Element element, String name, Set<String> attributes) {
-        require(element.getTagName().equals("esf:" + name) && NS.equals(element.getNamespaceURI()));
+        element(element, name, attributes, false);
+    }
+
+    private static void element(Element element, String name, Set<String> attributes, boolean legacy) {
+        require((element.getTagName().equals("esf:" + name) && NS.equals(element.getNamespaceURI()))
+                || (legacy && (NS.equals(element.getNamespaceURI()) && name.equals(element.getLocalName())
+                        || element.getNamespaceURI() == null && name.equals(element.getTagName()))));
         var attrs = element.getAttributes();
         for (int i = 0; i < attrs.getLength(); i++) {
             Node attr = attrs.item(i);
@@ -343,6 +392,7 @@ public final class SnapshotTool {
 
     static final class Result {
         boolean logicalEncoding;
+        boolean rewrapped;
         int logical;
         int configurations;
         int factories;
