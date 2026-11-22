@@ -41,7 +41,7 @@ class SystemdCoreValidationTest(unittest.TestCase):
         self.assertEqual('systemd',Path('/proc/1/comm').read_text().strip())
         destinations=['/opt/eclipse/kura','/etc/kura','/var/lib/kura-key-service',
                       '/etc/kura-management-agent','/fixtures/core-validation','/run/kura-key-service',
-                      '/etc/systemd/system/kura-management-agent.service','/usr/bin/java']
+                      '/etc/systemd/system/kura-management-agent.service']
         destinations += ['/lib/systemd/system/'+name for name in (*package.lifecycle.UNITS,'kura.service')]
         self.assertFalse(any(os.path.lexists(name) for name in destinations),'Never adopt an existing runtime or credentials')
         validation.writer.WriterLeaseTest.setUp(self)
@@ -63,19 +63,28 @@ class SystemdCoreValidationTest(unittest.TestCase):
                      '--groups','kura-key-control','kurad')
         daemon=pwd.getpwnam('kurad').pw_uid
         for name in ('plain.xml','current.aes','old.aes'):os.chown(target/name,daemon,daemon)
-        os.symlink(str(validation.JAVA),'/usr/bin/java')
+        system_java = Path('/usr/bin/java')
+        if not os.path.lexists(system_java):
+            system_java.symlink_to(validation.JAVA)
+        runtime = subprocess.run([system_java, '-version'], capture_output=True, text=True, check=True, timeout=15)
+        self.assertRegex(runtime.stderr, r'version "(?:2[1-9]|[3-9][0-9])(?:[."+-])')
         Path('/etc/kura-management-agent').mkdir(mode=0o700)
         self.put(Path('/etc/kura-management-agent/agent.env'),b'')
         self.put(target/'validator.json',service.encode(dict(schema=2,mode='plain',passwordPolicy='authenticated',key=dict(kind='core'))))
         unit=Path('/agent-source/packaging/kura-management-agent.service').read_text()
-        self.assertIn('InaccessiblePaths=-/etc/kura/credentials -/var/lib/kura-key-service\n',unit)
+        self.assertIn('TemporaryFileSystem=/etc/kura:ro /var/lib:ro\n', unit)
+        self.assertIn('BindPaths=/var/lib/kura-management-agent\n', unit)
         unit=unit.replace('Type=simple','Type=oneshot\nRemainAfterExit=yes')
-        unit=unit.replace('ExecStartPre=/usr/bin/python3 /usr/lib/kura-management-agent/setup.py check\n','')
+        admission='ExecStartPre=/usr/bin/python3 -I /usr/lib/kura-management-agent/setup.py check\n'
+        self.assertEqual(1, unit.count(admission))
+        unit=unit.replace(admission,'')
         unit=unit.replace('ExecStart=/usr/bin/yofc-management-agent',
             'ExecStart='+str(BINARY)+' --exact core_validation::tests::core_validator_startup_without_root_service --ignored --nocapture')
         unit=unit.replace('Restart=on-failure','Restart=no')
+        # The harness reads disposable Core-UID payloads while checking the parent masks.
+        unit=unit.replace('CapabilityBoundingSet=CAP_NET_ADMIN\n',
+                          'CapabilityBoundingSet=CAP_NET_ADMIN CAP_DAC_OVERRIDE\n')
         unit=unit.replace('[Install]','Environment=YOFC_DISPOSABLE_CORE_VALIDATION=1\n'
-            'CapabilityBoundingSet=CAP_NET_ADMIN CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER\n'
             'ReadWritePaths=/fixtures/core-validation\n\n[Install]')
         Path('/etc/systemd/system/kura-management-agent.service').write_text(unit)
         self.command('/usr/bin/systemctl','daemon-reload')
