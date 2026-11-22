@@ -91,11 +91,18 @@ def manager_properties(unit, names):
 
 
 def verify_unit_sources(units=UNITS):
+    # Container runtime adapters (LXC/OrbStack) install a global service.d
+    # drop-in that neutralizes hardening for every unit on the host. The bare
+    # "<kind>.d" entry generated for every unit name matches that directory on
+    # such hosts even though it carries no reboot-specific override. Require
+    # the adapter directory to contain only the known adapter drop-in.
+    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
+    adapter_conf = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
     for root in unit_load_paths():
         if not unit_directory_present(root):
             continue
         for unit in units:
-            names = unit_input_names(unit)
+            names = [i for i in unit_input_names(unit) if i not in generic_dropins]
             if root not in VENDOR_UNIT_ROOTS:
                 names.append(unit)
             for name in names:
@@ -111,6 +118,12 @@ def verify_unit_sources(units=UNITS):
                             and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
                     continue
                 raise Refused('UNPAIRED_UNIT')
+        for kind in generic_dropins:
+            directory = root / kind
+            if not directory.is_dir():
+                continue
+            for source in sorted(directory.glob('*.conf')):
+                require(source == adapter_conf, 'UNPAIRED_UNIT')
 
 
 def account_binding(path=None):
