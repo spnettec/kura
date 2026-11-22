@@ -10,7 +10,8 @@ import org.junit.jupiter.api.io.TempDir;
 class RecoveryWriteReleaseTest {
     @TempDir Path directory;
     @Test void durableReleaseAndItsFailureBoundariesUseFreshJvms() throws Exception {
-        for (String mode : new String[]{"success","publish-failure","business-failure","wrong-bounds","expired","journal-handoff","journal-publish-failure","unsafe-parent"}) {
+        for (String mode : new String[]{"success","admitted-level-six","wrong-framework-level","publish-failure",
+                "business-failure","wrong-bounds","expired","journal-handoff","journal-publish-failure","unsafe-parent"}) {
             Path root = Files.createDirectory(this.directory.resolve(mode),
                     PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
             if (mode.equals("unsafe-parent")) {

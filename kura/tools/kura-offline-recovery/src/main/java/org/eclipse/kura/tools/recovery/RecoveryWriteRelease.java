@@ -17,11 +17,13 @@ import org.eclipse.kura.core.configuration.ControlledRecovery;
 final class RecoveryWriteRelease implements RecoveryCompletionService {
     private final RecoveryVerifier verifier;
     private final Path receipt;
+    private final int frameworkTarget;
     private final AtomicBoolean attempted = new AtomicBoolean();
 
-    RecoveryWriteRelease(RecoveryVerifier verifier, Path normalReceipt) {
+    RecoveryWriteRelease(RecoveryVerifier verifier, Path normalReceipt, int frameworkTarget) {
         this.verifier = verifier;
         this.receipt = normalReceipt.resolveSibling(normalReceipt.getFileName() + ".write-release.properties");
+        this.frameworkTarget = frameworkTarget;
     }
 
     @Override public Report complete(Request request) throws KuraException {
@@ -38,7 +40,7 @@ final class RecoveryWriteRelease implements RecoveryCompletionService {
             var health = this.verifier.verify(request.challenge());
             var bounds = request.bounds();
             require(health.normalLoad() && health.ordinaryWritesBlocked() && health.cmMatched()
-                    && health.frameworkStartLevel() == 5 && health.configurationServiceAvailable()
+                    && health.frameworkStartLevel() == this.frameworkTarget && health.configurationServiceAvailable()
                     && health.components().stream().allMatch(c -> c.registered())
                     && health.checks().stream().allMatch(c -> c.passed()) && bounds != null
                     && bounds.sourceCount() == health.sourceConfigurationCount()

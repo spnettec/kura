@@ -152,7 +152,7 @@ public final class RecoveryBootstrap implements BundleActivator {
                     if(completionPolicy.equals("true")) {
                         this.completionRegistration=context.registerService(
                                 org.eclipse.kura.configuration.RecoveryCompletionService.class,
-                                new RecoveryWriteRelease(this.verifier,receipt),null);
+                                new RecoveryWriteRelease(this.verifier,receipt,frameworkTarget),null);
                     }
                 } finally { context.ungetService(reference); }
             } else {

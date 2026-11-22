@@ -17,7 +17,10 @@ public final class RecoveryWriteReleaseProbe {
     @SuppressWarnings("unchecked") public static void main(String[] args) throws Exception {
         Path root=Path.of(args[0]);
         if(args[1].equals("journal-reopen")){verifyReopenedJournal(root.resolve("data"));return;}
-        boolean journalMode=args[1].startsWith("journal-"),successMode=args[1].equals("success")||args[1].equals("journal-handoff");
+        boolean journalMode=args[1].startsWith("journal-"),successMode=args[1].equals("success")
+                || args[1].equals("journal-handoff") || args[1].equals("admitted-level-six");
+        int frameworkTarget = args[1].equals("admitted-level-six") || args[1].equals("wrong-framework-level") ? 6 : 5;
+        int actualLevel = args[1].equals("admitted-level-six") ? 6 : 5;
         ConfigurationServiceImpl journalCore=null;
         if(journalMode){
             Path data=Files.createDirectory(root.resolve("data"));journalCore=new ConfigurationServiceImpl();
@@ -31,7 +34,7 @@ public final class RecoveryWriteReleaseProbe {
         String request=root.resolve("request.properties").toString(),id="rec-11111111-1111-1111-1111-111111111111";
         System.setProperty(ControlledRecovery.REQUEST_PROPERTY,request);ControlledRecovery.admitNormalLoad(request,id,snapshot,sha);
         BundleContext context=mock(BundleContext.class);Bundle framework=mock(Bundle.class);FrameworkStartLevel level=mock(FrameworkStartLevel.class);
-        when(context.getBundle(0)).thenReturn(framework);when(framework.adapt(FrameworkStartLevel.class)).thenReturn(level);when(level.getStartLevel()).thenReturn(5);
+        when(context.getBundle(0)).thenReturn(framework);when(framework.adapt(FrameworkStartLevel.class)).thenReturn(level);when(level.getStartLevel()).thenReturn(actualLevel);
         ConfigurationAdmin cm=mock(ConfigurationAdmin.class);Configuration value=mock(Configuration.class);when(value.getPid()).thenReturn("single");
         when(value.getProperties()).thenReturn(new Hashtable<>(Map.of("kura.service.pid","single","count",9)));when(cm.listConfigurations(null)).thenReturn(new Configuration[]{value});
         var cmRef=(ServiceReference<ConfigurationAdmin>)mock(ServiceReference.class);when(context.getServiceReference(ConfigurationAdmin.class)).thenReturn(cmRef);when(context.getService(cmRef)).thenReturn(cm);
@@ -48,7 +51,7 @@ public final class RecoveryWriteReleaseProbe {
         if(args[1].equals("publish-failure")||args[1].equals("journal-publish-failure")){Files.createDirectory(receipt);}
         var expected=List.<ComponentConfiguration>of(new ComponentConfigurationImpl("single",null,Map.of("kura.service.pid","single","count",9)));
         try(var verifier=new RecoveryVerifier(context,expected)) {
-            var release=new RecoveryWriteRelease(verifier,normal);
+            var release=new RecoveryWriteRelease(verifier,normal,frameworkTarget);
             assertThrows(org.eclipse.kura.KuraException.class,ControlledRecovery::requireOrdinaryWrite);
             if(!successMode) {
                 assertThrows(org.eclipse.kura.KuraException.class,()->release.complete(completion));
@@ -57,6 +60,7 @@ public final class RecoveryWriteReleaseProbe {
                 if(!args[1].equals("publish-failure")&&!args[1].equals("journal-publish-failure")){assertFalse(Files.exists(receipt));}
             } else {
                 var result=release.complete(completion);assertTrue(result.writeReleaseCommitted());assertFalse(result.kuraRecoveryVerified());
+                assertEquals(frameworkTarget, result.preReleaseHealth().frameworkStartLevel());
                 assertTrue(result.preReleaseHealth().ordinaryWritesBlocked());assertFalse(ControlledRecovery.requested());
                 assertEquals(completion.completionId(),ControlledRecovery.completionEvidence().orElseThrow().completionId());
                 assertDoesNotThrow(ControlledRecovery::requireOrdinaryWrite);assertTrue(ControlledRecovery.evidence().isEmpty());
