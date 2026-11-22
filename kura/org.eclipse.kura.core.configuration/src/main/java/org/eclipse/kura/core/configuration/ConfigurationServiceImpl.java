@@ -1600,16 +1600,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(sid);
         if (xmlConfigs != null) {
-            List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
-            if (!xmlConfigs.hasLogicalPasswords()) {
-                for (ComponentConfiguration config : configs) {
-                    if (config != null && config.getConfigurationProperties() != null) {
-                        decryptConfigurationProperties(config.getConfigurationProperties());
-                    }
-                }
-            }
-
-            returnConfigs.addAll(xmlConfigs.getConfigurations());
+            returnConfigs.addAll(logicalSnapshotConfigurations(xmlConfigs));
         }
 
         return returnConfigs;
@@ -2607,7 +2598,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         try {
             XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(lastestID);
             if (xmlConfigs != null) {
-                configs = xmlConfigs.getConfigurations();
+                configs = logicalSnapshotConfigurations(xmlConfigs);
             }
         } catch (Exception e) {
             if (ControlledRecovery.requested()) {
@@ -2660,7 +2651,7 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
         List<ComponentConfiguration> configs = null;
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(lastestID);
         if (xmlConfigs != null) {
-            configs = xmlConfigs.getConfigurations();
+            configs = logicalSnapshotConfigurations(xmlConfigs);
         }
 
         return configs;
@@ -3362,9 +3353,29 @@ public class ConfigurationServiceImpl implements ConfigurationService, Configura
 
     private Map<String, ComponentConfiguration> getSnapshotConfigs(long id) throws KuraException {
         XmlComponentConfigurations xmlConfigs = loadEncryptedSnapshotFileContent(id);
-        List<ComponentConfiguration> configs = xmlConfigs.getConfigurations();
+        return ComponentUtil.toMap(logicalSnapshotConfigurations(xmlConfigs));
+    }
 
-        return ComponentUtil.toMap(configs);
+    private List<ComponentConfiguration> logicalSnapshotConfigurations(XmlComponentConfigurations snapshot) {
+        if (snapshot.hasLogicalPasswords()) {
+            return snapshot.getConfigurations();
+        }
+        List<ComponentConfiguration> result = new ArrayList<>();
+        for (ComponentConfiguration configuration : snapshot.getConfigurations()) {
+            if (configuration instanceof ComponentConfigurationImpl impl) {
+                var properties = impl.getConfigurationProperties();
+                if (properties != null) {
+                    var logical = LegacySnapshotPasswords.logical(properties, this.cryptoService);
+                    if (logical != properties) {
+                        var copy = new ComponentConfigurationImpl(impl.getPid(), impl.definition, logical);
+                        copy.setLogicalPasswords(true);
+                        configuration = copy;
+                    }
+                }
+            }
+            result.add(configuration);
+        }
+        return result;
     }
 
     private static final class TrackedComponentFactory {

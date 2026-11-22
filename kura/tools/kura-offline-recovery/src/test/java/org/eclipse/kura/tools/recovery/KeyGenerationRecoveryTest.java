@@ -153,17 +153,19 @@ class KeyGenerationRecoveryTest {
         var currentValue = new String(current.encryptAes("current".toCharArray()));
         // This value literally resembles a ciphertext after base64 decoding.
         var logicalValue = "S1VSQTIubGl0ZXJhbC12YWx1ZQ==";
+        var encodedOldValue = old.encodeBase64(new String(old.encryptAes("base64-wrapped".toCharArray())));
         String xml = """
                 <esf:configurations xmlns:esf="http://eurotech.com/esf/2.0">
                   <esf:configuration pid="test">
                     <properties>
                       <property name="passwords" type="Password" array="true" encrypted="true">
                         <value>%s</value><value>%s</value><value>%s</value><value>%s</value>
+                        <value>%s</value>
                       </property>
                     </properties>
                   </esf:configuration>
                 </esf:configurations>
-                """.formatted(oldValue, previousValue, currentValue, logicalValue);
+                """.formatted(oldValue, previousValue, currentValue, logicalValue, encodedOldValue);
         // The outer file already uses the new key, but its older inner values still need rewrapping.
         byte[] input = encrypted(current, xml.getBytes(StandardCharsets.UTF_8));
         byte[] wrapped = SnapshotRewrap.rewrap(input, current, sha(active));
@@ -178,7 +180,9 @@ class KeyGenerationRecoveryTest {
         XmlComponentConfigurations mapped = new XmlJavaComponentConfigurationsMapper(activeOnly).unmarshal(document);
         var passwords = (Password[]) mapped.getConfigurations().getFirst().getConfigurationProperties().get("passwords");
         assertArrayEquals(new String[]{"old", "previous", "current", "KURA2.literal-value"},
-                Arrays.stream(passwords).map(value -> new String(value.getPassword())).toArray(String[]::new));
+                Arrays.stream(passwords, 0, 4).map(value -> new String(value.getPassword())).toArray(String[]::new));
+        assertTrue(passwords[4].toString().startsWith("KURA2." + sha(active) + "."));
+        assertArrayEquals("base64-wrapped".toCharArray(), activeOnly.decryptAes(passwords[4].getPassword()));
         assertArrayEquals(wrapped, SnapshotRewrap.rewrap(wrapped, current, sha(active)));
         byte[] incorrect = encrypted(current, xml.replace(previousValue, "KURA2.invalid-value").getBytes(StandardCharsets.UTF_8));
         assertThrows(Exception.class, () -> SnapshotRewrap.rewrap(incorrect, current, sha(active)));

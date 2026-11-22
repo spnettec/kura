@@ -354,20 +354,7 @@ public class XmlConfigPropertiesAdapter {
                         break;
                     case PASSWORD_TYPE:
                         try (CryptoLease lease = crypto()) {
-                            CryptoService cryptoService = lease.service();
-                            propvalue = values[0];
-                            if (this.logicalPasswords) {
-                                propvalue = new Password(cryptoService.decodeBase64((String) propvalue));
-                            } else if (adaptedProp.isEncrypted()) {
-                                try {
-                                    propvalue = new Password(
-                                            cryptoService.decryptAes(((String) propvalue).toCharArray()));
-                                } catch (KuraException e) {
-                                    propvalue = new Password(cryptoService.decodeBase64((String) propvalue));
-                                }
-                            } else {
-                                propvalue = new Password((String) propvalue);
-                            }
+                            propvalue = decodePassword(values[0], adaptedProp.isEncrypted(), lease.service());
                         }
                         break;
                     }
@@ -455,18 +442,7 @@ public class XmlConfigPropertiesAdapter {
                             Password[] pwdValues = new Password[values.length];
                             for (int i = 0; i < values.length; i++) {
                                 if (values[i] != null) {
-                                    if (this.logicalPasswords) {
-                                        pwdValues[i] = new Password(cryptoService.decodeBase64(values[i]));
-                                    } else if (adaptedProp.isEncrypted()) {
-                                        try {
-                                            pwdValues[i] = new Password(
-                                                    cryptoService.decryptAes(values[i].toCharArray()));
-                                        } catch (KuraException e) {
-                                            pwdValues[i] = new Password(cryptoService.decodeBase64(values[i]));
-                                        }
-                                    } else {
-                                        pwdValues[i] = new Password(values[i]);
-                                    }
+                                    pwdValues[i] = decodePassword(values[i], adaptedProp.isEncrypted(), cryptoService);
                                 }
                             }
                             propvalue = pwdValues;
@@ -478,6 +454,28 @@ public class XmlConfigPropertiesAdapter {
             }
         }
         return properties;
+    }
+
+    private Password decodePassword(String value, boolean encrypted, CryptoService crypto) throws Exception {
+        if (this.logicalPasswords) {
+            return new Password(crypto.decodeBase64(value));
+        }
+        if (!encrypted) {
+            return new LegacyLogicalPassword(value == null ? null : value.toCharArray());
+        }
+        try {
+            return new LegacyLogicalPassword(crypto.decryptAes(value.toCharArray()));
+        } catch (KuraException legacyBase64) {
+            // Historical writers used Base64 for both stored CM ciphertext and logical text.
+            return new Password(crypto.decodeBase64(value));
+        }
+    }
+
+    /** A legacy value that the XML representation has already identified as logical. */
+    static final class LegacyLogicalPassword extends Password {
+        LegacyLogicalPassword(char[] value) {
+            super(value);
+        }
     }
 
     private static Object restoreContainer(XmlConfigPropertyAdapted property, Object value) {

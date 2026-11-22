@@ -24,6 +24,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 
+import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.configuration.XmlComponentConfigurations;
 import org.eclipse.kura.core.crypto.CryptoServiceImpl;
 import org.eclipse.kura.internal.xml.marshaller.unmarshaller.XmlJavaComponentConfigurationsMapper;
@@ -269,21 +270,30 @@ public final class SnapshotTool {
 
     private static boolean rewrapLegacyPassword(Element value, String text, CryptoServiceImpl crypto, String prefix)
             throws Exception {
-        // The historical mapper treats plain base64 as logical text, including decoded text that looks encrypted.
-        if (!text.contains("-") && !text.contains(".")) {
-            crypto.decodeBase64(text);
+        boolean base64 = !text.contains("-") && !text.contains(".");
+        String candidate = base64 ? crypto.decodeBase64(text) : text;
+        if (candidate.isEmpty()) {
             return false;
         }
-        char[] plain = crypto.decryptAes(text.toCharArray());
+        char[] plain;
         try {
-            if (text.startsWith(prefix)) {
+            plain = crypto.decryptAes(candidate.toCharArray());
+        } catch (KuraException failure) {
+            if (base64) {
+                // Historical Base64 also represents literal passwords.
+                return false;
+            }
+            throw failure;
+        }
+        try {
+            if (candidate.startsWith(prefix)) {
                 return false; // The tag has already been authenticated.
             }
             char[] wrapped = crypto.encryptAes(plain);
             try {
                 String replacement = new String(wrapped);
                 require(replacement.startsWith(prefix));
-                value.setTextContent(replacement);
+                value.setTextContent(base64 ? crypto.encodeBase64(replacement) : replacement);
                 return true;
             } finally {
                 Arrays.fill(wrapped, '\0');

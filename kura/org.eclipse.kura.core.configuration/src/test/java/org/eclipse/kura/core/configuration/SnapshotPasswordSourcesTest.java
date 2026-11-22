@@ -78,10 +78,27 @@ class SnapshotPasswordSourcesTest {
         if(factory)verify(configuration).updateIfDifferent(capture.capture());else verify(configuration).update(capture.capture());
         assertEquals("encrypted:encrypted:logical",capture.getValue().get("secret"));assertEquals("encrypted:logical",values.get("secret").toString());
     }
-    @Test void startupKeepsUnmarkedLegacyCipherPropertiesOnTheirOldPath()throws Exception {
+    @Test void startupAuthenticatesLegacyCipherPropertiesBeforeStoringThem()throws Exception {
         var core=new Fixture();var values=new HashMap<String,Object>();values.put("secret",new Password("encrypted:legacy"));core.seed(new ComponentConfigurationImpl("owned",null,values));core.loaded.setPasswordEncoding(null);
         var admin=mock(ConfigurationAdmin.class);var configuration=mock(Configuration.class);when(admin.getConfiguration("owned","?")).thenReturn(configuration);core.setConfigurationAdmin(admin);core.startup();
         @SuppressWarnings("rawtypes")var capture=org.mockito.ArgumentCaptor.forClass(Dictionary.class);verify(configuration).update(capture.capture());assertEquals("encrypted:legacy",capture.getValue().get("secret"));
+    }
+
+    @Test void legacySequenceAuthenticatesEachAmbiguousElementAndPreservesKnownLogicalValues() throws Exception {
+        var knownLogical = new XmlConfigPropertiesAdapter.LegacyLogicalPassword("encrypted:literal".toCharArray());
+        var source = new Vector<>(List.of(new Password("encrypted:stored"), new Password("legacy literal"),
+                knownLogical));
+        var crypto = RollbackConvergenceTest.crypto();
+
+        var result = LegacySnapshotPasswords.logical(Map.of("secret", source, "label", "encrypted:label"), crypto);
+
+        var passwords = assertInstanceOf(Vector.class, result.get("secret"));
+        assertEquals("stored", passwords.get(0).toString());
+        assertEquals("legacy literal", passwords.get(1).toString());
+        assertEquals("encrypted:literal", passwords.get(2).toString());
+        assertEquals("encrypted:label", result.get("label"));
+        assertEquals("encrypted:stored", source.getFirst().toString());
+        verify(crypto, times(2)).decryptAes(any(char[].class));
     }
     @Test void startupEncryptionFailurePreventsAnyCmSeeding()throws Exception {
         var core=new Fixture();var decoded=new ComponentConfigurationImpl("owned",null,Map.of("secret",new Password("logical")));decoded.setLogicalPasswords(true);core.seed(decoded);var crypto=RollbackConvergenceTest.crypto();when(crypto.encryptAes(any(char[].class))).thenThrow(new org.eclipse.kura.KuraException(org.eclipse.kura.KuraErrorCode.ENCODE_ERROR));core.setCryptoService(crypto);var admin=mock(ConfigurationAdmin.class);core.setConfigurationAdmin(admin);
