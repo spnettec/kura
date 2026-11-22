@@ -33,6 +33,8 @@ VALIDATION_UNITS = ('kura-snapshot-validation.socket', 'kura-snapshot-validation
 NATIVE_VALIDATION_UNITS = (*UNITS, *VALIDATION_UNITS)
 SNAPSHOT_INVENTORY_UNITS = (*NATIVE_VALIDATION_UNITS, 'kura-snapshot-inventory.socket', 'kura-snapshot-inventory.service')
 RECOVERY_DELEGATION_UNITS = (*SNAPSHOT_INVENTORY_UNITS, 'kura-recovery-input.socket', 'kura-recovery-input.service')
+NATIVE_MAIN_UNITS = (*RECOVERY_DELEGATION_UNITS, 'kura-recovery-main.socket', 'kura-recovery-main.service',
+                     'kura-recovery-main-reader.socket', 'kura-recovery-main-reader.service')
 LEGACY_ASSETS = frozenset(("bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
                    "libexec/key-backup/kura-key-crypto.jar", "libexec/key-backup/lib/bcprov-jdk18on-1.86.jar"))
 COLD_V1_ASSETS = LEGACY_ASSETS | frozenset(('bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py',
@@ -46,9 +48,10 @@ RECOVERY_INPUT_ASSETS = SNAPSHOT_INVENTORY_ASSETS | {'bin/kura_recovery_input.py
 RECOVERY_LAUNCH_ASSETS = RECOVERY_INPUT_ASSETS | {'bin/kura_recovery_launch.py'}
 RECOVERY_DELEGATION_ASSETS = RECOVERY_LAUNCH_ASSETS | {'bin/kura_native_recovery_input.py'}
 RECOVERY_MAIN_COMMAND_ASSETS = RECOVERY_DELEGATION_ASSETS | {'bin/kura_recovery_main_command.py'}
+NATIVE_MAIN_ASSETS = RECOVERY_MAIN_COMMAND_ASSETS | {'bin/kura_native_recovery_main.py'}
 JOURNAL_ASSETS = (JOURNAL_V1_ASSETS, ASSETS, NATIVE_VALIDATION_ASSETS, SNAPSHOT_INVENTORY_ASSETS,
                   RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS, RECOVERY_DELEGATION_ASSETS,
-                  RECOVERY_MAIN_COMMAND_ASSETS)
+                  RECOVERY_MAIN_COMMAND_ASSETS, NATIVE_MAIN_ASSETS)
 
 
 class Refused(RuntimeError):
@@ -1710,6 +1713,7 @@ class Lifecycle:
         delegation_profiles = {(files, frozenset(RECOVERY_DELEGATION_UNITS))
                                for files in (RECOVERY_DELEGATION_ASSETS, RECOVERY_MAIN_COMMAND_ASSETS)}
         recognized = (recovery_profiles | inventory_profiles | delegation_profiles
+                      | {(NATIVE_MAIN_ASSETS, frozenset(NATIVE_MAIN_UNITS))}
                       | {(NATIVE_VALIDATION_ASSETS, frozenset(NATIVE_VALIDATION_UNITS))}) if modern else (
             recovery_profiles | {(LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, recovery_units)})
         require(profile in recognized and (not modern or isinstance(manifest['generation'], dict)),
@@ -1913,7 +1917,7 @@ class Lifecycle:
     def no_overrides(self):
         for prefix in ("/etc", "/run", "/usr/lib", "/lib"):
             base = self.path(prefix + "/systemd/system")
-            for name in RECOVERY_DELEGATION_UNITS:
+            for name in NATIVE_MAIN_UNITS:
                 if prefix in ("/etc", "/run"):
                     require(not os.path.lexists(base / name), "Custom key-service unit requires reviewed migration")
                 stem, kind = name.rsplit(".", 1)
@@ -1935,10 +1939,10 @@ class Lifecycle:
 
     def stop_units(self):
         if not self.path("/run/systemd/system").is_dir():
-            require(not any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in RECOVERY_DELEGATION_UNITS),
+            require(not any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in NATIVE_MAIN_UNITS),
                     "Installed key service requires its systemd manager")
             return
-        for name in RECOVERY_DELEGATION_UNITS: # Stop listener first, then the idle worker service.
+        for name in NATIVE_MAIN_UNITS: # Stop listener first, then the idle worker service.
             output = self.command(["show", name, "--property=LoadState", "--property=ActiveState",
                                    "--property=MainPID", "--property=ControlPID"])
             properties = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
@@ -2033,9 +2037,9 @@ class Lifecycle:
     def enter(self, action):
         require(action in ("install", "upgrade", "remove"))
         self.no_overrides()
-        registered = any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in RECOVERY_DELEGATION_UNITS)
+        registered = any(os.path.lexists(self.path("/lib/systemd/system/" + name)) for name in NATIVE_MAIN_UNITS)
         if self.path("/run/systemd/system").is_dir():
-            for name in RECOVERY_DELEGATION_UNITS:
+            for name in NATIVE_MAIN_UNITS:
                 output = self.command(["show", name, "--property=LoadState"])
                 properties = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
                 require(properties.get("LoadState") in ("loaded", "masked", "not-found"))
@@ -2044,7 +2048,7 @@ class Lifecycle:
         manifest = None
         if registered and previous_fence is None:
             manifest=self.assets() # Never execute an unknown installed helper or silently adopt another unit.
-            for name in set(RECOVERY_DELEGATION_UNITS)-set(manifest['units']):
+            for name in set(NATIVE_MAIN_UNITS)-set(manifest['units']):
                 require(not os.path.lexists(self.path('/lib/systemd/system/'+name)), 'Foreign recovery unit requires reviewed migration')
                 if self.path('/run/systemd/system').is_dir():
                     properties=dict(line.split('=',1) for line in self.command(['show',name,'--property=LoadState']).splitlines() if '=' in line)

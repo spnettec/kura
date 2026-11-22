@@ -6,7 +6,9 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import stat
+import struct
 import sys
 
 ROOT = '/var/lib/kura-recovery-launch'
@@ -21,6 +23,7 @@ SELECTION = 'selection.json'
 CONDITION = 'condition.json'
 RECEIPT = 'applied.properties'
 MAX_SNAPSHOT = 32 << 20
+READER_SOCKET = '/run/kura-recovery-main-reader.sock'
 IDENTITY = re.compile(r'rec-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
 SHA = re.compile(r'[0-9a-f]{64}')
 
@@ -102,6 +105,45 @@ def projection(base, identity, uid, gid, root):
     snapshot = read(path / SNAPSHOT, 0, gid, 0o440, MAX_SNAPSHOT)
     require(len(snapshot) == plan['size'] and digest(snapshot) == plan['snapshotSha256'])
     return path, plan
+
+
+def inspect_projection(path, plan, uid, gid):
+    identity = plan['restoreId']
+    plan_sha = digest(canonical(plan))
+    output = path / OUT
+    result = dict(schema=1, restoreId=identity, root=plan['root'], planSha256=plan_sha,
+                  state='MAIN_LAUNCH_PREPARED')
+    if not os.path.lexists(output / CLAIM):
+        entries = {entry.name for entry in output.iterdir()}
+        require(entries in (set(), {CONDITION}))
+        if entries:
+            result['state'] = 'MAIN_LAUNCH_CONDITIONED'
+        return result
+    claim = json.loads(read(output / CLAIM, uid, gid, 0o600, 4096))
+    require(isinstance(claim, dict)
+            and set(claim) == {'schema', 'state', 'restoreId', 'planSha256', 'pid', 'startTicks', 'invocationId', 'bootId'}
+            and type(claim['schema']) is int and claim['schema'] == 1
+            and claim['state'] == 'MAIN_LAUNCH_CLAIMED' and claim['restoreId'] == identity
+            and claim['planSha256'] == plan_sha and type(claim['pid']) is int and claim['pid'] > 1
+            and isinstance(claim['startTicks'], str) and re.fullmatch('[0-9]{1,20}', claim['startTicks'])
+            and isinstance(claim['invocationId'], str) and re.fullmatch('[0-9a-f]{32}', claim['invocationId'])
+            and isinstance(claim['bootId'], str) and IDENTITY.fullmatch('rec-' + claim['bootId']))
+    result.update(state=claim['state'], invocation=claim)
+    if os.path.lexists(output / RECEIPT):
+        raw = read(output / RECEIPT, uid, gid, 0o600, 65536)
+        lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
+        receipt = dict(lines)
+        require(len(lines) == len(receipt) and receipt.get('schema') == '1'
+                and receipt.get('restore.id') == identity)
+        status = receipt.get('status')
+        require(status in ('CM_APPLIED', 'RECOVERY_REQUIRED'))
+        if status == 'CM_APPLIED':
+            require(receipt.get('snapshot.sha256') == plan['snapshotSha256'])
+            for name in ('backup', 'applied'):
+                artifact = output / (RECEIPT + f'.cm-{name}.aes')
+                require(digest(read(artifact, uid, gid, 0o600, 64 << 20)) == receipt.get(name + '.sha256'))
+        result.update(state=status, receiptSha256=digest(raw))
+    return result
 
 
 def boot_identity():
@@ -208,10 +250,34 @@ def claim(path, plan, lease):
     sync(path / OUT)
 
 
+def read_once():
+    require(os.geteuid() != 0 and os.environ.get('LISTEN_PID') == str(os.getpid())
+            and os.environ.get('LISTEN_FDS') == '1')
+    with socket.socket(fileno=3) as listener:
+        require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
+                and listener.getsockname() == READER_SOCKET
+                and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN) == 1)
+        connection, _ = listener.accept()
+        with connection, connection.makefile('rb') as input_file:
+            connection.settimeout(3)
+            pid, owner, _ = struct.unpack('3i', connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+            require(owner == 0 and pid > 0)
+            raw = input_file.read(128).decode('ascii')
+            require(raw.endswith('\n') and IDENTITY.fullmatch(raw[:-1]))
+            uid, gid = os.geteuid(), os.getegid()
+            path, plan = projection(Path(ROOT), raw[:-1], uid, gid, Path('/'))
+            result = canonical(inspect_projection(path, plan, uid, gid))
+            require(0 < len(result) <= 8192)
+            connection.sendall(struct.pack('!I', len(result)) + result)
+
+
 if __name__ == '__main__':
     try:
-        require(sys.argv[1:] == ['condition'])
-        condition(Path(__file__).resolve().parents[1])
+        if sys.argv[1:] == ['read-once']:
+            read_once()
+        else:
+            require(sys.argv[1:] == ['condition'])
+            condition(Path(__file__).resolve().parents[1])
     except (OSError, ValueError, TypeError, KeyError):
         print('Controlled recovery selection is already used, stale, or invalid', file=sys.stderr)
         sys.exit(1)

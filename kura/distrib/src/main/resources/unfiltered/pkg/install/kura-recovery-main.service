@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Core fixed recovery Main command authority
+Requires=kura-recovery-main.socket kura-recovery-main-reader.socket
+After=kura-recovery-main.socket kura-recovery-main-reader.socket
+PartOf=kura-recovery-main.socket
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+ConditionPathIsDirectory=/var/lib/kura-recovery-launch
+
+[Service]
+Type=simple
+User=root
+Group=root
+SupplementaryGroups=kurad
+ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_native_recovery_main.py
+Sockets=kura-recovery-main.socket
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/kura-recovery-launch
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+LimitCORE=0
+LimitMEMLOCK=0
+MemoryMax=256M
+TasksMax=32
+TimeoutStopSec=75

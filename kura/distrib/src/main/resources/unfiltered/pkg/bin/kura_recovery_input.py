@@ -299,41 +299,7 @@ class RecoveryInput:
                 if not os.path.lexists(base / identity):
                     return self.observation(identity, 'MAIN_LAUNCH_ABSENT')
                 path, plan = launch.projection(base, identity, core.pw_uid, core.pw_gid, self.lifecycle.root)
-                result = self.observation(identity, 'MAIN_LAUNCH_PREPARED')
-                result['planSha256'] = launch.digest(launch.canonical(plan))
-                output = path / launch.OUT
-                if not os.path.lexists(output / launch.CLAIM):
-                    require({entry.name for entry in output.iterdir()} in (set(), {launch.CONDITION}),
-                            'UNSAFE_FILESYSTEM')
-                    return result
-                raw = launch.read(output / launch.CLAIM, core.pw_uid, core.pw_gid, 0o600, 4096)
-                claim = decode(raw)
-                fields(claim, {'schema', 'state', 'restoreId', 'planSha256', 'pid', 'startTicks', 'invocationId', 'bootId'})
-                require(type(claim['schema']) is int and claim['schema'] == 1
-                        and claim['state'] == 'MAIN_LAUNCH_CLAIMED' and claim['restoreId'] == identity
-                        and claim['planSha256'] == result['planSha256']
-                        and type(claim['pid']) is int and claim['pid'] > 1
-                        and isinstance(claim['startTicks'], str) and re.fullmatch('[0-9]{1,20}', claim['startTicks'])
-                        and isinstance(claim['invocationId'], str) and re.fullmatch('[0-9a-f]{32}', claim['invocationId'])
-                        and isinstance(claim['bootId'], str) and RESTORE_ID.fullmatch('rec-' + claim['bootId']),
-                        'UNSAFE_FILESYSTEM')
-                result.update(state=claim['state'], invocation=claim)
-                if os.path.lexists(output / launch.RECEIPT):
-                    raw = launch.read(output / launch.RECEIPT, core.pw_uid, core.pw_gid, 0o600, 65536)
-                    lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
-                    receipt = dict(lines)
-                    require(len(lines) == len(receipt) and receipt.get('schema') == '1'
-                            and receipt.get('restore.id') == identity, 'UNSAFE_FILESYSTEM')
-                    status = receipt.get('status')
-                    require(status in ('CM_APPLIED', 'RECOVERY_REQUIRED'), 'UNSAFE_FILESYSTEM')
-                    if status == 'CM_APPLIED':
-                        require(receipt.get('snapshot.sha256') == plan['snapshotSha256'], 'UNSAFE_FILESYSTEM')
-                        for name in ('backup', 'applied'):
-                            item = output / (launch.RECEIPT + f'.cm-{name}.aes')
-                            value = launch.read(item, core.pw_uid, core.pw_gid, 0o600, 64 << 20)
-                            require(launch.digest(value) == receipt.get(name + '.sha256'), 'UNSAFE_FILESYSTEM')
-                    result.update(state=status, receiptSha256=launch.digest(raw))
-                return result
+                return launch.inspect_projection(path, plan, core.pw_uid, core.pw_gid)
 
 
 def private_file(path, flags):
@@ -345,6 +311,9 @@ def command(manager, lifecycle, arguments):
     recovery = RecoveryInput(manager, lifecycle)
     if arguments[0] == 'delegate':
         from kura_native_recovery_input import administrative_grant
+        return administrative_grant(recovery, arguments[1:])
+    if arguments[0] == 'delegate-main':
+        from kura_native_recovery_main import administrative_grant
         return administrative_grant(recovery, arguments[1:])
     if arguments[0] in ('start-main', 'stop-main', 'main-command-status'):
         from kura_recovery_main_command import command as main_command

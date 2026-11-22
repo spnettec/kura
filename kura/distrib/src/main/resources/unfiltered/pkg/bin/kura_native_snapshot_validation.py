@@ -3,6 +3,7 @@
 """Only the live, Root-attested native agent can invoke Core's read-only validator."""
 
 import grp
+from contextlib import contextmanager
 import hashlib
 import os
 from pathlib import Path
@@ -84,6 +85,18 @@ def live_agent(lifecycle, peer):
             'FORBIDDEN')
     verify_alive(pidfd, 'FORBIDDEN')
     return value
+
+
+@contextmanager
+def administrator_peer(lifecycle):
+    pid = int(unit_state()['MainPID'])
+    require(pid > 1, 'FORBIDDEN')
+    pidfd = os.pidfd_open(pid)
+    try:
+        peer = (pid, pwd.getpwnam(ACCOUNT).pw_uid, grp.getgrnam('kura-management').gr_gid, pidfd)
+        yield lambda: live_agent(lifecycle, peer)
+    finally:
+        os.close(pidfd)
 
 
 def validation_request(manager, request, descriptor, uid):

@@ -15,16 +15,30 @@ JOB = re.compile(r'o "(/org/freedesktop/systemd1/job/[0-9]+)"\n?')
 
 
 class Controller:
-    def __init__(self, recovery):
+    def __init__(self, recovery, *, reader=None, authorize=None):
         self.recovery = recovery
         self.manager = recovery.manager
         self.lifecycle = recovery.lifecycle
         self.base = self.lifecycle.path(launch.ROOT)
         self.core = pwd.getpwnam('kurad')
+        self.reader = reader
+        self.authorize = authorize
         require(self.core.pw_uid > 0 and self.core.pw_gid > 0, 'UNMANAGED_CORE')
 
     def projection(self, identity):
         return launch.projection(self.base, identity, self.core.pw_uid, self.core.pw_gid, self.lifecycle.root)
+
+    def inspect(self, path, plan):
+        if self.reader is None:
+            return launch.inspect_projection(path, plan, self.core.pw_uid, self.core.pw_gid)
+        result = self.reader(plan['restoreId'])
+        require(result.get('restoreId') == plan['restoreId'] and result.get('root') == plan['root']
+                and result.get('planSha256') == launch.digest(launch.canonical(plan)), 'CONFLICT')
+        return result
+
+    def authenticate(self):
+        if self.authorize is not None:
+            self.authorize()
 
     def journal(self, identity):
         return self.base / '.commands' / identity
@@ -83,7 +97,7 @@ class Controller:
             manager.settled()
             path, plan = self.projection(identity)
             require(launch.digest(launch.canonical(plan)) == planned, 'CONFLICT')
-            require(not any((path / launch.OUT).iterdir()), 'MAIN_LAUNCH_USED')
+            require(self.inspect(path, plan)['state'] == 'MAIN_LAUNCH_PREPARED', 'MAIN_LAUNCH_USED')
             require(launch.selection(self.base, self.core.pw_gid, self.lifecycle.root) is None,
                     'MAIN_SELECTION_EXISTS')
             journal = self.journal(identity)
@@ -95,9 +109,11 @@ class Controller:
                 require(source == dict(keySha256=plan['activeKeySha256'], ringSha256=plan['ringSha256'])
                         and cohort['cohortSha256'] == plan['cohortSha256'], 'COHORT_CHANGED')
                 manager.generation_start_authorized(source, cohort)
-                os.close(manager.writer_lock(create=True))
+                if self.reader is None:
+                    os.close(manager.writer_lock(create=True))
                 with manager.exclusive_writers():
                     self.ensure_stopped(component, generation)
+                    self.authenticate()
                     selection = dict(schema=1, root=plan['root'], restoreId=identity,
                                      planSha256=planned, bootId=launch.boot_identity())
                     intent = selection | {'state': 'MAIN_START_INTENT',
@@ -118,6 +134,7 @@ class Controller:
         # maintenance and prohibits a fallback to an ordinary Main.
         try:
             self.ensure_stopped(component, generation)
+            self.authenticate()
             raw = component.command(START, timeout=18)
             job = JOB.fullmatch(raw)
             require(job is not None, 'UNKNOWN')
@@ -129,8 +146,6 @@ class Controller:
 
     def stop(self, identity, receipt_sha):
         digest(receipt_sha)
-        observed = self.recovery.inspect_main(identity)
-        require(observed['state'] == 'CM_APPLIED' and observed['receiptSha256'] == receipt_sha, 'CONFLICT')
         prior = self.observation(identity)
         require(prior['state'] == 'MAIN_START_JOB_ACCEPTED', 'MAIN_COMMAND_EXISTS')
         manager = self.manager
@@ -144,8 +159,8 @@ class Controller:
             require(selected is not None and selected['restoreId'] == identity
                     and launch.digest(launch.canonical(selected)) == prior['selectionSha256']
                     and selected['bootId'] == launch.boot_identity(), 'CONFLICT')
-            require(launch.digest(launch.read(path / launch.OUT / launch.RECEIPT, self.core.pw_uid,
-                                              self.core.pw_gid, 0o600, 65536)) == receipt_sha, 'CONFLICT')
+            observed = self.inspect(path, plan)
+            require(observed['state'] == 'CM_APPLIED' and observed['receiptSha256'] == receipt_sha, 'CONFLICT')
             component, cohort = manager.generation_component()
             generation = plan['ringSha256'] is not None
             unit = component.unit(generation_mode=generation)
@@ -162,14 +177,14 @@ class Controller:
             intent = prior | {'state': 'MAIN_STOP_INTENT', 'pid': invocation['pid'],
                               'invocationId': invocation['invocationId'], 'startTicks': invocation['startTicks'],
                               'receiptSha256': receipt_sha}
+            self.authenticate()
             try:
                 manager.atomic(journal / 'stop.json', encode(intent), no_replace=True)
                 component.command(STOP, timeout=55)
                 self.ensure_stopped(component, generation)
                 with manager.exclusive_writers():
                     self.ensure_stopped(component, generation)
-                    require(launch.digest(launch.read(path / launch.OUT / launch.RECEIPT, self.core.pw_uid,
-                                                      self.core.pw_gid, 0o600, 65536)) == receipt_sha, 'CONFLICT')
+                    require(self.inspect(path, plan) == observed, 'CONFLICT')
                     receipt = intent | {'state': 'MAIN_STOPPED'}
                     manager.atomic(journal / 'stop-receipt.json', encode(receipt), no_replace=True)
                     return receipt

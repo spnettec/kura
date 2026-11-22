@@ -141,7 +141,9 @@ configure_brokers() {
     for key_unit in kura-key-service.socket kura-key-service.service kura-key-recovery.service \
             kura-snapshot-validation.socket kura-snapshot-validation.service \
             kura-snapshot-inventory.socket kura-snapshot-inventory.service \
-            kura-recovery-input.socket kura-recovery-input.service; do
+            kura-recovery-input.socket kura-recovery-input.service \
+            kura-recovery-main.socket kura-recovery-main.service \
+            kura-recovery-main-reader.socket kura-recovery-main-reader.service; do
         install -o root -g root -m 0644 "${INSTALL_DIR}/kura/install/${key_unit}" "/lib/systemd/system/${key_unit}" || exit 1
     done
 

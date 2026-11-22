@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: EPL-2.0
+[Unit]
+Description=Private Core recovery result reader
+PartOf=kura-recovery-main.socket
+ConditionPathExists=!/var/lib/kura-key-service/maintenance.json
+
+[Socket]
+ListenStream=/run/kura-recovery-main-reader.sock
+SocketMode=0600
+RemoveOnStop=yes
+Backlog=4

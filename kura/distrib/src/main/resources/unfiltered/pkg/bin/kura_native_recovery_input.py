@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Core-owned one-shot stage admission for the paired native agent."""
-import grp
 import hashlib
 import os
 from pathlib import Path
-import pwd
 import re
 import socket
 import subprocess
@@ -14,7 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_key_service import Failure, Lifecycle, LifecycleRefused, Manager, Refused
 from kura_key_service import decode, digest, encode, fields, read_request_frame, require, send_frame
-from kura_native_snapshot_validation import ACCOUNT, ATTESTATION_FIELDS, live_agent, unit_state
+from kura_native_snapshot_validation import ATTESTATION_FIELDS, administrator_peer, live_agent
 from kura_reboot_broker import Refused as PeerRefused
 from kura_reboot_broker import socket_peer
 from kura_recovery_input import MAX_INPUTS, MAX_SNAPSHOT, NATIVE_ADMISSIONS, RESTORE_ID, RecoveryInput
@@ -48,14 +46,8 @@ def administrative_grant(recovery, arguments):
     exact_input(options)
     lifecycle = recovery.lifecycle
     require_package(lifecycle)
-    pid = int(unit_state()['MainPID'])
-    require(pid > 1, 'FORBIDDEN')
-    pidfd = os.pidfd_open(pid)
-    try:
-        peer = (pid, pwd.getpwnam(ACCOUNT).pw_uid, grp.getgrnam('kura-management').gr_gid, pidfd)
-        return grant(recovery, options, lambda: live_agent(lifecycle, peer))
-    finally:
-        os.close(pidfd)
+    with administrator_peer(lifecycle) as authenticate:
+        return grant(recovery, options, authenticate)
 
 
 def grant(recovery, options, authenticate):

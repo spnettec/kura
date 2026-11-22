@@ -86,12 +86,14 @@ def prepare(assembly, cipher_target, offline_target):
                'bin/kura_key_recovery.py', 'bin/kura_key_recovery_setup.py', 'bin/kura_key_recovery_start.py',
                'bin/kura_key_journal.py', 'bin/kura_native_snapshot_validation.py', 'bin/kura_snapshot_inventory.py',
                'bin/kura_recovery_input.py', 'bin/kura_recovery_launch.py', 'bin/kura_native_recovery_input.py',
-               'bin/kura_recovery_main_command.py']
+               'bin/kura_recovery_main_command.py', 'bin/kura_native_recovery_main.py']
     static = ['share/key-recovery/' + name for name in ['index.html', 'recovery.js', 'recovery.css', 'archive.js']]
     units = ['kura-key-service.socket', 'kura-key-service.service', 'kura-key-recovery.service',
              'kura-snapshot-validation.socket', 'kura-snapshot-validation.service',
              'kura-snapshot-inventory.socket', 'kura-snapshot-inventory.service',
-             'kura-recovery-input.socket', 'kura-recovery-input.service', 'kura.service']
+             'kura-recovery-input.socket', 'kura-recovery-input.service',
+             'kura-recovery-main.socket', 'kura-recovery-main.service',
+             'kura-recovery-main-reader.socket', 'kura-recovery-main-reader.service', 'kura.service']
     for name in helpers + static + ['bin/kura_key_cohort.py', 'bin/kura_credential_env.sh'] + ["install/" + unit for unit in units]:
         require((assembly / name).is_file() and not (assembly / name).is_symlink())
     # prerm runs account/policy teardown while tracked root code still exists.
