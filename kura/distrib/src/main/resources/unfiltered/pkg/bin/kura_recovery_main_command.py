@@ -11,6 +11,7 @@ import time
 from kura_key_service import Failure, LifecycleRefused, Refused, decode, digest, encode, fields, rename_no_replace, require
 from kura_key_generation import START, SYSTEMCTL
 import kura_recovery_launch as launch
+from kura_snapshot_publication import SnapshotPublication
 
 STOP = (*SYSTEMCTL, 'stop', 'kura.service')
 JOB = re.compile(r'o "(/org/freedesktop/systemd1/job/[0-9]+)"\n?')
@@ -263,9 +264,12 @@ class Controller:
         raw, applied = launch.decision(path / launch.OUT / launch.RECEIPT, plan['restoreId'],
                                        self.core.pw_uid, self.core.pw_gid)
         require(launch.digest(raw) == stopped['receiptSha256'], 'CONFLICT')
-        normal = plan | {'guarded': dict(snapshotId=snapshot_id, selectionSha256=stopped['selectionSha256'],
-                                         sourceReceiptSha256=stopped['receiptSha256'],
-                                         sourceAppliedSha256=applied['applied.sha256'])}
+        guard = dict(snapshotId=snapshot_id, selectionSha256=stopped['selectionSha256'],
+                     sourceReceiptSha256=stopped['receiptSha256'], sourceAppliedSha256=applied['applied.sha256'])
+        published = SnapshotPublication(self).require_published(plan['restoreId'], snapshot_id, stopped['receiptSha256'])
+        if published is not None:
+            guard.update(snapshotFile=published['file'], snapshotDirectory=published['directory'])
+        normal = plan | {'guarded': guard}
         launch.normal_snapshot(self.lifecycle.root, normal, self.core.pw_uid, self.core.pw_gid)
         self.authenticate()
         try:
@@ -318,6 +322,7 @@ class Controller:
                         require(not os.path.lexists(draft), 'MAIN_COMMAND_EXISTS')
                         normal = self.prepare_guarded(path, plan, stopped, snapshot_id)
                     else:
+                        SnapshotPublication(self).require_published(identity, snapshot_id, receipt_sha)
                         normal, result = self.inspect_guarded(path, plan, fixed, draft=True, admit=True)
                         require(result['state'] == 'MAIN_LAUNCH_PREPARED' and result['planSha256'] == prepared
                                 and normal['guarded']['snapshotId'] == snapshot_id
@@ -529,11 +534,16 @@ class Controller:
 def command(recovery, action, arguments):
     parameter_count = {'start-main': 2, 'stop-main': 2, 'main-command-status': 1,
                        'start-guarded-main': 3, 'guarded-main-status': 1,
-                       'approve-guarded-release': 3, 'guarded-release-status': 1, 'retire-guarded-main': 2}
+                       'approve-guarded-release': 3, 'guarded-release-status': 1, 'retire-guarded-main': 2,
+                       'publish-ordinary-snapshot': 2, 'continue-ordinary-snapshot': 2, 'ordinary-snapshot-status': 1}
     require(len(arguments) == parameter_count[action])
     identity, *expected = arguments
     require(launch.IDENTITY.fullmatch(identity) is not None)
     fixed = Controller(recovery)
+    if action == 'ordinary-snapshot-status':
+        return SnapshotPublication(fixed).status(identity)
+    if action in ('publish-ordinary-snapshot', 'continue-ordinary-snapshot'):
+        return SnapshotPublication(fixed).run(identity, expected[0], continuing=action == 'continue-ordinary-snapshot')
     if action == 'approve-guarded-release':
         from kura_native_snapshot_validation import administrator_peer
 

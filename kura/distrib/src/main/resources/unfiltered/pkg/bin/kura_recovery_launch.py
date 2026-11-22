@@ -241,12 +241,19 @@ def snapshot_number(value):
 def normal_snapshot(root, plan, uid, gid):
     parent = root / NORMAL_SNAPSHOTS.lstrip('/')
     directory(parent, uid, gid, 0o700)
-    snapshot_id = plan['guarded']['snapshotId']
+    guard = plan['guarded']
+    snapshot_id = guard['snapshotId']
     expected = snapshot_number(snapshot_id)
     for item in parent.glob('snapshot_*.xml'):
         require(snapshot_number(item.name[9:-4]) <= expected)
-    contents = read(parent / ('snapshot_' + snapshot_id + '.xml'), uid, gid, 0o600, MAX_SNAPSHOT)
+    target = parent / ('snapshot_' + snapshot_id + '.xml')
+    linked = 'snapshotFile' in guard
+    if linked:
+        require(root_identity(parent) == guard['snapshotDirectory'] and root_identity(target) == guard['snapshotFile'])
+    contents = read(target, uid, gid, 0o600, MAX_SNAPSHOT)
     require(len(contents) == plan['size'] and digest(contents) == plan['snapshotSha256'])
+    if linked:
+        require(root_identity(parent) == guard['snapshotDirectory'] and root_identity(target) == guard['snapshotFile'])
 
 
 def guarded_plan(path, plan, fixed, uid, gid, *, draft=False):
@@ -258,11 +265,18 @@ def guarded_plan(path, plan, fixed, uid, gid, *, draft=False):
     require(isinstance(normal, dict) and canonical(normal) == raw
             and set(normal) == set(plan) | {'guarded'} and all(normal[key] == plan[key] for key in plan))
     guard = normal['guarded']
+    base_fields = {'snapshotId', 'selectionSha256', 'sourceReceiptSha256', 'sourceAppliedSha256'}
+    published_fields = {'snapshotFile', 'snapshotDirectory'}
     require(isinstance(guard, dict)
-            and set(guard) == {'snapshotId', 'selectionSha256', 'sourceReceiptSha256', 'sourceAppliedSha256'}
+            and set(guard) in (base_fields, base_fields | published_fields)
             and guard['selectionSha256'] == digest(canonical(fixed))
             and all(isinstance(guard[key], str) and SHA.fullmatch(guard[key])
                     for key in ('sourceReceiptSha256', 'sourceAppliedSha256')))
+    for key in published_fields & set(guard):
+        item = guard[key]
+        require(isinstance(item, dict) and set(item) == {'device', 'inode'}
+                and all(isinstance(value, str) and re.fullmatch('[1-9][0-9]{0,19}', value)
+                        for value in item.values()))
     snapshot_number(guard['snapshotId'])
     require(read(target / REQUEST, 0, gid, 0o440, 4096) == guarded_properties(path / GUARDED, normal))
     return target, normal

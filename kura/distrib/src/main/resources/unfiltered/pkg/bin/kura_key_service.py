@@ -66,14 +66,14 @@ def require(ok, reason="INVALID_ARGUMENT"):
         raise Failure(reason)
 
 
-def rename_no_replace(source, destination):
+def rename_no_replace(source, destination, *, directory_fd=-100):
     """Move one original inode without replacing a destination or creating hard links."""
     library = ctypes.CDLL(None, use_errno=True)
     rename = getattr(library, "renameat2", None)
     require(rename is not None and sys.platform == "linux", "UNSUPPORTED")
     rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
     rename.restype = ctypes.c_int
-    if rename(-100, os.fsencode(source), -100, os.fsencode(destination), 1) != 0:
+    if rename(directory_fd, os.fsencode(source), directory_fd, os.fsencode(destination), 1) != 0:
         code = ctypes.get_errno()
         if code == errno.EEXIST:
             raise Failure("CONFLICT")

@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unf
 import kura_recovery_launch as launch
 import kura_recovery_main_command as commands
 from kura_key_service import Failure, Lifecycle, Manager
+from kura_snapshot_publication import SnapshotPublication
 
 
 @unittest.skipUnless(sys.platform == 'linux' and os.geteuid() == 0, 'Linux Root fixture required')
@@ -112,6 +113,27 @@ class LaunchProjectionTest(unittest.TestCase):
         snapshot.symlink_to(self.target / launch.SNAPSHOT)
         with self.assertRaises(OSError):
             launch.normal_snapshot(self.root, plan, 0, 0)
+
+    def test_snapshot_publication_observes_original_inode_at_either_name(self):
+        lifecycle = Lifecycle(self.root, 0)
+        publication = SnapshotPublication(SimpleNamespace(
+            manager=None, lifecycle=lifecycle, core=SimpleNamespace(pw_uid=0, pw_gid=0)))
+        publication.directory.mkdir(parents=True, mode=0o700)
+        intent = dict(snapshotId='7', snapshotSha256=launch.digest(self.contents), size=len(self.contents),
+                      directory=publication.directory_identity(), state='ORDINARY_SNAPSHOT_INTENT')
+        pending, target = publication.paths(self.identity, intent['snapshotId'])
+        launch.write(pending, self.contents, 0o600)
+        self.assertEqual('ORDINARY_SNAPSHOT_UNKNOWN', publication.observed(self.identity, intent, None)['state'])
+        ready = intent | {'state': 'ORDINARY_SNAPSHOT_READY', 'file': publication.fingerprint(pending, intent)}
+        self.assertEqual(ready, publication.observed(self.identity, intent, ready))
+        pending.rename(target)
+        published = publication.observed(self.identity, intent, ready)
+        self.assertEqual('ORDINARY_SNAPSHOT_PUBLISHED_UNCONFIRMED', published['state'])
+        self.assertEqual(ready['file'], published['file'])
+        replacement = publication.directory / 'replacement'
+        launch.write(replacement, self.contents, 0o600)
+        replacement.replace(target)
+        self.assertEqual('ORDINARY_SNAPSHOT_UNKNOWN', publication.observed(self.identity, intent, ready)['state'])
 
     def test_guarded_marker_keeps_original_selection_and_pins_new_plan(self):
         fixed = dict(restoreId=self.identity)
