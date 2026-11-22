@@ -124,6 +124,7 @@ class LaunchProjectionTest(unittest.TestCase):
 
     def test_guarded_status_preserves_uncertain_publication_on_original_number(self):
         manager = Mock()
+        manager.state = self.root
         manager.lock.return_value = nullcontext()
         lifecycle = SimpleNamespace(path=lambda _: self.base, root=self.root)
         recovery = SimpleNamespace(manager=manager, lifecycle=lifecycle,
