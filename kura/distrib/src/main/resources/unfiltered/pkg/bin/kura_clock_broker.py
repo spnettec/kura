@@ -238,12 +238,18 @@ def unit_input_names(name):
 
 def unit_sources():
     """Reject overrides in the manager's complete current system load path."""
+    # Container runtime adapters (LXC/OrbStack) install a global service.d
+    # drop-in that neutralizes hardening for every unit on the host. The bare
+    # "<kind>.d" entry generated for every unit name matches that directory on
+    # such hosts even though it carries no clock-specific override. Require the
+    # adapter drop-in to be exactly the known runtime adapter, not other content.
+    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
     try:
         for root in unit_load_paths():
             if not unit_directory_present(root):
                 continue
             for name in UNITS:
-                inputs = unit_input_names(name)
+                inputs = [i for i in unit_input_names(name) if i not in generic_dropins]
                 if root not in VENDOR_UNIT_ROOTS:
                     inputs.append(name)
                 for entry in inputs:
@@ -252,6 +258,14 @@ def unit_sources():
                     except FileNotFoundError:
                         continue
                     raise Refused('UNPAIRED_CODE')
+            if root not in VENDOR_UNIT_ROOTS:
+                for kind in generic_dropins:
+                    directory = root / kind
+                    if not directory.is_dir():
+                        continue
+                    for source in sorted(directory.glob('*.conf')):
+                        require(source.name == 'zzz-lxc-service.conf',
+                                'UNPAIRED_CODE: unreviewed global drop-in')
     except OSError as error:
         raise Refused('UNPAIRED_CODE') from error
 
