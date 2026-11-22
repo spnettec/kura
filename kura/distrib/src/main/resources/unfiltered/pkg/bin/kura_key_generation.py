@@ -220,18 +220,7 @@ class Generations:
                     dropin=manager.store.path(DROPIN), current=manager.state / CURRENT)
 
     def file_snapshot(self, path):
-        try:
-            before = path.lstat()
-        except FileNotFoundError:
-            return None
-        raw = self.manager.read(path, 8192)
-        after = path.lstat()
-        def metadata(value):
-            return dict(device=value.st_dev, inode=value.st_ino, uid=value.st_uid, gid=value.st_gid,
-                        mode=stat.S_IMODE(value.st_mode), nlink=value.st_nlink, size=value.st_size,
-                        mtimeNs=value.st_mtime_ns, ctimeNs=value.st_ctime_ns)
-        require(metadata(before) == metadata(after), 'UNSAFE_FILESYSTEM')
-        return dict(metadata(after), sha256=hashlib.sha256(raw).hexdigest())
+        return self.manager.file_snapshot(path)
 
     def recovery_receipt(self, identity):
         manager = self.manager

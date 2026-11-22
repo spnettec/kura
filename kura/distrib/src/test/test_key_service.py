@@ -520,6 +520,16 @@ class KeyServiceTest(unittest.TestCase):
                                expectedRingSha256=expected or self.manager.generation_receipt()["ringSha256"])
         return self.manager.handle(request, recovery_only=recovery_only)
 
+    def send_as(self, request, uid=None):
+        user = os.geteuid() if uid is None else uid
+        result, descriptor = service.serve_request(self.manager, request, os.getpid(), user, 20001, 20002, None)
+        self.assertIsNone(descriptor)
+        return result
+
+    def restore_sender(self, request):
+        return dict(source='local-admin', namespaceSha256=self.manager.gwt_namespace()['namespaceSha256'],
+                    admissionId=str(uuid.uuid4()), request=request)
+
     def generation_boot_admission(self):
         metadata = self.manager.generation_receipt()
         return self.manager.handle(self.request("generation-start-admission", ringSha256=metadata["ringSha256"],
@@ -610,12 +620,12 @@ class KeyServiceTest(unittest.TestCase):
         ring = self.directory / "kura_encryption_keyring"
         ring.unlink()
         identity = str(uuid.uuid4())
-        atomic = self.manager.atomic
-        def lose_key(path, value, **options):
-            if path == self.key_path:
+        rename = service.rename_no_replace
+        def lose_key(staged, destination):
+            if destination == self.key_path:
                 raise OSError("Fixture loses publication of the second original credential")
-            return atomic(path, value, **options)
-        with patch.object(self.manager, "atomic", side_effect=lose_key):
+            return rename(staged, destination)
+        with patch.object(service, 'rename_no_replace', side_effect=lose_key):
             self.refused("UNKNOWN", lambda: self.generation_restore(backup, identity=identity))
         self.assertTrue(ring.is_file())
         self.assertFalse(self.key_path.exists())
@@ -658,15 +668,102 @@ class KeyServiceTest(unittest.TestCase):
         self.key_path.unlink()
         (self.directory / "kura_encryption_keyring").unlink()
         foreign = secrets.token_bytes(32)
-        atomic = self.manager.atomic
-        def race(path, value, **options):
-            if path == self.key_path:
-                self.write(path, foreign, 0o400)
-            return atomic(path, value, **options)
-        with patch.object(self.manager, "atomic", side_effect=race):
+        rename = service.rename_no_replace
+        def race(staged, destination):
+            if destination == self.key_path:
+                self.write(destination, foreign, 0o400)
+            return rename(staged, destination)
+        with patch.object(service, 'rename_no_replace', side_effect=race):
             self.refused("UNKNOWN", lambda: self.generation_restore(backup))
         self.assertEqual(foreign, self.key_path.read_bytes())
         self.refused("UNRESOLVED_OPERATION", self.generation_boot_admission)
+
+    @unittest.skipUnless(sys.platform == 'linux' and os.geteuid() == 0, 'Linux Root sender and no-replace rename')
+    def test_generation_restore_continues_through_sender_only_from_original_staged_inodes(self):
+        raw = self.generation_fixture()
+        backup = self.generation_backup()['backup']
+        ring = self.directory / 'kura_encryption_keyring'
+        ring.unlink()
+        self.key_path.unlink()
+        self.write(self.state / 'sender-admission.lock', b'', 0o600)
+        identity = str(uuid.uuid4())
+        original = self.restore_sender(self.request('generation-restore', operationId=identity, backup=backup,
+            passphrase=PASSWORD, expectedRingSha256=self.manager.generation_receipt()['ringSha256']))
+        receipt = self.identity(self.receipt_path)
+        generation = self.identity(self.directory / 'key-generations.json')
+        rename = service.rename_no_replace
+
+        def lose_key(staged, destination):
+            if destination == self.key_path:
+                raise OSError('Fixture interrupts the active key rename')
+            return rename(staged, destination)
+
+        self.assertEqual('RESERVED', self.send_as(self.request('sender-reserve', **original))['state'])
+        with patch.object(service, 'rename_no_replace', side_effect=lose_key):
+            self.refused('UNKNOWN', lambda: self.send_as(self.request('sender-command', **original)))
+        ring_identity = self.identity(ring)
+        staged_key = self.manager.generation_restore_stage(self.key_path, identity, 'activeKey')
+        staged_inode = staged_key.stat().st_ino
+        read = self.request('generation-restore-read', operationId=identity)
+        view = self.send_as(read)
+        self.assertEqual('UNKNOWN', view['state'])
+        self.assertFalse(view['startupAuthorized'])
+        self.refused('FORBIDDEN', lambda: self.send_as(read, uid=20001))
+        self.refused('FORBIDDEN', lambda: self.send_as(read, uid=20002))
+        self.refused('UNRESOLVED_OPERATION', self.generation_boot_admission)
+        namespace = self.manager.gwt_namespace()
+        with patch.object(self.manager, 'gwt_namespace', return_value=dict(namespace, namespaceSha256='9' * 64)):
+            self.refused('CONFLICT', lambda: self.send_as(read))
+        original_path = self.state / 'operations' / (identity + '.json')
+        original_bytes = original_path.read_bytes()
+        altered = service.decode(original_bytes)
+        altered['intent']['receiptTag'] = '0' * 64
+        self.write(original_path, service.encode(altered), 0o600)
+        self.refused('UNSAFE_JOURNAL', lambda: self.send_as(read))
+        self.write(original_path, original_bytes, 0o600)
+        recover = self.request('generation-restore-recover', operationId=identity,
+                               expectedRestoreIntentSha256=view['restoreIntentSha256'])
+        self.refused('FORBIDDEN', lambda: self.send_as(recover))
+        incorrect = self.restore_sender(dict(recover, expectedRestoreIntentSha256='0' * 64))
+        self.refused('CONFLICT', lambda: self.send_as(self.request('sender-reserve', **incorrect)))
+        continuation = self.restore_sender(recover)
+
+        # A copy of the correct key is not proof that the staged inode reached
+        # the canonical name. Refuse before spending the continuation.
+        self.write(self.key_path, self.key, 0o400)
+        self.refused('CONFLICT', lambda: self.send_as(self.request('sender-reserve', **continuation)))
+        self.key_path.unlink()
+        with patch.object(self.manager, 'crypt', side_effect=AssertionError('No backup redispatch')):
+            reserved = self.send_as(self.request('sender-reserve', **continuation))
+            self.assertEqual(identity, reserved['nativeOperationId'])
+            result = self.send_as(self.request('sender-command', **continuation))
+        self.assertTrue(result['keyringRestored'] and result['activeKeyRestored'])
+        self.assertEqual(result, self.send_as(read)['originalResult'])
+        self.assertEqual(raw, ring.read_bytes())
+        self.assertEqual(ring_identity, self.identity(ring))
+        self.assertEqual(staged_inode, self.key_path.stat().st_ino)
+        self.assertFalse(staged_key.exists())
+        self.assertEqual(receipt, self.identity(self.receipt_path))
+        self.assertEqual(generation, self.identity(self.directory / 'key-generations.json'))
+        self.assertEqual('GENERATION_READY', self.generation_boot_admission()['state'])
+        original_row = self.manager.sender_admissions.load(original['admissionId'])
+        next_row = self.manager.sender_admissions.load(continuation['admissionId'])
+        self.assertEqual(('TERMINAL', 'TERMINAL'), (original_row['state'], next_row['state']))
+        self.assertEqual(original_row['admissionId'], next_row['parentAdmissionId'])
+
+    def test_generation_restore_does_not_recover_an_unsigned_original_intent(self):
+        self.generation_fixture()
+        identity = str(uuid.uuid4())
+        record = dict(schema=1, operationId=identity, action='generation-restore',
+                      requestTag='1' * 64, state='INTENT', response=None)
+        self.write(self.state / 'operations' / (identity + '.json'), service.encode(record), 0o600)
+        view = self.manager.handle(self.request('generation-restore-read', operationId=identity))
+        self.assertIsNone(view['restoreIntentSha256'])
+        self.assertEqual('UNKNOWN', view['state'])
+        request = self.request('generation-restore-recover', operationId=identity,
+                               expectedRestoreIntentSha256='1' * 64)
+        self.refused('UNRESOLVED_OPERATION', lambda: self.manager.handle(request))
+        self.refused('UNRESOLVED_OPERATION', self.generation_boot_admission)
 
     def test_generation_startup_and_restore_are_fenced_by_an_original_unknown_start(self):
         self.generation_fixture()

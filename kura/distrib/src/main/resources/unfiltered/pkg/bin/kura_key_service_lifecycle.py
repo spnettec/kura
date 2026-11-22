@@ -868,11 +868,41 @@ def validate_start_lease(value, identity):
     return value
 
 
+GENERATION_RESTORE_CONTEXT = b'yofc-kura-generation-restore-checkpoint-v1\0'
+
+
+def validate_generation_restore_intent(value):
+    file_fields = {'device', 'inode', 'uid', 'gid', 'mode', 'nlink', 'size', 'mtimeNs', 'ctimeNs', 'sha256'}
+
+    def file_proof(proof, mode, maximum):
+        require(isinstance(proof, dict) and set(proof) == file_fields
+                and all(type(proof[k]) is int and proof[k] >= 0 for k in file_fields - {'sha256'})
+                and proof['inode'] > 0 and proof['mode'] == mode and proof['nlink'] == 1
+                and 0 < proof['size'] <= maximum and is_digest(proof['sha256']))
+
+    require(isinstance(value, dict) and set(value) == {'schema', 'namespaceSha256', 'keyring', 'activeKey',
+                                                       'provisioned', 'generationReceipt', 'receiptTag'}
+            and type(value['schema']) is int and value['schema'] == 1
+            and is_digest(value['namespaceSha256']) and is_digest(value['receiptTag']))
+    for name, maximum in (('keyring', 512), ('activeKey', 32)):
+        target = value[name]
+        require(isinstance(target, dict) and set(target) == {'missing', 'file'}
+                and type(target['missing']) is bool)
+        file_proof(target['file'], 0o400, maximum)
+    require(value['keyring']['missing'] or value['activeKey']['missing'])
+    file_proof(value['provisioned'], 0o600, 8192)
+    file_proof(value['generationReceipt'], 0o600, 2048)
+    return value
+
+
 def validate_record(record, identity):
     cancel = isinstance(record, dict) and record.get('action') == 'generation-cancel'
     lease = isinstance(record, dict) and record.get('action') == 'generation-start-lease'
+    restore_intent = (isinstance(record, dict) and record.get('action') == 'generation-restore'
+                      and 'intent' in record)
     require(isinstance(record, dict) and set(record) ==
-            {"schema", "operationId", "action", "requestTag", "state", "response"} | ({'intent'} if cancel or lease else set()))
+            {"schema", "operationId", "action", "requestTag", "state", "response"}
+            | ({'intent'} if cancel or lease or restore_intent else set()))
     require(type(record["schema"]) is int and record["schema"] == 1 and canonical_id(identity)
             and record["operationId"] == identity and record["action"] in
               ("backup-create", "generation-backup-create", "restore", "generation-restore", "generation-prepare", "generation-backup-verify",
@@ -889,6 +919,8 @@ def validate_record(record, identity):
             'preparationId', 'expectedHistorySha256', 'expectedRingSha256'})
         require(canonical_id(intent['preparationId']) and intent['preparationId'] != identity
                 and is_digest(intent['expectedHistorySha256']) and is_digest(intent['expectedRingSha256']))
+    if restore_intent:
+        validate_generation_restore_intent(record['intent'])
     if record["state"] == "INTENT":
         require(response is None)
         return record
@@ -955,6 +987,12 @@ def validate_record(record, identity):
         require(is_digest(response["ringSha256"]) and is_digest(response["activeKeySha256"])
                 and type(response["activeKeyRestored"]) is bool and type(response["keyringRestored"]) is bool
                 and response["existingReceiptPreserved"] is True)
+        if restore_intent:
+            intent = record['intent']
+            for label, sha, restored in (('keyring', 'ringSha256', 'keyringRestored'),
+                                          ('activeKey', 'activeKeySha256', 'activeKeyRestored')):
+                require(intent[label]['file']['sha256'] == response[sha]
+                        and intent[label]['missing'] is response[restored])
     else:
         require(is_digest(response["keySha256"]) and type(response["keyChanged"]) is bool
                 and response["existingReceiptPreserved"] is True)
@@ -1272,7 +1310,7 @@ class Lifecycle:
         finally:
             os.close(fd)
 
-    def check_records(self, *, recovering_cancel=None, recovering_publication=None):
+    def check_records(self, *, recovering_cancel=None, recovering_publication=None, recovering_restore=None):
         inventory=archive_inventory(self)
         handoff_revocations(self)
         self.directory(self.state / "operations", private=True)
@@ -1285,6 +1323,8 @@ class Lifecycle:
                 if path.name[:-5] == recovering_cancel and record['action'] == 'generation-cancel':
                     continue
                 if path.name[:-5] == recovering_publication and record['action'] == 'generation-publish':
+                    continue
+                if path.name[:-5] == recovering_restore and record['action'] == 'generation-restore' and 'intent' in record:
                     continue
                 raise Unresolved("Unresolved key operation; preserve original UUID and package state")
         startups=self.state/'startups'

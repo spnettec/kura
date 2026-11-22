@@ -42,7 +42,8 @@ from kura_key_service_lifecycle import (Lifecycle, validate_record, validate_pub
                                        handoff_operation_request, archive_inventory, archive_references, archive_entry,
                                        active_journal_count, ARCHIVE_INTENT_CONTEXT, ARCHIVE_RECEIPT_CONTEXT,
                                        PRIVATE_FENCE_PURPOSE, PRIVATE_FENCE_CONTEXT, validate_gwt_intent, validate_sender_attempt,
-                                       check_sender_original)
+                                       check_sender_original, GENERATION_RESTORE_CONTEXT,
+                                       validate_generation_restore_intent)
 
 SOCKET = "/run/kura-key-service/control.sock"
 STATE = "/var/lib/kura-key-service"
@@ -345,6 +346,16 @@ class SenderAdmissions:
             original = self.manager.record(identity)
             require(original is not None and original['action'] == 'generation-cancel' and original['state'] == 'INTENT', 'UNRESOLVED_OPERATION')
             return dict(directory='operations', operationId=identity, action='generation-cancel', requestTag=original['requestTag'], continuation=True)
+        elif action == 'generation-restore-recover':
+            require(source == 'local-admin', 'FORBIDDEN')
+            manager = self.manager
+            with manager.lock(manager.state / 'admission.lock', False):
+                original = manager.generation_restore_original(request)
+                require(original['state'] == 'INTENT', 'CONFLICT')
+                with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                    manager.generation_restore_pending(original, manager.generation_restore_paths())
+            return dict(directory='operations', operationId=original['operationId'], action='generation-restore',
+                        requestTag=original['requestTag'], continuation=True)
         else:
             require(action in SENDER_MUTATIONS, 'FORBIDDEN')
             native = request
@@ -445,9 +456,14 @@ class SenderAdmissions:
                 if not self.settled(value): denied = True
             prior = self.native(target)
             require(prior is None or target['continuation'] and prior.get('state') == 'INTENT', 'CONFLICT')
+            if target['continuation'] and target['action'] == 'generation-restore':
+                require(parent is not None, 'UNRESOLVED_OPERATION')
             try:
-                ignored = {} if not target['continuation'] else {
-                    'recovering_cancel' if target['action'] == 'generation-cancel' else 'recovering_publication': target['operationId']}
+                ignored = {}
+                if target['continuation']:
+                    key = {'generation-cancel': 'recovering_cancel', 'generation-publish': 'recovering_publication',
+                           'generation-restore': 'recovering_restore'}[target['action']]
+                    ignored[key] = target['operationId']
                 Lifecycle(self.manager.root, self.manager.owner).check_records(**ignored)
             except LifecycleUnresolved: denied = True
             except LifecycleRefused: raise Failure('UNSAFE_JOURNAL') from None
@@ -675,6 +691,21 @@ class Manager:
         except Refused:
             raise Failure("UNSAFE_FILESYSTEM") from None
 
+    def file_snapshot(self, path, limit=8192):
+        def metadata(value):
+            return dict(device=value.st_dev, inode=value.st_ino, uid=value.st_uid, gid=value.st_gid,
+                        mode=stat.S_IMODE(value.st_mode), nlink=value.st_nlink, size=value.st_size,
+                        mtimeNs=value.st_mtime_ns, ctimeNs=value.st_ctime_ns)
+
+        try:
+            before = metadata(path.lstat())
+        except FileNotFoundError:
+            return None
+        raw = self.read(path, limit)
+        after = metadata(path.lstat())
+        require(before == after, 'UNSAFE_FILESYSTEM')
+        return dict(after, sha256=hashlib.sha256(raw).hexdigest())
+
     def atomic(self, path, data, mode=0o600, no_replace=False):
         self.directory(path.parent, private=True)
         temporary = path.parent / (".key-service-" + secrets.token_hex(16))
@@ -859,14 +890,10 @@ class Manager:
         except LifecycleRefused:
             raise Failure("UNSAFE_JOURNAL") from None
 
-    def settled(self, *, recovering_publication=None):
+    def settled(self, **continuation):
         self.sender_admissions.require_settled()
         try:
-            policy = Lifecycle(self.root, self.owner)
-            if recovering_publication is None:
-                policy.check_records()
-            else:
-                policy.check_records(recovering_publication=recovering_publication)
+            Lifecycle(self.root, self.owner).check_records(**continuation)
         except LifecycleUnresolved:
             raise Failure("UNRESOLVED_OPERATION") from None
         except LifecycleRefused:
@@ -891,6 +918,133 @@ class Manager:
             raise Failure("UNSAFE_FILESYSTEM") from None
         require(ring is None or hmac.compare_digest(ring, raw), "CONFLICT")
         return active, current, ring, proof
+
+    def generation_restore_paths(self):
+        return {'keyring': self.store.path(RING_PATH), 'activeKey': self.store.path(KEY_PATH),
+                'provisioned': self.store.path(RECEIPT_PATH),
+                'generationReceipt': self.store.path(GENERATION_RECEIPT_PATH)}
+
+    @staticmethod
+    def generation_restore_stage(canonical, identity, label):
+        return canonical.with_name('.restore-' + identity + '-' + label)
+
+    def generation_restore_tag(self, record, intent):
+        signed = dict(operationId=record['operationId'], requestTag=record['requestTag'],
+                      intent={k: v for k, v in intent.items() if k != 'receiptTag'})
+        return hmac.new(self.sender_admissions.secret(), GENERATION_RESTORE_CONTEXT + encode(signed),
+                        hashlib.sha256).hexdigest()
+
+    def generation_restore_checkpoint(self, record):
+        intent = record.get('intent')
+        if intent is None:
+            return None
+        require(hmac.compare_digest(intent['receiptTag'], self.generation_restore_tag(record, intent)),
+                'UNSAFE_JOURNAL')
+        require(intent['namespaceSha256'] == self.gwt_namespace()['namespaceSha256'], 'CONFLICT')
+        return hashlib.sha256(encode(intent)).hexdigest()
+
+    def generation_restore_original(self, request):
+        fields(request, {'schema', 'action', 'operationId', 'expectedRestoreIntentSha256'})
+        identity = operation_id(request['operationId'])
+        expected = digest(request['expectedRestoreIntentSha256'])
+        record = self.record(identity)
+        require(record is not None and record['action'] == 'generation-restore', 'CONFLICT')
+        actual = self.generation_restore_checkpoint(record)
+        require(actual is not None, 'UNRESOLVED_OPERATION')
+        require(hmac.compare_digest(expected, actual), 'CONFLICT')
+        return record
+
+    def generation_restore_read(self, request):
+        fields(request, {'schema', 'action', 'operationId'})
+        identity = operation_id(request['operationId'])
+        with self.lock(self.state / 'admission.lock', False):
+            self.maintenance()
+            record = self.record(identity)
+            require(record is not None and record['action'] == 'generation-restore', 'CONFLICT')
+            original = self.public_record(record)
+            return dict(schema=1, action=request['action'], operationId=identity, state=original['state'],
+                        scope='ORIGINAL_RESTORE_ONLY',
+                        restoreIntentSha256=self.generation_restore_checkpoint(record),
+                        originalResult=original, startupAuthorized=False)
+
+    def stage_generation_restore(self, record, paths, raw, active, *, ring_missing, key_missing):
+        intent = dict(schema=1, namespaceSha256=self.gwt_namespace()['namespaceSha256'],
+                      provisioned=self.file_snapshot(paths['provisioned']),
+                      generationReceipt=self.file_snapshot(paths['generationReceipt'], 2048))
+        for label, content, missing in (('keyring', raw, ring_missing), ('activeKey', active, key_missing)):
+            source = paths[label]
+            if missing:
+                require(not os.path.lexists(source), 'CONFLICT')
+                source = self.generation_restore_stage(source, record['operationId'], label)
+                self.atomic(source, content, mode=0o400, no_replace=True)
+            proof = self.file_snapshot(source, 512)
+            require(proof is not None and proof['sha256'] == hashlib.sha256(content).hexdigest(), 'CONFLICT')
+            intent[label] = dict(missing=missing, file=proof)
+        intent['receiptTag'] = self.generation_restore_tag(record, intent)
+        validate_generation_restore_intent(intent)
+        record['intent'] = intent
+        self.atomic(self.operations / (record['operationId'] + '.json'), encode(record))
+
+    def generation_restore_pending(self, record, paths):
+        intent = record['intent']
+        for label in ('provisioned', 'generationReceipt'):
+            require(self.file_snapshot(paths[label]) == intent[label], 'CONFLICT')
+        pending = []
+        for label, maximum in (('keyring', 512), ('activeKey', 32)):
+            canonical = paths[label]
+            staged = self.generation_restore_stage(canonical, record['operationId'], label)
+            expected = intent[label]['file']
+            current = self.file_snapshot(canonical, maximum)
+            candidate = self.file_snapshot(staged, maximum)
+            if not intent[label]['missing']:
+                require(candidate is None and current == expected, 'CONFLICT')
+            elif current is None:
+                require(candidate == expected, 'CONFLICT')
+                pending.append((staged, canonical))
+            else:
+                # A same-directory rename changes ctime. The staged inode and
+                # every other recorded field must still match the original.
+                require(candidate is None and not pending and all(
+                    current[key] == value for key, value in expected.items() if key != 'ctimeNs'), 'CONFLICT')
+        return pending
+
+    def finish_generation_restore(self, record, metadata, *, ring_restored, key_restored):
+        response = dict(schema=1, operationId=record['operationId'], action='generation-restore',
+                        state='SUCCEEDED', ringSha256=metadata['ringSha256'],
+                        activeKeySha256=metadata['activeKeySha256'], activeKeyRestored=key_restored,
+                        keyringRestored=ring_restored, existingReceiptPreserved=True)
+        record.update(state='SUCCEEDED', response=response)
+        self.atomic(self.operations / (record['operationId'] + '.json'), encode(record))
+        return response
+
+    def publish_staged_generation_restore(self, record, paths):
+        pending = self.generation_restore_pending(record, paths)
+        try:
+            for staged, canonical in pending:
+                rename_no_replace(staged, canonical)
+                self.sync(canonical.parent)
+            if not pending:
+                self.sync(paths['activeKey'].parent)
+            _, metadata, _ = self.generations()
+            intent = record['intent']
+            require(not self.generation_restore_pending(record, paths)
+                    and metadata['ringSha256'] == intent['keyring']['file']['sha256']
+                    and metadata['activeKeySha256'] == intent['activeKey']['file']['sha256'], 'UNKNOWN')
+            return self.finish_generation_restore(record, metadata, ring_restored=intent['keyring']['missing'],
+                                                  key_restored=intent['activeKey']['missing'])
+        except (OSError, Failure, Refused):
+            raise Failure('UNKNOWN') from None
+
+    def recover_generation_restore(self, request):
+        with self.lock(self.state / 'admission.lock', True):
+            self.maintenance()
+            record = self.generation_restore_original(request)
+            if record['state'] == 'SUCCEEDED':
+                return self.public_record(record)
+            self.settled(recovering_restore=record['operationId'])
+            require(self.generation_restore_supported(), 'UNSUPPORTED')
+            with self.lock(self.store.path('/etc/kura/credentials/.provision.lock'), True):
+                return self.publish_staged_generation_restore(record, self.generation_restore_paths())
 
     def restore_generations(self, request, *, recovery_only):
         fields(request, {"schema", "action", "operationId", "passphrase", "backup", "expectedRingSha256"})
@@ -919,21 +1073,15 @@ class Manager:
                               requestTag=tag, state="INTENT", response=None)
                 try:
                     self.atomic(self.operations / (identity + ".json"), encode(record))
-                    # Only missing, strictly original bytes may be published. No overwrite or new generation.
-                    if ring is None:
-                        self.atomic(self.store.path(RING_PATH), raw, mode=0o400, no_replace=True)
-                    if current is None:
-                        self.atomic(self.store.path(KEY_PATH), active, mode=0o400, no_replace=True)
+                    if missing:
+                        paths = self.generation_restore_paths()
+                        self.stage_generation_restore(record, paths, raw, active, ring_missing=ring is None,
+                                                      key_missing=current is None)
+                        return self.publish_staged_generation_restore(record, paths)
                     restored, observed, observed_proof = self.generations()
                     require(restored == raw and observed == metadata and observed_proof == proof, "UNKNOWN")
-                    response = dict(schema=1, operationId=identity, action="generation-restore", state="SUCCEEDED",
-                                    ringSha256=metadata["ringSha256"], activeKeySha256=metadata["activeKeySha256"],
-                                    activeKeyRestored=current is None, keyringRestored=ring is None,
-                                    existingReceiptPreserved=True)
-                    record.update(state="SUCCEEDED", response=response)
-                    self.atomic(self.operations / (identity + ".json"), encode(record))
-                    return response
-                except (OSError, Failure, Refused):
+                    return self.finish_generation_restore(record, metadata, ring_restored=False, key_restored=False)
+                except (OSError, Failure, Refused, LifecycleRefused):
                     raise Failure("UNKNOWN") from None
 
     def create_generation_backup(self, request):
@@ -1625,6 +1773,10 @@ class Manager:
                                 activeKeySha256=metadata["activeKeySha256"])
         if action == "generation-restore":
             return self.restore_generations(request, recovery_only=recovery_only)
+        if action == 'generation-restore-read':
+            return self.generation_restore_read(request)
+        if action == 'generation-restore-recover':
+            return self.recover_generation_restore(request)
         if action == "generation-backup-create":
             return self.create_generation_backup(request)
         if action == "generation-backup-inspect":
@@ -1835,7 +1987,8 @@ ARCHIVE_ACTIONS = frozenset(('journal-archive-plan','journal-archive','journal-a
 PRIVATE_FENCE_ACTIONS = frozenset(('sender-private-fence-plan','sender-private-fence','sender-private-fence-read'))
 SENDER_MUTATIONS = GWT_MUTATIONS | frozenset(('generation-backup-create', 'generation-restore', 'core-start',
     'core-start-after-maintenance', 'generation-cancel', 'generation-cancel-recover', 'generation-publish',
-    'generation-core-start', 'generation-publication-recover', 'generation-handoff-command'))
+    'generation-core-start', 'generation-publication-recover', 'generation-handoff-command',
+    'generation-restore-recover'))
 
 
 def sender_mutation(request):
@@ -1877,6 +2030,8 @@ def serve_request(manager, request, pid, uid, daemon, recovery, input_descriptor
     if sender_mutation(request):
         # Includes independent recovery and local Root clients. No old wire format bypasses reservation/intake.
         require(getattr(manager.sender_admissions.context, 'current', None) is not None, 'FORBIDDEN')
+    if action in ('generation-restore-read', 'generation-restore-recover'):
+        require(uid == 0, 'FORBIDDEN')
     require(uid != daemon or action not in ('core-start', 'core-start-after-maintenance', 'generation-publication-recover'), 'FORBIDDEN')
     if action == 'core-snapshot-validate':
         require(uid in (0, daemon) and (recovery is None or uid != recovery), 'FORBIDDEN')
