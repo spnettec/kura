@@ -49,9 +49,10 @@ final class StartupPasswordConvergence {
             for (int i=0; i<result.length; i++) result[i]=(String) reuse(passwords[i], strings[i], crypto);
             return result;
         }
-        if (logical instanceof Collection<?> values && stored instanceof Collection<?> ciphers) {
-            if (!(values instanceof List<?>) || !(ciphers instanceof List<?>) || values.size() != ciphers.size()
-                    || (values instanceof Vector<?>) != (ciphers instanceof Vector<?>)) throw invalid();
+        if (logical instanceof List<?> values && stored instanceof List<?> ciphers) {
+            // Equinox can return an ordinary List for a historical Vector. Keep the admitted
+            // CM representation and authenticate every element in order before seeding.
+            if (values.size() != ciphers.size()) throw invalid();
             Collection<Object> result = CollectionsUtil.newCollectionLike(ciphers);
             var iterator = ciphers.iterator();
             for (Object value : values) result.add(reuse(value, iterator.next(), crypto));

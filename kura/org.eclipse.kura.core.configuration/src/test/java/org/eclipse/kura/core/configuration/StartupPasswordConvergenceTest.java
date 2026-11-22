@@ -29,8 +29,24 @@ class StartupPasswordConvergenceTest {
         for(var current:List.of(Map.<String,Object>of(),Map.<String,Object>of("p","aes1:changed"),Map.<String,Object>of("p","not-a-cipher"),Map.<String,Object>of("p",new String[]{"aes1:secret"}),Map.<String,Object>of("p","aes1:secret","service.factoryPid","other")))
             assertThrows(KuraException.class,()->StartupPasswordConvergence.preserve(logical,current,crypto));
         assertThrows(KuraException.class,()->StartupPasswordConvergence.preserve(logical,null,crypto));
-        assertThrows(KuraException.class,()->StartupPasswordConvergence.preserve(Map.of("p",new Vector<>(List.of(new Password("secret")))),Map.of("p",List.of("aes1:secret")),crypto));
+        assertThrows(KuraException.class,()->StartupPasswordConvergence.preserve(Map.of("p",new Vector<>(List.of(new Password("secret")))),Map.of("p",Set.of("aes1:secret")),crypto));
         verify(crypto,never()).encryptAes(any(char[].class));
+    }
+    @Test void historicalVectorKeepsTheExactOrderedListReturnedByEquinox() throws Exception {
+        var crypto = crypto();
+        Map<String, Object> logical = Map.of("p", new Vector<>(List.of(new Password("first"), new Password("second"))));
+        var admitted = new ArrayList<>(List.of("aes2:first", "aes1:second"));
+
+        var preserved = StartupPasswordConvergence.preserve(logical, Map.of("p", admitted), crypto);
+
+        var stored = assertInstanceOf(ArrayList.class, preserved.get("p"));
+        assertEquals(admitted, stored);
+        assertNotSame(admitted, stored);
+        assertThrows(KuraException.class, () -> StartupPasswordConvergence.preserve(logical,
+                Map.of("p", List.of("aes1:second", "aes2:first")), crypto));
+        assertThrows(KuraException.class, () -> StartupPasswordConvergence.preserve(logical,
+                Map.of("p", new String[] {"aes2:first", "aes1:second"}), crypto));
+        verify(crypto, never()).encryptAes(any(char[].class));
     }
     static class Fixture extends ConfigurationServiceImpl {
         final List<ComponentConfiguration> values;
