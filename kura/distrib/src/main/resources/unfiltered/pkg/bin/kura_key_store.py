@@ -759,6 +759,14 @@ def check_loaded(require_generations=False, require_root=False):
 
 def exec_java(arguments):
     require(bool(arguments), 'Missing managed Java arguments')
+    recovery = os.environ.get('KURA_CONTROLLED_RECOVERY_ID')
+    if recovery is not None:
+        home = Path(__file__).resolve().parents[1]
+        sys.path.insert(0, str(home / 'bin'))
+        import kura_recovery_launch as launch
+        path, plan = launch.selected(home)
+        require(all(not option.startswith(('@', '-Dkura.recovery.request', '-Dosgi.startLevel'))
+                    for option in arguments), 'Conflicting controlled recovery JVM arguments')
     binding, _ = loaded_binding()
     response, descriptor = root_exchange(dict(schema=1, action='writer-lease-acquire', **binding), descriptor=True)
     try:
@@ -777,6 +785,9 @@ def exec_java(arguments):
                 and metadata.st_dev == response['lockDevice'] and metadata.st_ino == response['lockInode']
                 and fcntl.fcntl(descriptor, fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY,
                 'Invalid Root writer descriptor')
+        if recovery is not None:
+            launch.claim(path, plan, response)
+            arguments = ['-Dosgi.startLevel=6', '-Dkura.recovery.request=' + str(path / launch.REQUEST), *arguments]
         # One reserved, inheritable descriptor carries the kernel lease across exec.
         if descriptor != 9:
             os.dup2(descriptor, 9, inheritable=True)

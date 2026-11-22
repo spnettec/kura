@@ -7,6 +7,7 @@ import fcntl
 import hashlib
 import os
 from pathlib import Path
+import pwd
 import re
 import shutil
 import stat
@@ -199,21 +200,132 @@ class RecoveryInput:
                     require(current_binding == result['bindingSha256'], 'COHORT_CHANGED')
                     return self.publish(pending, target, result)
 
+    def prepare_main(self, identity):
+        import kura_recovery_launch as launch
+
+        require(RESTORE_ID.fullmatch(identity) is not None)
+        manager = self.manager
+        core = pwd.getpwnam('kurad')
+        require(core.pw_uid > 0 and core.pw_gid > 0, 'UNMANAGED_CORE')
+        base = self.lifecycle.path(launch.ROOT)
+        target = base / identity
+        pending = base / ('.pending-' + identity)
+        with manager.lock(manager.state / 'admission.lock', False):
+            manager.maintenance()
+            manager.settled()
+            with self.spool_lock(True):
+                staged = self.spool / identity
+                source = self.receipt(staged, identity)
+                contents = manager.read(staged / ARTIFACT, MAX_SNAPSHOT)
+                require(launch.digest(contents) == source['snapshotSha256'], 'UNSAFE_FILESYSTEM')
+                validation = manager.validation_component()
+                with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                    binding, fingerprint = validation.binding()
+                    require(fingerprint == source['bindingSha256'], 'COHORT_CHANGED')
+                    home = self.lifecycle.path('/opt/eclipse/kura').resolve(strict=True)
+                    raw = self.lifecycle.read(home / launch.BOOTSTRAP, limit=16 << 20, private=False)
+                    plan = {name: source[name] for name in ('schema', 'root', 'restoreId', 'bindingSha256',
+                                                            'snapshotSha256', 'size', 'mode', 'passwordPolicy')}
+                    plan.update({name: binding[name] for name in ('activeKeySha256', 'ringSha256', 'cohortSha256')})
+                    plan['bootstrapSha256'] = launch.digest(raw)
+                    self.prepare_projection(launch, base, pending, target, plan, contents, core)
+        return self.observation(identity, 'MAIN_LAUNCH_PREPARED') | {'planSha256': launch.digest(launch.canonical(plan))}
+
+    def prepare_projection(self, launch, base, pending, target, plan, contents, core):
+        self.lifecycle.directory(base.parent)
+        if not os.path.lexists(base):
+            base.mkdir(mode=0o700)
+            os.chown(base, 0, core.pw_gid)
+            base.chmod(0o750)
+            self.lifecycle.sync(base.parent)
+        launch.directory(base, 0, core.pw_gid, 0o750)
+        require(not os.path.lexists(pending) and not os.path.lexists(target), 'MAIN_LAUNCH_EXISTS')
+        pending.mkdir(mode=0o700)
+        self.lifecycle.sync(base)
+        entries = {launch.SNAPSHOT: contents, launch.PLAN: launch.canonical(plan),
+                   launch.REQUEST: launch.properties(target, plan)}
+        for name, value in entries.items():
+            launch.write(pending / name, value, 0o440, core.pw_gid)
+        output = pending / launch.OUT
+        output.mkdir(mode=0o700)
+        os.chown(output, core.pw_uid, core.pw_gid)
+        os.chown(pending, 0, core.pw_gid)
+        pending.chmod(0o750)
+        self.lifecycle.sync(pending)
+        try:
+            rename_no_replace(pending, target)
+            self.lifecycle.sync(base)
+        except OSError:
+            raise Failure('UNKNOWN') from None
+
+    def inspect_main(self, identity):
+        import kura_recovery_launch as launch
+
+        require(RESTORE_ID.fullmatch(identity) is not None)
+        core = pwd.getpwnam('kurad')
+        base = self.lifecycle.path(launch.ROOT)
+        with self.manager.lock(self.manager.state / 'admission.lock', False):
+            with self.spool_lock(False):
+                if not os.path.lexists(base):
+                    return self.observation(identity, 'MAIN_LAUNCH_ABSENT')
+                launch.directory(base, 0, core.pw_gid, 0o750)
+                pending = base / ('.pending-' + identity)
+                if os.path.lexists(pending):
+                    require(not os.path.lexists(base / identity), 'UNSAFE_FILESYSTEM')
+                    self.manager.directory(pending)
+                    return self.observation(identity, 'MAIN_LAUNCH_PREPARING')
+                if not os.path.lexists(base / identity):
+                    return self.observation(identity, 'MAIN_LAUNCH_ABSENT')
+                path, plan = launch.projection(base, identity, core.pw_uid, core.pw_gid, self.lifecycle.root)
+                result = self.observation(identity, 'MAIN_LAUNCH_PREPARED')
+                result['planSha256'] = launch.digest(launch.canonical(plan))
+                output = path / launch.OUT
+                if not os.path.lexists(output / launch.CLAIM):
+                    require(not any(output.iterdir()), 'UNSAFE_FILESYSTEM')
+                    return result
+                raw = launch.read(output / launch.CLAIM, core.pw_uid, core.pw_gid, 0o600, 4096)
+                claim = decode(raw)
+                fields(claim, {'schema', 'state', 'restoreId', 'planSha256', 'pid', 'startTicks', 'invocationId', 'bootId'})
+                require(type(claim['schema']) is int and claim['schema'] == 1
+                        and claim['state'] == 'MAIN_LAUNCH_CLAIMED' and claim['restoreId'] == identity
+                        and claim['planSha256'] == result['planSha256']
+                        and type(claim['pid']) is int and claim['pid'] > 1
+                        and isinstance(claim['startTicks'], str) and re.fullmatch('[0-9]{1,20}', claim['startTicks'])
+                        and isinstance(claim['invocationId'], str) and re.fullmatch('[0-9a-f]{32}', claim['invocationId'])
+                        and isinstance(claim['bootId'], str) and RESTORE_ID.fullmatch('rec-' + claim['bootId']),
+                        'UNSAFE_FILESYSTEM')
+                result.update(state=claim['state'], invocation=claim)
+                if os.path.lexists(output / launch.RECEIPT):
+                    raw = launch.read(output / launch.RECEIPT, core.pw_uid, core.pw_gid, 0o600, 65536)
+                    lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
+                    receipt = dict(lines)
+                    require(len(lines) == len(receipt) and receipt.get('schema') == '1'
+                            and receipt.get('restore.id') == identity, 'UNSAFE_FILESYSTEM')
+                    status = receipt.get('status')
+                    require(status in ('CM_APPLIED', 'RECOVERY_REQUIRED'), 'UNSAFE_FILESYSTEM')
+                    if status == 'CM_APPLIED':
+                        require(receipt.get('snapshot.sha256') == plan['snapshotSha256'], 'UNSAFE_FILESYSTEM')
+                        for name in ('backup', 'applied'):
+                            item = output / (launch.RECEIPT + f'.cm-{name}.aes')
+                            value = launch.read(item, core.pw_uid, core.pw_gid, 0o600, 64 << 20)
+                            require(launch.digest(value) == receipt.get(name + '.sha256'), 'UNSAFE_FILESYSTEM')
+                    result.update(state=status, receiptSha256=launch.digest(raw))
+                return result
+
 
 def private_file(path, flags):
     return os.open(path, flags | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
 
 
 def command(manager, lifecycle, arguments):
-    require(os.geteuid() == 0 and arguments and arguments[0] in ('stage', 'original', 'continue'), 'FORBIDDEN')
+    require(os.geteuid() == 0 and arguments, 'FORBIDDEN')
     recovery = RecoveryInput(manager, lifecycle)
-    if arguments[0] == 'original':
+    controls = {'original': recovery.original, 'continue': recovery.continue_ready,
+                'prepare-main': recovery.prepare_main, 'inspect-main': recovery.inspect_main}
+    if arguments[0] in controls:
         require(len(arguments) == 2)
-        return recovery.original(arguments[1])
-    if arguments[0] == 'continue':
-        require(len(arguments) == 2)
-        return recovery.continue_ready(arguments[1])
-    require(len(arguments) == 7)
+        return controls[arguments[0]](arguments[1])
+    require(arguments[0] == 'stage' and len(arguments) == 7)
     _, identity, path, expected, mode, policy, binding_sha = arguments
     require(Path(path).is_absolute())
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)

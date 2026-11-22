@@ -42,8 +42,9 @@ ASSETS = JOURNAL_V1_ASSETS | frozenset(('share/key-recovery/archive.js',))
 NATIVE_VALIDATION_ASSETS = ASSETS | {'bin/kura_native_snapshot_validation.py'}
 SNAPSHOT_INVENTORY_ASSETS = NATIVE_VALIDATION_ASSETS | {'bin/kura_snapshot_inventory.py'}
 RECOVERY_INPUT_ASSETS = SNAPSHOT_INVENTORY_ASSETS | {'bin/kura_recovery_input.py'}
+RECOVERY_LAUNCH_ASSETS = RECOVERY_INPUT_ASSETS | {'bin/kura_recovery_launch.py'}
 JOURNAL_ASSETS = (JOURNAL_V1_ASSETS, ASSETS, NATIVE_VALIDATION_ASSETS, SNAPSHOT_INVENTORY_ASSETS,
-                  RECOVERY_INPUT_ASSETS)
+                  RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS)
 
 
 class Refused(RuntimeError):
@@ -1701,7 +1702,7 @@ class Lifecycle:
         recovery_units = frozenset(UNITS)
         recovery_profiles = {(files, recovery_units) for files in (PRE_JOURNAL_ASSETS, JOURNAL_V1_ASSETS, ASSETS)}
         inventory_profiles = {(files, frozenset(SNAPSHOT_INVENTORY_UNITS))
-                              for files in (SNAPSHOT_INVENTORY_ASSETS, RECOVERY_INPUT_ASSETS)}
+                              for files in (SNAPSHOT_INVENTORY_ASSETS, RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS)}
         recognized = (recovery_profiles | inventory_profiles
                       | {(NATIVE_VALIDATION_ASSETS, frozenset(NATIVE_VALIDATION_UNITS))}) if modern else (
             recovery_profiles | {(LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, recovery_units)})

@@ -10,6 +10,11 @@ import sys
 
 
 def publish(home, directory):
+    recovery = os.environ.get('KURA_CONTROLLED_RECOVERY_ID')
+    if recovery is not None:
+        sys.path.insert(0, str(home / 'bin'))
+        import kura_recovery_launch as launch
+        launch.selected(home)
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     lock = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
@@ -26,8 +31,15 @@ def publish(home, directory):
                 output.flush()
                 # The independently paired loader appends its normal bundle
                 # list. Template read errors above must reach the launcher.
-                subprocess.run([home / 'bin/gen_config_ini.sh', os.devnull,
-                                home / 'plugins', home / 'siblings'], stdout=output, check=True)
+                command = [home / 'bin/gen_config_ini.sh', os.devnull, home / 'plugins', home / 'siblings']
+                if recovery is None:
+                    subprocess.run(command, stdout=output, check=True)
+                else:
+                    configured = subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout
+                    marker = b'\nosgi.bundles='
+                    launch.require(configured.count(marker) == 1)
+                    entry = ('reference\\:file\\:' + str(home / launch.BOOTSTRAP) + '@1\\:start,').encode()
+                    output.write(configured.replace(marker, marker + entry, 1))
                 os.fsync(output.fileno())
             os.replace(pending, directory / 'config.ini')
             os.fsync(lock)
@@ -40,5 +52,5 @@ def publish(home, directory):
 if __name__ == '__main__':
     try:
         publish(Path(sys.argv[1]), Path(sys.argv[2]))
-    except (OSError, subprocess.CalledProcessError) as error:
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
         sys.exit(f'Cannot publish Equinox configuration: {error}')
