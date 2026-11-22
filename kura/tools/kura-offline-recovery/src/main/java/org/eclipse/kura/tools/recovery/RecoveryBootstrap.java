@@ -146,7 +146,9 @@ public final class RecoveryBootstrap implements BundleActivator {
                     ConfigurationRestore.verify(admin,verificationExpected);
                     Path observed=receipt.resolveSibling(receipt.getFileName()+".cm-observed.aes");
                     backup(observed,ConfigurationRestore.capture(admin),crypto);
-                    ControlledRecovery.admitNormalLoad(request,manifest.get("restore.id"),snapshot,manifest.get("snapshot.sha256"));
+                    // The normal-load admission binds the artifact the Main actually reads
+                    // (possibly converted); receipts keep the source lineage digest.
+                    ControlledRecovery.admitNormalLoad(request,manifest.get("restore.id"),snapshot,publishedSha);
                     publish(receipt,("schema=1\nstatus=NORMAL_BOOT_ADMITTED\nrestore.id="+manifest.get("restore.id")
                             +"\nsnapshot.sha256="+manifest.get("snapshot.sha256")
                             +"\nsource.receipt.sha256="+manifest.get("verification.source.receipt.sha256")
