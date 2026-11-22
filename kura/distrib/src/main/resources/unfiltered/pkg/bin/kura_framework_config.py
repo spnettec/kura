@@ -10,11 +10,11 @@ import sys
 
 
 def publish(home, directory):
-    recovery = os.environ.get('KURA_CONTROLLED_RECOVERY_ID')
-    if recovery is not None:
+    recovery = None
+    if 'KURA_CONTROLLED_RECOVERY_ID' in os.environ or os.path.lexists('/var/lib/kura-recovery-launch'):
         sys.path.insert(0, str(home / 'bin'))
         import kura_recovery_launch as launch
-        launch.selected(home)
+        recovery = launch.selected(home)
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     lock = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:

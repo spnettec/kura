@@ -45,8 +45,10 @@ SNAPSHOT_INVENTORY_ASSETS = NATIVE_VALIDATION_ASSETS | {'bin/kura_snapshot_inven
 RECOVERY_INPUT_ASSETS = SNAPSHOT_INVENTORY_ASSETS | {'bin/kura_recovery_input.py'}
 RECOVERY_LAUNCH_ASSETS = RECOVERY_INPUT_ASSETS | {'bin/kura_recovery_launch.py'}
 RECOVERY_DELEGATION_ASSETS = RECOVERY_LAUNCH_ASSETS | {'bin/kura_native_recovery_input.py'}
+RECOVERY_MAIN_COMMAND_ASSETS = RECOVERY_DELEGATION_ASSETS | {'bin/kura_recovery_main_command.py'}
 JOURNAL_ASSETS = (JOURNAL_V1_ASSETS, ASSETS, NATIVE_VALIDATION_ASSETS, SNAPSHOT_INVENTORY_ASSETS,
-                  RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS, RECOVERY_DELEGATION_ASSETS)
+                  RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS, RECOVERY_DELEGATION_ASSETS,
+                  RECOVERY_MAIN_COMMAND_ASSETS)
 
 
 class Refused(RuntimeError):
@@ -1705,7 +1707,9 @@ class Lifecycle:
         recovery_profiles = {(files, recovery_units) for files in (PRE_JOURNAL_ASSETS, JOURNAL_V1_ASSETS, ASSETS)}
         inventory_profiles = {(files, frozenset(SNAPSHOT_INVENTORY_UNITS))
                               for files in (SNAPSHOT_INVENTORY_ASSETS, RECOVERY_INPUT_ASSETS, RECOVERY_LAUNCH_ASSETS)}
-        recognized = (recovery_profiles | inventory_profiles | {(RECOVERY_DELEGATION_ASSETS, frozenset(RECOVERY_DELEGATION_UNITS))}
+        delegation_profiles = {(files, frozenset(RECOVERY_DELEGATION_UNITS))
+                               for files in (RECOVERY_DELEGATION_ASSETS, RECOVERY_MAIN_COMMAND_ASSETS)}
+        recognized = (recovery_profiles | inventory_profiles | delegation_profiles
                       | {(NATIVE_VALIDATION_ASSETS, frozenset(NATIVE_VALIDATION_UNITS))}) if modern else (
             recovery_profiles | {(LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, recovery_units)})
         require(profile in recognized and (not modern or isinstance(manifest['generation'], dict)),
@@ -2049,6 +2053,8 @@ class Lifecycle:
             self.check_main_package_layout(manifest)
         self.initialize()
         with self.sender_locked(), self.gwt_locked() as gwt, self.recovery_locked(), self.locked():
+            require(not os.path.lexists(self.path('/var/lib/kura-recovery-launch/selection.json')),
+                    'Controlled recovery Main selection still owns this Root; preserve the original command')
             self.check_package_writers(allow_main=True)
             self.check_sender_admissions()
             if gwt is not None: gwt.check()

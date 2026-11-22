@@ -759,12 +759,14 @@ def check_loaded(require_generations=False, require_root=False):
 
 def exec_java(arguments):
     require(bool(arguments), 'Missing managed Java arguments')
-    recovery = os.environ.get('KURA_CONTROLLED_RECOVERY_ID')
-    if recovery is not None:
+    recovery = None
+    if 'KURA_CONTROLLED_RECOVERY_ID' in os.environ or os.path.lexists('/var/lib/kura-recovery-launch'):
         home = Path(__file__).resolve().parents[1]
         sys.path.insert(0, str(home / 'bin'))
         import kura_recovery_launch as launch
-        path, plan = launch.selected(home)
+        recovery = launch.selected(home)
+    if recovery is not None:
+        path, plan = recovery
         require(all(not option.startswith(('@', '-Dkura.recovery.request', '-Dosgi.startLevel'))
                     for option in arguments), 'Conflicting controlled recovery JVM arguments')
     binding, _ = loaded_binding()

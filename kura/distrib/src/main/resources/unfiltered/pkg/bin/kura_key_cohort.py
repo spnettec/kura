@@ -178,6 +178,11 @@ def managed_unit(raw):
     require("kura_encryption_key:/etc/kura/credentials/kura_encryption_key" in values.get(("[Service]", "LoadCredential"), []))
     require('/run/kura-key-service' in ' '.join(values.get(('[Service]', 'ReadOnlyPaths'), [])).split())
     helpers = set()
+    recovery_launch = "bin/kura_recovery_launch.py"
+    conditions = values.get(("[Service]", "ExecCondition"), [])
+    if conditions:
+        require(conditions == ["/usr/bin/python3 -I -B /opt/eclipse/kura/" + recovery_launch + " condition"])
+        helpers.add(recovery_launch)
     privileged = [line for line in starts if line.startswith("+")]
     if privileged:
         prefix = "+/usr/bin/setpriv --bounding-set=-all,+chown"

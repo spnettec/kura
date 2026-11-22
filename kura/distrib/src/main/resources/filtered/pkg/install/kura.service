@@ -20,6 +20,7 @@ Environment=KURA_MANAGED_FIREWALL_TABLES=1
 Environment=KURA_MANAGED_FIREWALL_PUBLICATION=1
 UMask=0077
 Type=forking
+ExecCondition=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_recovery_launch.py condition
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_key_store.py check-loaded-managed
 ExecStartPre=/usr/bin/python3 -I INSTALL_DIR/kura/bin/kura_su_pam.py check-installed
 ExecStartPre=/usr/bin/python3 -I -B INSTALL_DIR/kura/bin/kura_modem_cohort.py

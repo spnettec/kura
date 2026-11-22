@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
 
 ROOT = '/var/lib/kura-recovery-launch'
 SELECTOR = 'KURA_CONTROLLED_RECOVERY_ID'
@@ -16,6 +17,8 @@ REQUEST = 'request.properties'
 PLAN = 'plan.json'
 OUT = 'result'
 CLAIM = 'launch.json'
+SELECTION = 'selection.json'
+CONDITION = 'condition.json'
 RECEIPT = 'applied.properties'
 MAX_SNAPSHOT = 32 << 20
 IDENTITY = re.compile(r'rec-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
@@ -101,19 +104,77 @@ def projection(base, identity, uid, gid, root):
     return path, plan
 
 
-def selected(home):
-    identity = os.environ.get(SELECTOR)
-    if identity is None:
+def boot_identity():
+    return Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+
+
+def selection(base, gid, root):
+    if not os.path.lexists(base):
         return None
+    directory(base, 0, gid, 0o750)
+    path = base / SELECTION
+    if not os.path.lexists(path):
+        return None
+    raw = read(path, 0, gid, 0o440, 4096)
+    value = json.loads(raw)
+    require(isinstance(value, dict) and set(value) == {'schema', 'root', 'restoreId', 'planSha256', 'bootId'}
+            and canonical(value) == raw and type(value['schema']) is int and value['schema'] == 1
+            and value['root'] == root_identity(root)
+            and isinstance(value['restoreId'], str) and IDENTITY.fullmatch(value['restoreId'])
+            and isinstance(value['planSha256'], str) and SHA.fullmatch(value['planSha256'])
+            and isinstance(value['bootId'], str) and IDENTITY.fullmatch('rec-' + value['bootId']))
+    return value
+
+
+def unit_invocation():
     require(os.geteuid() != 0 and os.geteuid() == os.getuid() and os.getegid() == os.getgid())
+    require(Path('/proc/self/cgroup').read_text().strip() == '0::/system.slice/kura.service')
+    invocation = os.environ.get('INVOCATION_ID', '')
+    require(re.fullmatch('[0-9a-f]{32}', invocation) is not None)
+    return invocation
+
+
+def select_projection(home, identity, fixed):
     require(not any(os.environ.get(name) for name in
                     ('KURA_JVM_ARGS_FILE', 'JDK_JAVA_OPTIONS', '_JAVA_OPTIONS', 'JAVA_TOOL_OPTIONS')))
-    require(Path('/proc/self/cgroup').read_text().strip() == '0::/system.slice/kura.service')
-    require(re.fullmatch('[0-9a-f]{32}', os.environ.get('INVOCATION_ID', '')) is not None)
     path, plan = projection(Path(ROOT), identity, os.getuid(), os.getgid(), Path('/'))
     jar = home / BOOTSTRAP
     require(digest(jar.read_bytes()) == plan['bootstrapSha256'])
-    require(not any((path / OUT).iterdir()))
+    if fixed is not None:
+        require(fixed['bootId'] == boot_identity() and fixed['planSha256'] == digest(canonical(plan)))
+    return path, plan
+
+
+def condition(home):
+    fixed = selection(Path(ROOT), os.getgid(), Path('/'))
+    if fixed is None:
+        return
+    require(SELECTOR not in os.environ)
+    invocation = unit_invocation()
+    path, _ = select_projection(home, fixed['restoreId'], fixed)
+    output = path / OUT
+    require(not any(output.iterdir()))
+    marker = dict(schema=1, selectionSha256=digest(canonical(fixed)), invocationId=invocation)
+    write(output / CONDITION, canonical(marker), 0o600)
+    sync(output)
+
+
+def selected(home):
+    identity = os.environ.get(SELECTOR)
+    fixed = selection(Path(ROOT), os.getgid(), Path('/'))
+    if identity is None and fixed is None:
+        return None
+    invocation = unit_invocation()
+    if fixed is not None:
+        require(identity is None)
+        identity = fixed['restoreId']
+    path, plan = select_projection(home, identity, fixed)
+    output = path / OUT
+    expected = {CONDITION} if fixed is not None else set()
+    require({item.name for item in output.iterdir()} == expected)
+    if fixed is not None:
+        marker = dict(schema=1, selectionSha256=digest(canonical(fixed)), invocationId=invocation)
+        require(read(output / CONDITION, os.getuid(), os.getgid(), 0o600, 4096) == canonical(marker))
     return path, plan
 
 
@@ -142,6 +203,15 @@ def claim(path, plan, lease):
     value = dict(schema=1, state='MAIN_LAUNCH_CLAIMED', restoreId=plan['restoreId'],
                  planSha256=digest(canonical(plan)), pid=os.getpid(),
                  startTicks=lease['startTicks'], invocationId=os.environ['INVOCATION_ID'],
-                 bootId=Path('/proc/sys/kernel/random/boot_id').read_text().strip())
+                 bootId=boot_identity())
     write(path / OUT / CLAIM, canonical(value), 0o600)
     sync(path / OUT)
+
+
+if __name__ == '__main__':
+    try:
+        require(sys.argv[1:] == ['condition'])
+        condition(Path(__file__).resolve().parents[1])
+    except (OSError, ValueError, TypeError, KeyError):
+        print('Controlled recovery selection is already used, stale, or invalid', file=sys.stderr)
+        sys.exit(1)

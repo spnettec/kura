@@ -303,7 +303,8 @@ class RecoveryInput:
                 result['planSha256'] = launch.digest(launch.canonical(plan))
                 output = path / launch.OUT
                 if not os.path.lexists(output / launch.CLAIM):
-                    require(not any(output.iterdir()), 'UNSAFE_FILESYSTEM')
+                    require({entry.name for entry in output.iterdir()} in (set(), {launch.CONDITION}),
+                            'UNSAFE_FILESYSTEM')
                     return result
                 raw = launch.read(output / launch.CLAIM, core.pw_uid, core.pw_gid, 0o600, 4096)
                 claim = decode(raw)
@@ -345,6 +346,9 @@ def command(manager, lifecycle, arguments):
     if arguments[0] == 'delegate':
         from kura_native_recovery_input import administrative_grant
         return administrative_grant(recovery, arguments[1:])
+    if arguments[0] in ('start-main', 'stop-main', 'main-command-status'):
+        from kura_recovery_main_command import command as main_command
+        return main_command(recovery, arguments[0], arguments[1:])
     controls = {'original': recovery.original, 'continue': recovery.continue_ready,
                 'prepare-main': recovery.prepare_main, 'inspect-main': recovery.inspect_main}
     if arguments[0] in controls:
