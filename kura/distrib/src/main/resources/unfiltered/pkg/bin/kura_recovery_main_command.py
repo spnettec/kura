@@ -400,7 +400,9 @@ class Controller:
             require(launch.digest(launch.canonical(normal)) == status['guardedSha256'], 'CONFLICT')
             self.active_invocation(plan, fixed, status['outcome'])
             return status['outcome'] | {'snapshotSha256': plan['snapshotSha256'],
-                                        'sourceReceiptSha256': status['originalStop']['receiptSha256']}
+                                        'sourceReceiptSha256': status['originalStop']['receiptSha256'],
+                                        'publishedSha256': normal['guarded'].get('publishedSha256',
+                                                                                 plan['snapshotSha256'])}
 
     def authorize_release(self, identity, receipt_sha, policy_path, authenticate):
         digest(receipt_sha)
