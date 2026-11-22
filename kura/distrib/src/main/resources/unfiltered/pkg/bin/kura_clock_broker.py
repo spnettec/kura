@@ -271,13 +271,18 @@ def unit_sources():
 
 
 def effective_units(units=UNITS):
+    # Container runtime adapters (LXC/OrbStack) add a global service.d drop-in
+    # to every unit on the host. It carries no clock-specific override, so that
+    # exact adapter path may appear alongside an otherwise clean unit.
+    adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
     properties = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                   'NeedDaemonReload', 'Transient')
     for name in units:
         value = systemd_properties(properties, name)
+        dropins = [p for p in value['DropInPaths'].split() if p != adapter]
         require(value['Id'] == name and value['Names'].split() == [name] and value['LoadState'] == 'loaded'
                 and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}
-                and value['SourcePath'] == value['DropInPaths'] == ''
+                and value['SourcePath'] == '' and not dropins
                 and value['NeedDaemonReload'] == value['Transient'] == 'no', 'UNPAIRED_CODE')
 
 
