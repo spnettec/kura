@@ -268,7 +268,9 @@ class Controller:
                      sourceReceiptSha256=stopped['receiptSha256'], sourceAppliedSha256=applied['applied.sha256'])
         published = SnapshotPublication(self).require_published(plan['restoreId'], snapshot_id, stopped['receiptSha256'])
         if published is not None:
-            guard.update(snapshotFile=published['file'], snapshotDirectory=published['directory'])
+            guard.update(snapshotFile=published['file'], snapshotDirectory=published['directory'],
+                         publishedSha256=published['publishedSha256'], publishedSize=published['publishedSize'],
+                         publishedMode=published['publishedMode'])
         normal = plan | {'guarded': guard}
         launch.normal_snapshot(self.lifecycle.root, normal, self.core.pw_uid, self.core.pw_gid)
         self.authenticate()

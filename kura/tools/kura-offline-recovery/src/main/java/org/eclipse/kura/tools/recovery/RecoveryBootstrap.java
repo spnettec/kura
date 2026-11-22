@@ -106,12 +106,16 @@ public final class RecoveryBootstrap implements BundleActivator {
 
             Path snapshot=Path.of(manifest.get("snapshot.path"));
             privateParent(snapshot);
-            ControlledRecovery.verifyArtifact(snapshot,manifest.get("snapshot.sha256"));
+            // A published import may have been converted into the directory's own format;
+            // the boot then reads that artifact while receipts keep the source lineage digest.
+            String publishedSha=manifest.getOrDefault("snapshot.published.sha256",manifest.get("snapshot.sha256"));
+            String publishedMode=manifest.getOrDefault("snapshot.published.mode",manifest.get("snapshot.mode"));
+            ControlledRecovery.verifyArtifact(snapshot,publishedSha);
             byte[] artifact=read(snapshot,32<<20);
-            require(hash(artifact).equals(manifest.get("snapshot.sha256")));
+            require(hash(artifact).equals(publishedSha));
             CryptoServiceImpl crypto=recoveryCrypto(manifest);
             byte[] xml=artifact;
-            if(manifest.get("snapshot.mode").equals("aes-gcm")) {
+            if(publishedMode.equals("aes-gcm")) {
                 try(InputStream input=crypto.aesDecryptingStream(new ByteArrayInputStream(artifact))){
                     xml=input.readNBytes((32<<20)+1);require(xml.length<=32<<20);
                 }
@@ -376,6 +380,8 @@ public final class RecoveryBootstrap implements BundleActivator {
         Set<String> normal=Set.of("verification.mode","verification.source.receipt",
                 "verification.source.receipt.sha256","verification.source.applied.sha256");
         allowed.addAll(normal);
+        Set<String> published=Set.of("snapshot.published.sha256","snapshot.published.mode");
+        allowed.addAll(published);
         require(result.keySet().containsAll(required)&&allowed.containsAll(result.keySet())&&result.get("schema").equals("1")
                 &&result.get("restore.id").matches("rec-[0-9a-f-]{36}")&&result.get("snapshot.sha256").matches("[0-9a-f]{64}")
                 &&Set.of("plain","aes-gcm").contains(result.get("snapshot.mode"))
@@ -409,6 +415,12 @@ public final class RecoveryBootstrap implements BundleActivator {
                     && !result.get("verification.source.receipt").equals(result.get("receipt.path"))
                     && result.get("verification.source.receipt.sha256").matches("[0-9a-f]{64}")
                     && result.get("verification.source.applied.sha256").matches("[0-9a-f]{64}"));
+        }
+        if(published.stream().anyMatch(result::containsKey)) {
+            require(normal.stream().allMatch(result::containsKey)
+                    && result.keySet().containsAll(published)
+                    && result.get("snapshot.published.sha256").matches("[0-9a-f]{64}")
+                    && Set.of("plain","aes-gcm").contains(result.get("snapshot.published.mode")));
         }
         if (projection) {
             Path directory = path.getParent();

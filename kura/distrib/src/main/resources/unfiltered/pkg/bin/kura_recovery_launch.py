@@ -83,6 +83,11 @@ def guarded_properties(path, plan):
         'verification.source.receipt.sha256': guard['sourceReceiptSha256'],
         'verification.source.applied.sha256': guard['sourceAppliedSha256'],
     })
+    # A published import may have been converted into the directory's own format; the
+    # boot then reads that exact artifact while receipts keep the source lineage digest.
+    if 'publishedSha256' in guard:
+        values['snapshot.published.sha256'] = guard['publishedSha256']
+        values['snapshot.published.mode'] = guard['publishedMode']
     return ''.join(key + '=' + value + '\n' for key, value in sorted(values.items())).encode('ascii')
 
 
@@ -250,8 +255,10 @@ def normal_snapshot(root, plan, uid, gid):
     linked = 'snapshotFile' in guard
     if linked:
         require(root_identity(parent) == guard['snapshotDirectory'] and root_identity(target) == guard['snapshotFile'])
+    published_sha = guard.get('publishedSha256', plan['snapshotSha256'])
+    published_size = guard.get('publishedSize', plan['size'])
     contents = read(target, uid, gid, 0o600, MAX_SNAPSHOT)
-    require(len(contents) == plan['size'] and digest(contents) == plan['snapshotSha256'])
+    require(len(contents) == published_size and digest(contents) == published_sha)
     if linked:
         require(root_identity(parent) == guard['snapshotDirectory'] and root_identity(target) == guard['snapshotFile'])
 
@@ -267,8 +274,10 @@ def guarded_plan(path, plan, fixed, uid, gid, *, draft=False):
     guard = normal['guarded']
     base_fields = {'snapshotId', 'selectionSha256', 'sourceReceiptSha256', 'sourceAppliedSha256'}
     published_fields = {'snapshotFile', 'snapshotDirectory'}
+    converted_fields = {'publishedSha256', 'publishedSize', 'publishedMode'}
     require(isinstance(guard, dict)
-            and set(guard) in (base_fields, base_fields | published_fields)
+            and set(guard) in (base_fields, base_fields | published_fields,
+                               base_fields | published_fields | converted_fields)
             and guard['selectionSha256'] == digest(canonical(fixed))
             and all(isinstance(guard[key], str) and SHA.fullmatch(guard[key])
                     for key in ('sourceReceiptSha256', 'sourceAppliedSha256')))
@@ -277,6 +286,11 @@ def guarded_plan(path, plan, fixed, uid, gid, *, draft=False):
         require(isinstance(item, dict) and set(item) == {'device', 'inode'}
                 and all(isinstance(value, str) and re.fullmatch('[1-9][0-9]{0,19}', value)
                         for value in item.values()))
+    if converted_fields & set(guard):
+        require(published_fields <= set(guard)
+                and SHA.fullmatch(guard['publishedSha256'])
+                and type(guard['publishedSize']) is int and 0 < guard['publishedSize'] <= MAX_SNAPSHOT
+                and guard['publishedMode'] in ('plain', 'aes-gcm'))
     snapshot_number(guard['snapshotId'])
     require(read(target / REQUEST, 0, gid, 0o440, 4096) == guarded_properties(path / GUARDED, normal))
     return target, normal

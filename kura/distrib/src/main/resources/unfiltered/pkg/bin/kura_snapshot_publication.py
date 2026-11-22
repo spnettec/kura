@@ -97,15 +97,16 @@ class SnapshotPublication:
             require(ready is receipt is None, 'UNSAFE_FILESYSTEM')
             return None, None, None
         fields(intent, {'schema', 'root', 'restoreId', 'state', 'selectionSha256', 'planSha256', 'sourceReceiptSha256',
-                        'snapshotId', 'snapshotSha256', 'size', 'publishedSha256', 'publishedSize', 'directory',
-                        'policySha256'})
+                        'snapshotId', 'snapshotSha256', 'size', 'publishedSha256', 'publishedSize', 'publishedMode',
+                        'directory', 'policySha256'})
         require(intent['state'] == 'ORDINARY_SNAPSHOT_INTENT', 'UNSAFE_FILESYSTEM')
         self.paths(identity, intent['snapshotId'])
         for name in ('selectionSha256', 'planSha256', 'sourceReceiptSha256', 'policySha256', 'snapshotSha256',
                      'publishedSha256'):
             digest(intent[name])
         require(type(intent['size']) is int and 0 < intent['size'] <= launch.MAX_SNAPSHOT
-                and type(intent['publishedSize']) is int and 0 < intent['publishedSize'] <= launch.MAX_SNAPSHOT,
+                and type(intent['publishedSize']) is int and 0 < intent['publishedSize'] <= launch.MAX_SNAPSHOT
+                and intent['publishedMode'] in ('plain', 'aes-gcm'),
                 'UNSAFE_FILESYSTEM')
         if ready is None:
             require(receipt is None, 'UNSAFE_FILESYSTEM')
@@ -213,7 +214,7 @@ class SnapshotPublication:
                                 selectionSha256=stopped['selectionSha256'], planSha256=stopped['planSha256'],
                                 sourceReceiptSha256=source_receipt, snapshotId=number, snapshotSha256=plan['snapshotSha256'],
                                 size=plan['size'], publishedSha256=published_sha, publishedSize=published_size,
-                                directory=directory, policySha256=policy)
+                                publishedMode=policy_mode, directory=directory, policySha256=policy)
                             try:
                                 manager.atomic(self.journal(identity) / (self.INTENT + '.json'), encode(intent), no_replace=True)
                                 self.write_pending(fd, pending.name, path / launch.SNAPSHOT, payload)
