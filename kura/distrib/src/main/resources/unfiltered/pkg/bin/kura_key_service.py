@@ -2205,7 +2205,30 @@ def snapshot_rewrap(args):
     return component['SnapshotRewrap'](manager, identity, namespace, snapshot, *expected).run(action)
 
 
+def recovery_input(args):
+    require(os.geteuid() == 0, 'FORBIDDEN')
+    lifecycle = Lifecycle()
+    lifecycle.no_overrides()
+    manifest = lifecycle.assets()
+    relative = 'bin/kura_recovery_input.py'
+    require(relative in manifest['files'], 'UNAVAILABLE')
+    home = lifecycle.path('/opt/eclipse/kura').resolve(strict=True)
+    path = home / relative
+    source = lifecycle.read(path, limit=65536, private=False)
+    require(hashlib.sha256(source).hexdigest() == manifest['files'][relative], 'COHORT_CHANGED')
+    namespace = {'__name__': 'kura_recovery_input', '__file__': str(path)}
+    exec(compile(source, str(path), 'exec'), namespace)
+    return namespace['command'](Manager(), lifecycle, args)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) >= 2 and sys.argv[1] == '--recovery-input':
+        try:
+            sys.stdout.buffer.write(encode(recovery_input(sys.argv[2:])) + b'\n')
+        except (Failure, OSError, Refused, LifecycleRefused, ValueError, KeyError, subprocess.SubprocessError) as error:
+            print(error.reason if isinstance(error, Failure) else 'RECOVERY_INPUT_REFUSED', file=sys.stderr)
+            sys.exit(1)
+        sys.exit(0)
     rewrap = {'--provider-store-rewrap': provider_store_rewrap, '--snapshot-rewrap': snapshot_rewrap}
     if len(sys.argv) >= 2 and sys.argv[1] in rewrap:
         try:
