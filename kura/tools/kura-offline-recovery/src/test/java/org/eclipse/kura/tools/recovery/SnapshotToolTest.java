@@ -189,6 +189,31 @@ class SnapshotToolTest {
         assertFalse(err.toString().contains(directory.toString()));
     }
 
+    @Test void convertRefusesWhenTheEncryptedFormWouldExceedTheOrdinaryLimit() throws Exception {
+        Path keyPath = importKey("kura_encryption_key", key);
+        // 25 x 1 MiB values: the artifact stays within the ordinary input bound, but the
+        // encrypted form (ASCII header + Base64 + GCM) cannot fit the same 32 MiB bound.
+        StringBuilder rows = new StringBuilder();
+        String chunk = "x".repeat(1024 * 1024);
+        for (int index = 0; index < 25; index++) {
+            rows.append("<esf:property name=\"p").append(index).append(
+                    "\" type=\"String\" array=\"false\" encrypted=\"false\"><esf:value>")
+                .append(chunk).append("</esf:value></esf:property>");
+        }
+        byte[] oversize = ("<esf:configurations xmlns:esf=\"http://eurotech.com/esf/2.0\">"
+                + "<esf:configuration pid=\"oversize.import.fixture\"><esf:properties>" + rows
+                + "</esf:properties></esf:configuration></esf:configurations>")
+                .getBytes(StandardCharsets.UTF_8);
+        assertTrue(oversize.length <= 32 * 1024 * 1024);
+        Path staged = directory.resolve("oversize.xml"); Files.write(staged, oversize);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(), err = new ByteArrayOutputStream();
+        assertEquals(2, convert(convertArguments(staged, "plain", "aes-gcm", keyPath,
+                "--password-policy", "authenticated"), out, err));
+        assertEquals("", out.toString());
+        assertTrue(err.toString().startsWith("{\"error\":\"SNAPSHOT_CONVERSION_FAILED\"}"));
+        assertArrayEquals(oversize, Files.readAllBytes(staged));
+    }
+
     @ParameterizedTest @ValueSource(strings = {
         "<esf:property name='x' type='Bogus' array='false' encrypted='false'><esf:value>1</esf:value></esf:property>",
         "<esf:property name='x' type='Boolean' array='false' encrypted='false'><esf:value>yes</esf:value></esf:property>",
