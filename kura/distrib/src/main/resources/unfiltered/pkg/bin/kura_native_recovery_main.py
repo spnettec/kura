@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
-"""Native delegation of the two fixed, journaled Main commands."""
+"""Native delegation of fixed, journaled Main commands."""
 import os
 from pathlib import Path
 import socket
@@ -20,7 +20,7 @@ from kura_recovery_main_command import Controller
 import kura_recovery_launch as launch
 
 SOCKET = '/run/kura-recovery-main.sock'
-COMMANDS = ('start', 'stop')
+COMMANDS = ('start', 'stop', 'guarded-start')
 READER = 'kura-recovery-main-reader.service'
 UNITS = {'kura-recovery-main.socket', 'kura-recovery-main.service', READER, 'kura-recovery-main-reader.socket'}
 
@@ -35,8 +35,9 @@ def grant_path(controller, identity, action):
     return controller.base / '.native-commands' / identity / (action + '.json')
 
 
-def grant(controller, identity, action, expected, authenticate):
+def grant(controller, identity, action, expected, authenticate, *, snapshot_id=None):
     manager = controller.manager
+    stopped = controller.observation(identity) if action == 'guarded-start' else None
     with manager.lock(manager.state / 'admission.lock', True):
         manager.maintenance()
         manager.settled()
@@ -48,54 +49,75 @@ def grant(controller, identity, action, expected, authenticate):
             require(result['state'] == 'MAIN_LAUNCH_PREPARED' and result['planSha256'] == expected
                     and controller.load(identity, 'start') is None, 'CONFLICT')
             os.close(manager.writer_lock(create=True))
-        else:
+        elif action == 'stop':
             require(result['state'] == 'CM_APPLIED' and result['receiptSha256'] == expected
                     and controller.load(identity, 'start-receipt') is not None
                     and controller.load(identity, 'stop') is None, 'CONFLICT')
         record = dict(schema=1, state='MAIN_COMMAND_GRANTED', restoreId=identity, action=action,
                       expectedSha256=expected, peer=peer)
         target = grant_path(controller, identity, action)
+        require(not os.path.lexists(target), 'MAIN_COMMAND_EXISTS')
         controller.lifecycle.directory(target.parent, private=True, create=True)
         controller.lifecycle.sync(target.parent.parent)
         controller.lifecycle.sync(controller.base)
         require(authenticate() == peer, 'FORBIDDEN')
-        manager.atomic(target, encode(record), no_replace=True)
+        if action == 'guarded-start':
+            plan = controller.prepare_guarded_grant(identity, stopped, expected, snapshot_id)
+            record.update(snapshotId=snapshot_id, guardedSha256=plan)
+            try:
+                require(authenticate() == peer, 'FORBIDDEN')
+                manager.atomic(target, encode(record), no_replace=True)
+            except (OSError, Failure, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError) as error:
+                raise Failure('UNKNOWN') from error
+        else:
+            manager.atomic(target, encode(record), no_replace=True)
     return {key: value for key, value in record.items() if key != 'peer'}
 
 
 def administrative_grant(recovery, arguments):
-    require(os.geteuid() == 0 and len(arguments) == 3)
-    identity, action, expected = arguments
+    require(os.geteuid() == 0 and len(arguments) in (3, 4))
+    identity, action, expected, *snapshot = arguments
     require(launch.IDENTITY.fullmatch(identity) and action in COMMANDS)
+    require(bool(snapshot) == (action == 'guarded-start'))
+    snapshot_id = snapshot[0] if snapshot else None
+    if snapshot_id is not None:
+        launch.snapshot_number(snapshot_id)
     digest(expected)
     require_package(recovery.lifecycle)
     with administrator_peer(recovery.lifecycle) as authenticate:
-        return grant(Controller(recovery), identity, action, expected, authenticate)
+        return grant(Controller(recovery), identity, action, expected, authenticate, snapshot_id=snapshot_id)
 
 
-def authorization(controller, identity, action, current, expected=None):
+def authorization(controller, identity, action, current, expected=None, snapshot_id=None):
     path = grant_path(controller, identity, action)
     require(os.path.lexists(path), 'FORBIDDEN')
     value = decode(controller.manager.read(path, 8192))
-    fields(value, {'schema', 'state', 'restoreId', 'action', 'expectedSha256', 'peer'})
+    extra = {'snapshotId', 'guardedSha256'} if action == 'guarded-start' else set()
+    fields(value, {'schema', 'state', 'restoreId', 'action', 'expectedSha256', 'peer'} | extra)
     owner = value['peer']
     require(type(value['schema']) is int and value['schema'] == 1 and value['state'] == 'MAIN_COMMAND_GRANTED'
             and value['restoreId'] == identity and value['action'] == action and isinstance(owner, dict)
             and set(owner) == ATTESTATION_FIELDS, 'UNSAFE_FILESYSTEM')
     digest(value['expectedSha256'])
+    if action == 'guarded-start':
+        digest(value['guardedSha256'])
+        launch.snapshot_number(value['snapshotId'])
     if expected is not None:
-        require(owner == current and value['expectedSha256'] == expected, 'FORBIDDEN')
+        require(owner == current and value['expectedSha256'] == expected
+                and value.get('snapshotId') == snapshot_id, 'FORBIDDEN')
     else:
         require(all(owner[key] == current[key] for key in ('rootDevice', 'rootInode', 'identitySha256')), 'FORBIDDEN')
+    return value
 
 
-def read_projection(identity):
+def read_projection(identity, phase=None):
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
         connection.settimeout(12)
         connection.connect(launch.READER_SOCKET)
         _, owner, _ = struct.unpack('3i', connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
         require(owner == 0, 'FORBIDDEN')
-        connection.sendall((identity + '\n').encode('ascii'))
+        prefix = phase + ' ' if phase else ''
+        connection.sendall((prefix + identity + '\n').encode('ascii'))
         connection.shutdown(socket.SHUT_WR)
         raw = read_frame(connection)
         require(len(raw) <= 8192 and not connection.recv(1), 'PROTOCOL_MISMATCH')
@@ -113,15 +135,20 @@ def read_projection(identity):
         time.sleep(0.025)
     else:
         raise Failure('READER_BUSY')
+    if value == {'schema': 1, 'error': 'CONFLICT'}:
+        raise Failure('CONFLICT')
     return value
 
 
 def handle(recovery, request, descriptor, authenticate):
     action = request.get('action')
-    require(action in ('main-start', 'main-stop', 'main-original', 'main-application-original')
-            and descriptor is None, 'FORBIDDEN')
-    read_only = action in ('main-original', 'main-application-original')
-    fields(request, {'schema', 'restoreId', 'action'} | (set() if read_only else {'expectedSha256'}))
+    writes = {'main-' + name for name in COMMANDS}
+    reads = {'main-original', 'main-application-original', 'main-guarded-original', 'main-guarded-application-original'}
+    require(isinstance(action, str) and action in writes | reads and descriptor is None, 'FORBIDDEN')
+    extra = {'expectedSha256'} if action in writes else set()
+    if action == 'main-guarded-start':
+        extra.add('snapshotId')
+    fields(request, {'schema', 'restoreId', 'action'} | extra)
     identity = request['restoreId']
     require(type(request['schema']) is int and request['schema'] == 1 and isinstance(identity, str)
             and launch.IDENTITY.fullmatch(identity), 'INVALID_ARGUMENT')
@@ -134,16 +161,33 @@ def handle(recovery, request, descriptor, authenticate):
         direction = 'start' if os.path.lexists(grant_path(fixed, identity, 'start')) else 'stop'
         authorization(fixed, identity, direction, original)
         return fixed.observation(identity)
+    if action in ('main-guarded-original', 'main-guarded-application-original'):
+        grant = authorization(fixed, identity, 'guarded-start', original)
+        if action == 'main-guarded-application-original':
+            result = fixed.guarded_application(identity)
+            require(result['planSha256'] == grant['guardedSha256']
+                    and result['sourceReceiptSha256'] == grant['expectedSha256'], 'CONFLICT')
+            return result
+        result = fixed.guarded_status(identity)
+        if 'guardedSha256' in result:
+            require(result['guardedSha256'] == grant['guardedSha256']
+                    and result['originalStop']['receiptSha256'] == grant['expectedSha256'], 'CONFLICT')
+        return result
     direction = action.removeprefix('main-')
     expected = digest(request['expectedSha256'])
+    snapshot_id = request.get('snapshotId')
+    if direction == 'guarded-start':
+        launch.snapshot_number(snapshot_id)
 
     def current_authority():
         current = authenticate()
         require(current == original, 'FORBIDDEN')
-        authorization(fixed, identity, direction, current, expected)
+        return authorization(fixed, identity, direction, current, expected, snapshot_id)
 
-    current_authority()
+    grant = current_authority()
     fixed.authorize = current_authority
+    if direction == 'guarded-start':
+        return fixed.start_guarded(identity, expected, snapshot_id, prepared=grant['guardedSha256'])
     return (fixed.start if direction == 'start' else fixed.stop)(identity, expected)
 
 
@@ -160,7 +204,7 @@ def serve_connection(connection, recovery):
             try:
                 require(authenticate() == original, 'FORBIDDEN')
             except (Failure, OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):
-                raise Failure('UNKNOWN' if request['action'] in ('main-start', 'main-stop') else 'FORBIDDEN') from None
+                raise Failure('UNKNOWN' if request['action'].removeprefix('main-') in COMMANDS else 'FORBIDDEN') from None
     except Failure as error:
         result = dict(schema=1, error=error.reason)
     except (OSError, ValueError, KeyError, Refused, LifecycleRefused, PeerRefused, subprocess.SubprocessError):

@@ -27,6 +27,7 @@ PrivateNetwork=yes
 TemporaryFileSystem=/etc:ro /var/lib:ro /opt/eclipse:ro /run:ro
 BindReadOnlyPaths=/opt/eclipse/kura/bin/kura_recovery_launch.py:/run/kura-recovery-main-reader.py
 BindReadOnlyPaths=/var/lib/kura-recovery-launch
+BindReadOnlyPaths=-/opt/eclipse/kura/user/snapshots
 InaccessiblePaths=/proc
 ProtectControlGroups=yes
 ProtectKernelModules=yes

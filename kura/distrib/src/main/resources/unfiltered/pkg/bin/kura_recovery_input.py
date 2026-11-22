@@ -271,7 +271,8 @@ class RecoveryInput:
     def prepare_guarded_projection(self, pending, target, plan, core):
         import kura_recovery_launch as launch
 
-        entries = {launch.PLAN: launch.canonical(plan), launch.REQUEST: launch.guarded_properties(target, plan)}
+        request = launch.guarded_properties(target.parent / launch.GUARDED, plan)
+        entries = {launch.PLAN: launch.canonical(plan), launch.REQUEST: request}
         self.publish_projection(launch, pending, target, entries, core)
 
     def publish_projection(self, launch, pending, target, entries, core):

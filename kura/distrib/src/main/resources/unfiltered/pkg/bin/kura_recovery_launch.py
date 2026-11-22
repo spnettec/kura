@@ -23,6 +23,7 @@ SELECTION = 'selection.json'
 CONDITION = 'condition.json'
 RECEIPT = 'applied.properties'
 GUARDED = 'guarded'
+GUARDED_DRAFT = 'guarded-draft'
 NORMAL_RECEIPT = 'normal.properties'
 NORMAL_SNAPSHOTS = '/opt/eclipse/kura/user/snapshots'
 SNAPSHOT_ID = re.compile(r'0|[1-9][0-9]{0,18}')
@@ -195,8 +196,8 @@ def normal_snapshot(root, plan, uid, gid):
     require(len(contents) == plan['size'] and digest(contents) == plan['snapshotSha256'])
 
 
-def guarded_projection(path, plan, fixed, uid, gid):
-    target = path / GUARDED
+def guarded_plan(path, plan, fixed, uid, gid, *, draft=False):
+    target = path / (GUARDED_DRAFT if draft else GUARDED)
     directory(target, 0, gid, 0o750)
     directory(target / OUT, uid, gid, 0o700)
     raw = read(target / PLAN, 0, gid, 0o440, 8192)
@@ -206,14 +207,22 @@ def guarded_projection(path, plan, fixed, uid, gid):
     guard = normal['guarded']
     require(isinstance(guard, dict)
             and set(guard) == {'snapshotId', 'selectionSha256', 'sourceReceiptSha256', 'sourceAppliedSha256'}
-            and guard['selectionSha256'] == digest(canonical(fixed)))
+            and guard['selectionSha256'] == digest(canonical(fixed))
+            and all(isinstance(guard[key], str) and SHA.fullmatch(guard[key])
+                    for key in ('sourceReceiptSha256', 'sourceAppliedSha256')))
     snapshot_number(guard['snapshotId'])
+    require(read(target / REQUEST, 0, gid, 0o440, 4096) == guarded_properties(path / GUARDED, normal))
+    return target, normal
+
+
+def guarded_projection(path, plan, fixed, uid, gid, *, draft=False):
+    target, normal = guarded_plan(path, plan, fixed, uid, gid, draft=draft)
+    guard = normal['guarded']
     applied = inspect_projection(path, plan, uid, gid)
     source_raw, source = decision(path / OUT / RECEIPT, plan['restoreId'], uid, gid)
     require(applied['state'] == 'CM_APPLIED' and source.get('status') == 'CM_APPLIED'
             and applied['receiptSha256'] == guard['sourceReceiptSha256'] == digest(source_raw)
             and source.get('applied.sha256') == guard['sourceAppliedSha256'])
-    require(read(target / REQUEST, 0, gid, 0o440, 4096) == guarded_properties(target, normal))
     return target, normal
 
 
@@ -344,10 +353,27 @@ def read_once():
             pid, owner, _ = struct.unpack('3i', connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
             require(owner == 0 and pid > 0)
             raw = input_file.read(128).decode('ascii')
-            require(raw.endswith('\n') and IDENTITY.fullmatch(raw[:-1]))
+            require(raw.endswith('\n'))
+            request = raw[:-1].split(' ')
+            require(len(request) == 1 or len(request) == 2 and request[0] in ('guarded', 'draft', 'draft-admit'))
+            identity = request[-1]
+            require(IDENTITY.fullmatch(identity))
             uid, gid = os.geteuid(), os.getegid()
-            path, plan = projection(Path(ROOT), raw[:-1], uid, gid, Path('/'))
-            result = canonical(inspect_projection(path, plan, uid, gid))
+            root, base = Path('/'), Path(ROOT)
+            path, plan = projection(base, identity, uid, gid, root)
+            if len(request) == 2:
+                fixed = selection(base, gid, root)
+                require(fixed is not None and fixed['restoreId'] == identity
+                        and fixed['planSha256'] == digest(canonical(plan)))
+                draft = request[0] != 'guarded'
+                path, plan = guarded_projection(path, plan, fixed, uid, gid, draft=draft)
+            try:
+                if request[0] == 'draft-admit':
+                    normal_snapshot(root, plan, uid, gid)
+            except (OSError, ValueError):
+                result = canonical({'schema': 1, 'error': 'CONFLICT'})
+            else:
+                result = canonical(inspect_projection(path, plan, uid, gid))
             require(0 < len(result) <= 8192)
             connection.sendall(struct.pack('!I', len(result)) + result)
 
