@@ -22,6 +22,10 @@ CLAIM = 'launch.json'
 SELECTION = 'selection.json'
 CONDITION = 'condition.json'
 RECEIPT = 'applied.properties'
+GUARDED = 'guarded'
+NORMAL_RECEIPT = 'normal.properties'
+NORMAL_SNAPSHOTS = '/opt/eclipse/kura/user/snapshots'
+SNAPSHOT_ID = re.compile(r'0|[1-9][0-9]{0,18}')
 MAX_SNAPSHOT = 32 << 20
 READER_SOCKET = '/run/kura-recovery-main-reader.sock'
 IDENTITY = re.compile(r'rec-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
@@ -59,6 +63,21 @@ def properties(path, plan):
         'crypto.key.sha256': plan['activeKeySha256'],
         'crypto.ring.sha256': plan['ringSha256'] or 'none',
     }
+    return ''.join(key + '=' + value + '\n' for key, value in sorted(values.items())).encode('ascii')
+
+
+def guarded_properties(path, plan):
+    source = path.parent / OUT / RECEIPT
+    guard = plan['guarded']
+    values = dict(line.split('=', 1) for line in properties(path, plan).decode('ascii').splitlines())
+    values.update({
+        'snapshot.path': str(Path(NORMAL_SNAPSHOTS) / ('snapshot_' + guard['snapshotId'] + '.xml')),
+        'receipt.path': str(path / OUT / NORMAL_RECEIPT),
+        'verification.mode': 'normal-read-only',
+        'verification.source.receipt': str(source),
+        'verification.source.receipt.sha256': guard['sourceReceiptSha256'],
+        'verification.source.applied.sha256': guard['sourceAppliedSha256'],
+    })
     return ''.join(key + '=' + value + '\n' for key, value in sorted(values.items())).encode('ascii')
 
 
@@ -129,21 +148,73 @@ def inspect_projection(path, plan, uid, gid):
             and isinstance(claim['invocationId'], str) and re.fullmatch('[0-9a-f]{32}', claim['invocationId'])
             and isinstance(claim['bootId'], str) and IDENTITY.fullmatch('rec-' + claim['bootId']))
     result.update(state=claim['state'], invocation=claim)
-    if os.path.lexists(output / RECEIPT):
-        raw = read(output / RECEIPT, uid, gid, 0o600, 65536)
-        lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
-        receipt = dict(lines)
-        require(len(lines) == len(receipt) and receipt.get('schema') == '1'
-                and receipt.get('restore.id') == identity)
+    filename = NORMAL_RECEIPT if 'guarded' in plan else RECEIPT
+    if os.path.lexists(output / filename):
+        raw, receipt = decision(output / filename, identity, uid, gid)
         status = receipt.get('status')
-        require(status in ('CM_APPLIED', 'RECOVERY_REQUIRED'))
+        success = 'NORMAL_BOOT_ADMITTED' if 'guarded' in plan else 'CM_APPLIED'
+        require(status in (success, 'RECOVERY_REQUIRED'))
         if status == 'CM_APPLIED':
             require(receipt.get('snapshot.sha256') == plan['snapshotSha256'])
             for name in ('backup', 'applied'):
                 artifact = output / (RECEIPT + f'.cm-{name}.aes')
                 require(digest(read(artifact, uid, gid, 0o600, 64 << 20)) == receipt.get(name + '.sha256'))
+        elif status == 'NORMAL_BOOT_ADMITTED':
+            guard = plan['guarded']
+            observed = output / (NORMAL_RECEIPT + '.cm-observed.aes')
+            require(receipt.get('snapshot.sha256') == plan['snapshotSha256']
+                    and receipt.get('source.receipt.sha256') == guard['sourceReceiptSha256']
+                    and receipt.get('source.applied.sha256') == guard['sourceAppliedSha256']
+                    and digest(read(observed, uid, gid, 0o600, MAX_SNAPSHOT)) == receipt.get('observed.sha256'))
         result.update(state=status, receiptSha256=digest(raw))
     return result
+
+
+def decision(path, identity, uid, gid):
+    raw = read(path, uid, gid, 0o600, 65536)
+    lines = [line.split('=', 1) for line in raw.decode('utf-8').splitlines()]
+    record = dict(lines)
+    require(len(lines) == len(record) and record.get('schema') == '1'
+            and record.get('restore.id') == identity)
+    return raw, record
+
+
+def snapshot_number(value):
+    require(isinstance(value, str) and SNAPSHOT_ID.fullmatch(value) and int(value) <= (1 << 63) - 1)
+    return int(value)
+
+
+def normal_snapshot(root, plan, uid, gid):
+    parent = root / NORMAL_SNAPSHOTS.lstrip('/')
+    directory(parent, uid, gid, 0o700)
+    snapshot_id = plan['guarded']['snapshotId']
+    expected = snapshot_number(snapshot_id)
+    for item in parent.glob('snapshot_*.xml'):
+        require(snapshot_number(item.name[9:-4]) <= expected)
+    contents = read(parent / ('snapshot_' + snapshot_id + '.xml'), uid, gid, 0o600, MAX_SNAPSHOT)
+    require(len(contents) == plan['size'] and digest(contents) == plan['snapshotSha256'])
+
+
+def guarded_projection(path, plan, fixed, uid, gid):
+    target = path / GUARDED
+    directory(target, 0, gid, 0o750)
+    directory(target / OUT, uid, gid, 0o700)
+    raw = read(target / PLAN, 0, gid, 0o440, 8192)
+    normal = json.loads(raw)
+    require(isinstance(normal, dict) and canonical(normal) == raw
+            and set(normal) == set(plan) | {'guarded'} and all(normal[key] == plan[key] for key in plan))
+    guard = normal['guarded']
+    require(isinstance(guard, dict)
+            and set(guard) == {'snapshotId', 'selectionSha256', 'sourceReceiptSha256', 'sourceAppliedSha256'}
+            and guard['selectionSha256'] == digest(canonical(fixed)))
+    snapshot_number(guard['snapshotId'])
+    applied = inspect_projection(path, plan, uid, gid)
+    source_raw, source = decision(path / OUT / RECEIPT, plan['restoreId'], uid, gid)
+    require(applied['state'] == 'CM_APPLIED' and source.get('status') == 'CM_APPLIED'
+            and applied['receiptSha256'] == guard['sourceReceiptSha256'] == digest(source_raw)
+            and source.get('applied.sha256') == guard['sourceAppliedSha256'])
+    require(read(target / REQUEST, 0, gid, 0o440, 4096) == guarded_properties(target, normal))
+    return target, normal
 
 
 def boot_identity():
@@ -184,7 +255,17 @@ def select_projection(home, identity, fixed):
     require(digest(jar.read_bytes()) == plan['bootstrapSha256'])
     if fixed is not None:
         require(fixed['bootId'] == boot_identity() and fixed['planSha256'] == digest(canonical(plan)))
+        if os.path.lexists(path / GUARDED):
+            path, plan = guarded_projection(path, plan, fixed, os.getuid(), os.getgid())
+            normal_snapshot(Path('/'), plan, os.getuid(), os.getgid())
     return path, plan
+
+
+def condition_marker(fixed, plan, invocation):
+    result = dict(schema=1, selectionSha256=digest(canonical(fixed)), invocationId=invocation)
+    if 'guarded' in plan:
+        result['guardedSha256'] = digest(canonical(plan))
+    return result
 
 
 def condition(home):
@@ -193,10 +274,10 @@ def condition(home):
         return
     require(SELECTOR not in os.environ)
     invocation = unit_invocation()
-    path, _ = select_projection(home, fixed['restoreId'], fixed)
+    path, plan = select_projection(home, fixed['restoreId'], fixed)
     output = path / OUT
     require(not any(output.iterdir()))
-    marker = dict(schema=1, selectionSha256=digest(canonical(fixed)), invocationId=invocation)
+    marker = condition_marker(fixed, plan, invocation)
     write(output / CONDITION, canonical(marker), 0o600)
     sync(output)
 
@@ -215,7 +296,7 @@ def selected(home):
     expected = {CONDITION} if fixed is not None else set()
     require({item.name for item in output.iterdir()} == expected)
     if fixed is not None:
-        marker = dict(schema=1, selectionSha256=digest(canonical(fixed)), invocationId=invocation)
+        marker = condition_marker(fixed, plan, invocation)
         require(read(output / CONDITION, os.getuid(), os.getgid(), 0o600, 4096) == canonical(marker))
     return path, plan
 

@@ -171,7 +171,7 @@ class RecoveryBootstrapTest {
     }
     @Test void normalSourceAuthenticatesExactCmWithoutApplyingOrReencryptingIt() throws Exception {
         var crypto=org.eclipse.kura.core.crypto.CryptoServiceImpl.forSnapshotRecovery(null,true);
-        var manifest=normalSource(crypto);var values=RecoveryBootstrap.normalLoadSource(manifest,crypto);
+        var manifest=normalSource(crypto);var values=RecoveryBootstrap.normalLoadSource(manifest,crypto,false);
         assertEquals(2,values.getFirst().getConfigurationProperties().get("count"));
         assertInstanceOf(String.class,values.getFirst().getConfigurationProperties().get("password"));
         var admin=mock(org.osgi.service.cm.ConfigurationAdmin.class);
@@ -179,10 +179,28 @@ class RecoveryBootstrapTest {
         verify(admin).listConfigurations(null);verifyNoMoreInteractions(admin);
         for(String suffix:java.util.List.of("", ".cm-applied.aes")) {
             var changed=normalSource(crypto);Files.writeString(Path.of(changed.get("verification.source.receipt")+suffix),"drift");
-            assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(changed,crypto));
+            assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(changed,crypto,false));
         }
         var other=org.eclipse.kura.core.crypto.CryptoServiceImpl.forSnapshotRecovery("0123456789abcdef".getBytes(),false);
-        assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(manifest,other));
+        assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(manifest,other,false));
+    }
+    @Test void fixedGuardedLoadRequiresOriginalRestoreAndSnapshot() throws Exception {
+        var crypto=org.eclipse.kura.core.crypto.CryptoServiceImpl.forSnapshotRecovery(null,true);
+        var manifest=normalSource(crypto);
+        var source=Path.of(manifest.get("verification.source.receipt"));
+        Files.writeString(source,"snapshot.sha256="+manifest.get("snapshot.sha256")+"\n",
+                java.nio.file.StandardOpenOption.APPEND);
+        var fixed=new java.util.HashMap<>(manifest);
+        fixed.put("restore.id","rec-33333333-3333-3333-3333-333333333333");
+        fixed.put("verification.source.receipt.sha256",hash(Files.readAllBytes(source)));
+        assertFalse(RecoveryBootstrap.normalLoadSource(fixed,crypto,true).isEmpty());
+        assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(fixed,crypto,false));
+        var changed=new java.util.HashMap<>(fixed);
+        changed.put("snapshot.sha256","f".repeat(64));
+        assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(changed,crypto,true));
+        changed.put("snapshot.sha256",fixed.get("snapshot.sha256"));
+        changed.put("restore.id",manifest.get("restore.id"));
+        assertThrows(Exception.class,()->RecoveryBootstrap.normalLoadSource(changed,crypto,true));
     }
     @Test void normalManifestCannotMixCompensationOrAdmitPartialUnknownSource() throws Exception {
         var crypto=org.eclipse.kura.core.crypto.CryptoServiceImpl.forSnapshotRecovery(null,true);

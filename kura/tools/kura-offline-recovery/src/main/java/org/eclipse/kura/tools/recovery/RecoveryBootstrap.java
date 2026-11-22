@@ -44,6 +44,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 /** Optional in-framework gate. Standalone validate never starts this or any OSGi framework. */
 public final class RecoveryBootstrap implements BundleActivator {
     private static final Path CORE_PROJECTIONS = Path.of("/var/lib/kura-recovery-launch");
+    private static final Path CORE_SNAPSHOTS = Path.of("/opt/eclipse/kura/user/snapshots");
     private RecoveryVerifier verifier;
     private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryVerificationService> verificationRegistration;
     private org.osgi.framework.ServiceRegistration<org.eclipse.kura.configuration.RecoveryCompletionService> completionRegistration;
@@ -85,7 +86,10 @@ public final class RecoveryBootstrap implements BundleActivator {
             // External authority must be injected from current Rust revision, not an old Kura snapshot.
             // Until that adapter is wired, reject the profile rather than replaying or silently skipping it.
             require(System.getProperty("kura.configuration.external.pids", "").isBlank());
-            manifest = manifest(Path.of(request));
+            Path requestPath = Path.of(request);
+            manifest = manifest(requestPath);
+            boolean fixedGuarded = requestPath.startsWith(CORE_PROJECTIONS) && manifest.containsKey("verification.mode");
+            require(!fixedGuarded || "false".equals(context.getProperty("osgi.clean")));
             receipt = Path.of(manifest.get("receipt.path"));
             privateParent(receipt);
             require(!Files.exists(receipt,LinkOption.NOFOLLOW_LINKS)); // Never replay a retained decision.
@@ -134,7 +138,7 @@ public final class RecoveryBootstrap implements BundleActivator {
             ConfigurationAdmin admin=context.getService(reference);require(admin!=null);
             if (manifest.containsKey("verification.mode")) {
                 try {
-                    var verificationExpected=normalLoadSource(manifest,crypto);
+                    var verificationExpected=normalLoadSource(manifest,crypto,fixedGuarded);
                     ConfigurationRestore.verify(admin,verificationExpected);
                     Path observed=receipt.resolveSibling(receipt.getFileName()+".cm-observed.aes");
                     backup(observed,ConfigurationRestore.capture(admin),crypto);
@@ -299,7 +303,8 @@ public final class RecoveryBootstrap implements BundleActivator {
         finally {Arrays.fill(xml,(byte)0);}
     }
     /** Authenticate the exact restored CM before SCR or any business bundle can run. */
-    static List<ComponentConfiguration> normalLoadSource(Map<String,String> manifest,CryptoServiceImpl crypto)
+    static List<ComponentConfiguration> normalLoadSource(Map<String,String> manifest,CryptoServiceImpl crypto,
+            boolean fixedGuarded)
             throws Exception {
         require("normal-read-only".equals(manifest.get("verification.mode")));
         Path source=Path.of(manifest.get("verification.source.receipt"));privateParent(source);
@@ -310,8 +315,13 @@ public final class RecoveryBootstrap implements BundleActivator {
                 && "false".equals(decision.get("fullRecoveryVerified"))
                 && "UNVERIFIED".equals(decision.get("businessHealth"))
                 && decision.get("restore.id").matches("rec-[0-9a-f-]{36}")
-                && !decision.get("restore.id").equals(manifest.get("restore.id"))
                 && manifest.get("verification.source.applied.sha256").equals(decision.get("applied.sha256")));
+        if (fixedGuarded) {
+            require(manifest.get("restore.id").equals(decision.get("restore.id"))
+                    && manifest.get("snapshot.sha256").equals(decision.get("snapshot.sha256")));
+        } else {
+            require(!manifest.get("restore.id").equals(decision.get("restore.id")));
+        }
         byte[] encrypted=read(source.resolveSibling(source.getFileName()+".cm-applied.aes"),32<<20);
         require(hash(encrypted).equals(manifest.get("verification.source.applied.sha256")));
         byte[] xml;
@@ -334,10 +344,13 @@ public final class RecoveryBootstrap implements BundleActivator {
     }
     static Map<String,String> manifest(Path path) throws Exception {
         boolean projection = path.startsWith(CORE_PROJECTIONS);
+        boolean guarded = projection && path.getNameCount() == CORE_PROJECTIONS.getNameCount() + 3
+                && path.getParent().getFileName().toString().equals("guarded");
         if (projection) {
-            require(path.equals(path.normalize()) && path.getNameCount() == CORE_PROJECTIONS.getNameCount() + 2
+            require(path.equals(path.normalize()) && (guarded || path.getNameCount() == CORE_PROJECTIONS.getNameCount() + 2)
                     && path.getFileName().toString().equals("request.properties"));
             projected(CORE_PROJECTIONS, true);
+            if (guarded) { projected(path.getParent().getParent(), true); }
             projected(path.getParent(), true);
             projected(path, false);
         } else {
@@ -399,12 +412,23 @@ public final class RecoveryBootstrap implements BundleActivator {
         }
         if (projection) {
             Path directory = path.getParent();
-            Path snapshot = directory.resolve("snapshot_0.xml");
-            require(managed && result.get("restore.id").equals(directory.getFileName().toString())
-                    && result.get("snapshot.path").equals(snapshot.toString())
-                    && result.get("receipt.path").equals(directory.resolve("result/applied.properties").toString())
-                    && compensation.stream().noneMatch(result::containsKey) && normal.stream().noneMatch(result::containsKey));
-            projected(snapshot, false);
+            Path original = guarded ? directory.getParent() : directory;
+            require(managed && result.get("restore.id").equals(original.getFileName().toString())
+                    && compensation.stream().noneMatch(result::containsKey));
+            if (guarded) {
+                Path snapshot = Path.of(result.get("snapshot.path"));
+                require(result.keySet().containsAll(normal) && snapshot.equals(snapshot.normalize())
+                        && CORE_SNAPSHOTS.equals(snapshot.getParent())
+                        && snapshot.getFileName().toString().matches("snapshot_(0|[1-9][0-9]{0,18})\\.xml")
+                        && result.get("receipt.path").equals(directory.resolve("result/normal.properties").toString())
+                        && result.get("verification.source.receipt").equals(original.resolve("result/applied.properties").toString()));
+            } else {
+                Path snapshot = directory.resolve("snapshot_0.xml");
+                require(result.get("snapshot.path").equals(snapshot.toString())
+                        && result.get("receipt.path").equals(directory.resolve("result/applied.properties").toString())
+                        && normal.stream().noneMatch(result::containsKey));
+                projected(snapshot, false);
+            }
         }
         return result;
     }

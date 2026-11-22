@@ -92,6 +92,59 @@ class LaunchProjectionTest(unittest.TestCase):
                 launch.condition(self.root)
             self.assertEqual(marker, (self.output / launch.CONDITION).read_bytes())
 
+    def test_guarded_snapshot_must_be_latest_exact_and_regular(self):
+        parent = self.root / launch.NORMAL_SNAPSHOTS.lstrip('/')
+        parent.mkdir(parents=True, mode=0o700)
+        snapshot = parent / 'snapshot_7.xml'
+        launch.write(snapshot, self.contents, 0o600)
+        plan = self.plan | {'guarded': {'snapshotId': '7'}}
+        launch.normal_snapshot(self.root, plan, 0, 0)
+        newer = parent / 'snapshot_8.xml'
+        launch.write(newer, self.contents, 0o600)
+        with self.assertRaises(ValueError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+        newer.unlink()
+        snapshot.unlink()
+        launch.write(snapshot, b'other contents', 0o600)
+        with self.assertRaises(ValueError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+        snapshot.unlink()
+        snapshot.symlink_to(self.target / launch.SNAPSHOT)
+        with self.assertRaises(OSError):
+            launch.normal_snapshot(self.root, plan, 0, 0)
+
+    def test_guarded_marker_keeps_original_selection_and_pins_new_plan(self):
+        fixed = dict(restoreId=self.identity)
+        normal = self.plan | {'guarded': {'snapshotId': '7'}}
+        marker = launch.condition_marker(fixed, normal, 'a' * 32)
+        self.assertEqual(launch.digest(launch.canonical(fixed)), marker['selectionSha256'])
+        self.assertEqual(launch.digest(launch.canonical(normal)), marker['guardedSha256'])
+        self.assertEqual('a' * 32, marker['invocationId'])
+        self.assertNotEqual(marker, launch.condition_marker(fixed, self.plan, 'a' * 32))
+
+    def test_guarded_status_preserves_uncertain_publication_on_original_number(self):
+        manager = Mock()
+        manager.lock.return_value = nullcontext()
+        lifecycle = SimpleNamespace(path=lambda _: self.base, root=self.root)
+        recovery = SimpleNamespace(manager=manager, lifecycle=lifecycle,
+                                   observation=lambda identity, state: dict(schema=1, restoreId=identity, state=state,
+                                                                            root=self.plan['root']))
+        with patch.object(commands.pwd, 'getpwnam', return_value=SimpleNamespace(pw_uid=1001, pw_gid=1001)):
+            controller = commands.Controller(recovery)
+        controller.observation = Mock(return_value={'state': 'MAIN_STOPPED', 'receiptSha256': 'e' * 64})
+        controller.load = Mock(return_value=None)
+        controller.projection = Mock(return_value=(self.target, self.plan))
+        self.assertEqual('GUARDED_MAIN_ABSENT', controller.guarded_status(self.identity)['state'])
+        (self.target / '.guarded-pending').mkdir(mode=0o700)
+        status = controller.guarded_status(self.identity)
+        self.assertEqual('GUARDED_MAIN_START_UNKNOWN', status['state'])
+        self.assertEqual(self.identity, status['restoreId'])
+        controller.load.return_value = controller.observation.return_value
+        controller.guarded_source = Mock(return_value=(self.target, self.plan, {}))
+        with self.assertRaisesRegex(Failure, 'MAIN_COMMAND_EXISTS'):
+            controller.start_guarded(self.identity, 'e' * 64, '7')
+        manager.generation_component.assert_not_called()
+
     def test_lost_start_reply_keeps_original_intent_and_never_dispatches_again(self):
         manager = Manager(self.root, 0)
         policy = Lifecycle(self.root, 0)

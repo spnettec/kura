@@ -767,7 +767,7 @@ def exec_java(arguments):
         recovery = launch.selected(home)
     if recovery is not None:
         path, plan = recovery
-        require(all(not option.startswith(('@', '-Dkura.recovery.request', '-Dosgi.startLevel'))
+        require(all(not option.startswith(('@', '-Dkura.recovery.request', '-Dosgi.startLevel', '-Dosgi.clean'))
                     for option in arguments), 'Conflicting controlled recovery JVM arguments')
     binding, _ = loaded_binding()
     response, descriptor = root_exchange(dict(schema=1, action='writer-lease-acquire', **binding), descriptor=True)
@@ -790,6 +790,8 @@ def exec_java(arguments):
         if recovery is not None:
             launch.claim(path, plan, response)
             arguments = ['-Dosgi.startLevel=6', '-Dkura.recovery.request=' + str(path / launch.REQUEST), *arguments]
+            if 'guarded' in plan:
+                arguments.insert(0, '-Dosgi.clean=false')
             if os.path.lexists(Path(launch.ROOT) / launch.SELECTION):
                 arguments.insert(0, '-Dkura.management.recovery.verification.enabled=true')
         # One reserved, inheritable descriptor carries the kernel lease across exec.

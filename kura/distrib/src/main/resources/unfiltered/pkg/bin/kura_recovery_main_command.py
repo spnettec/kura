@@ -209,11 +209,108 @@ class Controller:
             except (OSError, Failure, Refused, LifecycleRefused, subprocess.SubprocessError, ValueError, KeyError) as error:
                 raise Failure('UNKNOWN') from error
 
+    def guarded_source(self, identity, stopped):
+        path, plan = self.projection(identity)
+        fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+        require(stopped['state'] == 'MAIN_STOPPED' and fixed is not None
+                and fixed['restoreId'] == identity and fixed['bootId'] == launch.boot_identity()
+                and stopped['bootId'] == fixed['bootId']
+                and launch.digest(launch.canonical(fixed)) == stopped['selectionSha256']
+                and launch.digest(launch.canonical(plan)) == stopped['planSha256'], 'CONFLICT')
+        applied = self.inspect(path, plan)
+        require(applied['state'] == 'CM_APPLIED' and applied['receiptSha256'] == stopped['receiptSha256']
+                and all(applied['invocation'][key] == stopped[key]
+                        for key in ('pid', 'invocationId', 'startTicks', 'bootId')), 'CONFLICT')
+        return path, plan, fixed
+
+    def start_guarded(self, identity, receipt_sha, snapshot_id):
+        digest(receipt_sha)
+        launch.snapshot_number(snapshot_id)
+        stopped = self.observation(identity)
+        require(stopped['state'] == 'MAIN_STOPPED' and stopped['receiptSha256'] == receipt_sha, 'CONFLICT')
+        manager = self.manager
+        with manager.lock(manager.state / 'admission.lock', True):
+            manager.maintenance()
+            manager.settled()
+            require(self.load(identity, 'stop-receipt') == stopped, 'CONFLICT')
+            path, plan, _ = self.guarded_source(identity, stopped)
+            target, pending = path / launch.GUARDED, path / '.guarded-pending'
+            require(not os.path.lexists(target) and not os.path.lexists(pending)
+                    and self.load(identity, 'guarded-start-receipt') is None, 'MAIN_COMMAND_EXISTS')
+            raw, applied = launch.decision(path / launch.OUT / launch.RECEIPT, identity,
+                                           self.core.pw_uid, self.core.pw_gid)
+            require(launch.digest(raw) == receipt_sha, 'CONFLICT')
+            normal = plan | {'guarded': dict(snapshotId=snapshot_id, selectionSha256=stopped['selectionSha256'],
+                                             sourceReceiptSha256=receipt_sha, sourceAppliedSha256=applied['applied.sha256'])}
+            component, cohort = manager.generation_component()
+            generation = plan['ringSha256'] is not None
+            with manager.lock(manager.store.path('/etc/kura/credentials/.provision.lock'), False):
+                _, _, _, _, _, source = manager.generation_source()
+                require(source == dict(keySha256=plan['activeKeySha256'], ringSha256=plan['ringSha256'])
+                        and cohort['cohortSha256'] == plan['cohortSha256'], 'COHORT_CHANGED')
+                manager.generation_start_authorized(source, cohort)
+                with manager.exclusive_writers():
+                    self.ensure_stopped(component, generation)
+                    launch.normal_snapshot(self.lifecycle.root, normal, self.core.pw_uid, self.core.pw_gid)
+                    self.authenticate()
+                    try:
+                        pending.mkdir(mode=0o700)
+                        self.lifecycle.sync(path)
+                        self.recovery.prepare_guarded_projection(pending, target, normal, self.core)
+                    except (OSError, Failure, Refused, LifecycleRefused) as error:
+                        raise Failure('UNKNOWN') from error
+        try:
+            self.ensure_stopped(component, generation)
+            self.authenticate()
+            job = JOB.fullmatch(component.command(START, timeout=18))
+            require(job is not None, 'UNKNOWN')
+            receipt = dict(schema=1, root=plan['root'], restoreId=identity, state='GUARDED_MAIN_START_JOB_ACCEPTED',
+                           guardedSha256=launch.digest(launch.canonical(normal)), jobPath=job.group(1))
+            manager.atomic(self.journal(identity) / 'guarded-start-receipt.json', encode(receipt), no_replace=True)
+            return receipt
+        except (OSError, Failure, Refused, LifecycleRefused, subprocess.SubprocessError, ValueError, KeyError) as error:
+            raise Failure('UNKNOWN') from error
+
+    def guarded_status(self, identity):
+        stopped = self.observation(identity)
+        result = self.recovery.observation(identity, 'GUARDED_MAIN_ABSENT')
+        if stopped['state'] != 'MAIN_STOPPED':
+            return result
+        with self.manager.lock(self.manager.state / 'admission.lock', False):
+            path, plan = self.projection(identity)
+            pending = path / '.guarded-pending'
+            if not os.path.lexists(path / launch.GUARDED):
+                require(self.load(identity, 'guarded-start-receipt') is None, 'UNSAFE_FILESYSTEM')
+                if os.path.lexists(pending):
+                    result['state'] = 'GUARDED_MAIN_START_UNKNOWN'
+                return result
+            fixed = launch.selection(self.base, self.core.pw_gid, self.lifecycle.root)
+            require(not os.path.lexists(pending) and fixed is not None
+                    and fixed['restoreId'] == identity
+                    and launch.digest(launch.canonical(fixed)) == stopped['selectionSha256'], 'CONFLICT')
+            target, normal = launch.guarded_projection(path, plan, fixed, self.core.pw_uid, self.core.pw_gid)
+            fingerprint = launch.digest(launch.canonical(normal))
+            receipt = self.load(identity, 'guarded-start-receipt')
+            if receipt is not None:
+                fields(receipt, set(result) | {'guardedSha256', 'jobPath'})
+                require(receipt['state'] == 'GUARDED_MAIN_START_JOB_ACCEPTED'
+                        and receipt['guardedSha256'] == fingerprint
+                        and re.fullmatch('/org/freedesktop/systemd1/job/[0-9]+', receipt['jobPath']), 'UNSAFE_FILESYSTEM')
+                result = receipt
+            else:
+                result.update(state='GUARDED_MAIN_START_UNKNOWN', guardedSha256=fingerprint)
+            result['originalStop'] = stopped
+            result['outcome'] = launch.inspect_projection(target, normal, self.core.pw_uid, self.core.pw_gid)
+            return result
+
 
 def command(recovery, action, arguments):
-    require(len(arguments) == (1 if action == 'main-command-status' else 2))
+    parameter_count = {'start-main': 2, 'stop-main': 2, 'main-command-status': 1,
+                       'start-guarded-main': 3, 'guarded-main-status': 1}
+    require(len(arguments) == parameter_count[action])
     identity, *expected = arguments
     require(launch.IDENTITY.fullmatch(identity) is not None)
     fixed = Controller(recovery)
-    route = {'start-main': fixed.start, 'stop-main': fixed.stop, 'main-command-status': fixed.observation}
+    route = {'start-main': fixed.start, 'stop-main': fixed.stop, 'main-command-status': fixed.observation,
+             'start-guarded-main': fixed.start_guarded, 'guarded-main-status': fixed.guarded_status}
     return route[action](identity, *expected)
