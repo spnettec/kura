@@ -43,6 +43,7 @@ import org.eclipse.kura.configuration.metatype.Designate;
 import org.eclipse.kura.configuration.metatype.MetaData;
 import org.eclipse.kura.configuration.metatype.OCD;
 import org.eclipse.kura.configuration.metatype.Scalar;
+import org.eclipse.kura.core.configuration.LegacySnapshotPasswords;
 import org.eclipse.kura.core.configuration.metatype.Tmetadata;
 import org.eclipse.kura.core.configuration.metatype.Tocd;
 import org.eclipse.kura.core.util.IOUtil;
@@ -816,7 +817,7 @@ public class ComponentUtil {
     private static boolean isEncrypted(Password configPassword, final CryptoService cryptoService) {
         // Legacy empty decoding succeeds without authenticating a ciphertext. Encrypt an
         // actual empty password so strict snapshot validation can authenticate it too.
-        if (configPassword.getPassword().length == 0) {
+        if (LegacySnapshotPasswords.isKnownLogical(configPassword) || configPassword.getPassword().length == 0) {
             return false;
         }
         boolean result = false;

@@ -183,6 +183,32 @@ class SnapshotToolTest {
         return output.toByteArray();
     }
 
+    @Test void controlledLegacyRestorePreservesKnownLogicalPasswordsThatAuthenticateAsCiphertext() throws Exception {
+        char[] unrelatedSecret = "unrelated-fixture-value".toCharArray();
+        String ciphertext = new String(crypto.encryptAes(unrelatedSecret));
+        String direct = new String(crypto.encryptAes(ciphertext.toCharArray()));
+        byte[] xml = raw("""
+                <esf:property name="plain" type="Password"><esf:value>%s</esf:value></esf:property>
+                <esf:property name="mixed" type="Password" array="true" container="VECTOR" encrypted="true">
+                    <esf:value>%s</esf:value><esf:value>%s</esf:value>
+                </esf:property>
+                """.formatted(ciphertext, direct, crypto.encodeBase64(ciphertext)));
+        var decoded = SnapshotTool.decode(xml, crypto, "legacy");
+
+        var target = RecoveryBootstrap.targetProperties(decoded.configurations().getFirst(), crypto);
+
+        var plain = assertInstanceOf(Password.class, target.get("plain"));
+        var mixed = assertInstanceOf(java.util.Vector.class, target.get("mixed"));
+        var unwrapped = assertInstanceOf(Password.class, mixed.get(0));
+        var wrapped = assertInstanceOf(Password.class, mixed.get(1));
+        assertTrue(Arrays.equals(ciphertext.toCharArray(), crypto.decryptAes(plain.getPassword())),
+                "An explicitly unencrypted legacy password must preserve its logical value");
+        assertTrue(Arrays.equals(ciphertext.toCharArray(), crypto.decryptAes(unwrapped.getPassword())),
+                "A directly unwrapped legacy password must preserve its logical value");
+        assertTrue(Arrays.equals(ciphertext.toCharArray(), wrapped.getPassword()),
+                "An authenticated historical CM ciphertext retains its existing storage representation");
+    }
+
     @Test void logicalV1RequiresExplicitPolicyAndNeverGuessesCiphertext() throws Exception {
         String cipherShaped = new String(crypto.encryptAes("literal-cipher-shape".toCharArray()));
         var values = Map.<String,Object>of("password", new Password(cipherShaped),

@@ -11,8 +11,13 @@ import org.eclipse.kura.core.configuration.util.CollectionsUtil;
 import org.eclipse.kura.crypto.CryptoService;
 
 /** Resolves legacy snapshot passwords one element at a time before using them as logical values. */
-final class LegacySnapshotPasswords {
+public final class LegacySnapshotPasswords {
     private LegacySnapshotPasswords() { }
+
+    /** Whether the XML adapter has already established that this is a logical value. */
+    public static boolean isKnownLogical(Password password) {
+        return password instanceof XmlConfigPropertiesAdapter.LegacyLogicalPassword;
+    }
 
     static Map<String, Object> logical(Map<String, Object> source, CryptoService crypto) {
         Map<String, Object> result = source;
@@ -53,8 +58,7 @@ final class LegacySnapshotPasswords {
 
     private static Password logicalPassword(Password password, CryptoService crypto) {
         char[] value = password.getPassword();
-        if (!(password instanceof XmlConfigPropertiesAdapter.LegacyLogicalPassword)
-                && crypto != null && value != null && value.length != 0) {
+        if (!isKnownLogical(password) && crypto != null && value != null && value.length != 0) {
             try {
                 char[] authenticated = crypto.decryptAes(value);
                 if (authenticated != null) {
