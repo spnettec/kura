@@ -23,6 +23,10 @@ if __name__=='__main__':sys.modules['kura_key_service_lifecycle']=sys.modules[__
 FORMAT = "yofc-kura-gateway-master-key-v1"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 STATE = "/var/lib/kura-key-service"
+# Container runtime adapters (LXC/OrbStack) drop a global conf under /run that
+# appears in every unit's DropInPaths; it neutralizes hardening host-wide and
+# grants nothing to this service.
+CONTAINER_ADAPTER_DROPIN = '/run/systemd/system/service.d/zzz-lxc-service.conf'
 MAIN_VENDOR_PATHS = ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
 MAIN_LINKS = {'linked': '/etc/systemd/system/kura.service',
               'linked-runtime': '/run/systemd/system/kura.service'}
@@ -1501,9 +1505,12 @@ class Lifecycle:
                 'Main unit differs from its package; reviewed migration is required')
         properties = self.main_unit_properties()
         fragment = properties.pop('FragmentPath')
+        drop_ins = [path for path in properties.pop('DropInPaths').split()
+                    if path != CONTAINER_ADAPTER_DROPIN]
         fields = dict(Id='kura.service', Names='kura.service', LoadState='loaded', UnitFileState=choice,
                       SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
-        require(properties == fields and fragment in MAIN_VENDOR_PATHS, 'Effective Main unit requires reviewed migration')
+        require(properties == fields and drop_ins == [] and fragment in MAIN_VENDOR_PATHS,
+                'Effective Main unit requires reviewed migration')
         loaded = self.path(fragment)
         require(loaded.parent.resolve(strict=True) / loaded.name == physical
                 and self.read(physical, private=False) == unit, 'Main unit changed during package pairing')
