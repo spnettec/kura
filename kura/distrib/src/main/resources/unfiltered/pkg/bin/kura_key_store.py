@@ -17,7 +17,6 @@ import stat
 import struct
 import subprocess
 import sys
-import time
 import types
 
 CREDENTIAL = "kura_encryption_key"
@@ -116,36 +115,36 @@ def publish_fallback_copy():
 
 
 def credential_probe():
-    """Observe, with one transient unit, whether PID 1 actually injects
-    LoadCredential files on this kernel. "absent" selects the direct-read
-    ownership variant; any probe failure keeps the canonical injection
-    contract, which also stays correct when the fallback variant is active."""
+    """Decide whether the installed Main unit will actually receive its
+    LoadCredential. Container runtime adapters (LXC/OrbStack) drop a global
+    ``service.d`` drop-in holding an empty ``LoadCredential=`` that clears
+    credential loading for every system service, even though the kernel and
+    PID 1 are fully capable of injecting credentials. Transient probe units
+    do not read that directory, and ``systemctl show`` renders the property
+    as ``[unprintable]`` on both kinds of host, so neither can tell the two
+    apart. The authoritative signal is the effective unit text: the last
+    ``LoadCredential=`` assignment across the vendor unit and its drop-ins.
+    "absent" selects the direct-read variant; any uncertainty keeps the
+    canonical injection contract."""
     if sys.platform != "linux" or not os.path.isdir("/run/systemd/system"):
         return "present"
-    if not os.path.exists("/bin/systemd-run"):
-        return "present"
-    name = "kura-credential-probe-" + secrets.token_hex(6)
     try:
-        subprocess.run(
-            ["/bin/systemd-run", "--unit", name, "--collect",
-             "--property=Type=oneshot",
-             "--property=LoadCredential=kura_probe:/etc/hosts",
-             "--property=ExecStart=/usr/bin/test -r /run/credentials/" + name + "/kura_probe"],
-            capture_output=True, text=True, timeout=10, check=True)
-        deadline = time.monotonic() + 12
-        while time.monotonic() < deadline:
-            state = subprocess.run(["/bin/systemctl", "show", name,
-                                    "--property=ActiveState,Result"],
-                                   capture_output=True, text=True, timeout=5)
-            fields = dict(line.split("=", 1) for line in state.stdout.splitlines() if "=" in line)
-            if fields.get("ActiveState") in ("inactive", "failed"):
-                return "present" if fields.get("Result") == "success" else "absent"
-            time.sleep(0.4)
-        return "absent"
+        shown = subprocess.run(["/bin/systemctl", "cat", "kura.service"],
+                               capture_output=True, text=True, timeout=5, check=True)
     except (OSError, subprocess.SubprocessError):
-        return "absent"
-    finally:
-        subprocess.run(["/bin/systemctl", "stop", name], capture_output=True, timeout=5)
+        return "present"
+    last = None
+    for line in shown.stdout.splitlines():
+        # Drop-in separators are comments; only real assignments count.
+        if line.startswith("#") or line.startswith("["):
+            continue
+        if line.startswith("LoadCredential="):
+            last = line
+    if last is None:
+        # The unit carries no credential at all (unexpected); leave the
+        # canonical contract so the normal startup check reports it.
+        return "present"
+    return "present" if last[len("LoadCredential="):].strip() else "absent"
 
 
 def credential_fallback_setup():
