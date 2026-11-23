@@ -60,6 +60,7 @@ import org.eclipse.kura.core.testutil.json.JsonProjection;
 import org.eclipse.kura.core.testutil.requesthandler.Transport;
 import org.eclipse.kura.core.testutil.requesthandler.Transport.MethodSpec;
 import org.eclipse.kura.crypto.CryptoService;
+import org.eclipse.kura.identity.IdentityService;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -1107,6 +1108,43 @@ class ConfigurationEndpointsIT extends EndpointTestBase {
 
     @ParameterizedTest
     @EnumSource(TransportType.class)
+    void userStoreConfigurationIsListedForAdminAndCloudRequests(TransportType type) throws KuraException {
+        useTransport(type, "CONF-V2", "configuration/v2");
+        givenConfigurations(configurationBuilder(USER_STORE_PID).build(), configurationBuilder("foo").build());
+
+        whenRequestIsPerformed(new MethodSpec("GET"), "/configurableComponents/configurations");
+
+        thenRequestSucceeds();
+        thenResponseConfigurationPidsAre(USER_STORE_PID, "foo");
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void userStoreConfigurationIsReturnedByPidForAdminAndCloudRequests(TransportType type) throws KuraException {
+        useTransport(type, "CONF-V2", "configuration/v2");
+        givenConfigurations(configurationBuilder(USER_STORE_PID).build(), configurationBuilder("foo").build());
+
+        whenRequestIsPerformed(new MethodSpec("POST"), "/configurableComponents/configurations/byPid",
+                "{\"pids\":[\"" + USER_STORE_PID + "\"]}");
+
+        thenRequestSucceeds();
+        thenResponseConfigurationPidsAre(USER_STORE_PID);
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
+    void userStoreConfigurationIsReturnedInSnapshotForAdminAndCloudRequests(TransportType type) throws KuraException {
+        useTransport(type, "CONF-V2", "configuration/v2");
+        givenConfigurations(configurationBuilder(USER_STORE_PID).build(), configurationBuilder("foo").build());
+
+        whenRequestIsPerformed(new MethodSpec("POST"), "/snapshots/byId", "{\"id\":10000}");
+
+        thenRequestSucceeds();
+        thenResponseConfigurationPidsAre(USER_STORE_PID, "foo");
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransportType.class)
     public void testADIdAndType(TransportType type) throws KuraException {
         useTransport(type, "CONF-V2", "configuration/v2");
         givenConfigurations(configurationBuilder("foo") //
@@ -1510,11 +1548,13 @@ class ConfigurationEndpointsIT extends EndpointTestBase {
                 self().field("configs").arrayItem(0));
     }
 
+    private static final String USER_STORE_PID = "org.eclipse.kura.internal.useradmin.store.RoleRepositoryStoreImpl";
 
     private ConfigurationService configurationService;
     private CryptoService cryptoService;
     private ConfigurationRestService endpoint;
     private final Map<String, Map<String, Object>> receivedConfigsByPid = new HashMap<>();
+    private IdentityService identityService;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -1535,6 +1575,8 @@ class ConfigurationEndpointsIT extends EndpointTestBase {
         Mockito.doAnswer(configurationUpdateAnswer).when(this.configurationService)
                 .updateConfiguration(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.anyBoolean());
         this.endpoint = new ConfigurationRestService();
+        this.identityService = Mockito.mock(IdentityService.class);
+        this.endpoint.setIdentityService(this.identityService);
         this.endpoint.setConfigurationService(this.configurationService);
         this.endpoint.setCryptoService(this.cryptoService);
         this.endpoint.setRequestHandlerRegistry(this.cloud);
@@ -1544,6 +1586,15 @@ class ConfigurationEndpointsIT extends EndpointTestBase {
     @AfterEach
     void unregisterEndpoint() {
         if (this.endpoint != null) { this.endpoint.unsetRequestHandlerRegistry(this.cloud); }
+    }
+
+    private void thenResponseConfigurationPidsAre(final String... expectedPids) {
+        final JsonValue root = Json
+                .parse(expectResponse().getBody().orElseThrow(() -> new IllegalStateException("expected body")));
+        final Set<String> actualPids = root.asObject().get("configs").asArray().values().stream()
+                .map(c -> c.asObject().get("pid").asString()).collect(Collectors.toSet());
+
+        assertEquals(new HashSet<>(Arrays.asList(expectedPids)), actualPids);
     }
 
     private void thenResponseElementIs(final JsonValue expected, final JsonProjection projection) {
