@@ -60,6 +60,7 @@
                                 <exec executable="${java.home}/bin/java" failonerror="true">
                                     <arg value="${project.basedir}/SqlcipherDriver.java"/>
                                     <arg value="${project.build.directory}/jdbc"/>
+                                    <arg value="${kura.build.qualifier}"/>
                                 </exec>
                             </target>
                         </configuration>

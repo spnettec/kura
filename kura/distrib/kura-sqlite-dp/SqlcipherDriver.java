@@ -3,7 +3,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -18,6 +20,10 @@ class SqlcipherDriver {
             throw new IOException("Build the SQLCipher deployment package on GNU/Linux ARM64");
         }
         Path input = Path.of(args[0]).toAbsolutePath();
+        String qualifier = args[1];
+        if (!qualifier.matches("[A-Za-z0-9_-]+")) {
+            throw new IOException("Invalid SQLCipher build qualifier: " + qualifier);
+        }
         Path work = Files.createTempDirectory(input, "build-");
         try {
             Path driver = input.resolve("driver.jar");
@@ -37,7 +43,10 @@ class SqlcipherDriver {
                     "-I" + jdk.resolve("include/linux"), "@" + cflags, "NativeDB.c",
                     "@" + libs, "-o", "libsqlitejdbc.so");
             Path output = work.resolve("sqlcipher-jdbc.jar");
-            writeJar(driver, work.resolve("libsqlitejdbc.so"), output);
+            Path nativeLibrary = work.resolve("libsqlitejdbc.so");
+            String nativeDigest = HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(nativeLibrary)));
+            writeJar(driver, nativeLibrary, output, qualifier + "_" + nativeDigest);
             verifyEngine(output);
             Files.move(output, input.resolve("sqlcipher-jdbc.jar"), StandardCopyOption.ATOMIC_MOVE,
                     StandardCopyOption.REPLACE_EXISTING);
@@ -88,12 +97,13 @@ class SqlcipherDriver {
         out.putNextEntry(entry);
     }
 
-    private static void writeJar(Path driver, Path nativeLibrary, Path output) throws IOException {
+    private static void writeJar(Path driver, Path nativeLibrary, Path output, String revision) throws IOException {
         try (var jar = new JarFile(driver.toFile()); var out = new JarOutputStream(Files.newOutputStream(output))) {
             var manifest = jar.getManifest();
             var headers = manifest.getMainAttributes();
             headers.putValue("Bundle-Name", "SQLite JDBC with system SQLCipher (Linux ARM64)");
-            headers.putValue("Bundle-Version", headers.getValue("Bundle-Version") + "_sqlcipher");
+            // Deployment Admin compares bundle versions before replacing an installed JNI.
+            headers.putValue("Bundle-Version", headers.getValue("Bundle-Version") + "_sqlcipher_" + revision);
             headers.putValue("Require-Capability", headers.getValue("Require-Capability")
                     + ",osgi.native;filter:=\"(&(osgi.native.osname=Linux)(|(osgi.native.processor=aarch64)(osgi.native.processor=arm64)))\"");
             entry(out, JarFile.MANIFEST_NAME);

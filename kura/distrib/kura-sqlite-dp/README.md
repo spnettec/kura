@@ -12,4 +12,4 @@ mvn -Dmaven.repo.local="$repo" -Dkura.build.qualifier="$qualifier" -f kura/pom.x
 mvn -Dmaven.repo.local="$repo" -Dkura.build.qualifier="$qualifier" -f kura/distrib/kura-sqlite-dp/pom.xml package
 ```
 
-The full distribution reactor also includes the module with `-Psqlcipher-dp`. The DP is written to `kura/distrib/kura-sqlite-dp/target/`. Updating or removing it uses Kura's normal deployment package lifecycle. Database files, encryption settings and credentials belong to the gateway. Changes to those are independent of updating the DP.
+The full distribution reactor also includes the module with `-Psqlcipher-dp`. The DP is written to `kura/distrib/kura-sqlite-dp/target/`. Use a newer build qualifier when publishing an update to an installed DP. The JDBC bundle version includes that qualifier and the JNI SHA-256 so Deployment Admin can identify the native revision. Updating or removing the DP uses Kura's normal deployment package lifecycle. Database files, encryption settings and credentials belong to the gateway.
