@@ -257,6 +257,25 @@ class EncryptionKeyLifecycleTests(unittest.TestCase):
         self.store.prepare("upgrade")
         self.assertEqual(self.key.read_bytes(),b"0123456789abcdef")
 
+    def test_published_keys_accept_only_the_vendor_networking_dependency(self):
+        dependencies = ("[Unit]\nWants=NetworkManager.service ModemManager.service\n"
+                        "After=NetworkManager.service ModemManager.service\n")
+        vendor = self.put(policy.NETWORKING_DROPIN, dependencies, 0o644)
+        self.store.path("/lib").symlink_to("usr/lib")
+        self.store.dropins_safe(published=True)
+        self.store.stable()
+        vendor.write_text(dependencies + "[Service]\nAmbientCapabilities=cap_net_admin\n")
+        with self.assertRaisesRegex(policy.Refused, "Unexpected Networking drop-in"):
+            self.store.dropins_safe(published=True)
+        vendor.write_text(dependencies)
+        self.put("/etc/systemd/system/kura.service.d/kura-networking.conf", dependencies, 0o644)
+        with self.assertRaisesRegex(policy.Refused, "Unexpected Main drop-in"):
+            self.store.dropins_safe(published=True)
+        self.store.path("/etc/systemd/system/kura.service.d/kura-networking.conf").unlink()
+        vendor.chmod(0o666)
+        with self.assertRaisesRegex(policy.Refused, "Unsafe key-policy file"):
+            self.store.dropins_safe(published=True)
+
     def test_retained_key_archive_can_recover_without_any_new_key(self):
         self.store.prepare("install")
         value = self.key.read_bytes()

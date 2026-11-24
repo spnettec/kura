@@ -33,6 +33,8 @@ GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 GENERATION_DROPIN = "/etc/systemd/system/kura.service.d/40-kura-key-generations.conf"
 GENERATION_TEMPLATE = "share/key-management/key-generations.conf"
+NETWORKING_DROPIN = "/usr/lib/systemd/system/kura.service.d/kura-networking.conf"
+NETWORKING_DEPENDENCIES_SHA = "06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473"
 RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 LIFECYCLE_SOURCE_LIMIT = 160 * 1024
 JOURNAL_SOURCE_LIMIT = 128 * 1024
@@ -447,6 +449,25 @@ class Store:
         require(len(value) in (16,24,32), "Invalid persisted encryption-key length")
         return value
 
+    def check_networking_dropin(self, source):
+        vendor = self.path(NETWORKING_DROPIN)
+        if source == self.path(NETWORKING_DROPIN.removeprefix("/usr")):
+            library = self.path("/lib")
+            alias = library.lstat()
+            require(stat.S_ISLNK(alias.st_mode) and alias.st_uid == self.owner
+                    and os.readlink(library) in ("usr/lib", "/usr/lib")
+                    and source.resolve(strict=True) == vendor,
+                    "Unexpected Networking drop-in alias")
+        else:
+            require(source == vendor, "Unexpected Networking drop-in path")
+        for parent in vendor.relative_to(self.root).parents:
+            metadata = (self.root / parent).lstat()
+            require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == self.owner
+                    and not metadata.st_mode & 0o022, "Unsafe Networking drop-in directory")
+        raw = self.read(vendor, limit=4096)
+        require(hashlib.sha256(raw).hexdigest() == NETWORKING_DEPENDENCIES_SHA,
+                "Unexpected Networking drop-in for published credentials")
+
     def dropins_safe(self, published=False):
         dangerous = ("EnvironmentFile","LoadCredential","LoadCredentialEncrypted",
                      "SetCredential","SetCredentialEncrypted","ImportCredential","ExecStart","ExecStartPre")
@@ -467,6 +488,10 @@ class Store:
                             raise Refused(str(error)) from error
                         continue
                     if published:
+                        if source in (self.path(NETWORKING_DROPIN),
+                                      self.path(NETWORKING_DROPIN.removeprefix("/usr"))):
+                            self.check_networking_dropin(source)
+                            continue
                         require(source == self.path(GENERATION_DROPIN),
                                 "Unexpected Main drop-in alongside published generation credentials")
                         continue  # The publication validator checks this file under the provisioning lock.
