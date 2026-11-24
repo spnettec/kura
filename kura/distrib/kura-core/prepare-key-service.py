@@ -79,7 +79,35 @@ def verify_crypto_imports(assembly, modules=None):
     return checked
 
 
-def prepare(assembly, cipher_target, offline_target):
+def bind_published_predecessors(manifest, paths):
+    if not paths:
+        return
+    field = 'publishedPredecessorManifestSha256s'
+    administrative = {'bin/kura_key_service_lifecycle.py', 'bin/kura_key_store.py', 'bin/kura_key_generation.py'}
+
+    def stable_assets(files):
+        return dict.fromkeys(files) | {k: v for k, v in files.items() if k not in administrative}
+
+    def boot_contract(value):
+        generation = value['generation']
+        require(value['schema'] == 2 and value['protocol'] == 2
+                and set(value) == {'schema', 'protocol', 'files', 'units', 'generation'}
+                and set(generation) - {field} == {'writerProtocol', 'unitSha256', 'files', 'readers'})
+        return (value['units'], stable_assets(value['files']), generation['writerProtocol'],
+                generation['unitSha256'], generation['readers'], stable_assets(generation['files']))
+
+    contract = boot_contract(manifest)
+    hashes = set()
+    for path in paths:
+        require(path.is_file() and not path.is_symlink() and path.stat().st_size <= 65536)
+        raw = path.read_bytes()
+        require(boot_contract(json.loads(raw)) == contract)
+        hashes.add(hashlib.sha256(raw).hexdigest())
+    require(1 <= len(hashes) <= 8)
+    manifest['generation'][field] = sorted(hashes)
+
+
+def prepare(assembly, cipher_target, offline_target, predecessors=()):
     require(assembly.is_dir() and not assembly.is_symlink())
     verify_crypto_imports(assembly)
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
@@ -148,6 +176,7 @@ def prepare(assembly, cipher_target, offline_target):
                       unitSha256=digest(main_unit), writerProtocol=1)
     manifest = dict(schema=2, protocol=2, files={name: digest(assembly / name) for name in sorted(base_files)},
                     units={name: digest(assembly / "install" / name) for name in units if name != 'kura.service'}, generation=generation)
+    bind_published_predecessors(manifest, predecessors)
     cohort.validate(assembly, generation, Path.read_bytes, os.geteuid(), unit=unit_bytes)
     (destination / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n")
     return manifest
@@ -204,7 +233,10 @@ def embed_policy_readers(preinst,lifecycle,journal,manifest):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
     require(preinst.is_file() and not preinst.is_symlink())
     require(manifest.is_file() and not manifest.is_symlink())
-    assignments = ['_KURA_INCOMING_KEY_MANIFEST_SHA256 = ' + repr(hashlib.sha256(manifest.read_bytes()).hexdigest())]
+    raw = manifest.read_bytes()
+    predecessors = json.loads(raw)['generation'].get('publishedPredecessorManifestSha256s', [])
+    assignments = ['_KURA_INCOMING_KEY_MANIFEST_SHA256 = ' + repr(hashlib.sha256(raw).hexdigest()),
+                   '_KURA_INCOMING_KEY_PREDECESSORS = ' + repr(tuple(predecessors))]
     readers = (('_KURA_EMBEDDED_LIFECYCLE_SOURCE', lifecycle, 160 * 1024),
                ('_KURA_EMBEDDED_JOURNAL_SOURCE', journal, 128 * 1024),
                ('_KURA_REMOVAL_HOME_SOURCE', Path(__file__).with_name('removal-home.py'), 32768))
@@ -358,7 +390,9 @@ def embed_configure_phases(control, assembly):
 
 if __name__ == "__main__":
     require(len(sys.argv) == 5)
-    prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+    previous = os.environ.get('KURA_PUBLISHED_GENERATION_PREDECESSORS')
+    predecessors = tuple(Path(path) for path in previous.split(os.pathsep)) if previous else ()
+    prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), predecessors)
     prepare_broker_packages(Path(sys.argv[1]), sys.argv[4])
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')

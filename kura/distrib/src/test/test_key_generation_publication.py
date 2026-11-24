@@ -259,6 +259,45 @@ class GenerationPublicationTest(unittest.TestCase):
         with self.assertRaisesRegex(policy.Refused, 'Incomplete published'):
             store.prepare('upgrade')
 
+    def test_published_predecessor_requires_original_start_and_successor_package_history(self):
+        result = self.publish()
+        fence = dict(schema=1, id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='upgrade')
+        marker = self.state / 'maintenance.json'
+        policy = writer.policy
+        store = policy.Store(self.root)
+        manifest = self.home / 'libexec/key-backup/manifest.json'
+        previous = manifest.read_bytes()
+        successor = service.decode(previous)
+        prior_hash = self.cohort['manifestSha256']
+        successor['generation']['publishedPredecessorManifestSha256s'] = [prior_hash]
+        encoded = service.encode(successor)
+        incoming_hash = __import__('hashlib').sha256(encoded).hexdigest()
+        source = package.SOURCE / 'unfiltered/pkg/bin'
+        readers = dict(_KURA_EMBEDDED_LIFECYCLE_SOURCE=(source / 'kura_key_service_lifecycle.py').read_bytes(),
+                       _KURA_EMBEDDED_JOURNAL_SOURCE=(source / 'kura_key_journal.py').read_bytes(),
+                       _KURA_INCOMING_KEY_MANIFEST_SHA256=incoming_hash,
+                       _KURA_INCOMING_KEY_PREDECESSORS=(prior_hash,))
+        self.put(marker, service.encode(fence))
+        with patch.dict(vars(policy), readers):
+            with self.assertRaisesRegex(policy.Refused, 'original completed generation startup'):
+                store.prepare('upgrade')
+        marker.unlink()
+        start = self.start_request()
+        self.component.request(start, start=True)
+        self.put(marker, service.encode(fence))
+        with patch.dict(vars(policy), readers):
+            self.assertTrue(store.prepare('upgrade')['keyReady'])
+        manifest.write_bytes(encoded)
+        self.assertTrue(store.prepare('package')['keyReady'])
+        marker.unlink()
+        self.refused('COHORT_CHANGED', self.admission)
+        self.put(marker, service.encode(fence))
+        self.policy.leave()
+        self.assertEqual('CREDENTIAL_READY', self.admission()['state'])
+        self.assertEqual(result, self.manager.record(result['operationId'])['response'])
+        self.assertEqual(self.cohort['cohortSha256'],
+                         self.manager.record(start['operationId'])['response']['cohortSha256'])
+
     def test_preparation_history_published_round_allows_new_staging_without_discarding_original_material(self):
         result = self.publish()
         directory = self.state / 'generations' / self.preparation

@@ -20,7 +20,7 @@ from kura_key_service import (Failure, require, fields, digest, operation_id, en
                               GENERATION_FORMAT, key_generations)
 from kura_key_store import GENERATION_CREDENTIALS_DIRECTORY, Refused as CredentialRefused, credential_reader_acl
 from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
-    validate_publication,
+    validate_publication, published_cohort_matches,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
     validate_start_lease, START_LEASE_CONTEXT, handoff_operation_request)
 
@@ -180,7 +180,14 @@ class Generations:
         require(len(matches) == 1, 'GENERATION_START_REQUIRED')
         response = matches[0]['response']
         require(response['ringSha256'] == source['ringSha256'] and response['activeKeySha256'] == source['keySha256']
-                and response['cohortSha256'] == cohort['cohortSha256'], 'COHORT_CHANGED')
+                and response['cohortSha256'] == current['cohortSha256']
+                and published_cohort_matches(current['cohortSha256'], cohort), 'COHORT_CHANGED')
+        if response['cohortSha256'] != cohort['cohortSha256']:
+            try:
+                Lifecycle(manager.root, manager.owner).completed_generation_successor(
+                    cohort['manifestSha256'], source['keySha256'])
+            except (OSError, Refused):
+                raise Failure('COHORT_CHANGED') from None
 
     def prepared(self, request):
         manager = self.manager
@@ -1293,8 +1300,7 @@ class ProviderStoreRewrap:
             self.check_profile(policy, core)
             publication = core.current()
             _, _, _, generation, _, source = manager.generation_source()
-            require(generation == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256'],
-                    'COHORT_CHANGED')
+            require(generation == publication['generation'], 'COHORT_CHANGED')
             core.require_start(source, cohort)
             account = pwd.getpwnam('kurad')
             locks.enter_context(manager.exclusive_writers())

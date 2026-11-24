@@ -116,6 +116,20 @@ def is_digest(value):
     return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
 
 
+def generation_cohort_reference(manifest_sha256, launchers):
+    return dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                manifestSha256=manifest_sha256, launcherSha256s=launchers)
+
+
+def published_cohort_matches(original, binding, predecessors=None):
+    if predecessors is None:
+        if original == binding['cohortSha256']:
+            return True
+        predecessors = binding.get('publishedPredecessorManifestSha256s', ())
+    return any(original == hashlib.sha256(encoded(
+        generation_cohort_reference(manifest, binding['launcherSha256s']))).hexdigest() for manifest in predecessors)
+
+
 GWT_BINDING_PURPOSE = 'yofc.kura.gwt-sender-namespace.v1'
 GWT_DATA_FIELDS = frozenset(('dataDirectory', 'dataDevice', 'dataInode', 'dataUid'))
 GWT_NAMESPACE_FIELDS = frozenset(('namespaceSha256', 'rootDevice', 'rootInode'))
@@ -1755,7 +1769,14 @@ class Lifecycle:
         if generation_binding:
             require(modern, 'This package has no complete generation-reader cohort')
             generation = manifest['generation']
-            require(set(generation) == {'files', 'readers', 'unitSha256', 'writerProtocol'}
+            fields = {'files', 'readers', 'unitSha256', 'writerProtocol'}
+            predecessors = generation.get('publishedPredecessorManifestSha256s')
+            if 'publishedPredecessorManifestSha256s' in generation:
+                fields.add('publishedPredecessorManifestSha256s')
+                require(isinstance(predecessors, list) and 1 <= len(predecessors) <= 8
+                        and all(is_digest(item) for item in predecessors)
+                        and predecessors == sorted(set(predecessors)), 'Invalid generation predecessor manifest list')
+            require(set(generation) == fields
                     and type(generation['writerProtocol']) is int and generation['writerProtocol'] == 1
                     and isinstance(generation['files'], dict)
                     and 1 <= len(generation['files']) <= 512 and is_digest(generation['unitSha256']))
@@ -1781,14 +1802,25 @@ class Lifecycle:
                 observed = namespace['validate'](physical, generation, lambda p: self.read(p, private=False), self.owner, unit=unit)
             except namespace['Refused']:
                 raise Refused('Generation-reader package is not paired; preserve keys and original operation IDs') from None
-            binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
-                           manifestSha256=hashlib.sha256(manifest_raw).hexdigest(),
-                           launcherSha256s={Path(name).name: value for name, value in observed.items()})
-            return dict(binding, cohortSha256=hashlib.sha256(encoded(binding)).hexdigest())
+            binding = generation_cohort_reference(hashlib.sha256(manifest_raw).hexdigest(),
+                {Path(name).name: value for name, value in observed.items()})
+            result = dict(binding, cohortSha256=hashlib.sha256(encoded(binding)).hexdigest())
+            if predecessors is not None:
+                result['publishedPredecessorManifestSha256s'] = predecessors
+            return result
         return manifest
 
     def generation_assets(self):
         return self.assets(generation_binding=True)
+
+    def completed_generation_successor(self, manifest_sha256, key_sha256):
+        history = self.state / 'package-history'
+        self.directory(history, private=True)
+        records = [validate_maintenance(decode(self.read(path)), path.name[:-5]) for path in history.iterdir()]
+        parents = {value['previousMaintenanceId'] for value in records}
+        heads = [value for value in records if value['maintenanceId'] not in parents]
+        require(len(heads) == 1 and heads[0]['manifestSha256'] == manifest_sha256
+                and heads[0]['keySha256'] == key_sha256, 'Original package maintenance has not committed the successor')
 
     @contextlib.contextmanager
     def recovery_locked(self):

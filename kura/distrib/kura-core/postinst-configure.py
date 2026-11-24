@@ -401,7 +401,7 @@ class Configure:
             logical.symlink_to(self.physical)
             policy.sync(logical.parent)
         self.paired_home()
-        require(policy.generation_assets()['cohortSha256'] == saved['cohortSha256'],
+        require(self.api.published_cohort_matches(saved['cohortSha256'], policy.generation_assets()),
                 'Restored vendor layout differs from the original published cohort')
 
     def restore_published_launchers(self, original, secret):
@@ -421,6 +421,11 @@ class Configure:
         binding = policy.generation_assets()
         require(binding['manifestSha256'] == self.binding['manifestSha256'],
                 'Published launchers require a paired incoming manifest')
+        previous_manifest = hashlib.sha256(policy.read(
+            parked / 'libexec/key-backup/manifest.json', private=False)).hexdigest()
+        require(previous_manifest == binding['manifestSha256']
+                or previous_manifest in binding.get('publishedPredecessorManifestSha256s', ()),
+                'Original upgrade home differs from the approved predecessor')
 
         # After a partial write each destination must still be either the exact
         # packaged template or the exact launcher bound to the publication.
@@ -435,9 +440,10 @@ class Configure:
             original_hashes[name] = hashlib.sha256(saved).hexdigest()
             if saved != actual:
                 replacements[target] = saved
-        original_binding = dict(binding, launcherSha256s=original_hashes)
-        del original_binding['cohortSha256']
-        require(hashlib.sha256(self.api.encoded(original_binding)).hexdigest() == publication['cohortSha256'],
+        original_binding = self.api.generation_cohort_reference(binding['manifestSha256'], original_hashes)
+        original_cohort = hashlib.sha256(self.api.encoded(original_binding)).hexdigest()
+        paired = dict(binding, cohortSha256=original_cohort, launcherSha256s=original_hashes)
+        require(self.api.published_cohort_matches(publication['cohortSha256'], paired),
                 'Retained launchers differ from the published generation')
 
         # Stage inside the authenticated recovery copy on the runtime filesystem.
@@ -454,7 +460,7 @@ class Configure:
                     os.fsync(stream.fileno())
                 os.replace(pending, target)
         policy.sync(self.physical / 'bin')
-        require(policy.generation_assets()['cohortSha256'] == publication['cohortSha256'],
+        require(self.api.published_cohort_matches(publication['cohortSha256'], policy.generation_assets()),
                 'Restored launchers differ from the published generation')
 
     def restore_package_history(self, original, mode, secret):

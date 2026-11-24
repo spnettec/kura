@@ -154,7 +154,24 @@ def credential_fallback_setup():
     """Materialize the direct-read key copy after the runtime account exists
     (fresh installs call this from the installer, post user creation)."""
     require(os.geteuid() == 0, "Credential fallback setup requires the package administrator")
-    require(fallback_runtime_identity() is not None, "Credential fallback requires the runtime account")
+    account = fallback_runtime_identity()
+    require(account is not None, "Credential fallback requires the runtime account")
+    projection = Path(GENERATION_CREDENTIALS_DIRECTORY)
+    if os.path.lexists(projection):
+        store = Store()
+        store.private_dir(projection)
+        require(stat.S_IMODE(projection.lstat().st_mode) == 0o710
+                and os.getxattr(projection, 'system.posix_acl_access') == credential_reader_acl(account[0], 7, 1),
+                "Unsafe generation credential directory")
+        with store.locked():
+            for path in (KEY_PATH, RING_PATH, GENERATION_RECEIPT_PATH):
+                target = projection / Path(path).name
+                require(stat.S_IMODE(target.lstat().st_mode) == 0o440
+                        and store.read(target, private=True, limit=2048, loaded_for_uid=account[0])
+                        == store.read(store.path(path), private=True, limit=2048),
+                        "Projected generation credentials differ from the original")
+            store.stable()
+        return dict(fallback=True)
     canonical = Path(CANONICAL_CREDENTIALS_DIRECTORY) / CREDENTIAL
     require(os.path.lexists(canonical), "Credential fallback requires the provisioned key")
     if credential_probe() == "absent" or fallback_active():
@@ -442,10 +459,6 @@ class Store:
                     continue
                 require(not directory.is_symlink(), "Symlinked systemd drop-in directory")
                 for source in sorted(directory.glob("*.conf")):
-                    if published:
-                        require(source == self.path(GENERATION_DROPIN),
-                                "Unexpected Main drop-in alongside published generation credentials")
-                        continue  # The publication validator checks this file under the provisioning lock.
                     if source == self.path("/run/systemd/system/service.d/zzz-lxc-service.conf"):
                         api = paired_lifecycle()
                         try:
@@ -453,6 +466,10 @@ class Store:
                         except api.Refused as error:
                             raise Refused(str(error)) from error
                         continue
+                    if published:
+                        require(source == self.path(GENERATION_DROPIN),
+                                "Unexpected Main drop-in alongside published generation credentials")
+                        continue  # The publication validator checks this file under the provisioning lock.
                     text = self.read(source).decode("utf-8")
                     for line in text.splitlines():
                         line = line.strip()
@@ -464,7 +481,8 @@ class Store:
                         require(not relevant, "Custom key/startup drop-in requires a reviewed migration")
 
     def check_published_maintenance(self, api, lifecycle, metadata, receipt):
-        require(lifecycle.fence() is not None, "Published credentials require the original maintenance fence")
+        fence = lifecycle.fence()
+        require(fence is not None, "Published credentials require the original maintenance fence")
         lifecycle.check_extended_journal()
         current = lifecycle.state / "generation-current.json"
         publication = api.validate_publication(api.decode(lifecycle.read(current, 8192)))
@@ -480,13 +498,26 @@ class Store:
             api.archive_entry(lifecycle, dict(directory="operations", operationId=publication[operation]), secret)
 
         home = self.path("/opt/eclipse/kura").resolve(strict=True)
-        if "_KURA_EMBEDDED_LIFECYCLE_SOURCE" in globals():
-            manifest = lifecycle.read(home / "libexec/key-backup/manifest.json", private=False)
-            require(hashlib.sha256(manifest).hexdigest() == globals().get("_KURA_INCOMING_KEY_MANIFEST_SHA256"),
-                    "Incoming release needs a reviewed generation cohort migration")
         binding = lifecycle.generation_assets()
-        require(binding["cohortSha256"] == publication["cohortSha256"],
+        original_cohort = publication["cohortSha256"]
+        require(api.published_cohort_matches(original_cohort, binding),
                 "Installed readers or launchers differ from the published cohort")
+        if "_KURA_EMBEDDED_LIFECYCLE_SOURCE" in globals():
+            incoming = globals().get("_KURA_INCOMING_KEY_MANIFEST_SHA256")
+            if incoming != binding['manifestSha256']:
+                predecessors = globals().get("_KURA_INCOMING_KEY_PREDECESSORS", ())
+                require(fence['firstAction'] == 'upgrade' and binding['manifestSha256'] in predecessors
+                        and api.published_cohort_matches(original_cohort, binding, predecessors),
+                        "Incoming release needs a reviewed generation cohort migration")
+                starts = [api.validate_record(api.decode(lifecycle.read(path)), path.name[:-5])
+                          for path in (lifecycle.state / "operations").iterdir()]
+                accepted = [record["response"] for record in starts
+                            if record["action"] == "generation-core-start" and record["state"] == "SUCCEEDED"
+                            and record["response"]["publicationId"] == publication["operationId"]]
+                require(len(accepted) == 1 and accepted[0]["cohortSha256"] == original_cohort
+                        and accepted[0]["activeKeySha256"] == metadata["activeKeySha256"]
+                        and accepted[0]["ringSha256"] == metadata["ringSha256"],
+                        "Cohort replacement requires the original completed generation startup")
         dropin = self.path(GENERATION_DROPIN)
         lifecycle.directory(dropin.parent, private=True)
         require(stat.S_IMODE(dropin.lstat().st_mode) == 0o400 and
