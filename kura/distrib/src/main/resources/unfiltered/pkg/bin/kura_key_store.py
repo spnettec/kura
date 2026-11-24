@@ -3,6 +3,7 @@
 """Private Core encryption-key provisioning; never rotate existing encrypted data."""
 import array
 import contextlib
+import ctypes
 import fcntl
 import hashlib
 import json
@@ -38,6 +39,7 @@ JOURNAL_SOURCE_LIMIT = 128 * 1024
 FALLBACK_USER = "kurad"
 FALLBACK_CREDENTIALS_DIRECTORY = "/var/lib/kura-credentials"
 CANONICAL_CREDENTIALS_DIRECTORY = "/etc/kura/credentials"
+PR_SET_NO_NEW_PRIVS = 38
 
 
 def fallback_runtime_identity():
@@ -908,8 +910,20 @@ def check_loaded(require_generations=False, require_root=False):
     elif metadata is not None:
         generation_start_admission(metadata)
 
+
+def require_no_new_privileges():
+    require(sys.platform == 'linux', 'Managed Main requires Linux process admission')
+    prctl = ctypes.CDLL(None).prctl
+    prctl.argtypes = (ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong)
+    prctl.restype = ctypes.c_int
+    require(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == 0, 'Cannot enforce NoNewPrivs for managed Main')
+
+
 def exec_java(arguments):
     require(bool(arguments), 'Missing managed Java arguments')
+    # All packaged Main launchers converge here, including guarded recovery.
+    # Preserve the same process across admission and exec.
+    require_no_new_privileges()
     recovery = None
     if 'KURA_CONTROLLED_RECOVERY_ID' in os.environ or os.path.lexists('/var/lib/kura-recovery-launch'):
         home = Path(__file__).resolve().parents[1]
