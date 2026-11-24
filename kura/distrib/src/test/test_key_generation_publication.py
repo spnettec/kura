@@ -181,6 +181,55 @@ class GenerationPublicationTest(unittest.TestCase):
         self.assertEqual(commands, self.commands)
         self.refused('START_ALREADY_AUTHORIZED', lambda: self.component.request(self.start_request(), start=True))
 
+    def test_container_projection_continues_the_original_publication(self):
+        scope = self.component.unit.__func__.__globals__
+        adapter = scope['CONTAINER_ADAPTER_DROPIN']
+
+        def with_adapter(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = '\n'.join(
+                f'{line} {adapter}'.replace('= ', '=') if line.startswith('DropInPaths=') else line
+                for line in result.stdout.split('\n'))
+            return result
+
+        self.component.runner = with_adapter
+        directory = self.manager.store.path(scope['GENERATION_CREDENTIALS_DIRECTORY'])
+        projection = self.component.project_credentials
+        replace = os.replace
+
+        def interrupt_ring_copy(source, destination, **options):
+            if destination == directory / 'kura_encryption_keyring':
+                raise OSError('fixture interrupted the projected ring rename')
+            return replace(source, destination, **options)
+
+        uid = 65534
+        identity = self.publish_request['operationId']
+        read = dict(schema=1, action='generation-publication-read', operationId=identity)
+        with patch.object(scope['Lifecycle'], 'check_container_adapter'):
+            # The systemd stand-in uses the test worker UID. Exercise the disk
+            # projection with the distinct reader used by this fixture.
+            with patch.object(self.component, 'project_credentials',
+                              side_effect=lambda targets, history, _: projection(targets, history, uid)):
+                with patch.object(os, 'replace', side_effect=interrupt_ring_copy):
+                    self.refused('UNKNOWN', self.publish)
+                receipt = self.component.publication_read(read)
+                self.assertEqual('UNKNOWN', receipt['state'])
+                self.assertEqual(0o700, directory.stat().st_mode & 0o777)
+                self.assertFalse((self.state / 'generation-current.json').exists())
+                active_inode = (directory / 'kura_encryption_key').stat().st_ino
+                result = self.component.recover_publication(dict(read, action='generation-publication-recover',
+                        expectedRecoveryReceiptSha256=receipt['recoveryReceiptSha256']))
+        self.assertEqual(identity, result['operationId'])
+        self.assertEqual('SUCCEEDED', result['state'])
+        self.assertEqual(1, self.count_stops())
+        self.assertEqual(0o710, directory.stat().st_mode & 0o777)
+        self.assertEqual(active_inode, (directory / 'kura_encryption_key').stat().st_ino)
+        for name in ('kura_encryption_key', 'kura_encryption_keyring', 'key-generations.json'):
+            self.assertEqual((self.directory / name).read_bytes(),
+                             self.manager.store.read(directory / name, private=True, loaded_for_uid=uid))
+            with self.assertRaises(writer.policy.Refused):
+                self.manager.store.read(directory / name, private=True, loaded_for_uid=uid - 1)
+
     def test_package_admits_only_original_published_credentials_and_paired_incoming_manifest(self):
         self.publish()
         fence = dict(schema=1, id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='upgrade')

@@ -38,6 +38,7 @@ LIFECYCLE_SOURCE_LIMIT = 160 * 1024
 JOURNAL_SOURCE_LIMIT = 128 * 1024
 FALLBACK_USER = "kurad"
 FALLBACK_CREDENTIALS_DIRECTORY = "/var/lib/kura-credentials"
+GENERATION_CREDENTIALS_DIRECTORY = "/var/lib/kura-generation-credentials"
 CANONICAL_CREDENTIALS_DIRECTORY = "/etc/kura/credentials"
 PR_SET_NO_NEW_PRIVS = 38
 
@@ -758,6 +759,14 @@ class Store:
             require(self.unit_key(Path(target)) == self.key(self.path(KEY_PATH)),
                     "Installed service does not use the provisioned key")
 
+def credential_reader_acl(uid, owner_permissions, reader_permissions):
+    undefined = 0xffffffff
+    return struct.pack("<I", 2) + b"".join(
+        struct.pack("<HHI", *entry) for entry in
+        ((1, owner_permissions, undefined), (2, reader_permissions, uid), (4, 0, undefined),
+         (16, reader_permissions, undefined), (32, 0, undefined)))
+
+
 def loaded_permissions_private(fd, metadata, reader_uid=None):
     mode = stat.S_IMODE(metadata.st_mode)
     if not mode & 0o077:
@@ -772,13 +781,8 @@ def loaded_permissions_private(fd, metadata, reader_uid=None):
         acl = os.getxattr(fd,"system.posix_acl_access")
     except (AttributeError,OSError):
         return False
-    if len(acl) != 44 or struct.unpack_from("<I",acl)[0] != 2:
-        return False
-    entries = [struct.unpack_from("<HHI",acl,offset) for offset in range(4,44,8)]
-    undefined = 0xffffffff
     reader_uid = os.geteuid() if reader_uid is None else reader_uid
-    return entries == [(1,4,undefined),(2,4,reader_uid),(4,0,undefined),
-                       (16,4,undefined),(32,0,undefined)]
+    return acl == credential_reader_acl(reader_uid, 4, 4)
 
 def read_loaded(directory, name, limit, *, with_metadata=False):
     source = directory / name
@@ -801,18 +805,22 @@ def read_loaded(directory, name, limit, *, with_metadata=False):
     finally:
         os.close(fd)
 
+def loaded_credential_directory():
+    directory = Path(os.environ.get("CREDENTIALS_DIRECTORY", ""))
+    if directory.is_absolute():
+        return directory
+    projection = Path(GENERATION_CREDENTIALS_DIRECTORY)
+    if os.path.lexists(projection):
+        return projection
+    require(fallback_active(), "Kura encryption credential is unavailable")
+    return Path(FALLBACK_CREDENTIALS_DIRECTORY)
+
+
 def loaded_credential_proof(name):
     """ACL/identity receipt for the same-UID Java reader. No raw bytes or Root RPC."""
     limits={CREDENTIAL:32,RING_CREDENTIAL:512}
     require(name in limits,'Unsupported loaded credential')
-    directory=os.environ.get('CREDENTIALS_DIRECTORY','')
-    if not directory or not Path(directory).is_absolute():
-        if fallback_active():
-            # Kernels without credential injection read the provisioned key
-            # directly with the fallback runtime identity.
-            directory=FALLBACK_CREDENTIALS_DIRECTORY
-    require(directory and Path(directory).is_absolute(),'Kura encryption credential is unavailable')
-    value,m=read_loaded(Path(directory),name,limits[name],with_metadata=True)
+    value,m=read_loaded(loaded_credential_directory(),name,limits[name],with_metadata=True)
     identity=(m.st_dev,m.st_ino,m.st_uid,m.st_gid,m.st_mode,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
     print(':'.join(map(str,('v'+str(LOADED_CREDENTIAL_PROOF_PROTOCOL),name,*identity,hashlib.sha256(value).hexdigest()))))
 
@@ -883,14 +891,7 @@ def credential_start_admission(key_sha256, ring_sha256):
                          dict(schema=1, state="CREDENTIAL_READY", **expected))
 
 def loaded_binding(require_generations=False):
-    directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
-    if not directory or not Path(directory).is_absolute():
-        if fallback_active():
-            # Kernels without credential injection read the provisioned key
-            # directly with the fallback runtime identity.
-            directory = FALLBACK_CREDENTIALS_DIRECTORY
-    require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
-    directory = Path(directory)
+    directory = loaded_credential_directory()
     value = read_loaded(directory, CREDENTIAL, 32)
     require(len(value) in (16, 24, 32), "Invalid loaded Kura encryption credential")
     names = (RING_CREDENTIAL, "key-generations.json")

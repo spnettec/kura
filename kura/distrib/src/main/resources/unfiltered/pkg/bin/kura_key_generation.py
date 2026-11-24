@@ -18,6 +18,7 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
+from kura_key_store import GENERATION_CREDENTIALS_DIRECTORY, credential_reader_acl
 from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
     validate_publication,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
@@ -62,7 +63,8 @@ class Generations:
                 and self.manager.store.path(result['FragmentPath']).resolve(strict=True)
                 == self.manager.store.path('/lib/systemd/system/kura.service').resolve(strict=True), 'UNMANAGED_CORE')
         dropins = result['DropInPaths'].split()
-        if CONTAINER_ADAPTER_DROPIN in dropins:
+        result['ContainerAdapter'] = CONTAINER_ADAPTER_DROPIN in dropins
+        if result['ContainerAdapter']:
             try:
                 Lifecycle(self.manager.root, self.manager.owner).check_container_adapter()
             except (OSError, Refused) as error:
@@ -226,6 +228,7 @@ class Generations:
         require(unit['ActiveState'] == 'inactive' and unit['SubState'] == 'dead'
                 and unit['MainPID'] == '0' and unit['ControlPID'] == '0' and self.cgroup_empty(), 'CORE_NOT_DRAINED')
         self.no_foreign_processes(uid)
+        return unit
 
     def publication_paths(self):
         manager = self.manager
@@ -311,6 +314,55 @@ class Generations:
                     generationReceipt=(encode(dict(schema=1, purpose=GENERATION_FORMAT, **metadata)), 0o600),
                     dropin=(template, 0o400), current=(publication, 0o600))
 
+    def project_credentials(self, targets, history, uid):
+        # The reviewed adapter clears LoadCredential. Keep the projection
+        # Root-owned and grant only the managed account traversal and read.
+        manager = self.manager
+        require(uid > 0, 'UNMANAGED_CORE')
+        directory = manager.store.path(GENERATION_CREDENTIALS_DIRECTORY)
+        manager.directory(directory.parent)
+        directory.mkdir(mode=0o700, exist_ok=True)
+        manager.directory(directory)
+        acl = credential_reader_acl(uid, 7, 1)
+        mode = stat.S_IMODE(directory.lstat().st_mode)
+        require(mode == 0o700 or mode == 0o710
+                and os.getxattr(directory, 'system.posix_acl_access') == acl, 'UNSAFE_FILESYSTEM')
+        stage = directory / '.pending'
+        stage.mkdir(mode=0o700, exist_ok=True)
+        manager.directory(stage, private=True)
+        previous = history['sourceGenerationReceipt']
+        previous_proof = encode(dict(schema=1, purpose=GENERATION_FORMAT, **previous)) if previous is not None else None
+        sources = ((KEY_PATH, 'activeKey', history['source']['keySha256']),
+                   (RING_PATH, 'ring', history['source']['ringSha256']),
+                   (GENERATION_RECEIPT_PATH, 'generationReceipt',
+                    hashlib.sha256(previous_proof).hexdigest() if previous_proof is not None else None))
+        for source, name, prior_digest in sources:
+            # Only the original or already published bytes can occupy a leaf
+            # during continuation. The canonical source stays in the journal.
+            path = directory / Path(source).name
+            data = targets[name][0]
+            if os.path.lexists(path):
+                require(stat.S_IMODE(path.lstat().st_mode) == 0o440, 'UNSAFE_FILESYSTEM')
+                current = manager.store.read(path, private=True, limit=2048, loaded_for_uid=uid)
+                if current == data:
+                    continue
+                require(prior_digest is not None and hashlib.sha256(current).hexdigest() == prior_digest, 'CONFLICT')
+            candidate = stage / path.name
+            if not os.path.lexists(candidate):
+                manager.atomic(candidate, data, mode=0o400, no_replace=True)
+            require(manager.store.read(candidate, private=True, limit=2048, loaded_for_uid=uid) == data, 'CONFLICT')
+            fd = os.open(candidate, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+            try:
+                os.setxattr(fd, 'system.posix_acl_access', credential_reader_acl(uid, 4, 4))
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            os.replace(candidate, path)
+            manager.sync(stage)
+        os.setxattr(directory, 'system.posix_acl_access', acl)
+        manager.sync(directory)
+        manager.sync(directory.parent)
+
     def publication_progress(self, value, targets, source_files):
         manager = self.manager
         paths = self.publication_paths()
@@ -349,9 +401,11 @@ class Generations:
             reload_needed = True
         if reload_needed:
             self.command((*SYSTEMCTL, 'daemon-reload'))
-        self.stopped(generation_mode=True, uid=uid)
+        unit = self.stopped(generation_mode=True, uid=uid)
         require(manager.generations()[1] == value['generation'] and manager.require_generation_cohort() == cohort, 'COHORT_CHANGED')
         self.dropin(generation_mode=True)
+        if unit['ContainerAdapter']:
+            self.project_credentials(targets, history, uid)
         for name in ('publication', 'current'):
             if not done[name]:
                 data, mode = expected[name]
