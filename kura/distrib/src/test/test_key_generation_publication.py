@@ -35,7 +35,7 @@ class GenerationPublicationTest(unittest.TestCase):
         self.component.no_foreign_processes = Mock()
         self.component.process_group = lambda _: '/system.slice/kura.service'
         accounts = patch.object(self.component.__class__.__init__.__globals__['pwd'], 'getpwnam',
-                                return_value=types.SimpleNamespace(pw_uid=os.geteuid()))
+                                return_value=types.SimpleNamespace(pw_uid=os.geteuid(), pw_gid=os.getegid()))
         accounts.start(); self.addCleanup(accounts.stop)
         self.group = self.root / 'sys/fs/cgroup/system.slice/kura.service'
         self.group.mkdir(parents=True)
