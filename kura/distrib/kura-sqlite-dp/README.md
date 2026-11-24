@@ -1,6 +1,6 @@
 # SQLite provider with SQLCipher for Linux ARM64
 
-This optional Kura deployment package delivers the SQLite provider and Xerial JDBC together. The JDBC bundle contains a Linux ARM64 JNI linked to the distribution's SQLCipher. The gateway needs the matching SQLCipher shared-library ABI (Debian 13 package `libsqlcipher1`). Install the DP through Kura's deployment package interface. A plain Xerial JDBC or SQLite provider already installed under a different owner must be reconciled before installing this DP.
+This optional Kura deployment package delivers the SQLite provider and Xerial JDBC together. The JDBC bundle contains a Linux ARM64 JNI linked to the distribution's SQLCipher. The gateway needs the shared-library ABI used to build the DP. Debian 13 provides `libsqlcipher1` and Ubuntu 26.04 provides `libsqlcipher2`. Install the DP through Kura's deployment package interface. A plain Xerial JDBC or SQLite provider already installed under a different owner must be reconciled before installing this DP.
 
 On a GNU/Linux ARM64 build host use JDK 21, Maven, a C compiler, pkg-config and `libsqlcipher-dev`. From the Core checkout, use the same Maven repository and build qualifier for build-support, the Core provider and the distribution:
 
